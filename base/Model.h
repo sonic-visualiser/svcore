@@ -13,6 +13,8 @@
 #include <vector>
 #include <QObject>
 
+#include "XmlExportable.h"
+
 typedef std::vector<float> SampleBlock;
 
 /** 
@@ -20,7 +22,8 @@ typedef std::vector<float> SampleBlock;
  * of data on a time scale based on an audio frame rate.
  */
 
-class Model : virtual public QObject
+class Model : virtual public QObject,
+	      public XmlExportable
 {
     Q_OBJECT
 
@@ -81,6 +84,9 @@ public:
 	return ok;
     }
     static const int COMPLETION_UNKNOWN;
+
+    virtual QString toXmlString(QString indent = "",
+				QString extraAttributes = "") const;
 
 signals:
     /**

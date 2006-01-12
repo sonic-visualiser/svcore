@@ -15,6 +15,7 @@
 
 #include "base/ZoomConstraint.h"
 #include "base/PropertyContainer.h"
+#include "base/XmlExportable.h"
 
 class Layer;
 class ViewManager;
@@ -35,7 +36,8 @@ class ViewManager;
  */
 
 class View : public QFrame,
-	     public PropertyContainer
+	     public PropertyContainer,
+	     public XmlExportable
 {
     Q_OBJECT
 
@@ -148,6 +150,9 @@ public:
 	return objectName();
     }
 
+    virtual QString toXmlString(QString indent = "",
+				QString extraAttributes = "") const;
+
 signals:
     void propertyContainerAdded(PropertyContainer *pc);
     void propertyContainerRemoved(PropertyContainer *pc);
@@ -191,23 +196,23 @@ protected:
 
     void checkProgress(void *object);
 
-    size_t m_centreFrame;
-    int m_zoomLevel;
-    bool m_newModel;
-    bool m_followPan;
-    bool m_followZoom;
-    PlaybackFollowMode m_followPlay;
-    size_t m_playPointerFrame;
-    bool m_lightBackground;
-    bool m_showProgress;
+    size_t              m_centreFrame;
+    int                 m_zoomLevel;
+    bool                m_newModel;
+    bool                m_followPan;
+    bool                m_followZoom;
+    PlaybackFollowMode  m_followPlay;
+    size_t              m_playPointerFrame;
+    bool                m_lightBackground;
+    bool                m_showProgress;
 
-    QPixmap *m_cache;
-    size_t m_cacheCentreFrame;
-    int m_cacheZoomLevel;
+    QPixmap            *m_cache;
+    size_t              m_cacheCentreFrame;
+    int                 m_cacheZoomLevel;
 
-    bool m_deleting;
+    bool                m_deleting;
 
-    LayerList m_layers; // I don't own these, but see note in dtor comment above
+    LayerList           m_layers; // I don't own these, but see dtor note above
 
     // caches for use in getScrollableBackLayers, getNonScrollableFrontLayers
     mutable LayerList m_lastScrollableBackLayers;
