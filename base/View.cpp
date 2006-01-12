@@ -2,7 +2,7 @@
 
 /*
     A waveform viewer and audio annotation editor.
-    Chris Cannam, Queen Mary University of London, 2005
+    Chris Cannam, Queen Mary University of London, 2005-2006
     
     This is experimental software.  Not for distribution.
 */
@@ -334,7 +334,7 @@ View::modelChanged()
     QObject *obj = sender();
 
 #ifdef DEBUG_VIEW_WIDGET_PAINT
-    std::cerr << "View::modelChanged()" << std::endl;
+    std::cerr << "View(" << this << ")::modelChanged()" << std::endl;
 #endif
     delete m_cache;
     m_cache = 0;
@@ -349,12 +349,12 @@ View::modelChanged(size_t startFrame, size_t endFrame)
 {
     QObject *obj = sender();
 
-#ifdef DEBUG_VIEW_WIDGET_PAINT
-    std::cerr << "View::modelChanged(" << startFrame << "," << endFrame << ")" << std::endl;
-#endif
-
     long myStartFrame = getStartFrame();
     size_t myEndFrame = getEndFrame();
+
+#ifdef DEBUG_VIEW_WIDGET_PAINT
+    std::cerr << "View(" << this << ")::modelChanged(" << startFrame << "," << endFrame << ") [me " << myStartFrame << "," << myEndFrame << "]" << std::endl;
+#endif
 
     if (myStartFrame > 0 && endFrame < size_t(myStartFrame)) {
 	checkProgress(obj);
@@ -391,8 +391,11 @@ void
 View::modelReplaced()
 {
 #ifdef DEBUG_VIEW_WIDGET_PAINT
-    std::cerr << "View::modelReplaced()" << std::endl;
+    std::cerr << "View(" << this << ")::modelReplaced()" << std::endl;
 #endif
+    delete m_cache;
+    m_cache = 0;
+
     m_newModel = true;
     update();
 }
