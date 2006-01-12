@@ -953,6 +953,39 @@ View::paintEvent(QPaintEvent *e)
     QFrame::paintEvent(e);
 }
 
+QString
+View::toXmlString(QString indent, QString extraAttributes) const
+{
+    QString s;
+
+    s += indent;
+
+    s += QString("<view "
+		 "centre=\"%1\" "
+		 "zoom=\"%2\" "
+		 "followPan=\"%3\" "
+		 "followZoom=\"%4\" "
+		 "tracking=\"%5\" "
+		 "light=\"%6\" %7>\n")
+	.arg(m_centreFrame)
+	.arg(m_zoomLevel)
+	.arg(m_followPan)
+	.arg(m_followZoom)
+	.arg(m_followPlay == PlaybackScrollContinuous ? "scroll" :
+	     m_followPlay == PlaybackScrollPage ? "page" : "ignore")
+	.arg(m_lightBackground)
+	.arg(extraAttributes);
+
+    for (size_t i = 0; i < m_layers.size(); ++i) {
+	s += m_layers[i]->toXmlString(indent + "  ");
+    }
+
+    s += indent + "</view>";
+
+    return s;
+}
+
+
 #ifdef INCLUDE_MOCFILES
 #include "View.moc.cpp"
 #endif

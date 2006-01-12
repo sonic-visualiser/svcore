@@ -12,6 +12,7 @@
 #define _VIEWER_H_
 
 #include "PropertyContainer.h"
+#include "XmlExportable.h"
 
 #include <QObject>
 #include <QRect>
@@ -28,7 +29,8 @@ class View;
  */
 
 class Layer : public QObject,
-	      public PropertyContainer
+	      public PropertyContainer,
+	      public XmlExportable
 {
     Q_OBJECT
 
@@ -85,6 +87,9 @@ public:
     virtual int getCompletion() const { return 100; }
 
     virtual void setObjectName(const QString &name);
+
+    virtual QString toXmlString(QString indent = "",
+				QString extraAttributes = "") const;
 
 signals:
     void modelChanged();
