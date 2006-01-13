@@ -18,9 +18,12 @@ Model::toXmlString(QString indent, QString extraAttributes) const
     
     s += indent;
 
-    s += QString("<model id=\"%1\" name=\"%2\" %3/>\n")
-	.arg((intptr_t)this)
+    s += QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
+	.arg(getObjectExportId(this))
 	.arg(objectName())
+	.arg(getSampleRate())
+	.arg(getStartFrame())
+	.arg(getEndFrame())
 	.arg(extraAttributes);
 
     return s;
