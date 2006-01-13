@@ -980,7 +980,7 @@ View::toXmlString(QString indent, QString extraAttributes) const
 	s += m_layers[i]->toXmlString(indent + "  ");
     }
 
-    s += indent + "</view>";
+    s += indent + "</view>\n";
 
     return s;
 }

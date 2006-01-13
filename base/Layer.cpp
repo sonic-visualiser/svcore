@@ -41,12 +41,12 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
     
     s += indent;
 
-    s += QString("<layer type=\"%1\" id=\"%2\" name=\"%3\" model=\"%4\" %5/>\n")
+    s += QString("<layer id=\"%2\" type=\"%1\" name=\"%3\" model=\"%4\" %5/>\n")
 	.arg(LayerFactory::instance()->getLayerTypeName
 	     (LayerFactory::instance()->getLayerType(this)))
-	.arg((intptr_t)this)
+	.arg(getObjectExportId(this))
 	.arg(objectName())
-	.arg((intptr_t)getModel())
+	.arg(getObjectExportId(getModel()))
 	.arg(extraAttributes);
 
     return s;

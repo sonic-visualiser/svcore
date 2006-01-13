@@ -8,6 +8,7 @@
 */
 
 #include "XmlExportable.h"
+#include <map>
 
 QString
 XmlExportable::encodeEntities(QString s)
@@ -38,4 +39,18 @@ XmlExportable::encodeColour(QColor c)
 
     return "#" + r + g + b;
 }
+
+int
+XmlExportable::getObjectExportId(const void * object)
+{
+    static std::map<const void *, int> idMap;
+    static int maxId = 0;
+    
+    if (idMap.find(object) == idMap.end()) {
+	idMap[object] = maxId++;
+    }
+
+    return idMap[object];
+}
+
 
