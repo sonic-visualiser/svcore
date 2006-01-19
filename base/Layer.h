@@ -16,6 +16,7 @@
 
 #include <QObject>
 #include <QRect>
+#include <QXmlAttributes>
 
 class ZoomConstraint;
 class Model;
@@ -90,6 +91,8 @@ public:
 
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
+
+    virtual void setProperties(const QXmlAttributes &) = 0;
 
 signals:
     void modelChanged();
