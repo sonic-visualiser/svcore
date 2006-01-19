@@ -89,9 +89,21 @@ public:
 
     virtual void setObjectName(const QString &name);
 
+    /**
+     * Convert the layer's data (though not those of the model it
+     * refers to) into an XML string for file output.  This class
+     * implements the basic name/type/model-id output; subclasses will
+     * typically call this superclass implementation with extra
+     * attributes describing their particular properties.
+     */
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
+    /**
+     * Set the particular properties of a layer (those specific to the
+     * subclass) from a set of XML attributes.  This is the effective
+     * inverse of the toXmlString method.
+     */
     virtual void setProperties(const QXmlAttributes &) = 0;
 
 signals:
