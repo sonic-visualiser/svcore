@@ -21,7 +21,9 @@ ViewManager::ViewManager() :
     m_globalCentreFrame(0),
     m_globalZoom(1024),
     m_lastLeft(0), 
-    m_lastRight(0)
+    m_lastRight(0),
+    m_inProgressExclusive(true),
+    m_toolMode(NavigateMode)
 {
     connect(this, 
 	    SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
@@ -48,6 +50,107 @@ ViewManager::getGlobalZoom() const
     std::cout << "ViewManager::getGlobalZoom: returning " << m_globalZoom << std::endl;
 #endif
     return m_globalZoom;
+}
+
+bool
+ViewManager::haveInProgressSelection() const
+{
+    return !m_inProgressSelection.isEmpty();
+}
+
+const Selection &
+ViewManager::getInProgressSelection(bool &exclusive) const
+{
+    exclusive = m_inProgressExclusive;
+    return m_inProgressSelection;
+}
+
+void
+ViewManager::setInProgressSelection(const Selection &selection, bool exclusive)
+{
+    m_inProgressExclusive = exclusive;
+    m_inProgressSelection = selection;
+    if (exclusive) clearSelections();
+    emit selectionChanged();
+}
+
+void
+ViewManager::clearInProgressSelection()
+{
+    m_inProgressSelection = Selection();
+    emit selectionChanged();
+}
+
+const ViewManager::SelectionList &
+ViewManager::getSelections() const
+{
+    return m_selections;
+}
+
+void
+ViewManager::setSelection(const Selection &selection)
+{
+    clearSelections();
+    addSelection(selection);
+}
+
+void
+ViewManager::addSelection(const Selection &selection)
+{
+    m_selections.insert(selection);
+
+    // Cope with a sitation where the new selection overlaps one or
+    // more existing ones.  This is a terribly inefficient way to do
+    // this, but that probably isn't significant in real life.
+
+     for (SelectionList::iterator i = m_selections.begin();
+	 i != m_selections.end(); ) {
+	
+	SelectionList::iterator j = i;
+	if (++j == m_selections.end()) break;
+
+	if (i->getEndFrame() >= j->getStartFrame()) {
+	    Selection merged(i->getStartFrame(),
+			     std::max(i->getEndFrame(), j->getEndFrame()));
+	    m_selections.erase(i);
+	    m_selections.erase(j);
+	    m_selections.insert(merged);
+	    i = m_selections.begin();
+	} else {
+	    ++i;
+	}
+    }
+
+    emit selectionChanged();
+}
+
+void
+ViewManager::removeSelection(const Selection &selection)
+{
+    //!!! Likewise this needs to cope correctly with the situation
+    //where selection is not one of the original selection set but
+    //simply overlaps one of them (cutting down the original selection
+    //appropriately)
+
+    m_selections.erase(selection);
+
+    emit selectionChanged();
+}
+
+void
+ViewManager::clearSelections()
+{
+    m_selections.clear();
+
+    emit selectionChanged();
+}
+
+void
+ViewManager::setToolMode(ToolMode mode)
+{
+    m_toolMode = mode;
+
+    emit toolModeChanged();
 }
 
 void
@@ -117,6 +220,12 @@ ViewManager::checkPlayStatus()
 //	std::cout << "ViewManager::checkPlayStatus: Not playing" << std::endl;
 #endif
     }
+}
+
+bool
+ViewManager::isPlaying() const
+{
+    return m_playSource && m_playSource->isPlaying();
 }
 
 void
