@@ -60,11 +60,49 @@ public:
     virtual int getVerticalScaleWidth(QPainter &) const { return 0; }
     virtual void paintVerticalScale(QPainter &, QRect) const { }
 
+    //!!! I don't like these.  The layer should return a structured
+    //string-based description list and the pane should render it
+    //itself.
+
     virtual QRect getFeatureDescriptionRect(QPainter &, QPoint) const {
 	return QRect(0, 0, 0, 0);
     }
     virtual void paintLocalFeatureDescription(QPainter &, QRect, QPoint) const {
     }
+
+    //!!! We also need a method (like the vertical scale method) for
+    //drawing additional scales like a colour scale.  That is, unless
+    //all applicable layers can actually do this from
+    //paintVerticalScale as well?
+
+    // Select mode:
+    //
+    //!!! Next, a method that gets the frame of the nearest feature in
+    //a particular snap direction.  This would be used for selection
+    //mode, where we're selecting from the waveform based on feature
+    //location.  Do we need multi-select on features as well?  This is
+    //an issue; if you select a feature are you selecting that feature
+    //(in which case what do you do with it?) or a section of the
+    //underlying waveform?
+
+    virtual int getNearestFeatureFrame(int frame,
+				       size_t &resolution,
+				       bool snapRight = true) const {
+	resolution = 1;
+	return frame;
+    }
+
+    // Paint and edit modes:
+    //
+    // Layer needs to get actual mouse events, I guess.  Paint mode is
+    // probably the easier.
+
+    // Text mode:
+    //
+    // Label nearest feature.  We need to get the feature coordinates
+    // and current label from the layer, and then the pane can pop up
+    // a little text entry dialog at the right location.  Or we edit
+    // in place?  Probably the dialog is easier.
 
     /**
      * This should return true if the view can safely be scrolled

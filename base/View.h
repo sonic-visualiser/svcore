@@ -15,10 +15,10 @@
 
 #include "base/ZoomConstraint.h"
 #include "base/PropertyContainer.h"
+#include "base/ViewManager.h"
 #include "base/XmlExportable.h"
 
 class Layer;
-class ViewManager;
 
 #include <map>
 
@@ -111,6 +111,15 @@ public:
      */
     virtual Layer *getLayer(int n) { return m_layers[n]; }
 
+    /**
+     * Return the layer last selected by the user.  This is normally
+     * the top layer, the same as getLayer(getLayerCount()-1).
+     * However, if the user has selected the pane itself more recently
+     * than any of the layers on it, this function will return 0.  It
+     * will also return 0 if there are no layers.
+     */
+    virtual Layer *getSelectedLayer();
+
     virtual void setViewManager(ViewManager *m);
 
     virtual void setFollowGlobalPan(bool f);
@@ -176,6 +185,8 @@ public slots:
 
     virtual void propertyContainerSelected(PropertyContainer *pc);
 
+    virtual void toolModeChanged();
+
 protected:
     View(QWidget *, bool showProgress);
     virtual void paintEvent(QPaintEvent *e);
@@ -213,6 +224,7 @@ protected:
     bool                m_deleting;
 
     LayerList           m_layers; // I don't own these, but see dtor note above
+    bool                m_haveSelectedLayer;
 
     // caches for use in getScrollableBackLayers, getNonScrollableFrontLayers
     mutable LayerList m_lastScrollableBackLayers;

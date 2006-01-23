@@ -8,7 +8,6 @@
 */
 
 #include "base/View.h"
-#include "base/ViewManager.h"
 #include "base/Layer.h"
 #include "base/Model.h"
 #include "base/ZoomConstraint.h"
@@ -42,6 +41,7 @@ View::View(QWidget *w, bool showProgress) :
     m_cacheCentreFrame(0),
     m_cacheZoomLevel(1024),
     m_deleting(false),
+    m_haveSelectedLayer(false),
     m_manager(0)
 {
 //    QWidget::setAttribute(Qt::WA_PaintOnScreen);
@@ -140,7 +140,13 @@ View::getPropertyContainer(size_t i)
 void
 View::propertyContainerSelected(PropertyContainer *pc)
 {
-    if (pc == this) return;
+    if (pc == this) {
+	if (m_haveSelectedLayer) {
+	    m_haveSelectedLayer = false;
+	    update();
+	}
+	return;
+    }
 
     delete m_cache;
     m_cache = 0;
@@ -156,9 +162,18 @@ View::propertyContainerSelected(PropertyContainer *pc)
     }
 
     if (selectedLayer) {
+	m_haveSelectedLayer = true;
 	m_layers.push_back(selectedLayer);
 	update();
+    } else {
+	m_haveSelectedLayer = false;
     }
+}
+
+void
+View::toolModeChanged()
+{
+    std::cerr << "View::toolModeChanged(" << m_manager->getToolMode() << ")" << std::endl;
 }
 
 long
@@ -280,6 +295,16 @@ View::removeLayer(Layer *layer)
     emit propertyContainerRemoved(layer);
 }
 
+Layer *
+View::getSelectedLayer()
+{
+    if (m_haveSelectedLayer && !m_layers.empty()) {
+	return getLayer(getLayerCount() - 1);
+    } else {
+	return 0;
+    }
+}
+
 void
 View::setViewManager(ViewManager *manager)
 {
@@ -288,6 +313,8 @@ View::setViewManager(ViewManager *manager)
 	m_manager->disconnect(this, SLOT(viewManagerZoomLevelChanged(void *, unsigned long, bool)));
 	disconnect(m_manager, SIGNAL(centreFrameChanged(void *, unsigned long, bool)));
 	disconnect(m_manager, SIGNAL(zoomLevelChanged(void *, unsigned long, bool)));
+	disconnect(m_manager, SIGNAL(toolModeChanged()));
+	disconnect(m_manager, SIGNAL(selectionChanged()));
     }
 
     m_manager = manager;
@@ -300,11 +327,17 @@ View::setViewManager(ViewManager *manager)
 	    this, SLOT(viewManagerPlaybackFrameChanged(unsigned long)));
     connect(m_manager, SIGNAL(zoomLevelChanged(void *, unsigned long, bool)),
 	    this, SLOT(viewManagerZoomLevelChanged(void *, unsigned long, bool)));
+    connect(m_manager, SIGNAL(toolModeChanged()),
+	    this, SLOT(toolModeChanged()));
+    connect(m_manager, SIGNAL(selectionChanged()),
+	    this, SLOT(update()));
 
     connect(this, SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
 	    m_manager, SIGNAL(centreFrameChanged(void *, unsigned long, bool)));
     connect(this, SIGNAL(zoomLevelChanged(void *, unsigned long, bool)),
 	    m_manager, SIGNAL(zoomLevelChanged(void *, unsigned long, bool)));
+
+    toolModeChanged();
 }
 
 void
@@ -886,7 +919,10 @@ View::paintEvent(QPaintEvent *e)
 	paint.setBrush(Qt::NoBrush);
 	
 	for (LayerList::iterator i = scrollables.begin(); i != scrollables.end(); ++i) {
+	    paint.setRenderHint(QPainter::Antialiasing, false);
+	    paint.save();
 	    (*i)->paint(paint, cacheRect);
+	    paint.restore();
 	}
 	
 	paint.end();
@@ -926,6 +962,42 @@ View::paintEvent(QPaintEvent *e)
 	(*i)->paint(paint, nonCacheRect);
     }
 	
+    ViewManager::SelectionList selections;
+
+    if (m_manager) {
+	selections = m_manager->getSelections();
+	if (m_manager->haveInProgressSelection()) {
+	    bool exclusive;
+	    Selection inProgressSelection =
+		m_manager->getInProgressSelection(exclusive);
+	    if (exclusive) selections.clear();
+	    selections.insert(inProgressSelection);
+	}
+    }
+
+    paint.setPen(QColor(150, 150, 255));
+    paint.setBrush(QColor(150, 150, 255, 80));
+
+    for (ViewManager::SelectionList::iterator i = selections.begin();
+	 i != selections.end(); ++i) {
+
+	int p0 = -1, p1 = -1;
+
+	if (int(i->getStartFrame()) >= getStartFrame()) {
+	    p0 = (i->getStartFrame() - getStartFrame()) / m_zoomLevel;
+	}
+
+	if (int(i->getEndFrame()) >= getStartFrame()) {
+	    p1 = (i->getEndFrame() - getStartFrame()) / m_zoomLevel;
+	}
+
+	if (p0 == -1 && p1 == -1) continue;
+
+	if (p1 > width()) p1 = width() + 1;
+
+	paint.drawRect(p0, -1, p1 - p0, height() + 1);
+    }
+
     paint.end();
 
     if (m_followPlay != PlaybackScrollContinuous) {

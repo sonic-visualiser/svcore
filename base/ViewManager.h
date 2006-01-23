@@ -14,6 +14,9 @@
 #include <QTimer>
 
 #include <map>
+#include <set>
+
+#include "Selection.h"
 
 class AudioPlaySource;
 class PlayParameters;
@@ -42,8 +45,33 @@ public:
     PlayParameters *getPlayParameters(const Model *model);
     void clearPlayParameters();
 
+    bool isPlaying() const;
+
     unsigned long getGlobalCentreFrame() const;
     unsigned long getGlobalZoom() const;
+
+    typedef std::set<Selection> SelectionList;
+
+    bool haveInProgressSelection() const;
+    const Selection &getInProgressSelection(bool &exclusive) const;
+    void setInProgressSelection(const Selection &selection, bool exclusive);
+    void clearInProgressSelection();
+
+    const SelectionList &getSelections() const;
+    void setSelection(const Selection &selection);
+    void addSelection(const Selection &selection);
+    void removeSelection(const Selection &selection);
+    void clearSelections();
+
+    enum ToolMode {
+	NavigateMode,
+	SelectMode,
+        EditMode,
+	DrawMode,
+	TextMode
+    };
+    ToolMode getToolMode() const { return m_toolMode; }
+    void setToolMode(ToolMode mode);
 
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
@@ -58,6 +86,12 @@ signals:
     /** Emitted when the output levels change. Values in range 0.0 -> 1.0. */
     void outputLevelsChanged(float left, float right);
 
+    /** Emitted when the selection has changed. */
+    void selectionChanged();
+
+    /** Emitted when the tool mode has been changed. */
+    void toolModeChanged();
+
 protected slots:
     void checkPlayStatus();
     void considerSeek(void *, unsigned long, bool);
@@ -70,6 +104,12 @@ protected:
 
     float m_lastLeft;
     float m_lastRight;
+
+    SelectionList m_selections;
+    Selection m_inProgressSelection;
+    bool m_inProgressExclusive;
+
+    ToolMode m_toolMode;
 
     std::map<const Model *, PlayParameters *> m_playParameters;
 };
