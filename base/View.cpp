@@ -40,6 +40,7 @@ View::View(QWidget *w, bool showProgress) :
     m_cache(0),
     m_cacheCentreFrame(0),
     m_cacheZoomLevel(1024),
+    m_selectionCached(false),
     m_deleting(false),
     m_haveSelectedLayer(false),
     m_manager(0)
@@ -315,6 +316,7 @@ View::setViewManager(ViewManager *manager)
 	disconnect(m_manager, SIGNAL(zoomLevelChanged(void *, unsigned long, bool)));
 	disconnect(m_manager, SIGNAL(toolModeChanged()));
 	disconnect(m_manager, SIGNAL(selectionChanged()));
+	disconnect(m_manager, SIGNAL(inProgressSelectionChanged()));
     }
 
     m_manager = manager;
@@ -330,7 +332,9 @@ View::setViewManager(ViewManager *manager)
     connect(m_manager, SIGNAL(toolModeChanged()),
 	    this, SLOT(toolModeChanged()));
     connect(m_manager, SIGNAL(selectionChanged()),
-	    this, SLOT(update()));
+	    this, SLOT(selectionChanged()));
+    connect(m_manager, SIGNAL(inProgressSelectionChanged()),
+	    this, SLOT(selectionChanged()));
 
     connect(this, SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
 	    m_manager, SIGNAL(centreFrameChanged(void *, unsigned long, bool)));
@@ -527,6 +531,17 @@ View::viewManagerZoomLevelChanged(void *p, unsigned long z, bool locked)
 	    if (p == this) repaint();
 	}
     }
+}
+
+void
+View::selectionChanged()
+{
+    if (m_selectionCached) {
+	delete m_cache;
+	m_cache = 0;
+	m_selectionCached = false;
+    }
+    update();
 }
 
 size_t
@@ -799,16 +814,23 @@ View::paintEvent(QPaintEvent *e)
     bool layersChanged = false;
     LayerList scrollables = getScrollableBackLayers(layersChanged);
     LayerList nonScrollables = getNonScrollableFrontLayers(layersChanged);
+    bool selectionCacheable = nonScrollables.empty();
+    bool haveSelections = m_manager && !m_manager->getSelections().empty();
+    bool selectionDrawn = false;
 
 #ifdef DEBUG_VIEW_WIDGET_PAINT
     std::cerr << "View(" << this << ")::paintEvent: have " << scrollables.size()
 	      << " scrollable back layers and " << nonScrollables.size()
 	      << " non-scrollable front layers" << std::endl;
+    std::cerr << "haveSelections " << haveSelections << ", selectionCacheable "
+	      << selectionCacheable << ", m_selectionCached " << m_selectionCached << std::endl;
 #endif
 
-    if (layersChanged || scrollables.empty()) {
+    if (layersChanged || scrollables.empty() ||
+	(haveSelections && (selectionCacheable != m_selectionCached))) {
 	delete m_cache;
 	m_cache = 0;
+	m_selectionCached = false;
     }
 
     if (!scrollables.empty()) {
@@ -924,6 +946,12 @@ View::paintEvent(QPaintEvent *e)
 	    (*i)->paint(paint, cacheRect);
 	    paint.restore();
 	}
+
+	if (haveSelections && selectionCacheable) {
+	    drawSelections(paint);
+	    m_selectionCached = repaintCache;
+	    selectionDrawn = true;
+	}
 	
 	paint.end();
 
@@ -962,42 +990,13 @@ View::paintEvent(QPaintEvent *e)
 	(*i)->paint(paint, nonCacheRect);
     }
 	
-    ViewManager::SelectionList selections;
+    paint.end();
 
-    if (m_manager) {
-	selections = m_manager->getSelections();
-	if (m_manager->haveInProgressSelection()) {
-	    bool exclusive;
-	    Selection inProgressSelection =
-		m_manager->getInProgressSelection(exclusive);
-	    if (exclusive) selections.clear();
-	    selections.insert(inProgressSelection);
-	}
+    paint.begin(this);
+    if (e) paint.setClipRect(e->rect());
+    if (!m_selectionCached) {
+	drawSelections(paint);
     }
-
-    paint.setPen(QColor(150, 150, 255));
-    paint.setBrush(QColor(150, 150, 255, 80));
-
-    for (ViewManager::SelectionList::iterator i = selections.begin();
-	 i != selections.end(); ++i) {
-
-	int p0 = -1, p1 = -1;
-
-	if (int(i->getStartFrame()) >= getStartFrame()) {
-	    p0 = (i->getStartFrame() - getStartFrame()) / m_zoomLevel;
-	}
-
-	if (int(i->getEndFrame()) >= getStartFrame()) {
-	    p1 = (i->getEndFrame() - getStartFrame()) / m_zoomLevel;
-	}
-
-	if (p0 == -1 && p1 == -1) continue;
-
-	if (p1 > width()) p1 = width() + 1;
-
-	paint.drawRect(p0, -1, p1 - p0, height() + 1);
-    }
-
     paint.end();
 
     if (m_followPlay != PlaybackScrollContinuous) {
@@ -1023,6 +1022,53 @@ View::paintEvent(QPaintEvent *e)
     }
 
     QFrame::paintEvent(e);
+}
+
+void
+View::drawSelections(QPainter &paint)
+{
+    ViewManager::SelectionList selections;
+
+    if (m_manager) {
+	selections = m_manager->getSelections();
+	if (m_manager->haveInProgressSelection()) {
+	    bool exclusive;
+	    Selection inProgressSelection =
+		m_manager->getInProgressSelection(exclusive);
+	    if (exclusive) selections.clear();
+	    selections.insert(inProgressSelection);
+	}
+    }
+
+    paint.save();
+    paint.setPen(QColor(150, 150, 255));
+    paint.setBrush(QColor(150, 150, 255, 80));
+
+    for (ViewManager::SelectionList::iterator i = selections.begin();
+	 i != selections.end(); ++i) {
+
+	int p0 = -1, p1 = -1;
+
+	if (int(i->getStartFrame()) >= getStartFrame()) {
+	    p0 = (i->getStartFrame() - getStartFrame()) / m_zoomLevel;
+	}
+
+	if (int(i->getEndFrame()) >= getStartFrame()) {
+	    p1 = (i->getEndFrame() - getStartFrame()) / m_zoomLevel;
+	}
+
+	if (p0 == -1 && p1 == -1) continue;
+
+	if (p1 > width()) p1 = width() + 1;
+
+#ifdef DEBUG_VIEW_WIDGET_PAINT
+	std::cerr << "View::drawSelections: " << p0 << ",-1 [" << (p1-p0) << "x" << (height()+1) << "]" << std::endl;
+#endif
+
+	paint.drawRect(p0, -1, p1 - p0, height() + 1);
+    }
+
+    paint.restore();
 }
 
 QString

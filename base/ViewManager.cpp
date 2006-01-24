@@ -23,7 +23,9 @@ ViewManager::ViewManager() :
     m_lastLeft(0), 
     m_lastRight(0),
     m_inProgressExclusive(true),
-    m_toolMode(NavigateMode)
+    m_toolMode(NavigateMode),
+    m_playLoopMode(false),
+    m_playSelectionMode(true)
 {
     connect(this, 
 	    SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
@@ -71,14 +73,14 @@ ViewManager::setInProgressSelection(const Selection &selection, bool exclusive)
     m_inProgressExclusive = exclusive;
     m_inProgressSelection = selection;
     if (exclusive) clearSelections();
-    emit selectionChanged();
+    emit inProgressSelectionChanged();
 }
 
 void
 ViewManager::clearInProgressSelection()
 {
     m_inProgressSelection = Selection();
-    emit selectionChanged();
+    emit inProgressSelectionChanged();
 }
 
 const ViewManager::SelectionList &
@@ -103,7 +105,11 @@ ViewManager::addSelection(const Selection &selection)
     // more existing ones.  This is a terribly inefficient way to do
     // this, but that probably isn't significant in real life.
 
-     for (SelectionList::iterator i = m_selections.begin();
+    // It's essential for the correct operation of
+    // getContainingSelection that the selections do not overlap, so
+    // this is not just a frill.
+
+    for (SelectionList::iterator i = m_selections.begin();
 	 i != m_selections.end(); ) {
 	
 	SelectionList::iterator j = i;
@@ -145,12 +151,49 @@ ViewManager::clearSelections()
     emit selectionChanged();
 }
 
+Selection
+ViewManager::getContainingSelection(size_t frame, bool defaultToFollowing)
+{
+    // This scales very badly with the number of selections, but it's
+    // more efficient for very small numbers of selections than a more
+    // scalable method, and I think that may be what we need
+
+    for (SelectionList::const_iterator i = m_selections.begin();
+	 i != m_selections.end(); ++i) {
+
+	if (i->contains(frame)) return *i;
+
+	if (i->getStartFrame() > frame) {
+	    if (defaultToFollowing) return *i;
+	    else return Selection();
+	}
+    }
+
+    return Selection();
+}
+
 void
 ViewManager::setToolMode(ToolMode mode)
 {
     m_toolMode = mode;
 
     emit toolModeChanged();
+}
+
+void
+ViewManager::setPlayLoopMode(bool mode)
+{
+    m_playLoopMode = mode;
+
+    emit playLoopModeChanged();
+}
+
+void
+ViewManager::setPlaySelectionMode(bool mode)
+{
+    m_playSelectionMode = mode;
+
+    emit playSelectionModeChanged();
 }
 
 void

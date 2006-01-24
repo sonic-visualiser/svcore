@@ -185,11 +185,13 @@ public slots:
 
     virtual void propertyContainerSelected(PropertyContainer *pc);
 
+    virtual void selectionChanged();
     virtual void toolModeChanged();
 
 protected:
     View(QWidget *, bool showProgress);
     virtual void paintEvent(QPaintEvent *e);
+    virtual void drawSelections(QPainter &);
 
     typedef std::vector<Layer *> LayerList;
 
@@ -220,6 +222,7 @@ protected:
     QPixmap            *m_cache;
     size_t              m_cacheCentreFrame;
     int                 m_cacheZoomLevel;
+    bool                m_selectionCached;
 
     bool                m_deleting;
 
