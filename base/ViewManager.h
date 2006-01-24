@@ -63,6 +63,14 @@ public:
     void removeSelection(const Selection &selection);
     void clearSelections();
 
+    /**
+     * Return the selection that contains a given frame.
+     * If defaultToFollowing is true, and if the frame is not in a
+     * selected area, return the next selection after the given frame.
+     * Return the empty selection if no appropriate selection is found.
+     */
+    Selection getContainingSelection(size_t frame, bool defaultToFollowing);
+
     enum ToolMode {
 	NavigateMode,
 	SelectMode,
@@ -72,6 +80,12 @@ public:
     };
     ToolMode getToolMode() const { return m_toolMode; }
     void setToolMode(ToolMode mode);
+
+    bool getPlayLoopMode() const { return m_playLoopMode; }
+    void setPlayLoopMode(bool on);
+
+    bool getPlaySelectionMode() const { return m_playSelectionMode; }
+    void setPlaySelectionMode(bool on);
 
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
@@ -89,8 +103,17 @@ signals:
     /** Emitted when the selection has changed. */
     void selectionChanged();
 
+    /** Emitted when the in-progress (rubberbanding) selection has changed. */
+    void inProgressSelectionChanged();
+
     /** Emitted when the tool mode has been changed. */
     void toolModeChanged();
+
+    /** Emitted when the play loop mode has been changed. */
+    void playLoopModeChanged();
+
+    /** Emitted when the play selection mode has been changed. */
+    void playSelectionModeChanged();
 
 protected slots:
     void checkPlayStatus();
@@ -110,6 +133,9 @@ protected:
     bool m_inProgressExclusive;
 
     ToolMode m_toolMode;
+
+    bool m_playLoopMode;
+    bool m_playSelectionMode;
 
     std::map<const Model *, PlayParameters *> m_playParameters;
 };

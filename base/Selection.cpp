@@ -65,14 +65,28 @@ Selection::getEndFrame() const
 }
 
 bool
+Selection::contains(size_t frame) const
+{
+    return (frame >= m_startFrame) && (frame < m_endFrame);
+}
+
+bool
 Selection::operator<(const Selection &s) const
 {
-    return (m_startFrame < s.m_startFrame);
+    if (isEmpty()) {
+	if (s.isEmpty()) return false;
+	else return true;
+    } else {
+	if (s.isEmpty()) return false;
+	else return (m_startFrame < s.m_startFrame);
+    }
 }
 
 bool
 Selection::operator==(const Selection &s) const
 {
+    if (isEmpty()) return s.isEmpty();
+
     return (m_startFrame == s.m_startFrame &&
 	    m_endFrame == s.m_endFrame);
 }

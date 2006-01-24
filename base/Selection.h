@@ -24,6 +24,7 @@ public:
     bool isEmpty() const;
     size_t getStartFrame() const;
     size_t getEndFrame() const;
+    bool contains(size_t frame) const;
 
     bool operator<(const Selection &) const;
     bool operator==(const Selection &) const;
