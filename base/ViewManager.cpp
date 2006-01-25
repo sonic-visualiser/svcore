@@ -138,17 +138,19 @@ ViewManager::removeSelection(const Selection &selection)
     //simply overlaps one of them (cutting down the original selection
     //appropriately)
 
-    m_selections.erase(selection);
-
-    emit selectionChanged();
+    if (m_selections.find(selection) != m_selections.end()) {
+	m_selections.erase(selection);
+	emit selectionChanged();
+    }
 }
 
 void
 ViewManager::clearSelections()
 {
-    m_selections.clear();
-
-    emit selectionChanged();
+    if (!m_selections.empty()) {
+	m_selections.clear();
+	emit selectionChanged();
+    }
 }
 
 Selection
@@ -223,6 +225,12 @@ ViewManager::clearPlayParameters()
 	delete m_playParameters.begin()->second;
 	m_playParameters.erase(m_playParameters.begin());
     }
+}
+
+void
+ViewManager::playStatusChanged(bool playing)
+{
+    checkPlayStatus();
 }
 
 void

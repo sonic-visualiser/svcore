@@ -51,6 +51,7 @@ public:
     virtual QString configure(QString key, QString value);
     virtual void sendEvent(const RealTime &eventTime,
 			   const void *event);
+    virtual void clearEvents();
 
     virtual size_t getBufferSize() const { return m_blockSize; }
     virtual size_t getAudioInputCount() const { return m_audioPortsIn.size(); }
@@ -174,6 +175,9 @@ protected:
     QString                   m_program;
     bool                      m_grouped;
     RealTime                  m_lastRunTime;
+
+    RealTime                  m_lastEventSendTime;
+    bool                      m_haveLastEventSendTime;
 
     QMutex                    m_processLock;
 

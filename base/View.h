@@ -192,6 +192,7 @@ protected:
     View(QWidget *, bool showProgress);
     virtual void paintEvent(QPaintEvent *e);
     virtual void drawSelections(QPainter &);
+    virtual bool shouldLabelSelections() const { return true; }
 
     typedef std::vector<Layer *> LayerList;
 
@@ -205,7 +206,7 @@ protected:
 				      ZoomConstraint::RoundingDirection dir =
 				      ZoomConstraint::RoundNearest) const;
 
-    void setCentreFrame(size_t f, bool e);
+    bool setCentreFrame(size_t f, bool doEmit);
 
     void checkProgress(void *object);
 

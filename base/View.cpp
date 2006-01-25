@@ -204,9 +204,11 @@ View::setStartFrame(long f)
     setCentreFrame(f + m_zoomLevel * (width() / 2));
 }
 
-void
+bool
 View::setCentreFrame(size_t f, bool e)
 {
+    bool changeVisible = false;
+
     if (m_centreFrame != f) {
 
 	int formerPixel = m_centreFrame / m_zoomLevel;
@@ -221,10 +223,14 @@ View::setCentreFrame(size_t f, bool e)
 	    std::cout << "View(" << this << ")::setCentreFrame: newPixel " << newPixel << ", formerPixel " << formerPixel << std::endl;
 #endif
 	    update();
+
+	    changeVisible = true;
 	}
 
 	if (e) emit centreFrameChanged(this, f, m_followPan);
     }
+
+    return changeVisible;
 }
 
 void
@@ -492,25 +498,52 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     switch (m_followPlay) {
 
     case PlaybackScrollContinuous:
-	if (QApplication::mouseButtons() == Qt::NoButton) {
+	if (QApplication::mouseButtons() == Qt::NoButton &&
+	    QApplication::keyboardModifiers() == Qt::NoModifier) {
 	    setCentreFrame(f, false);
 	}
 	break;
 
     case PlaybackScrollPage:
     { 
+	int xold = (long(oldPlayPointerFrame) - getStartFrame()) / m_zoomLevel;
+	repaint(xold - 1, 0, 3, height());
+
 	long w = width() * getZoomLevel();
 	w -= w/5;
 	long sf = (f / w) * w - w/8;
+
+	if (m_manager &&
+	    m_manager->isPlaying() &&
+	    m_manager->getPlaySelectionMode()) {
+	    ViewManager::SelectionList selections = m_manager->getSelections();
+	    if (!selections.empty()) {
+		size_t selectionStart = selections.begin()->getStartFrame();
+		if (sf < long(selectionStart) - w / 10) {
+		    sf = long(selectionStart) - w / 10;
+		}
+	    }
+	}
+
 #ifdef DEBUG_VIEW_WIDGET_PAINT
 	std::cerr << "PlaybackScrollPage: f = " << f << ", sf = " << sf << ", start frame "
 		  << getStartFrame() << std::endl;
 #endif
-	setCentreFrame(sf + width() * getZoomLevel() / 2, false);
-	int xold = (long(oldPlayPointerFrame) - getStartFrame()) / m_zoomLevel;
+
+	if (QApplication::mouseButtons() == Qt::NoButton &&
+	    QApplication::keyboardModifiers() == Qt::NoModifier) {
+	    bool changed =
+		setCentreFrame(sf + width() * getZoomLevel() / 2, false);
+	    if (changed) {
+		xold = (long(oldPlayPointerFrame) -
+			getStartFrame()) / m_zoomLevel;
+		update(xold - 1, 0, 3, height());
+	    }
+	}
+
 	int xnew = (long(m_playPointerFrame) - getStartFrame()) / m_zoomLevel;
-	update(xold - 1, 0, 3, height());
 	update(xnew - 1, 0, 3, height());
+
 	break;
     }
 
@@ -818,6 +851,17 @@ View::paintEvent(QPaintEvent *e)
     bool haveSelections = m_manager && !m_manager->getSelections().empty();
     bool selectionDrawn = false;
 
+    if (!selectionCacheable) {
+	selectionCacheable = true;
+	for (LayerList::const_iterator i = nonScrollables.begin();
+	     i != nonScrollables.end(); ++i) {
+	    if ((*i)->isLayerOpaque()) {
+		selectionCacheable = false;
+		break;
+	    }
+	}
+    }
+
 #ifdef DEBUG_VIEW_WIDGET_PAINT
     std::cerr << "View(" << this << ")::paintEvent: have " << scrollables.size()
 	      << " scrollable back layers and " << nonScrollables.size()
@@ -1044,28 +1088,76 @@ View::drawSelections(QPainter &paint)
     paint.setPen(QColor(150, 150, 255));
     paint.setBrush(QColor(150, 150, 255, 80));
 
+    int sampleRate = getModelsSampleRate();
+
+    const QFontMetrics &metrics = paint.fontMetrics();
+
     for (ViewManager::SelectionList::iterator i = selections.begin();
 	 i != selections.end(); ++i) {
 
 	int p0 = -1, p1 = -1;
 
-	if (int(i->getStartFrame()) >= getStartFrame()) {
-	    p0 = (i->getStartFrame() - getStartFrame()) / m_zoomLevel;
-	}
+	p0 = (long(i->getStartFrame()) - getStartFrame()) / m_zoomLevel;
+	p1 = (long(i->getEndFrame()) - getStartFrame()) / m_zoomLevel;
 
-	if (int(i->getEndFrame()) >= getStartFrame()) {
-	    p1 = (i->getEndFrame() - getStartFrame()) / m_zoomLevel;
-	}
-
-	if (p0 == -1 && p1 == -1) continue;
-
-	if (p1 > width()) p1 = width() + 1;
+	if (p1 < 0 || p0 > width()) continue;
 
 #ifdef DEBUG_VIEW_WIDGET_PAINT
 	std::cerr << "View::drawSelections: " << p0 << ",-1 [" << (p1-p0) << "x" << (height()+1) << "]" << std::endl;
 #endif
 
 	paint.drawRect(p0, -1, p1 - p0, height() + 1);
+
+	if (sampleRate && shouldLabelSelections()) {
+	    
+	    QString startText = QString("%1 / %2")
+		.arg(QString::fromStdString
+		     (RealTime::frame2RealTime
+		      (i->getStartFrame(), sampleRate).toText(true)))
+		.arg(i->getStartFrame());
+	    
+	    QString endText = QString(" %1 / %2")
+		.arg(QString::fromStdString
+		     (RealTime::frame2RealTime
+		      (i->getEndFrame(), sampleRate).toText(true)))
+		.arg(i->getEndFrame());
+	    
+	    QString durationText = QString("(%1 / %2) ")
+		.arg(QString::fromStdString
+		     (RealTime::frame2RealTime
+		      (i->getEndFrame() - i->getStartFrame(), sampleRate)
+		      .toText(true)))
+		.arg(i->getEndFrame() - i->getStartFrame());
+
+	    int sw = metrics.width(startText),
+		ew = metrics.width(endText),
+		dw = metrics.width(durationText);
+
+	    int sy = metrics.ascent() + metrics.height() + 4;
+	    int ey = sy;
+	    int dy = sy + metrics.height();
+
+	    int sx = p0 + 2;
+	    int ex = sx;
+	    int dx = sx;
+
+	    if (sw + ew > (p1 - p0)) {
+		ey += metrics.height();
+		dy += metrics.height();
+	    }
+
+	    if (ew < (p1 - p0)) {
+		ex = p1 - 2 - ew;
+	    }
+
+	    if (dw < (p1 - p0)) {
+		dx = p1 - 2 - dw;
+	    }
+
+	    paint.drawText(sx, sy, startText);
+	    paint.drawText(ex, ey, endText);
+	    paint.drawText(dx, dy, durationText);
+	}
     }
 
     paint.restore();

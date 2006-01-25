@@ -117,6 +117,16 @@ public:
     virtual bool isLayerScrollable() const { return true; }
 
     /**
+     * This should return true if the layer completely obscures any
+     * underlying layers.  It's used to determine whether the view can
+     * safely draw any selection rectangles under the layer instead of
+     * over it, in the case where the layer is not scrollable and
+     * therefore needs to be redrawn each time (so that the selection
+     * rectangle can be cached).
+     */
+    virtual bool isLayerOpaque() const { return false; }
+
+    /**
      * Return the proportion of background work complete in drawing
      * this view, as a percentage -- in most cases this will be the
      * value returned by pointer from a call to the underlying model's
