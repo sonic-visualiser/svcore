@@ -95,6 +95,7 @@ public:
 
     virtual void sendEvent(const RealTime & /* eventTime */,
 			   const void * /* event */) { }
+    virtual void clearEvents() { }
 
     virtual bool isBypassed() const = 0;
     virtual void setBypassed(bool value) = 0;

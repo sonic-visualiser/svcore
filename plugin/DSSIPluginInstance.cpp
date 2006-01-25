@@ -60,7 +60,8 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     m_latencyPort(0),
     m_run(false),
     m_bypassed(false),
-    m_grouped(false)
+    m_grouped(false),
+    m_haveLastEventSendTime(false)
 {
 #ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::DSSIPluginInstance(" << identifier << ")"
@@ -788,6 +789,11 @@ void
 DSSIPluginInstance::sendEvent(const RealTime &eventTime,
 			      const void *e)
 {
+    if (m_haveLastEventSendTime &&
+	m_lastEventSendTime > eventTime) {
+	clearEvents();
+    }
+
     snd_seq_event_t *event = (snd_seq_event_t *)e;
 #ifdef DEBUG_DSSI_PROCESS
     std::cerr << "DSSIPluginInstance::sendEvent at " << eventTime << std::endl;
@@ -801,6 +807,13 @@ DSSIPluginInstance::sendEvent(const RealTime &eventTime,
     ev.data.note.channel = 0;
 
     m_eventBuffer.write(&ev, 1);
+}
+
+void
+DSSIPluginInstance::clearEvents()
+{
+    m_haveLastEventSendTime = false;
+    m_eventBuffer.reset();
 }
 
 bool
@@ -858,6 +871,7 @@ DSSIPluginInstance::run(const RealTime &blockTime)
 
     if (!m_descriptor || !m_descriptor->run_synth) {
 	m_eventBuffer.skip(m_eventBuffer.getReadSpace());
+	m_haveLastEventSendTime = false;
 	if (m_descriptor->LADSPA_Plugin->run) {
 	    m_descriptor->LADSPA_Plugin->run(m_instanceHandle, m_blockSize);
 	} else {
@@ -901,7 +915,13 @@ DSSIPluginInstance::run(const RealTime &blockTime)
 #endif
 
 	if (frameOffset >= int(m_blockSize)) break;
-	if (frameOffset < 0) frameOffset = 0;
+	if (frameOffset < 0) {
+	    frameOffset = 0;
+	    if (ev->type == SND_SEQ_EVENT_NOTEON) {
+		m_eventBuffer.skip(1);
+		continue;
+	    }
+	}
 
 	ev->time.tick = frameOffset;
 	m_eventBuffer.skip(1);

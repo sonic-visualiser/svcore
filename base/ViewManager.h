@@ -117,6 +117,7 @@ signals:
 
 protected slots:
     void checkPlayStatus();
+    void playStatusChanged(bool playing);
     void considerSeek(void *, unsigned long, bool);
     void considerZoomChange(void *, unsigned long, bool);
 
