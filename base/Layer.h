@@ -22,6 +22,7 @@ class ZoomConstraint;
 class Model;
 class QPainter;
 class View;
+class QMouseEvent;
 
 /**
  * The base class for visual representations of the data found in a
@@ -52,6 +53,8 @@ public:
     virtual VerticalPosition getPreferredFrameCountPosition() const {
 	return PositionBottom;
     }
+
+    virtual QString getPropertyContainerIconName() const;
 
     virtual QString getPropertyContainerName() const {
 	return objectName();
@@ -92,10 +95,14 @@ public:
 	return frame;
     }
 
-    // Paint and edit modes:
+    // Draw and edit modes:
     //
-    // Layer needs to get actual mouse events, I guess.  Paint mode is
+    // Layer needs to get actual mouse events, I guess.  Draw mode is
     // probably the easier.
+
+    virtual void drawStart(QMouseEvent *e) { }
+    virtual void drawDrag(QMouseEvent *e) { }
+    virtual void drawEnd(QMouseEvent *e) { }
 
     // Text mode:
     //
