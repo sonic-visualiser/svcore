@@ -789,8 +789,20 @@ void
 DSSIPluginInstance::sendEvent(const RealTime &eventTime,
 			      const void *e)
 {
+#ifdef DEBUG_DSSI_PROCESS
+    std::cerr << "DSSIPluginInstance::sendEvent: last was " << m_lastEventSendTime << " (valid " << m_haveLastEventSendTime << "), this is " << eventTime << std::endl;
+#endif
+
+    // The process mechanism only works correctly if the events are
+    // sorted.  It's the responsibility of the caller to ensure that:
+    // we will happily drop events here if we find the timeline going
+    // backwards.
     if (m_haveLastEventSendTime &&
 	m_lastEventSendTime > eventTime) {
+#ifdef DEBUG_DSSI_PROCESS
+	std::cerr << "... clearing down" << std::endl;
+#endif
+	m_haveLastEventSendTime = false;
 	clearEvents();
     }
 
@@ -807,6 +819,9 @@ DSSIPluginInstance::sendEvent(const RealTime &eventTime,
     ev.data.note.channel = 0;
 
     m_eventBuffer.write(&ev, 1);
+
+    m_lastEventSendTime = eventTime;
+    m_haveLastEventSendTime = true;
 }
 
 void
