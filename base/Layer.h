@@ -100,9 +100,13 @@ public:
     // Layer needs to get actual mouse events, I guess.  Draw mode is
     // probably the easier.
 
-    virtual void drawStart(QMouseEvent *e) { }
-    virtual void drawDrag(QMouseEvent *e) { }
-    virtual void drawEnd(QMouseEvent *e) { }
+    virtual void drawStart(QMouseEvent *) { }
+    virtual void drawDrag(QMouseEvent *) { }
+    virtual void drawEnd(QMouseEvent *) { }
+
+    virtual void editStart(QMouseEvent *) { }
+    virtual void editDrag(QMouseEvent *) { }
+    virtual void editEnd(QMouseEvent *) { }
 
     // Text mode:
     //
