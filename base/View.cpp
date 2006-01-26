@@ -755,6 +755,26 @@ View::zoom(bool in)
 }
 
 void
+View::scroll(bool right, bool lots)
+{
+    long delta;
+    if (lots) {
+	delta = ((width() / 2) * m_zoomLevel);
+    } else {
+	delta = ((width() / 20) * m_zoomLevel);
+    }
+    if (right) delta = -delta;
+
+    if (int(m_centreFrame) < delta) {
+	setCentreFrame(0);
+    } else if (int(m_centreFrame) - delta >= int(getModelsEndFrame())) {
+	setCentreFrame(getModelsEndFrame());
+    } else {
+	setCentreFrame(m_centreFrame - delta);
+    }
+}
+
+void
 View::checkProgress(void *object)
 {
 //    std::cerr << "View::checkProgress(" << object << ")" << std::endl;

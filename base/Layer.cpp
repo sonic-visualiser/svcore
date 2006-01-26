@@ -27,6 +27,13 @@ Layer::~Layer()
     m_view->removeLayer(this);
 }
 
+QString
+Layer::getPropertyContainerIconName() const
+{
+    return LayerFactory::instance()->getLayerIconName
+	(LayerFactory::instance()->getLayerType(this));
+}
+
 void
 Layer::setObjectName(const QString &name)
 {

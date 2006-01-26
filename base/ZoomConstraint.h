@@ -17,7 +17,8 @@
  * the available zoom sizes for a view, for example based on cache
  * strategy or a (processing) window-size limitation.
  *
- * The default ZoomConstraint imposes no actual constraint.
+ * The default ZoomConstraint imposes no actual constraint except for
+ * a nominal maximum.
  */
 
 class ZoomConstraint
@@ -43,8 +44,11 @@ public:
 				       RoundingDirection = RoundNearest)
 	const
     {
-	return requestedBlockSize;
+	if (requestedBlockSize > getMaxZoomLevel()) return getMaxZoomLevel();
+	else return requestedBlockSize;
     }
+
+    virtual size_t getMaxZoomLevel() const { return 262144; }
 };
 
 #endif

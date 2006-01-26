@@ -101,6 +101,11 @@ public:
      */
     virtual void zoom(bool in);
 
+    /**
+     * Scroll left or right by a smallish or largish amount.
+     */
+    virtual void scroll(bool right, bool lots);
+
     virtual void addLayer(Layer *v);
     virtual void removeLayer(Layer *v); // does not delete the layer
     virtual int getLayerCount() const { return m_layers.size(); }
