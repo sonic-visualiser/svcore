@@ -48,7 +48,7 @@ public:
      * Call from a non-RT thread.
      * Only one thread should be calling this on any given scavenger.
      */
-    void scavenge();
+    void scavenge(bool clearNow = false);
 
 protected:
     typedef std::pair<T *, int> ObjectTimePair;
@@ -121,7 +121,7 @@ Scavenger<T>::claim(T *t)
 
 template <typename T>
 void
-Scavenger<T>::scavenge()
+Scavenger<T>::scavenge(bool clearNow)
 {
 //    std::cerr << "Scavenger::scavenge: scavenged " << m_scavenged << ", claimed " << m_claimed << std::endl;
 
@@ -133,7 +133,8 @@ Scavenger<T>::scavenge()
 
     for (size_t i = 0; i < m_objects.size(); ++i) {
 	ObjectTimePair &pair = m_objects[i];
-	if (pair.first != 0 && pair.second + m_sec < sec) {
+	if (clearNow ||
+	    (pair.first != 0 && pair.second + m_sec < sec)) {
 	    T *ot = pair.first;
 	    pair.first = 0;
 	    delete ot;
