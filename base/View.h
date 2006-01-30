@@ -252,7 +252,7 @@ protected:
 
     class LayerProgressBar : public QProgressBar {
     public:
-	LayerProgressBar(QWidget *parent) : QProgressBar(parent) { }
+	LayerProgressBar(QWidget *parent);
 	virtual QString text() const { return m_text; }
 	virtual void setText(QString text) { m_text = text; }
     protected:

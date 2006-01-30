@@ -33,10 +33,20 @@ TransformFactory::~TransformFactory()
 TransformFactory::TransformList
 TransformFactory::getAllTransforms()
 {
-    TransformList list;
-//!!!    list.push_back(BeatDetectTransform::getName());
-//    list.push_back(BeatDetectionFunctionTransform::getName());
+    if (m_transforms.empty()) populateTransforms();
 
+    TransformList list;
+    for (TransformMap::const_iterator i = m_transforms.begin();
+	 i != m_transforms.end(); ++i) {
+	list.push_back(TransformDesc(i->first, i->second));
+    }
+
+    return list;
+}
+
+void
+TransformFactory::populateTransforms()
+{
     //!!!
     std::vector<QString> fexplugs =
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
@@ -62,24 +72,31 @@ TransformFactory::getAllTransforms()
 		    plugin->getOutputDescriptors();
 
 		if (outputs.size() == 1) {
-		    list.push_back
-			(TransformDesc
-			 (QString("%1:%2").arg(pluginId).arg(outputs[0].name.c_str()),
-			  pluginDescription));
+		    m_transforms[QString("%1:%2")
+				 .arg(pluginId)
+				 .arg(outputs[0].name.c_str())]
+			= pluginDescription;
 		} else {
 		    for (size_t j = 0; j < outputs.size(); ++j) {
-			list.push_back
-			    (TransformDesc
-			     (QString("%1:%2").arg(pluginId).arg(outputs[j].name.c_str()),
-			      QString("%1: %2").arg(pluginDescription)
-			      .arg(outputs[j].description.c_str())));
+			m_transforms[QString("%1:%2")
+				     .arg(pluginId)
+				     .arg(outputs[j].name.c_str())]
+			    = QString("%1: %2")
+			    .arg(pluginDescription)
+			    .arg(outputs[j].description.c_str());
 		    }
 		}
 	    }
 	}
     }
-    
-    return list;
+}
+
+QString
+TransformFactory::getTransformDescription(TransformName name)
+{
+    if (m_transforms.find(name) != m_transforms.end()) {
+	return m_transforms[name];
+    } else return "";
 }
 
 Transform *
@@ -111,6 +128,7 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
     }
 
     if (start && transform) transform->start();
+    transform->setObjectName(name);
     return transform;
 }
 

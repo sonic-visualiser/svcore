@@ -12,6 +12,8 @@
 
 #include "Transform.h"
 
+#include <map>
+
 class TransformFactory : public QObject
 {
     Q_OBJECT
@@ -50,6 +52,8 @@ public:
      */
     Model *transform(TransformName name, Model *inputModel);
 
+    QString getTransformDescription(TransformName name);
+
     //!!! Need some way to indicate that the input model has changed /
     //been deleted so as not to blow up backgrounded transform!  -- Or
     //indeed, if the output model has been deleted -- could equally
@@ -64,6 +68,10 @@ protected:
     Transform *createTransform(TransformName name, Model *inputModel);
     Transform *createTransform(TransformName name, Model *inputModel,
 			       bool start);
+
+    typedef std::map<TransformName, QString> TransformMap;
+    TransformMap m_transforms;
+    void populateTransforms();
 
     static TransformFactory *m_instance;
 };

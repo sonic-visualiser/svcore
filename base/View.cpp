@@ -21,8 +21,9 @@
 #include <QApplication>
 
 #include <iostream>
+#include <cassert>
 
-//#define DEBUG_VIEW_WIDGET_PAINT 1
+#define DEBUG_VIEW_WIDGET_PAINT 1
 
 using std::cerr;
 using std::endl;
@@ -195,7 +196,7 @@ View::getStartFrame() const
 size_t
 View::getEndFrame() const
 {
-    return getStartFrame() + (width() * m_zoomLevel) - 1;
+    return getFrameForX(width()) - 1;
 }
 
 void
@@ -255,6 +256,14 @@ View::setZoomLevel(size_t z)
     }
 }
 
+View::LayerProgressBar::LayerProgressBar(QWidget *parent) :
+    QProgressBar(parent)
+{
+    QFont f(font());
+    f.setPointSize(f.pointSize() * 8 / 10);
+    setFont(f);
+}
+
 void
 View::addLayer(Layer *layer)
 {
@@ -268,7 +277,7 @@ View::addLayer(Layer *layer)
     m_progressBars[layer]->setMaximum(100);
     m_progressBars[layer]->setMinimumWidth(80);
     m_progressBars[layer]->hide();
-
+    
     connect(layer, SIGNAL(layerParametersChanged()),
 	    this,    SLOT(layerParametersChanged()));
     connect(layer, SIGNAL(layerNameChanged()),
@@ -503,6 +512,9 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 
     if (m_playPointerFrame == f) return;
     bool visible = (getXForFrame(m_playPointerFrame) != getXForFrame(f));
+    std::cerr << "old x = " << getXForFrame(m_playPointerFrame)
+	      << ", new x = " << getXForFrame(f)
+	      << ", visible = " << visible << std::endl;
     size_t oldPlayPointerFrame = m_playPointerFrame;
     m_playPointerFrame = f;
     if (!visible) return;
