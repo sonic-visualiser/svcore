@@ -233,6 +233,18 @@ View::setCentreFrame(size_t f, bool e)
     return changeVisible;
 }
 
+int
+View::getXForFrame(long frame) const
+{
+    return (frame - getStartFrame()) / m_zoomLevel;
+}
+
+long
+View::getFrameForX(int x) const
+{
+    return (long(x) * long(m_zoomLevel)) + getStartFrame();
+}
+
 void
 View::setZoomLevel(size_t z)
 {
@@ -414,9 +426,9 @@ View::modelChanged(size_t startFrame, size_t endFrame)
     if (long(startFrame) < myStartFrame) startFrame = myStartFrame;
     if (endFrame > myEndFrame) endFrame = myEndFrame;
 
-    int x0 = (startFrame - myStartFrame) / m_zoomLevel;
-    int x1 = (endFrame - myStartFrame) / m_zoomLevel;
-    if (x1 < x0) return;
+    int x0 = getXForFrame(startFrame);
+    int x1 = getXForFrame(endFrame + 1);
+    if (x1 < x0) x1 = x0;
 
     checkProgress(obj);
 
@@ -490,7 +502,7 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     }
 
     if (m_playPointerFrame == f) return;
-    bool visible = (m_playPointerFrame / m_zoomLevel != f / m_zoomLevel);
+    bool visible = (getXForFrame(m_playPointerFrame) != getXForFrame(f));
     size_t oldPlayPointerFrame = m_playPointerFrame;
     m_playPointerFrame = f;
     if (!visible) return;
@@ -506,10 +518,10 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 
     case PlaybackScrollPage:
     { 
-	int xold = (long(oldPlayPointerFrame) - getStartFrame()) / m_zoomLevel;
+	int xold = getXForFrame(oldPlayPointerFrame);
 	repaint(xold - 1, 0, 3, height());
 
-	long w = width() * getZoomLevel();
+	long w = getEndFrame() - getStartFrame();
 	w -= w/5;
 	long sf = (f / w) * w - w/8;
 
@@ -530,18 +542,24 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 		  << getStartFrame() << std::endl;
 #endif
 
-	if (QApplication::mouseButtons() == Qt::NoButton &&
-	    QApplication::keyboardModifiers() == Qt::NoModifier) {
-	    bool changed =
-		setCentreFrame(sf + width() * getZoomLevel() / 2, false);
-	    if (changed) {
-		xold = (long(oldPlayPointerFrame) -
-			getStartFrame()) / m_zoomLevel;
-		update(xold - 1, 0, 3, height());
+	// We don't consider scrolling unless the pointer is outside
+	// the clearly visible range already
+
+	int xnew = getXForFrame(m_playPointerFrame);
+
+	if (xnew < width()/8 || xnew > (width()*7)/8) {
+	    if (QApplication::mouseButtons() == Qt::NoButton &&
+		QApplication::keyboardModifiers() == Qt::NoModifier) {
+		long offset = getFrameForX(width()/2) - getStartFrame();
+		long newCentre = sf + offset;
+		bool changed = setCentreFrame(newCentre, false);
+		if (changed) {
+		    xold = getXForFrame(oldPlayPointerFrame);
+		    update(xold - 1, 0, 3, height());
+		}
 	    }
 	}
 
-	int xnew = (long(m_playPointerFrame) - getStartFrame()) / m_zoomLevel;
 	update(xnew - 1, 0, 3, height());
 
 	break;
@@ -759,9 +777,9 @@ View::scroll(bool right, bool lots)
 {
     long delta;
     if (lots) {
-	delta = ((width() / 2) * m_zoomLevel);
+	delta = (getEndFrame() - getStartFrame()) / 2;
     } else {
-	delta = ((width() / 20) * m_zoomLevel);
+	delta = (getEndFrame() - getStartFrame()) / 20;
     }
     if (right) delta = -delta;
 
@@ -921,8 +939,9 @@ View::paintEvent(QPaintEvent *e)
 
 	} else if (m_cacheCentreFrame != m_centreFrame) {
 
-	    long dx = long(m_cacheCentreFrame / m_zoomLevel) -
-		long(m_centreFrame / m_zoomLevel);
+	    long dx =
+		getXForFrame(m_cacheCentreFrame) -
+		getXForFrame(m_centreFrame);
 
 	    if (dx > -width() && dx < width()) {
 #if defined(Q_WS_WIN32) || defined(Q_WS_MAC)
@@ -1070,8 +1089,7 @@ View::paintEvent(QPaintEvent *e)
 	if (long(m_playPointerFrame) > getStartFrame() &&
 	    m_playPointerFrame < getEndFrame()) {
 
-	    int playx = (long(m_playPointerFrame) - getStartFrame()) /
-		m_zoomLevel;
+	    int playx = getXForFrame(m_playPointerFrame);
 
 	    paint.setPen(Qt::black);
 	    paint.drawLine(playx - 1, 0, playx - 1, height() - 1);
@@ -1115,10 +1133,8 @@ View::drawSelections(QPainter &paint)
     for (ViewManager::SelectionList::iterator i = selections.begin();
 	 i != selections.end(); ++i) {
 
-	int p0 = -1, p1 = -1;
-
-	p0 = (long(i->getStartFrame()) - getStartFrame()) / m_zoomLevel;
-	p1 = (long(i->getEndFrame()) - getStartFrame()) / m_zoomLevel;
+	int p0 = getXForFrame(i->getStartFrame());
+	int p1 = getXForFrame(i->getEndFrame());
 
 	if (p1 < 0 || p0 > width()) continue;
 
