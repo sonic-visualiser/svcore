@@ -41,6 +41,20 @@ Layer::setObjectName(const QString &name)
     emit layerNameChanged();
 }
 
+int
+Layer::getXForFrame(long frame) const
+{
+    if (m_view) return m_view->getXForFrame(frame);
+    else return 0;
+}
+
+long
+Layer::getFrameForX(int x) const
+{
+    if (m_view) return m_view->getFrameForX(x);
+    else return 0;
+}
+
 QString
 Layer::toXmlString(QString indent, QString extraAttributes) const
 {

@@ -85,6 +85,17 @@ public:
     virtual size_t getEndFrame() const;
 
     /**
+     * Return the pixel x-coordinate corresponding to a given sample
+     * frame (which may be negative).
+     */
+    int getXForFrame(long frame) const;
+
+    /**
+     * Return the closest frame to the given pixel x-coordinate.
+     */
+    long getFrameForX(int x) const;
+
+    /**
      * Return the zoom level, i.e. the number of frames per pixel.
      */
     virtual int getZoomLevel() const { return m_zoomLevel; }

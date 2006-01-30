@@ -149,6 +149,17 @@ public:
     virtual void setObjectName(const QString &name);
 
     /**
+     * Return the pixel x-coordinate corresponding to a given sample
+     * frame (which may be negative).
+     */
+    int getXForFrame(long frame) const;
+
+    /**
+     * Return the closest frame to the given pixel x-coordinate.
+     */
+    long getFrameForX(int x) const;
+
+    /**
      * Convert the layer's data (though not those of the model it
      * refers to) into an XML string for file output.  This class
      * implements the basic name/type/model-id output; subclasses will
