@@ -10,7 +10,7 @@
 /*
    This is a modified version of a source file from the 
    Rosegarden MIDI and audio sequencer and notation editor.
-   This file copyright 2000-2005 Chris Cannam and Richard Bown.
+   This file copyright 2000-2006 Chris Cannam and Richard Bown.
 */
 
 #ifndef _LADSPA_PLUGIN_FACTORY_H_

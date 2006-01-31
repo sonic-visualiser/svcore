@@ -17,7 +17,7 @@
    distributed under the GNU Lesser General Public License.
 */
 
-#include "MultiViewCommandHistory.h"
+#include "CommandHistory.h"
 
 #include "Command.h"
 
@@ -28,7 +28,9 @@
 
 #include <iostream>
 
-MultiViewCommandHistory::MultiViewCommandHistory() :
+CommandHistory *CommandHistory::m_instance = 0;
+
+CommandHistory::CommandHistory() :
     m_undoLimit(50),
     m_redoLimit(50),
     m_savedAt(0)
@@ -37,22 +39,28 @@ MultiViewCommandHistory::MultiViewCommandHistory() :
     m_undoAction->setShortcut(tr("Ctrl+Z"));
     connect(m_undoAction, SIGNAL(triggered()), this, SLOT(undo()));
     
+    m_undoMenuAction = new QAction(QIcon(":/icons/undo.png"), tr("&Undo"), this);
+    connect(m_undoMenuAction, SIGNAL(triggered()), this, SLOT(undo()));
+    
     m_undoMenu = new QMenu(tr("&Undo"));
-    m_undoAction->setMenu(m_undoMenu);
+    m_undoMenuAction->setMenu(m_undoMenu);
     connect(m_undoMenu, SIGNAL(triggered(QAction *)),
 	    this, SLOT(undoActivated(QAction*)));
 
-    m_redoAction = new QAction(QIcon(":/icons/redo.png"), tr("&Redo"), this);
+    m_redoAction = new QAction(QIcon(":/icons/redo.png"), tr("Re&do"), this);
     m_redoAction->setShortcut(tr("Ctrl+Shift+Z"));
     connect(m_redoAction, SIGNAL(triggered()), this, SLOT(redo()));
+    
+    m_redoMenuAction = new QAction(QIcon(":/icons/redo.png"), tr("Re&do"), this);
+    connect(m_redoMenuAction, SIGNAL(triggered()), this, SLOT(redo()));
 
     m_redoMenu = new QMenu(tr("Re&do"));
-    m_redoAction->setMenu(m_redoMenu);
+    m_redoMenuAction->setMenu(m_redoMenu);
     connect(m_redoMenu, SIGNAL(triggered(QAction *)),
 	    this, SLOT(redoActivated(QAction*)));
 }
 
-MultiViewCommandHistory::~MultiViewCommandHistory()
+CommandHistory::~CommandHistory()
 {
     m_savedAt = -1;
     clearStack(m_undoStack);
@@ -62,8 +70,15 @@ MultiViewCommandHistory::~MultiViewCommandHistory()
     delete m_redoMenu;
 }
 
+CommandHistory *
+CommandHistory::getInstance()
+{
+    if (!m_instance) m_instance = new CommandHistory();
+    return m_instance;
+}
+
 void
-MultiViewCommandHistory::clear()
+CommandHistory::clear()
 {
     m_savedAt = -1;
     clearStack(m_undoStack);
@@ -72,25 +87,25 @@ MultiViewCommandHistory::clear()
 }
 
 void
-MultiViewCommandHistory::registerMenu(QMenu *menu)
+CommandHistory::registerMenu(QMenu *menu)
 {
     menu->addAction(m_undoAction);
     menu->addAction(m_redoAction);
 }
 
 void
-MultiViewCommandHistory::registerToolbar(QToolBar *toolbar)
+CommandHistory::registerToolbar(QToolBar *toolbar)
 {
-    toolbar->addAction(m_undoAction);
-    toolbar->addAction(m_redoAction);
+    toolbar->addAction(m_undoMenuAction);
+    toolbar->addAction(m_redoMenuAction);
 }
 
 void
-MultiViewCommandHistory::addCommand(Command *command, bool execute)
+CommandHistory::addCommand(Command *command, bool execute)
 {
     if (!command) return;
 
-    std::cerr << "MVCH::addCommand: " << command->name().toLocal8Bit().data() << std::endl;
+    std::cerr << "MVCH::addCommand: " << command->getName().toLocal8Bit().data() << std::endl;
 
     // We can't redo after adding a command
     clearStack(m_redoStack);
@@ -103,23 +118,37 @@ MultiViewCommandHistory::addCommand(Command *command, bool execute)
     
     if (execute) {
 	command->execute();
-        emit commandExecuted();
-	emit commandExecuted(command);
     }
 
-//    updateButtons();
+    // Emit even if we aren't executing the command, because
+    // someone must have executed it for this to make any sense
+    emit commandExecuted();
+    emit commandExecuted(command);
+
     updateActions();
 }
 
 void
-MultiViewCommandHistory::undo()
+CommandHistory::addExecutedCommand(Command *command)
+{
+    addCommand(command, false);
+}
+
+void
+CommandHistory::addCommandAndExecute(Command *command)
+{
+    addCommand(command, true);
+}
+
+void
+CommandHistory::undo()
 {
     if (m_undoStack.empty()) return;
 
     Command *command = m_undoStack.top();
     command->unexecute();
     emit commandExecuted();
-    emit commandExecuted(command);
+    emit commandUnexecuted(command);
 
     m_redoStack.push(command);
     m_undoStack.pop();
@@ -131,7 +160,7 @@ MultiViewCommandHistory::undo()
 }
 
 void
-MultiViewCommandHistory::redo()
+CommandHistory::redo()
 {
     if (m_redoStack.empty()) return;
 
@@ -148,7 +177,7 @@ MultiViewCommandHistory::redo()
 }
 
 void
-MultiViewCommandHistory::setUndoLimit(int limit)
+CommandHistory::setUndoLimit(int limit)
 {
     if (limit > 0 && limit != m_undoLimit) {
         m_undoLimit = limit;
@@ -157,7 +186,7 @@ MultiViewCommandHistory::setUndoLimit(int limit)
 }
 
 void
-MultiViewCommandHistory::setRedoLimit(int limit)
+CommandHistory::setRedoLimit(int limit)
 {
     if (limit > 0 && limit != m_redoLimit) {
         m_redoLimit = limit;
@@ -166,13 +195,13 @@ MultiViewCommandHistory::setRedoLimit(int limit)
 }
 
 void
-MultiViewCommandHistory::documentSaved()
+CommandHistory::documentSaved()
 {
     m_savedAt = m_undoStack.size();
 }
 
 void
-MultiViewCommandHistory::clipCommands()
+CommandHistory::clipCommands()
 {
     if ((int)m_undoStack.size() > m_undoLimit) {
 	m_savedAt -= (m_undoStack.size() - m_undoLimit);
@@ -183,7 +212,7 @@ MultiViewCommandHistory::clipCommands()
 }
 
 void
-MultiViewCommandHistory::clipStack(CommandStack &stack, int limit)
+CommandHistory::clipStack(CommandStack &stack, int limit)
 {
     int i;
 
@@ -193,7 +222,7 @@ MultiViewCommandHistory::clipStack(CommandStack &stack, int limit)
 
 	for (i = 0; i < limit; ++i) {
 	    Command *command = stack.top();
-	    std::cerr << "MVCH::clipStack: Saving recent command: " << command->name().toLocal8Bit().data() << " at " << command << std::endl;
+	    std::cerr << "MVCH::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 	    tempStack.push(stack.top());
 	    stack.pop();
 	}
@@ -208,18 +237,18 @@ MultiViewCommandHistory::clipStack(CommandStack &stack, int limit)
 }
 
 void
-MultiViewCommandHistory::clearStack(CommandStack &stack)
+CommandHistory::clearStack(CommandStack &stack)
 {
     while (!stack.empty()) {
 	Command *command = stack.top();
-	std::cerr << "MVCH::clearStack: About to delete command: " << command->name().toLocal8Bit().data() << " at " << command << std::endl;
+	std::cerr << "MVCH::clearStack: About to delete command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 	delete command;
 	stack.pop();
     }
 }
 
 void
-MultiViewCommandHistory::undoActivated(QAction *action)
+CommandHistory::undoActivated(QAction *action)
 {
     int pos = m_actionCounts[action];
     for (int i = 0; i <= pos; ++i) {
@@ -228,7 +257,7 @@ MultiViewCommandHistory::undoActivated(QAction *action)
 }
 
 void
-MultiViewCommandHistory::redoActivated(QAction *action)
+CommandHistory::redoActivated(QAction *action)
 {
     int pos = m_actionCounts[action];
     for (int i = 0; i <= pos; ++i) {
@@ -237,36 +266,41 @@ MultiViewCommandHistory::redoActivated(QAction *action)
 }
 
 void
-MultiViewCommandHistory::updateActions()
+CommandHistory::updateActions()
 {
-    if (m_undoStack.empty()) {
-	m_undoAction->setEnabled(false);
-	m_undoAction->setText(tr("Nothing to undo"));
-    } else {
-	m_undoAction->setEnabled(true);
-	QString commandName = m_undoStack.top()->name();
-	commandName.replace(QRegExp("&"), "");
-	QString text = tr("&Undo %1").arg(commandName);
-	m_undoAction->setText(text);
-    }
-
-    if (m_redoStack.empty()) {
-	m_redoAction->setEnabled(false);
-	m_redoAction->setText(tr("Nothing to redo"));
-    } else {
-	m_redoAction->setEnabled(true);
-	QString commandName = m_redoStack.top()->name();
-	commandName.replace(QRegExp("&"), "");
-	QString text = tr("Re&do %1").arg(commandName);
-	m_redoAction->setText(text);
-    }
-
     m_actionCounts.clear();
 
     for (int undo = 0; undo <= 1; ++undo) {
 
+	QAction *action(undo ? m_undoAction : m_redoAction);
+	QAction *menuAction(undo ? m_undoMenuAction : m_redoMenuAction);
 	QMenu *menu(undo ? m_undoMenu : m_redoMenu);
 	CommandStack &stack(undo ? m_undoStack : m_redoStack);
+
+	if (stack.empty()) {
+
+	    QString text(undo ? tr("Nothing to undo") : tr("Nothing to redo"));
+
+	    action->setEnabled(false);
+	    action->setText(text);
+
+	    menuAction->setEnabled(false);
+	    menuAction->setText(text);
+
+	} else {
+
+	    action->setEnabled(true);
+	    menuAction->setEnabled(true);
+
+	    QString commandName = stack.top()->getName();
+	    commandName.replace(QRegExp("&"), "");
+
+	    QString text = (undo ? tr("&Undo %1") : tr("Re&do %1"))
+		.arg(commandName);
+
+	    action->setText(text);
+	    menuAction->setText(text);
+	}
 
 	menu->clear();
 
@@ -279,7 +313,7 @@ MultiViewCommandHistory::updateActions()
 	    tempStack.push(command);
 	    stack.pop();
 
-	    QString commandName = command->name();
+	    QString commandName = command->getName();
 	    commandName.replace(QRegExp("&"), "");
 
 	    QString text;
