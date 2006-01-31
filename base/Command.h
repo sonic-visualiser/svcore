@@ -10,12 +10,38 @@
 #ifndef _COMMAND_H_
 #define _COMMAND_H_
 
+#include <QString>
+#include <vector>
+
 class Command
 {
 public:
+    virtual ~Command() { }
+
     virtual void execute() = 0;
     virtual void unexecute() = 0;
-    virtual QString name() const = 0;
+    virtual QString getName() const = 0;
+};
+
+class MacroCommand : public Command
+{
+public:
+    MacroCommand(QString name);
+    virtual ~MacroCommand();
+
+    virtual void addCommand(Command *command);
+    virtual void deleteCommand(Command *command);
+    virtual bool haveCommands() const { return !m_commands.empty(); }
+
+    virtual void execute();
+    virtual void unexecute();
+
+    virtual QString getName() const { return m_name; }
+    virtual void setName(QString name) { m_name = name; }
+
+protected:
+    QString m_name;
+    std::vector<Command *> m_commands;
 };
 
 #endif

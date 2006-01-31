@@ -33,23 +33,23 @@ class QMenu;
 class QToolBar;
 
 /**
- * The MultiViewCommandHistory class stores a list of executed
- * commands and maintains Undo and Redo actions synchronised with
- * those commands.
+ * The CommandHistory class stores a list of executed commands and
+ * maintains Undo and Redo actions synchronised with those commands.
  *
- * MultiViewCommandHistory also allows you to associate more than one
- * Undo and Redo action with the same command history, and it keeps
- * them all up-to-date at once.  This makes it effective in systems
- * where multiple views may be editing the same data at once.
+ * CommandHistory allows you to associate more than one Undo and Redo
+ * menu or toolbar with the same command history, and it keeps them
+ * all up-to-date at once.  This makes it effective in systems where
+ * multiple views may be editing the same data.
  */
 
-class MultiViewCommandHistory : public QObject
+class CommandHistory : public QObject
 {
     Q_OBJECT
 
 public:
-    MultiViewCommandHistory();
-    virtual ~MultiViewCommandHistory();
+    virtual ~CommandHistory();
+
+    static CommandHistory *getInstance();
 
     void clear();
     
@@ -79,6 +79,18 @@ public slots:
      */
     virtual void documentSaved();
 
+    /**
+     * Add a command to the history that has already been executed,
+     * without executing it again.  Equivalent to addCommand(command, false).
+     */
+    void addExecutedCommand(Command *);
+
+    /**
+     * Add a command to the history and also execute it.  Equivalent
+     * to addCommand(command, true).
+     */
+    void addCommandAndExecute(Command *);
+
 protected slots:
     void undo();
     void redo();
@@ -87,16 +99,22 @@ protected slots:
 
 signals:
     /**
+     * Emitted whenever a command has just been executed or
+     * unexecuted, whether by addCommand, undo, or redo.
+     */
+    void commandExecuted();
+
+    /**
      * Emitted whenever a command has just been executed, whether by
-     * addCommand, undo, or redo.
+     * addCommand or redo.
      */
     void commandExecuted(Command *);
 
     /**
-     * Emitted whenever a command has just been executed, whether by
-     * addCommand, undo, or redo.
+     * Emitted whenever a command has just been unexecuted, whether by
+     * addCommand or undo.
      */
-    void commandExecuted();
+    void commandUnexecuted(Command *);
 
     /**
      * Emitted when the undo/redo stack has reached the same state at
@@ -104,9 +122,14 @@ signals:
      */
     void documentRestored();
 
-private:
+protected:
+    CommandHistory();
+    static CommandHistory *m_instance;
+
     QAction *m_undoAction;
     QAction *m_redoAction;
+    QAction *m_undoMenuAction;
+    QAction *m_redoMenuAction;
     QMenu *m_undoMenu;
     QMenu *m_redoMenu;
 
@@ -121,11 +144,7 @@ private:
     int m_savedAt;
 
     void updateActions();
-//    void updateMenus();
 
-//    void updateButtons();
-//    void updateButton(bool undo, const QString &name, CommandStack &stack);
-//    void updateMenu(bool undo, const QString &name, CommandStack &stack);
     void clipCommands();
 
     void clipStack(CommandStack &stack, int limit);
