@@ -99,6 +99,19 @@ TransformFactory::getTransformDescription(TransformName name)
     } else return "";
 }
 
+QString
+TransformFactory::getTransformFriendlyName(TransformName name)
+{
+    QString description = getTransformDescription(name);
+
+    int i = description.indexOf(':');
+    if (i >= 0) {
+	return description.remove(0, i + 2);
+    } else {
+	return description;
+    }
+}
+
 Transform *
 TransformFactory::createTransform(TransformName name, Model *inputModel)
 {

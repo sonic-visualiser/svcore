@@ -52,7 +52,16 @@ public:
      */
     Model *transform(TransformName name, Model *inputModel);
 
+    /**
+     * Full description of a transform, suitable for putting on a menu.
+     */
     QString getTransformDescription(TransformName name);
+
+    /**
+     * Brief but friendly description of a transform, suitable for use
+     * as the name of the output layer.
+     */
+    QString getTransformFriendlyName(TransformName name);
 
     //!!! Need some way to indicate that the input model has changed /
     //been deleted so as not to blow up backgrounded transform!  -- Or
