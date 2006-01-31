@@ -23,7 +23,7 @@
 #include <iostream>
 #include <cassert>
 
-#define DEBUG_VIEW_WIDGET_PAINT 1
+//#define DEBUG_VIEW_WIDGET_PAINT 1
 
 using std::cerr;
 using std::endl;
@@ -512,9 +512,6 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 
     if (m_playPointerFrame == f) return;
     bool visible = (getXForFrame(m_playPointerFrame) != getXForFrame(f));
-    std::cerr << "old x = " << getXForFrame(m_playPointerFrame)
-	      << ", new x = " << getXForFrame(f)
-	      << ", visible = " << visible << std::endl;
     size_t oldPlayPointerFrame = m_playPointerFrame;
     m_playPointerFrame = f;
     if (!visible) return;
@@ -558,6 +555,10 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 	// the clearly visible range already
 
 	int xnew = getXForFrame(m_playPointerFrame);
+
+#ifdef DEBUG_VIEW_WIDGET_PAINT
+	std::cerr << "xnew = " << xnew << ", width = " << width() << std::endl;
+#endif
 
 	if (xnew < width()/8 || xnew > (width()*7)/8) {
 	    if (QApplication::mouseButtons() == Qt::NoButton &&

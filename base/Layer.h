@@ -138,6 +138,14 @@ public:
     virtual bool isLayerOpaque() const { return false; }
 
     /**
+     * This should return true if the layer can be edited by the user.
+     * If this is the case, the appropriate edit tools may be made
+     * available by the application and the layer's drawStart/Drag/End
+     * and editStart/Drag/End methods should be implemented.
+     */
+    virtual bool isLayerEditable() const { return false; }
+
+    /**
      * Return the proportion of background work complete in drawing
      * this view, as a percentage -- in most cases this will be the
      * value returned by pointer from a call to the underlying model's
