@@ -11,6 +11,7 @@
 #include "PluginIdentifier.h"
 
 #include "plugins/BeatDetect.h" //!!!
+#include "plugins/ChromagramPlugin.h" //!!!
 #include "plugins/ZeroCrossing.h" //!!!
 
 #include <iostream>
@@ -64,6 +65,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 {
     std::vector<QString> rv;
     rv.push_back("sv:_builtin:beats"); //!!!
+    rv.push_back("sv:_builtin:chromagram"); //!!!
     rv.push_back("sv:_builtin:zerocrossing"); //!!!
     return rv;
 }
@@ -87,6 +89,10 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     if (label == "beats") {
 	return new BeatDetector(inputSampleRate); //!!!
+    }
+
+    if (label == "chromagram") {
+	return new ChromagramPlugin(inputSampleRate); //!!!
     }
 
     if (label == "zerocrossing") {

@@ -124,7 +124,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     } else {
 	
 	m_output = new DenseThreeDimensionalModel(modelRate, modelResolution,
-						  valueCount);
+						  valueCount, false);
     }
 }
 
@@ -335,7 +335,9 @@ FeatureExtractionPluginTransform::setCompletion(int completion)
 
     } else {
 
-	//!!! Can't actually do this with the 3D model (yet?)
+	DenseThreeDimensionalModel *model = getOutput<DenseThreeDimensionalModel>();
+	if (!model) return;
+	model->setCompletion(completion);
     }
 }
 
