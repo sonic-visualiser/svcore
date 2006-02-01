@@ -149,6 +149,12 @@ public:
 	size_t valueCount;
 
 	/**
+	 * The names of each of the values, if appropriate.  This is
+	 * always optional.
+	 */
+	std::vector<std::string> valueNames;
+
+	/**
 	 * True if the results in the output have a fixed numeric
 	 * range (minimum and maximum values).  Undefined if
 	 * valueCount is zero.

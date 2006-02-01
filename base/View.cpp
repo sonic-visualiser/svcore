@@ -808,8 +808,6 @@ View::scroll(bool right, bool lots)
 void
 View::checkProgress(void *object)
 {
-//    std::cerr << "View::checkProgress(" << object << ")" << std::endl;
-
     if (!m_showProgress) return;
 
     int ph = height();
