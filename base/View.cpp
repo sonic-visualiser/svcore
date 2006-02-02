@@ -516,6 +516,12 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     m_playPointerFrame = f;
     if (!visible) return;
 
+    if (QApplication::keyboardModifiers() != Qt::NoModifier) {
+	std::cerr << "View::viewManagerPlaybackFrameChanged: modifiers == "
+		  << QApplication::keyboardModifiers()
+		  << std::endl;
+    }
+
     switch (m_followPlay) {
 
     case PlaybackScrollContinuous:

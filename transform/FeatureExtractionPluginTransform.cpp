@@ -110,7 +110,8 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 
     if (valueCount == 0) {
 
-	m_output = new SparseOneDimensionalModel(modelRate, modelResolution);
+	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
+						 false);
 
     } else if (valueCount == 1 ||
 
@@ -125,6 +126,15 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	
 	m_output = new DenseThreeDimensionalModel(modelRate, modelResolution,
 						  valueCount, false);
+
+	if (!m_descriptor->valueNames.empty()) {
+	    std::vector<QString> names;
+	    for (size_t i = 0; i < m_descriptor->valueNames.size(); ++i) {
+		names.push_back(m_descriptor->valueNames[i].c_str());
+	    }
+	    (dynamic_cast<DenseThreeDimensionalModel *>(m_output))
+		->setBinNames(names);
+	}
     }
 }
 
