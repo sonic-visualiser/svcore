@@ -516,17 +516,15 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     m_playPointerFrame = f;
     if (!visible) return;
 
-    if (QApplication::keyboardModifiers() != Qt::NoModifier) {
-	std::cerr << "View::viewManagerPlaybackFrameChanged: modifiers == "
-		  << QApplication::keyboardModifiers()
-		  << std::endl;
-    }
+    bool modifierPressed = // we only care about these ones
+	((QApplication::keyboardModifiers() & Qt::ShiftModifier) ||
+	 (QApplication::keyboardModifiers() & Qt::ControlModifier));
 
     switch (m_followPlay) {
 
     case PlaybackScrollContinuous:
 	if (QApplication::mouseButtons() == Qt::NoButton &&
-	    QApplication::keyboardModifiers() == Qt::NoModifier) {
+	    !modifierPressed) {
 	    setCentreFrame(f, false);
 	}
 	break;
@@ -568,7 +566,7 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 
 	if (xnew < width()/8 || xnew > (width()*7)/8) {
 	    if (QApplication::mouseButtons() == Qt::NoButton &&
-		QApplication::keyboardModifiers() == Qt::NoModifier) {
+		!modifierPressed) {
 		long offset = getFrameForX(width()/2) - getStartFrame();
 		long newCentre = sf + offset;
 		bool changed = setCentreFrame(newCentre, false);
