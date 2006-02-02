@@ -25,7 +25,7 @@ ViewManager::ViewManager() :
     m_inProgressExclusive(true),
     m_toolMode(NavigateMode),
     m_playLoopMode(false),
-    m_playSelectionMode(true)
+    m_playSelectionMode(false)
 {
     connect(this, 
 	    SIGNAL(centreFrameChanged(void *, unsigned long, bool)),

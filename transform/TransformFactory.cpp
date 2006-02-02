@@ -58,35 +58,41 @@ TransformFactory::populateTransforms()
 	FeatureExtractionPluginFactory *factory =
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
 
-	if (factory) {
-	    //!!! well, really we want to be able to query this without having to instantiate
+	if (!factory) {
+	    std::cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    continue;
+	}
 
-	    FeatureExtractionPlugin *plugin = 
-		factory->instantiatePlugin(pluginId, 48000);
+	//!!! well, really we want to be able to query this without having to instantiate
 
-	    QString pluginDescription = plugin->getDescription().c_str();
+	FeatureExtractionPlugin *plugin = 
+	    factory->instantiatePlugin(pluginId, 48000);
 
-	    if (plugin) {
+	if (!plugin) {
+	    std::cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    continue;
+	}
+		
+	QString pluginDescription = plugin->getDescription().c_str();
+	FeatureExtractionPlugin::OutputList outputs =
+	    plugin->getOutputDescriptors();
 
-		FeatureExtractionPlugin::OutputList outputs =
-		    plugin->getOutputDescriptors();
+	for (size_t j = 0; j < outputs.size(); ++j) {
 
-		if (outputs.size() == 1) {
-		    m_transforms[QString("%1:%2")
-				 .arg(pluginId)
-				 .arg(outputs[0].name.c_str())]
-			= pluginDescription;
-		} else {
-		    for (size_t j = 0; j < outputs.size(); ++j) {
-			m_transforms[QString("%1:%2")
-				     .arg(pluginId)
-				     .arg(outputs[j].name.c_str())]
-			    = QString("%1: %2")
-			    .arg(pluginDescription)
-			    .arg(outputs[j].description.c_str());
-		    }
-		}
+	    QString transformName = QString("%1:%2")
+		    .arg(pluginId).arg(outputs[j].name.c_str());
+
+	    QString userDescription;
+
+	    if (outputs.size() == 1) {
+		userDescription = pluginDescription;
+	    } else {
+		userDescription = QString("%1: %2")
+		    .arg(pluginDescription)
+		    .arg(outputs[j].description.c_str());
 	    }
+
+	    m_transforms[transformName] = userDescription;
 	}
     }
 }

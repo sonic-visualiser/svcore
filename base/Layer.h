@@ -63,14 +63,8 @@ public:
     virtual int getVerticalScaleWidth(QPainter &) const { return 0; }
     virtual void paintVerticalScale(QPainter &, QRect) const { }
 
-    //!!! I don't like these.  The layer should return a structured
-    //string-based description list and the pane should render it
-    //itself.
-
-    virtual QRect getFeatureDescriptionRect(QPainter &, QPoint) const {
-	return QRect(0, 0, 0, 0);
-    }
-    virtual void paintLocalFeatureDescription(QPainter &, QRect, QPoint) const {
+    virtual QString getFeatureDescription(QPoint &) const {
+	return "";
     }
 
     //!!! We also need a method (like the vertical scale method) for
