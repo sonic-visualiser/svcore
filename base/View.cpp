@@ -32,7 +32,6 @@ View::View(QWidget *w, bool showProgress) :
     QFrame(w),
     m_centreFrame(0),
     m_zoomLevel(1024),
-    m_newModel(true),
     m_followPan(true),
     m_followZoom(true),
     m_followPlay(PlaybackScrollPage),
@@ -246,6 +245,12 @@ View::getFrameForX(int x) const
     return (long(x) * long(m_zoomLevel)) + getStartFrame();
 }
 
+int
+View::getZoomLevel() const
+{
+    return m_zoomLevel;
+}
+
 void
 View::setZoomLevel(size_t z)
 {
@@ -291,7 +296,6 @@ View::addLayer(Layer *layer)
     connect(layer, SIGNAL(modelReplaced()),
 	    this,    SLOT(modelReplaced()));
 
-    m_newModel = true;
     update();
 
     emit propertyContainerAdded(layer);
@@ -460,7 +464,6 @@ View::modelReplaced()
     delete m_cache;
     m_cache = 0;
 
-    m_newModel = true;
     update();
 }
 
@@ -845,19 +848,6 @@ View::checkProgress(void *object)
 	}
     }
 }
-/*!!!
-void
-View::identifyLocalFeatures(bool on, int x, int y)
-{
-    for (LayerList::const_iterator i = m_layers.end(); i != m_layers.begin(); ) {
-	--i;
-#ifdef DEBUG_VIEW_WIDGET_PAINT
-	std::cerr << "View::identifyLocalFeatures: calling on " << *i << std::endl;
-#endif
-	if ((*i)->identifyLocalFeatures(on, x, y)) break;
-    }
-}
-*/
 
 void
 View::paintEvent(QPaintEvent *e)
@@ -868,10 +858,6 @@ View::paintEvent(QPaintEvent *e)
     if (m_layers.empty()) {
 	QFrame::paintEvent(e);
 	return;
-    }
-
-    if (m_newModel) {
-	m_newModel = false;
     }
 
     // ensure our constraints are met
