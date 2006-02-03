@@ -96,9 +96,9 @@ public:
     long getFrameForX(int x) const;
 
     /**
-     * Return the zoom level, i.e. the number of frames per pixel.
+     * Return the zoom level, i.e. the number of frames per pixel
      */
-    virtual int getZoomLevel() const { return m_zoomLevel; }
+    int getZoomLevel() const;
 
     /**
      * Set the zoom level, i.e. the number of frames per pixel.  The
@@ -228,7 +228,6 @@ protected:
 
     size_t              m_centreFrame;
     int                 m_zoomLevel;
-    bool                m_newModel;
     bool                m_followPan;
     bool                m_followZoom;
     PlaybackFollowMode  m_followPlay;
