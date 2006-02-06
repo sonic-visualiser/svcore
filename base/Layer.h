@@ -72,21 +72,37 @@ public:
     //all applicable layers can actually do this from
     //paintVerticalScale as well?
 
-    // Select mode:
-    //
-    //!!! Next, a method that gets the frame of the nearest feature in
-    //a particular snap direction.  This would be used for selection
-    //mode, where we're selecting from the waveform based on feature
-    //location.  Do we need multi-select on features as well?  This is
-    //an issue; if you select a feature are you selecting that feature
-    //(in which case what do you do with it?) or a section of the
-    //underlying waveform?
+    enum SnapType {
+	SnapLeft,
+	SnapRight,
+	SnapNearest,
+	SnapNeighbouring
+    };
 
-    virtual int getNearestFeatureFrame(int frame,
-				       size_t &resolution,
-				       bool snapRight = true) const {
+    /**
+     * Adjust the given frame to snap to the nearest feature, if
+     * possible.
+     *
+     * If snap is SnapLeft or SnapRight, adjust the frame to match
+     * that of the nearest feature in the given direction regardless
+     * of how far away it is.  If snap is SnapNearest, adjust the
+     * frame to that of the nearest feature in either direction.  If
+     * snap is SnapNeighbouring, adjust the frame to that of the
+     * nearest feature if it is close, and leave it alone (returning
+     * false) otherwise.  SnapNeighbouring should always choose the
+     * same feature that would be used in an editing operation through
+     * calls to editStart etc.
+     *
+     * Return true if a suitable feature was found and frame adjusted
+     * accordingly.  Return false if no suitable feature was
+     * available.  Also return the resolution of the model in this
+     * layer in sample frames.
+     */
+    virtual bool snapToFeatureFrame(int &frame,
+				    size_t &resolution,
+				    SnapType snap) const {
 	resolution = 1;
-	return frame;
+	return false;
     }
 
     // Draw and edit modes:
