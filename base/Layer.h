@@ -194,6 +194,15 @@ public:
      */
     virtual void setProperties(const QXmlAttributes &) = 0;
 
+    /**
+     * Indicate that a layer is not currently visible and is not
+     * expected to become visible in the near future (for example
+     * because the user has explicitly removed or hidden it).  The
+     * layer may respond by (for example) freeing any cache memory it
+     * is using, until next time its paint method is called.
+     */
+    virtual void setLayerDormant() { }
+
 signals:
     void modelChanged();
     void modelCompletionChanged();

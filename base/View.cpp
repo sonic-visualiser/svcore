@@ -544,7 +544,7 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 	if (m_manager &&
 	    m_manager->isPlaying() &&
 	    m_manager->getPlaySelectionMode()) {
-	    ViewManager::SelectionList selections = m_manager->getSelections();
+	    MultiSelection::SelectionList selections = m_manager->getSelections();
 	    if (!selections.empty()) {
 		size_t selectionStart = selections.begin()->getStartFrame();
 		if (sf < long(selectionStart) - w / 10) {
@@ -1110,7 +1110,7 @@ View::paintEvent(QPaintEvent *e)
 void
 View::drawSelections(QPainter &paint)
 {
-    ViewManager::SelectionList selections;
+    MultiSelection::SelectionList selections;
 
     if (m_manager) {
 	selections = m_manager->getSelections();
@@ -1131,7 +1131,7 @@ View::drawSelections(QPainter &paint)
 
     const QFontMetrics &metrics = paint.fontMetrics();
 
-    for (ViewManager::SelectionList::iterator i = selections.begin();
+    for (MultiSelection::SelectionList::iterator i = selections.begin();
 	 i != selections.end(); ++i) {
 
 	int p0 = getXForFrame(i->getStartFrame());
