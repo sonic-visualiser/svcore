@@ -20,6 +20,7 @@ ViewManager::ViewManager() :
     m_playSource(0),
     m_globalCentreFrame(0),
     m_globalZoom(1024),
+    m_playbackFrame(0),
     m_lastLeft(0), 
     m_lastRight(0),
     m_inProgressExclusive(true),
@@ -54,6 +55,27 @@ ViewManager::getGlobalZoom() const
     return m_globalZoom;
 }
 
+unsigned long
+ViewManager::getPlaybackFrame() const
+{
+    if (m_playSource && m_playSource->isPlaying()) {
+	m_playbackFrame = m_playSource->getCurrentPlayingFrame();
+    }
+    return m_playbackFrame;
+}
+
+void
+ViewManager::setPlaybackFrame(unsigned long f)
+{
+    if (m_playbackFrame != f) {
+	m_playbackFrame = f;
+	if (m_playSource && m_playSource->isPlaying()) {
+	    m_playSource->play(f);
+	}
+	emit playbackFrameChanged(f);
+    }
+}
+
 bool
 ViewManager::haveInProgressSelection() const
 {
@@ -83,95 +105,44 @@ ViewManager::clearInProgressSelection()
     emit inProgressSelectionChanged();
 }
 
-const ViewManager::SelectionList &
+const MultiSelection::SelectionList &
 ViewManager::getSelections() const
 {
-    return m_selections;
+    return m_selections.getSelections();
 }
 
 void
 ViewManager::setSelection(const Selection &selection)
 {
-    clearSelections();
-    addSelection(selection);
+    m_selections.setSelection(selection);
+    emit selectionChanged();
 }
 
 void
 ViewManager::addSelection(const Selection &selection)
 {
-    m_selections.insert(selection);
-
-    // Cope with a sitation where the new selection overlaps one or
-    // more existing ones.  This is a terribly inefficient way to do
-    // this, but that probably isn't significant in real life.
-
-    // It's essential for the correct operation of
-    // getContainingSelection that the selections do not overlap, so
-    // this is not just a frill.
-
-    for (SelectionList::iterator i = m_selections.begin();
-	 i != m_selections.end(); ) {
-	
-	SelectionList::iterator j = i;
-	if (++j == m_selections.end()) break;
-
-	if (i->getEndFrame() >= j->getStartFrame()) {
-	    Selection merged(i->getStartFrame(),
-			     std::max(i->getEndFrame(), j->getEndFrame()));
-	    m_selections.erase(i);
-	    m_selections.erase(j);
-	    m_selections.insert(merged);
-	    i = m_selections.begin();
-	} else {
-	    ++i;
-	}
-    }
-
+    m_selections.addSelection(selection);
     emit selectionChanged();
 }
 
 void
 ViewManager::removeSelection(const Selection &selection)
 {
-    //!!! Likewise this needs to cope correctly with the situation
-    //where selection is not one of the original selection set but
-    //simply overlaps one of them (cutting down the original selection
-    //appropriately)
-
-    if (m_selections.find(selection) != m_selections.end()) {
-	m_selections.erase(selection);
-	emit selectionChanged();
-    }
+    m_selections.removeSelection(selection);
+    emit selectionChanged();
 }
 
 void
 ViewManager::clearSelections()
 {
-    if (!m_selections.empty()) {
-	m_selections.clear();
-	emit selectionChanged();
-    }
+    m_selections.clearSelections();
+    emit selectionChanged();
 }
 
 Selection
 ViewManager::getContainingSelection(size_t frame, bool defaultToFollowing)
 {
-    // This scales very badly with the number of selections, but it's
-    // more efficient for very small numbers of selections than a more
-    // scalable method, and I think that may be what we need
-
-    for (SelectionList::const_iterator i = m_selections.begin();
-	 i != m_selections.end(); ++i) {
-
-	if (i->contains(frame)) return *i;
-
-	if (i->getStartFrame() > frame) {
-	    if (defaultToFollowing) return *i;
-	    else return Selection();
-	}
-    }
-
-    return Selection();
+    return m_selections.getContainingSelection(frame, defaultToFollowing);
 }
 
 void
@@ -247,13 +218,13 @@ ViewManager::checkPlayStatus()
 	    }
 	}
 
-	m_globalCentreFrame = m_playSource->getCurrentPlayingFrame();
+	m_playbackFrame = m_playSource->getCurrentPlayingFrame();
 
 #ifdef DEBUG_VIEW_MANAGER
-	std::cout << "ViewManager::checkPlayStatus: Playing, frame " << m_globalCentreFrame << ", levels " << m_lastLeft << "," << m_lastRight << std::endl;
+	std::cout << "ViewManager::checkPlayStatus: Playing, frame " << m_playbackFrame << ", levels " << m_lastLeft << "," << m_lastRight << std::endl;
 #endif
 
-	emit playbackFrameChanged(m_globalCentreFrame);
+	emit playbackFrameChanged(m_playbackFrame);
 
 	QTimer::singleShot(20, this, SLOT(checkPlayStatus()));
 
@@ -296,11 +267,14 @@ ViewManager::considerSeek(void *p, unsigned long f, bool locked)
 	unsigned long playFrame = m_playSource->getCurrentPlayingFrame();
 	unsigned long diff = std::max(f, playFrame) - std::min(f, playFrame);
 	if (diff > 20000) {
+	    m_playbackFrame = f;
 	    m_playSource->play(f);
 #ifdef DEBUG_VIEW_MANAGER 
 	    std::cout << "ViewManager::considerSeek: reseeking from " << playFrame << " to " << f << std::endl;
 #endif
 	}
+    } else {
+	m_playbackFrame = f; //!!! only if that view is in scroll mode?
     }
 }
 

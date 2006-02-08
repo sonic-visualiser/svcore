@@ -91,3 +91,98 @@ Selection::operator==(const Selection &s) const
 	    m_endFrame == s.m_endFrame);
 }
 
+
+MultiSelection::MultiSelection()
+{
+}
+
+MultiSelection::~MultiSelection()
+{
+}
+
+const MultiSelection::SelectionList &
+MultiSelection::getSelections() const
+{
+    return m_selections;
+}
+
+void
+MultiSelection::setSelection(const Selection &selection)
+{
+    clearSelections();
+    addSelection(selection);
+}
+
+void
+MultiSelection::addSelection(const Selection &selection)
+{
+    m_selections.insert(selection);
+
+    // Cope with a sitation where the new selection overlaps one or
+    // more existing ones.  This is a terribly inefficient way to do
+    // this, but that probably isn't significant in real life.
+
+    // It's essential for the correct operation of
+    // getContainingSelection that the selections do not overlap, so
+    // this is not just a frill.
+
+    for (SelectionList::iterator i = m_selections.begin();
+	 i != m_selections.end(); ) {
+	
+	SelectionList::iterator j = i;
+	if (++j == m_selections.end()) break;
+
+	if (i->getEndFrame() >= j->getStartFrame()) {
+	    Selection merged(i->getStartFrame(),
+			     std::max(i->getEndFrame(), j->getEndFrame()));
+	    m_selections.erase(i);
+	    m_selections.erase(j);
+	    m_selections.insert(merged);
+	    i = m_selections.begin();
+	} else {
+	    ++i;
+	}
+    }
+}
+
+void
+MultiSelection::removeSelection(const Selection &selection)
+{
+    //!!! Likewise this needs to cope correctly with the situation
+    //where selection is not one of the original selection set but
+    //simply overlaps one of them (cutting down the original selection
+    //appropriately)
+
+    if (m_selections.find(selection) != m_selections.end()) {
+	m_selections.erase(selection);
+    }
+}
+
+void
+MultiSelection::clearSelections()
+{
+    if (!m_selections.empty()) {
+	m_selections.clear();
+    }
+}
+
+Selection
+MultiSelection::getContainingSelection(size_t frame, bool defaultToFollowing)
+{
+    // This scales very badly with the number of selections, but it's
+    // more efficient for very small numbers of selections than a more
+    // scalable method, and I think that may be what we need
+
+    for (SelectionList::const_iterator i = m_selections.begin();
+	 i != m_selections.end(); ++i) {
+
+	if (i->contains(frame)) return *i;
+
+	if (i->getStartFrame() > frame) {
+	    if (defaultToFollowing) return *i;
+	    else return Selection();
+	}
+    }
+
+    return Selection();
+}

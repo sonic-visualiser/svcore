@@ -14,7 +14,6 @@
 #include <QTimer>
 
 #include <map>
-#include <set>
 
 #include "Selection.h"
 
@@ -50,14 +49,17 @@ public:
     unsigned long getGlobalCentreFrame() const;
     unsigned long getGlobalZoom() const;
 
-    typedef std::set<Selection> SelectionList;
+    unsigned long getPlaybackFrame() const;
+    void setPlaybackFrame(unsigned long frame);
 
     bool haveInProgressSelection() const;
     const Selection &getInProgressSelection(bool &exclusive) const;
     void setInProgressSelection(const Selection &selection, bool exclusive);
     void clearInProgressSelection();
 
-    const SelectionList &getSelections() const;
+    const MultiSelection &getSelection() const;
+
+    const MultiSelection::SelectionList &getSelections() const;
     void setSelection(const Selection &selection);
     void addSelection(const Selection &selection);
     void removeSelection(const Selection &selection);
@@ -125,11 +127,12 @@ protected:
     AudioPlaySource *m_playSource;
     unsigned long m_globalCentreFrame;
     unsigned long m_globalZoom;
+    mutable unsigned long m_playbackFrame;
 
     float m_lastLeft;
     float m_lastRight;
 
-    SelectionList m_selections;
+    MultiSelection m_selections;
     Selection m_inProgressSelection;
     bool m_inProgressExclusive;
 
