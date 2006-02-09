@@ -14,6 +14,7 @@
 #include "base/Profiler.h"
 
 #include "layer/TimeRulerLayer.h" //!!! damn, shouldn't be including that here
+#include "model/PowerOfSqrtTwoZoomConstraint.h" //!!! likewise
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -752,22 +753,23 @@ View::getZoomConstraintBlockSize(size_t blockSize,
     size_t candidate = blockSize;
     bool haveCandidate = false;
 
+    PowerOfSqrtTwoZoomConstraint defaultZoomConstraint;
+
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 
-	if ((*i)->getZoomConstraint()) {
+	const ZoomConstraint *zoomConstraint = (*i)->getZoomConstraint();
+	if (!zoomConstraint) zoomConstraint = &defaultZoomConstraint;
 
-	    size_t thisBlockSize = 
-		(*i)->getZoomConstraint()->getNearestBlockSize
-		(blockSize, dir);
+	size_t thisBlockSize =
+	    zoomConstraint->getNearestBlockSize(blockSize, dir);
 
-	    // Go for the block size that's furthest from the one
-	    // passed in.  Most of the time, that's what we want.
-	    if (!haveCandidate ||
-		(thisBlockSize > blockSize && thisBlockSize > candidate) ||
-		(thisBlockSize < blockSize && thisBlockSize < candidate)) {
-		candidate = thisBlockSize;
-		haveCandidate = true;
-	    }
+	// Go for the block size that's furthest from the one
+	// passed in.  Most of the time, that's what we want.
+	if (!haveCandidate ||
+	    (thisBlockSize > blockSize && thisBlockSize > candidate) ||
+	    (thisBlockSize < blockSize && thisBlockSize < candidate)) {
+	    candidate = thisBlockSize;
+	    haveCandidate = true;
 	}
     }
 
