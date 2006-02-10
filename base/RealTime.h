@@ -19,6 +19,9 @@
 #include <iostream>
 #include <string>
 
+struct timeval;
+
+
 /**
  * RealTime represents time values to nanosecond precision
  * with accurate arithmetic and frame-rate conversion functions.
@@ -37,6 +40,10 @@ struct RealTime
 
     RealTime(const RealTime &r) :
 	sec(r.sec), nsec(r.nsec) { }
+
+    static RealTime fromSeconds(double sec);
+    static RealTime fromMilliseconds(int msec);
+    static RealTime fromTimeval(const struct timeval &);
 
     RealTime &operator=(const RealTime &r) {
 	sec = r.sec; nsec = r.nsec; return *this;

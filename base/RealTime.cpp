@@ -26,6 +26,7 @@ using std::cerr;
 using std::endl;
 
 #include "base/RealTime.h"
+#include "sys/time.h"
 
 // A RealTime consists of two ints that must be at least 32 bits each.
 // A signed 32-bit int can store values exceeding +/- 2 billion.  This
@@ -53,6 +54,23 @@ RealTime::RealTime(int s, int n) :
     }
 }
 
+RealTime
+RealTime::fromSeconds(double sec)
+{
+    return RealTime(int(sec), int((sec - int(sec)) * ONE_BILLION));
+}
+
+RealTime
+RealTime::fromMilliseconds(int msec)
+{
+    return RealTime(msec / 1000, (msec % 1000) * 1000000);
+}
+
+RealTime
+RealTime::fromTimeval(const struct timeval &tv)
+{
+    return RealTime(tv.tv_sec, tv.tv_usec * 1000);
+}
 
 std::ostream &operator<<(std::ostream &out, const RealTime &rt)
 {
