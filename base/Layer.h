@@ -8,8 +8,8 @@
     This is experimental software.  Not for distribution.
 */
 
-#ifndef _VIEWER_H_
-#define _VIEWER_H_
+#ifndef _LAYER_H_
+#define _LAYER_H_
 
 #include "PropertyContainer.h"
 #include "XmlExportable.h"

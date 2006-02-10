@@ -24,10 +24,12 @@ public:
 				    float concertA = 440.0);
 
     static QString getPitchLabel(int midiPitch,
-				 float centsOffset = 0);
+				 float centsOffset = 0,
+				 bool useFlats = false);
 
     static QString getPitchLabelForFrequency(float frequency,
-					     float concertA = 440.0);
+					     float concertA = 440.0,
+					     bool useFlats = false);
 };
 
 
