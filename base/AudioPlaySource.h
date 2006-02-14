@@ -21,6 +21,8 @@
 class AudioPlaySource
 {
 public:
+    virtual ~AudioPlaySource() { }
+
     /**
      * Start playing from the given frame.  If playback is already
      * under way, reseek to the given frame and continue.

@@ -24,6 +24,8 @@
 class ZoomConstraint
 {
 public:
+    virtual ~ZoomConstraint() { }
+
     enum RoundingDirection {
 	RoundDown,
 	RoundUp,

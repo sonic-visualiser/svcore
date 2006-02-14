@@ -16,6 +16,8 @@
 class XmlExportable
 {
 public:
+    virtual ~XmlExportable() { }
+
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const = 0;
 
