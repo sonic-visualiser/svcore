@@ -19,6 +19,8 @@ class Playable;
 class PropertyContainer
 {
 public:
+    virtual ~PropertyContainer() { }
+
     typedef QString PropertyName;
     typedef std::vector<PropertyName> PropertyList;
     
