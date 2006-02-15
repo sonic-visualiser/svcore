@@ -203,6 +203,8 @@ public:
      */
     virtual void setLayerDormant() { }
 
+    virtual PlayParameters *getPlayParameters() const;
+
 signals:
     void modelChanged();
     void modelCompletionChanged();

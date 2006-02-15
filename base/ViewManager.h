@@ -18,7 +18,6 @@
 #include "Selection.h"
 
 class AudioPlaySource;
-class PlayParameters;
 class Model;
 
 /**
@@ -39,10 +38,6 @@ public:
     ViewManager();
 
     void setAudioPlaySource(AudioPlaySource *source);
-
-//!!! No way to remove a model!
-    PlayParameters *getPlayParameters(const Model *model);
-    void clearPlayParameters();
 
     bool isPlaying() const;
 
@@ -140,8 +135,6 @@ protected:
 
     bool m_playLoopMode;
     bool m_playSelectionMode;
-
-    std::map<const Model *, PlayParameters *> m_playParameters;
 };
 
 #endif
