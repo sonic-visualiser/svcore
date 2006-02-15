@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "layer/LayerFactory.h" //!!! shouldn't be including this here -- does that suggest we need to move this into layer/ ?
+#include "PlayParameterRepository.h"
 
 Layer::Layer(View *w)
 {
@@ -72,6 +73,18 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
 
     return s;
 }
+
+PlayParameters *
+Layer::getPlayParameters() const
+{
+    const Model *model = getModel();
+    if (model) {
+	return PlayParameterRepository::instance()->getPlayParameters(model);
+    }
+    return 0;
+}
+
+
 
 #ifdef INCLUDE_MOCFILES
 #include "Layer.moc.cpp"

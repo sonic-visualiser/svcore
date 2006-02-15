@@ -7,8 +7,8 @@
     This is experimental software.  Not for distribution.
 */
 
-#ifndef _PLAYABLE_H_
-#define _PLAYABLE_H_
+#ifndef _PLAY_PARAMETERS_H_
+#define _PLAY_PARAMETERS_H_
 
 #include <QObject>
 

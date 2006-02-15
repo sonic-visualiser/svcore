@@ -9,7 +9,6 @@
 
 #include "ViewManager.h"
 #include "AudioPlaySource.h"
-#include "PlayParameters.h"
 #include "Model.h"
 
 #include <iostream>
@@ -176,26 +175,6 @@ ViewManager::setAudioPlaySource(AudioPlaySource *source)
 	QTimer::singleShot(100, this, SLOT(checkPlayStatus()));
     }
     m_playSource = source;
-}
-
-PlayParameters *
-ViewManager::getPlayParameters(const Model *model)
-{
-    if (m_playParameters.find(model) == m_playParameters.end()) {
-	// Give all models the same type of play parameters for the moment
-	m_playParameters[model] = new PlayParameters;
-    }
-
-    return m_playParameters[model];
-}
-
-void
-ViewManager::clearPlayParameters()
-{
-    while (!m_playParameters.empty()) {
-	delete m_playParameters.begin()->second;
-	m_playParameters.erase(m_playParameters.begin());
-    }
 }
 
 void

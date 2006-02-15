@@ -20,7 +20,7 @@
 #include "PluginIdentifier.h"
 #include "LADSPAPluginFactory.h"
 
-#define DEBUG_DSSI 1
+//#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
 
 #define EVENT_BUFFER_SIZE 1023

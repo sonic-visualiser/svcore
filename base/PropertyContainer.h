@@ -14,7 +14,7 @@
 #include <QObject>
 #include <vector>
 
-class Playable;
+class PlayParameters;
 
 class PropertyContainer
 {
@@ -82,7 +82,7 @@ public:
     virtual QString getPropertyContainerName() const = 0;
     virtual QString getPropertyContainerIconName() const = 0;
 
-    Playable *getPlayable() const { return 0; }
+    virtual PlayParameters *getPlayParameters() const { return 0; }
 };
 
 #endif
