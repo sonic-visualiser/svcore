@@ -15,8 +15,12 @@ class Model;
 
 #include <map>
 
-class PlayParameterRepository
+#include <QObject>
+
+class PlayParameterRepository : public QObject
 {
+    Q_OBJECT
+
 public:
     static PlayParameterRepository *instance();
 
@@ -26,6 +30,12 @@ public:
     PlayParameters *getPlayParameters(const Model *model);
 
     void clear();
+
+signals:
+    void playParametersChanged(PlayParameters *);
+
+protected slots:
+    void playParametersChanged();
 
 protected:
     std::map<const Model *, PlayParameters *> m_playParameters;

@@ -9,26 +9,37 @@
 
 #include "PlayParameters.h"
 
+#include <iostream>
+
 void
 PlayParameters::setPlayMuted(bool muted)
 {
+    std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
     m_playMuted = muted;
+    emit playMutedChanged(muted);
     emit playParametersChanged();
 }
 
+void
+PlayParameters::setPlayAudible(bool audible)
+{
+    std::cerr << "PlayParameters: setPlayAudible(" << audible << ")" << std::endl;
+    setPlayMuted(!audible);
+}
 
 void
 PlayParameters::setPlayPan(float pan)
 {
     m_playPan = pan;
+    emit playPanChanged(pan);
     emit playParametersChanged();
 }
-
 
 void
 PlayParameters::setPlayGain(float gain)
 {
     m_playGain = gain;
+    emit playGainChanged(gain);
     emit playParametersChanged();
 }
 

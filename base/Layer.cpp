@@ -15,7 +15,8 @@
 #include "layer/LayerFactory.h" //!!! shouldn't be including this here -- does that suggest we need to move this into layer/ ?
 #include "PlayParameterRepository.h"
 
-Layer::Layer(View *w)
+Layer::Layer(View *w) :
+    m_dormant(false)
 {
     m_view = w;
 
@@ -75,8 +76,9 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
 }
 
 PlayParameters *
-Layer::getPlayParameters() const
+Layer::getPlayParameters() 
 {
+    std::cerr << "Layer (" << this << ")::getPlayParameters: model is "<< getModel() << std::endl;
     const Model *model = getModel();
     if (model) {
 	return PlayParameterRepository::instance()->getPlayParameters(model);
@@ -84,6 +86,12 @@ Layer::getPlayParameters() const
     return 0;
 }
 
+void
+Layer::showLayer(bool show)
+{
+    setLayerDormant(!show);
+    emit layerParametersChanged();
+}
 
 
 #ifdef INCLUDE_MOCFILES

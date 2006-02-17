@@ -44,7 +44,8 @@ View::View(QWidget *w, bool showProgress) :
     m_selectionCached(false),
     m_deleting(false),
     m_haveSelectedLayer(false),
-    m_manager(0)
+    m_manager(0),
+    m_propertyContainer(new ViewPropertyContainer(this))
 {
 //    QWidget::setAttribute(Qt::WA_PaintOnScreen);
 }
@@ -56,12 +57,14 @@ View::~View()
     for (LayerList::iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 	delete *i;
     }
+
+    delete m_propertyContainer;
 }
 
 PropertyContainer::PropertyList
 View::getProperties() const
 {
-    PropertyList list;
+    PropertyContainer::PropertyList list;
     list.push_back(tr("Global Scroll"));
     list.push_back(tr("Global Zoom"));
     list.push_back(tr("Follow Playback"));
@@ -69,27 +72,33 @@ View::getProperties() const
 }
 
 PropertyContainer::PropertyType
-View::getPropertyType(const PropertyName &name) const
+View::getPropertyType(const PropertyContainer::PropertyName &name) const
 {
-    if (name == tr("Global Scroll")) return ToggleProperty;
-    if (name == tr("Global Zoom")) return ToggleProperty;
-    if (name == tr("Follow Playback")) return ValueProperty;
-    return InvalidProperty;
+    if (name == tr("Global Scroll")) return PropertyContainer::ToggleProperty;
+    if (name == tr("Global Zoom")) return PropertyContainer::ToggleProperty;
+    if (name == tr("Follow Playback")) return PropertyContainer::ValueProperty;
+    return PropertyContainer::InvalidProperty;
 }
 
 int
-View::getPropertyRangeAndValue(const PropertyName &name,
-				       int *min, int *max) const
+View::getPropertyRangeAndValue(const PropertyContainer::PropertyName &name,
+			       int *min, int *max) const
 {
     if (name == tr("Global Scroll")) return m_followPan;
     if (name == tr("Global Zoom")) return m_followZoom;
-    if (name == tr("Follow Playback")) { *min = 0; *max = 2; return int(m_followPlay); }
-    return PropertyContainer::getPropertyRangeAndValue(name, min, max);
+    if (name == tr("Follow Playback")) {
+	if (min) *min = 0;
+	if (max) *max = 2;
+	return int(m_followPlay);
+    }
+    if (min) *min = 0;
+    if (max) *max = 0;
+    return 0;
 }
 
 QString
-View::getPropertyValueLabel(const PropertyName &name,
-				  int value) const
+View::getPropertyValueLabel(const PropertyContainer::PropertyName &name,
+			    int value) const
 {
     if (name == tr("Follow Playback")) {
 	switch (value) {
@@ -103,7 +112,7 @@ View::getPropertyValueLabel(const PropertyName &name,
 }
 
 void
-View::setProperty(const PropertyName &name, int value)
+View::setProperty(const PropertyContainer::PropertyName &name, int value)
 {
     if (name == tr("Global Scroll")) {
 	setFollowGlobalPan(value != 0);
@@ -135,14 +144,14 @@ View::getPropertyContainer(size_t i) const
 PropertyContainer *
 View::getPropertyContainer(size_t i)
 {
-    if (i == 0) return this;
+    if (i == 0) return m_propertyContainer;
     return m_layers[i-1];
 }
 
 void
 View::propertyContainerSelected(PropertyContainer *pc)
 {
-    if (pc == this) {
+    if (pc == m_propertyContainer) {
 	if (m_haveSelectedLayer) {
 	    m_haveSelectedLayer = false;
 	    update();
@@ -380,21 +389,21 @@ void
 View::setFollowGlobalPan(bool f)
 {
     m_followPan = f;
-    emit propertyContainerPropertyChanged(this);
+    emit propertyContainerPropertyChanged(m_propertyContainer);
 }
 
 void
 View::setFollowGlobalZoom(bool f)
 {
     m_followZoom = f;
-    emit propertyContainerPropertyChanged(this);
+    emit propertyContainerPropertyChanged(m_propertyContainer);
 }
 
 void
 View::setPlaybackFollow(PlaybackFollowMode m)
 {
     m_followPlay = m;
-    emit propertyContainerPropertyChanged(this);
+    emit propertyContainerPropertyChanged(m_propertyContainer);
 }
 
 void
@@ -692,6 +701,7 @@ View::getScrollableBackLayers(bool &changed) const
 
     LayerList scrollables;
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
+	if ((*i)->isLayerDormant()) continue;
 	if ((*i)->isLayerScrollable()) scrollables.push_back(*i);
 	else {
 	    if (scrollables != m_lastScrollableBackLayers) {
@@ -730,6 +740,7 @@ View::getNonScrollableFrontLayers(bool &changed) const
 
     size_t count = 0;
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
+	if ((*i)->isLayerDormant()) continue;
 	if (count < scrollables.size()) {
 	    ++count;
 	    continue;
@@ -1234,6 +1245,12 @@ View::toXmlString(QString indent, QString extraAttributes) const
     return s;
 }
 
+ViewPropertyContainer::ViewPropertyContainer(View *v) :
+    m_v(v)
+{
+    connect(m_v, SIGNAL(propertyChanged(PropertyName)),
+	    this, SIGNAL(propertyChanged(PropertyName)));
+}
 
 #ifdef INCLUDE_MOCFILES
 #include "View.moc.cpp"

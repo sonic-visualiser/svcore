@@ -30,8 +30,7 @@ class QMouseEvent;
  * View, and may also be editable.
  */
 
-class Layer : public QObject,
-	      public PropertyContainer,
+class Layer : public PropertyContainer,
 	      public XmlExportable
 {
     Q_OBJECT
@@ -199,11 +198,21 @@ public:
      * expected to become visible in the near future (for example
      * because the user has explicitly removed or hidden it).  The
      * layer may respond by (for example) freeing any cache memory it
-     * is using, until next time its paint method is called.
+     * is using, until next time its paint method is called.  It does
+     * not need to remember not to draw itself; the view will handle
+     * that.
      */
-    virtual void setLayerDormant() { }
+    virtual void setLayerDormant(bool dormant) { m_dormant = dormant; }
 
-    virtual PlayParameters *getPlayParameters() const;
+    /**
+     * Return whether the layer is dormant (i.e. hidden).
+     */
+    virtual bool isLayerDormant() const { return m_dormant; }
+
+    virtual PlayParameters *getPlayParameters();
+
+public slots:
+    void showLayer(bool show);
 
 signals:
     void modelChanged();
@@ -216,6 +225,7 @@ signals:
 
 protected:
     View *m_view;
+    bool m_dormant;
 };
 
 #endif
