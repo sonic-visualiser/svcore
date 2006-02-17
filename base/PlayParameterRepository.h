@@ -26,8 +26,10 @@ public:
 
     virtual ~PlayParameterRepository();
 
-//!!! No way to remove a model!
-    PlayParameters *getPlayParameters(const Model *model);
+    void addModel(const Model *model);
+    void removeModel(const Model *model);
+
+    PlayParameters *getPlayParameters(const Model *model) const;
 
     void clear();
 

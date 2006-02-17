@@ -28,6 +28,8 @@ class Model : virtual public QObject,
     Q_OBJECT
 
 public:
+    virtual ~Model();
+
     /**
      * Return true if the model was constructed successfully.  Classes
      * that refer to the model should always test this before use.

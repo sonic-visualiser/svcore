@@ -159,20 +159,23 @@ public:
     virtual void setPlaybackFollow(PlaybackFollowMode m);
     virtual PlaybackFollowMode getPlaybackFollow() const { return m_followPlay; }
 
+    typedef PropertyContainer::PropertyName PropertyName;
+
     // We implement the PropertyContainer API, although we don't
     // actually subclass PropertyContainer.  We have our own
     // PropertyContainer that we can return on request that just
     // delegates back to us.
     virtual PropertyContainer::PropertyList getProperties() const;
-    virtual PropertyContainer::PropertyType getPropertyType(const PropertyContainer::PropertyName &) const;
-    virtual int getPropertyRangeAndValue(const PropertyContainer::PropertyName &,
+    virtual PropertyContainer::PropertyType getPropertyType(const PropertyName &) const;
+    virtual int getPropertyRangeAndValue(const PropertyName &,
 					 int *min, int *max) const;
-    virtual QString getPropertyValueLabel(const PropertyContainer::PropertyName &,
+    virtual QString getPropertyValueLabel(const PropertyName &,
 					  int value) const;
-    virtual void setProperty(const PropertyContainer::PropertyName &, int value);
+    virtual void setProperty(const PropertyName &, int value);
     virtual QString getPropertyContainerName() const {
 	return objectName();
     }
+    virtual QString getPropertyContainerIconName() const = 0;
 
     virtual size_t getPropertyContainerCount() const;
 
@@ -187,6 +190,7 @@ signals:
     void propertyContainerRemoved(PropertyContainer *pc);
     void propertyContainerPropertyChanged(PropertyContainer *pc);
     void propertyContainerNameChanged(PropertyContainer *pc);
+    void propertyChanged(PropertyName);
 
     void centreFrameChanged(void *, unsigned long, bool);
     void zoomLevelChanged(void *, unsigned long, bool);
@@ -294,7 +298,7 @@ public:
 	return m_v->getPropertyContainerName();
     }
     QString getPropertyContainerIconName() const {
-	return "view";
+	return m_v->getPropertyContainerIconName();
     }
 
 public slots:

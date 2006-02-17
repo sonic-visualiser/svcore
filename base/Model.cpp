@@ -8,8 +8,18 @@
 */
 
 #include "Model.h"
+#include "PlayParameterRepository.h"
 
 const int Model::COMPLETION_UNKNOWN = -1;
+
+Model::~Model()
+{
+    // Subclasses have to handle adding themselves to the repository,
+    // if they want to be played.  We can't do it from here because
+    // the repository would be unable to tell whether we were playable
+    // or not (because dynamic_cast won't work from the base class ctor)
+    PlayParameterRepository::instance()->removeModel(this);
+}
 
 QString
 Model::toXmlString(QString indent, QString extraAttributes) const

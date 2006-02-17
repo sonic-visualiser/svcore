@@ -17,13 +17,14 @@ PlayParameters::setPlayMuted(bool muted)
     std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
     m_playMuted = muted;
     emit playMutedChanged(muted);
+    emit playAudibleChanged(!muted);
     emit playParametersChanged();
 }
 
 void
 PlayParameters::setPlayAudible(bool audible)
 {
-    std::cerr << "PlayParameters: setPlayAudible(" << audible << ")" << std::endl;
+    std::cerr << "PlayParameters(" << this << "): setPlayAudible(" << audible << ")" << std::endl;
     setPlayMuted(!audible);
 }
 

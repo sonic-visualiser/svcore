@@ -78,7 +78,7 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
 PlayParameters *
 Layer::getPlayParameters() 
 {
-    std::cerr << "Layer (" << this << ")::getPlayParameters: model is "<< getModel() << std::endl;
+    std::cerr << "Layer (" << this << ", " << objectName().toStdString() << ")::getPlayParameters: model is "<< getModel() << std::endl;
     const Model *model = getModel();
     if (model) {
 	return PlayParameterRepository::instance()->getPlayParameters(model);
