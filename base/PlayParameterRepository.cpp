@@ -10,6 +10,9 @@
 #include "PlayParameterRepository.h"
 #include "PlayParameters.h"
 
+//!!! shouldn't be including this here -- restructure needed
+#include "audioio/AudioGenerator.h"
+
 #include <iostream>
 
 PlayParameterRepository *
@@ -25,18 +28,42 @@ PlayParameterRepository::~PlayParameterRepository()
 {
 }
 
-PlayParameters *
-PlayParameterRepository::getPlayParameters(const Model *model)
+void
+PlayParameterRepository::addModel(const Model *model)
 {
-    if (m_playParameters.find(model) == m_playParameters.end()) {
-	// Give all models the same type of play parameters for the moment
-	std::cerr << "Creating new PlayParameters for model " << model << std::endl;
-	m_playParameters[model] = new PlayParameters;
-	connect(m_playParameters[model], SIGNAL(playParametersChanged()),
-		this, SLOT(playParametersChanged()));
-    }
+    if (!getPlayParameters(model)) {
 
-    return m_playParameters[model];
+	// Give all models the same type of play parameters for the
+	// moment, provided they can be played at all
+
+	if (AudioGenerator::canPlay(model)) {
+
+	    std::cerr << "PlayParameterRepository: Adding play parameters for " << model << std::endl;
+
+	    m_playParameters[model] = new PlayParameters;
+
+	    connect(m_playParameters[model], SIGNAL(playParametersChanged()),
+		    this, SLOT(playParametersChanged()));
+
+	} else {
+
+	    std::cerr << "PlayParameterRepository: Model " << model << " not playable" <<  std::endl;
+	}	    
+    }
+}    
+
+void
+PlayParameterRepository::removeModel(const Model *model)
+{
+    delete m_playParameters[model];
+    m_playParameters.erase(model);
+}
+
+PlayParameters *
+PlayParameterRepository::getPlayParameters(const Model *model) const
+{
+    if (m_playParameters.find(model) == m_playParameters.end()) return 0;
+    return m_playParameters.find(model)->second;
 }
 
 void
@@ -48,6 +75,7 @@ PlayParameterRepository::playParametersChanged()
 void
 PlayParameterRepository::clear()
 {
+    std::cerr << "PlayParameterRepository: PlayParameterRepository::clear" << std::endl;
     while (!m_playParameters.empty()) {
 	delete m_playParameters.begin()->second;
 	m_playParameters.erase(m_playParameters.begin());

@@ -23,17 +23,18 @@ public:
     virtual float getPlayPan() const { return m_playPan; } // -1.0 -> 1.0
     virtual float getPlayGain() const { return m_playGain; }
 
-signals:
-    void playParametersChanged();
-    void playMutedChanged(bool);
-    void playPanChanged(float);
-    void playGainChanged(float);
-
 public slots:
     virtual void setPlayMuted(bool muted);
     virtual void setPlayAudible(bool nonMuted);
     virtual void setPlayPan(float pan);
     virtual void setPlayGain(float gain);
+
+signals:
+    void playParametersChanged();
+    void playMutedChanged(bool);
+    void playAudibleChanged(bool);
+    void playPanChanged(float);
+    void playGainChanged(float);
 
 protected:
     bool m_playMuted;
