@@ -17,6 +17,7 @@
 
 #define MLOCK(a,b)   1
 #define MUNLOCK(a,b) 1
+#define MUNLOCK_SAMPLEBLOCK(a) 1
 
 #define DLOPEN(a,b)  LoadLibrary((a).toStdWString().c_str())
 #define DLSYM(a,b)   GetProcAddress((HINSTANCE)(a),(b))
@@ -35,7 +36,8 @@ void gettimeofday(struct timeval *p, void *tz);
 #include <dlfcn.h>
 
 #define MLOCK(a,b)   ::mlock((a),(b))
-#define MUNLOCK(a,b) ::munlock((a),(b))
+#define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
+#define MUNLOCK_SAMPLEBLOCK(a) do { const float &b = *(a).begin(); MUNLOCK(&b, (a).capacity() * sizeof(float)); } while(0);
 
 #define DLOPEN(a,b)  dlopen((a).toStdString().c_str(),(b))
 #define DLSYM(a,b)   dlsym((a),(b))

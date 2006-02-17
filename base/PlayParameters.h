@@ -12,7 +12,7 @@
 
 #include <QObject>
 
-class PlayParameters : virtual public QObject
+class PlayParameters : public QObject
 {
     Q_OBJECT
 
@@ -20,16 +20,20 @@ public:
     PlayParameters() : m_playMuted(false), m_playPan(0.0), m_playGain(1.0) { }
 
     virtual bool isPlayMuted() const { return m_playMuted; }
-    virtual void setPlayMuted(bool muted);
-    
     virtual float getPlayPan() const { return m_playPan; } // -1.0 -> 1.0
-    virtual void setPlayPan(float pan);
-    
     virtual float getPlayGain() const { return m_playGain; }
-    virtual void setPlayGain(float gain);
 
 signals:
     void playParametersChanged();
+    void playMutedChanged(bool);
+    void playPanChanged(float);
+    void playGainChanged(float);
+
+public slots:
+    virtual void setPlayMuted(bool muted);
+    virtual void setPlayAudible(bool nonMuted);
+    virtual void setPlayPan(float pan);
+    virtual void setPlayGain(float gain);
 
 protected:
     bool m_playMuted;

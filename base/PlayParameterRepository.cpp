@@ -10,6 +10,8 @@
 #include "PlayParameterRepository.h"
 #include "PlayParameters.h"
 
+#include <iostream>
+
 PlayParameterRepository *
 PlayParameterRepository::m_instance = new PlayParameterRepository;
 
@@ -28,10 +30,19 @@ PlayParameterRepository::getPlayParameters(const Model *model)
 {
     if (m_playParameters.find(model) == m_playParameters.end()) {
 	// Give all models the same type of play parameters for the moment
+	std::cerr << "Creating new PlayParameters for model " << model << std::endl;
 	m_playParameters[model] = new PlayParameters;
+	connect(m_playParameters[model], SIGNAL(playParametersChanged()),
+		this, SLOT(playParametersChanged()));
     }
 
     return m_playParameters[model];
+}
+
+void
+PlayParameterRepository::playParametersChanged()
+{
+    emit playParametersChanged(dynamic_cast<PlayParameters *>(sender()));
 }
 
 void

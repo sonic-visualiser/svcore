@@ -19,6 +19,7 @@
 #include "base/XmlExportable.h"
 
 class Layer;
+class ViewPropertyContainer;
 
 #include <map>
 
@@ -36,7 +37,6 @@ class Layer;
  */
 
 class View : public QFrame,
-	     public PropertyContainer,
 	     public XmlExportable
 {
     Q_OBJECT
@@ -159,21 +159,25 @@ public:
     virtual void setPlaybackFollow(PlaybackFollowMode m);
     virtual PlaybackFollowMode getPlaybackFollow() const { return m_followPlay; }
 
-    virtual PropertyList getProperties() const;
-    virtual PropertyType getPropertyType(const PropertyName &) const;
-    virtual int getPropertyRangeAndValue(const PropertyName &,
-					   int *min, int *max) const;
-    virtual QString getPropertyValueLabel(const PropertyName &,
+    // We implement the PropertyContainer API, although we don't
+    // actually subclass PropertyContainer.  We have our own
+    // PropertyContainer that we can return on request that just
+    // delegates back to us.
+    virtual PropertyContainer::PropertyList getProperties() const;
+    virtual PropertyContainer::PropertyType getPropertyType(const PropertyContainer::PropertyName &) const;
+    virtual int getPropertyRangeAndValue(const PropertyContainer::PropertyName &,
+					 int *min, int *max) const;
+    virtual QString getPropertyValueLabel(const PropertyContainer::PropertyName &,
 					  int value) const;
-    virtual void setProperty(const PropertyName &, int value);
-
-    virtual size_t getPropertyContainerCount() const;
-    virtual const PropertyContainer *getPropertyContainer(size_t i) const;
-    virtual PropertyContainer *getPropertyContainer(size_t i);
-
+    virtual void setProperty(const PropertyContainer::PropertyName &, int value);
     virtual QString getPropertyContainerName() const {
 	return objectName();
     }
+
+    virtual size_t getPropertyContainerCount() const;
+
+    virtual const PropertyContainer *getPropertyContainer(size_t i) const;
+    virtual PropertyContainer *getPropertyContainer(size_t i);
 
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
@@ -262,6 +266,44 @@ protected:
     ProgressMap m_progressBars; // I own the ProgressBars
 
     ViewManager *m_manager; // I don't own this
+    ViewPropertyContainer *m_propertyContainer; // I own this
+};
+
+
+// Use this for delegation, because we can't subclass from
+// PropertyContainer (which is a QObject) ourselves because of
+// ambiguity with QFrame parent
+
+class ViewPropertyContainer : public PropertyContainer
+{
+    Q_OBJECT
+
+public:
+    ViewPropertyContainer(View *v);
+    PropertyList getProperties() const { return m_v->getProperties(); }
+    PropertyType getPropertyType(const PropertyName &n) const {
+	return m_v->getPropertyType(n);
+    }
+    int getPropertyRangeAndValue(const PropertyName &n, int *min, int *max) const {
+	return m_v->getPropertyRangeAndValue(n, min, max);
+    }
+    QString getPropertyValueLabel(const PropertyName &n, int value) const {
+	return m_v->getPropertyValueLabel(n, value);
+    }
+    QString getPropertyContainerName() const {
+	return m_v->getPropertyContainerName();
+    }
+    QString getPropertyContainerIconName() const {
+	return "view";
+    }
+
+public slots:
+    virtual void setProperty(const PropertyName &n, int value) {
+	m_v->setProperty(n, value);
+    }
+
+protected:
+    View *m_v;
 };
 
 #endif

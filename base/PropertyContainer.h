@@ -16,8 +16,10 @@
 
 class PlayParameters;
 
-class PropertyContainer
+class PropertyContainer : public QObject
 {
+    Q_OBJECT
+
 public:
     virtual ~PropertyContainer() { }
 
@@ -72,17 +74,21 @@ public:
     virtual QString getPropertyValueLabel(const PropertyName &,
 					  int value) const;
 
+    virtual QString getPropertyContainerName() const = 0;
+    virtual QString getPropertyContainerIconName() const = 0;
+
+    virtual PlayParameters *getPlayParameters() { return 0; }
+
+signals:
+    void propertyChanged(PropertyName);
+    
+public slots:
     /**
      * Set a property.  This is used for all property types.  For
      * boolean properties, zero is false and non-zero true; for
      * colours, the integer value should be treated as a qRgb.
      */
     virtual void setProperty(const PropertyName &, int value);
-
-    virtual QString getPropertyContainerName() const = 0;
-    virtual QString getPropertyContainerIconName() const = 0;
-
-    virtual PlayParameters *getPlayParameters() const { return 0; }
 };
 
 #endif
