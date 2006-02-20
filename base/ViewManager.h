@@ -72,8 +72,7 @@ public:
 	NavigateMode,
 	SelectMode,
         EditMode,
-	DrawMode,
-	TextMode
+	DrawMode
     };
     ToolMode getToolMode() const { return m_toolMode; }
     void setToolMode(ToolMode mode);

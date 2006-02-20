@@ -117,6 +117,8 @@ public:
     virtual void editDrag(QMouseEvent *) { }
     virtual void editEnd(QMouseEvent *) { }
 
+    virtual void editOpen(QMouseEvent *) { } // on double-click
+
     // Text mode:
     //
     // Label nearest feature.  We need to get the feature coordinates
