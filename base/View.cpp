@@ -414,8 +414,26 @@ View::modelChanged()
 #ifdef DEBUG_VIEW_WIDGET_PAINT
     std::cerr << "View(" << this << ")::modelChanged()" << std::endl;
 #endif
-    delete m_cache;
-    m_cache = 0;
+    
+    // If the model that has changed is not used by any of the cached
+    // layers, we won't need to recreate the cache
+    
+    bool recreate = false;
+
+    bool discard;
+    LayerList scrollables = getScrollableBackLayers(false, discard);
+    for (LayerList::const_iterator i = scrollables.begin();
+	 i != scrollables.end(); ++i) {
+	if (*i == obj || (*i)->getModel() == obj) {
+	    recreate = true;
+	    break;
+	}
+    }
+
+    if (recreate) {
+	delete m_cache;
+	m_cache = 0;
+    }
 
     checkProgress(obj);
 
@@ -443,8 +461,25 @@ View::modelChanged(size_t startFrame, size_t endFrame)
 	return;
     }
 
-    delete m_cache;
-    m_cache = 0;
+    // If the model that has changed is not used by any of the cached
+    // layers, we won't need to recreate the cache
+    
+    bool recreate = false;
+
+    bool discard;
+    LayerList scrollables = getScrollableBackLayers(false, discard);
+    for (LayerList::const_iterator i = scrollables.begin();
+	 i != scrollables.end(); ++i) {
+	if (*i == obj || (*i)->getModel() == obj) {
+	    recreate = true;
+	    break;
+	}
+    }
+
+    if (recreate) {
+	delete m_cache;
+	m_cache = 0;
+    }
 
     if (long(startFrame) < myStartFrame) startFrame = myStartFrame;
     if (endFrame > myEndFrame) endFrame = myEndFrame;
@@ -455,7 +490,8 @@ View::modelChanged(size_t startFrame, size_t endFrame)
 
     checkProgress(obj);
 
-    update(x0, 0, x1 - x0 + 1, height());
+    update();
+//!!    update(x0, 0, x1 - x0 + 1, height());
 }    
 
 void
@@ -695,7 +731,7 @@ View::areLayersScrollable() const
 }
 
 View::LayerList
-View::getScrollableBackLayers(bool &changed) const
+View::getScrollableBackLayers(bool testChanged, bool &changed) const
 {
     changed = false;
 
@@ -704,7 +740,7 @@ View::getScrollableBackLayers(bool &changed) const
 	if ((*i)->isLayerDormant()) continue;
 	if ((*i)->isLayerScrollable()) scrollables.push_back(*i);
 	else {
-	    if (scrollables != m_lastScrollableBackLayers) {
+	    if (testChanged && scrollables != m_lastScrollableBackLayers) {
 		m_lastScrollableBackLayers = scrollables;
 		changed = true;
 	    }
@@ -721,7 +757,7 @@ View::getScrollableBackLayers(bool &changed) const
 	scrollables.clear();
     }
 
-    if (scrollables != m_lastScrollableBackLayers) {
+    if (testChanged && scrollables != m_lastScrollableBackLayers) {
 	m_lastScrollableBackLayers = scrollables;
 	changed = true;
     }
@@ -729,10 +765,10 @@ View::getScrollableBackLayers(bool &changed) const
 }
 
 View::LayerList
-View::getNonScrollableFrontLayers(bool &changed) const
+View::getNonScrollableFrontLayers(bool testChanged, bool &changed) const
 {
     changed = false;
-    LayerList scrollables = getScrollableBackLayers(changed);
+    LayerList scrollables = getScrollableBackLayers(testChanged, changed);
     LayerList nonScrollables;
 
     // Everything in front of the first non-scrollable from the back
@@ -748,7 +784,7 @@ View::getNonScrollableFrontLayers(bool &changed) const
 	nonScrollables.push_back(*i);
     }
 
-    if (nonScrollables != m_lastNonScrollableBackLayers) {
+    if (testChanged && nonScrollables != m_lastNonScrollableBackLayers) {
 	m_lastNonScrollableBackLayers = nonScrollables;
 	changed = true;
     }
@@ -897,8 +933,8 @@ View::paintEvent(QPaintEvent *e)
     // are, we should store only those in the cache
 
     bool layersChanged = false;
-    LayerList scrollables = getScrollableBackLayers(layersChanged);
-    LayerList nonScrollables = getNonScrollableFrontLayers(layersChanged);
+    LayerList scrollables = getScrollableBackLayers(true, layersChanged);
+    LayerList nonScrollables = getNonScrollableFrontLayers(true, layersChanged);
     bool selectionCacheable = nonScrollables.empty();
     bool haveSelections = m_manager && !m_manager->getSelections().empty();
     bool selectionDrawn = false;

@@ -224,8 +224,8 @@ protected:
     size_t getModelsEndFrame() const;
     int getModelsSampleRate() const;
     bool areLayersScrollable() const;
-    LayerList getScrollableBackLayers(bool &changed) const;
-    LayerList getNonScrollableFrontLayers(bool &changed) const;
+    LayerList getScrollableBackLayers(bool testChanged, bool &changed) const;
+    LayerList getNonScrollableFrontLayers(bool testChanged, bool &changed) const;
     size_t getZoomConstraintBlockSize(size_t blockSize,
 				      ZoomConstraint::RoundingDirection dir =
 				      ZoomConstraint::RoundNearest) const;
