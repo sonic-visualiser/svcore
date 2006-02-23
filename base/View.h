@@ -96,6 +96,26 @@ public:
     long getFrameForX(int x) const;
 
     /**
+     * Return the pixel y-coordinate corresponding to a given
+     * frequency, if the frequency range is as specified.  This does
+     * not imply any policy about layer frequency ranges, but it might
+     * be useful for layers to match theirs up if desired.
+     *
+     * Not thread-safe in logarithmic mode.  Call only from GUI thread.
+     */
+    float getYForFrequency(float frequency, float minFreq, float maxFreq, 
+			   bool logarithmic) const;
+
+    /**
+     * Return the closest frequency to the given pixel y-coordinate,
+     * if the frequency range is as specified.
+     *
+     * Not thread-safe in logarithmic mode.  Call only from GUI thread.
+     */
+    float getFrequencyForY(int y, float minFreq, float maxFreq,
+			   bool logarithmic) const;
+
+    /**
      * Return the zoom level, i.e. the number of frames per pixel
      */
     int getZoomLevel() const;
