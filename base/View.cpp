@@ -255,6 +255,70 @@ View::getFrameForX(int x) const
     return (long(x) * long(m_zoomLevel)) + getStartFrame();
 }
 
+float
+View::getYForFrequency(float frequency,
+		       float minf,
+		       float maxf, 
+		       bool logarithmic) const
+{
+    int h = height();
+
+    if (logarithmic) {
+
+	static float lastminf = 0.0, lastmaxf = 0.0;
+	static float logminf = 0.0, logmaxf = 0.0;
+
+	if (lastminf != minf) {
+	    lastminf = (minf == 0.0 ? 1.0 : minf);
+	    logminf = log10f(minf);
+	}
+	if (lastmaxf != maxf) {
+	    lastmaxf = (maxf < lastminf ? lastminf : maxf);
+	    logmaxf = log10f(maxf);
+	}
+
+	if (logminf == logmaxf) return 0;
+	return h - (h * (log10f(frequency) - logminf)) / (logmaxf - logminf);
+
+    } else {
+	
+	if (minf == maxf) return 0;
+	return h - (h * (frequency - minf)) / (maxf - minf);
+    }
+}
+
+float
+View::getFrequencyForY(int y,
+		       float minf,
+		       float maxf,
+		       bool logarithmic) const
+{
+    int h = height();
+
+    if (logarithmic) {
+
+	static float lastminf = 0.0, lastmaxf = 0.0;
+	static float logminf = 0.0, logmaxf = 0.0;
+
+	if (lastminf != minf) {
+	    lastminf = (minf == 0.0 ? 1.0 : minf);
+	    logminf = log10f(minf);
+	}
+	if (lastmaxf != maxf) {
+	    lastmaxf = (maxf < lastminf ? lastminf : maxf);
+	    logmaxf = log10f(maxf);
+	}
+
+	if (logminf == logmaxf) return 0;
+	return pow(10.f, logminf + ((logmaxf - logminf) * (h - y)) / h);
+
+    } else {
+
+	if (minf == maxf) return 0;
+	return minf + ((h - y) * (maxf - minf)) / h;
+    }
+}
+
 int
 View::getZoomLevel() const
 {
