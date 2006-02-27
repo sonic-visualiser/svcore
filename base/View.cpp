@@ -1014,6 +1014,14 @@ View::paintEvent(QPaintEvent *e)
 	}
     }
 
+    if (selectionCacheable) {
+	QPoint localPos;
+	bool closeToLeft, closeToRight;
+	if (shouldIlluminateLocalSelection(localPos, closeToLeft, closeToRight)) {
+	    selectionCacheable = false;
+	}
+    }
+
 #ifdef DEBUG_VIEW_WIDGET_PAINT
     std::cerr << "View(" << this << ")::paintEvent: have " << scrollables.size()
 	      << " scrollable back layers and " << nonScrollables.size()
@@ -1237,10 +1245,17 @@ View::drawSelections(QPainter &paint)
     }
 
     paint.save();
-    paint.setPen(QColor(150, 150, 255));
     paint.setBrush(QColor(150, 150, 255, 80));
 
     int sampleRate = getModelsSampleRate();
+
+    QPoint localPos;
+    long illuminateFrame = -1;
+    bool closeToLeft, closeToRight;
+
+    if (shouldIlluminateLocalSelection(localPos, closeToLeft, closeToRight)) {
+	illuminateFrame = getFrameForX(localPos.x());
+    }
 
     const QFontMetrics &metrics = paint.fontMetrics();
 
@@ -1256,7 +1271,33 @@ View::drawSelections(QPainter &paint)
 	std::cerr << "View::drawSelections: " << p0 << ",-1 [" << (p1-p0) << "x" << (height()+1) << "]" << std::endl;
 #endif
 
+	bool illuminateThis =
+	    (illuminateFrame >= 0 && i->contains(illuminateFrame));
+
+	paint.setPen(QColor(150, 150, 255));
 	paint.drawRect(p0, -1, p1 - p0, height() + 1);
+
+	if (illuminateThis) {
+	    paint.save();
+	    if (hasLightBackground()) {
+		paint.setPen(QPen(Qt::black, 2));
+	    } else {
+		paint.setPen(QPen(Qt::white, 2));
+	    }
+	    if (closeToLeft) {
+		paint.drawLine(p0, 1, p1, 1);
+		paint.drawLine(p0, 0, p0, height());
+		paint.drawLine(p0, height() - 1, p1, height() - 1);
+	    } else if (closeToRight) {
+		paint.drawLine(p0, 1, p1, 1);
+		paint.drawLine(p1, 0, p1, height());
+		paint.drawLine(p0, height() - 1, p1, height() - 1);
+	    } else {
+		paint.setBrush(Qt::NoBrush);
+		paint.drawRect(p0, 1, p1 - p0, height() - 2);
+	    }
+	    paint.restore();
+	}
 
 	if (sampleRate && shouldLabelSelections()) {
 	    
