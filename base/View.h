@@ -170,6 +170,9 @@ public:
     virtual bool shouldIlluminateLocalFeatures(const Layer *, QPoint &) {
 	return false;
     }
+    virtual bool shouldIlluminateLocalSelection(QPoint &, bool &, bool &) {
+	return false;
+    }
 
     enum PlaybackFollowMode {
 	PlaybackScrollContinuous,
