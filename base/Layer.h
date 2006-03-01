@@ -13,6 +13,7 @@
 
 #include "PropertyContainer.h"
 #include "XmlExportable.h"
+#include "Selection.h"
 
 #include <QObject>
 #include <QRect>
@@ -40,6 +41,7 @@ public:
     virtual ~Layer();
 
     virtual const Model *getModel() const = 0;
+    virtual const View *getView() const { return m_view; }
     virtual const ZoomConstraint *getZoomConstraint() const { return 0; }
     virtual void paint(QPainter &, QRect) const = 0;   
 
@@ -118,6 +120,11 @@ public:
     virtual void editEnd(QMouseEvent *) { }
 
     virtual void editOpen(QMouseEvent *) { } // on double-click
+
+    virtual void moveSelection(Selection s, size_t newStartFrame) { }
+    virtual void resizeSelection(Selection s, Selection newSize) { }
+    virtual void deleteSelection(Selection s) { }
+
 
     // Text mode:
     //

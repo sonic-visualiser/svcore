@@ -26,9 +26,9 @@
 
 #include "base/System.h"
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 #include "lrdf.h"
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 
 
 DSSIPluginFactory::DSSIPluginFactory() :
@@ -217,7 +217,7 @@ DSSIPluginFactory::getPluginPath()
 }
 
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 std::vector<QString>
 DSSIPluginFactory::getLRDFPath(QString &baseUri)
 {
@@ -280,7 +280,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 	    continue;
 	}
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
 		
@@ -330,7 +330,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 		++controlPortNumber;
 	    }
 	}
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 
 	QString identifier = PluginIdentifier::createIdentifier
 	    ("dssi", soname, ladspaDescriptor->Label);

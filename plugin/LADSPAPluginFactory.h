@@ -55,7 +55,7 @@ protected:
 
     virtual std::vector<QString> getPluginPath();
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 #endif
 

@@ -27,9 +27,9 @@
 
 #include "base/System.h"
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 #include "lrdf.h"
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 
 
 LADSPAPluginFactory::LADSPAPluginFactory()
@@ -453,7 +453,7 @@ LADSPAPluginFactory::getPluginPath()
 }
 
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 std::vector<QString>
 LADSPAPluginFactory::getLRDFPath(QString &baseUri)
 {
@@ -486,7 +486,7 @@ LADSPAPluginFactory::discoverPlugins()
     }
     std::cerr << std::endl;
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
     // Initialise liblrdf and read the description files 
     //
     lrdf_init();
@@ -509,7 +509,7 @@ LADSPAPluginFactory::discoverPlugins()
     if (haveSomething) {
 	generateTaxonomy(baseUri + "Plugin", "");
     }
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 
     generateFallbackCategories();
 
@@ -523,11 +523,11 @@ LADSPAPluginFactory::discoverPlugins()
 	}
     }
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
     // Cleanup after the RDF library
     //
     lrdf_cleanup();
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 }
 
 void
@@ -554,7 +554,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
     int index = 0;
     while ((descriptor = fn(index))) {
 
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
 		
@@ -600,7 +600,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 		++controlPortNumber;
 	    }
 	}
-#endif // HAVE_LIBLRDF
+#endif // HAVE_LRDF
 
 	QString identifier = PluginIdentifier::createIdentifier
 	    ("ladspa", soname, descriptor->Label);
@@ -664,7 +664,7 @@ LADSPAPluginFactory::generateFallbackCategories()
 void
 LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 {
-#ifdef HAVE_LIBLRDF
+#ifdef HAVE_LRDF
     lrdf_uris *uris = lrdf_get_instances(uri.toStdString().c_str());
 
     if (uris != NULL) {
