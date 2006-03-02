@@ -66,7 +66,7 @@ public:
      * selected area, return the next selection after the given frame.
      * Return the empty selection if no appropriate selection is found.
      */
-    Selection getContainingSelection(size_t frame, bool defaultToFollowing);
+    Selection getContainingSelection(size_t frame, bool defaultToFollowing) const;
 
     enum ToolMode {
 	NavigateMode,

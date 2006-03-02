@@ -155,6 +155,7 @@ public:
      * will also return 0 if there are no layers.
      */
     virtual Layer *getSelectedLayer();
+    virtual const Layer *getSelectedLayer() const;
 
     virtual void setViewManager(ViewManager *m);
 
@@ -167,10 +168,10 @@ public:
     virtual void setLightBackground(bool lb) { m_lightBackground = lb; }
     virtual bool hasLightBackground() const { return m_lightBackground; }
 
-    virtual bool shouldIlluminateLocalFeatures(const Layer *, QPoint &) {
+    virtual bool shouldIlluminateLocalFeatures(const Layer *, QPoint &) const {
 	return false;
     }
-    virtual bool shouldIlluminateLocalSelection(QPoint &, bool &, bool &) {
+    virtual bool shouldIlluminateLocalSelection(QPoint &, bool &, bool &) const {
 	return false;
     }
 

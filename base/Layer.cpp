@@ -15,10 +15,10 @@
 #include "layer/LayerFactory.h" //!!! shouldn't be including this here -- does that suggest we need to move this into layer/ ?
 #include "PlayParameterRepository.h"
 
-Layer::Layer(View *w) :
+Layer::Layer() :
     m_dormant(false)
 {
-    m_view = w;
+//    m_view = w;
 
     // Subclass must call this:
 //    w->addLayer(this);
@@ -26,7 +26,7 @@ Layer::Layer(View *w) :
 
 Layer::~Layer()
 {
-    m_view->removeLayer(this);
+//    m_view->removeLayer(this);
 }
 
 QString
@@ -42,7 +42,7 @@ Layer::setObjectName(const QString &name)
     QObject::setObjectName(name);
     emit layerNameChanged();
 }
-
+/*
 int
 Layer::getXForFrame(long frame) const
 {
@@ -56,7 +56,7 @@ Layer::getFrameForX(int x) const
     if (m_view) return m_view->getFrameForX(x);
     else return 0;
 }
-
+*/
 QString
 Layer::toXmlString(QString indent, QString extraAttributes) const
 {
@@ -87,9 +87,9 @@ Layer::getPlayParameters()
 }
 
 void
-Layer::showLayer(bool show)
+Layer::showLayer(View *view, bool show)
 {
-    setLayerDormant(!show);
+    setLayerDormant(view, !show);
     emit layerParametersChanged();
 }
 

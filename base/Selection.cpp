@@ -167,7 +167,7 @@ MultiSelection::clearSelections()
 }
 
 Selection
-MultiSelection::getContainingSelection(size_t frame, bool defaultToFollowing)
+MultiSelection::getContainingSelection(size_t frame, bool defaultToFollowing) const
 {
     // This scales very badly with the number of selections, but it's
     // more efficient for very small numbers of selections than a more
