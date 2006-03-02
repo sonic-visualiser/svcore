@@ -52,6 +52,8 @@ View::View(QWidget *w, bool showProgress) :
 
 View::~View()
 {
+    //!!! will want to _not_ delete layers
+
     m_deleting = true;
 
     for (LayerList::iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
@@ -409,6 +411,12 @@ View::getSelectedLayer()
     } else {
 	return 0;
     }
+}
+
+const Layer *
+View::getSelectedLayer() const
+{
+    return const_cast<const Layer *>(const_cast<View *>(this)->getSelectedLayer());
 }
 
 void
@@ -789,7 +797,7 @@ View::areLayersScrollable() const
 {
     // True iff all views are scrollable
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
-	if (!(*i)->isLayerScrollable()) return false;
+	if (!(*i)->isLayerScrollable(this)) return false;
     }
     return true;
 }
@@ -801,8 +809,8 @@ View::getScrollableBackLayers(bool testChanged, bool &changed) const
 
     LayerList scrollables;
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
-	if ((*i)->isLayerDormant()) continue;
-	if ((*i)->isLayerScrollable()) scrollables.push_back(*i);
+	if ((*i)->isLayerDormant(this)) continue;
+	if ((*i)->isLayerScrollable(this)) scrollables.push_back(*i);
 	else {
 	    if (testChanged && scrollables != m_lastScrollableBackLayers) {
 		m_lastScrollableBackLayers = scrollables;
@@ -840,7 +848,7 @@ View::getNonScrollableFrontLayers(bool testChanged, bool &changed) const
 
     size_t count = 0;
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
-	if ((*i)->isLayerDormant()) continue;
+	if ((*i)->isLayerDormant(this)) continue;
 	if (count < scrollables.size()) {
 	    ++count;
 	    continue;
@@ -1148,7 +1156,7 @@ View::paintEvent(QPaintEvent *e)
 	for (LayerList::iterator i = scrollables.begin(); i != scrollables.end(); ++i) {
 	    paint.setRenderHint(QPainter::Antialiasing, false);
 	    paint.save();
-	    (*i)->paint(paint, cacheRect);
+	    (*i)->paint(this, paint, cacheRect);
 	    paint.restore();
 	}
 
@@ -1192,7 +1200,7 @@ View::paintEvent(QPaintEvent *e)
     paint.setBrush(Qt::NoBrush);
 	
     for (LayerList::iterator i = nonScrollables.begin(); i != nonScrollables.end(); ++i) {
-	(*i)->paint(paint, nonCacheRect);
+	(*i)->paint(this, paint, nonCacheRect);
     }
 	
     paint.end();

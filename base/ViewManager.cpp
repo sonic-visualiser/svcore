@@ -145,7 +145,7 @@ ViewManager::clearSelections()
 }
 
 Selection
-ViewManager::getContainingSelection(size_t frame, bool defaultToFollowing)
+ViewManager::getContainingSelection(size_t frame, bool defaultToFollowing) const
 {
     return m_selections.getContainingSelection(frame, defaultToFollowing);
 }

@@ -37,13 +37,12 @@ class Layer : public PropertyContainer,
     Q_OBJECT
 
 public:
-    Layer(View *w);
+    Layer();
     virtual ~Layer();
 
     virtual const Model *getModel() const = 0;
-    virtual const View *getView() const { return m_view; }
     virtual const ZoomConstraint *getZoomConstraint() const { return 0; }
-    virtual void paint(QPainter &, QRect) const = 0;   
+    virtual void paint(View *, QPainter &, QRect) const = 0;   
 
     enum VerticalPosition {
 	PositionTop, PositionMiddle, PositionBottom
@@ -61,10 +60,10 @@ public:
 	return objectName();
     }
 
-    virtual int getVerticalScaleWidth(QPainter &) const { return 0; }
-    virtual void paintVerticalScale(QPainter &, QRect) const { }
+    virtual int getVerticalScaleWidth(View *, QPainter &) const { return 0; }
+    virtual void paintVerticalScale(View *, QPainter &, QRect) const { }
 
-    virtual QString getFeatureDescription(QPoint &) const {
+    virtual QString getFeatureDescription(View *, QPoint &) const {
 	return "";
     }
 
@@ -99,7 +98,8 @@ public:
      * available.  Also return the resolution of the model in this
      * layer in sample frames.
      */
-    virtual bool snapToFeatureFrame(int &frame,
+    virtual bool snapToFeatureFrame(View *v,
+				    int &frame,
 				    size_t &resolution,
 				    SnapType snap) const {
 	resolution = 1;
@@ -111,15 +111,15 @@ public:
     // Layer needs to get actual mouse events, I guess.  Draw mode is
     // probably the easier.
 
-    virtual void drawStart(QMouseEvent *) { }
-    virtual void drawDrag(QMouseEvent *) { }
-    virtual void drawEnd(QMouseEvent *) { }
+    virtual void drawStart(View *, QMouseEvent *) { }
+    virtual void drawDrag(View *, QMouseEvent *) { }
+    virtual void drawEnd(View *, QMouseEvent *) { }
 
-    virtual void editStart(QMouseEvent *) { }
-    virtual void editDrag(QMouseEvent *) { }
-    virtual void editEnd(QMouseEvent *) { }
+    virtual void editStart(View *, QMouseEvent *) { }
+    virtual void editDrag(View *, QMouseEvent *) { }
+    virtual void editEnd(View *, QMouseEvent *) { }
 
-    virtual void editOpen(QMouseEvent *) { } // on double-click
+    virtual void editOpen(View *, QMouseEvent *) { } // on double-click
 
     virtual void moveSelection(Selection s, size_t newStartFrame) { }
     virtual void resizeSelection(Selection s, Selection newSize) { }
@@ -134,16 +134,16 @@ public:
     // in place?  Probably the dialog is easier.
 
     /**
-     * This should return true if the view can safely be scrolled
-     * automatically by the widget (simply copying the existing data
+     * This should return true if the layer can safely be scrolled
+     * automatically by a given view (simply copying the existing data
      * and then refreshing the exposed area) without altering its
-     * meaning.  For the widget as a whole this is usually not
+     * meaning.  For the view widget as a whole this is usually not
      * possible because of invariant (non-scrolling) material
      * displayed over the top, but the widget may be able to optimise
      * scrolling better if it is known that individual views can be
      * scrolled safely in this way.
      */
-    virtual bool isLayerScrollable() const { return true; }
+    virtual bool isLayerScrollable(const View *) const { return true; }
 
     /**
      * This should return true if the layer completely obscures any
@@ -178,12 +178,12 @@ public:
      * Return the pixel x-coordinate corresponding to a given sample
      * frame (which may be negative).
      */
-    int getXForFrame(long frame) const;
+//    int getXForFrame(long frame) const;
 
     /**
      * Return the closest frame to the given pixel x-coordinate.
      */
-    long getFrameForX(int x) const;
+//    long getFrameForX(int x) const;
 
     /**
      * Convert the layer's data (though not those of the model it
@@ -211,17 +211,20 @@ public:
      * not need to remember not to draw itself; the view will handle
      * that.
      */
-    virtual void setLayerDormant(bool dormant) { m_dormant = dormant; }
+    //!!! update for multiview
+    virtual void setLayerDormant(const View *, bool dormant) { m_dormant = dormant; }
 
     /**
      * Return whether the layer is dormant (i.e. hidden).
      */
-    virtual bool isLayerDormant() const { return m_dormant; }
+    //!!! update for multiview
+    virtual bool isLayerDormant(const View *) const { return m_dormant; }
 
     virtual PlayParameters *getPlayParameters();
 
 public slots:
-    void showLayer(bool show);
+    //!!! update for multiview
+    void showLayer(View *, bool show);
 
 signals:
     void modelChanged();
@@ -233,7 +236,7 @@ signals:
     void layerNameChanged();
 
 protected:
-    View *m_view;
+//    View *m_view;
     bool m_dormant;
 };
 
