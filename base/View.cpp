@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <math.h>
 
 //#define DEBUG_VIEW_WIDGET_PAINT 1
 
