@@ -19,6 +19,8 @@
 #include <QRect>
 #include <QXmlAttributes>
 
+#include <map>
+
 class ZoomConstraint;
 class Model;
 class QPainter;
@@ -175,17 +177,6 @@ public:
     virtual void setObjectName(const QString &name);
 
     /**
-     * Return the pixel x-coordinate corresponding to a given sample
-     * frame (which may be negative).
-     */
-//    int getXForFrame(long frame) const;
-
-    /**
-     * Return the closest frame to the given pixel x-coordinate.
-     */
-//    long getFrameForX(int x) const;
-
-    /**
      * Convert the layer's data (though not those of the model it
      * refers to) into an XML string for file output.  This class
      * implements the basic name/type/model-id output; subclasses will
@@ -203,27 +194,30 @@ public:
     virtual void setProperties(const QXmlAttributes &) = 0;
 
     /**
-     * Indicate that a layer is not currently visible and is not
-     * expected to become visible in the near future (for example
-     * because the user has explicitly removed or hidden it).  The
-     * layer may respond by (for example) freeing any cache memory it
-     * is using, until next time its paint method is called.  It does
-     * not need to remember not to draw itself; the view will handle
-     * that.
+     * Indicate that a layer is not currently visible in the given
+     * view and is not expected to become visible in the near future
+     * (for example because the user has explicitly removed or hidden
+     * it).  The layer may respond by (for example) freeing any cache
+     * memory it is using, until next time its paint method is called.
+     * It does not need to remember not to draw itself; the view will
+     * handle that.
      */
-    //!!! update for multiview
-    virtual void setLayerDormant(const View *, bool dormant) { m_dormant = dormant; }
+    virtual void setLayerDormant(const View *v, bool dormant) {
+	m_dormancy[v] = dormant;
+    }
 
     /**
-     * Return whether the layer is dormant (i.e. hidden).
+     * Return whether the layer is dormant (i.e. hidden) in the given
+     * view.
      */
-    //!!! update for multiview
-    virtual bool isLayerDormant(const View *) const { return m_dormant; }
+    virtual bool isLayerDormant(const View *v) const {
+	if (m_dormancy.find(v) == m_dormancy.end()) return false;
+	return m_dormancy.find(v)->second;
+    }
 
     virtual PlayParameters *getPlayParameters();
 
 public slots:
-    //!!! update for multiview
     void showLayer(View *, bool show);
 
 signals:
@@ -236,8 +230,7 @@ signals:
     void layerNameChanged();
 
 protected:
-//    View *m_view;
-    bool m_dormant;
+    std::map<const void *, bool> m_dormancy;
 };
 
 #endif
