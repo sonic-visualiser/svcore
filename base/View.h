@@ -48,6 +48,7 @@ public:
      * which case they will remove themselves from this View
      * automatically), or to be removed explicitly without deleting
      * using removeLayer.
+     **!!!!!!
      */
     virtual ~View();
 
