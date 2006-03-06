@@ -198,9 +198,8 @@ public:
      * view and is not expected to become visible in the near future
      * (for example because the user has explicitly removed or hidden
      * it).  The layer may respond by (for example) freeing any cache
-     * memory it is using, until next time its paint method is called.
-     * It does not need to remember not to draw itself; the view will
-     * handle that.
+     * memory it is using, until next time its paint method is called,
+     * when it should set itself un-dormant again.
      */
     virtual void setLayerDormant(const View *v, bool dormant) {
 	m_dormancy[v] = dormant;
@@ -230,7 +229,7 @@ signals:
     void layerNameChanged();
 
 protected:
-    std::map<const void *, bool> m_dormancy;
+    mutable std::map<const void *, bool> m_dormancy;
 };
 
 #endif
