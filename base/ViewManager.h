@@ -83,6 +83,8 @@ public:
     bool getPlaySelectionMode() const { return m_playSelectionMode; }
     void setPlaySelectionMode(bool on);
 
+    size_t getPlaybackSampleRate() const;
+
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
     void centreFrameChanged(void *originator, unsigned long frame, bool locked);

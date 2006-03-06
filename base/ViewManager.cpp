@@ -174,6 +174,15 @@ ViewManager::setPlaySelectionMode(bool mode)
     emit playSelectionModeChanged();
 }
 
+size_t
+ViewManager::getPlaybackSampleRate() const
+{
+    if (m_playSource) {
+	return m_playSource->getTargetSampleRate();
+    }
+    return 0;
+}
+
 void
 ViewManager::setAudioPlaySource(AudioPlaySource *source)
 {

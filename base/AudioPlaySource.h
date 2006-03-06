@@ -50,6 +50,12 @@ public:
      * 0.0 -> 1.0, for metering purposes.
      */
     virtual bool getOutputLevels(float &left, float &right) = 0;
+
+    /**
+     * Return the sample rate set by the target audio device (or the
+     * source sample rate if the target hasn't set one).
+     */
+    virtual size_t getTargetSampleRate() const = 0;
 };
 
 #endif
