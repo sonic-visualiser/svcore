@@ -84,6 +84,8 @@ public:
     void setPlaySelectionMode(bool on);
 
     size_t getPlaybackSampleRate() const;
+    size_t getMainModelSampleRate() const { return m_mainModelSampleRate; }
+    void setMainModelSampleRate(size_t sr) { m_mainModelSampleRate = sr; }
 
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
@@ -124,6 +126,7 @@ protected:
     unsigned long m_globalCentreFrame;
     unsigned long m_globalZoom;
     mutable unsigned long m_playbackFrame;
+    size_t m_mainModelSampleRate;
 
     float m_lastLeft;
     float m_lastRight;
