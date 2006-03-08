@@ -174,6 +174,8 @@ CommandHistory::redo()
     // no need to clip
 
     updateActions();
+
+    if ((int)m_undoStack.size() == m_savedAt) emit documentRestored();
 }
 
 void

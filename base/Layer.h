@@ -43,6 +43,10 @@ public:
     virtual ~Layer();
 
     virtual const Model *getModel() const = 0;
+    virtual Model *getModel() {
+	return const_cast<Model *>(const_cast<const Layer *>(this)->getModel());
+    }
+
     virtual const ZoomConstraint *getZoomConstraint() const { return 0; }
     virtual void paint(View *, QPainter &, QRect) const = 0;   
 
