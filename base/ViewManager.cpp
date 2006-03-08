@@ -20,6 +20,7 @@ ViewManager::ViewManager() :
     m_globalCentreFrame(0),
     m_globalZoom(1024),
     m_playbackFrame(0),
+    m_mainModelSampleRate(0),
     m_lastLeft(0), 
     m_lastRight(0),
     m_inProgressExclusive(true),
