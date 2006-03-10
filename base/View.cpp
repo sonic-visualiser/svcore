@@ -53,14 +53,16 @@ View::View(QWidget *w, bool showProgress) :
 
 View::~View()
 {
+    std::cerr << "View::~View(" << this << ")" << std::endl;
+
     //!!! will want to _not_ delete layers
 
     m_deleting = true;
-
+/*!!!
     for (LayerList::iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 	delete *i;
     }
-
+*/
     delete m_propertyContainer;
 }
 
