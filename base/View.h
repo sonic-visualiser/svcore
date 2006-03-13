@@ -232,7 +232,7 @@ public slots:
     virtual void viewManagerPlaybackFrameChanged(unsigned long);
     virtual void viewManagerZoomLevelChanged(void *, unsigned long, bool);
 
-    virtual void propertyContainerSelected(PropertyContainer *pc);
+    virtual void propertyContainerSelected(View *, PropertyContainer *pc);
 
     virtual void selectionChanged();
     virtual void toolModeChanged();

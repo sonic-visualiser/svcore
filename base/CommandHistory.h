@@ -28,6 +28,7 @@
 #include <map>
 
 class Command;
+class MacroCommand;
 class QAction;
 class QMenu;
 class QToolBar;
@@ -70,6 +71,12 @@ public:
     /// Set the maximum number of items in the redo history.
     void setRedoLimit(int limit);
     
+    /// Start recording commands to batch up into a single compound command.
+    void startCompoundOperation(QString name, bool execute);
+
+    /// Finish recording commands and store the compound command.
+    void endCompoundOperation();
+
 public slots:
     /**
      * Checkpoint function that should be called when the document is
@@ -143,6 +150,10 @@ protected:
     int m_redoLimit;
     int m_savedAt;
 
+    MacroCommand *m_currentMacro;
+    bool m_executeMacro;
+    void addToMacro(Command *command);
+    
     void updateActions();
 
     void clipCommands();

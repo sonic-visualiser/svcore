@@ -154,8 +154,10 @@ View::getPropertyContainer(size_t i)
 }
 
 void
-View::propertyContainerSelected(PropertyContainer *pc)
+View::propertyContainerSelected(View *client, PropertyContainer *pc)
 {
+    if (client != this) return;
+    
     if (pc == m_propertyContainer) {
 	if (m_haveSelectedLayer) {
 	    m_haveSelectedLayer = false;
