@@ -33,7 +33,9 @@ CommandHistory *CommandHistory::m_instance = 0;
 CommandHistory::CommandHistory() :
     m_undoLimit(50),
     m_redoLimit(50),
-    m_savedAt(0)
+    m_savedAt(0),
+    m_currentMacro(0),
+    m_executeMacro(false)
 {
     m_undoAction = new QAction(QIcon(":/icons/undo.png"), tr("&Undo"), this);
     m_undoAction->setShortcut(tr("Ctrl+Z"));
@@ -105,6 +107,11 @@ CommandHistory::addCommand(Command *command, bool execute)
 {
     if (!command) return;
 
+    if (m_currentMacro) {
+	addToMacro(command);
+	return;
+    }
+
     std::cerr << "MVCH::addCommand: " << command->getName().toLocal8Bit().data() << std::endl;
 
     // We can't redo after adding a command
@@ -127,6 +134,43 @@ CommandHistory::addCommand(Command *command, bool execute)
 
     updateActions();
 }
+
+void
+CommandHistory::addToMacro(Command *command)
+{
+    std::cerr << "MVCH::addToMacro: " << command->getName().toLocal8Bit().data() << std::endl;
+
+    if (m_executeMacro) command->execute();
+    m_currentMacro->addCommand(command);
+}
+
+void
+CommandHistory::startCompoundOperation(QString name, bool execute)
+{
+    if (m_currentMacro) {
+	std::cerr << "MVCH::startCompoundOperation: ERROR: compound operation already in progress!" << std::endl;
+	std::cerr << "(name is " << m_currentMacro->getName().toLocal8Bit().data() << ")" << std::endl;
+    }
+    
+    m_currentMacro = new MacroCommand(name);
+    m_executeMacro = execute;
+}
+
+void
+CommandHistory::endCompoundOperation()
+{
+    if (!m_currentMacro) {
+	std::cerr << "MVCH::endCompoundOperation: ERROR: no compound operation in progress!" << std::endl;
+    }
+
+    Command *toAdd = m_currentMacro;
+    m_currentMacro = 0;
+
+    // We don't execute the macro command here, because we have been
+    // executing the individual commands as we went along if
+    // m_executeMacro was true.
+    addCommand(toAdd, false);
+}    
 
 void
 CommandHistory::addExecutedCommand(Command *command)
