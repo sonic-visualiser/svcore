@@ -43,12 +43,8 @@ class View : public QFrame,
 
 public:
     /**
-     * Deleting a View deletes all its views.  However, it is
-     * also acceptable for the views to be deleted by other code (in
-     * which case they will remove themselves from this View
-     * automatically), or to be removed explicitly without deleting
-     * using removeLayer.
-     **!!!!!!
+     * Deleting a View does not delete any of its layers.  They should
+     * be managed elsewhere (e.g. by the Document).
      */
     virtual ~View();
 
@@ -168,6 +164,13 @@ public:
 
     virtual void setLightBackground(bool lb) { m_lightBackground = lb; }
     virtual bool hasLightBackground() const { return m_lightBackground; }
+
+    enum TextStyle {
+	BoxedText,
+	OutlinedText
+    };
+
+    virtual void drawVisibleText(int x, int y, QString text, TextStyle style);
 
     virtual bool shouldIlluminateLocalFeatures(const Layer *, QPoint &) const {
 	return false;

@@ -10,6 +10,7 @@
 #include "ViewManager.h"
 #include "AudioPlaySource.h"
 #include "Model.h"
+#include "CommandHistory.h"
 
 #include <iostream>
 
@@ -120,29 +121,78 @@ ViewManager::getSelections() const
 void
 ViewManager::setSelection(const Selection &selection)
 {
-    m_selections.setSelection(selection);
-    emit selectionChanged();
+    MultiSelection ms(m_selections);
+    ms.setSelection(selection);
+    setSelections(ms);
 }
 
 void
 ViewManager::addSelection(const Selection &selection)
 {
-    m_selections.addSelection(selection);
-    emit selectionChanged();
+    MultiSelection ms(m_selections);
+    ms.addSelection(selection);
+    setSelections(ms);
 }
 
 void
 ViewManager::removeSelection(const Selection &selection)
 {
-    m_selections.removeSelection(selection);
-    emit selectionChanged();
+    MultiSelection ms(m_selections);
+    ms.removeSelection(selection);
+    setSelections(ms);
 }
 
 void
 ViewManager::clearSelections()
 {
-    m_selections.clearSelections();
+    MultiSelection ms(m_selections);
+    ms.clearSelections();
+    setSelections(ms);
+}
+
+void
+ViewManager::setSelections(const MultiSelection &ms)
+{
+    if (m_selections.getSelections() == ms.getSelections()) return;
+    SetSelectionCommand *command = new SetSelectionCommand(this, ms);
+    CommandHistory::getInstance()->addCommand(command);
+}
+
+void
+ViewManager::signalSelectionChange()
+{
     emit selectionChanged();
+}
+
+ViewManager::SetSelectionCommand::SetSelectionCommand(ViewManager *vm,
+						      const MultiSelection &ms) :
+    m_vm(vm),
+    m_oldSelection(vm->m_selections),
+    m_newSelection(ms)
+{
+}
+
+ViewManager::SetSelectionCommand::~SetSelectionCommand() { }
+
+void
+ViewManager::SetSelectionCommand::execute()
+{
+    m_vm->m_selections = m_newSelection;
+    m_vm->signalSelectionChange();
+}
+
+void
+ViewManager::SetSelectionCommand::unexecute()
+{
+    m_vm->m_selections = m_oldSelection;
+    m_vm->signalSelectionChange();
+}
+
+QString
+ViewManager::SetSelectionCommand::getName() const
+{
+    if (m_newSelection.getSelections().empty()) return tr("Clear Selection");
+    else return tr("Select");
 }
 
 Selection

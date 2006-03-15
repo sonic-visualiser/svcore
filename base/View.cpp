@@ -55,14 +55,7 @@ View::~View()
 {
     std::cerr << "View::~View(" << this << ")" << std::endl;
 
-    //!!! will want to _not_ delete layers
-
     m_deleting = true;
-/*!!!
-    for (LayerList::iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
-	delete *i;
-    }
-*/
     delete m_propertyContainer;
 }
 
@@ -474,6 +467,12 @@ View::setFollowGlobalZoom(bool f)
 {
     m_followZoom = f;
     emit propertyContainerPropertyChanged(m_propertyContainer);
+}
+
+void
+View::drawVisibleText(int x, int y, QString text, TextStyle style)
+{
+    //!!! blah.
 }
 
 void
