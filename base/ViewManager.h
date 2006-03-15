@@ -16,6 +16,7 @@
 #include <map>
 
 #include "Selection.h"
+#include "Command.h"
 
 class AudioPlaySource;
 class Model;
@@ -139,6 +140,24 @@ protected:
 
     bool m_playLoopMode;
     bool m_playSelectionMode;
+
+    void setSelections(const MultiSelection &ms);
+    void signalSelectionChange();
+
+    class SetSelectionCommand : public Command
+    {
+    public:
+	SetSelectionCommand(ViewManager *vm, const MultiSelection &ms);
+	virtual ~SetSelectionCommand();
+	virtual void execute();
+	virtual void unexecute();
+	virtual QString getName() const;
+
+    protected:
+	ViewManager *m_vm;
+	MultiSelection m_oldSelection;
+	MultiSelection m_newSelection;
+    };
 };
 
 #endif
