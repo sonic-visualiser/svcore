@@ -13,6 +13,8 @@
 #include <cstddef>
 #include <set>
 
+#include "XmlExportable.h"
+
 class Selection
 {
 public:
@@ -35,7 +37,7 @@ protected:
     size_t m_endFrame;
 };
 
-class MultiSelection
+class MultiSelection : public XmlExportable
 {
 public:
     MultiSelection();
@@ -56,6 +58,9 @@ public:
      * Return the empty selection if no appropriate selection is found.
      */
     Selection getContainingSelection(size_t frame, bool defaultToFollowing) const;
+
+    virtual QString toXmlString(QString indent = "",
+				QString extraAttributes = "") const;
 
 protected:
     SelectionList m_selections;

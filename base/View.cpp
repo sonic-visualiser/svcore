@@ -470,9 +470,40 @@ View::setFollowGlobalZoom(bool f)
 }
 
 void
-View::drawVisibleText(int x, int y, QString text, TextStyle style)
+View::drawVisibleText(QPainter &paint, int x, int y, QString text, TextStyle style)
 {
-    //!!! blah.
+    if (style == OutlinedText) {
+
+	QColor origPenColour = paint.pen().color();
+	QColor penColour = origPenColour;
+	QColor surroundColour = Qt::white;  //palette().background().color();
+
+	if (!hasLightBackground()) {
+	    int h, s, v;
+	    penColour.getHsv(&h, &s, &v);
+	    penColour = QColor::fromHsv(h, s, 255 - v);
+	    surroundColour = Qt::black;
+	}
+
+	paint.setPen(surroundColour);
+
+	for (int dx = -1; dx <= 1; ++dx) {
+	    for (int dy = -1; dy <= 1; ++dy) {
+		if (!(dx || dy)) continue;
+		paint.drawText(x + dx, y + dy, text);
+	    }
+	}
+
+	paint.setPen(penColour);
+
+	paint.drawText(x, y, text);
+
+	paint.setPen(origPenColour);
+
+    } else {
+
+	std::cerr << "ERROR: View::drawVisibleText: Boxed style not yet implemented!" << std::endl;
+    }
 }
 
 void
@@ -811,26 +842,18 @@ View::getScrollableBackLayers(bool testChanged, bool &changed) const
 {
     changed = false;
 
+    // We want a list of all the scrollable layers that are behind the
+    // backmost non-scrollable layer.
+
     LayerList scrollables;
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 	if ((*i)->isLayerDormant(this)) continue;
-	if ((*i)->isLayerScrollable(this)) scrollables.push_back(*i);
-	else {
-	    if (testChanged && scrollables != m_lastScrollableBackLayers) {
-		m_lastScrollableBackLayers = scrollables;
-		changed = true;
-	    }
-	    return scrollables;
+	if ((*i)->isLayerOpaque()) {
+	    // You can't see anything behind an opaque layer!
+	    scrollables.clear();
 	}
-    }
-
-    if (scrollables.size() == 1 &&
-	dynamic_cast<TimeRulerLayer *>(*scrollables.begin())) {
-
-	// If only the ruler is scrollable, it's not worth the bother
-	// -- it probably redraws as quickly as it refreshes from
-	// cache
-	scrollables.clear();
+	if ((*i)->isLayerScrollable(this)) scrollables.push_back(*i);
+	else break;
     }
 
     if (testChanged && scrollables != m_lastScrollableBackLayers) {
@@ -850,12 +873,17 @@ View::getNonScrollableFrontLayers(bool testChanged, bool &changed) const
     // Everything in front of the first non-scrollable from the back
     // should also be considered non-scrollable
 
-    size_t count = 0;
+    bool started = false;
+
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 	if ((*i)->isLayerDormant(this)) continue;
-	if (count < scrollables.size()) {
-	    ++count;
+	if (!started && (*i)->isLayerScrollable(this)) {
 	    continue;
+	}
+	started = true;
+	if ((*i)->isLayerOpaque()) {
+	    // You can't see anything behind an opaque layer!
+	    nonScrollables.clear();
 	}
 	nonScrollables.push_back(*i);
     }
@@ -1006,7 +1034,7 @@ View::paintEvent(QPaintEvent *e)
     QRect nonCacheRect(cacheRect);
 
     // If not all layers are scrollable, but some of the back layers
-    // are, we should store only those in the cache
+    // are, we should store only those in the cache.
 
     bool layersChanged = false;
     LayerList scrollables = getScrollableBackLayers(true, layersChanged);
@@ -1015,6 +1043,10 @@ View::paintEvent(QPaintEvent *e)
     bool haveSelections = m_manager && !m_manager->getSelections().empty();
     bool selectionDrawn = false;
 
+    // If all the non-scrollable layers are non-opaque, then we draw
+    // the selection rectangle behind them and cache it.  If any are
+    // opaque, however, we can't cache.
+    //
     if (!selectionCacheable) {
 	selectionCacheable = true;
 	for (LayerList::const_iterator i = nonScrollables.begin();
