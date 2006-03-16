@@ -8,6 +8,9 @@
 */
 
 #include "PropertyContainer.h"
+#include "CommandHistory.h"
+
+#include <iostream>
 
 PropertyContainer::PropertyList
 PropertyContainer::getProperties() const
@@ -42,7 +45,47 @@ PropertyContainer::getPropertyValueLabel(const PropertyName &, int) const
 }
 
 void
-PropertyContainer::setProperty(const PropertyName &, int) 
+PropertyContainer::setProperty(const PropertyName &name, int) 
 {
+    std::cerr << "WARNING: PropertyContainer[" << getPropertyContainerName().toStdString() << "]::setProperty(" << name.toStdString() << "): no implementation in subclass!" << std::endl;
+}
+
+void
+PropertyContainer::setPropertyWithCommand(const PropertyName &name, int value)
+{
+    int currentValue = getPropertyRangeAndValue(name, 0, 0);
+    if (value == currentValue) return;
+
+    CommandHistory::getInstance()->addCommand
+	(new SetPropertyCommand(this, name, value));
+}
+
+PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
+							  const PropertyName &pn,
+							  int value) :
+    m_pc(pc),
+    m_pn(pn),
+    m_value(value),
+    m_oldValue(0)
+{
+}
+
+void
+PropertyContainer::SetPropertyCommand::execute()
+{
+    m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, 0, 0);
+    m_pc->setProperty(m_pn, m_value);
+}
+
+void
+PropertyContainer::SetPropertyCommand::unexecute() 
+{
+    m_pc->setProperty(m_pn, m_oldValue);
+}
+
+QString
+PropertyContainer::SetPropertyCommand::getName() const
+{
+    return m_pc->tr("Set %1 Property").arg(m_pn);
 }
 

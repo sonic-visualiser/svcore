@@ -10,6 +10,8 @@
 #ifndef _PROPERTY_CONTAINER_H_
 #define _PROPERTY_CONTAINER_H_
 
+#include "Command.h"
+
 #include <QString>
 #include <QObject>
 #include <vector>
@@ -89,6 +91,30 @@ public slots:
      * colours, the integer value should be treated as a qRgb.
      */
     virtual void setProperty(const PropertyName &, int value);
+
+    /**
+     * Set a property using a command, supporting undo and redo.
+     */
+    virtual void setPropertyWithCommand(const PropertyName &, int value);
+
+protected:
+
+    class SetPropertyCommand : public Command
+    {
+    public:
+	SetPropertyCommand(PropertyContainer *pc, const PropertyName &pn, int);
+	virtual ~SetPropertyCommand() { }
+
+	virtual void execute();
+	virtual void unexecute();
+	virtual QString getName() const;
+
+    protected:
+	PropertyContainer *m_pc;
+	PropertyName m_pn;
+	int m_value;
+	int m_oldValue;
+    };
 };
 
 #endif

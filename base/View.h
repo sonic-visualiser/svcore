@@ -170,7 +170,8 @@ public:
 	OutlinedText
     };
 
-    virtual void drawVisibleText(int x, int y, QString text, TextStyle style);
+    virtual void drawVisibleText(QPainter &p, int x, int y,
+				 QString text, TextStyle style);
 
     virtual bool shouldIlluminateLocalFeatures(const Layer *, QPoint &) const {
 	return false;

@@ -33,6 +33,7 @@ CommandHistory *CommandHistory::m_instance = 0;
 CommandHistory::CommandHistory() :
     m_undoLimit(50),
     m_redoLimit(50),
+    m_menuLimit(15),
     m_savedAt(0),
     m_currentMacro(0),
     m_executeMacro(false)
@@ -112,7 +113,7 @@ CommandHistory::addCommand(Command *command, bool execute)
 	return;
     }
 
-    std::cerr << "MVCH::addCommand: " << command->getName().toLocal8Bit().data() << std::endl;
+    std::cerr << "MVCH::addCommand: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 
     // We can't redo after adding a command
     clearStack(m_redoStack);
@@ -241,6 +242,13 @@ CommandHistory::setRedoLimit(int limit)
 }
 
 void
+CommandHistory::setMenuLimit(int limit)
+{
+    m_menuLimit = limit;
+    updateActions();
+}
+
+void
 CommandHistory::documentSaved()
 {
     m_savedAt = m_undoStack.size();
@@ -287,7 +295,8 @@ CommandHistory::clearStack(CommandStack &stack)
 {
     while (!stack.empty()) {
 	Command *command = stack.top();
-	std::cerr << "MVCH::clearStack: About to delete command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
+	// Not safe to call getName() on a command about to be deleted
+	std::cerr << "MVCH::clearStack: About to delete command " << command << std::endl;
 	delete command;
 	stack.pop();
     }
@@ -353,7 +362,7 @@ CommandHistory::updateActions()
 	CommandStack tempStack;
 	int j = 0;
 
-	while (j < 10 && !stack.empty()) {
+	while (j < m_menuLimit && !stack.empty()) {
 
 	    Command *command = stack.top();
 	    tempStack.push(command);

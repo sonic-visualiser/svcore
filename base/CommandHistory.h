@@ -60,17 +60,23 @@ public:
     void addCommand(Command *command, bool execute = true);
     
     /// Return the maximum number of items in the undo history.
-    int undoLimit() { return m_undoLimit; }
+    int getUndoLimit() const { return m_undoLimit; }
 
     /// Set the maximum number of items in the undo history.
     void setUndoLimit(int limit);
 
     /// Return the maximum number of items in the redo history.
-    int redoLimit() { return m_redoLimit; }
+    int getRedoLimit() const { return m_redoLimit; }
 
     /// Set the maximum number of items in the redo history.
     void setRedoLimit(int limit);
     
+    /// Return the maximum number of items visible in undo and redo menus.
+    int getMenuLimit() const { return m_menuLimit; }
+
+    /// Set the maximum number of items in the menus.
+    void setMenuLimit(int limit);
+
     /// Start recording commands to batch up into a single compound command.
     void startCompoundOperation(QString name, bool execute);
 
@@ -148,6 +154,7 @@ protected:
 
     int m_undoLimit;
     int m_redoLimit;
+    int m_menuLimit;
     int m_savedAt;
 
     MacroCommand *m_currentMacro;
