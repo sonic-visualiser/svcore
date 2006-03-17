@@ -9,6 +9,7 @@
 
 #include "Layer.h"
 #include "View.h"
+#include "Model.h"
 
 #include <iostream>
 
@@ -29,6 +30,23 @@ Layer::getPropertyContainerIconName() const
 {
     return LayerFactory::instance()->getLayerIconName
 	(LayerFactory::instance()->getLayerType(this));
+}
+
+QString
+Layer::getLayerPresentationName() const
+{
+    QString layerName = objectName();
+    QString modelName;
+    if (getModel()) modelName = getModel()->objectName();
+	    
+    QString text;
+    if (modelName != "") {
+	text = QString("%1: %2").arg(modelName).arg(layerName);
+    } else {
+	text = layerName;
+    }
+	
+    return text;
 }
 
 void

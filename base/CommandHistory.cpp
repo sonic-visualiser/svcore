@@ -25,6 +25,7 @@
 #include <QMenu>
 #include <QToolBar>
 #include <QString>
+#include <QTimer>
 
 #include <iostream>
 
@@ -35,8 +36,11 @@ CommandHistory::CommandHistory() :
     m_redoLimit(50),
     m_menuLimit(15),
     m_savedAt(0),
-    m_currentMacro(0),
-    m_executeMacro(false)
+    m_currentCompound(0),
+    m_executeCompound(false),
+    m_currentBundle(0),
+    m_bundleTimer(0),
+    m_bundleTimeout(5000)
 {
     m_undoAction = new QAction(QIcon(":/icons/undo.png"), tr("&Undo"), this);
     m_undoAction->setShortcut(tr("Ctrl+Z"));
@@ -83,6 +87,8 @@ CommandHistory::getInstance()
 void
 CommandHistory::clear()
 {
+    std::cerr << "CommandHistory::clear()" << std::endl;
+    closeBundle();
     m_savedAt = -1;
     clearStack(m_undoStack);
     clearStack(m_redoStack);
@@ -104,18 +110,26 @@ CommandHistory::registerToolbar(QToolBar *toolbar)
 }
 
 void
-CommandHistory::addCommand(Command *command, bool execute)
+CommandHistory::addCommand(Command *command, bool execute, bool bundle)
 {
     if (!command) return;
 
-    if (m_currentMacro) {
-	addToMacro(command);
+    if (m_currentCompound) {
+	addToCompound(command);
 	return;
     }
 
-    std::cerr << "MVCH::addCommand: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
+    if (bundle) {
+	addToBundle(command, execute);
+	return;
+    } else if (m_currentBundle) {
+	closeBundle();
+    }
+
+    std::cerr << "CommandHistory::addCommand: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 
     // We can't redo after adding a command
+    std::cerr << "CommandHistory::clearing redo stack" << std::endl;
     clearStack(m_redoStack);
 
     // can we reach savedAt?
@@ -137,39 +151,83 @@ CommandHistory::addCommand(Command *command, bool execute)
 }
 
 void
-CommandHistory::addToMacro(Command *command)
+CommandHistory::addToBundle(Command *command, bool execute)
 {
-    std::cerr << "MVCH::addToMacro: " << command->getName().toLocal8Bit().data() << std::endl;
+    if (m_currentBundle) {
+	if (!command || (command->getName() != m_currentBundleName)) {
+	    closeBundle();
+	}
+    }
 
-    if (m_executeMacro) command->execute();
-    m_currentMacro->addCommand(command);
+    if (!command) return;
+
+    if (!m_currentBundle) {
+	// need to addCommand before setting m_currentBundle, as addCommand
+	// with bundle false will reset m_currentBundle to 0
+	MacroCommand *mc = new MacroCommand(command->getName());
+	addCommand(mc, false);
+	m_currentBundle = mc;
+	m_currentBundleName = command->getName();
+    }
+
+    if (execute) command->execute();
+    m_currentBundle->addCommand(command);
+
+    delete m_bundleTimer;
+    m_bundleTimer = new QTimer(this);
+    connect(m_bundleTimer, SIGNAL(timeout()), this, SLOT(bundleTimerTimeout()));
+    m_bundleTimer->start(m_bundleTimeout);
+}
+
+void
+CommandHistory::closeBundle()
+{
+    m_currentBundle = 0;
+    m_currentBundleName = "";
+}
+
+void
+CommandHistory::bundleTimerTimeout()
+{
+    closeBundle();
+}
+
+void
+CommandHistory::addToCompound(Command *command)
+{
+    std::cerr << "CommandHistory::addToCompound: " << command->getName().toLocal8Bit().data() << std::endl;
+
+    if (m_executeCompound) command->execute();
+    m_currentCompound->addCommand(command);
 }
 
 void
 CommandHistory::startCompoundOperation(QString name, bool execute)
 {
-    if (m_currentMacro) {
-	std::cerr << "MVCH::startCompoundOperation: ERROR: compound operation already in progress!" << std::endl;
-	std::cerr << "(name is " << m_currentMacro->getName().toLocal8Bit().data() << ")" << std::endl;
+    if (m_currentCompound) {
+	std::cerr << "CommandHistory::startCompoundOperation: ERROR: compound operation already in progress!" << std::endl;
+	std::cerr << "(name is " << m_currentCompound->getName().toLocal8Bit().data() << ")" << std::endl;
     }
-    
-    m_currentMacro = new MacroCommand(name);
-    m_executeMacro = execute;
+ 
+    closeBundle();
+   
+    m_currentCompound = new MacroCommand(name);
+    m_executeCompound = execute;
 }
 
 void
 CommandHistory::endCompoundOperation()
 {
-    if (!m_currentMacro) {
-	std::cerr << "MVCH::endCompoundOperation: ERROR: no compound operation in progress!" << std::endl;
+    if (!m_currentCompound) {
+	std::cerr << "CommandHistory::endCompoundOperation: ERROR: no compound operation in progress!" << std::endl;
     }
 
-    Command *toAdd = m_currentMacro;
-    m_currentMacro = 0;
+    Command *toAdd = m_currentCompound;
+    m_currentCompound = 0;
 
     // We don't execute the macro command here, because we have been
     // executing the individual commands as we went along if
-    // m_executeMacro was true.
+    // m_executeCompound was true.
     addCommand(toAdd, false);
 }    
 
@@ -190,6 +248,8 @@ CommandHistory::undo()
 {
     if (m_undoStack.empty()) return;
 
+    closeBundle();
+
     Command *command = m_undoStack.top();
     command->unexecute();
     emit commandExecuted();
@@ -208,6 +268,8 @@ void
 CommandHistory::redo()
 {
     if (m_redoStack.empty()) return;
+
+    closeBundle();
 
     Command *command = m_redoStack.top();
     command->execute();
@@ -249,8 +311,15 @@ CommandHistory::setMenuLimit(int limit)
 }
 
 void
+CommandHistory::setBundleTimeout(int ms)
+{
+    m_bundleTimeout = ms;
+}
+
+void
 CommandHistory::documentSaved()
 {
+    closeBundle();
     m_savedAt = m_undoStack.size();
 }
 
@@ -276,7 +345,7 @@ CommandHistory::clipStack(CommandStack &stack, int limit)
 
 	for (i = 0; i < limit; ++i) {
 	    Command *command = stack.top();
-	    std::cerr << "MVCH::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
+	    std::cerr << "CommandHistory::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 	    tempStack.push(stack.top());
 	    stack.pop();
 	}
@@ -296,7 +365,7 @@ CommandHistory::clearStack(CommandStack &stack)
     while (!stack.empty()) {
 	Command *command = stack.top();
 	// Not safe to call getName() on a command about to be deleted
-	std::cerr << "MVCH::clearStack: About to delete command " << command << std::endl;
+	std::cerr << "CommandHistory::clearStack: About to delete command " << command << std::endl;
 	delete command;
 	stack.pop();
     }

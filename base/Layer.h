@@ -66,6 +66,8 @@ public:
 	return objectName();
     }
 
+    virtual QString getLayerPresentationName() const;
+
     virtual int getVerticalScaleWidth(View *, QPainter &) const { return 0; }
     virtual void paintVerticalScale(View *, QPainter &, QRect) const { }
 

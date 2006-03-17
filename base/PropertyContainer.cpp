@@ -57,7 +57,7 @@ PropertyContainer::setPropertyWithCommand(const PropertyName &name, int value)
     if (value == currentValue) return;
 
     CommandHistory::getInstance()->addCommand
-	(new SetPropertyCommand(this, name, value));
+	(new SetPropertyCommand(this, name, value), true, true); // bundled
 }
 
 PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,

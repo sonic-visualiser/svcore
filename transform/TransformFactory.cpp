@@ -47,9 +47,10 @@ TransformFactory::getAllTransforms()
 void
 TransformFactory::populateTransforms()
 {
-    //!!!
     std::vector<QString> fexplugs =
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
+
+    std::map<QString, QString> makers;
 
     for (size_t i = 0; i < fexplugs.size(); ++i) {
 
@@ -62,8 +63,6 @@ TransformFactory::populateTransforms()
 	    std::cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
 	    continue;
 	}
-
-	//!!! well, really we want to be able to query this without having to instantiate
 
 	FeatureExtractionPlugin *plugin = 
 	    factory->instantiatePlugin(pluginId, 48000);
@@ -93,8 +92,44 @@ TransformFactory::populateTransforms()
 	    }
 
 	    m_transforms[transformName] = userDescription;
+	    
+	    makers[transformName] = plugin->getMaker().c_str();
 	}
     }
+
+    // disambiguate plugins with similar descriptions
+
+    std::map<QString, int> descriptions;
+
+    for (TransformMap::iterator i = m_transforms.begin(); i != m_transforms.end();
+	 ++i) {
+
+	QString name = i->first, description = i->second;
+
+	++descriptions[description];
+	++descriptions[QString("%1 [%2]").arg(description).arg(makers[name])];
+    }
+
+    std::map<QString, int> counts;
+    TransformMap newMap;
+
+    for (TransformMap::iterator i = m_transforms.begin(); i != m_transforms.end();
+	 ++i) {
+
+	QString name = i->first, description = i->second;
+
+	if (descriptions[description] > 1) {
+	    description = QString("%1 [%2]").arg(description).arg(makers[name]);
+	    if (descriptions[description] > 1) {
+		description = QString("%1 <%2>")
+		    .arg(description).arg(++counts[description]);
+	    }
+	}
+
+	newMap[name] = description;
+    }	    
+	    
+    m_transforms = newMap;
 }
 
 QString

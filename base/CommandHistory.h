@@ -32,6 +32,7 @@ class MacroCommand;
 class QAction;
 class QMenu;
 class QToolBar;
+class QTimer;
 
 /**
  * The CommandHistory class stores a list of executed commands and
@@ -57,7 +58,27 @@ public:
     void registerMenu(QMenu *menu);
     void registerToolbar(QToolBar *toolbar);
 
-    void addCommand(Command *command, bool execute = true);
+    /**
+     * Add a command to the command history.
+     *
+     * If execute is true, the command will be executed before being
+     * added.  Otherwise it will be assumed to have been already
+     * executed -- a command should not be added to the history unless
+     * its work has actually been done somehow!
+     *
+     * If a compound operation is in use (see startCompoundOperation
+     * below), the execute status of the compound operation will
+     * override any value of execute passed to this method.
+     *
+     * If bundle is true, the command will be a candidate for bundling
+     * with any adjacent bundeable commands that have the same name,
+     * into a single compound command.  This is useful for small
+     * commands that may be executed repeatedly altering the same data
+     * (e.g. type text, set a parameter) whose number and extent is
+     * not known in advance.  The bundle parameter will be ignored if
+     * a compound operation is already in use.
+     */
+    void addCommand(Command *command, bool execute = true, bool bundle = false);
     
     /// Return the maximum number of items in the undo history.
     int getUndoLimit() const { return m_undoLimit; }
@@ -76,6 +97,12 @@ public:
 
     /// Set the maximum number of items in the menus.
     void setMenuLimit(int limit);
+
+    /// Return the time after which a bundle will be closed if nothing is added.
+    int getBundleTimeout() const { return m_bundleTimeout; }
+
+    /// Set the time after which a bundle will be closed if nothing is added.
+    void setBundleTimeout(int msec);
 
     /// Start recording commands to batch up into a single compound command.
     void startCompoundOperation(QString name, bool execute);
@@ -109,7 +136,8 @@ protected slots:
     void redo();
     void undoActivated(QAction *);
     void redoActivated(QAction *);
-
+    void bundleTimerTimeout();
+    
 signals:
     /**
      * Emitted whenever a command has just been executed or
@@ -157,9 +185,16 @@ protected:
     int m_menuLimit;
     int m_savedAt;
 
-    MacroCommand *m_currentMacro;
-    bool m_executeMacro;
-    void addToMacro(Command *command);
+    MacroCommand *m_currentCompound;
+    bool m_executeCompound;
+    void addToCompound(Command *command);
+
+    MacroCommand *m_currentBundle;
+    QString m_currentBundleName;
+    QTimer *m_bundleTimer;
+    int m_bundleTimeout;
+    void addToBundle(Command *command, bool execute);
+    void closeBundle();
     
     void updateActions();
 

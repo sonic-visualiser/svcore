@@ -41,6 +41,12 @@ MacroCommand::deleteCommand(Command *command)
     }
 }
 
+bool
+MacroCommand::haveCommands() const
+{
+    return !m_commands.empty();
+}
+
 void
 MacroCommand::execute()
 {
@@ -55,5 +61,17 @@ MacroCommand::unexecute()
     for (size_t i = 0; i < m_commands.size(); ++i) {
 	m_commands[m_commands.size() - i - 1]->unexecute();
     }
+}
+
+QString
+MacroCommand::getName() const
+{
+    return m_name;
+}
+
+void
+MacroCommand::setName(QString name)
+{
+    m_name = name;
 }
 

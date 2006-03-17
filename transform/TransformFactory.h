@@ -24,8 +24,10 @@ public:
     static TransformFactory *instance();
 
     // The name is intended to be computer-referencable, and unique
-    // within the application.  The description should be
-    // human-readable, and does not have to be unique.
+    // within the application.  The description is intended to be
+    // human readable.  In principle it doesn't have to be unique, but
+    // the factory will add suffixes to ensure that it is, all the
+    // same (just to avoid user confusion).
 
     struct TransformDesc {
 	TransformDesc(TransformName _name, QString _description = "") :
