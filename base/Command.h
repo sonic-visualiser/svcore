@@ -31,13 +31,13 @@ public:
 
     virtual void addCommand(Command *command);
     virtual void deleteCommand(Command *command);
-    virtual bool haveCommands() const { return !m_commands.empty(); }
+    virtual bool haveCommands() const;
 
     virtual void execute();
     virtual void unexecute();
 
-    virtual QString getName() const { return m_name; }
-    virtual void setName(QString name) { m_name = name; }
+    virtual QString getName() const;
+    virtual void setName(QString name);
 
 protected:
     QString m_name;

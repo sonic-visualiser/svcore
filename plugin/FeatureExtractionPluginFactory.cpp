@@ -13,7 +13,7 @@
 #include "plugins/BeatDetect.h" //!!!
 #include "plugins/ChromagramPlugin.h" //!!!
 #include "plugins/ZeroCrossing.h" //!!!
-// NOTE: added by Martin Gasser
+#include "plugins/SpectralCentroid.h" //!!!
 #include "plugins/TonalChangeDetect.h" //!!!
 
 #include <iostream>
@@ -69,8 +69,8 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     rv.push_back("sv:_builtin:beats"); //!!!
     rv.push_back("sv:_builtin:chromagram"); //!!!
     rv.push_back("sv:_builtin:zerocrossing"); //!!!
-	// NOTE: added by Martin Gasser
-	rv.push_back("sv:_builtin:tonalchange"); //!!!
+    rv.push_back("sv:_builtin:spectralcentroid"); //!!!
+    rv.push_back("sv:_builtin:tonalchange"); //!!!
     return rv;
 }
 
@@ -103,7 +103,10 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 	return new ZeroCrossing(inputSampleRate); //!!!
     }
 
-	// NOTE: added by Martin Gasser
+    if (label == "spectralcentroid") {
+	return new SpectralCentroid(inputSampleRate); //!!!
+    }
+
     if (label == "tonalchange") {
 	return new TonalChangeDetect(inputSampleRate); //!!!
     }
