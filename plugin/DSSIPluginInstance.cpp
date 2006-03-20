@@ -92,51 +92,82 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     }
 }
 
-DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
-				       int clientId,
-				       QString identifier,
-				       int position,
-				       unsigned long sampleRate,
-				       size_t blockSize,
-				       sample_t **inputBuffers,
-				       sample_t **outputBuffers,
-				       const DSSI_Descriptor* descriptor) :
-    RealTimePluginInstance(factory, identifier),
-    m_client(clientId),
-    m_position(position),
-    m_descriptor(descriptor),
-    m_eventBuffer(EVENT_BUFFER_SIZE),
-    m_blockSize(blockSize),
-    m_inputBuffers(inputBuffers),
-    m_outputBuffers(outputBuffers),
-    m_ownBuffers(false),
-    m_idealChannelCount(0),
-    m_sampleRate(sampleRate),
-    m_latencyPort(0),
-    m_run(false),
-    m_bypassed(false),
-    m_grouped(false)
+std::string
+DSSIPluginInstance::getName() const
 {
-#ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::DSSIPluginInstance[buffers supplied](" << identifier << ")"
-	      << std::endl;
-#endif
-
-    init();
-
-    m_pending.lsb = m_pending.msb = m_pending.program = -1;
-
-    instantiate(sampleRate);
-    if (isOK()) {
-	connectPorts();
-	activate();
-	if (m_descriptor->run_multiple_synths) {
-	    m_grouped = true;
-	    initialiseGroupMembership();
-	}
-    }
+    return m_descriptor->LADSPA_Plugin->Label;
 }
 
+std::string 
+DSSIPluginInstance::getDescription() const
+{
+    return m_descriptor->LADSPA_Plugin->Name;
+}
+
+std::string
+DSSIPluginInstance::getMaker() const
+{
+    return m_descriptor->LADSPA_Plugin->Maker;
+}
+
+int
+DSSIPluginInstance::getPluginVersion() const
+{
+    return 1;
+}
+
+std::string
+DSSIPluginInstance::getCopyright() const
+{
+    return m_descriptor->LADSPA_Plugin->Copyright;
+}
+
+DSSIPluginInstance::ParameterList
+DSSIPluginInstance::getParameterDescriptors() const
+{
+    ParameterList list;
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        
+        ParameterDescriptor pd;
+        unsigned int pn = m_controlPortsIn[i].first;
+
+        pd.name = m_descriptor->LADSPA_Plugin->PortNames[pn];
+        pd.description = pd.name;
+        pd.minValue = f->getPortMinimum(m_descriptor->LADSPA_Plugin, pn);
+        pd.maxValue = f->getPortMaximum(m_descriptor->LADSPA_Plugin, pn);
+        pd.defaultValue = f->getPortDefault(m_descriptor->LADSPA_Plugin, pn);
+        pd.isQuantized = false;
+
+        list.push_back(pd);
+    }
+
+    return list;
+}
+
+float
+DSSIPluginInstance::getParameter(std::string name) const
+{
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
+            return getParameterValue(i);
+        }
+    }
+
+    return 0.0;
+}
+
+void
+DSSIPluginInstance::setParameter(std::string name, float value)
+{
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
+            setParameterValue(i, value);
+            break;
+        }
+    }
+}    
 
 void
 DSSIPluginInstance::init()
@@ -436,7 +467,6 @@ DSSIPluginInstance::checkProgramCache() const
 	ProgramDescriptor d;
 	d.bank = programDescriptor->Bank;
 	d.program = programDescriptor->Program;
-//!!!	d.name = QString("%1. %2").arg(index).arg(programDescriptor->Name);
 	d.name = programDescriptor->Name;
 	m_cachedPrograms.push_back(d);
     }
@@ -448,18 +478,18 @@ DSSIPluginInstance::checkProgramCache() const
     m_programCacheValid = true;
 }
 
-QStringList
+DSSIPluginInstance::ProgramList
 DSSIPluginInstance::getPrograms() const
 {
 #ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::getPrograms" << std::endl;
 #endif
 
-    if (!m_descriptor) return QStringList();
+    if (!m_descriptor) return ProgramList();
 
     checkProgramCache();
 
-    QStringList programs;
+    ProgramList programs;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
 	 i != m_cachedPrograms.end(); ++i) {
@@ -469,14 +499,14 @@ DSSIPluginInstance::getPrograms() const
     return programs;
 }
 
-QString
+std::string
 DSSIPluginInstance::getProgram(int bank, int program) const
 {
 #ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::getProgram(" << bank << "," << program << ")" << std::endl;
 #endif
 
-    if (!m_descriptor) return QString();
+    if (!m_descriptor) return std::string();
 
     checkProgramCache();
 
@@ -485,11 +515,11 @@ DSSIPluginInstance::getProgram(int bank, int program) const
 	if (i->bank == bank && i->program == program) return i->name;
     }
 
-    return QString();
+    return std::string();
 }
 
 unsigned long
-DSSIPluginInstance::getProgram(QString name) const
+DSSIPluginInstance::getProgram(std::string name) const
 {
 #ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::getProgram(" << name << ")" << std::endl;
@@ -513,20 +543,20 @@ DSSIPluginInstance::getProgram(QString name) const
     return 0;
 }
 
-QString
+std::string
 DSSIPluginInstance::getCurrentProgram() const
 {
     return m_program;
 }
 
 void
-DSSIPluginInstance::selectProgram(QString program)
+DSSIPluginInstance::selectProgram(std::string program)
 {
     selectProgramAux(program, true);
 }
 
 void
-DSSIPluginInstance::selectProgramAux(QString program, bool backupPortValues)
+DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
 {
 #ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::selectProgram(" << program << ")" << std::endl;
@@ -587,7 +617,7 @@ DSSIPluginInstance::activate()
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->activate) return;
     m_descriptor->LADSPA_Plugin->activate(m_instanceHandle);
 
-    if (!m_program.isEmpty()) {
+    if (m_program != "") {
 #ifdef DEBUG_DSSI
 	std::cerr << "DSSIPluginInstance::activate: restoring program " << m_program << std::endl;
 #endif
@@ -739,17 +769,17 @@ DSSIPluginInstance::getParameterDefault(unsigned int parameter) const
     }
 }
 
-QString
-DSSIPluginInstance::configure(QString key,
-			      QString value)
+std::string
+DSSIPluginInstance::configure(std::string key,
+			      std::string value)
 {
-    if (!m_descriptor || !m_descriptor->configure) return QString();
+    if (!m_descriptor || !m_descriptor->configure) return std::string();
 
-    if (key == PluginIdentifier::RESERVED_PROJECT_DIRECTORY_KEY) {
+    if (key == PluginIdentifier::RESERVED_PROJECT_DIRECTORY_KEY.toStdString()) {
 #ifdef DSSI_PROJECT_DIRECTORY_KEY
 	key = DSSI_PROJECT_DIRECTORY_KEY;
 #else
-	return QString();
+	return std::string();
 #endif
     }
 	
@@ -759,24 +789,24 @@ DSSIPluginInstance::configure(QString key,
 #endif
 
     char *message = m_descriptor->configure(m_instanceHandle,
-					    key.toStdString().c_str(),
-					    value.toStdString().c_str());
+					    key.c_str(),
+					    value.c_str());
 
     m_programCacheValid = false;
 
-    QString qm;
+    std::string qm;
 
     // Ignore return values from reserved key configuration calls such
     // as project directory
 #ifdef DSSI_RESERVED_CONFIGURE_PREFIX
-    if (key.startsWith(DSSI_RESERVED_CONFIGURE_PREFIX)) {
+    if (QString(key.c_str()).startsWith(DSSI_RESERVED_CONFIGURE_PREFIX)) {
 	return qm;
     }
 #endif
 
     if (message) {
 	if (m_descriptor->LADSPA_Plugin && m_descriptor->LADSPA_Plugin->Label) {
-	    qm = QString(m_descriptor->LADSPA_Plugin->Label) + ": ";
+	    qm = std::string(m_descriptor->LADSPA_Plugin->Label) + ": ";
 	}
 	qm = qm + message;
 	free(message);

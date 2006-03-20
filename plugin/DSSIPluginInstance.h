@@ -42,13 +42,24 @@ public:
     virtual QString getIdentifier() const { return m_identifier; }
     int getPosition() const { return m_position; }
 
+    virtual std::string getName() const;
+    virtual std::string getDescription() const;
+    virtual std::string getMaker() const;
+    virtual int getPluginVersion() const;
+    virtual std::string getCopyright() const;
+
     virtual void run(const RealTime &);
 
     virtual unsigned int getParameterCount() const;
     virtual void setParameterValue(unsigned int parameter, float value);
     virtual float getParameterValue(unsigned int parameter) const;
     virtual float getParameterDefault(unsigned int parameter) const;
-    virtual QString configure(QString key, QString value);
+
+    virtual ParameterList getParameterDescriptors() const;
+    virtual float getParameter(std::string) const;
+    virtual void setParameter(std::string, float);
+
+    virtual std::string configure(std::string key, std::string value);
     virtual void sendEvent(const RealTime &eventTime,
 			   const void *event);
     virtual void clearEvents();
@@ -59,11 +70,11 @@ public:
     virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
     virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
 
-    virtual QStringList getPrograms() const;
-    virtual QString getCurrentProgram() const;
-    virtual QString getProgram(int bank, int program) const;
-    virtual unsigned long getProgram(QString name) const;
-    virtual void selectProgram(QString program);
+    virtual ProgramList getPrograms() const;
+    virtual std::string getCurrentProgram() const;
+    virtual std::string getProgram(int bank, int program) const;
+    virtual unsigned long getProgram(std::string name) const;
+    virtual void selectProgram(std::string program);
 
     virtual bool isBypassed() const { return m_bypassed; }
     virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
@@ -92,18 +103,6 @@ protected:
 		       int idealChannelCount,
 		       const DSSI_Descriptor* descriptor);
     
-    // Constructor that uses shared buffers
-    // 
-    DSSIPluginInstance(RealTimePluginFactory *factory,
-		       int client,
-		       QString identifier,
-		       int position,
-		       unsigned long sampleRate,
-		       size_t blockSize,
-		       sample_t **inputBuffers,
-		       sample_t **outputBuffers,
-		       const DSSI_Descriptor* descriptor);
-
     void init();
     void instantiate(unsigned long sampleRate);
     void cleanup();
@@ -113,7 +112,7 @@ protected:
 
     bool handleController(snd_seq_event_t *ev);
     void setPortValueFromController(unsigned int portNumber, int controlValue);
-    void selectProgramAux(QString program, bool backupPortValues);
+    void selectProgramAux(std::string program, bool backupPortValues);
     void checkProgramCache() const;
 
     void initialiseGroupMembership();
@@ -154,7 +153,7 @@ protected:
     struct ProgramDescriptor {
 	int bank;
 	int program;
-	QString name;
+	std::string name;
     };
     mutable std::vector<ProgramDescriptor> m_cachedPrograms;
     mutable bool m_programCacheValid;
@@ -172,7 +171,7 @@ protected:
     bool                      m_run;
     
     bool                      m_bypassed;
-    QString                   m_program;
+    std::string               m_program;
     bool                      m_grouped;
     RealTime                  m_lastRunTime;
 

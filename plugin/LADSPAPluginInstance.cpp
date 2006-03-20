@@ -62,38 +62,82 @@ LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
     }
 }
 
-LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
-					   int clientId,
-					   QString identifier,
-                                           int position,
-					   unsigned long sampleRate,
-					   size_t blockSize,
-					   sample_t **inputBuffers,
-					   sample_t **outputBuffers,
-                                           const LADSPA_Descriptor* descriptor) :
-    RealTimePluginInstance(factory, identifier),
-    m_client(clientId),
-    m_position(position),
-    m_instanceCount(0),
-    m_descriptor(descriptor),
-    m_blockSize(blockSize),
-    m_inputBuffers(inputBuffers),
-    m_outputBuffers(outputBuffers),
-    m_ownBuffers(false),
-    m_sampleRate(sampleRate),
-    m_latencyPort(0),
-    m_run(false),
-    m_bypassed(false)
+std::string
+LADSPAPluginInstance::getName() const
 {
-    init();
-
-    instantiate(sampleRate);
-    if (isOK()) {
-	connectPorts();
-	activate();
-    }
+    return m_descriptor->Label;
 }
 
+std::string 
+LADSPAPluginInstance::getDescription() const
+{
+    return m_descriptor->Name;
+}
+
+std::string
+LADSPAPluginInstance::getMaker() const
+{
+    return m_descriptor->Maker;
+}
+
+int
+LADSPAPluginInstance::getPluginVersion() const
+{
+    return 1;
+}
+
+std::string
+LADSPAPluginInstance::getCopyright() const
+{
+    return m_descriptor->Copyright;
+}
+
+LADSPAPluginInstance::ParameterList
+LADSPAPluginInstance::getParameterDescriptors() const
+{
+    ParameterList list;
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        
+        ParameterDescriptor pd;
+        unsigned int pn = m_controlPortsIn[i].first;
+
+        pd.name = m_descriptor->PortNames[pn];
+        pd.description = pd.name;
+        pd.minValue = f->getPortMinimum(m_descriptor, pn);
+        pd.maxValue = f->getPortMaximum(m_descriptor, pn);
+        pd.defaultValue = f->getPortDefault(m_descriptor, pn);
+        pd.isQuantized = false;
+
+        list.push_back(pd);
+    }
+
+    return list;
+}
+
+float
+LADSPAPluginInstance::getParameter(std::string name) const
+{
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        if (name == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+            return getParameterValue(i);
+        }
+    }
+
+    return 0.0;
+}
+
+void
+LADSPAPluginInstance::setParameter(std::string name, float value)
+{
+    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+        if (name == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+            setParameterValue(i, value);
+            break;
+        }
+    }
+}    
 
 void
 LADSPAPluginInstance::init(int idealChannelCount)

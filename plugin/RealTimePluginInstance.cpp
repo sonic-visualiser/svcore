@@ -30,4 +30,3 @@ RealTimePluginInstance::~RealTimePluginInstance()
     }
 }
 
-
