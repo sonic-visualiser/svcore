@@ -227,13 +227,16 @@ CommandHistory::endCompoundOperation()
 	std::cerr << "CommandHistory::endCompoundOperation: ERROR: no compound operation in progress!" << std::endl;
     }
 
-    Command *toAdd = m_currentCompound;
+    MacroCommand *toAdd = m_currentCompound;
     m_currentCompound = 0;
 
-    // We don't execute the macro command here, because we have been
-    // executing the individual commands as we went along if
-    // m_executeCompound was true.
-    addCommand(toAdd, false);
+    if (toAdd->haveCommands()) {
+
+        // We don't execute the macro command here, because we have
+        // been executing the individual commands as we went along if
+        // m_executeCompound was true.
+        addCommand(toAdd, false);
+    }
 }    
 
 void
