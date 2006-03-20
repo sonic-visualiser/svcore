@@ -24,8 +24,7 @@ class Model;
 /**
  * The ViewManager manages properties that may need to be synchronised
  * between separate Views.  For example, it handles signals associated
- * with changes to the global pan and zoom.  It also handles playback
- * properties and play synchronisation.
+ * with changes to the global pan and zoom, and it handles selections.
  *
  * Views should be implemented in such a way as to work
  * correctly whether they are supplied with a ViewManager or not.
