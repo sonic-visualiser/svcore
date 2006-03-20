@@ -38,12 +38,22 @@ public:
     virtual QString getIdentifier() const { return m_identifier; }
     int getPosition() const { return m_position; }
 
+    virtual std::string getName() const;
+    virtual std::string getDescription() const;
+    virtual std::string getMaker() const;
+    virtual int getPluginVersion() const;
+    virtual std::string getCopyright() const;
+
     virtual void run(const RealTime &rt);
 
     virtual unsigned int getParameterCount() const;
     virtual void setParameterValue(unsigned int parameter, float value);
     virtual float getParameterValue(unsigned int parameter) const;
     virtual float getParameterDefault(unsigned int parameter) const;
+    
+    virtual ParameterList getParameterDescriptors() const;
+    virtual float getParameter(std::string) const;
+    virtual void setParameter(std::string, float);
 
     virtual size_t getBufferSize() const { return m_blockSize; }
     virtual size_t getAudioInputCount() const { return m_instanceCount * m_audioPortsIn.size(); }
@@ -72,18 +82,6 @@ protected:
 			 unsigned long sampleRate,
 			 size_t blockSize,
 			 int idealChannelCount,
-                         const LADSPA_Descriptor* descriptor);
-
-    // Constructor that uses shared buffers
-    // 
-    LADSPAPluginInstance(RealTimePluginFactory *factory,
-			 int client,
-			 QString identifier,
-                         int position,
-			 unsigned long sampleRate,
-			 size_t blockSize,
-			 sample_t **inputBuffers,
-			 sample_t **outputBuffers,
                          const LADSPA_Descriptor* descriptor);
 
     void init(int idealChannelCount = 0);

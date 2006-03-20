@@ -16,9 +16,12 @@
 #ifndef _REALTIME_PLUGIN_INSTANCE_H_
 #define _REALTIME_PLUGIN_INSTANCE_H_
 
+#include "PluginInstance.h"
+
 #include <QString>
 #include <QStringList>
 #include <vector>
+#include <string>
 
 #include "base/RealTime.h"
 
@@ -34,6 +37,9 @@ class RealTimePluginFactory;
  * plugin, connected its inputs and outputs and so on, and that there
  * is an understanding in place about the sizes of the buffers in use
  * by the plugin.  All of this depends on the subclass implementation.
+ *
+ * The PluginInstance base class includes additional abstract methods
+ * which the subclass of RealTimePluginInstance must implement.
  */
 
 // These names are taken from LADSPA, but the values are not
@@ -54,7 +60,7 @@ namespace PortHint { // ORable
     static const int SampleRate = 8;
 }
 
-class RealTimePluginInstance
+class RealTimePluginInstance : public PluginInstance
 {
 public:
     typedef float sample_t;
@@ -80,18 +86,18 @@ public:
     virtual sample_t **getAudioInputBuffers() = 0;
     virtual sample_t **getAudioOutputBuffers() = 0;
 
-    virtual QStringList getPrograms() const { return QStringList(); }
-    virtual QString getCurrentProgram() const { return QString(); }
-    virtual QString getProgram(int /* bank */, int /* program */) const { return QString(); }
-    virtual unsigned long getProgram(QString /* name */) const { return 0; } // bank << 16 + program
-    virtual void selectProgram(QString) { }
+//     virtual QStringList getPrograms() const { return QStringList(); }
+//     virtual QString getCurrentProgram() const { return QString(); }
+    virtual std::string getProgram(int /* bank */, int /* program */) const { return std::string(); }
+//     virtual unsigned long getProgram(QString /* name */) const { return 0; } // bank << 16 + program
+//     virtual void selectProgram(QString) { }
 
     virtual unsigned int getParameterCount() const = 0;
     virtual void setParameterValue(unsigned int parameter, float value) = 0;
     virtual float getParameterValue(unsigned int parameter) const = 0;
     virtual float getParameterDefault(unsigned int parameter) const = 0;
 
-    virtual QString configure(QString /* key */, QString /* value */) { return QString(); }
+    virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 
     virtual void sendEvent(const RealTime & /* eventTime */,
 			   const void * /* event */) { }
