@@ -10,9 +10,7 @@
 #ifndef _FEATURE_EXTRACTION_PLUGIN_H_
 #define _FEATURE_EXTRACTION_PLUGIN_H_
 
-/**
- * A base class for feature extraction plugins.
- */
+#include "PluginInstance.h"
 
 #include <string>
 #include <vector>
@@ -27,9 +25,12 @@
  * In most cases, the input will be audio and the output will be a
  * stream of derived data at a lower sampling resolution than the
  * input.
+ *
+ * Note that this class inherits several abstract methods from
+ * PluginInstance, that must be implemented by the subclass.
  */
 
-class FeatureExtractionPlugin
+class FeatureExtractionPlugin : public PluginInstance
 {
 public:
     /**
@@ -56,36 +57,6 @@ public:
     virtual void reset() = 0;
 
     /**
-     * Get the computer-usable name of the plugin.  This should be
-     * reasonably short and contain no whitespace or punctuation
-     * characters.
-     */
-    virtual std::string getName() const = 0;
-
-    /**
-     * Get a human-readable description of the plugin.  This should be
-     * self-contained, as it may be shown to the user in isolation
-     * without also showing the plugin's "name".
-     */
-    virtual std::string getDescription() const = 0;
-
-    /**
-     * Get the name of the author or vendor of the plugin in
-     * human-readable form.
-     */
-    virtual std::string getMaker() const = 0;
-
-    /**
-     * Get the version number of the plugin.
-     */
-    virtual int getPluginVersion() const = 0;
-
-    /**
-     * Get the copyright statement or licensing summary of the plugin.
-     */
-    virtual std::string getCopyright() const = 0;
-
-    /**
      * Get the preferred step size (window increment -- the distance
      * in sample frames between the start frames of consecutive blocks
      * passed to the process() function) for the plugin.  This should
@@ -109,7 +80,6 @@ public:
      * Get the maximum supported number of input channels.
      */
     virtual size_t getMaxChannelCount() const { return 1; }
-
 
     struct OutputDescriptor
     {
@@ -224,75 +194,6 @@ public:
      * FeatureSet returned from the process() call.
      */
     virtual OutputList getOutputDescriptors() const = 0;
-
-
-    struct ParameterDescriptor
-    {
-	/**
-	 * The name of the parameter, in computer-usable form.  Should
-	 * be reasonably short and without whitespace or punctuation.
-	 */
-	std::string name;
-
-	/**
-	 * The human-readable name of the parameter.
-	 */
-	std::string description;
-
-	/**
-	 * The unit of the parameter, in human-readable form.
-	 */
-	std::string unit;
-
-	/**
-	 * The minimum value of the parameter.
-	 */
-	float minValue;
-
-	/**
-	 * The maximum value of the parameter.
-	 */
-	float maxValue;
-
-	/**
-	 * The default value of the parameter.
-	 */
-	float defaultValue;
-	
-	/**
-	 * True if the parameter values are quantized to a particular
-	 * resolution.
-	 */
-	bool isQuantized;
-
-	/**
-	 * Quantization resolution of the parameter values (e.g. 1.0
-	 * if they are all integers).  Undefined if isQuantized is
-	 * false.
-	 */
-	float quantizeStep;
-    };
-
-    typedef std::vector<ParameterDescriptor> ParameterList;
-
-    /**
-     * Get the controllable parameters of this plugin.
-     */
-    virtual ParameterList getParameterDescriptors() const {
-	return ParameterList();
-    }
-
-    /**
-     * Get the value of a named parameter.  The argument is the name
-     * field from that parameter's descriptor.
-     */
-    virtual float getParameter(std::string) const { return 0.0; }
-
-    /**
-     * Set a named parameter.  The first argument is the name field
-     * from that parameter's descriptor.
-     */
-    virtual void setParameter(std::string, float) { } 
 
     struct Feature
     {
