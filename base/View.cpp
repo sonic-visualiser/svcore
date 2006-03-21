@@ -328,6 +328,9 @@ View::getFrequencyForY(int y,
 int
 View::getZoomLevel() const
 {
+#ifdef DEBUG_VIEW_WIDGET_PAINT
+	std::cout << "zoom level: " << m_zoomLevel << std::endl;
+#endif
     return m_zoomLevel;
 }
 

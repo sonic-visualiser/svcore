@@ -24,6 +24,8 @@
 #include "base/ViewManager.h"
 #include "base/XmlExportable.h"
 
+// #define DEBUG_VIEW_WIDGET_PAINT 1
+
 class Layer;
 class ViewPropertyContainer;
 
