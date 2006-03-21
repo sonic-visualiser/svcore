@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-//#define DEBUG_VIEW_MANAGER 1
+// #define DEBUG_VIEW_MANAGER 1
 
 ViewManager::ViewManager() :
     m_playSource(0),
