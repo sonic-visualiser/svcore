@@ -19,6 +19,10 @@
 #include <string>
 #include <vector>
 
+#include "base/XmlExportable.h"
+
+class QXmlAttributes;
+
 /**
  * A base class for plugins with optional configurable parameters,
  * programs, etc.
@@ -30,7 +34,7 @@
  * controls for the plugin to the user.
  */
 
-class PluginInstance
+class PluginInstance : public XmlExportable
 {
 public:
     /**
@@ -70,7 +74,8 @@ public:
     {
 	/**
 	 * The name of the parameter, in computer-usable form.  Should
-	 * be reasonably short and without whitespace or punctuation.
+	 * be reasonably short, and may only contain the characters
+	 * [a-zA-Z0-9_].
 	 */
 	std::string name;
 
@@ -153,6 +158,21 @@ public:
      * available programs, do nothing.)
      */
     virtual void selectProgram(std::string) { }
+
+    /**
+     * Export plugin settings to XML.
+     */
+    virtual QString toXmlString(QString indent = "",
+                                QString extraAttributes = "") const;
+
+    /**
+     * Set the parameters and program of a plugin from a set of XML
+     * attributes.  This is a partial inverse of toXmlString.
+     */
+    virtual void setParameters(const QXmlAttributes &);
+
+protected:
+    QString stripInvalidParameterNameCharacters(QString) const;
 };
 
 #endif
