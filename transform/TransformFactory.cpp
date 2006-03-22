@@ -15,11 +15,11 @@
 
 #include "TransformFactory.h"
 
-#include "BeatDetectTransform.h"
-#include "BeatDetectionFunctionTransform.h"
 #include "FeatureExtractionPluginTransform.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
+#include "widgets/PluginParameterDialog.h"
 
 #include <iostream>
 
@@ -42,9 +42,9 @@ TransformFactory::getAllTransforms()
     if (m_transforms.empty()) populateTransforms();
 
     TransformList list;
-    for (TransformMap::const_iterator i = m_transforms.begin();
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
-	list.push_back(TransformDesc(i->first, i->second));
+	list.push_back(i->second);
     }
 
     return list;
@@ -97,7 +97,13 @@ TransformFactory::populateTransforms()
 		    .arg(outputs[j].description.c_str());
 	    }
 
-	    m_transforms[transformName] = userDescription;
+            bool configurable = (!plugin->getPrograms().empty() ||
+                                 !plugin->getParameterDescriptors().empty());
+
+	    m_transforms[transformName] = 
+                TransformDesc(transformName,
+                              userDescription,
+                              configurable);
 	    
 	    makers[transformName] = plugin->getMaker().c_str();
 	}
@@ -107,22 +113,23 @@ TransformFactory::populateTransforms()
 
     std::map<QString, int> descriptions;
 
-    for (TransformMap::iterator i = m_transforms.begin(); i != m_transforms.end();
-	 ++i) {
+    for (TransformDescriptionMap::iterator i = m_transforms.begin();
+         i != m_transforms.end(); ++i) {
 
-	QString name = i->first, description = i->second;
+        TransformDesc desc = i->second;
 
-	++descriptions[description];
-	++descriptions[QString("%1 [%2]").arg(description).arg(makers[name])];
+	++descriptions[desc.description];
+	++descriptions[QString("%1 [%2]").arg(desc.description).arg(makers[desc.name])];
     }
 
     std::map<QString, int> counts;
-    TransformMap newMap;
+    TransformDescriptionMap newMap;
 
-    for (TransformMap::iterator i = m_transforms.begin(); i != m_transforms.end();
-	 ++i) {
+    for (TransformDescriptionMap::iterator i = m_transforms.begin();
+         i != m_transforms.end(); ++i) {
 
-	QString name = i->first, description = i->second;
+        TransformDesc desc = i->second;
+	QString name = desc.name, description = desc.description;
 
 	if (descriptions[description] > 1) {
 	    description = QString("%1 [%2]").arg(description).arg(makers[name]);
@@ -132,7 +139,8 @@ TransformFactory::populateTransforms()
 	    }
 	}
 
-	newMap[name] = description;
+        desc.description = description;
+	newMap[name] = desc;
     }	    
 	    
     m_transforms = newMap;
@@ -142,7 +150,7 @@ QString
 TransformFactory::getTransformDescription(TransformName name)
 {
     if (m_transforms.find(name) != m_transforms.end()) {
-	return m_transforms[name];
+	return m_transforms[name].description;
     } else return "";
 }
 
@@ -159,32 +167,63 @@ TransformFactory::getTransformFriendlyName(TransformName name)
     }
 }
 
-Transform *
-TransformFactory::createTransform(TransformName name, Model *inputModel)
+bool
+TransformFactory::getConfigurationForTransform(TransformName name,
+                                               Model *inputModel,
+                                               QString &configurationXml)
 {
-    return createTransform(name, inputModel, true);
+    QString id = name.section(':', 0, 2);
+    QString output = name.section(':', 3);
+    
+    bool ok = false;
+    configurationXml = m_lastConfigurations[name];
+
+    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+
+    if (FeatureExtractionPluginFactory::instanceFor(id)) {
+        FeatureExtractionPlugin *plugin =
+            FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
+            (id, inputModel->getSampleRate());
+        if (plugin) {
+            if (configurationXml != "") {
+                plugin->setParametersFromXml(configurationXml);
+            }
+            PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
+            if (dialog->exec() == QDialog::Accepted) {
+                ok = true;
+            }
+            configurationXml = plugin->toXmlString();
+            delete plugin;
+        }
+    }
+
+    if (ok) m_lastConfigurations[name] = configurationXml;
+
+    return ok;
 }
 
 Transform *
 TransformFactory::createTransform(TransformName name, Model *inputModel,
-				  bool start)
+				  QString configurationXml, bool start)
 {
     Transform *transform = 0;
 
-    if (name == BeatDetectTransform::getName()) {
-	transform = new BeatDetectTransform(inputModel);
-    } else if (name == BeatDetectionFunctionTransform::getName()) {
-	transform = new BeatDetectionFunctionTransform(inputModel);
+    // The only transform type we support at the moment is the
+    // FeatureExtractionPluginTransform.  In future we may wish to
+    // support e.g. RealTimePluginTransform for audio->audio or
+    // audio->midi transforms using standard effects plugins.
+
+    QString id = name.section(':', 0, 2);
+    QString output = name.section(':', 3);
+
+    if (FeatureExtractionPluginFactory::instanceFor(id)) {
+        transform = new FeatureExtractionPluginTransform(inputModel,
+                                                         id,
+                                                         configurationXml,
+                                                         output);
     } else {
-	QString id = name.section(':', 0, 2);
-	QString output = name.section(':', 3);
-	if (FeatureExtractionPluginFactory::instanceFor(id)) {
-	    transform = new FeatureExtractionPluginTransform(inputModel,
-							     id, output);
-	} else {
-	    std::cerr << "TransformFactory::createTransform: Unknown transform "
-		      << name.toStdString() << std::endl;
-	}
+        std::cerr << "TransformFactory::createTransform: Unknown transform "
+                  << name.toStdString() << std::endl;
     }
 
     if (start && transform) transform->start();
@@ -193,9 +232,10 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
 }
 
 Model *
-TransformFactory::transform(TransformName name, Model *inputModel)
+TransformFactory::transform(TransformName name, Model *inputModel,
+                            QString configurationXml)
 {
-    Transform *t = createTransform(name, inputModel, false);
+    Transform *t = createTransform(name, inputModel, configurationXml, false);
 
     if (!t) return 0;
 

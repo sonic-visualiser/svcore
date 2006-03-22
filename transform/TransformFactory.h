@@ -29,21 +29,31 @@ public:
 
     static TransformFactory *instance();
 
-    // The name is intended to be computer-referencable, and unique
+    // The name is intended to be computer-referenceable, and unique
     // within the application.  The description is intended to be
     // human readable.  In principle it doesn't have to be unique, but
     // the factory will add suffixes to ensure that it is, all the
     // same (just to avoid user confusion).
 
     struct TransformDesc {
-	TransformDesc(TransformName _name, QString _description = "") :
-	    name(_name), description(_description) { }
+        TransformDesc() { }
+	TransformDesc(TransformName _name, QString _description, bool _configurable) :
+	    name(_name), description(_description), configurable(_configurable) { }
 	TransformName name;
 	QString description;
+        bool configurable;
     };
     typedef std::vector<TransformDesc> TransformList;
 
     TransformList getAllTransforms();
+
+    /**
+     * Get a configuration XML string for the given transform (by
+     * asking the user, most likely).  Returns true if the transform
+     * is acceptable, false if the operation should be cancelled.
+     */
+    bool getConfigurationForTransform(TransformName name, Model *inputModel,
+                                      QString &configurationXml);
 
     /**
      * Return the output model resulting from applying the named
@@ -58,7 +68,8 @@ public:
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
-    Model *transform(TransformName name, Model *inputModel);
+    Model *transform(TransformName name, Model *inputModel,
+                     QString configurationXml = "");
 
     /**
      * Full description of a transform, suitable for putting on a menu.
@@ -82,12 +93,21 @@ protected slots:
     void transformFinished();
 
 protected:
-    Transform *createTransform(TransformName name, Model *inputModel);
     Transform *createTransform(TransformName name, Model *inputModel,
-			       bool start);
+                               QString configurationXml, bool start);
 
-    typedef std::map<TransformName, QString> TransformMap;
-    TransformMap m_transforms;
+    struct TransformIdent
+    {
+        TransformName name;
+        QString configurationXml;
+    };
+
+    typedef std::map<TransformName, QString> TransformConfigurationMap;
+    TransformConfigurationMap m_lastConfigurations;
+
+    typedef std::map<TransformName, TransformDesc> TransformDescriptionMap;
+    TransformDescriptionMap m_transforms;
+
     void populateTransforms();
 
     static TransformFactory *m_instance;

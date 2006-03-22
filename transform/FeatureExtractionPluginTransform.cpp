@@ -29,6 +29,7 @@
 
 FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputModel,
 								   QString pluginId,
+                                                                   QString configurationXml,
 								   QString outputName) :
     Transform(inputModel),
     m_plugin(0),
@@ -52,6 +53,10 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	std::cerr << "FeatureExtractionPluginTransform: Failed to instantiate plugin \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
+    }
+
+    if (configurationXml != "") {
+        m_plugin->setParametersFromXml(configurationXml);
     }
 
     FeatureExtractionPlugin::OutputList outputs =
