@@ -18,6 +18,11 @@
 #include <QRegExp>
 #include <QXmlAttributes>
 
+#include <QDomDocument>
+#include <QDomElement>
+#include <QDomNamedNodeMap>
+#include <QDomAttr>
+
 #include <iostream>
 
 QString
@@ -83,16 +88,58 @@ PluginInstance::setParameters(const QXmlAttributes &attrs)
 
     for (ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
-        QString name = stripInvalidParameterNameCharacters
-            (QString(i->name.c_str()));
+        QString name = QString("param-%1")
+            .arg(stripInvalidParameterNameCharacters
+                 (QString(i->name.c_str())));
         bool ok;
         float value = attrs.value(name).trimmed().toFloat(&ok);
         if (ok) {
             setParameter(i->name, value);
         } else {
-            std::cerr << "WARNING: PluginInstance::setParameters: Invalid value \"" << attrs.value(name).toStdString() << "\" for parameter \"" << i->name << "\"" << std::endl;
+            std::cerr << "WARNING: PluginInstance::setParameters: Invalid value \"" << attrs.value(name).toStdString() << "\" for parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
         }
     }
+}
+
+void
+PluginInstance::setParametersFromXml(QString xml)
+{
+    QDomDocument doc;
+
+    QString error;
+    int errorLine;
+    int errorColumn;
+
+    if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
+        std::cerr << "PluginInstance::setParametersFromXml: Error in parsing XML: " << error.toStdString() << " at line " << errorLine << ", column " << errorColumn << std::endl;
+        std::cerr << "Input follows:" << std::endl;
+        std::cerr << xml.toStdString() << std::endl;
+        std::cerr << "Input ends." << std::endl;
+        return;
+    }
+
+    QDomElement pluginElt = doc.firstChildElement("plugin");
+
+    if (pluginElt.isNull()) {
+        std::cerr << "pluginElt is null" << std::endl;
+        pluginElt = doc.documentElement();
+        if (pluginElt.isNull()) {
+            std::cerr << "pluginElt is still null" << std::endl;
+        }
+    }
+
+    QDomNamedNodeMap attrNodes = pluginElt.attributes();
+    QXmlAttributes attrs;
+
+    for (int i = 0; i < attrNodes.length(); ++i) {
+        QDomAttr attr = attrNodes.item(i).toAttr();
+        if (attr.isNull()) continue;
+        std::cerr << "Adding attribute \"" << attr.name().toStdString()
+                  << "\" with value \"" << attr.value().toStdString() << "\"" << std::endl;
+        attrs.append(attr.name(), "", "", attr.value());
+    }
+
+    setParameters(attrs);
 }
     
 QString

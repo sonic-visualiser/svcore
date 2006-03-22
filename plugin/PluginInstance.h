@@ -171,6 +171,13 @@ public:
      */
     virtual void setParameters(const QXmlAttributes &);
 
+    /**
+     * Set the parameters and program of a plugin from an XML plugin
+     * element as returned by toXmlString.  This is a partial inverse
+     * of toXmlString.
+     */
+    virtual void setParametersFromXml(QString xml);
+
 protected:
     QString stripInvalidParameterNameCharacters(QString) const;
 };

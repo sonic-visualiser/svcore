@@ -26,6 +26,7 @@ class FeatureExtractionPluginTransform : public Transform
 public:
     FeatureExtractionPluginTransform(Model *inputModel,
 				     QString plugin,
+                                     QString configurationXml = "",
 				     QString outputName = "");
     virtual ~FeatureExtractionPluginTransform();
 
