@@ -168,6 +168,14 @@ TransformFactory::getTransformFriendlyName(TransformName name)
 }
 
 bool
+TransformFactory::isTransformConfigurable(TransformName name)
+{
+    if (m_transforms.find(name) != m_transforms.end()) {
+	return m_transforms[name].configurable;
+    } else return false;
+}
+
+bool
 TransformFactory::getConfigurationForTransform(TransformName name,
                                                Model *inputModel,
                                                QString &configurationXml)
@@ -193,6 +201,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
                 ok = true;
             }
             configurationXml = plugin->toXmlString();
+            delete dialog;
             delete plugin;
         }
     }

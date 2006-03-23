@@ -41,12 +41,17 @@ public:
 
 signals:
     void playParametersChanged(PlayParameters *);
+    void playPluginIdChanged(const Model *, QString);
+    void playPluginConfigurationChanged(const Model *, QString);
 
 protected slots:
     void playParametersChanged();
+    void playPluginIdChanged(QString);
+    void playPluginConfigurationChanged(QString);
 
 protected:
-    std::map<const Model *, PlayParameters *> m_playParameters;
+    typedef std::map<const Model *, PlayParameters *> ModelParameterMap;
+    ModelParameterMap m_playParameters;
 
     static PlayParameterRepository *m_instance;
 };

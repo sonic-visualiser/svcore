@@ -93,6 +93,8 @@ public:
     virtual bool isInGroup() const { return m_grouped; }
     virtual void detachFromGroup();
 
+    virtual std::string getType() const { return "DSSI Real-Time Plugin"; }
+
 protected:
     // To be constructed only by DSSIPluginFactory
     friend class DSSIPluginFactory;

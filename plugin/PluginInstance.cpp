@@ -91,6 +91,10 @@ PluginInstance::setParameters(const QXmlAttributes &attrs)
         QString name = QString("param-%1")
             .arg(stripInvalidParameterNameCharacters
                  (QString(i->name.c_str())));
+        if (attrs.value(name) == "") {
+            std::cerr << "PluginInstance::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
+            continue;
+        }
         bool ok;
         float value = attrs.value(name).trimmed().toFloat(&ok);
         if (ok) {
@@ -119,15 +123,6 @@ PluginInstance::setParametersFromXml(QString xml)
     }
 
     QDomElement pluginElt = doc.firstChildElement("plugin");
-
-    if (pluginElt.isNull()) {
-        std::cerr << "pluginElt is null" << std::endl;
-        pluginElt = doc.documentElement();
-        if (pluginElt.isNull()) {
-            std::cerr << "pluginElt is still null" << std::endl;
-        }
-    }
-
     QDomNamedNodeMap attrNodes = pluginElt.attributes();
     QXmlAttributes attrs;
 

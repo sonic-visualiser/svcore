@@ -82,6 +82,13 @@ public:
      */
     QString getTransformFriendlyName(TransformName name);
 
+    /**
+     * Return true if the transform has any configurable parameters,
+     * i.e. if getConfigurationForTransform can ever return a non-trivial
+     * (not equivalent to empty) configuration string.
+     */
+    bool isTransformConfigurable(TransformName name);
+
     //!!! Need some way to indicate that the input model has changed /
     //been deleted so as not to blow up backgrounded transform!  -- Or
     //indeed, if the output model has been deleted -- could equally

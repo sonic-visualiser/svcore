@@ -74,6 +74,8 @@ public:
     virtual void silence();
     virtual void setIdealChannelCount(size_t channels); // may re-instantiate
 
+    virtual std::string getType() const { return "LADSPA Real-Time Plugin"; }
+
 protected:
     // To be constructed only by LADSPAPluginFactory
     friend class LADSPAPluginFactory;

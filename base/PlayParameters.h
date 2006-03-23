@@ -29,11 +29,16 @@ public:
     virtual float getPlayPan() const { return m_playPan; } // -1.0 -> 1.0
     virtual float getPlayGain() const { return m_playGain; }
 
+    virtual QString getPlayPluginId() const { return m_playPluginId; } 
+    virtual QString getPlayPluginConfiguration() const { return m_playPluginConfiguration; }
+
 public slots:
     virtual void setPlayMuted(bool muted);
     virtual void setPlayAudible(bool nonMuted);
     virtual void setPlayPan(float pan);
     virtual void setPlayGain(float gain);
+    virtual void setPlayPluginId(QString id);
+    virtual void setPlayPluginConfiguration(QString configuration);
 
 signals:
     void playParametersChanged();
@@ -41,11 +46,15 @@ signals:
     void playAudibleChanged(bool);
     void playPanChanged(float);
     void playGainChanged(float);
+    void playPluginIdChanged(QString);
+    void playPluginConfigurationChanged(QString);
 
 protected:
     bool m_playMuted;
     float m_playPan;
     float m_playGain;
+    QString m_playPluginId;
+    QString m_playPluginConfiguration;
 };
 
 #endif

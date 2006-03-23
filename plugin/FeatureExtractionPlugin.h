@@ -253,6 +253,8 @@ public:
      */
     virtual FeatureSet getRemainingFeatures() = 0;
 
+    virtual std::string getType() const { return "Feature Extraction Plugin"; }
+
 protected:
     FeatureExtractionPlugin(float inputSampleRate) :
 	m_inputSampleRate(inputSampleRate) { }

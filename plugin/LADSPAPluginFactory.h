@@ -52,6 +52,7 @@ public:
     float getPortMinimum(const LADSPA_Descriptor *, int port);
     float getPortMaximum(const LADSPA_Descriptor *, int port);
     float getPortDefault(const LADSPA_Descriptor *, int port);
+    float getPortQuantization(const LADSPA_Descriptor *, int port);
     int getPortDisplayHint(const LADSPA_Descriptor *, int port);
 
 protected:
