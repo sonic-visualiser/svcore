@@ -48,8 +48,20 @@ PlayParameterRepository::addModel(const Model *model)
 
 	    m_playParameters[model] = new PlayParameters;
 
+            m_playParameters[model]->setPlayPluginId
+                (AudioGenerator::getDefaultPlayPluginId(model));
+
+            m_playParameters[model]->setPlayPluginConfiguration
+                (AudioGenerator::getDefaultPlayPluginConfiguration(model));
+
 	    connect(m_playParameters[model], SIGNAL(playParametersChanged()),
 		    this, SLOT(playParametersChanged()));
+
+	    connect(m_playParameters[model], SIGNAL(playPluginIdChanged(QString)),
+		    this, SLOT(playPluginIdChanged(QString)));
+
+	    connect(m_playParameters[model], SIGNAL(playPluginConfigurationChanged(QString)),
+		    this, SLOT(playPluginConfigurationChanged(QString)));
 
 	} else {
 
@@ -75,7 +87,34 @@ PlayParameterRepository::getPlayParameters(const Model *model) const
 void
 PlayParameterRepository::playParametersChanged()
 {
-    emit playParametersChanged(dynamic_cast<PlayParameters *>(sender()));
+    PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
+    emit playParametersChanged(params);
+}
+
+void
+PlayParameterRepository::playPluginIdChanged(QString id)
+{
+    PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
+    for (ModelParameterMap::iterator i = m_playParameters.begin();
+         i != m_playParameters.end(); ++i) {
+        if (i->second == params) {
+            emit playPluginIdChanged(i->first, id);
+            return;
+        }
+    }
+}
+
+void
+PlayParameterRepository::playPluginConfigurationChanged(QString config)
+{
+    PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
+    for (ModelParameterMap::iterator i = m_playParameters.begin();
+         i != m_playParameters.end(); ++i) {
+        if (i->second == params) {
+            emit playPluginConfigurationChanged(i->first, config);
+            return;
+        }
+    }
 }
 
 void

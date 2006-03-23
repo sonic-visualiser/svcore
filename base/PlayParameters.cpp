@@ -37,17 +37,41 @@ PlayParameters::setPlayAudible(bool audible)
 void
 PlayParameters::setPlayPan(float pan)
 {
-    m_playPan = pan;
-    emit playPanChanged(pan);
-    emit playParametersChanged();
+    if (m_playPan != pan) {
+        m_playPan = pan;
+        emit playPanChanged(pan);
+        emit playParametersChanged();
+    }
 }
 
 void
 PlayParameters::setPlayGain(float gain)
 {
-    m_playGain = gain;
-    emit playGainChanged(gain);
-    emit playParametersChanged();
+    if (m_playGain != gain) {
+        m_playGain = gain;
+        emit playGainChanged(gain);
+        emit playParametersChanged();
+    }
+}
+
+void
+PlayParameters::setPlayPluginId(QString id)
+{
+    if (m_playPluginId != id) {
+        m_playPluginId = id;
+        emit playPluginIdChanged(id);
+        emit playParametersChanged();
+    }
+}
+
+void
+PlayParameters::setPlayPluginConfiguration(QString configuration)
+{
+    if (m_playPluginConfiguration != configuration) {
+        m_playPluginConfiguration = configuration;
+        emit playPluginConfigurationChanged(configuration);
+        emit playParametersChanged();
+    }
 }
 
 

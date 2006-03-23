@@ -25,7 +25,7 @@
 #include "PluginIdentifier.h"
 #include "LADSPAPluginFactory.h"
 
-//#define DEBUG_DSSI 1
+#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
 
 #define EVENT_BUFFER_SIZE 1023
@@ -143,7 +143,14 @@ DSSIPluginInstance::getParameterDescriptors() const
         pd.minValue = f->getPortMinimum(m_descriptor->LADSPA_Plugin, pn);
         pd.maxValue = f->getPortMaximum(m_descriptor->LADSPA_Plugin, pn);
         pd.defaultValue = f->getPortDefault(m_descriptor->LADSPA_Plugin, pn);
-        pd.isQuantized = false;
+
+        float q = f->getPortQuantization(m_descriptor->LADSPA_Plugin, pn);
+        if (q == 0.0) {
+            pd.isQuantized = false;
+        } else {
+            pd.isQuantized = true;
+            pd.quantizeStep = q;
+        }
 
         list.push_back(pd);
     }
@@ -154,9 +161,13 @@ DSSIPluginInstance::getParameterDescriptors() const
 float
 DSSIPluginInstance::getParameter(std::string name) const
 {
+    std::cerr << "DSSIPluginInstance::getParameter(" << name << ")" << std::endl;
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
-            return getParameterValue(i);
+            std::cerr << "Matches port " << i << std::endl;
+            float v = getParameterValue(i);
+            std::cerr << "Returning " << v << std::endl;
+            return v;
         }
     }
 
@@ -166,6 +177,8 @@ DSSIPluginInstance::getParameter(std::string name) const
 void
 DSSIPluginInstance::setParameter(std::string name, float value)
 {
+    std::cerr << "DSSIPluginInstance::setParameter(" << name << ", " << value << ")" << std::endl;
+
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
             setParameterValue(i, value);
@@ -647,7 +660,8 @@ DSSIPluginInstance::connectPorts()
 
     assert(sizeof(LADSPA_Data) == sizeof(float));
     assert(sizeof(sample_t) == sizeof(float));
-
+    
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     int inbuf = 0, outbuf = 0;
 
     for (unsigned int i = 0; i < m_audioPortsIn.size(); ++i) {
@@ -671,6 +685,14 @@ DSSIPluginInstance::connectPorts()
 	    (m_instanceHandle,
 	     m_controlPortsIn[i].first,
 	     m_controlPortsIn[i].second);
+
+        if (f) {
+            float defaultValue = f->getPortDefault
+                (m_descriptor->LADSPA_Plugin, m_controlPortsIn[i].first);
+            *m_controlPortsIn[i].second = defaultValue;
+            m_backupControlPortsIn[i] = defaultValue;
+            std::cerr << "DSSIPluginInstance::connectPorts: set control port " << i << " to default value " << defaultValue << std::endl;
+        }
     }
 
     for (unsigned int i = 0; i < m_controlPortsOut.size(); ++i) {

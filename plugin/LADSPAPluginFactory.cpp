@@ -262,6 +262,20 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     return deft;
 }
 
+float
+LADSPAPluginFactory::getPortQuantization(const LADSPA_Descriptor *descriptor, int port)
+{
+    int displayHint = getPortDisplayHint(descriptor, port);
+    if (displayHint & PortHint::Toggled) {
+        return lrintf(getPortMaximum(descriptor, port)) - 
+            lrintf(getPortMinimum(descriptor, port));
+    }
+    if (displayHint & PortHint::Integer) {
+        return 1.0;
+    }
+    return 0.0;
+}
+
 int
 LADSPAPluginFactory::getPortDisplayHint(const LADSPA_Descriptor *descriptor, int port)
 {

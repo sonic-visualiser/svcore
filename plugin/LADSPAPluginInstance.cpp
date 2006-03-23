@@ -113,7 +113,14 @@ LADSPAPluginInstance::getParameterDescriptors() const
         pd.minValue = f->getPortMinimum(m_descriptor, pn);
         pd.maxValue = f->getPortMaximum(m_descriptor, pn);
         pd.defaultValue = f->getPortDefault(m_descriptor, pn);
-        pd.isQuantized = false;
+
+        float q = f->getPortQuantization(m_descriptor, pn);
+        if (q == 0.0) {
+            pd.isQuantized = false;
+        } else {
+            pd.isQuantized = true;
+            pd.quantizeStep = q;
+        }
 
         list.push_back(pd);
     }
@@ -335,6 +342,7 @@ LADSPAPluginInstance::connectPorts()
     assert(sizeof(LADSPA_Data) == sizeof(float));
     assert(sizeof(sample_t) == sizeof(float));
 
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     int inbuf = 0, outbuf = 0;
 
     for (std::vector<LADSPA_Handle>::iterator hi = m_instanceHandles.begin();
@@ -364,6 +372,11 @@ LADSPAPluginInstance::connectPorts()
 	    m_descriptor->connect_port(*hi,
 				       m_controlPortsIn[i].first,
 				       m_controlPortsIn[i].second);
+            if (f) {
+                float defaultValue = f->getPortDefault
+                    (m_descriptor, m_controlPortsIn[i].first);
+                *m_controlPortsIn[i].second = defaultValue;
+            }
 	}
 
 	for (unsigned int i = 0; i < m_controlPortsOut.size(); ++i) {

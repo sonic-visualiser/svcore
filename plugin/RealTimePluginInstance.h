@@ -120,6 +120,8 @@ public:
 
     void setFactory(RealTimePluginFactory *f) { m_factory = f; } // ew
 
+    virtual std::string getType() const { return "Real-Time Plugin"; }
+
 protected:
     RealTimePluginInstance(RealTimePluginFactory *factory, QString identifier) :
 	m_factory(factory), m_identifier(identifier) { }

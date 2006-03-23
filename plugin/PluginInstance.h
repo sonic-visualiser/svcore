@@ -69,6 +69,12 @@ public:
      */
     virtual std::string getCopyright() const = 0;
 
+    /**
+     * Get the type of plugin (e.g. DSSI, etc).  This is likely to be
+     * implemented by the immediate subclass, not by actual plugins.
+     */
+    virtual std::string getType() const = 0;
+
 
     struct ParameterDescriptor
     {
