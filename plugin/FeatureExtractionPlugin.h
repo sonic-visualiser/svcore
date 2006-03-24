@@ -36,6 +36,56 @@
  * PluginInstance, that must be implemented by the subclass.
  */
 
+/**
+ * Plugin Lifecycle
+ * ================
+ *
+ * Feature extraction plugins are managed differently from real-time
+ * plugins.  The main difference is that the parameters for a feature
+ * extraction plugin are configured before the plugin is used, and do
+ * not change during use.
+ *
+ * 1. Host constructs the plugin, passing it the input sample rate.
+ * The plugin may do basic initialisation, but should not do anything
+ * computationally expensive at this point.
+ *
+ * 2. Host may query the plugin's available outputs.
+ *
+ * 3. Host queries programs and parameter descriptors, and may set
+ * some or all of them.  Parameters that are not explicitly set should
+ * take their default values as specified in the parameter descriptor.
+ * When a program is set, the parameter values may change and the host
+ * will re-query them to check.
+ *
+ * 4. Host queries the preferred step size, block size, number of
+ * channels, and the number of values per feature for the plugin's
+ * outputs.  These may all vary depending on the parameter values.
+ *
+ * 5. Plugin is properly initialised with a call to initialise.  This
+ * fixes the step size, block size, and number of channels, as well as
+ * all of the parameter and program settings.  If the values passed in
+ * to initialise do not match the plugin's advertised preferred values
+ * from step 4, the plugin may refuse to initialise and return false
+ * (although if possible it should accept the new values).
+ *
+ * 6. Host will repeatedly call the process method to pass in blocks
+ * of input data.  This method may return features extracted from that
+ * data (if the plugin is causal).
+ *
+ * 7. Host will call getRemainingFeatures exactly once, after all the
+ * input data has been processed.  This may return any non-causal or
+ * leftover features.
+ *
+ * 8. At any point after initialise was called, the host may
+ * optionally call the reset method and restart processing.  (This
+ * does not mean it can change the parameters, which are fixed from
+ * initialise until destruction.)
+ *
+ * A plugin does not need to handle the case where setParameter or
+ * selectProgram is called after initialise has been called.  It's the
+ * host's responsibility not to do that.
+ */
+
 class FeatureExtractionPlugin : public PluginInstance
 {
 public:
