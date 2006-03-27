@@ -125,6 +125,19 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
     unloadUnusedLibraries();
 }
 	
+const RealTimePluginDescriptor *
+LADSPAPluginFactory::getPluginDescriptor(QString identifier) const
+{
+    std::map<QString, RealTimePluginDescriptor *>::const_iterator i =
+        m_rtDescriptors.find(identifier);
+
+    if (i != m_rtDescriptors.end()) {
+        return i->second;
+    } 
+
+    return 0;
+}
+
 float
 LADSPAPluginFactory::getPortMinimum(const LADSPA_Descriptor *descriptor, int port)
 {
@@ -573,6 +586,17 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
     int index = 0;
     while ((descriptor = fn(index))) {
 
+        RealTimePluginDescriptor *rtd = new RealTimePluginDescriptor;
+        rtd->name = descriptor->Name;
+        rtd->label = descriptor->Label;
+        rtd->maker = descriptor->Maker;
+        rtd->copyright = descriptor->Copyright;
+        rtd->category = "";
+        rtd->isSynth = false;
+        rtd->parameterCount = 0;
+        rtd->audioInputPortCount = 0;
+        rtd->controlOutputPortCount = 0;
+
 #ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
@@ -588,6 +612,8 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 	    }
 	}
 	
+        rtd->category = category.toStdString();
+
 //	std::cerr << "Plugin id is " << descriptor->UniqueID
 //		  << ", category is \"" << (category ? category : QString("(none)"))
 //		  << "\", name is " << descriptor->Name
@@ -621,9 +647,30 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 	}
 #endif // HAVE_LRDF
 
+	for (unsigned long i = 0; i < descriptor->PortCount; i++) {
+	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i])) {
+                if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
+                    ++rtd->parameterCount;
+                } else {
+                    if (strcmp(descriptor->PortNames[i], "latency") &&
+                        strcmp(descriptor->PortNames[i], "_latency")) {
+                        ++rtd->controlOutputPortCount;
+                        rtd->controlOutputPortNames.push_back
+                            (descriptor->PortNames[i]);
+                    }
+                }
+            } else {
+                if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
+                    ++rtd->audioInputPortCount;
+                }
+            }
+        }
+
 	QString identifier = PluginIdentifier::createIdentifier
 	    ("ladspa", soname, descriptor->Label);
 	m_identifiers.push_back(identifier);
+
+        m_rtDescriptors[identifier] = rtd;
 
 	++index;
     }

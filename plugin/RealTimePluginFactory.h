@@ -27,6 +27,21 @@
 
 class RealTimePluginInstance;
 
+class RealTimePluginDescriptor
+{
+public:
+    std::string name;
+    std::string label;
+    std::string maker;
+    std::string copyright;
+    std::string category;
+    bool isSynth;
+    unsigned int parameterCount;
+    unsigned int audioInputPortCount;
+    unsigned int controlOutputPortCount;
+    std::vector<std::string> controlOutputPortNames;
+};
+
 class RealTimePluginFactory
 {
 public:
@@ -55,6 +70,11 @@ public:
      * the LADSPA implementation for details.
      */
     virtual void enumeratePlugins(std::vector<QString> &list) = 0;
+
+    /**
+     * Get some basic information about a plugin (rapidly).
+     */
+    virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const = 0;
 
     /**
      * Instantiate a plugin.

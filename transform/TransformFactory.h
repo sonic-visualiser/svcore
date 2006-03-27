@@ -33,14 +33,20 @@ public:
     // within the application.  The description is intended to be
     // human readable.  In principle it doesn't have to be unique, but
     // the factory will add suffixes to ensure that it is, all the
-    // same (just to avoid user confusion).
+    // same (just to avoid user confusion).  The friendly name is a
+    // shorter version of the description.
 
     struct TransformDesc {
         TransformDesc() { }
-	TransformDesc(TransformName _name, QString _description, bool _configurable) :
-	    name(_name), description(_description), configurable(_configurable) { }
+	TransformDesc(TransformName _name, QString _description,
+                      QString _friendlyName, QString _maker,
+                      bool _configurable) :
+	    name(_name), description(_description), friendlyName(_friendlyName),
+            maker(_maker), configurable(_configurable) { }
 	TransformName name;
 	QString description;
+        QString friendlyName;
+        QString maker;
         bool configurable;
     };
     typedef std::vector<TransformDesc> TransformList;
@@ -116,6 +122,8 @@ protected:
     TransformDescriptionMap m_transforms;
 
     void populateTransforms();
+    void populateFeatureExtractionPlugins(TransformDescriptionMap &);
+    void populateRealTimePlugins(TransformDescriptionMap &);
 
     static TransformFactory *m_instance;
 };

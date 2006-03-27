@@ -113,8 +113,8 @@ typedef struct _SVPPluginDescriptor
     unsigned int (*getPreferredBlockSize)(SVPPluginHandle);
     unsigned int (*getMinChannelCount)(SVPPluginHandle);
     unsigned int (*getMaxChannelCount)(SVPPluginHandle);
-    unsigned int (*getOutputCount)(SVPPluginHandle);
 
+    unsigned int (*getOutputCount)(SVPPluginHandle);
     SVPOutputDescriptor *(*getOutputDescriptor)(SVPPluginHandle,
                                                 unsigned int);
     void (*releaseOutputDescriptor)(SVPOutputDescriptor *);

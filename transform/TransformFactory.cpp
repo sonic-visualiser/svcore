@@ -16,8 +16,10 @@
 #include "TransformFactory.h"
 
 #include "FeatureExtractionPluginTransform.h"
+#include "RealTimePluginTransform.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+#include "plugin/RealTimePluginFactory.h"
 
 #include "widgets/PluginParameterDialog.h"
 
@@ -53,14 +55,57 @@ TransformFactory::getAllTransforms()
 void
 TransformFactory::populateTransforms()
 {
-    std::vector<QString> fexplugs =
+    TransformDescriptionMap transforms;
+
+    populateFeatureExtractionPlugins(transforms);
+    populateRealTimePlugins(transforms);
+
+    // disambiguate plugins with similar descriptions
+
+    std::map<QString, int> descriptions;
+
+    for (TransformDescriptionMap::iterator i = transforms.begin();
+         i != transforms.end(); ++i) {
+
+        TransformDesc desc = i->second;
+
+	++descriptions[desc.description];
+	++descriptions[QString("%1 [%2]").arg(desc.description).arg(desc.maker)];
+    }
+
+    std::map<QString, int> counts;
+    m_transforms.clear();
+
+    for (TransformDescriptionMap::iterator i = transforms.begin();
+         i != transforms.end(); ++i) {
+
+        TransformDesc desc = i->second;
+	QString name = desc.name;
+        QString description = desc.description;
+        QString maker = desc.maker;
+
+	if (descriptions[description] > 1) {
+	    description = QString("%1 [%2]").arg(description).arg(maker);
+	    if (descriptions[description] > 1) {
+		description = QString("%1 <%2>")
+		    .arg(description).arg(++counts[description]);
+	    }
+	}
+
+        desc.description = description;
+	m_transforms[name] = desc;
+    }	    
+}
+
+void
+TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &transforms)
+{
+    std::vector<QString> plugs =
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
 
-    std::map<QString, QString> makers;
+    for (size_t i = 0; i < plugs.size(); ++i) {
 
-    for (size_t i = 0; i < fexplugs.size(); ++i) {
-
-	QString pluginId = fexplugs[i];
+	QString pluginId = plugs[i];
 
 	FeatureExtractionPluginFactory *factory =
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
@@ -88,62 +133,92 @@ TransformFactory::populateTransforms()
 		    .arg(pluginId).arg(outputs[j].name.c_str());
 
 	    QString userDescription;
+            QString friendlyName;
 
 	    if (outputs.size() == 1) {
 		userDescription = pluginDescription;
+                friendlyName = pluginDescription;
 	    } else {
 		userDescription = QString("%1: %2")
 		    .arg(pluginDescription)
 		    .arg(outputs[j].description.c_str());
+                friendlyName = outputs[j].description.c_str();
 	    }
 
             bool configurable = (!plugin->getPrograms().empty() ||
                                  !plugin->getParameterDescriptors().empty());
 
-	    m_transforms[transformName] = 
+	    transforms[transformName] = 
                 TransformDesc(transformName,
                               userDescription,
+                              friendlyName,
+                              plugin->getMaker().c_str(),
                               configurable);
-	    
-	    makers[transformName] = plugin->getMaker().c_str();
 	}
     }
+}
 
-    // disambiguate plugins with similar descriptions
+void
+TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
+{
+    std::vector<QString> plugs =
+	RealTimePluginFactory::getAllPluginIdentifiers();
 
-    std::map<QString, int> descriptions;
+    for (size_t i = 0; i < plugs.size(); ++i) {
+        
+	QString pluginId = plugs[i];
 
-    for (TransformDescriptionMap::iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
+        RealTimePluginFactory *factory =
+            RealTimePluginFactory::instanceFor(pluginId);
 
-        TransformDesc desc = i->second;
-
-	++descriptions[desc.description];
-	++descriptions[QString("%1 [%2]").arg(desc.description).arg(makers[desc.name])];
-    }
-
-    std::map<QString, int> counts;
-    TransformDescriptionMap newMap;
-
-    for (TransformDescriptionMap::iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
-
-        TransformDesc desc = i->second;
-	QString name = desc.name, description = desc.description;
-
-	if (descriptions[description] > 1) {
-	    description = QString("%1 [%2]").arg(description).arg(makers[name]);
-	    if (descriptions[description] > 1) {
-		description = QString("%1 <%2>")
-		    .arg(description).arg(++counts[description]);
-	    }
+	if (!factory) {
+	    std::cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    continue;
 	}
 
-        desc.description = description;
-	newMap[name] = desc;
-    }	    
-	    
-    m_transforms = newMap;
+        const RealTimePluginDescriptor *descriptor =
+            factory->getPluginDescriptor(pluginId);
+
+        if (!descriptor) {
+	    std::cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    continue;
+	}
+	
+        if (descriptor->controlOutputPortCount == 0 ||
+            descriptor->audioInputPortCount == 0) continue;
+
+        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " output ports" << std::endl;
+	
+	QString pluginDescription = descriptor->name.c_str();
+
+	for (size_t j = 0; j < descriptor->controlOutputPortCount; ++j) {
+
+	    QString transformName = QString("%1:%2").arg(pluginId).arg(j);
+	    QString userDescription;
+
+	    if (j < descriptor->controlOutputPortNames.size() &&
+                descriptor->controlOutputPortNames[j] != "") {
+		userDescription = tr("%1: %2")
+                    .arg(pluginDescription)
+                    .arg(descriptor->controlOutputPortNames[j].c_str());
+	    } else if (descriptor->controlOutputPortCount > 1) {
+		userDescription = tr("%1: Output %2")
+		    .arg(pluginDescription)
+		    .arg(j + 1);
+	    } else {
+                userDescription = pluginDescription;
+            }
+
+            bool configurable = (descriptor->parameterCount > 0);
+
+	    transforms[transformName] = 
+                TransformDesc(transformName,
+                              userDescription,
+                              userDescription,
+                              descriptor->maker.c_str(),
+                              configurable);
+	}
+    }
 }
 
 QString
@@ -157,14 +232,9 @@ TransformFactory::getTransformDescription(TransformName name)
 QString
 TransformFactory::getTransformFriendlyName(TransformName name)
 {
-    QString description = getTransformDescription(name);
-
-    int i = description.indexOf(':');
-    if (i >= 0) {
-	return description.remove(0, i + 2);
-    } else {
-	return description;
-    }
+    if (m_transforms.find(name) != m_transforms.end()) {
+	return m_transforms[name].friendlyName;
+    } else return "";
 }
 
 bool
@@ -188,22 +258,30 @@ TransformFactory::getConfigurationForTransform(TransformName name,
 
     std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
 
+    PluginInstance *plugin = 0;
+
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
-        FeatureExtractionPlugin *plugin =
-            FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
+
+        plugin = FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
             (id, inputModel->getSampleRate());
-        if (plugin) {
-            if (configurationXml != "") {
-                plugin->setParametersFromXml(configurationXml);
-            }
-            PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
-            if (dialog->exec() == QDialog::Accepted) {
-                ok = true;
-            }
-            configurationXml = plugin->toXmlString();
-            delete dialog;
-            delete plugin;
+
+    } else if (RealTimePluginFactory::instanceFor(id)) {
+
+        plugin = RealTimePluginFactory::instanceFor(id)->instantiatePlugin
+            (id, 0, 0, inputModel->getSampleRate(), 1024, 1);
+    }
+
+    if (plugin) {
+        if (configurationXml != "") {
+            plugin->setParametersFromXml(configurationXml);
         }
+        PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
+        if (dialog->exec() == QDialog::Accepted) {
+            ok = true;
+        }
+        configurationXml = plugin->toXmlString();
+        delete dialog;
+        delete plugin;
     }
 
     if (ok) m_lastConfigurations[name] = configurationXml;
@@ -217,11 +295,6 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
 {
     Transform *transform = 0;
 
-    // The only transform type we support at the moment is the
-    // FeatureExtractionPluginTransform.  In future we may wish to
-    // support e.g. RealTimePluginTransform for audio->audio or
-    // audio->midi transforms using standard effects plugins.
-
     QString id = name.section(':', 0, 2);
     QString output = name.section(':', 3);
 
@@ -230,6 +303,11 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
                                                          id,
                                                          configurationXml,
                                                          output);
+    } else if (RealTimePluginFactory::instanceFor(id)) {
+        transform = new RealTimePluginTransform(inputModel,
+                                                id,
+                                                configurationXml,
+                                                output.toInt());
     } else {
         std::cerr << "TransformFactory::createTransform: Unknown transform "
                   << name.toStdString() << std::endl;

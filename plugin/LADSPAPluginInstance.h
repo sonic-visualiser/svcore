@@ -66,6 +66,9 @@ public:
     virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
     virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
 
+    virtual size_t getControlOutputCount() const { return m_controlPortsOut.size(); }
+    virtual float getControlOutputValue(size_t n) const;
+
     virtual bool isBypassed() const { return m_bypassed; }
     virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
 

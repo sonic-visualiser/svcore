@@ -75,6 +75,9 @@ public:
     virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
     virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
 
+    virtual size_t getControlOutputCount() const { return m_controlPortsOut.size(); }
+    virtual float getControlOutputValue(size_t n) const;
+
     virtual ProgramList getPrograms() const;
     virtual std::string getCurrentProgram() const;
     virtual std::string getProgram(int bank, int program) const;
