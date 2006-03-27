@@ -114,9 +114,6 @@ RealTimePluginTransform::run()
 
     while (blockFrame < endFrame) {
 
-	std::cout << "RealTimePluginTransform::run: blockFrame "
-		  << blockFrame;
-
 	size_t completion =
 	    (((blockFrame - startFrame) / blockSize) * 99) /
 	    (   (endFrame - startFrame) / blockSize);
@@ -143,9 +140,8 @@ RealTimePluginTransform::run()
 
         float value = m_plugin->getControlOutputValue(m_outputNo);
 
-        std::cout << " value " << value << std::endl;
-
-	model->addPoint(SparseTimeValueModel::Point(blockFrame, value, ""));
+	model->addPoint(SparseTimeValueModel::Point
+                        (blockFrame - m_plugin->getLatency(), value, ""));
 
 	if (blockFrame == startFrame || completion > prevCompletion) {
 	    model->setCompletion(completion);
