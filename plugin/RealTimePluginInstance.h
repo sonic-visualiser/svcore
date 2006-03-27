@@ -33,9 +33,9 @@
 class RealTimePluginFactory;
 	
 /**
- * RealTimePluginInstance is a very trivial interface that an audio
- * process can use to refer to an instance of a plugin without needing
- * to know what type of plugin it is.
+ * RealTimePluginInstance is an interface that an audio process can
+ * use to refer to an instance of a plugin without needing to know
+ * what type of plugin it is.
  *
  * The audio code calls run() on an instance that has been passed to
  * it, and assumes that the passing code has already initialised the
@@ -45,6 +45,13 @@ class RealTimePluginFactory;
  *
  * The PluginInstance base class includes additional abstract methods
  * which the subclass of RealTimePluginInstance must implement.
+ */
+
+/*
+ * N.B. RealTimePluginInstance, RealTimePluginFactory and their
+ * subclasses are terrible code.  They've been reused, cut and pasted
+ * and mangled too many times to fit too many different uses, and
+ * could do with a good tidy.
  */
 
 // These names are taken from LADSPA, but the values are not
@@ -90,6 +97,10 @@ public:
 
     virtual sample_t **getAudioInputBuffers() = 0;
     virtual sample_t **getAudioOutputBuffers() = 0;
+
+    // Control inputs are known as parameters here
+    virtual size_t getControlOutputCount() const = 0;
+    virtual float getControlOutputValue(size_t n) const = 0;
 
 //     virtual QStringList getPrograms() const { return QStringList(); }
 //     virtual QString getCurrentProgram() const { return QString(); }

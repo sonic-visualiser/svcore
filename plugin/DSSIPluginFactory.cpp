@@ -285,6 +285,18 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 	    continue;
 	}
 
+        RealTimePluginDescriptor *rtd = new RealTimePluginDescriptor;
+        rtd->name = ladspaDescriptor->Name;
+        rtd->label = ladspaDescriptor->Label;
+        rtd->maker = ladspaDescriptor->Maker;
+        rtd->copyright = ladspaDescriptor->Copyright;
+        rtd->category = "";
+        rtd->isSynth = (descriptor->run_synth ||
+                        descriptor->run_multiple_synths);
+        rtd->parameterCount = 0;
+        rtd->audioInputPortCount = 0;
+        rtd->controlOutputPortCount = 0;
+
 #ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
@@ -303,6 +315,8 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 		m_taxonomy[ladspaDescriptor->UniqueID] = category;
 	    }
 	}
+
+        rtd->category = category.toStdString();
 	
 //	std::cerr << "Plugin id is " << ladspaDescriptor->UniqueID
 //		  << ", category is \"" << (category ? category : QString("(none)"))
@@ -337,9 +351,30 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 	}
 #endif // HAVE_LRDF
 
+	for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
+	    if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
+                if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
+                    ++rtd->parameterCount;
+                } else {
+                    if (strcmp(ladspaDescriptor->PortNames[i], "latency") &&
+                        strcmp(ladspaDescriptor->PortNames[i], "_latency")) {
+                        ++rtd->controlOutputPortCount;
+                        rtd->controlOutputPortNames.push_back
+                            (ladspaDescriptor->PortNames[i]);
+                    }
+                }
+            } else {
+                if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
+                    ++rtd->audioInputPortCount;
+                }
+            }
+        }
+
 	QString identifier = PluginIdentifier::createIdentifier
 	    ("dssi", soname, ladspaDescriptor->Label);
 	m_identifiers.push_back(identifier);
+
+        m_rtDescriptors[identifier] = rtd;
 
 	++index;
     }

@@ -414,6 +414,13 @@ LADSPAPluginInstance::setParameterValue(unsigned int parameter, float value)
 }
 
 float
+LADSPAPluginInstance::getControlOutputValue(unsigned int output) const
+{
+    if (output > m_controlPortsOut.size()) return 0.0;
+    return (*m_controlPortsOut[output].second);
+}
+
+float
 LADSPAPluginInstance::getParameterValue(unsigned int parameter) const
 {
     if (parameter >= m_controlPortsIn.size()) return 0.0;

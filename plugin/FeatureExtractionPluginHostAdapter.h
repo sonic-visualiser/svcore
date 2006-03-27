@@ -54,6 +54,8 @@ public:
     FeatureSet getRemainingFeatures();
 
 protected:
+    void convertFeatures(SVPFeatureList **, FeatureSet &);
+
     const SVPPluginDescriptor *m_descriptor;
     SVPPluginHandle m_handle;
 };

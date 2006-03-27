@@ -773,6 +773,13 @@ DSSIPluginInstance::setPortValueFromController(unsigned int port, int cv)
 }
 
 float
+DSSIPluginInstance::getControlOutputValue(unsigned int output) const
+{
+    if (output > m_controlPortsOut.size()) return 0.0;
+    return (*m_controlPortsOut[output].second);
+}
+
+float
 DSSIPluginInstance::getParameterValue(unsigned int parameter) const
 {
 #ifdef DEBUG_DSSI

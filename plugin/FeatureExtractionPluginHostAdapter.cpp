@@ -78,14 +78,34 @@ FeatureExtractionPluginHostAdapter::getCopyright() const
 FeatureExtractionPluginHostAdapter::ParameterList
 FeatureExtractionPluginHostAdapter::getParameterDescriptors() const
 {
-    //!!!
-    return ParameterList();
+    ParameterList list;
+    for (unsigned int i = 0; i < m_descriptor->parameterCount; ++i) {
+        const SVPParameterDescriptor *spd = m_descriptor->parameters[i];
+        ParameterDescriptor pd;
+        pd.name = spd->name;
+        pd.description = spd->description;
+        pd.unit = spd->unit;
+        pd.minValue = spd->minValue;
+        pd.maxValue = spd->maxValue;
+        pd.defaultValue = spd->defaultValue;
+        pd.isQuantized = spd->isQuantized;
+        pd.quantizeStep = spd->quantizeStep;
+        list.push_back(pd);
+    }
+    return list;
 }
 
 float
 FeatureExtractionPluginHostAdapter::getParameter(std::string param) const
 {
-    //!!!
+    if (!m_handle) return 0.0;
+
+    for (unsigned int i = 0; i < m_descriptor->parameterCount; ++i) {
+        if (param == m_descriptor->parameters[i]->name) {
+            return m_descriptor->getParameter(m_handle, i);
+        }
+    }
+
     return 0.0;
 }
 
@@ -93,27 +113,48 @@ void
 FeatureExtractionPluginHostAdapter::setParameter(std::string param, 
                                                  float value)
 {
-    //!!!
+    if (!m_handle) return;
+
+    for (unsigned int i = 0; i < m_descriptor->parameterCount; ++i) {
+        if (param == m_descriptor->parameters[i]->name) {
+            m_descriptor->setParameter(m_handle, i, value);
+            return;
+        }
+    }
 }
 
 FeatureExtractionPluginHostAdapter::ProgramList
 FeatureExtractionPluginHostAdapter::getPrograms() const
 {
-    //!!!
-    return ProgramList();
+    ProgramList list;
+    
+    for (unsigned int i = 0; i < m_descriptor->programCount; ++i) {
+        list.push_back(m_descriptor->programs[i]);
+    }
+    
+    return list;
 }
 
 std::string
 FeatureExtractionPluginHostAdapter::getCurrentProgram() const
 {
-    //!!!
-    return "";
+    if (!m_handle) return "";
+
+    int pn = m_descriptor->getCurrentProgram(m_handle);
+    return m_descriptor->programs[pn];
 }
 
 void
 FeatureExtractionPluginHostAdapter::selectProgram(std::string program)
 {
-    //!!!
+    if (!m_handle) return;
+
+    for (unsigned int i = 0; i < m_descriptor->programCount; ++i) {
+        if (program == m_descriptor->programs[i]) {
+            m_descriptor->selectProgram(m_handle, i);
+            return;
+        }
+    }
 }
 
 size_t
@@ -133,22 +174,105 @@ FeatureExtractionPluginHostAdapter::getPreferredBlockSize() const
 FeatureExtractionPluginHostAdapter::OutputList
 FeatureExtractionPluginHostAdapter::getOutputDescriptors() const
 {
-    //!!!
-    return OutputList();
+    OutputList list;
+    if (!m_handle) return list;
+
+    unsigned int count = m_descriptor->getOutputCount(m_handle);
+
+    for (unsigned int i = 0; i < count; ++i) {
+        SVPOutputDescriptor *sd = m_descriptor->getOutputDescriptor(m_handle, i);
+        OutputDescriptor d;
+        d.name = sd->name;
+        d.description = sd->description;
+        d.unit = sd->unit;
+        d.hasFixedValueCount = sd->hasFixedValueCount;
+        d.valueCount = sd->valueCount;
+        for (unsigned int j = 0; j < sd->valueCount; ++j) {
+            d.valueNames.push_back(sd->valueNames[i]);
+        }
+        d.hasKnownExtents = sd->hasKnownExtents;
+        d.minValue = sd->minValue;
+        d.maxValue = sd->maxValue;
+        d.isQuantized = sd->isQuantized;
+        d.quantizeStep = sd->quantizeStep;
+
+        switch (sd->sampleType) {
+        case svpOneSamplePerStep:
+            d.sampleType = OutputDescriptor::OneSamplePerStep; break;
+        case svpFixedSampleRate:
+            d.sampleType = OutputDescriptor::FixedSampleRate; break;
+        case svpVariableSampleRate:
+            d.sampleType = OutputDescriptor::VariableSampleRate; break;
+        }
+
+        d.sampleRate = sd->sampleRate;
+
+        list.push_back(d);
+
+        m_descriptor->releaseOutputDescriptor(sd);
+    }
+
+    return list;
 }
 
 FeatureExtractionPluginHostAdapter::FeatureSet
 FeatureExtractionPluginHostAdapter::process(float **inputBuffers,
                                             RealTime timestamp)
 {
-    //!!!
-    return FeatureSet();
+    FeatureSet fs;
+    if (!m_handle) return fs;
+
+    int sec = timestamp.sec;
+    int nsec = timestamp.nsec;
+    
+    SVPFeatureList **features = m_descriptor->process(m_handle,
+                                                      inputBuffers,
+                                                      sec, nsec);
+    
+    convertFeatures(features, fs);
+    m_descriptor->releaseFeatureSet(features);
+    return fs;
 }
 
 FeatureExtractionPluginHostAdapter::FeatureSet
 FeatureExtractionPluginHostAdapter::getRemainingFeatures()
 {
-    //!!!
-    return FeatureSet();
+    FeatureSet fs;
+    if (!m_handle) return fs;
+    
+    SVPFeatureList **features = m_descriptor->getRemainingFeatures(m_handle); 
+
+    convertFeatures(features, fs);
+    m_descriptor->releaseFeatureSet(features);
+    return fs;
+}
+
+void
+FeatureExtractionPluginHostAdapter::convertFeatures(SVPFeatureList **features,
+                                                    FeatureSet &fs)
+{
+    for (unsigned int i = 0; features[i]; ++i) {
+        
+        SVPFeatureList &list = *features[i];
+
+        if (list.featureCount > 0) {
+
+            for (unsigned int j = 0; j < list.featureCount; ++j) {
+                
+                Feature feature;
+                feature.hasTimestamp = list.features[j].hasTimestamp;
+                feature.timestamp = RealTime(list.features[j].sec,
+                                             list.features[j].nsec);
+
+                for (unsigned int k = 0; k < list.features[j].valueCount; ++k) {
+                    feature.values.push_back(list.features[j].values[k]);
+                }
+                
+                feature.label = list.features[j].label;
+
+                fs[i].push_back(feature);
+            }
+        }
+    }
 }
 

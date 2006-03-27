@@ -76,10 +76,10 @@ ViewManager::setPlaybackFrame(unsigned long f)
 {
     if (m_playbackFrame != f) {
 	m_playbackFrame = f;
+	emit playbackFrameChanged(f);
 	if (m_playSource && m_playSource->isPlaying()) {
 	    m_playSource->play(f);
 	}
-	emit playbackFrameChanged(f);
     }
 }
 

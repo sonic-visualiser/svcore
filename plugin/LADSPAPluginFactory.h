@@ -42,6 +42,8 @@ public:
 
     virtual void enumeratePlugins(std::vector<QString> &list);
 
+    virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const;
+
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
 						      int clientId,
 						      int position,
@@ -78,6 +80,7 @@ protected:
     void unloadUnusedLibraries();
 
     std::vector<QString> m_identifiers;
+    std::map<QString, RealTimePluginDescriptor *> m_rtDescriptors;
 
     std::map<unsigned long, QString> m_taxonomy;
     std::map<QString, QString> m_fallbackCategories;
