@@ -34,24 +34,30 @@ public:
     // human readable.  In principle it doesn't have to be unique, but
     // the factory will add suffixes to ensure that it is, all the
     // same (just to avoid user confusion).  The friendly name is a
-    // shorter version of the description.
+    // shorter version of the description.  The type is also intended
+    // to be user-readable, for use in menus.
 
     struct TransformDesc {
         TransformDesc() { }
-	TransformDesc(TransformName _name, QString _description,
+	TransformDesc(QString _type, TransformName _name, QString _description,
                       QString _friendlyName, QString _maker,
-                      bool _configurable) :
-	    name(_name), description(_description), friendlyName(_friendlyName),
-            maker(_maker), configurable(_configurable) { }
+                      QString _units, bool _configurable) :
+	    type(_type), name(_name), description(_description),
+            friendlyName(_friendlyName),
+            maker(_maker), units(_units), configurable(_configurable) { }
+        QString type;
 	TransformName name;
 	QString description;
         QString friendlyName;
         QString maker;
+        QString units;
         bool configurable;
     };
     typedef std::vector<TransformDesc> TransformList;
 
     TransformList getAllTransforms();
+
+    std::vector<QString> getAllTransformTypes();
 
     /**
      * Get a configuration XML string for the given transform (by
@@ -87,6 +93,8 @@ public:
      * as the name of the output layer.
      */
     QString getTransformFriendlyName(TransformName name);
+
+    QString getTransformUnits(TransformName name);
 
     /**
      * Return true if the transform has any configurable parameters,

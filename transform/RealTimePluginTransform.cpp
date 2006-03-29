@@ -28,6 +28,7 @@
 RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
                                                  QString pluginId,
                                                  QString configurationXml,
+                                                 QString units,
                                                  int output) :
     Transform(inputModel),
     m_plugin(0),
@@ -66,9 +67,13 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
         return;
     }
 	
-    m_output = new SparseTimeValueModel(input->getSampleRate(),
-                                        1024, //!!!
-                                        0.0, 0.0, false);
+    SparseTimeValueModel *model = new SparseTimeValueModel
+        (input->getSampleRate(), 1024, //!!!
+         0.0, 0.0, false);
+
+    if (units != "") model->setScaleUnits(units);
+
+    m_output = model;
 }
 
 RealTimePluginTransform::~RealTimePluginTransform()

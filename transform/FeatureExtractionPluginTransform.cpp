@@ -130,8 +130,11 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	       m_descriptor->sampleType ==
 	       FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate) {
 	
-	m_output = new SparseTimeValueModel(modelRate, modelResolution,
-					    minValue, maxValue, false);
+        SparseTimeValueModel *model = new SparseTimeValueModel
+            (modelRate, modelResolution, minValue, maxValue, false);
+        model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
+
+        m_output = model;
 
     } else {
 	
