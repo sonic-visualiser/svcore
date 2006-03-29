@@ -24,6 +24,9 @@
 #include "widgets/PluginParameterDialog.h"
 
 #include <iostream>
+#include <set>
+
+#include <QRegExp>
 
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
@@ -50,6 +53,25 @@ TransformFactory::getAllTransforms()
     }
 
     return list;
+}
+
+std::vector<QString>
+TransformFactory::getAllTransformTypes()
+{
+    if (m_transforms.empty()) populateTransforms();
+
+    std::set<QString> types;
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
+	 i != m_transforms.end(); ++i) {
+        types.insert(i->second.type);
+    }
+
+    std::vector<QString> rv;
+    for (std::set<QString>::iterator i = types.begin(); i != types.end(); ++i) {
+        rv.push_back(*i);
+    }
+
+    return rv;
 }
 
 void
@@ -134,6 +156,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 
 	    QString userDescription;
             QString friendlyName;
+            QString units = outputs[j].unit.c_str();
 
 	    if (outputs.size() == 1) {
 		userDescription = pluginDescription;
@@ -149,10 +172,12 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                  !plugin->getParameterDescriptors().empty());
 
 	    transforms[transformName] = 
-                TransformDesc(transformName,
+                TransformDesc(tr("Analysis Plugin"),
+                              transformName,
                               userDescription,
                               friendlyName,
                               plugin->getMaker().c_str(),
+                              units,
                               configurable);
 	}
     }
@@ -163,6 +188,8 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 {
     std::vector<QString> plugs =
 	RealTimePluginFactory::getAllPluginIdentifiers();
+
+    QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
     for (size_t i = 0; i < plugs.size(); ++i) {
         
@@ -195,27 +222,42 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
 	    QString transformName = QString("%1:%2").arg(pluginId).arg(j);
 	    QString userDescription;
+            QString units;
 
 	    if (j < descriptor->controlOutputPortNames.size() &&
                 descriptor->controlOutputPortNames[j] != "") {
+
+                QString portName = descriptor->controlOutputPortNames[j].c_str();
+
 		userDescription = tr("%1: %2")
                     .arg(pluginDescription)
-                    .arg(descriptor->controlOutputPortNames[j].c_str());
+                    .arg(portName);
+
+                if (unitRE.indexIn(portName) >= 0) {
+                    units = unitRE.cap(1);
+                }
+
 	    } else if (descriptor->controlOutputPortCount > 1) {
+
 		userDescription = tr("%1: Output %2")
 		    .arg(pluginDescription)
 		    .arg(j + 1);
+
 	    } else {
+
                 userDescription = pluginDescription;
             }
+
 
             bool configurable = (descriptor->parameterCount > 0);
 
 	    transforms[transformName] = 
-                TransformDesc(transformName,
+                TransformDesc(tr("Real-Time Plugin"),
+                              transformName,
                               userDescription,
                               userDescription,
                               descriptor->maker.c_str(),
+                              units,
                               configurable);
 	}
     }
@@ -234,6 +276,14 @@ TransformFactory::getTransformFriendlyName(TransformName name)
 {
     if (m_transforms.find(name) != m_transforms.end()) {
 	return m_transforms[name].friendlyName;
+    } else return "";
+}
+
+QString
+TransformFactory::getTransformUnits(TransformName name)
+{
+    if (m_transforms.find(name) != m_transforms.end()) {
+	return m_transforms[name].units;
     } else return "";
 }
 
@@ -307,6 +357,7 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
         transform = new RealTimePluginTransform(inputModel,
                                                 id,
                                                 configurationXml,
+                                                getTransformUnits(name),
                                                 output.toInt());
     } else {
         std::cerr << "TransformFactory::createTransform: Unknown transform "

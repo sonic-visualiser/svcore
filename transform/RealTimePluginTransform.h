@@ -27,6 +27,7 @@ public:
     RealTimePluginTransform(Model *inputModel,
 			    QString plugin,
 			    QString configurationXml = "",
+                            QString units = "",
 			    int output = 0);
     virtual ~RealTimePluginTransform();
 
