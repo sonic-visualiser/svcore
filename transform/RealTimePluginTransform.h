@@ -26,6 +26,7 @@ class RealTimePluginTransform : public Transform
 public:
     RealTimePluginTransform(Model *inputModel,
 			    QString plugin,
+                            int channel,
 			    QString configurationXml = "",
                             QString units = "",
 			    int output = 0);
@@ -35,6 +36,7 @@ protected:
     virtual void run();
 
     RealTimePluginInstance *m_plugin;
+    int m_channel;
     int m_outputNo;
 
     // just casts

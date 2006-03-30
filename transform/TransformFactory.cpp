@@ -23,6 +23,8 @@
 
 #include "widgets/PluginParameterDialog.h"
 
+#include "model/DenseTimeValueModel.h"
+
 #include <iostream>
 #include <set>
 
@@ -296,8 +298,44 @@ TransformFactory::isTransformConfigurable(TransformName name)
 }
 
 bool
+TransformFactory::getTransformChannelRange(TransformName name,
+                                           int &min, int &max)
+{
+    QString id = name.section(':', 0, 2);
+
+    if (FeatureExtractionPluginFactory::instanceFor(id)) {
+
+        FeatureExtractionPlugin *plugin = 
+            FeatureExtractionPluginFactory::instanceFor(id)->
+            instantiatePlugin(id, 48000);
+        if (!plugin) return false;
+
+        min = plugin->getMinChannelCount();
+        max = plugin->getMaxChannelCount();
+        delete plugin;
+
+        return true;
+
+    } else if (RealTimePluginFactory::instanceFor(id)) {
+
+        const RealTimePluginDescriptor *descriptor = 
+            RealTimePluginFactory::instanceFor(id)->
+            getPluginDescriptor(id);
+        if (!descriptor) return false;
+
+        min = descriptor->audioInputPortCount;
+        max = descriptor->audioInputPortCount;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool
 TransformFactory::getConfigurationForTransform(TransformName name,
                                                Model *inputModel,
+                                               int &channel,
                                                QString &configurationXml)
 {
     QString id = name.section(':', 0, 2);
@@ -325,11 +363,31 @@ TransformFactory::getConfigurationForTransform(TransformName name,
         if (configurationXml != "") {
             plugin->setParametersFromXml(configurationXml);
         }
-        PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
+
+        int sourceChannels = 1;
+        if (dynamic_cast<DenseTimeValueModel *>(inputModel)) {
+            sourceChannels = dynamic_cast<DenseTimeValueModel *>(inputModel)
+                ->getChannelCount();
+        }
+
+        int minChannels = 1, maxChannels = sourceChannels;
+        getTransformChannelRange(name, minChannels, maxChannels);
+
+        int targetChannels = sourceChannels;
+        if (sourceChannels < minChannels) targetChannels = minChannels;
+        if (sourceChannels > maxChannels) targetChannels = maxChannels;
+
+        int defaultChannel = channel;
+
+        PluginParameterDialog *dialog = new PluginParameterDialog(plugin,
+                                                                  sourceChannels,
+                                                                  targetChannels,
+                                                                  defaultChannel);
         if (dialog->exec() == QDialog::Accepted) {
             ok = true;
         }
         configurationXml = plugin->toXmlString();
+        channel = dialog->getChannel();
         delete dialog;
         delete plugin;
     }
@@ -341,21 +399,25 @@ TransformFactory::getConfigurationForTransform(TransformName name,
 
 Transform *
 TransformFactory::createTransform(TransformName name, Model *inputModel,
-				  QString configurationXml, bool start)
+                                  int channel, QString configurationXml, bool start)
 {
     Transform *transform = 0;
 
+    //!!! use channel
+    
     QString id = name.section(':', 0, 2);
     QString output = name.section(':', 3);
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
         transform = new FeatureExtractionPluginTransform(inputModel,
                                                          id,
+                                                         channel,
                                                          configurationXml,
                                                          output);
     } else if (RealTimePluginFactory::instanceFor(id)) {
         transform = new RealTimePluginTransform(inputModel,
                                                 id,
+                                                channel,
                                                 configurationXml,
                                                 getTransformUnits(name),
                                                 output.toInt());
@@ -371,9 +433,10 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
 
 Model *
 TransformFactory::transform(TransformName name, Model *inputModel,
-                            QString configurationXml)
+                            int channel, QString configurationXml)
 {
-    Transform *t = createTransform(name, inputModel, configurationXml, false);
+    Transform *t = createTransform(name, inputModel, channel,
+                                   configurationXml, false);
 
     if (!t) return 0;
 
