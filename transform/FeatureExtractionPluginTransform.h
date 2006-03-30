@@ -26,6 +26,7 @@ class FeatureExtractionPluginTransform : public Transform
 public:
     FeatureExtractionPluginTransform(Model *inputModel,
 				     QString plugin,
+                                     int channel,
                                      QString configurationXml = "",
 				     QString outputName = "");
     virtual ~FeatureExtractionPluginTransform();
@@ -34,6 +35,7 @@ protected:
     virtual void run();
 
     FeatureExtractionPlugin *m_plugin;
+    int m_channel;
     FeatureExtractionPlugin::OutputDescriptor *m_descriptor;
     int m_outputFeatureNo;
 

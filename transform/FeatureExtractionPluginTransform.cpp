@@ -29,10 +29,12 @@
 
 FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputModel,
 								   QString pluginId,
+                                                                   int channel,
                                                                    QString configurationXml,
 								   QString outputName) :
     Transform(inputModel),
     m_plugin(0),
+    m_channel(channel),
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
@@ -223,7 +225,7 @@ FeatureExtractionPluginTransform::run()
 
 	if (channelCount == 1) {
 	    got = input->getValues
-		(-1, blockFrame, blockFrame + blockSize, buffers[0]);
+		(m_channel, blockFrame, blockFrame + blockSize, buffers[0]);
 	    while (got < blockSize) {
 		buffers[0][got++] = 0.0;
 	    }

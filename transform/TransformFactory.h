@@ -65,6 +65,7 @@ public:
      * is acceptable, false if the operation should be cancelled.
      */
     bool getConfigurationForTransform(TransformName name, Model *inputModel,
+                                      int &channel,
                                       QString &configurationXml);
 
     /**
@@ -81,7 +82,7 @@ public:
      * when no longer needed.
      */
     Model *transform(TransformName name, Model *inputModel,
-                     QString configurationXml = "");
+                     int channel, QString configurationXml = "");
 
     /**
      * Full description of a transform, suitable for putting on a menu.
@@ -103,6 +104,15 @@ public:
      */
     bool isTransformConfigurable(TransformName name);
 
+    /**
+     * If the transform has a prescribed number or range of channel
+     * inputs, return true and set minChannels and maxChannels to the
+     * minimum and maximum number of channel inputs the transform can
+     * accept.
+     */
+    bool getTransformChannelRange(TransformName name,
+                                  int &minChannels, int &maxChannels);
+
     //!!! Need some way to indicate that the input model has changed /
     //been deleted so as not to blow up backgrounded transform!  -- Or
     //indeed, if the output model has been deleted -- could equally
@@ -115,7 +125,7 @@ protected slots:
 
 protected:
     Transform *createTransform(TransformName name, Model *inputModel,
-                               QString configurationXml, bool start);
+                               int channel, QString configurationXml, bool start);
 
     struct TransformIdent
     {

@@ -27,11 +27,13 @@
 
 RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
                                                  QString pluginId,
+                                                 int channel,
                                                  QString configurationXml,
                                                  QString units,
                                                  int output) :
     Transform(inputModel),
     m_plugin(0),
+    m_channel(channel),
     m_outputNo(output)
 {
     std::cerr << "RealTimePluginTransform::RealTimePluginTransform: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
@@ -105,6 +107,8 @@ RealTimePluginTransform::run()
 
     size_t sampleRate = input->getSampleRate();
     int channelCount = input->getChannelCount();
+    if (m_channel != -1) channelCount = 1;
+
     size_t blockSize = m_plugin->getBufferSize();
 
     float **buffers = m_plugin->getAudioInputBuffers();
@@ -127,7 +131,7 @@ RealTimePluginTransform::run()
 
 	if (channelCount == 1) {
 	    got = input->getValues
-		(-1, blockFrame, blockFrame + blockSize, buffers[0]);
+		(m_channel, blockFrame, blockFrame + blockSize, buffers[0]);
 	    while (got < blockSize) {
 		buffers[0][got++] = 0.0;
 	    }
