@@ -455,6 +455,8 @@ View::setViewManager(ViewManager *manager)
 	    this, SLOT(selectionChanged()));
     connect(m_manager, SIGNAL(inProgressSelectionChanged()),
 	    this, SLOT(selectionChanged()));
+    connect(m_manager, SIGNAL(overlayModeChanged()),
+            this, SLOT(update()));
 
     connect(this, SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
 	    m_manager, SIGNAL(centreFrameChanged(void *, unsigned long, bool)));

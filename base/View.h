@@ -163,6 +163,7 @@ public:
     virtual const Layer *getSelectedLayer() const;
 
     virtual void setViewManager(ViewManager *m);
+    virtual ViewManager *getViewManager() const { return m_manager; }
 
     virtual void setFollowGlobalPan(bool f);
     virtual bool getFollowGlobalPan() const { return m_followPan; }
