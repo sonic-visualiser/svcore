@@ -33,7 +33,8 @@ ViewManager::ViewManager() :
     m_inProgressExclusive(true),
     m_toolMode(NavigateMode),
     m_playLoopMode(false),
-    m_playSelectionMode(false)
+    m_playSelectionMode(false),
+    m_overlayMode(BasicOverlays)
 {
     connect(this, 
 	    SIGNAL(centreFrameChanged(void *, unsigned long, bool)),
@@ -339,6 +340,15 @@ ViewManager::considerZoomChange(void *p, unsigned long z, bool locked)
 #ifdef DEBUG_VIEW_MANAGER 
     std::cout << "ViewManager::considerZoomChange(" << p << ", " << z << ", " << locked << ")" << std::endl;
 #endif
+}
+
+void
+ViewManager::setOverlayMode(OverlayMode mode)
+{
+    if (m_overlayMode != mode) {
+        m_overlayMode = mode;
+        emit overlayModeChanged();
+    }
 }
 
 #ifdef INCLUDE_MOCFILES

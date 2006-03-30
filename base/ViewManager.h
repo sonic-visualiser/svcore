@@ -93,6 +93,14 @@ public:
     size_t getMainModelSampleRate() const { return m_mainModelSampleRate; }
     void setMainModelSampleRate(size_t sr) { m_mainModelSampleRate = sr; }
 
+    enum OverlayMode {
+        NoOverlays,
+        BasicOverlays,
+        AllOverlays
+    };
+    void setOverlayMode(OverlayMode mode);
+    OverlayMode getOverlayMode() const { return m_overlayMode; }
+
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
     void centreFrameChanged(void *originator, unsigned long frame, bool locked);
@@ -120,6 +128,9 @@ signals:
 
     /** Emitted when the play selection mode has been changed. */
     void playSelectionModeChanged();
+
+    /** Emitted when the overlay mode has been changed. */
+    void overlayModeChanged();
 
 protected slots:
     void checkPlayStatus();
@@ -163,6 +174,8 @@ protected:
 	MultiSelection m_oldSelection;
 	MultiSelection m_newSelection;
     };
+
+    OverlayMode m_overlayMode;
 };
 
 #endif
