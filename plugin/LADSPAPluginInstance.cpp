@@ -224,7 +224,7 @@ size_t
 LADSPAPluginInstance::getLatency()
 {
     if (m_latencyPort) {
-	if (!m_run) run(RealTime::zeroTime);
+	if (!m_run) run(Vamp::RealTime::zeroTime);
 	if (*m_latencyPort > 0) return (size_t)*m_latencyPort;
     }
     return 0;
@@ -441,7 +441,7 @@ LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
 }
 
 void
-LADSPAPluginInstance::run(const RealTime &)
+LADSPAPluginInstance::run(const Vamp::RealTime &)
 {
     if (!m_descriptor || !m_descriptor->run) return;
 

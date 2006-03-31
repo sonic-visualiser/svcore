@@ -17,7 +17,8 @@
 #include "FeatureExtractionPluginTransform.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
-#include "plugin/FeatureExtractionPlugin.h"
+#include "plugin/PluginXml.h"
+#include "vamp-sdk/Plugin.h"
 
 #include "base/Model.h"
 #include "model/SparseOneDimensionalModel.h"
@@ -58,10 +59,10 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     }
 
     if (configurationXml != "") {
-        m_plugin->setParametersFromXml(configurationXml);
+        PluginXml(m_plugin).setParametersFromXml(configurationXml);
     }
 
-    FeatureExtractionPlugin::OutputList outputs =
+    Vamp::Plugin::OutputList outputs =
 	m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {
@@ -73,7 +74,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     for (size_t i = 0; i < outputs.size(); ++i) {
 	if (outputName == "" || outputs[i].name == outputName.toStdString()) {
 	    m_outputFeatureNo = i;
-	    m_descriptor = new FeatureExtractionPlugin::OutputDescriptor
+	    m_descriptor = new Vamp::Plugin::OutputDescriptor
 		(outputs[i]);
 	    break;
 	}
@@ -106,17 +107,17 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     
     switch (m_descriptor->sampleType) {
 
-    case FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate:
+    case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
 	if (m_descriptor->sampleRate != 0.0) {
 	    modelResolution = size_t(modelRate / m_descriptor->sampleRate + 0.001);
 	}
 	break;
 
-    case FeatureExtractionPlugin::OutputDescriptor::OneSamplePerStep:
+    case Vamp::Plugin::OutputDescriptor::OneSamplePerStep:
 	modelResolution = m_plugin->getPreferredStepSize();
 	break;
 
-    case FeatureExtractionPlugin::OutputDescriptor::FixedSampleRate:
+    case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
 	modelRate = m_descriptor->sampleRate;
 	break;
     }
@@ -130,7 +131,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 
 	       // We don't have a sparse 3D model
 	       m_descriptor->sampleType ==
-	       FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate) {
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 	
         SparseTimeValueModel *model = new SparseTimeValueModel
             (modelRate, modelResolution, minValue, maxValue, false);
@@ -239,11 +240,11 @@ FeatureExtractionPluginTransform::run()
 	    }
 	}
 
-	FeatureExtractionPlugin::FeatureSet features = m_plugin->process
-	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate));
+	Vamp::Plugin::FeatureSet features = m_plugin->process
+	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
 
 	for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-	    FeatureExtractionPlugin::Feature feature =
+	    Vamp::Plugin::Feature feature =
 		features[m_outputFeatureNo][fi];
 	    addFeature(blockFrame, feature);
 	}
@@ -256,10 +257,10 @@ FeatureExtractionPluginTransform::run()
 	blockFrame += stepSize;
     }
 
-    FeatureExtractionPlugin::FeatureSet features = m_plugin->getRemainingFeatures();
+    Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
     for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-	FeatureExtractionPlugin::Feature feature =
+	Vamp::Plugin::Feature feature =
 	    features[m_outputFeatureNo][fi];
 	addFeature(blockFrame, feature);
     }
@@ -270,7 +271,7 @@ FeatureExtractionPluginTransform::run()
 
 void
 FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
-					     const FeatureExtractionPlugin::Feature &feature)
+					     const Vamp::Plugin::Feature &feature)
 {
     size_t inputRate = m_input->getSampleRate();
 
@@ -285,7 +286,7 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
     size_t frame = blockFrame;
 
     if (m_descriptor->sampleType ==
-	FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate) {
+	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	if (!feature.hasTimestamp) {
 	    std::cerr
@@ -294,16 +295,16 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 		<< std::endl;
 	    return;
 	} else {
-	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
+	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
     } else if (m_descriptor->sampleType ==
-	       FeatureExtractionPlugin::OutputDescriptor::FixedSampleRate) {
+	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
 	if (feature.hasTimestamp) {
 	    //!!! warning: sampleRate may be non-integral
-	    frame = RealTime::realTime2Frame(feature.timestamp,
-					     m_descriptor->sampleRate);
+	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp,
+                                                   m_descriptor->sampleRate);
 	} else {
 	    frame = m_output->getEndFrame() + 1;
 	}
@@ -317,7 +318,7 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 	
     } else if (valueCount == 1 ||
 	       m_descriptor->sampleType == 
-	       FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate) {
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	float value = 0.0;
 	if (feature.values.size() > 0) value = feature.values[0];
@@ -353,7 +354,7 @@ FeatureExtractionPluginTransform::setCompletion(int completion)
 
     } else if (valueCount == 1 ||
 	       m_descriptor->sampleType ==
-	       FeatureExtractionPlugin::OutputDescriptor::VariableSampleRate) {
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	SparseTimeValueModel *model = getOutput<SparseTimeValueModel>();
 	if (!model) return;

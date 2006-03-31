@@ -18,6 +18,7 @@
 
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/RealTimePluginInstance.h"
+#include "plugin/PluginXml.h"
 
 #include "base/Model.h"
 #include "model/SparseTimeValueModel.h"
@@ -61,7 +62,7 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
     }
 
     if (configurationXml != "") {
-        m_plugin->setParametersFromXml(configurationXml);
+        PluginXml(m_plugin).setParametersFromXml(configurationXml);
     }
 
     if (m_outputNo >= m_plugin->getControlOutputCount()) {
@@ -145,7 +146,7 @@ RealTimePluginTransform::run()
 	    }
 	}
 
-        m_plugin->run(RealTime::frame2RealTime(blockFrame, sampleRate));
+        m_plugin->run(Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
 
         float value = m_plugin->getControlOutputValue(m_outputNo);
 

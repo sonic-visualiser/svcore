@@ -53,7 +53,7 @@ public:
     virtual int getPluginVersion() const;
     virtual std::string getCopyright() const;
 
-    virtual void run(const RealTime &);
+    virtual void run(const Vamp::RealTime &);
 
     virtual unsigned int getParameterCount() const;
     virtual void setParameterValue(unsigned int parameter, float value);
@@ -65,7 +65,7 @@ public:
     virtual void setParameter(std::string, float);
 
     virtual std::string configure(std::string key, std::string value);
-    virtual void sendEvent(const RealTime &eventTime,
+    virtual void sendEvent(const Vamp::RealTime &eventTime,
 			   const void *event);
     virtual void clearEvents();
 
@@ -126,7 +126,7 @@ protected:
     void checkProgramCache() const;
 
     void initialiseGroupMembership();
-    void runGrouped(const RealTime &);
+    void runGrouped(const Vamp::RealTime &);
 
     // For use in DSSIPluginFactory (set in the DSSI_Host_Descriptor):
     static int requestMidiSend(LADSPA_Handle instance,
@@ -183,9 +183,9 @@ protected:
     bool                      m_bypassed;
     std::string               m_program;
     bool                      m_grouped;
-    RealTime                  m_lastRunTime;
+    Vamp::RealTime            m_lastRunTime;
 
-    RealTime                  m_lastEventSendTime;
+    Vamp::RealTime            m_lastEventSendTime;
     bool                      m_haveLastEventSendTime;
 
     QMutex                    m_processLock;
