@@ -21,10 +21,13 @@
 #include "vamp-sdk/Plugin.h"
 
 #include "base/Model.h"
+#include "base/Window.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/DenseThreeDimensionalModel.h"
 #include "model/DenseTimeValueModel.h"
+
+#include <fftw3.h>
 
 #include <iostream>
 
@@ -205,6 +208,22 @@ FeatureExtractionPluginTransform::run()
 	buffers[ch] = new float[blockSize];
     }
 
+    double *fftInput = 0;
+    fftw_complex *fftOutput = 0;
+    fftw_plan fftPlan = 0;
+    Window<double> windower(HanningWindow, blockSize);
+
+    if (m_plugin->getInputDomain() == Vamp::Plugin::FrequencyDomain) {
+
+        fftInput = (double *)fftw_malloc(blockSize * sizeof(double));
+        fftOutput = (fftw_complex *)fftw_malloc(blockSize * sizeof(fftw_complex));
+        fftPlan = fftw_plan_dft_r2c_1d(blockSize, fftInput, fftOutput,
+                                       FFTW_ESTIMATE);
+        if (!fftPlan) {
+            std::cerr << "ERROR: FeatureExtractionPluginTransform::run(): fftw_plan failed! Results will be garbage" << std::endl;
+        }
+    }
+
     size_t startFrame = m_input->getStartFrame();
     size_t   endFrame = m_input->getEndFrame();
     size_t blockFrame = startFrame;
@@ -240,6 +259,25 @@ FeatureExtractionPluginTransform::run()
 	    }
 	}
 
+        if (fftPlan) {
+            for (size_t ch = 0; ch < channelCount; ++ch) {
+                for (size_t i = 0; i < blockSize; ++i) {
+                    fftInput[i] = buffers[ch][i];
+                }
+                windower.cut(fftInput);
+                for (size_t i = 0; i < blockSize/2; ++i) {
+                    double temp = fftInput[i];
+                    fftInput[i] = fftInput[i + blockSize/2];
+                    fftInput[i + blockSize/2] = temp;
+                }
+                fftw_execute(fftPlan);
+                for (size_t i = 0; i < blockSize/2; ++i) {
+                    buffers[ch][i*2] = fftOutput[i][0];
+                    buffers[ch][i*2 + 1] = fftOutput[i][1];
+                }
+            }
+        }
+
 	Vamp::Plugin::FeatureSet features = m_plugin->process
 	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
 
@@ -255,6 +293,12 @@ FeatureExtractionPluginTransform::run()
 	}
 
 	blockFrame += stepSize;
+    }
+
+    if (fftPlan) {
+        fftw_destroy_plan(fftPlan);
+        fftw_free(fftInput);
+        fftw_free(fftOutput);
     }
 
     Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
