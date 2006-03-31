@@ -21,14 +21,13 @@
 #ifndef _REALTIME_PLUGIN_INSTANCE_H_
 #define _REALTIME_PLUGIN_INSTANCE_H_
 
-#include "PluginInstance.h"
+#include "vamp-sdk/PluginBase.h"
+#include "vamp-sdk/RealTime.h"
 
 #include <QString>
 #include <QStringList>
 #include <vector>
 #include <string>
-
-#include "base/RealTime.h"
 
 class RealTimePluginFactory;
 	
@@ -72,7 +71,7 @@ namespace PortHint { // ORable
     static const int SampleRate = 8;
 }
 
-class RealTimePluginInstance : public PluginInstance
+class RealTimePluginInstance : public Vamp::PluginBase
 {
 public:
     typedef float sample_t;
@@ -88,7 +87,7 @@ public:
      * may be of interest to synths etc that may have queued events
      * waiting.  Other plugins can ignore it.
      */
-    virtual void run(const RealTime &blockStartTime) = 0;
+    virtual void run(const Vamp::RealTime &blockStartTime) = 0;
     
     virtual size_t getBufferSize() const = 0;
 
@@ -115,7 +114,7 @@ public:
 
     virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 
-    virtual void sendEvent(const RealTime & /* eventTime */,
+    virtual void sendEvent(const Vamp::RealTime & /* eventTime */,
 			   const void * /* event */) { }
     virtual void clearEvents() { }
 

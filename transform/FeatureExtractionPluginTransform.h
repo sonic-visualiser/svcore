@@ -17,7 +17,8 @@
 #define _FEATURE_EXTRACTION_PLUGIN_TRANSFORM_H_
 
 #include "Transform.h"
-#include "FeatureExtractionPlugin.h"
+
+#include "vamp-sdk/Plugin.h"
 
 class DenseTimeValueModel;
 
@@ -34,13 +35,13 @@ public:
 protected:
     virtual void run();
 
-    FeatureExtractionPlugin *m_plugin;
+    Vamp::Plugin *m_plugin;
     int m_channel;
-    FeatureExtractionPlugin::OutputDescriptor *m_descriptor;
+    Vamp::Plugin::OutputDescriptor *m_descriptor;
     int m_outputFeatureNo;
 
     void addFeature(size_t blockFrame,
-		    const FeatureExtractionPlugin::Feature &feature);
+		    const Vamp::Plugin::Feature &feature);
 
     void setCompletion(int);
 

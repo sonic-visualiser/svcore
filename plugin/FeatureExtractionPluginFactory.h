@@ -19,7 +19,7 @@
 #include <QString>
 #include <vector>
 
-class FeatureExtractionPlugin;
+namespace Vamp { class Plugin; }
 
 class FeatureExtractionPluginFactory
 {
@@ -28,12 +28,16 @@ public:
     static FeatureExtractionPluginFactory *instanceFor(QString identifier);
     static std::vector<QString> getAllPluginIdentifiers();
 
-    std::vector<QString> getPluginIdentifiers();
+    virtual std::vector<QString> getPluginPath();
+
+    virtual std::vector<QString> getPluginIdentifiers();
+
+    virtual QString findPluginFile(QString soname, QString inDir = "");
 
     // We don't set blockSize or channels on this -- they're
     // negotiated and handled via initialize() on the plugin
-    virtual FeatureExtractionPlugin *instantiatePlugin(QString identifier,
-						       float inputSampleRate);
+    virtual Vamp::Plugin *instantiatePlugin(QString identifier,
+                                            float inputSampleRate);
 
 protected:
 };

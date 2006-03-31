@@ -22,6 +22,15 @@
 #include "plugins/SpectralCentroid.h" //!!!
 #include "plugins/TonalChangeDetect.h" //!!!
 
+#include "vamp/vamp.h"
+#include "vamp-sdk/PluginHostAdapter.h"
+
+#include "base/System.h"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+
 #include <iostream>
 
 static FeatureExtractionPluginFactory *_nativeInstance = 0;
@@ -29,7 +38,7 @@ static FeatureExtractionPluginFactory *_nativeInstance = 0;
 FeatureExtractionPluginFactory *
 FeatureExtractionPluginFactory::instance(QString pluginType)
 {
-    if (pluginType == "sv") {
+    if (pluginType == "vamp" || pluginType == "sv") { //!!!
 	if (!_nativeInstance) {
 	    std::cerr << "FeatureExtractionPluginFactory::instance(" << pluginType.toStdString()
 		      << "): creating new FeatureExtractionPluginFactory" << std::endl;
@@ -50,12 +59,43 @@ FeatureExtractionPluginFactory::instanceFor(QString identifier)
 }
 
 std::vector<QString>
+FeatureExtractionPluginFactory::getPluginPath()
+{
+    std::vector<QString> path;
+    std::string envPath;
+
+    char *cpath = getenv("Vamp_PATH");
+    if (cpath) envPath = cpath;
+
+    if (envPath == "") {
+        //!!! system dependent
+        envPath = "/usr/local/lib/vamp:/usr/lib/vamp";
+        char *chome = getenv("HOME");
+        if (chome) {
+            envPath = std::string(chome) + "/vamp:" +
+                std::string(chome) + "/.vamp:" + envPath;
+        }
+    }
+
+    std::string::size_type index = 0, newindex = 0;
+
+    while ((newindex = envPath.find(':', index)) < envPath.size()) {
+	path.push_back(envPath.substr(index, newindex - index).c_str());
+	index = newindex + 1;
+    }
+    
+    path.push_back(envPath.substr(index).c_str());
+
+    return path;
+}
+
+std::vector<QString>
 FeatureExtractionPluginFactory::getAllPluginIdentifiers()
 {
     FeatureExtractionPluginFactory *factory;
     std::vector<QString> rv;
     
-    factory = instance("sv");
+    factory = instance("vamp");
     if (factory) {
 	std::vector<QString> tmp = factory->getPluginIdentifiers();
 	for (size_t i = 0; i < tmp.size(); ++i) {
@@ -77,48 +117,196 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     rv.push_back("sv:_builtin:zerocrossing"); //!!!
     rv.push_back("sv:_builtin:spectralcentroid"); //!!!
     rv.push_back("sv:_builtin:tonalchange"); //!!!
+
+    std::vector<QString> path = getPluginPath();
+    
+    for (std::vector<QString>::iterator i = path.begin(); i != path.end(); ++i) {
+
+        std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << i->toStdString() << std::endl;
+
+	QDir pluginDir(*i, PLUGIN_GLOB,
+                       QDir::Name | QDir::IgnoreCase,
+                       QDir::Files | QDir::Readable);
+
+	for (unsigned int j = 0; j < pluginDir.count(); ++j) {
+
+            QString soname = pluginDir.filePath(pluginDir[j]);
+
+            void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
+            
+            if (!libraryHandle) {
+                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname.toStdString() << std::endl;
+                continue;
+            }
+
+            VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
+                DLSYM(libraryHandle, "vampGetPluginDescriptor");
+
+            if (!fn) {
+                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: No descriptor function in " << soname.toStdString() << std::endl;
+                if (DLCLOSE(libraryHandle) != 0) {
+                    std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname.toStdString() << std::endl;
+                }
+                continue;
+            }
+
+            const VampPluginDescriptor *descriptor = 0;
+            int index = 0;
+
+            while ((descriptor = fn(index))) {
+                QString id = QString("vamp:%1:%2").arg(soname).arg(descriptor->name);
+                rv.push_back(id);
+                std::cerr << "Found id " << id.toStdString() << std::endl;
+                ++index;
+            }
+            
+            if (DLCLOSE(libraryHandle) != 0) {
+                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname.toStdString() << std::endl;
+            }
+	}
+    }
+
     return rv;
 }
 
-FeatureExtractionPlugin *
+QString
+FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
+{
+    QString file = "";
+
+    if (inDir != "") {
+
+        QDir dir(inDir, PLUGIN_GLOB,
+                 QDir::Name | QDir::IgnoreCase,
+                 QDir::Files | QDir::Readable);
+        if (!dir.exists()) return "";
+
+        file = dir.filePath(QFileInfo(soname).fileName());
+        if (QFileInfo(file).exists()) {
+            return file;
+        }
+
+	for (unsigned int j = 0; j < dir.count(); ++j) {
+            file = dir.filePath(dir[j]);
+            if (QFileInfo(file).baseName() == QFileInfo(soname).baseName()) {
+                return file;
+            }
+        }
+
+        return "";
+
+    } else {
+
+        QFileInfo fi(soname);
+        if (fi.exists()) return soname;
+
+        if (fi.isAbsolute() && fi.absolutePath() != "") {
+            file = findPluginFile(soname, fi.absolutePath());
+            if (file != "") return file;
+        }
+
+        std::vector<QString> path = getPluginPath();
+        for (std::vector<QString>::iterator i = path.begin();
+             i != path.end(); ++i) {
+            if (*i != "") {
+                file = findPluginFile(soname, *i);
+                if (file != "") return file;
+            }
+        }
+
+        return "";
+    }
+}
+
+Vamp::Plugin *
 FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 						  float inputSampleRate)
 {
-    QString type, soName, label;
-    PluginIdentifier::parseIdentifier(identifier, type, soName, label);
-    if (type != "sv") {
+    Vamp::Plugin *rv = 0;
+
+    const VampPluginDescriptor *descriptor = 0;
+    int index = 0;
+
+    QString type, soname, label;
+    PluginIdentifier::parseIdentifier(identifier, type, soname, label);
+    if (type != "vamp" && type != "sv") { //!!!
 	std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type.toStdString() << std::endl;
 	return 0;
     }
 
     //!!!
-    if (soName != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
-	std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Non-built-in plugins not yet supported (paradoxically enough)" << std::endl;
-	return 0;
+    if (type == "sv" && soname == PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
+
+        if (label == "beats") {
+            return new BeatDetector(inputSampleRate); //!!!
+        }
+        
+        if (label == "chromagram") {
+            return new ChromagramPlugin(inputSampleRate); //!!!
+        }
+        
+        if (label == "zerocrossing") {
+            return new ZeroCrossing(inputSampleRate); //!!!
+        }
+        
+        if (label == "spectralcentroid") {
+            return new SpectralCentroid(inputSampleRate); //!!!
+        }
+        
+        if (label == "tonalchange") {
+            return new TonalChangeDetect(inputSampleRate); //!!!
+        }
+        
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Unknown plugin \"" << identifier.toStdString() << "\"" << std::endl;
+        
+        return 0;
     }
 
-    if (label == "beats") {
-	return new BeatDetector(inputSampleRate); //!!!
+    QString found = findPluginFile(soname);
+
+    if (found == "") {
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find library file " << soname.toStdString() << std::endl;
+    } else if (found != soname) {
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: WARNING: Given library name was " << soname.toStdString() << ", found at " << found.toStdString() << std::endl;
     }
 
-    if (label == "chromagram") {
-	return new ChromagramPlugin(inputSampleRate); //!!!
+    soname = found;
+
+    void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
+            
+    if (!libraryHandle) {
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname.toStdString() << std::endl;
+        return 0;
     }
 
-    if (label == "zerocrossing") {
-	return new ZeroCrossing(inputSampleRate); //!!!
-    }
-
-    if (label == "spectralcentroid") {
-	return new SpectralCentroid(inputSampleRate); //!!!
-    }
-
-    if (label == "tonalchange") {
-	return new TonalChangeDetect(inputSampleRate); //!!!
-    }
-
-    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Unknown plugin \"" << identifier.toStdString() << "\"" << std::endl;
+    VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
+        DLSYM(libraryHandle, "vampGetPluginDescriptor");
     
-    return 0;
+    if (!fn) {
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: No descriptor function in " << soname.toStdString() << std::endl;
+        goto done;
+    }
+
+    while ((descriptor = fn(index))) {
+        if (label == descriptor->name) break;
+        ++index;
+    }
+
+    if (!descriptor) {
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find plugin \"" << label.toStdString() << "\" in library " << soname.toStdString() << std::endl;
+        goto done;
+    }
+
+    rv = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
+
+    //!!! need to dlclose() when plugins from a given library are unloaded
+
+done:
+    if (!rv) {
+        if (DLCLOSE(libraryHandle) != 0) {
+            std::cerr << "WARNING: FeatureExtractionPluginFactory::instantiatePlugin: Failed to unload library " << soname.toStdString() << std::endl;
+        }
+    }
+    return rv;
 }
 

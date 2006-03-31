@@ -253,7 +253,7 @@ DSSIPluginInstance::getLatency()
 #endif
 
     if (m_latencyPort) {
-	if (!m_run) run(RealTime::zeroTime);
+	if (!m_run) run(Vamp::RealTime::zeroTime);
 	latency = (size_t)(*m_latencyPort + 0.1);
     }
     
@@ -850,7 +850,7 @@ DSSIPluginInstance::configure(std::string key,
 }
 
 void
-DSSIPluginInstance::sendEvent(const RealTime &eventTime,
+DSSIPluginInstance::sendEvent(const Vamp::RealTime &eventTime,
 			      const void *e)
 {
 #ifdef DEBUG_DSSI_PROCESS
@@ -926,7 +926,7 @@ DSSIPluginInstance::handleController(snd_seq_event_t *ev)
 }
 
 void
-DSSIPluginInstance::run(const RealTime &blockTime)
+DSSIPluginInstance::run(const Vamp::RealTime &blockTime)
 {
     static snd_seq_event_t localEventBuffer[EVENT_BUFFER_SIZE];
     int evCount = 0;
@@ -980,11 +980,11 @@ DSSIPluginInstance::run(const RealTime &blockTime)
 	*ev = m_eventBuffer.peekOne();
 	bool accept = true;
 
-	RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
+	Vamp::RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
 
 	int frameOffset = 0;
 	if (evTime > blockTime) {
-	    frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+	    frameOffset = Vamp::RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
 	}
 
 #ifdef DEBUG_DSSI_PROCESS
@@ -1084,7 +1084,7 @@ DSSIPluginInstance::run(const RealTime &blockTime)
 }
 
 void
-DSSIPluginInstance::runGrouped(const RealTime &blockTime)
+DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 {
     // If something else in our group has just been called for this
     // block time (but we haven't) then we should just write out the
@@ -1156,11 +1156,11 @@ DSSIPluginInstance::runGrouped(const RealTime &blockTime)
 	    *ev = instance->m_eventBuffer.peekOne();
 	    bool accept = true;
 
-	    RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
+	    Vamp::RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
 
 	    int frameOffset = 0;
 	    if (evTime > blockTime) {
-		frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+		frameOffset = Vamp::RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
 	    }
 
 #ifdef DEBUG_DSSI_PROCESS

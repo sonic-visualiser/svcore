@@ -206,7 +206,10 @@ DSSIPluginFactory::getPluginPath()
     if (path == "") {
 	path = "/usr/local/lib/dssi:/usr/lib/dssi";
 	char *home = getenv("HOME");
-	if (home) path = std::string(home) + "/.dssi:" + path;
+	if (home) {
+            path = std::string(home) + "/dssi:" +
+                   std::string(home) + "/.dssi:" + path;
+        }
     }
 
     std::string::size_type index = 0, newindex = 0;

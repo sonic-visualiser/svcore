@@ -20,6 +20,7 @@
 
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/RealTimePluginFactory.h"
+#include "plugin/PluginXml.h"
 
 #include "widgets/PluginParameterDialog.h"
 
@@ -139,7 +140,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    continue;
 	}
 
-	FeatureExtractionPlugin *plugin = 
+	Vamp::Plugin *plugin = 
 	    factory->instantiatePlugin(pluginId, 48000);
 
 	if (!plugin) {
@@ -148,7 +149,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	}
 		
 	QString pluginDescription = plugin->getDescription().c_str();
-	FeatureExtractionPlugin::OutputList outputs =
+	Vamp::Plugin::OutputList outputs =
 	    plugin->getOutputDescriptors();
 
 	for (size_t j = 0; j < outputs.size(); ++j) {
@@ -305,7 +306,7 @@ TransformFactory::getTransformChannelRange(TransformName name,
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
-        FeatureExtractionPlugin *plugin = 
+        Vamp::Plugin *plugin = 
             FeatureExtractionPluginFactory::instanceFor(id)->
             instantiatePlugin(id, 48000);
         if (!plugin) return false;
@@ -346,7 +347,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
 
     std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
 
-    PluginInstance *plugin = 0;
+    Vamp::PluginBase *plugin = 0;
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
@@ -361,7 +362,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
 
     if (plugin) {
         if (configurationXml != "") {
-            plugin->setParametersFromXml(configurationXml);
+            PluginXml(plugin).setParametersFromXml(configurationXml);
         }
 
         int sourceChannels = 1;
@@ -386,7 +387,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
         if (dialog->exec() == QDialog::Accepted) {
             ok = true;
         }
-        configurationXml = plugin->toXmlString();
+        configurationXml = PluginXml(plugin).toXmlString();
         channel = dialog->getChannel();
         delete dialog;
         delete plugin;
