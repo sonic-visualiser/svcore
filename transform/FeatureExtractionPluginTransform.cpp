@@ -206,7 +206,11 @@ FeatureExtractionPluginTransform::run()
 
     size_t sampleRate = m_input->getSampleRate();
 
-    m_plugin->initialise(channelCount, m_stepSize, m_blockSize);
+    if (!m_plugin->initialise(channelCount, m_stepSize, m_blockSize)) {
+        std::cerr << "FeatureExtractionPluginTransform::run: Plugin "
+                  << m_plugin->getName() << " failed to initialise!" << std::endl;
+        return;
+    }
 
     float **buffers = new float*[channelCount];
     for (size_t ch = 0; ch < channelCount; ++ch) {
