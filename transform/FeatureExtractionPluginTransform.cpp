@@ -39,6 +39,8 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     Transform(inputModel),
     m_plugin(0),
     m_channel(channel),
+    m_stepSize(0),
+    m_blockSize(0),
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
@@ -64,6 +66,12 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     if (configurationXml != "") {
         PluginXml(m_plugin).setParametersFromXml(configurationXml);
     }
+
+    m_blockSize = m_plugin->getPreferredBlockSize();
+    m_stepSize = m_plugin->getPreferredStepSize();
+
+    if (m_blockSize == 0) m_blockSize = 1024; //!!! todo: ask user
+    if (m_stepSize == 0) m_stepSize = m_blockSize; //!!! likewise
 
     Vamp::Plugin::OutputList outputs =
 	m_plugin->getOutputDescriptors();
@@ -198,26 +206,23 @@ FeatureExtractionPluginTransform::run()
 
     size_t sampleRate = m_input->getSampleRate();
 
-    size_t stepSize = m_plugin->getPreferredStepSize();
-    size_t blockSize = m_plugin->getPreferredBlockSize();
-
-    m_plugin->initialise(channelCount, stepSize, blockSize);
+    m_plugin->initialise(channelCount, m_stepSize, m_blockSize);
 
     float **buffers = new float*[channelCount];
     for (size_t ch = 0; ch < channelCount; ++ch) {
-	buffers[ch] = new float[blockSize];
+	buffers[ch] = new float[m_blockSize];
     }
 
     double *fftInput = 0;
     fftw_complex *fftOutput = 0;
     fftw_plan fftPlan = 0;
-    Window<double> windower(HanningWindow, blockSize);
+    Window<double> windower(HanningWindow, m_blockSize);
 
     if (m_plugin->getInputDomain() == Vamp::Plugin::FrequencyDomain) {
 
-        fftInput = (double *)fftw_malloc(blockSize * sizeof(double));
-        fftOutput = (fftw_complex *)fftw_malloc(blockSize * sizeof(fftw_complex));
-        fftPlan = fftw_plan_dft_r2c_1d(blockSize, fftInput, fftOutput,
+        fftInput = (double *)fftw_malloc(m_blockSize * sizeof(double));
+        fftOutput = (fftw_complex *)fftw_malloc(m_blockSize * sizeof(fftw_complex));
+        fftPlan = fftw_plan_dft_r2c_1d(m_blockSize, fftInput, fftOutput,
                                        FFTW_ESTIMATE);
         if (!fftPlan) {
             std::cerr << "ERROR: FeatureExtractionPluginTransform::run(): fftw_plan failed! Results will be garbage" << std::endl;
@@ -236,8 +241,8 @@ FeatureExtractionPluginTransform::run()
 //		  << blockFrame << std::endl;
 
 	size_t completion =
-	    (((blockFrame - startFrame) / stepSize) * 99) /
-	    (   (endFrame - startFrame) / stepSize);
+	    (((blockFrame - startFrame) / m_stepSize) * 99) /
+	    (   (endFrame - startFrame) / m_stepSize);
 
 	// channelCount is either m_input->channelCount or 1
 
@@ -245,15 +250,15 @@ FeatureExtractionPluginTransform::run()
 
 	if (channelCount == 1) {
 	    got = input->getValues
-		(m_channel, blockFrame, blockFrame + blockSize, buffers[0]);
-	    while (got < blockSize) {
+		(m_channel, blockFrame, blockFrame + m_blockSize, buffers[0]);
+	    while (got < m_blockSize) {
 		buffers[0][got++] = 0.0;
 	    }
 	} else {
 	    for (size_t ch = 0; ch < channelCount; ++ch) {
 		got = input->getValues
-		    (ch, blockFrame, blockFrame + blockSize, buffers[ch]);
-		while (got < blockSize) {
+		    (ch, blockFrame, blockFrame + m_blockSize, buffers[ch]);
+		while (got < m_blockSize) {
 		    buffers[ch][got++] = 0.0;
 		}
 	    }
@@ -261,17 +266,17 @@ FeatureExtractionPluginTransform::run()
 
         if (fftPlan) {
             for (size_t ch = 0; ch < channelCount; ++ch) {
-                for (size_t i = 0; i < blockSize; ++i) {
+                for (size_t i = 0; i < m_blockSize; ++i) {
                     fftInput[i] = buffers[ch][i];
                 }
                 windower.cut(fftInput);
-                for (size_t i = 0; i < blockSize/2; ++i) {
+                for (size_t i = 0; i < m_blockSize/2; ++i) {
                     double temp = fftInput[i];
-                    fftInput[i] = fftInput[i + blockSize/2];
-                    fftInput[i + blockSize/2] = temp;
+                    fftInput[i] = fftInput[i + m_blockSize/2];
+                    fftInput[i + m_blockSize/2] = temp;
                 }
                 fftw_execute(fftPlan);
-                for (size_t i = 0; i < blockSize/2; ++i) {
+                for (size_t i = 0; i < m_blockSize/2; ++i) {
                     buffers[ch][i*2] = fftOutput[i][0];
                     buffers[ch][i*2 + 1] = fftOutput[i][1];
                 }
@@ -292,7 +297,7 @@ FeatureExtractionPluginTransform::run()
 	    prevCompletion = completion;
 	}
 
-	blockFrame += stepSize;
+	blockFrame += m_stepSize;
     }
 
     if (fftPlan) {
