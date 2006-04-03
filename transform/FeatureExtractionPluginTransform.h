@@ -37,6 +37,8 @@ protected:
 
     Vamp::Plugin *m_plugin;
     int m_channel;
+    size_t m_stepSize;
+    size_t m_blockSize;
     Vamp::Plugin::OutputDescriptor *m_descriptor;
     int m_outputFeatureNo;
 
