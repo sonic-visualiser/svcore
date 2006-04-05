@@ -101,14 +101,14 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     std::cerr << "FeatureExtractionPluginTransform: output sample type "
 	      << m_descriptor->sampleType << std::endl;
 
-    int valueCount = 1;
+    int binCount = 1;
     float minValue = 0.0, maxValue = 0.0;
     
-    if (m_descriptor->hasFixedValueCount) {
-	valueCount = m_descriptor->valueCount;
+    if (m_descriptor->hasFixedBinCount) {
+	binCount = m_descriptor->binCount;
     }
 
-    if (valueCount > 0 && m_descriptor->hasKnownExtents) {
+    if (binCount > 0 && m_descriptor->hasKnownExtents) {
 	minValue = m_descriptor->minValue;
 	maxValue = m_descriptor->maxValue;
     }
@@ -133,12 +133,12 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	break;
     }
 
-    if (valueCount == 0) {
+    if (binCount == 0) {
 
 	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
 						 false);
 
-    } else if (valueCount == 1 ||
+    } else if (binCount == 1 ||
 
 	       // We don't have a sparse 3D model
 	       m_descriptor->sampleType ==
@@ -153,12 +153,12 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     } else {
 	
 	m_output = new DenseThreeDimensionalModel(modelRate, modelResolution,
-						  valueCount, false);
+						  binCount, false);
 
-	if (!m_descriptor->valueNames.empty()) {
+	if (!m_descriptor->binNames.empty()) {
 	    std::vector<QString> names;
-	    for (size_t i = 0; i < m_descriptor->valueNames.size(); ++i) {
-		names.push_back(m_descriptor->valueNames[i].c_str());
+	    for (size_t i = 0; i < m_descriptor->binNames.size(); ++i) {
+		names.push_back(m_descriptor->binNames[i].c_str());
 	    }
 	    (dynamic_cast<DenseThreeDimensionalModel *>(m_output))
 		->setBinNames(names);
@@ -233,54 +233,52 @@ FeatureExtractionPluginTransform::run()
         }
     }
 
-    size_t startFrame = m_input->getStartFrame();
-    size_t   endFrame = m_input->getEndFrame();
-    size_t blockFrame = startFrame;
+    long startFrame = m_input->getStartFrame();
+    long   endFrame = m_input->getEndFrame();
+    long blockFrame = startFrame;
 
-    size_t prevCompletion = 0;
+    long prevCompletion = 0;
 
-    while (blockFrame < endFrame) {
+    while (1) {
+
+        if (fftPlan) {
+            if (blockFrame - m_blockSize/2 > endFrame) break;
+        } else {
+            if (blockFrame >= endFrame) break;
+        }
 
 //	std::cerr << "FeatureExtractionPluginTransform::run: blockFrame "
 //		  << blockFrame << std::endl;
 
-	size_t completion =
+	long completion =
 	    (((blockFrame - startFrame) / m_stepSize) * 99) /
 	    (   (endFrame - startFrame) / m_stepSize);
 
 	// channelCount is either m_input->channelCount or 1
 
-	size_t got = 0;
-
-	if (channelCount == 1) {
-	    got = input->getValues
-		(m_channel, blockFrame, blockFrame + m_blockSize, buffers[0]);
-	    while (got < m_blockSize) {
-		buffers[0][got++] = 0.0;
-	    }
-	} else {
-	    for (size_t ch = 0; ch < channelCount; ++ch) {
-		got = input->getValues
-		    (ch, blockFrame, blockFrame + m_blockSize, buffers[ch]);
-		while (got < m_blockSize) {
-		    buffers[ch][got++] = 0.0;
-		}
-	    }
-	}
-
+        for (int ch = 0; ch < channelCount; ++ch) {
+            if (fftPlan) {
+                getFrames(ch, channelCount, 
+                          blockFrame - m_blockSize/2, m_blockSize, buffers[ch]);
+            } else {
+                getFrames(ch, channelCount, 
+                           blockFrame, m_blockSize, buffers[ch]);
+            }                
+        }
+        
         if (fftPlan) {
-            for (size_t ch = 0; ch < channelCount; ++ch) {
-                for (size_t i = 0; i < m_blockSize; ++i) {
+            for (int ch = 0; ch < channelCount; ++ch) {
+                for (int i = 0; i < m_blockSize; ++i) {
                     fftInput[i] = buffers[ch][i];
                 }
                 windower.cut(fftInput);
-                for (size_t i = 0; i < m_blockSize/2; ++i) {
+                for (int i = 0; i < m_blockSize/2; ++i) {
                     double temp = fftInput[i];
                     fftInput[i] = fftInput[i + m_blockSize/2];
                     fftInput[i + m_blockSize/2] = temp;
                 }
                 fftw_execute(fftPlan);
-                for (size_t i = 0; i < m_blockSize/2; ++i) {
+                for (int i = 0; i < m_blockSize/2; ++i) {
                     buffers[ch][i*2] = fftOutput[i][0];
                     buffers[ch][i*2 + 1] = fftOutput[i][1];
                 }
@@ -321,6 +319,32 @@ FeatureExtractionPluginTransform::run()
     setCompletion(100);
 }
 
+void
+FeatureExtractionPluginTransform::getFrames(int channel, int channelCount,
+                                            long startFrame, long size,
+                                            float *buffer)
+{
+    long offset = 0;
+
+    if (startFrame < 0) {
+        for (int i = 0; i < size && startFrame + i < 0; ++i) {
+            buffer[i] = 0.0f;
+        }
+        offset = -startFrame;
+        size -= offset;
+        if (size <= 0) return;
+        startFrame = 0;
+    }
+
+    size_t got = getInput()->getValues
+        ((channelCount == 1 ? m_channel : channel),
+         startFrame, startFrame + size, buffer + offset);
+
+    while (got < size) {
+        buffer[offset + got] = 0.0;
+        ++got;
+    }
+}
 
 void
 FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
@@ -331,9 +355,9 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 //    std::cerr << "FeatureExtractionPluginTransform::addFeature("
 //	      << blockFrame << ")" << std::endl;
 
-    int valueCount = 1;
-    if (m_descriptor->hasFixedValueCount) {
-	valueCount = m_descriptor->valueCount;
+    int binCount = 1;
+    if (m_descriptor->hasFixedBinCount) {
+	binCount = m_descriptor->binCount;
     }
 
     size_t frame = blockFrame;
@@ -363,13 +387,13 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 	}
     }
 	
-    if (valueCount == 0) {
+    if (binCount == 0) {
 
 	SparseOneDimensionalModel *model = getOutput<SparseOneDimensionalModel>();
 	if (!model) return;
 	model->addPoint(SparseOneDimensionalModel::Point(frame, feature.label.c_str()));
 	
-    } else if (valueCount == 1 ||
+    } else if (binCount == 1 ||
 	       m_descriptor->sampleType == 
 	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
@@ -394,18 +418,18 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 void
 FeatureExtractionPluginTransform::setCompletion(int completion)
 {
-    int valueCount = 1;
-    if (m_descriptor->hasFixedValueCount) {
-	valueCount = m_descriptor->valueCount;
+    int binCount = 1;
+    if (m_descriptor->hasFixedBinCount) {
+	binCount = m_descriptor->binCount;
     }
 
-    if (valueCount == 0) {
+    if (binCount == 0) {
 
 	SparseOneDimensionalModel *model = getOutput<SparseOneDimensionalModel>();
 	if (!model) return;
 	model->setCompletion(completion);
 
-    } else if (valueCount == 1 ||
+    } else if (binCount == 1 ||
 	       m_descriptor->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
