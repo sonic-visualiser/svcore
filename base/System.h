@@ -50,9 +50,18 @@ void gettimeofday(struct timeval *p, void *tz);
 #define DLCLOSE(a)   dlclose((a))
 #define DLERROR()    dlerror()
 
+#ifdef __APPLE__
+
+#define PLUGIN_GLOB  "*.dylib"
+
+#else 
+
 #define PLUGIN_GLOB  "*.so"
 
-#endif
+#endif /* __APPLE__ */
 
-#endif
+#endif /* ! _WIN32 */
+
+#endif /* ! _SYSTEM_H_ */
+
 
