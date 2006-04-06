@@ -125,7 +125,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	break;
 
     case Vamp::Plugin::OutputDescriptor::OneSamplePerStep:
-	modelResolution = m_plugin->getPreferredStepSize();
+	modelResolution = m_stepSize;
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
