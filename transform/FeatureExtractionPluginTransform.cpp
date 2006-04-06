@@ -129,7 +129,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
-	modelRate = m_descriptor->sampleRate;
+	modelRate = size_t(m_descriptor->sampleRate + 0.001);
 	break;
     }
 
@@ -242,7 +242,7 @@ FeatureExtractionPluginTransform::run()
     while (1) {
 
         if (fftPlan) {
-            if (blockFrame - m_blockSize/2 > endFrame) break;
+            if (blockFrame - int(m_blockSize)/2 > endFrame) break;
         } else {
             if (blockFrame >= endFrame) break;
         }
@@ -256,7 +256,7 @@ FeatureExtractionPluginTransform::run()
 
 	// channelCount is either m_input->channelCount or 1
 
-        for (int ch = 0; ch < channelCount; ++ch) {
+        for (size_t ch = 0; ch < channelCount; ++ch) {
             if (fftPlan) {
                 getFrames(ch, channelCount, 
                           blockFrame - m_blockSize/2, m_blockSize, buffers[ch]);
@@ -267,18 +267,18 @@ FeatureExtractionPluginTransform::run()
         }
         
         if (fftPlan) {
-            for (int ch = 0; ch < channelCount; ++ch) {
-                for (int i = 0; i < m_blockSize; ++i) {
+            for (size_t ch = 0; ch < channelCount; ++ch) {
+                for (size_t i = 0; i < m_blockSize; ++i) {
                     fftInput[i] = buffers[ch][i];
                 }
                 windower.cut(fftInput);
-                for (int i = 0; i < m_blockSize/2; ++i) {
+                for (size_t i = 0; i < m_blockSize/2; ++i) {
                     double temp = fftInput[i];
                     fftInput[i] = fftInput[i + m_blockSize/2];
                     fftInput[i + m_blockSize/2] = temp;
                 }
                 fftw_execute(fftPlan);
-                for (int i = 0; i < m_blockSize/2; ++i) {
+                for (size_t i = 0; i < m_blockSize/2; ++i) {
                     buffers[ch][i*2] = fftOutput[i][0];
                     buffers[ch][i*2 + 1] = fftOutput[i][1];
                 }
@@ -336,7 +336,7 @@ FeatureExtractionPluginTransform::getFrames(int channel, int channelCount,
         startFrame = 0;
     }
 
-    size_t got = getInput()->getValues
+    long got = getInput()->getValues
         ((channelCount == 1 ? m_channel : channel),
          startFrame, startFrame + size, buffer + offset);
 

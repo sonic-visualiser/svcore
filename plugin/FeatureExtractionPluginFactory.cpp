@@ -267,6 +267,9 @@ done:
             std::cerr << "WARNING: FeatureExtractionPluginFactory::instantiatePlugin: Failed to unload library " << soname.toStdString() << std::endl;
         }
     }
+
+//    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label.toStdString() << " from library " << soname.toStdString() << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << std::endl;
+    
     return rv;
 }
 
