@@ -16,12 +16,6 @@
 #include "FeatureExtractionPluginFactory.h"
 #include "PluginIdentifier.h"
 
-#include "plugins/BeatDetect.h" //!!!
-#include "plugins/ChromagramPlugin.h" //!!!
-#include "plugins/ZeroCrossing.h" //!!!
-#include "plugins/SpectralCentroid.h" //!!!
-#include "plugins/TonalChangeDetect.h" //!!!
-
 #include "vamp/vamp.h"
 #include "vamp-sdk/PluginHostAdapter.h"
 
@@ -38,7 +32,7 @@ static FeatureExtractionPluginFactory *_nativeInstance = 0;
 FeatureExtractionPluginFactory *
 FeatureExtractionPluginFactory::instance(QString pluginType)
 {
-    if (pluginType == "vamp" || pluginType == "sv") { //!!!
+    if (pluginType == "vamp") {
 	if (!_nativeInstance) {
 	    std::cerr << "FeatureExtractionPluginFactory::instance(" << pluginType.toStdString()
 		      << "): creating new FeatureExtractionPluginFactory" << std::endl;
@@ -112,12 +106,6 @@ std::vector<QString>
 FeatureExtractionPluginFactory::getPluginIdentifiers()
 {
     std::vector<QString> rv;
-    rv.push_back("sv:_builtin:beats"); //!!!
-    rv.push_back("sv:_builtin:chromagram"); //!!!
-    rv.push_back("sv:_builtin:zerocrossing"); //!!!
-    rv.push_back("sv:_builtin:spectralcentroid"); //!!!
-    rv.push_back("sv:_builtin:tonalchange"); //!!!
-
     std::vector<QString> path = getPluginPath();
     
     for (std::vector<QString>::iterator i = path.begin(); i != path.end(); ++i) {
@@ -135,7 +123,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
             
             if (!libraryHandle) {
-                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname.toStdString() << std::endl;
+                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname.toStdString() << ": " << DLERROR() << std::endl;
                 continue;
             }
 
@@ -229,37 +217,9 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     QString type, soname, label;
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
-    if (type != "vamp" && type != "sv") { //!!!
+    if (type != "vamp") {
 	std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type.toStdString() << std::endl;
 	return 0;
-    }
-
-    //!!!
-    if (type == "sv" && soname == PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
-
-        if (label == "beats") {
-            return new BeatDetector(inputSampleRate); //!!!
-        }
-        
-        if (label == "chromagram") {
-            return new ChromagramPlugin(inputSampleRate); //!!!
-        }
-        
-        if (label == "zerocrossing") {
-            return new ZeroCrossing(inputSampleRate); //!!!
-        }
-        
-        if (label == "spectralcentroid") {
-            return new SpectralCentroid(inputSampleRate); //!!!
-        }
-        
-        if (label == "tonalchange") {
-            return new TonalChangeDetect(inputSampleRate); //!!!
-        }
-        
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Unknown plugin \"" << identifier.toStdString() << "\"" << std::endl;
-        
-        return 0;
     }
 
     QString found = findPluginFile(soname);
@@ -275,7 +235,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
             
     if (!libraryHandle) {
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname.toStdString() << std::endl;
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname.toStdString() << ": " << DLERROR() << std::endl;
         return 0;
     }
 
