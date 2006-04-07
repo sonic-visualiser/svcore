@@ -73,8 +73,10 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     if (m_blockSize == 0) m_blockSize = 1024; //!!! todo: ask user
     if (m_stepSize == 0) m_stepSize = m_blockSize; //!!! likewise
 
-    Vamp::Plugin::OutputList outputs =
-	m_plugin->getOutputDescriptors();
+    //!!! cope with plugins that request non-power-of-2 block sizes in
+    // the frequency domain!
+
+    Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {
 	std::cerr << "FeatureExtractionPluginTransform: Plugin \""
@@ -343,6 +345,15 @@ FeatureExtractionPluginTransform::getFrames(int channel, int channelCount,
     while (got < size) {
         buffer[offset + got] = 0.0;
         ++got;
+    }
+
+    if (m_channel == -1 && channelCount == 1 &&
+        getInput()->getChannelCount() > 1) {
+        // use mean instead of sum, as plugin input
+        int cc = getInput()->getChannelCount();
+        for (long i = 0; i < size; ++i) {
+            buffer[i] /= cc;
+        }
     }
 }
 

@@ -32,6 +32,7 @@ class Model;
 class QPainter;
 class View;
 class QMouseEvent;
+class Clipboard;
 
 /**
  * The base class for visual representations of the data found in a
@@ -139,6 +140,8 @@ public:
     virtual void resizeSelection(Selection s, Selection newSize) { }
     virtual void deleteSelection(Selection s) { }
 
+    virtual void copy(Selection s, Clipboard &to) { }
+    virtual void paste(const Clipboard &from, int frameOffset) { }
 
     // Text mode:
     //
