@@ -136,6 +136,12 @@ RealTimePluginTransform::run()
 	    while (got < blockSize) {
 		buffers[0][got++] = 0.0;
 	    }
+            if (m_channel == -1 && channelCount > 1) {
+                // use mean instead of sum, as plugin input
+                for (size_t i = 0; i < got; ++i) {
+                    buffers[0][i] /= channelCount;
+                }
+            }                
 	} else {
 	    for (size_t ch = 0; ch < channelCount; ++ch) {
 		got = input->getValues

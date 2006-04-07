@@ -223,6 +223,9 @@ public:
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
+    size_t getModelsStartFrame() const;
+    size_t getModelsEndFrame() const;
+
 signals:
     void propertyContainerAdded(PropertyContainer *pc);
     void propertyContainerRemoved(PropertyContainer *pc);
@@ -258,8 +261,6 @@ protected:
 
     typedef std::vector<Layer *> LayerList;
 
-    size_t getModelsStartFrame() const;
-    size_t getModelsEndFrame() const;
     int getModelsSampleRate() const;
     bool areLayersScrollable() const;
     LayerList getScrollableBackLayers(bool testChanged, bool &changed) const;

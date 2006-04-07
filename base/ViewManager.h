@@ -23,6 +23,7 @@
 
 #include "Selection.h"
 #include "Command.h"
+#include "Clipboard.h"
 
 class AudioPlaySource;
 class Model;
@@ -73,6 +74,8 @@ public:
      * Return the empty selection if no appropriate selection is found.
      */
     Selection getContainingSelection(size_t frame, bool defaultToFollowing) const;
+
+    Clipboard &getClipboard() { return m_clipboard; }
 
     enum ToolMode {
 	NavigateMode,
@@ -151,6 +154,8 @@ protected:
     MultiSelection m_selections;
     Selection m_inProgressSelection;
     bool m_inProgressExclusive;
+
+    Clipboard m_clipboard;
 
     ToolMode m_toolMode;
 
