@@ -78,14 +78,13 @@ public:
     virtual int getVerticalScaleWidth(View *, QPainter &) const { return 0; }
     virtual void paintVerticalScale(View *, QPainter &, QRect) const { }
 
+    virtual bool getCrosshairExtents(View *, QPainter &, QPoint cursorPos,
+                                     std::vector<QRect> &) const { return false; }
+    virtual void paintCrosshairs(View *, QPainter &, QPoint) const { }
+
     virtual QString getFeatureDescription(View *, QPoint &) const {
 	return "";
     }
-
-    //!!! We also need a method (like the vertical scale method) for
-    //drawing additional scales like a colour scale.  That is, unless
-    //all applicable layers can actually do this from
-    //paintVerticalScale as well?
 
     enum SnapType {
 	SnapLeft,

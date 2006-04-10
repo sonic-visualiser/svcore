@@ -96,6 +96,8 @@ public:
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
+    virtual QString toDelimitedDataString(QString) const { return ""; }
+
 signals:
     /**
      * Emitted when a model has been edited (or more data retrieved
