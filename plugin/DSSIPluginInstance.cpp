@@ -828,6 +828,8 @@ DSSIPluginInstance::configure(std::string key,
 
     m_programCacheValid = false;
 
+    m_configurationData[key] = value;
+
     std::string qm;
 
     // Ignore return values from reserved key configuration calls such
