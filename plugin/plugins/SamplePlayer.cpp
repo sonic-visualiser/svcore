@@ -96,7 +96,7 @@ SamplePlayer::dssiDescriptor =
 {
     2, // DSSI API version
     &ladspaDescriptor,
-    0, // Configure
+    configure,
     getProgram,
     selectProgram,
     getMidiController,
@@ -128,6 +128,7 @@ SamplePlayer::SamplePlayer(int sampleRate) :
     m_sampleCount(0),
     m_sampleRate(sampleRate),
     m_sampleNo(0),
+    m_samplePath("samples"),
     m_sampleSearchComplete(false),
     m_pendingProgramChange(-1)
 {
@@ -205,6 +206,28 @@ void
 SamplePlayer::cleanup(LADSPA_Handle handle)
 {
     delete (SamplePlayer *)handle;
+}
+
+char *
+SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value)
+{
+    if (key && !strcmp(key, "samplepath")) {
+
+        SamplePlayer *player = (SamplePlayer *)handle;
+
+	QMutexLocker locker(&player->m_mutex);
+
+        player->m_samplePath = value;
+
+        if (player->m_sampleSearchComplete) {
+            player->m_sampleSearchComplete = false;
+            player->searchSamples();
+        }
+
+        return 0;
+    }
+
+    return strdup("Unknown configure key");
 }
 
 const DSSI_Program_Descriptor *
@@ -317,22 +340,25 @@ SamplePlayer::searchSamples()
 {
     if (m_sampleSearchComplete) return;
 
-    //!!!
-//    QString path = "/usr/share/hydrogen/data/drumkits/EasternHop-1";
-
     std::cerr << "Current working directory is \"" << getcwd(0, 0) << "\"" << std::endl;
 
-    QString path = "samples";
-    
     std::cerr << "SamplePlayer::searchSamples: Path is \""
-	      << path.toLocal8Bit().data() << "\"" << std::endl;
+	      << m_samplePath.toLocal8Bit().data() << "\"" << std::endl;
 
-    QDir dir(path, "*.wav");
-    for (unsigned int i = 0; i < dir.count(); ++i) {
-	QFileInfo file(dir.filePath(dir[i]));
-	m_samples.push_back(std::pair<QString, QString>
-			    (file.baseName(), file.filePath()));
-	std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+    QStringList dirList = m_samplePath.split(QRegExp("[:;]"));
+
+    for (QStringList::iterator i = dirList.begin(); i != dirList.end(); ++i) {
+
+        QDir dir(*i, "*.wav");
+
+        for (unsigned int i = 0; i < dir.count(); ++i) {
+            QFileInfo file(dir.filePath(dir[i]));
+            if (file.isReadable()) {
+                m_samples.push_back(std::pair<QString, QString>
+                                    (file.baseName(), file.filePath()));
+                std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+            }
+        }
     }
 
     m_sampleSearchComplete = true;

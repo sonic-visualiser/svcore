@@ -24,6 +24,7 @@
 #include <QDomAttr>
 
 #include "vamp-sdk/PluginBase.h"
+#include "RealTimePluginInstance.h"
 
 #include <iostream>
 
@@ -63,6 +64,29 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
             .arg(m_plugin->getParameter(i->name));
     }
 
+    RealTimePluginInstance *rtpi =
+        dynamic_cast<RealTimePluginInstance *>(m_plugin);
+    if (rtpi) {
+        std::map<std::string, std::string> configurePairs =
+            rtpi->getConfigurePairs();
+        QString config;
+        for (std::map<std::string, std::string>::iterator i = configurePairs.begin();
+             i != configurePairs.end(); ++i) {
+            QString key = i->first.c_str();
+            QString value = i->second.c_str();
+            key.replace(";", "[[SEMICOLON]]");
+            key.replace("=", "[[EQUALS]]");
+            value.replace(";", "[[SEMICOLON]]");
+            value.replace("=", "[[EQUALS]]");
+            if (config != "") config += ";";
+            config += QString("%1=%2").arg(key).arg(value);
+        }
+        if (config != "") {
+            s += QString("configuration=\"%1\" ")
+                .arg(encodeEntities(config));
+        }
+    }
+
     s += "/>\n";
     return s;
 }
@@ -88,6 +112,29 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
     int version = attrs.value("version").trimmed().toInt(&ok);
     if (ok && version != m_plugin->getPluginVersion()) {
         std::cerr << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << std::endl;
+    }
+
+    RealTimePluginInstance *rtpi =
+        dynamic_cast<RealTimePluginInstance *>(m_plugin);
+    if (rtpi) {
+        QString config = attrs.value("configuration");
+        if (config != "") {
+            QStringList configList = config.split(";");
+            for (QStringList::iterator i = configList.begin();
+                 i != configList.end(); ++i) {
+                QStringList kv = i->split("=");
+                if (kv.count() < 2) {
+                    std::cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << i->toStdString() << "\"" << std::endl;
+                    continue;
+                }
+                QString key(kv[0]), value(kv[1]);
+                key.replace("[[SEMICOLON]]", ";");
+                key.replace("[[EQUALS]]", ";");
+                value.replace("[[SEMICOLON]]", ";");
+                value.replace("[[SEMICOLON]]", ";");
+                rtpi->configure(key.toStdString(), value.toStdString());
+            }
+        }
     }
 
     if (!m_plugin->getPrograms().empty()) {

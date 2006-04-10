@@ -62,6 +62,7 @@ private:
     static void run(LADSPA_Handle, unsigned long);
     static void deactivate(LADSPA_Handle);
     static void cleanup(LADSPA_Handle);
+    static char *configure(LADSPA_Handle, const char *, const char *);
     static const DSSI_Program_Descriptor *getProgram(LADSPA_Handle, unsigned long);
     static void selectProgram(LADSPA_Handle, unsigned long, unsigned long);
     static int getMidiController(LADSPA_Handle, unsigned long);
@@ -90,6 +91,7 @@ private:
     int m_velocities[Polyphony];
     long m_sampleNo;
 
+    QString m_samplePath;
     QString m_program;
     std::vector<std::pair<QString, QString> > m_samples; // program name, path
     bool m_sampleSearchComplete;

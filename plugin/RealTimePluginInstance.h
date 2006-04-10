@@ -28,6 +28,7 @@
 #include <QStringList>
 #include <vector>
 #include <string>
+#include <map>
 
 class RealTimePluginFactory;
 	
@@ -132,12 +133,18 @@ public:
 
     virtual std::string getType() const { return "Real-Time Plugin"; }
 
+    virtual std::map<std::string, std::string> getConfigurePairs() {
+        return m_configurationData;
+    }
+
 protected:
     RealTimePluginInstance(RealTimePluginFactory *factory, QString identifier) :
 	m_factory(factory), m_identifier(identifier) { }
 
     RealTimePluginFactory *m_factory;
     QString m_identifier;
+
+    std::map<std::string, std::string> m_configurationData;
 
     friend class PluginFactory;
 };

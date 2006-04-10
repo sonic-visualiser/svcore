@@ -43,6 +43,7 @@ class ViewManager : public QObject
 
 public:
     ViewManager();
+    virtual ~ViewManager();
 
     void setAudioPlaySource(AudioPlaySource *source);
 
@@ -103,6 +104,8 @@ public:
     };
     void setOverlayMode(OverlayMode mode);
     OverlayMode getOverlayMode() const { return m_overlayMode; }
+
+    QString getTemporaryDirectory();
 
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
@@ -181,6 +184,9 @@ protected:
     };
 
     OverlayMode m_overlayMode;
+
+    void deleteTemporaryDirectory(QString);
+    QString m_tmpdir;
 };
 
 #endif
