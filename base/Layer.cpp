@@ -70,10 +70,10 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
     s += indent;
 
     s += QString("<layer id=\"%2\" type=\"%1\" name=\"%3\" model=\"%4\" %5/>\n")
-	.arg(LayerFactory::instance()->getLayerTypeName
-	     (LayerFactory::instance()->getLayerType(this)))
+	.arg(encodeEntities(LayerFactory::instance()->getLayerTypeName
+                            (LayerFactory::instance()->getLayerType(this))))
 	.arg(getObjectExportId(this))
-	.arg(objectName())
+	.arg(encodeEntities(objectName()))
 	.arg(getObjectExportId(getModel()))
 	.arg(extraAttributes);
 

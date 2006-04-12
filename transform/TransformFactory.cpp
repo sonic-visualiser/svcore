@@ -423,8 +423,9 @@ TransformFactory::createTransform(TransformName name, Model *inputModel,
                                                 getTransformUnits(name),
                                                 output.toInt());
     } else {
-        std::cerr << "TransformFactory::createTransform: Unknown transform "
-                  << name.toStdString() << std::endl;
+        std::cerr << "TransformFactory::createTransform: Unknown transform \""
+                  << name.toStdString() << "\"" << std::endl;
+        return transform;
     }
 
     if (start && transform) transform->start();

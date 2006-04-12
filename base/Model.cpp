@@ -40,7 +40,7 @@ Model::toXmlString(QString indent, QString extraAttributes) const
 
     s += QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
 	.arg(getObjectExportId(this))
-	.arg(objectName())
+	.arg(encodeEntities(objectName()))
 	.arg(getSampleRate())
 	.arg(getStartFrame())
 	.arg(getEndFrame())
