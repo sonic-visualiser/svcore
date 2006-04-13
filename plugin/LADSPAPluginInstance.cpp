@@ -24,7 +24,7 @@
 #include "LADSPAPluginInstance.h"
 #include "LADSPAPluginFactory.h"
 
-//#define DEBUG_LADSPA 1
+#define DEBUG_LADSPA 1
 
 
 LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,

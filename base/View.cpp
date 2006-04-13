@@ -152,6 +152,47 @@ View::getPropertyContainer(size_t i)
     return m_layers[i-1];
 }
 
+bool
+View::getValueExtents(QString unit, float &min, float &max) const
+{
+    bool have = false;
+
+    for (LayerList::const_iterator i = m_layers.begin();
+         i != m_layers.end(); ++i) { 
+
+        QString layerUnit;
+        float layerMin, layerMax;
+
+        if ((*i)->getValueExtents(layerMin, layerMax, layerUnit) &&
+            layerUnit.toLower() == unit.toLower()) {
+
+            if (!have || layerMin < min) min = layerMin;
+            if (!have || layerMax > max) max = layerMax;
+            have = true;
+        }
+    }
+
+    return have;
+}
+
+int
+View::getTextLabelHeight(const Layer *layer, QPainter &paint) const
+{
+    int y = 15 + paint.fontMetrics().ascent();
+
+    for (LayerList::const_iterator i = m_layers.begin();
+         i != m_layers.end(); ++i) { 
+
+        if (*i == layer) return y;
+
+        if ((*i)->needsTextLabelHeight()) {
+            y += paint.fontMetrics().height();
+        }
+    }
+
+    return y;
+}
+
 void
 View::propertyContainerSelected(View *client, PropertyContainer *pc)
 {

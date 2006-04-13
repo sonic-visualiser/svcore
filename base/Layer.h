@@ -230,6 +230,10 @@ public:
 
     virtual PlayParameters *getPlayParameters();
 
+    virtual bool needsTextLabelHeight() const { return false; }
+
+    virtual bool getValueExtents(float &min, float &max, QString &unit) const = 0;
+
 public slots:
     void showLayer(View *, bool show);
 

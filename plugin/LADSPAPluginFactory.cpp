@@ -323,6 +323,9 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 
 	m_instances.insert(instance);
 
+        std::cerr << "LADSPAPluginFactory::instantiatePlugin("
+                  << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
+
 	return instance;
     }
 
@@ -351,16 +354,19 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
 	QString itype, isoname, ilabel;
 	PluginIdentifier::parseIdentifier((*ii)->getIdentifier(), itype, isoname, ilabel);
 	if (isoname == soname) {
-//	    std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " is still in use for plugin " << ilabel << std::endl;
+	    std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " is still in use for plugin " << ilabel.toStdString() << std::endl;
 	    stillInUse = true;
 	    break;
 	}
     }
     
     if (!stillInUse) {
-//	std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
+	std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
 	unloadLibrary(soname);
     }
+
+    std::cerr << "LADSPAPluginFactory::releasePlugin("
+                  << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
 }
 
 const LADSPA_Descriptor *
