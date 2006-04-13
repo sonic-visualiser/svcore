@@ -31,6 +31,8 @@
 #define DLERROR()    ""
 
 #define PLUGIN_GLOB  "*.dll"
+#define PATH_SEPARATOR ';'
+#define DEFAULT_VAMP_PATH ""
 
 extern "C" {
 void gettimeofday(struct timeval *p, void *tz);
@@ -50,13 +52,17 @@ void gettimeofday(struct timeval *p, void *tz);
 #define DLCLOSE(a)   dlclose((a))
 #define DLERROR()    dlerror()
 
+#define PATH_SEPARATOR ':'
+
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib"
+#define DEFAULT_VAMP_PATH "/Library/Audio/Plug-Ins/VAMP/:$HOME/Library/Audio/Plug-Ins/VAMP"
 
 #else 
 
 #define PLUGIN_GLOB  "*.so"
+#define DEFAULT_VAMP_PATH "/usr/local/lib/vamp:/usr/lib/vamp:$HOME/vamp:$HOME/.vamp"
 
 #endif /* __APPLE__ */
 

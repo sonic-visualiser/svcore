@@ -58,22 +58,26 @@ FeatureExtractionPluginFactory::getPluginPath()
     std::vector<QString> path;
     std::string envPath;
 
-    char *cpath = getenv("Vamp_PATH");
+    char *cpath = getenv("VAMP_PATH");
     if (cpath) envPath = cpath;
 
     if (envPath == "") {
-        //!!! system dependent
-        envPath = "/usr/local/lib/vamp:/usr/lib/vamp";
+        envPath = DEFAULT_VAMP_PATH;
         char *chome = getenv("HOME");
         if (chome) {
-            envPath = std::string(chome) + "/vamp:" +
-                std::string(chome) + "/.vamp:" + envPath;
+            std::string home(chome);
+            int f;
+            while ((f = envPath.find("$HOME")) >= 0 && f < envPath.length()) {
+                envPath.replace(f, 5, home);
+            }
         }
     }
 
+    std::cerr << "VAMP path is: \"" << envPath << "\"" << std::endl;
+
     std::string::size_type index = 0, newindex = 0;
 
-    while ((newindex = envPath.find(':', index)) < envPath.size()) {
+    while ((newindex = envPath.find(PATH_SEPARATOR, index)) < envPath.size()) {
 	path.push_back(envPath.substr(index, newindex - index).c_str());
 	index = newindex + 1;
     }

@@ -92,7 +92,7 @@ CommandHistory::getInstance()
 void
 CommandHistory::clear()
 {
-    std::cerr << "CommandHistory::clear()" << std::endl;
+//    std::cerr << "CommandHistory::clear()" << std::endl;
     closeBundle();
     m_savedAt = -1;
     clearStack(m_undoStack);
@@ -131,10 +131,10 @@ CommandHistory::addCommand(Command *command, bool execute, bool bundle)
 	closeBundle();
     }
 
-    std::cerr << "CommandHistory::addCommand: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
+//    std::cerr << "CommandHistory::addCommand: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 
     // We can't redo after adding a command
-    std::cerr << "CommandHistory::clearing redo stack" << std::endl;
+//    std::cerr << "CommandHistory::clearing redo stack" << std::endl;
     clearStack(m_redoStack);
 
     // can we reach savedAt?
@@ -200,7 +200,7 @@ CommandHistory::bundleTimerTimeout()
 void
 CommandHistory::addToCompound(Command *command)
 {
-    std::cerr << "CommandHistory::addToCompound: " << command->getName().toLocal8Bit().data() << std::endl;
+//    std::cerr << "CommandHistory::addToCompound: " << command->getName().toLocal8Bit().data() << std::endl;
 
     if (m_executeCompound) command->execute();
     m_currentCompound->addCommand(command);
@@ -353,7 +353,7 @@ CommandHistory::clipStack(CommandStack &stack, int limit)
 
 	for (i = 0; i < limit; ++i) {
 	    Command *command = stack.top();
-	    std::cerr << "CommandHistory::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
+//	    std::cerr << "CommandHistory::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 	    tempStack.push(stack.top());
 	    stack.pop();
 	}

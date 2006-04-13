@@ -220,6 +220,10 @@ public:
     virtual const PropertyContainer *getPropertyContainer(size_t i) const;
     virtual PropertyContainer *getPropertyContainer(size_t i);
 
+    virtual int getTextLabelHeight(const Layer *layer, QPainter &) const;
+
+    virtual bool getValueExtents(QString unit, float &min, float &max) const;
+
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
