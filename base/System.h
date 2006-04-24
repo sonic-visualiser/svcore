@@ -32,7 +32,7 @@
 
 #define PLUGIN_GLOB  "*.dll"
 #define PATH_SEPARATOR ';'
-#define DEFAULT_VAMP_PATH ""
+#define DEFAULT_VAMP_PATH "C:\\Program Files\\Vamp Plugins"
 
 extern "C" {
 void gettimeofday(struct timeval *p, void *tz);
@@ -57,7 +57,7 @@ void gettimeofday(struct timeval *p, void *tz);
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib"
-#define DEFAULT_VAMP_PATH "/Library/Audio/Plug-Ins/VAMP/:$HOME/Library/Audio/Plug-Ins/VAMP"
+#define DEFAULT_VAMP_PATH "/Library/Audio/Plug-Ins/Vamp/:$HOME/Library/Audio/Plug-Ins/Vamp"
 
 #else 
 
