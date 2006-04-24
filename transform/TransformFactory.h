@@ -20,6 +20,8 @@
 
 #include <map>
 
+namespace Vamp { class PluginBase; }
+
 class TransformFactory : public QObject
 {
     Q_OBJECT
@@ -142,6 +144,9 @@ protected:
     void populateTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
+
+    bool getChannelRange(TransformName name,
+                         Vamp::PluginBase *plugin, int &min, int &max);
 
     static TransformFactory *m_instance;
 };

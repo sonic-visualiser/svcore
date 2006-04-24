@@ -263,6 +263,8 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     rv = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
 
+    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Constructed Vamp plugin, rv is " << rv << std::endl;
+
     //!!! need to dlclose() when plugins from a given library are unloaded
 
 done:
