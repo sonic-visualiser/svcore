@@ -334,6 +334,20 @@ TransformFactory::getTransformChannelRange(TransformName name,
 }
 
 bool
+TransformFactory::getChannelRange(TransformName name, Vamp::PluginBase *plugin,
+                                  int &minChannels, int &maxChannels)
+{
+    Vamp::Plugin *vp = 0;
+    if ((vp = dynamic_cast<Vamp::Plugin *>(plugin))) {
+        minChannels = vp->getMinChannelCount();
+        maxChannels = vp->getMaxChannelCount();
+        return true;
+    } else {
+        return getTransformChannelRange(name, minChannels, maxChannels);
+    }
+}
+
+bool
 TransformFactory::getConfigurationForTransform(TransformName name,
                                                Model *inputModel,
                                                int &channel,
@@ -372,7 +386,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
         }
 
         int minChannels = 1, maxChannels = sourceChannels;
-        getTransformChannelRange(name, minChannels, maxChannels);
+        getChannelRange(name, plugin, minChannels, maxChannels);
 
         int targetChannels = sourceChannels;
         if (sourceChannels < minChannels) targetChannels = minChannels;
