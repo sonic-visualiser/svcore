@@ -20,11 +20,6 @@
 
 #include <iostream>
 
-#include <QDir>
-#include <QFile>
-
-#include <cassert>
-
 // #define DEBUG_VIEW_MANAGER 1
 
 ViewManager::ViewManager() :
@@ -52,7 +47,6 @@ ViewManager::ViewManager() :
 
 ViewManager::~ViewManager()
 {
-    if (m_tmpdir != "") deleteTemporaryDirectory(m_tmpdir);
 }
 
 unsigned long
@@ -358,94 +352,6 @@ ViewManager::setOverlayMode(OverlayMode mode)
     if (m_overlayMode != mode) {
         m_overlayMode = mode;
         emit overlayModeChanged();
-    }
-}
-
-QString
-ViewManager::getTemporaryDirectory()
-{
-    if (m_tmpdir != "") return m_tmpdir;
-
-    // Generate a temporary directory.  Qt4.1 doesn't seem to be able
-    // to do this for us, and mkdtemp is not standard.  This method is
-    // based on the way glibc does mkdtemp.
-
-    static QString chars =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-    QString suffix;
-    int padlen = 6, attempts = 100;
-    unsigned int r = time(0) ^ getpid();
-
-    for (int i = 0; i < padlen; ++i) {
-        suffix += "X";
-    }
-    
-    for (int j = 0; j < attempts; ++j) {
-
-        unsigned int v = r;
-        
-        for (int i = 0; i < padlen; ++i) {
-            suffix[i] = chars[v % 62];
-            v /= 62;
-        }
-
-        QString candidate = QString("sv_%1").arg(suffix);
-
-        if (QDir::temp().mkpath(candidate)) {
-            m_tmpdir = QDir::temp().filePath(candidate);
-            break;
-        }
-
-        r = r + 7777;
-    }
-
-    if (m_tmpdir == "") {
-        std::cerr << "ERROR: ViewManager::getTemporaryDirectory: "
-                  << "Unable to create a temporary directory!" << std::endl;
-        assert(0);
-    }
-
-    return m_tmpdir;
-}
-
-void
-ViewManager::deleteTemporaryDirectory(QString tmpdir)
-{
-    if (tmpdir == "") return;
-    
-    QDir dir(tmpdir);
-    dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-
-    for (unsigned int i = 0; i < dir.count(); ++i) {
-
-        QFileInfo fi(dir.filePath(dir[i]));
-
-        if (fi.isDir()) {
-            deleteTemporaryDirectory(fi.absoluteFilePath());
-        } else {
-            if (!QFile(fi.absoluteFilePath()).remove()) {
-                std::cerr << "WARNING: ViewManager::deleteTemporaryDirectory: "
-                          << "Failed to unlink file \""
-                          << fi.absoluteFilePath().toStdString() << "\""
-                          << std::endl;
-            }
-        }
-    }
-
-    QString dirname = dir.dirName();
-    if (dirname != "") {
-        if (!dir.cdUp()) {
-            std::cerr << "WARNING: ViewManager::deleteTemporaryDirectory: "
-                      << "Failed to cd to parent directory of "
-                      << tmpdir.toStdString() << std::endl;
-            return;
-        }
-        if (!dir.rmdir(dirname)) {
-            std::cerr << "WARNING: ViewManager::deleteTemporaryDirectory: "
-                      << "Failed to remove directory "
-                      << dirname.toStdString() << std::endl;
-        } 
     }
 }
 

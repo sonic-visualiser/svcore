@@ -18,7 +18,9 @@
 
 #include <QObject>
 
-class PlayParameters : public QObject
+#include "XmlExportable.h"
+
+class PlayParameters : public QObject, public XmlExportable
 {
     Q_OBJECT
 
@@ -31,6 +33,9 @@ public:
 
     virtual QString getPlayPluginId() const { return m_playPluginId; } 
     virtual QString getPlayPluginConfiguration() const { return m_playPluginConfiguration; }
+
+    virtual QString toXmlString(QString indent = "",
+                                QString extraAttributes = "") const;
 
 public slots:
     virtual void setPlayMuted(bool muted);

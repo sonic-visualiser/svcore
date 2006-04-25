@@ -217,6 +217,9 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
 
 	QMutexLocker locker(&player->m_mutex);
 
+
+        //!!! What do we do if receiving an antique path pointing at things that no longer exist?
+
         player->m_samplePath = value;
 
         if (player->m_sampleSearchComplete) {
@@ -339,6 +342,8 @@ void
 SamplePlayer::searchSamples()
 {
     if (m_sampleSearchComplete) return;
+
+    m_samples.clear();
 
     std::cerr << "Current working directory is \"" << getcwd(0, 0) << "\"" << std::endl;
 

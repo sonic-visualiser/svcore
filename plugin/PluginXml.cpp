@@ -36,6 +36,24 @@ PluginXml::PluginXml(Vamp::PluginBase *plugin) :
 PluginXml::~PluginXml() { }
 
 QString
+PluginXml::encodeConfigurationChars(QString text)
+{
+    QString rv(text);
+    rv.replace(";", "[[SEMICOLON]]");
+    rv.replace("=", "[[EQUALS]]");
+    return rv;
+}
+
+QString
+PluginXml::decodeConfigurationChars(QString text)
+{
+    QString rv(text);
+    rv.replace("[[SEMICOLON]]", ";");
+    rv.replace("[[EQUALS]]", "=");
+    return rv;
+}
+    
+QString
 PluginXml::toXmlString(QString indent, QString extraAttributes) const
 {
     QString s;
@@ -74,10 +92,8 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
              i != configurePairs.end(); ++i) {
             QString key = i->first.c_str();
             QString value = i->second.c_str();
-            key.replace(";", "[[SEMICOLON]]");
-            key.replace("=", "[[EQUALS]]");
-            value.replace(";", "[[SEMICOLON]]");
-            value.replace("=", "[[EQUALS]]");
+            key = encodeConfigurationChars(key);
+            value = encodeConfigurationChars(value);
             if (config != "") config += ";";
             config += QString("%1=%2").arg(key).arg(value);
         }
@@ -128,10 +144,8 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                     continue;
                 }
                 QString key(kv[0]), value(kv[1]);
-                key.replace("[[SEMICOLON]]", ";");
-                key.replace("[[EQUALS]]", ";");
-                value.replace("[[SEMICOLON]]", ";");
-                value.replace("[[SEMICOLON]]", ";");
+                key = decodeConfigurationChars(key);
+                value = decodeConfigurationChars(value);
                 rtpi->configure(key.toStdString(), value.toStdString());
             }
         }
