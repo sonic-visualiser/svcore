@@ -17,6 +17,8 @@
 #include "PlayParameters.h"
 
 //!!! shouldn't be including this here -- restructure needed
+
+//!!! should the AudioGenerator actually implement all this stuff itself?  do we even want this class?
 #include "audioio/AudioGenerator.h"
 
 #include <iostream>

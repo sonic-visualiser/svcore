@@ -47,6 +47,9 @@ public:
      */
     virtual void setParametersFromXml(QString xml);
 
+    static QString encodeConfigurationChars(QString text);
+    static QString decodeConfigurationChars(QString text);
+
 protected:
     QString stripInvalidParameterNameCharacters(QString) const;
 

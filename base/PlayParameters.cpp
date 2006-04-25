@@ -17,6 +17,27 @@
 
 #include <iostream>
 
+QString
+PlayParameters::toXmlString(QString indent,
+                            QString extraAttributes) const
+{
+    QString s;
+    s += indent;
+    s += QString("<playParameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
+        .arg(m_playMuted ? "true" : "false")
+        .arg(m_playPan)
+        .arg(m_playGain)
+        .arg(m_playPluginId)
+        .arg(extraAttributes);
+    if (m_playPluginConfiguration != "") {
+        s += ">\n  " + indent + m_playPluginConfiguration
+            + indent + "</playParameters>\n";
+    } else {
+        s += "/>\n";
+    }
+    return s;
+}
+
 void
 PlayParameters::setPlayMuted(bool muted)
 {

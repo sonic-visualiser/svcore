@@ -105,8 +105,6 @@ public:
     void setOverlayMode(OverlayMode mode);
     OverlayMode getOverlayMode() const { return m_overlayMode; }
 
-    QString getTemporaryDirectory();
-
 signals:
     /** Emitted when a widget pans.  The originator identifies the widget. */
     void centreFrameChanged(void *originator, unsigned long frame, bool locked);
@@ -184,9 +182,6 @@ protected:
     };
 
     OverlayMode m_overlayMode;
-
-    void deleteTemporaryDirectory(QString);
-    QString m_tmpdir;
 };
 
 #endif
