@@ -71,6 +71,15 @@ FeatureExtractionPluginFactory::getPluginPath()
                 envPath.replace(f, 5, home);
             }
         }
+#ifdef Q_WS_WIN32
+        char *cpfiles = getenv("ProgramFiles");
+        if (!cpfiles) cpfiles = "C:\\Program Files";
+        std::string pfiles(cpfiles);
+        int f;
+        while ((f = envPath.find("%ProgramFiles%")) >= 0 && f < envPath.length()) {
+            envPath.replace(f, 14, pfiles);
+        }
+#endif
     }
 
     std::cerr << "VAMP path is: \"" << envPath << "\"" << std::endl;

@@ -50,22 +50,26 @@ PlayParameterRepository::addModel(const Model *model)
 
 	    std::cerr << "PlayParameterRepository: Adding play parameters for " << model << std::endl;
 
-	    m_playParameters[model] = new PlayParameters;
+            PlayParameters *params = new PlayParameters;
+	    m_playParameters[model] = params;
 
-            m_playParameters[model]->setPlayPluginId
+            params->setPlayPluginId
                 (AudioGenerator::getDefaultPlayPluginId(model));
 
-            m_playParameters[model]->setPlayPluginConfiguration
+            params->setPlayPluginConfiguration
                 (AudioGenerator::getDefaultPlayPluginConfiguration(model));
 
-	    connect(m_playParameters[model], SIGNAL(playParametersChanged()),
+	    connect(params, SIGNAL(playParametersChanged()),
 		    this, SLOT(playParametersChanged()));
 
-	    connect(m_playParameters[model], SIGNAL(playPluginIdChanged(QString)),
+	    connect(params, SIGNAL(playPluginIdChanged(QString)),
 		    this, SLOT(playPluginIdChanged(QString)));
 
-	    connect(m_playParameters[model], SIGNAL(playPluginConfigurationChanged(QString)),
+	    connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
 		    this, SLOT(playPluginConfigurationChanged(QString)));
+
+            std::cerr << "Connected play parameters " << params << " for model "
+                      << model << " to this " << this << std::endl;
 
 	} else {
 

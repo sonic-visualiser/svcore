@@ -91,7 +91,7 @@ private:
     int m_velocities[Polyphony];
     long m_sampleNo;
 
-    QString m_samplePath;
+    QString m_sampleDir;
     QString m_program;
     std::vector<std::pair<QString, QString> > m_samples; // program name, path
     bool m_sampleSearchComplete;
