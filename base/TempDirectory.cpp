@@ -156,11 +156,11 @@ TempDirectory::cleanupDirectory(QString tmpdir)
     }
 
     QDir dir(tmpdir);
-    dir.setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    dir.setFilter(QDir::Dirs | QDir::Files);
 
     for (unsigned int i = 0; i < dir.count(); ++i) {
 
-        if (dir[i] == "." || dir[i] == "..") continue; // just for paranoia
+        if (dir[i] == "." || dir[i] == "..") continue;
         QFileInfo fi(dir.filePath(dir[i]));
 
         if (fi.isDir()) {

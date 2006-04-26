@@ -846,6 +846,8 @@ DSSIPluginInstance::configure(std::string key,
 	}
 	qm = qm + message;
 	free(message);
+
+        std::cerr << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm.toStdString() << "\"" << std::endl;
     }
 
     return qm;

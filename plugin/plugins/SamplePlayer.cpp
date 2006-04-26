@@ -128,7 +128,7 @@ SamplePlayer::SamplePlayer(int sampleRate) :
     m_sampleCount(0),
     m_sampleRate(sampleRate),
     m_sampleNo(0),
-    m_samplePath("samples"),
+    m_sampleDir("samples"),
     m_sampleSearchComplete(false),
     m_pendingProgramChange(-1)
 {
@@ -211,23 +211,27 @@ SamplePlayer::cleanup(LADSPA_Handle handle)
 char *
 SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value)
 {
-    if (key && !strcmp(key, "samplepath")) {
+    if (key && !strcmp(key, "sampledir")) {
 
         SamplePlayer *player = (SamplePlayer *)handle;
 
 	QMutexLocker locker(&player->m_mutex);
 
+        if (QFileInfo(value).exists() &&
+            QFileInfo(value).isDir()) {
 
-        //!!! What do we do if receiving an antique path pointing at things that no longer exist?
+            player->m_sampleDir = value;
 
-        player->m_samplePath = value;
+            if (player->m_sampleSearchComplete) {
+                player->m_sampleSearchComplete = false;
+                player->searchSamples();
+            }
 
-        if (player->m_sampleSearchComplete) {
-            player->m_sampleSearchComplete = false;
-            player->searchSamples();
+            return 0;
+
+        } else {
+            return strdup("Sample directory does not exist, leaving unchanged");
         }
-
-        return 0;
     }
 
     return strdup("Unknown configure key");
@@ -345,27 +349,20 @@ SamplePlayer::searchSamples()
 
     m_samples.clear();
 
-    std::cerr << "Current working directory is \"" << getcwd(0, 0) << "\"" << std::endl;
+    std::cerr << "SamplePlayer::searchSamples: Directory is \""
+	      << m_sampleDir.toLocal8Bit().data() << "\"" << std::endl;
 
-    std::cerr << "SamplePlayer::searchSamples: Path is \""
-	      << m_samplePath.toLocal8Bit().data() << "\"" << std::endl;
-
-    QStringList dirList = m_samplePath.split(QRegExp("[:;]"));
-
-    for (QStringList::iterator i = dirList.begin(); i != dirList.end(); ++i) {
-
-        QDir dir(*i, "*.wav");
-
-        for (unsigned int i = 0; i < dir.count(); ++i) {
-            QFileInfo file(dir.filePath(dir[i]));
-            if (file.isReadable()) {
-                m_samples.push_back(std::pair<QString, QString>
-                                    (file.baseName(), file.filePath()));
-                std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
-            }
+    QDir dir(m_sampleDir, "*.wav");
+    
+    for (unsigned int i = 0; i < dir.count(); ++i) {
+        QFileInfo file(dir.filePath(dir[i]));
+        if (file.isReadable()) {
+            m_samples.push_back(std::pair<QString, QString>
+                                (file.baseName(), file.filePath()));
+            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
         }
     }
-
+    
     m_sampleSearchComplete = true;
 }
 

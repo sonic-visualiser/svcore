@@ -32,7 +32,7 @@
 
 #define PLUGIN_GLOB  "*.dll"
 #define PATH_SEPARATOR ';'
-#define DEFAULT_VAMP_PATH "C:\\Program Files\\Vamp Plugins"
+#define DEFAULT_VAMP_PATH "%ProgramFiles%\\Vamp Plugins"
 
 extern "C" {
 void gettimeofday(struct timeval *p, void *tz);
