@@ -146,7 +146,8 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             int index = 0;
 
             while ((descriptor = fn(index))) {
-                QString id = QString("vamp:%1:%2").arg(soname).arg(descriptor->name);
+                QString id = PluginIdentifier::createIdentifier
+                    ("vamp", soname, descriptor->name);
                 rv.push_back(id);
                 std::cerr << "Found id " << id.toStdString() << std::endl;
                 ++index;

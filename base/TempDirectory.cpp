@@ -160,6 +160,7 @@ TempDirectory::cleanupDirectory(QString tmpdir)
 
     for (unsigned int i = 0; i < dir.count(); ++i) {
 
+        if (dir[i] == "." || dir[i] == "..") continue; // just for paranoia
         QFileInfo fi(dir.filePath(dir[i]));
 
         if (fi.isDir()) {

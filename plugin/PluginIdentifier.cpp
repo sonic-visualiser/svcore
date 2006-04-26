@@ -20,13 +20,14 @@
 
 #include "PluginIdentifier.h"
 #include <iostream>
+#include <QFileInfo>
 
 QString
 PluginIdentifier::createIdentifier(QString type,
 				   QString soName,
 				   QString label)
 {
-    QString identifier = type + ":" + soName + ":" + label;
+    QString identifier = type + ":" + QFileInfo(soName).baseName() + ":" + label;
     return identifier;
 }
 

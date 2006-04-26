@@ -23,7 +23,7 @@ PlayParameters::toXmlString(QString indent,
 {
     QString s;
     s += indent;
-    s += QString("<playParameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
+    s += QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
         .arg(m_playMuted ? "true" : "false")
         .arg(m_playPan)
         .arg(m_playGain)
@@ -31,7 +31,7 @@ PlayParameters::toXmlString(QString indent,
         .arg(extraAttributes);
     if (m_playPluginConfiguration != "") {
         s += ">\n  " + indent + m_playPluginConfiguration
-            + indent + "</playParameters>\n";
+            + "\n" + indent + "</playparameters>\n";
     } else {
         s += "/>\n";
     }
@@ -90,6 +90,7 @@ PlayParameters::setPlayPluginConfiguration(QString configuration)
 {
     if (m_playPluginConfiguration != configuration) {
         m_playPluginConfiguration = configuration;
+        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration.toStdString() << "\"" << std::endl;
         emit playPluginConfigurationChanged(configuration);
         emit playParametersChanged();
     }

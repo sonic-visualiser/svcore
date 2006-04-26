@@ -39,6 +39,8 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addModel(const Model *model)
 {
+    std::cerr << "PlayParameterRepository:addModel " << model <<  std::endl;
+
     if (!getPlayParameters(model)) {
 
 	// Give all models the same type of play parameters for the
@@ -110,6 +112,7 @@ void
 PlayParameterRepository::playPluginConfigurationChanged(QString config)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
+    std::cerr << "PlayParameterRepository::playPluginConfigurationChanged" << std::endl;
     for (ModelParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
