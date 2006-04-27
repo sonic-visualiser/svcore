@@ -178,16 +178,21 @@ View::getValueExtents(QString unit, float &min, float &max) const
 int
 View::getTextLabelHeight(const Layer *layer, QPainter &paint) const
 {
-    int y = 15 + paint.fontMetrics().ascent();
+    std::map<int, Layer *> sortedLayers;
 
     for (LayerList::const_iterator i = m_layers.begin();
          i != m_layers.end(); ++i) { 
-
-        if (*i == layer) return y;
-
         if ((*i)->needsTextLabelHeight()) {
-            y += paint.fontMetrics().height();
+            sortedLayers[getObjectExportId(*i)] = *i;
         }
+    }
+
+    int y = 15 + paint.fontMetrics().ascent();
+
+    for (std::map<int, Layer *>::const_iterator i = sortedLayers.begin();
+         i != sortedLayers.end(); ++i) {
+        if (i->second == layer) return y;
+        y += paint.fontMetrics().height();
     }
 
     return y;
