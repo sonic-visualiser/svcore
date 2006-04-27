@@ -31,7 +31,7 @@ public:
 
     static QString encodeColour(QColor);
 
-    static int getObjectExportId(const void *); // not thread-safe
+    static int getObjectExportId(const void *); // thread-safe
 };
 
 #endif

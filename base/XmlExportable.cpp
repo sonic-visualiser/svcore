@@ -15,6 +15,8 @@
 
 #include "XmlExportable.h"
 #include <map>
+#include <QMutex>
+#include <QMutexLocker>
 
 QString
 XmlExportable::encodeEntities(QString s)
@@ -49,6 +51,9 @@ XmlExportable::encodeColour(QColor c)
 int
 XmlExportable::getObjectExportId(const void * object)
 {
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+
     static std::map<const void *, int> idMap;
     static int maxId = 0;
     
