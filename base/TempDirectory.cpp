@@ -70,7 +70,8 @@ TempDirectory::getPath()
     
     if (m_tmpdir != "") return m_tmpdir;
 
-    QDir systemTempDir = QDir::temp();
+//!!!    QDir tempDirBase = QDir::temp();
+    QDir tempDirBase = QDir::home();
 
     // Generate a temporary directory.  Qt4.1 doesn't seem to be able
     // to do this for us, and mkdtemp is not standard.  This method is
@@ -98,8 +99,8 @@ TempDirectory::getPath()
 
         QString candidate = QString("sv_%1").arg(suffix);
 
-        if (QDir::temp().mkpath(candidate)) {
-            m_tmpdir = systemTempDir.filePath(candidate);
+        if (tempDirBase.mkpath(candidate)) {
+            m_tmpdir = tempDirBase.filePath(candidate);
             break;
         }
 
@@ -108,7 +109,7 @@ TempDirectory::getPath()
 
     if (m_tmpdir == "") {
         throw DirectoryCreationFailed(QString("temporary subdirectory in %1")
-                                      .arg(systemTempDir.canonicalPath()));
+                                      .arg(tempDirBase.canonicalPath()));
     }
 
     return m_tmpdir;

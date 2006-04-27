@@ -45,7 +45,7 @@ void gettimeofday(struct timeval *p, void *tz);
 
 #define MLOCK(a,b)   ::mlock((a),(b))
 #define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
-#define MUNLOCK_SAMPLEBLOCK(a) do { const float &b = *(a).begin(); MUNLOCK(&b, (a).capacity() * sizeof(float)); } while(0);
+#define MUNLOCK_SAMPLEBLOCK(a) do { if (!(a).empty()) { const float &b = *(a).begin(); MUNLOCK(&b, (a).capacity() * sizeof(float)); } } while(0);
 
 #define DLOPEN(a,b)  dlopen((a).toStdString().c_str(),(b))
 #define DLSYM(a,b)   dlsym((a),(b))
