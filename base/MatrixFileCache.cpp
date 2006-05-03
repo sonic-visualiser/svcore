@@ -30,12 +30,6 @@
 #include <QFile>
 #include <QDir>
 
-//#define HAVE_MMAP 1
-
-#ifdef HAVE_MMAP
-#include <sys/mman.h>
-#endif
-
 std::map<QString, int> MatrixFileCache::m_refcount;
 QMutex MatrixFileCache::m_refcountMutex;
 
@@ -54,11 +48,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     m_rx(0),
     m_rw(0),
     m_userRegion(false),
-    m_region(0),
-    m_mmapped(false),
-    m_mmapSize(0),
-    m_mmapOff(0),
-    m_preferMmap(false)
+    m_region(0)
 {
     // Ensure header size is a multiple of the size of our data (for
     // alignment purposes)
@@ -121,13 +111,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
 MatrixFileCache::~MatrixFileCache()
 {
     if (m_rw > 0) {
-        if (m_mmapped) {
-#ifdef HAVE_MMAP
-            ::munmap(m_region, m_mmapSize);
-#endif
-        } else {
-            delete[] m_region;
-        }
+        delete[] m_region;
     }
 
     if (m_fd >= 0) {
@@ -173,7 +157,7 @@ MatrixFileCache::resize(size_t w, size_t h)
 
     if (w * h > m_width * m_height) {
 
-#ifdef HAVE_MMAP
+/*!!!
         // If we're going to mmap the file, we need to ensure it's long
         // enough beforehand
         
@@ -193,8 +177,7 @@ MatrixFileCache::resize(size_t w, size_t h)
                 ::perror("WARNING: MatrixFileCache::resize: write failed");
             }
         }
-#endif
-
+*/
     } else {
         
         if (::ftruncate(m_fd, off) < 0) {
@@ -358,12 +341,6 @@ MatrixFileCache::getRegionPtr(size_t x, size_t y) const
 
     float *region = m_region;
 
-    if (m_mmapOff > 0) {
-        char *cr = (char *)m_region;
-        cr += m_mmapOff;
-        region = (float *)cr;
-    }
-
     float *ptr = &(region[(x - m_rx) * m_height + y]);
     
 //    std::cerr << "getRegionPtr(" << x << "," << y << "): region is " << m_region << ", returning " << ptr << std::endl;
@@ -390,64 +367,14 @@ MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
     if (m_rw > 0 && x >= m_rx && x + width <= m_rx + m_rw) return true;
 
     if (m_rw > 0) {
-        if (m_mmapped) {
-#ifdef HAVE_MMAP
-            ::munmap(m_region, m_mmapSize);
-            std::cerr << "unmapped " << m_mmapSize << " at " << m_region << std::endl;
-#endif
-        } else {
-            delete[] m_region;
-        }
+        delete[] m_region;
         m_region = 0;
-        m_mmapped = false;
-        m_mmapSize = 0;
-        m_mmapOff = 0;
         m_rw = 0;
     }
 
     if (width == 0) {
         return true;
     }
-
-#ifdef HAVE_MMAP
-
-    if (m_preferMmap) {
-
-        size_t mmapSize = m_height * width * sizeof(float);
-        off_t offset = m_headerSize + (x * m_height) * sizeof(float);
-        int pagesize = getpagesize();
-        off_t aligned = (offset / pagesize) * pagesize;
-        size_t mmapOff = offset - aligned;
-        mmapSize += mmapOff;
-        
-        m_region = (float *)
-            ::mmap(0, mmapSize, PROT_READ, MAP_PRIVATE, m_fd, aligned);
-        
-        if (m_region == MAP_FAILED) {
-            
-            ::perror("Mmap failed");
-            std::cerr << "ERROR: MatrixFileCache::setRegion(" << x << ", "
-                      << width << "): Mmap(0, " << mmapSize
-                      << ", " << PROT_READ << ", " << MAP_SHARED << ", " << m_fd 
-                      << ", " << aligned << ") failed, falling back to "
-                      << "non-mmapping code for this cache" << std::endl;
-            m_preferMmap = false;
-            
-        } else {
-
-            std::cerr << "mmap succeeded (offset " << aligned << ", size " << mmapSize << ", m_mmapOff " << mmapOff << ") = " << m_region << std::endl;
-            
-            m_mmapped = true;
-            m_mmapSize = mmapSize;
-            m_mmapOff = mmapOff;
-            m_rx = x;
-            m_rw = width;
-            if (user) m_userRegion = true;
-            MUNLOCK(m_region, m_mmapSize);
-            return true;
-        }
-    }
-#endif
 
     if (!seekTo(x, 0)) return false;
 

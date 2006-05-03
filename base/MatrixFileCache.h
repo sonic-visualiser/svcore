@@ -62,10 +62,6 @@ protected:
     mutable size_t  m_rw;
     mutable bool    m_userRegion;
     mutable float  *m_region;
-    mutable bool    m_mmapped;
-    mutable size_t  m_mmapSize;
-    mutable size_t  m_mmapOff;
-    mutable bool    m_preferMmap;
     float *getRegionPtr(size_t x, size_t y) const;
 
     bool autoSetRegion(size_t x) const;
