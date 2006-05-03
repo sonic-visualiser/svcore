@@ -27,13 +27,17 @@
 #include <cstdio>
 
 #include <QFileInfo>
+#include <QFile>
 #include <QDir>
 
-#define HAVE_MMAP 1
+//#define HAVE_MMAP 1
 
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 #endif
+
+std::map<QString, int> MatrixFileCache::m_refcount;
+QMutex MatrixFileCache::m_refcountMutex;
 
 //!!! This class is a work in progress -- it does only as much as we
 // need for the current SpectrogramLayer.  Slated for substantial
@@ -45,7 +49,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     m_width(0),
     m_height(0),
     m_headerSize(2 * sizeof(size_t)),
-    m_autoRegionWidth(2048),
+    m_autoRegionWidth(256),
     m_off(-1),
     m_rx(0),
     m_rw(0),
@@ -54,7 +58,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     m_mmapped(false),
     m_mmapSize(0),
     m_mmapOff(0),
-    m_preferMmap(true)
+    m_preferMmap(false)
 {
     // Ensure header size is a multiple of the size of our data (for
     // alignment purposes)
@@ -87,6 +91,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
                   << fileName.toStdString() << "\"";
         if (mode == ReadWrite) std::cerr << " for writing";
         std::cerr << std::endl;
+        return;
     }
 
     if (newFile) {
@@ -104,6 +109,10 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
         m_height = header[1];
         seekTo(0, 0);
     }
+
+    m_fileName = fileName;
+    QMutexLocker locker(&m_refcountMutex);
+    ++m_refcount[fileName];
 
     std::cerr << "MatrixFileCache::MatrixFileCache: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
 
@@ -127,7 +136,16 @@ MatrixFileCache::~MatrixFileCache()
         }
     }
 
-    //!!! refcount and unlink
+    if (m_fileName != "") {
+        QMutexLocker locker(&m_refcountMutex);
+        if (--m_refcount[m_fileName] == 0) {
+            if (!QFile(m_fileName).remove()) {
+                std::cerr << "WARNING: MatrixFileCache::~MatrixFileCache: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
+            } else {
+                std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
+            }
+        }
+    }
 }
 
 size_t 
@@ -247,14 +265,17 @@ MatrixFileCache::getValueAt(size_t x, size_t y) const
         if (autoSetRegion(x)) {
             float *rp = getRegionPtr(x, y);
             if (rp) return *rp;
+            else return 0.f;
         }
     }
 
     if (!seekTo(x, y)) return 0.f;
     float value;
     ssize_t r = ::read(m_fd, &value, sizeof(float));
+    if (r < 0) {
+        ::perror("MatrixFileCache::getValueAt: Read failed");
+    }
     if (r != sizeof(float)) {
-        ::perror("MatrixFileCache::getValueAt: read failed");
         value = 0.f;
     }
     if (r > 0) m_off += r;
@@ -270,8 +291,8 @@ MatrixFileCache::getColumnAt(size_t x, float *values) const
             for (size_t y = 0; y < m_height; ++y) {
                 values[y] = rp[y];
             }
-            return;
         }
+        return;
     } else if (!m_userRegion) {
         if (autoSetRegion(x)) {
             float *rp = getRegionPtr(x, 0);
@@ -286,7 +307,7 @@ MatrixFileCache::getColumnAt(size_t x, float *values) const
 
     if (!seekTo(x, 0)) return;
     ssize_t r = ::read(m_fd, values, m_height * sizeof(float));
-    if (r != m_height * sizeof(float)) {
+    if (r < 0) {
         ::perror("MatrixFileCache::getColumnAt: read failed");
     }
     if (r > 0) m_off += r;
@@ -322,7 +343,7 @@ MatrixFileCache::setColumnAt(size_t x, float *values)
 
     if (!seekTo(x, 0)) return;
     ssize_t w = ::write(m_fd, values, m_height * sizeof(float));
-    if (w != m_height * sizeof(float)) {
+    if (w != ssize_t(m_height * sizeof(float))) {
         ::perror("WARNING: MatrixFileCache::setColumnAt: write failed");
     }
     if (w > 0) m_off += w;
@@ -422,7 +443,7 @@ MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
             m_rx = x;
             m_rw = width;
             if (user) m_userRegion = true;
-//            MUNLOCK(m_region, m_mmapSize);
+            MUNLOCK(m_region, m_mmapSize);
             return true;
         }
     }
@@ -431,6 +452,7 @@ MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
     if (!seekTo(x, 0)) return false;
 
     m_region = new float[width * m_height];
+    MUNLOCK(m_region, width * m_height * sizeof(float));
 
     ssize_t r = ::read(m_fd, m_region, width * m_height * sizeof(float));
     if (r < 0) {
@@ -444,7 +466,7 @@ MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
     
     m_off += r;
 
-    if (r < width * m_height * sizeof(float)) {
+    if (r < ssize_t(width * m_height * sizeof(float))) {
         // didn't manage to read the whole thing, but did get something
         std::cerr << "WARNING: MatrixFileCache::setRegion(" << x << ", " << width
                   << "): ";
@@ -462,7 +484,6 @@ MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
     std::cerr << "MatrixFileCache::setRegion: set region to " << x << ", " << width << std::endl;
 
     if (user) m_userRegion = true;
-    if (m_rw > 0) MUNLOCK(m_region, m_rw * m_height);
     return true;
 }
 
