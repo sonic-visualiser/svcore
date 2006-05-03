@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 #include <QString>
+#include <QMutex>
+#include <map>
 
 // This class is _not_ thread safe.  Each instance must only be used
 // within a single thread.  You may however have as many instances as
@@ -53,6 +55,7 @@ protected:
     size_t  m_height;
     size_t  m_headerSize;
     size_t  m_autoRegionWidth;
+    QString m_fileName;
 
     mutable off_t   m_off;
     mutable size_t  m_rx;
@@ -69,6 +72,9 @@ protected:
     bool setRegion(size_t x, size_t width, bool user) const;
 
     bool seekTo(size_t x, size_t y) const;
+
+    static std::map<QString, int> m_refcount;
+    static QMutex m_refcountMutex;
 };
 
 #endif
