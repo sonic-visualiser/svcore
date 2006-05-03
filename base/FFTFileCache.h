@@ -17,27 +17,27 @@
 #define _FFT_FILE_CACHE_H_
 
 #include "FFTCache.h"
-
-class MatrixFileCache;
+#include "MatrixFileCache.h"
 
 class FFTFileCache : public FFTCacheBase
 {
 public:
-    //!!!
+    //!!! This is very much a work in progress.
+    //
     // Initially, make this take a string for the filename,
     // and make the spectrogram layer have two, one for the main
     // thread and one for the fill thread, one RO and one RW, both
     // using the same string based off spectrogram layer address
     // or export ID.
-    // Subsequently factor out into reader and writer classes?
-    // Make take arguments to ctor describing FFT parameters and
+    // Subsequently factor out into reader and writer;
+    // make take arguments to ctor describing FFT parameters and
     // calculate its own string and eventually do its own FFT as
     // well.  Intention is to make it able ultimately to write
     // its own cache so it can do it in the background while e.g.
-    // plugins read from it -- need the reader thread to be able
+    // plugins get data from it -- need the reader thread to be able
     // to block waiting for the writer thread as appropriate.
 
-    FFTFileCache();
+    FFTFileCache(QString fileBase, MatrixFileCache::Mode mode);
     virtual ~FFTFileCache();
 
     virtual size_t getWidth() const;
@@ -50,19 +50,16 @@ public:
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const;
     virtual float getPhaseAt(size_t x, size_t y) const;
 
-    virtual bool isLocalPeak(size_t x, size_t y) const;
-    virtual bool isOverThreshold(size_t x, size_t y, float threshold) const;
-
     virtual void setNormalizationFactor(size_t x, float factor);
     virtual void setMagnitudeAt(size_t x, size_t y, float mag);
     virtual void setNormalizedMagnitudeAt(size_t x, size_t y, float norm);
     virtual void setPhaseAt(size_t x, size_t y, float phase);
 
-    virtual QColor getColour(unsigned char index) const;
-    virtual void setColour(unsigned char index, QColor colour);
+    //!!! not thread safe (but then neither is m_mfc)
+    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor);
 
 protected:
-    size_t m_height;
+    float *m_colbuf;
     MatrixFileCache *m_mfc;
 };
 

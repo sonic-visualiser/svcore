@@ -18,6 +18,10 @@
 
 #include <iostream>
 
+//!!! This class is a work in progress -- it does only as much as we
+// need for the current SpectrogramLayer.  Slated for substantial
+// refactoring and extension.
+
 FFTMemoryCache::FFTMemoryCache() :
     m_width(0),
     m_height(0),
