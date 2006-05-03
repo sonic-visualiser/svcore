@@ -69,18 +69,27 @@ PropertyContainer::PropertyList
 View::getProperties() const
 {
     PropertyContainer::PropertyList list;
-    list.push_back(tr("Global Scroll"));
-    list.push_back(tr("Global Zoom"));
-    list.push_back(tr("Follow Playback"));
+    list.push_back("Global Scroll");
+    list.push_back("Global Zoom");
+    list.push_back("Follow Playback");
     return list;
+}
+
+QString
+View::getPropertyLabel(const PropertyName &pn) const
+{
+    if (pn == "Global Scroll") return tr("Global Scroll");
+    if (pn == "Global Zoom") return tr("Global Zoom");
+    if (pn == "Follow Playback") return tr("Follow Playback");
+    return "";
 }
 
 PropertyContainer::PropertyType
 View::getPropertyType(const PropertyContainer::PropertyName &name) const
 {
-    if (name == tr("Global Scroll")) return PropertyContainer::ToggleProperty;
-    if (name == tr("Global Zoom")) return PropertyContainer::ToggleProperty;
-    if (name == tr("Follow Playback")) return PropertyContainer::ValueProperty;
+    if (name == "Global Scroll") return PropertyContainer::ToggleProperty;
+    if (name == "Global Zoom") return PropertyContainer::ToggleProperty;
+    if (name == "Follow Playback") return PropertyContainer::ValueProperty;
     return PropertyContainer::InvalidProperty;
 }
 
@@ -88,9 +97,9 @@ int
 View::getPropertyRangeAndValue(const PropertyContainer::PropertyName &name,
 			       int *min, int *max) const
 {
-    if (name == tr("Global Scroll")) return m_followPan;
-    if (name == tr("Global Zoom")) return m_followZoom;
-    if (name == tr("Follow Playback")) {
+    if (name == "Global Scroll") return m_followPan;
+    if (name == "Global Zoom") return m_followZoom;
+    if (name == "Follow Playback") {
 	if (min) *min = 0;
 	if (max) *max = 2;
 	return int(m_followPlay);
@@ -104,7 +113,7 @@ QString
 View::getPropertyValueLabel(const PropertyContainer::PropertyName &name,
 			    int value) const
 {
-    if (name == tr("Follow Playback")) {
+    if (name == "Follow Playback") {
 	switch (value) {
 	default:
 	case 0: return tr("Scroll");
@@ -118,11 +127,11 @@ View::getPropertyValueLabel(const PropertyContainer::PropertyName &name,
 void
 View::setProperty(const PropertyContainer::PropertyName &name, int value)
 {
-    if (name == tr("Global Scroll")) {
+    if (name == "Global Scroll") {
 	setFollowGlobalPan(value != 0);
-    } else if (name == tr("Global Zoom")) {
+    } else if (name == "Global Zoom") {
 	setFollowGlobalZoom(value != 0);
-    } else if (name == tr("Follow Playback")) {
+    } else if (name == "Follow Playback") {
 	switch (value) {
 	default:
 	case 0: setPlaybackFollow(PlaybackScrollContinuous); break;

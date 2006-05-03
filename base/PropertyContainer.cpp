@@ -24,6 +24,12 @@ PropertyContainer::getProperties() const
     return PropertyList();
 }
 
+//QString
+//PropertyContainer::getPropertyLabel(const PropertyName &) const
+//{
+//    return "";
+//}
+
 PropertyContainer::PropertyType
 PropertyContainer::getPropertyType(const PropertyName &) const
 {
