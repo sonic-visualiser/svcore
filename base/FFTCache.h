@@ -16,10 +16,10 @@
 #ifndef _FFT_CACHE_H_
 #define _FFT_CACHE_H_
 
-#include <QColor>
-#include <stdint.h>
+#include <cstdlib>
+#include <cmath>
 
-#define M_PI (3.14159265358979232846)
+#include <stdint.h>
 
 class FFTCacheBase
 {
@@ -36,16 +36,22 @@ public:
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
-    virtual bool isLocalPeak(size_t x, size_t y) const = 0;
-    virtual bool isOverThreshold(size_t x, size_t y, float threshold) const = 0;
-
     virtual void setNormalizationFactor(size_t x, float factor) = 0;
     virtual void setMagnitudeAt(size_t x, size_t y, float mag) = 0;
     virtual void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) = 0;
     virtual void setPhaseAt(size_t x, size_t y, float phase) = 0;
 
-    virtual QColor getColour(unsigned char index) const = 0;
-    virtual void setColour(unsigned char index, QColor colour) = 0;
+    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
+
+    bool isLocalPeak(size_t x, size_t y) const {
+        float mag = getMagnitudeAt(x, y);
+        if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
+        if (y < getHeight()-1 && mag < getMagnitudeAt(x, y + 1)) return false;
+        return true;
+    }
+    bool isOverThreshold(size_t x, size_t y, float threshold) const {
+        return getMagnitudeAt(x, y) > threshold;
+    }
 
 protected:
     FFTCacheBase() { }
@@ -96,17 +102,6 @@ public:
         return (float(i) / 32767.0) * M_PI;
     }
     
-    virtual bool isLocalPeak(size_t x, size_t y) const {
-        if (y > 0 && m_magnitude[x][y] < m_magnitude[x][y-1]) return false;
-        if (y < m_height-1 && m_magnitude[x][y] < m_magnitude[x][y+1]) return false;
-        return true;
-    }
-    
-    virtual bool isOverThreshold(size_t x, size_t y, float threshold) const {
-        if (threshold == 0.0) return true;
-        return getMagnitudeAt(x, y) > threshold;
-    }
-    
     virtual void setNormalizationFactor(size_t x, float factor) {
         if (x < m_width) m_factor[x] = factor;
     }
@@ -129,22 +124,21 @@ public:
         }
     }
     
-    virtual QColor getColour(unsigned char index) const {
-        return m_colours[index];
+    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) {
+        setNormalizationFactor(x, factor);
+        for (size_t y = 0; y < m_height; ++y) {
+            setMagnitudeAt(x, y, mags[y]);
+            setPhaseAt(x, y, phases[y]);
+        }
     }
-    
-    virtual void setColour(unsigned char index, QColor colour) {
-        m_colours[index] = colour;
-    }
-    
+
 private:
     size_t m_width;
     size_t m_height;
     uint16_t **m_magnitude;
     uint16_t **m_phase;
     float *m_factor;
-    QColor m_colours[256];
-    
+
     void resize(uint16_t **&, size_t, size_t);
 };
 

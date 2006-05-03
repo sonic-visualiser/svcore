@@ -37,12 +37,11 @@ public:
     void resize(size_t width, size_t height);
     void reset();
 
-    void setRangeOfInterest(size_t x, size_t width);
+    void setRegionOfInterest(size_t x, size_t width);
+    void clearRegionOfInterest();
 
     float getValueAt(size_t x, size_t y) const;
     void getColumnAt(size_t x, float *values) const;
-//    float getColumnMaximum(size_t x) const;
-//    float getColumnMinimum(size_t x) const;
 
     void setValueAt(size_t x, size_t y, float value);
     void setColumnAt(size_t x, float *values);
@@ -52,12 +51,22 @@ protected:
     Mode    m_mode;
     size_t  m_width;
     size_t  m_height;
-    size_t  m_rx;
-    size_t  m_rw;
-    float **m_range;
     size_t  m_headerSize;
+    size_t  m_autoRegionWidth;
 
-    mutable off_t m_off;
+    mutable off_t   m_off;
+    mutable size_t  m_rx;
+    mutable size_t  m_rw;
+    mutable bool    m_userRegion;
+    mutable float  *m_region;
+    mutable bool    m_mmapped;
+    mutable size_t  m_mmapSize;
+    mutable size_t  m_mmapOff;
+    mutable bool    m_preferMmap;
+    float *getRegionPtr(size_t x, size_t y) const;
+
+    bool autoSetRegion(size_t x) const;
+    bool setRegion(size_t x, size_t width, bool user) const;
 
     bool seekTo(size_t x, size_t y) const;
 };
