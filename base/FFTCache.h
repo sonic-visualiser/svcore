@@ -19,6 +19,8 @@
 #include <QColor>
 #include <stdint.h>
 
+#define M_PI (3.14159265358979232846)
+
 class FFTCacheBase
 {
 public:
