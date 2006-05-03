@@ -44,13 +44,14 @@ public:
 
     /**
      * Get a list of the names of all the supported properties on this
-     * container.  Note that these should already have been
-     * internationalized with a call to tr() or equivalent.  If the
-     * container needs to test for equality with string literals
-     * subsequently, it must be sure to call tr() again on the strings
-     * in order to ensure they match.
+     * container.  These should be fixed (i.e. not internationalized).
      */
     virtual PropertyList getProperties() const;
+
+    /**
+     * Return the human-readable (and i18n'ised) name of a property.
+     */
+    virtual QString getPropertyLabel(const PropertyName &) const = 0;
 
     /**
      * Return the type of the given property, or InvalidProperty if

@@ -204,6 +204,7 @@ public:
     // PropertyContainer that we can return on request that just
     // delegates back to us.
     virtual PropertyContainer::PropertyList getProperties() const;
+    virtual QString getPropertyLabel(const PropertyName &) const;
     virtual PropertyContainer::PropertyType getPropertyType(const PropertyName &) const;
     virtual int getPropertyRangeAndValue(const PropertyName &,
 					 int *min, int *max) const;
@@ -328,6 +329,9 @@ class ViewPropertyContainer : public PropertyContainer
 public:
     ViewPropertyContainer(View *v);
     PropertyList getProperties() const { return m_v->getProperties(); }
+    QString getPropertyLabel(const PropertyName &n) const {
+        return m_v->getPropertyLabel(n);
+    }
     PropertyType getPropertyType(const PropertyName &n) const {
 	return m_v->getPropertyType(n);
     }
