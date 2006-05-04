@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "MatrixFileCache.h"
+#include "MatrixFile.h"
 #include "base/TempDirectory.h"
 #include "base/System.h"
 
@@ -29,16 +29,16 @@
 #include <QFileInfo>
 #include <QDir>
 
-std::map<QString, int> MatrixFileCache::m_refcount;
-QMutex MatrixFileCache::m_refcountMutex;
+std::map<QString, int> MatrixFile::m_refcount;
+QMutex MatrixFile::m_refcountMutex;
 
-MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
+MatrixFile::MatrixFile(QString fileBase, Mode mode) :
     m_fd(-1),
     m_mode(mode),
     m_width(0),
     m_height(0),
     m_headerSize(2 * sizeof(size_t)),
-    m_defaultCacheWidth(2048),
+    m_defaultCacheWidth(256),
     m_prevX(0),
     m_requestToken(-1)
 {
@@ -49,7 +49,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     bool newFile = !QFileInfo(fileName).exists();
 
     if (newFile && mode == ReadOnly) {
-        std::cerr << "ERROR: MatrixFileCache::MatrixFileCache: Read-only mode "
+        std::cerr << "ERROR: MatrixFile::MatrixFile: Read-only mode "
                   << "specified, but cache file does not exist" << std::endl;
         return;
     }
@@ -65,7 +65,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
 
     if ((m_fd = ::open(fileName.toLocal8Bit(), flags, fmode)) < 0) {
         ::perror("Open failed");
-        std::cerr << "ERROR: MatrixFileCache::MatrixFileCache: "
+        std::cerr << "ERROR: MatrixFile::MatrixFile: "
                   << "Failed to open cache file \""
                   << fileName.toStdString() << "\"";
         if (mode == ReadWrite) std::cerr << " for writing";
@@ -79,7 +79,7 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
         size_t header[2];
         if (::read(m_fd, header, 2 * sizeof(size_t)) < 0) {
             perror("Read failed");
-            std::cerr << "ERROR: MatrixFileCache::MatrixFileCache: "
+            std::cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Failed to read header (fd " << m_fd << ", file \""
                       << fileName.toStdString() << "\")" << std::endl;
             return;
@@ -100,11 +100,11 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     QMutexLocker locker(&m_refcountMutex);
     ++m_refcount[fileName];
 
-    std::cerr << "MatrixFileCache::MatrixFileCache: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
+    std::cerr << "MatrixFile::MatrixFile: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
 
 }
 
-MatrixFileCache::~MatrixFileCache()
+MatrixFile::~MatrixFile()
 {
     float *requestData = 0;
 
@@ -123,7 +123,7 @@ MatrixFileCache::~MatrixFileCache()
 
     if (m_fd >= 0) {
         if (::close(m_fd) < 0) {
-            ::perror("MatrixFileCache::~MatrixFileCache: close failed");
+            ::perror("MatrixFile::~MatrixFile: close failed");
         }
     }
 
@@ -132,7 +132,7 @@ MatrixFileCache::~MatrixFileCache()
         if (--m_refcount[m_fileName] == 0) {
             if (::unlink(m_fileName.toLocal8Bit())) {
                 ::perror("Unlink failed");
-                std::cerr << "WARNING: MatrixFileCache::~MatrixFileCache: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
+                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
             } else {
                 std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
             }
@@ -141,22 +141,22 @@ MatrixFileCache::~MatrixFileCache()
 }
 
 size_t 
-MatrixFileCache::getWidth() const
+MatrixFile::getWidth() const
 {
     return m_width;
 }
 
 size_t
-MatrixFileCache::getHeight() const
+MatrixFile::getHeight() const
 {
     return m_height;
 }
 
 void
-MatrixFileCache::resize(size_t w, size_t h)
+MatrixFile::resize(size_t w, size_t h)
 {
     if (m_mode != ReadWrite) {
-        std::cerr << "ERROR: MatrixFileCache::resize called on read-only cache"
+        std::cerr << "ERROR: MatrixFile::resize called on read-only cache"
                   << std::endl;
         return;
     }
@@ -169,7 +169,7 @@ MatrixFileCache::resize(size_t w, size_t h)
 
         if (::lseek(m_fd, off - sizeof(float), SEEK_SET) == (off_t)-1) {
             ::perror("Seek failed");
-            std::cerr << "ERROR: MatrixFileCache::resize(" << w << ", "
+            std::cerr << "ERROR: MatrixFile::resize(" << w << ", "
                       << h << "): seek failed, cannot resize" << std::endl;
             return;
         }
@@ -178,13 +178,13 @@ MatrixFileCache::resize(size_t w, size_t h)
         
         float f(0);
         if (::write(m_fd, &f, sizeof(float)) != sizeof(float)) {
-            ::perror("WARNING: MatrixFileCache::resize: write failed");
+            ::perror("WARNING: MatrixFile::resize: write failed");
         }
 
     } else {
         
         if (::ftruncate(m_fd, off) < 0) {
-            ::perror("WARNING: MatrixFileCache::resize: ftruncate failed");
+            ::perror("WARNING: MatrixFile::resize: ftruncate failed");
         }
     }
 
@@ -192,7 +192,7 @@ MatrixFileCache::resize(size_t w, size_t h)
     m_height = 0;
 
     if (::lseek(m_fd, 0, SEEK_SET) == (off_t)-1) {
-        ::perror("ERROR: MatrixFileCache::resize: Seek to write header failed");
+        ::perror("ERROR: MatrixFile::resize: Seek to write header failed");
         return;
     }
 
@@ -200,7 +200,7 @@ MatrixFileCache::resize(size_t w, size_t h)
     header[0] = w;
     header[1] = h;
     if (::write(m_fd, header, 2 * sizeof(size_t)) != 2 * sizeof(size_t)) {
-        ::perror("ERROR: MatrixFileCache::resize: Failed to write header");
+        ::perror("ERROR: MatrixFile::resize: Failed to write header");
         return;
     }
 
@@ -211,10 +211,10 @@ MatrixFileCache::resize(size_t w, size_t h)
 }
 
 void
-MatrixFileCache::reset()
+MatrixFile::reset()
 {
     if (m_mode != ReadWrite) {
-        std::cerr << "ERROR: MatrixFileCache::reset called on read-only cache"
+        std::cerr << "ERROR: MatrixFile::reset called on read-only cache"
                   << std::endl;
         return;
     }
@@ -231,14 +231,14 @@ MatrixFileCache::reset()
 }
 
 float
-MatrixFileCache::getValueAt(size_t x, size_t y)
+MatrixFile::getValueAt(size_t x, size_t y)
 {
     float value = 0.f;
     if (getValuesFromCache(x, y, 1, &value)) return value;
 
     ssize_t r = 0;
 
-//    std::cout << "MatrixFileCache::getValueAt(" << x << ", " << y << ")"
+//    std::cout << "MatrixFile::getValueAt(" << x << ", " << y << ")"
 //              << ": reading the slow way" << std::endl;
 
     m_fdMutex.lock();
@@ -250,7 +250,7 @@ MatrixFileCache::getValueAt(size_t x, size_t y)
     m_fdMutex.unlock();
 
     if (r < 0) {
-        ::perror("MatrixFileCache::getValueAt: Read failed");
+        ::perror("MatrixFile::getValueAt: Read failed");
     }
     if (r != sizeof(float)) {
         value = 0.f;
@@ -260,13 +260,13 @@ MatrixFileCache::getValueAt(size_t x, size_t y)
 }
 
 void
-MatrixFileCache::getColumnAt(size_t x, float *values)
+MatrixFile::getColumnAt(size_t x, float *values)
 {
     if (getValuesFromCache(x, 0, m_height, values)) return;
 
     ssize_t r = 0;
 
-    std::cout << "MatrixFileCache::getColumnAt(" << x << ")"
+    std::cout << "MatrixFile::getColumnAt(" << x << ")"
               << ": reading the slow way" << std::endl;
 
     m_fdMutex.lock();
@@ -278,12 +278,12 @@ MatrixFileCache::getColumnAt(size_t x, float *values)
     m_fdMutex.unlock();
     
     if (r < 0) {
-        ::perror("MatrixFileCache::getColumnAt: read failed");
+        ::perror("MatrixFile::getColumnAt: read failed");
     }
 }
 
 bool
-MatrixFileCache::getValuesFromCache(size_t x, size_t ystart, size_t ycount,
+MatrixFile::getValuesFromCache(size_t x, size_t ystart, size_t ycount,
                                     float *values)
 {
     m_cacheMutex.lock();
@@ -316,10 +316,10 @@ MatrixFileCache::getValuesFromCache(size_t x, size_t ystart, size_t ycount,
 }
 
 void
-MatrixFileCache::setValueAt(size_t x, size_t y, float value)
+MatrixFile::setValueAt(size_t x, size_t y, float value)
 {
     if (m_mode != ReadWrite) {
-        std::cerr << "ERROR: MatrixFileCache::setValueAt called on read-only cache"
+        std::cerr << "ERROR: MatrixFile::setValueAt called on read-only cache"
                   << std::endl;
         return;
     }
@@ -338,17 +338,17 @@ MatrixFileCache::setValueAt(size_t x, size_t y, float value)
     m_fdMutex.unlock();
 
     if (!seekFailed && w != sizeof(float)) {
-        ::perror("WARNING: MatrixFileCache::setValueAt: write failed");
+        ::perror("WARNING: MatrixFile::setValueAt: write failed");
     }
 
     //... update cache as appropriate
 }
 
 void
-MatrixFileCache::setColumnAt(size_t x, float *values)
+MatrixFile::setColumnAt(size_t x, float *values)
 {
     if (m_mode != ReadWrite) {
-        std::cerr << "ERROR: MatrixFileCache::setColumnAt called on read-only cache"
+        std::cerr << "ERROR: MatrixFile::setColumnAt called on read-only cache"
                   << std::endl;
         return;
     }
@@ -367,16 +367,16 @@ MatrixFileCache::setColumnAt(size_t x, float *values)
     m_fdMutex.unlock();
 
     if (!seekFailed && w != ssize_t(m_height * sizeof(float))) {
-        ::perror("WARNING: MatrixFileCache::setColumnAt: write failed");
+        ::perror("WARNING: MatrixFile::setColumnAt: write failed");
     }
 
     //... update cache as appropriate
 }
 
 void
-MatrixFileCache::primeCache(size_t x, bool goingLeft)
+MatrixFile::primeCache(size_t x, bool goingLeft)
 {
-//    std::cerr << "MatrixFileCache::primeCache(" << x << ", " << goingLeft << ")" << std::endl;
+//    std::cerr << "MatrixFile::primeCache(" << x << ", " << goingLeft << ")" << std::endl;
 
     size_t rx = x;
     size_t rw = m_defaultCacheWidth;
@@ -391,7 +391,10 @@ MatrixFileCache::primeCache(size_t x, bool goingLeft)
 
     QMutexLocker locker(&m_cacheMutex);
 
-    if (m_requestToken >= 0) {
+    FileReadThread::Request request;
+
+    if (m_requestToken >= 0 &&
+        m_readThread.getRequest(m_requestToken, request)) {
 
         if (x >= m_requestingX &&
             x <  m_requestingX + m_requestingWidth) {
@@ -400,52 +403,57 @@ MatrixFileCache::primeCache(size_t x, bool goingLeft)
 
                 std::cerr << "last request is ready! (" << m_requestingX << ", "<< m_requestingWidth << ")"  << std::endl;
 
-                FileReadThread::Request request;
-                if (m_readThread.getRequest(m_requestToken, request)) {
-
-                    m_cache.x = (request.start - m_headerSize) / (m_height * sizeof(float));
-                    m_cache.width = request.size / (m_height * sizeof(float));
-                    
-                    std::cerr << "actual: " << m_cache.x << ", " << m_cache.width << std::endl;
-
-                    if (m_cache.data) delete[] m_cache.data;
-                    m_cache.data = (float *)request.data;
-                }
+                m_cache.x = (request.start - m_headerSize) / (m_height * sizeof(float));
+                m_cache.width = request.size / (m_height * sizeof(float));
                 
+                std::cerr << "actual: " << m_cache.x << ", " << m_cache.width << std::endl;
+
+                if (m_cache.data) delete[] m_cache.data;
+                m_cache.data = (float *)request.data;
+
                 m_readThread.done(m_requestToken);
                 m_requestToken = -1;
             }
 
+            // already requested something covering this area; wait for it
             return;
         }
 
-        std::cerr << "cancelling last request" << std::endl;
+        // the current request is no longer of any use
         m_readThread.cancel(m_requestToken);
-//!!!
+
+        // crude way to avoid leaking the data
+        while (!m_readThread.isCancelled(m_requestToken)) {
+            usleep(10000);
+        }
+
+        delete[] ((float *)request.data);
+        m_readThread.done(m_requestToken);
+
         m_requestToken = -1;
     }
 
-    FileReadThread::Request request;
     request.fd = m_fd;
     request.mutex = &m_fdMutex;
     request.start = m_headerSize + rx * m_height * sizeof(float);
     request.size = rw * m_height * sizeof(float);
     request.data = (char *)(new float[rw * m_height]);
+    MUNLOCK(request.data, rw * m_height * sizeof(float));
 
     m_requestingX = rx;
     m_requestingWidth = rw;
 
     int token = m_readThread.request(request);
-    std::cerr << "MatrixFileCache::primeCache: request token is "
-              << token << std::endl;
+    std::cerr << "MatrixFile::primeCache: request token is "
+              << token << " (x = " << rx << ", w = " << rw << ", left = " << goingLeft << ")" << std::endl;
 
     m_requestToken = token;
 }
 
 void
-MatrixFileCache::requestCancelled(int token)
+MatrixFile::requestCancelled(int token)
 {
-    std::cerr << "MatrixFileCache::requestCancelled(" << token << ")" << std::endl;
+    std::cerr << "MatrixFile::requestCancelled(" << token << ")" << std::endl;
 
     FileReadThread::Request request;
     if (m_readThread.getRequest(token, request)) {
@@ -455,13 +463,13 @@ MatrixFileCache::requestCancelled(int token)
 }
 
 bool
-MatrixFileCache::seekTo(size_t x, size_t y)
+MatrixFile::seekTo(size_t x, size_t y)
 {
     off_t off = m_headerSize + (x * m_height + y) * sizeof(float);
 
     if (::lseek(m_fd, off, SEEK_SET) == (off_t)-1) {
         ::perror("Seek failed");
-        std::cerr << "ERROR: MatrixFileCache::seekTo(" << x << ", " << y
+        std::cerr << "ERROR: MatrixFile::seekTo(" << x << ", " << y
                   << ") failed" << std::endl;
         return false;
     }

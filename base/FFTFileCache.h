@@ -17,7 +17,7 @@
 #define _FFT_FILE_CACHE_H_
 
 #include "FFTCache.h"
-#include "MatrixFileCache.h"
+#include "MatrixFile.h"
 
 class FFTFileCache : public FFTCacheBase
 {
@@ -37,7 +37,7 @@ public:
     // plugins get data from it -- need the reader thread to be able
     // to block waiting for the writer thread as appropriate.
 
-    FFTFileCache(QString fileBase, MatrixFileCache::Mode mode);
+    FFTFileCache(QString fileBase, MatrixFile::Mode mode);
     virtual ~FFTFileCache();
 
     virtual size_t getWidth() const;
@@ -60,7 +60,7 @@ public:
 
 protected:
     float *m_colbuf;
-    MatrixFileCache *m_mfc;
+    MatrixFile *m_mfc;
 };
 
 #endif

@@ -15,7 +15,7 @@
 
 #include "FFTFileCache.h"
 
-#include "MatrixFileCache.h"
+#include "MatrixFile.h"
 
 #include <iostream>
 
@@ -28,9 +28,9 @@
 // etc, and then store the normalization factor (maximum magnitude) at
 // [m_height * 2].
 
-FFTFileCache::FFTFileCache(QString fileBase, MatrixFileCache::Mode mode) :
+FFTFileCache::FFTFileCache(QString fileBase, MatrixFile::Mode mode) :
     m_colbuf(0),
-    m_mfc(new MatrixFileCache(fileBase, mode))
+    m_mfc(new MatrixFile(fileBase, mode))
 {
 }
 
