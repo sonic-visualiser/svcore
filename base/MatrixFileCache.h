@@ -21,12 +21,12 @@
 #include <QMutex>
 #include <map>
 
-// This class is _not_ thread safe.  Each instance must only be used
-// within a single thread.  You may however have as many instances as
-// you like referring to the same file in separate threads.
+#include "FileReadThread.h"
 
-class MatrixFileCache
+class MatrixFileCache : public QObject
 {
+    Q_OBJECT
+
 public:
     enum Mode { ReadOnly, ReadWrite };
 
@@ -39,38 +39,49 @@ public:
     void resize(size_t width, size_t height);
     void reset();
 
-    void setRegionOfInterest(size_t x, size_t width);
-    void clearRegionOfInterest();
-
-    float getValueAt(size_t x, size_t y) const;
-    void getColumnAt(size_t x, float *values) const;
+    float getValueAt(size_t x, size_t y);
+    void getColumnAt(size_t x, float *values);
 
     void setValueAt(size_t x, size_t y, float value);
     void setColumnAt(size_t x, float *values);
-    
+
+protected slots:
+    void requestCancelled(int token);
+
 protected:
     int     m_fd;
     Mode    m_mode;
     size_t  m_width;
     size_t  m_height;
     size_t  m_headerSize;
-    size_t  m_autoRegionWidth;
     QString m_fileName;
+    size_t  m_defaultCacheWidth;
+    size_t  m_prevX;
 
-    mutable off_t   m_off;
-    mutable size_t  m_rx;
-    mutable size_t  m_rw;
-    mutable bool    m_userRegion;
-    mutable float  *m_region;
-    float *getRegionPtr(size_t x, size_t y) const;
+    struct Cache {
+        size_t  x;
+        size_t  width;
+        float  *data;
+    };
 
-    bool autoSetRegion(size_t x) const;
-    bool setRegion(size_t x, size_t width, bool user) const;
+    Cache m_cache;
 
-    bool seekTo(size_t x, size_t y) const;
+    bool getValuesFromCache(size_t x, size_t ystart, size_t ycount,
+                            float *values);
+
+    void primeCache(size_t x, bool left);
+
+    bool seekTo(size_t x, size_t y);
+
+    FileReadThread m_readThread;
+    int m_requestToken;
+    size_t m_requestingX;
+    size_t m_requestingWidth;
 
     static std::map<QString, int> m_refcount;
     static QMutex m_refcountMutex;
+    QMutex m_fdMutex;
+    QMutex m_cacheMutex;
 };
 
 #endif
