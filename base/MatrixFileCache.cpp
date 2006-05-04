@@ -27,15 +27,10 @@
 #include <cstdio>
 
 #include <QFileInfo>
-#include <QFile>
 #include <QDir>
 
 std::map<QString, int> MatrixFileCache::m_refcount;
 QMutex MatrixFileCache::m_refcountMutex;
-
-//!!! This class is a work in progress -- it does only as much as we
-// need for the current SpectrogramLayer.  Slated for substantial
-// refactoring and extension.
 
 MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     m_fd(-1),
@@ -43,17 +38,11 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     m_width(0),
     m_height(0),
     m_headerSize(2 * sizeof(size_t)),
-    m_autoRegionWidth(256),
-    m_off(-1),
-    m_rx(0),
-    m_rw(0),
-    m_userRegion(false),
-    m_region(0)
+    m_defaultCacheWidth(2048),
+    m_prevX(0),
+    m_requestToken(-1)
 {
-    // Ensure header size is a multiple of the size of our data (for
-    // alignment purposes)
-    size_t hs = ((m_headerSize / sizeof(float)) * sizeof(float));
-    if (hs != m_headerSize) m_headerSize = hs + sizeof(float);
+    m_cache.data = 0;
 
     QDir tempDir(TempDirectory::instance()->getPath());
     QString fileName(tempDir.filePath(QString("%1.mfc").arg(fileBase)));
@@ -101,6 +90,13 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
     }
 
     m_fileName = fileName;
+    
+    //!!! why isn't this signal being delivered?
+    connect(&m_readThread, SIGNAL(cancelled(int)), 
+            this, SLOT(requestCancelled(int)));
+
+    m_readThread.start();
+
     QMutexLocker locker(&m_refcountMutex);
     ++m_refcount[fileName];
 
@@ -110,9 +106,20 @@ MatrixFileCache::MatrixFileCache(QString fileBase, Mode mode) :
 
 MatrixFileCache::~MatrixFileCache()
 {
-    if (m_rw > 0) {
-        delete[] m_region;
+    float *requestData = 0;
+
+    if (m_requestToken >= 0) {
+        FileReadThread::Request request;
+        if (m_readThread.getRequest(m_requestToken, request)) {
+            requestData = (float *)request.data;
+        }
     }
+
+    m_readThread.finish();
+    m_readThread.wait();
+
+    if (requestData) delete[] requestData;
+    if (m_cache.data) delete[] m_cache.data;
 
     if (m_fd >= 0) {
         if (::close(m_fd) < 0) {
@@ -123,7 +130,8 @@ MatrixFileCache::~MatrixFileCache()
     if (m_fileName != "") {
         QMutexLocker locker(&m_refcountMutex);
         if (--m_refcount[m_fileName] == 0) {
-            if (!QFile(m_fileName).remove()) {
+            if (::unlink(m_fileName.toLocal8Bit())) {
+                ::perror("Unlink failed");
                 std::cerr << "WARNING: MatrixFileCache::~MatrixFileCache: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
             } else {
                 std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
@@ -153,31 +161,26 @@ MatrixFileCache::resize(size_t w, size_t h)
         return;
     }
 
+    QMutexLocker locker(&m_fdMutex);
+    
     off_t off = m_headerSize + (w * h * sizeof(float));
 
     if (w * h > m_width * m_height) {
 
-/*!!!
-        // If we're going to mmap the file, we need to ensure it's long
-        // enough beforehand
-        
-        if (m_preferMmap) {
-        
-            if (::lseek(m_fd, off - sizeof(float), SEEK_SET) == (off_t)-1) {
-                ::perror("Seek failed");
-                std::cerr << "ERROR: MatrixFileCache::resize(" << w << ", "
-                          << h << "): seek failed, cannot resize" << std::endl;
-                return;
-            }
-            
-            // guess this requires efficient support for sparse files
-            
-            float f(0);
-            if (::write(m_fd, &f, sizeof(float)) != sizeof(float)) {
-                ::perror("WARNING: MatrixFileCache::resize: write failed");
-            }
+        if (::lseek(m_fd, off - sizeof(float), SEEK_SET) == (off_t)-1) {
+            ::perror("Seek failed");
+            std::cerr << "ERROR: MatrixFileCache::resize(" << w << ", "
+                      << h << "): seek failed, cannot resize" << std::endl;
+            return;
         }
-*/
+            
+        // guess this requires efficient support for sparse files
+        
+        float f(0);
+        if (::write(m_fd, &f, sizeof(float)) != sizeof(float)) {
+            ::perror("WARNING: MatrixFileCache::resize: write failed");
+        }
+
     } else {
         
         if (::ftruncate(m_fd, off) < 0) {
@@ -187,7 +190,6 @@ MatrixFileCache::resize(size_t w, size_t h)
 
     m_width = 0;
     m_height = 0;
-    m_off = 0;
 
     if (::lseek(m_fd, 0, SEEK_SET) == (off_t)-1) {
         ::perror("ERROR: MatrixFileCache::resize: Seek to write header failed");
@@ -217,6 +219,8 @@ MatrixFileCache::reset()
         return;
     }
     
+    QMutexLocker locker(&m_fdMutex);
+
     float *emptyCol = new float[m_height];
     for (size_t y = 0; y < m_height; ++y) emptyCol[y] = 0.f;
 
@@ -226,74 +230,89 @@ MatrixFileCache::reset()
     delete[] emptyCol;
 }
 
-void
-MatrixFileCache::setRegionOfInterest(size_t x, size_t width)
-{
-    setRegion(x, width, true);
-}
-
-void
-MatrixFileCache::clearRegionOfInterest()
-{
-    m_userRegion = false;
-}
-
 float
-MatrixFileCache::getValueAt(size_t x, size_t y) const
+MatrixFileCache::getValueAt(size_t x, size_t y)
 {
-    if (m_rw > 0 && x >= m_rx && x < m_rx + m_rw) {
-        float *rp = getRegionPtr(x, y);
-        if (rp) return *rp;
-    } else if (!m_userRegion) {
-        if (autoSetRegion(x)) {
-            float *rp = getRegionPtr(x, y);
-            if (rp) return *rp;
-            else return 0.f;
-        }
+    float value = 0.f;
+    if (getValuesFromCache(x, y, 1, &value)) return value;
+
+    ssize_t r = 0;
+
+//    std::cout << "MatrixFileCache::getValueAt(" << x << ", " << y << ")"
+//              << ": reading the slow way" << std::endl;
+
+    m_fdMutex.lock();
+
+    if (seekTo(x, y)) {
+        r = ::read(m_fd, &value, sizeof(float));
     }
 
-    if (!seekTo(x, y)) return 0.f;
-    float value;
-    ssize_t r = ::read(m_fd, &value, sizeof(float));
+    m_fdMutex.unlock();
+
     if (r < 0) {
         ::perror("MatrixFileCache::getValueAt: Read failed");
     }
     if (r != sizeof(float)) {
         value = 0.f;
     }
-    if (r > 0) m_off += r;
+
     return value;
 }
 
 void
-MatrixFileCache::getColumnAt(size_t x, float *values) const
+MatrixFileCache::getColumnAt(size_t x, float *values)
 {
-    if (m_rw > 0 && x >= m_rx && x < m_rx + m_rw) {
-        float *rp = getRegionPtr(x, 0);
-        if (rp) {
-            for (size_t y = 0; y < m_height; ++y) {
-                values[y] = rp[y];
-            }
-        }
-        return;
-    } else if (!m_userRegion) {
-        if (autoSetRegion(x)) {
-            float *rp = getRegionPtr(x, 0);
-            if (rp) {
-                for (size_t y = 0; y < m_height; ++y) {
-                    values[y] = rp[y];
-                }
-                return;
-            }
-        }
+    if (getValuesFromCache(x, 0, m_height, values)) return;
+
+    ssize_t r = 0;
+
+    std::cout << "MatrixFileCache::getColumnAt(" << x << ")"
+              << ": reading the slow way" << std::endl;
+
+    m_fdMutex.lock();
+
+    if (seekTo(x, 0)) {
+        r = ::read(m_fd, values, m_height * sizeof(float));
     }
 
-    if (!seekTo(x, 0)) return;
-    ssize_t r = ::read(m_fd, values, m_height * sizeof(float));
+    m_fdMutex.unlock();
+    
     if (r < 0) {
         ::perror("MatrixFileCache::getColumnAt: read failed");
     }
-    if (r > 0) m_off += r;
+}
+
+bool
+MatrixFileCache::getValuesFromCache(size_t x, size_t ystart, size_t ycount,
+                                    float *values)
+{
+    m_cacheMutex.lock();
+
+    if (!m_cache.data || x < m_cache.x || x >= m_cache.x + m_cache.width) {
+        bool left = (m_cache.data && x < m_cache.x);
+        m_cacheMutex.unlock();
+        primeCache(x, left); // this doesn't take effect until a later callback
+        m_prevX = x;
+        return false;
+    }
+
+    for (size_t y = ystart; y < ystart + ycount; ++y) {
+        values[y - ystart] = m_cache.data[(x - m_cache.x) * m_height + y];
+    }
+    m_cacheMutex.unlock();
+
+    if (m_cache.x > 0 && x < m_prevX && x < m_cache.x + m_cache.width/4) {
+        primeCache(x, true);
+    }
+
+    if (m_cache.x + m_cache.width < m_width &&
+        x > m_prevX &&
+        x > m_cache.x + (m_cache.width * 3) / 4) {
+        primeCache(x, false);
+    }
+
+    m_prevX = x;
+    return true;
 }
 
 void
@@ -305,14 +324,24 @@ MatrixFileCache::setValueAt(size_t x, size_t y, float value)
         return;
     }
 
-    if (!seekTo(x, y)) return;
-    ssize_t w = ::write(m_fd, &value, sizeof(float));
-    if (w != sizeof(float)) {
+    ssize_t w = 0;
+    bool seekFailed = false;
+
+    m_fdMutex.lock();
+
+    if (seekTo(x, y)) {
+        w = ::write(m_fd, &value, sizeof(float));
+    } else {
+        seekFailed = true;
+    }
+
+    m_fdMutex.unlock();
+
+    if (!seekFailed && w != sizeof(float)) {
         ::perror("WARNING: MatrixFileCache::setValueAt: write failed");
     }
-    if (w > 0) m_off += w;
 
-    //... update region as appropriate
+    //... update cache as appropriate
 }
 
 void
@@ -324,106 +353,111 @@ MatrixFileCache::setColumnAt(size_t x, float *values)
         return;
     }
 
-    if (!seekTo(x, 0)) return;
-    ssize_t w = ::write(m_fd, values, m_height * sizeof(float));
-    if (w != ssize_t(m_height * sizeof(float))) {
+    ssize_t w = 0;
+    bool seekFailed = false;
+
+    m_fdMutex.lock();
+
+    if (seekTo(x, 0)) {
+        w = ::write(m_fd, values, m_height * sizeof(float));
+    } else {
+        seekFailed = true;
+    }
+
+    m_fdMutex.unlock();
+
+    if (!seekFailed && w != ssize_t(m_height * sizeof(float))) {
         ::perror("WARNING: MatrixFileCache::setColumnAt: write failed");
     }
-    if (w > 0) m_off += w;
 
-    //... update region as appropriate
+    //... update cache as appropriate
 }
 
-float *
-MatrixFileCache::getRegionPtr(size_t x, size_t y) const
+void
+MatrixFileCache::primeCache(size_t x, bool goingLeft)
 {
-    if (m_rw == 0) return 0;
+//    std::cerr << "MatrixFileCache::primeCache(" << x << ", " << goingLeft << ")" << std::endl;
 
-    float *region = m_region;
-
-    float *ptr = &(region[(x - m_rx) * m_height + y]);
-    
-//    std::cerr << "getRegionPtr(" << x << "," << y << "): region is " << m_region << ", returning " << ptr << std::endl;
-    return ptr;
-}
-
-bool
-MatrixFileCache::autoSetRegion(size_t x) const
-{
     size_t rx = x;
-    size_t rw = m_autoRegionWidth;
-    size_t left = rw / 4;
-    if (x < m_rx) left = (rw * 3) / 4;
+    size_t rw = m_defaultCacheWidth;
+
+    size_t left = rw / 3;
+    if (goingLeft) left = (rw * 2) / 3;
+
     if (rx > left) rx -= left;
     else rx = 0;
+
     if (rx + rw > m_width) rw = m_width - rx;
-    return setRegion(rx, rw, false);
+
+    QMutexLocker locker(&m_cacheMutex);
+
+    if (m_requestToken >= 0) {
+
+        if (x >= m_requestingX &&
+            x <  m_requestingX + m_requestingWidth) {
+
+            if (m_readThread.isReady(m_requestToken)) {
+
+                std::cerr << "last request is ready! (" << m_requestingX << ", "<< m_requestingWidth << ")"  << std::endl;
+
+                FileReadThread::Request request;
+                if (m_readThread.getRequest(m_requestToken, request)) {
+
+                    m_cache.x = (request.start - m_headerSize) / (m_height * sizeof(float));
+                    m_cache.width = request.size / (m_height * sizeof(float));
+                    
+                    std::cerr << "actual: " << m_cache.x << ", " << m_cache.width << std::endl;
+
+                    if (m_cache.data) delete[] m_cache.data;
+                    m_cache.data = (float *)request.data;
+                }
+                
+                m_readThread.done(m_requestToken);
+                m_requestToken = -1;
+            }
+
+            return;
+        }
+
+        std::cerr << "cancelling last request" << std::endl;
+        m_readThread.cancel(m_requestToken);
+//!!!
+        m_requestToken = -1;
+    }
+
+    FileReadThread::Request request;
+    request.fd = m_fd;
+    request.mutex = &m_fdMutex;
+    request.start = m_headerSize + rx * m_height * sizeof(float);
+    request.size = rw * m_height * sizeof(float);
+    request.data = (char *)(new float[rw * m_height]);
+
+    m_requestingX = rx;
+    m_requestingWidth = rw;
+
+    int token = m_readThread.request(request);
+    std::cerr << "MatrixFileCache::primeCache: request token is "
+              << token << std::endl;
+
+    m_requestToken = token;
 }
 
-bool
-MatrixFileCache::setRegion(size_t x, size_t width, bool user) const
+void
+MatrixFileCache::requestCancelled(int token)
 {
-    if (!user && m_userRegion) return false;
-    if (m_rw > 0 && x >= m_rx && x + width <= m_rx + m_rw) return true;
+    std::cerr << "MatrixFileCache::requestCancelled(" << token << ")" << std::endl;
 
-    if (m_rw > 0) {
-        delete[] m_region;
-        m_region = 0;
-        m_rw = 0;
+    FileReadThread::Request request;
+    if (m_readThread.getRequest(token, request)) {
+        delete[] ((float *)request.data);
+        m_readThread.done(token);
     }
-
-    if (width == 0) {
-        return true;
-    }
-
-    if (!seekTo(x, 0)) return false;
-
-    m_region = new float[width * m_height];
-    MUNLOCK(m_region, width * m_height * sizeof(float));
-
-    ssize_t r = ::read(m_fd, m_region, width * m_height * sizeof(float));
-    if (r < 0) {
-        ::perror("Read failed");
-        std::cerr << "ERROR: MatrixFileCache::setRegion(" << x << ", " << width
-                  << ") failed" << std::endl;
-        delete[] m_region;
-        m_region = 0;
-        return false;
-    }
-    
-    m_off += r;
-
-    if (r < ssize_t(width * m_height * sizeof(float))) {
-        // didn't manage to read the whole thing, but did get something
-        std::cerr << "WARNING: MatrixFileCache::setRegion(" << x << ", " << width
-                  << "): ";
-        width = r / (m_height * sizeof(float));
-        std::cerr << "Only got " << width << " columns" << std::endl;
-    }
-
-    m_rx = x;
-    m_rw = width;
-    if (m_rw == 0) {
-        delete[] m_region;
-        m_region = 0;
-    }
-
-    std::cerr << "MatrixFileCache::setRegion: set region to " << x << ", " << width << std::endl;
-
-    if (user) m_userRegion = true;
-    return true;
 }
 
 bool
-MatrixFileCache::seekTo(size_t x, size_t y) const
+MatrixFileCache::seekTo(size_t x, size_t y)
 {
     off_t off = m_headerSize + (x * m_height + y) * sizeof(float);
-    if (off == m_off) return true;
-
-    if (m_mode == ReadWrite) {
-        std::cerr << "writer: ";
-        std::cerr << "seek required (from " << m_off << " to " << off << ")" << std::endl;
-    }
 
     if (::lseek(m_fd, off, SEEK_SET) == (off_t)-1) {
         ::perror("Seek failed");
@@ -432,7 +466,6 @@ MatrixFileCache::seekTo(size_t x, size_t y) const
         return false;
     }
 
-    m_off = off;
     return true;
 }
 
