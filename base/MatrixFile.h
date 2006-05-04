@@ -45,9 +45,6 @@ public:
     void setValueAt(size_t x, size_t y, float value);
     void setColumnAt(size_t x, float *values);
 
-protected slots:
-    void requestCancelled(int token);
-
 protected:
     int     m_fd;
     Mode    m_mode;
@@ -75,8 +72,10 @@ protected:
 
     FileReadThread m_readThread;
     int m_requestToken;
+
     size_t m_requestingX;
     size_t m_requestingWidth;
+    char *m_spareData;
 
     static std::map<QString, int> m_refcount;
     static QMutex m_refcountMutex;
