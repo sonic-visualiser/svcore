@@ -38,9 +38,10 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode) :
     m_width(0),
     m_height(0),
     m_headerSize(2 * sizeof(size_t)),
-    m_defaultCacheWidth(256),
+    m_defaultCacheWidth(512),
     m_prevX(0),
-    m_requestToken(-1)
+    m_requestToken(-1),
+    m_spareData(0)
 {
     m_cache.data = 0;
 
@@ -90,10 +91,6 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode) :
     }
 
     m_fileName = fileName;
-    
-    //!!! why isn't this signal being delivered?
-    connect(&m_readThread, SIGNAL(cancelled(int)), 
-            this, SLOT(requestCancelled(int)));
 
     m_readThread.start();
 
@@ -118,8 +115,9 @@ MatrixFile::~MatrixFile()
     m_readThread.finish();
     m_readThread.wait();
 
-    if (requestData) delete[] requestData;
-    if (m_cache.data) delete[] m_cache.data;
+    if (requestData) free(requestData);
+    if (m_cache.data) free(m_cache.data);
+    if (m_spareData) free(m_spareData);
 
     if (m_fd >= 0) {
         if (::close(m_fd) < 0) {
@@ -408,7 +406,10 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
                 
                 std::cerr << "actual: " << m_cache.x << ", " << m_cache.width << std::endl;
 
-                if (m_cache.data) delete[] m_cache.data;
+                if (m_cache.data) {
+                    if (m_spareData) free(m_spareData);
+                    m_spareData = (char *)m_cache.data;
+                }
                 m_cache.data = (float *)request.data;
 
                 m_readThread.done(m_requestToken);
@@ -427,7 +428,8 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
             usleep(10000);
         }
 
-        delete[] ((float *)request.data);
+        if (m_spareData) free(m_spareData);
+        m_spareData = request.data;
         m_readThread.done(m_requestToken);
 
         m_requestToken = -1;
@@ -437,8 +439,9 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
     request.mutex = &m_fdMutex;
     request.start = m_headerSize + rx * m_height * sizeof(float);
     request.size = rw * m_height * sizeof(float);
-    request.data = (char *)(new float[rw * m_height]);
+    request.data = (char *)realloc(m_spareData, rw * m_height * sizeof(float));
     MUNLOCK(request.data, rw * m_height * sizeof(float));
+    m_spareData = 0;
 
     m_requestingX = rx;
     m_requestingWidth = rw;
@@ -448,18 +451,6 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
               << token << " (x = " << rx << ", w = " << rw << ", left = " << goingLeft << ")" << std::endl;
 
     m_requestToken = token;
-}
-
-void
-MatrixFile::requestCancelled(int token)
-{
-    std::cerr << "MatrixFile::requestCancelled(" << token << ")" << std::endl;
-
-    FileReadThread::Request request;
-    if (m_readThread.getRequest(token, request)) {
-        delete[] ((float *)request.data);
-        m_readThread.done(token);
-    }
 }
 
 bool
