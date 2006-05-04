@@ -16,7 +16,8 @@
 #ifndef _FILE_READ_THREAD_H_
 #define _FILE_READ_THREAD_H_
 
-#include <QThread>
+#include "NonRTThread.h"
+
 #include <QMutex>
 #include <QWaitCondition>
 
@@ -25,7 +26,7 @@
 
 #include <stdint.h>
 
-class FileReadThread : public QThread
+class FileReadThread : public NonRTThread
 {
     Q_OBJECT
 

@@ -23,15 +23,15 @@
 
 #include "FileReadThread.h"
 
-class MatrixFileCache : public QObject
+class MatrixFile : public QObject
 {
     Q_OBJECT
 
 public:
     enum Mode { ReadOnly, ReadWrite };
 
-    MatrixFileCache(QString fileBase, Mode mode);
-    virtual ~MatrixFileCache();
+    MatrixFile(QString fileBase, Mode mode);
+    virtual ~MatrixFile();
 
     size_t getWidth() const;
     size_t getHeight() const;
