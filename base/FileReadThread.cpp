@@ -16,6 +16,7 @@
 #include "FileReadThread.h"
 
 #include <iostream>
+#include <unistd.h>
 
 FileReadThread::FileReadThread() :
     m_nextToken(0),
