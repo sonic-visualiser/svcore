@@ -20,6 +20,7 @@
 
 #include <windows.h>
 #include <malloc.h>
+#include <process.h>
 
 #define MLOCK(a,b)   1
 #define MUNLOCK(a,b) 1
@@ -33,6 +34,8 @@
 #define PLUGIN_GLOB  "*.dll"
 #define PATH_SEPARATOR ';'
 #define DEFAULT_VAMP_PATH "%ProgramFiles%\\Vamp Plugins"
+
+#define getpid _getpid
 
 extern "C" {
 void usleep(unsigned long usec);
