@@ -15,7 +15,9 @@
 
 #include "NonRTThread.h"
 
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 
 NonRTThread::NonRTThread(QObject *parent) :
     QThread(parent)

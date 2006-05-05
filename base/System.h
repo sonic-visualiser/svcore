@@ -34,9 +34,8 @@
 #define PATH_SEPARATOR ';'
 #define DEFAULT_VAMP_PATH "%ProgramFiles%\\Vamp Plugins"
 
-#define usleep(u) Sleep((u)/1000)
-
 extern "C" {
+void usleep(unsigned long usec);
 void gettimeofday(struct timeval *p, void *tz);
 }
 
