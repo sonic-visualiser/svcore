@@ -14,6 +14,7 @@
 */
 
 #include "TempDirectory.h"
+#include "System.h"
 
 #include <QDir>
 #include <QFile>
@@ -70,8 +71,29 @@ TempDirectory::getPath()
     
     if (m_tmpdir != "") return m_tmpdir;
 
-//!!!    QDir tempDirBase = QDir::temp();
-    QDir tempDirBase = QDir::home();
+    QString svDirBase = ".sv";
+    QString svDir = QDir::home().filePath(svDirBase);
+    if (!QFileInfo(svDir).exists()) {
+        if (!QDir::home().mkdir(svDirBase)) {
+            throw DirectoryCreationFailed(QString("%1 directory in $HOME")
+                                          .arg(svDirBase));
+        }
+    } else if (!QFileInfo(svDir).isDir()) {
+        throw DirectoryCreationFailed(QString("$HOME/%1 is not a directory")
+                                      .arg(svDirBase));
+    }
+
+    cleanupAbandonedDirectories(svDir);
+
+    return createTempDirectoryIn(svDir);
+}
+
+QString
+TempDirectory::createTempDirectoryIn(QString dir)
+{
+    // Entered with mutex held.
+
+    QDir tempDirBase(dir);
 
     // Generate a temporary directory.  Qt4.1 doesn't seem to be able
     // to do this for us, and mkdtemp is not standard.  This method is
@@ -110,6 +132,16 @@ TempDirectory::getPath()
     if (m_tmpdir == "") {
         throw DirectoryCreationFailed(QString("temporary subdirectory in %1")
                                       .arg(tempDirBase.canonicalPath()));
+    }
+
+    QString pidpath = QDir(m_tmpdir).filePath(QString("%1.pid").arg(getpid()));
+    QFile pidfile(pidpath);
+
+    if (!pidfile.open(QIODevice::WriteOnly)) {
+        throw DirectoryCreationFailed(QString("pid file creation in %1")
+                                      .arg(m_tmpdir));
+    } else {
+        pidfile.close();
     }
 
     return m_tmpdir;
@@ -196,3 +228,35 @@ TempDirectory::cleanupDirectory(QString tmpdir)
         m_mutex.unlock();
     }
 }
+
+void
+TempDirectory::cleanupAbandonedDirectories(QString svDir)
+{
+    QDir dir(svDir, "sv_*", QDir::Name, QDir::Dirs);
+
+    for (unsigned int i = 0; i < dir.count(); ++i) {
+        
+        QDir subdir(dir.filePath(dir[i]), "*.pid", QDir::Name, QDir::Files);
+
+        for (unsigned int j = 0; j < subdir.count(); ++j) {
+
+            bool ok = false;
+            int pid = QFileInfo(subdir[j]).baseName().toInt(&ok);
+            if (!ok) continue;
+
+            if (GetProcessStatus(pid) == ProcessNotRunning) {
+                std::cerr << "INFO: Found abandoned temporary directory from "
+                          << "an old Sonic Visualiser process\n(pid=" << pid
+                          << ", directory=\""
+                          << dir.filePath(dir[i]).toStdString()
+                          << "\").  Removing it..." << std::endl;
+                cleanupDirectory(dir.filePath(dir[i]));
+                std::cerr << "...done." << std::endl;
+                break;
+            }
+        }
+    }
+}
+
+
+        

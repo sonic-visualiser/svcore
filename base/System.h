@@ -68,6 +68,9 @@ void gettimeofday(struct timeval *p, void *tz);
 
 #endif /* ! _WIN32 */
 
+enum ProcessStatus { ProcessRunning, ProcessNotRunning, UnknownProcessStatus };
+extern ProcessStatus GetProcessStatus(int pid);
+
 #endif /* ! _SYSTEM_H_ */
 
 
