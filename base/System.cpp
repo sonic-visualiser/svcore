@@ -25,6 +25,11 @@
 
 extern "C" {
 
+void usleep(unsigned long usec)
+{
+    Sleep(usec / 1000);
+}
+
 void gettimeofday(struct timeval *tv, void *tz)
 {
     union { 
@@ -45,7 +50,7 @@ ProcessStatus
 GetProcessStatus(int pid)
 {
 #ifdef _WIN32
-    DWORD handle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+    HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!handle) {
         return ProcessNotRunning;
     } else {
