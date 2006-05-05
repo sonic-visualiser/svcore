@@ -15,6 +15,21 @@
 
 #include "System.h"
 
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#else
+#ifndef _WIN32
+#include <unistd.h>
+#include <cstdio>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#endif
+#endif
+
+#include <iostream>
+
 #ifdef _WIN32
 
 extern "C" {
@@ -34,3 +49,70 @@ void gettimeofday(struct timeval *tv, void *tz)
 }
 
 #endif
+
+ProcessStatus
+GetProcessStatus(int pid)
+{
+#ifdef __APPLE__
+
+    // See
+    // http://tuvix.apple.com/documentation/Darwin/Reference/ManPages/man3/sysctl.3.html
+    // http://developer.apple.com/qa/qa2001/qa1123.html
+
+    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, 0, 0 };
+    name[3] = pid;
+
+    int err;
+    size_t length = 0;
+
+    if (sysctl(name, 4, 0, &length, 0, 0)) {
+        perror("GetProcessStatus: sysctl failed");
+        return UnknownProcessStatus;
+    }
+
+    if (length > 0) return ProcessRunning;
+    else return ProcessNotRunning;
+
+#elsif _WIN32
+
+    return UnknownProcessStatus;
+
+#else
+
+    char filename[50];
+    struct stat statbuf;
+
+    // Looking up the pid in /proc is worth a try on any POSIX system,
+    // I guess -- it'll always compile and it won't return false
+    // negatives if we do this first check:
+
+    sprintf(filename, "/proc/%d", (int)getpid());
+
+    int err = stat(filename, &statbuf);
+
+    if (err || !S_ISDIR(statbuf.st_mode)) {
+        // If we can't even use it to tell whether we're running or
+        // not, then clearly /proc is no use on this system.
+        return UnknownProcessStatus;
+    }
+
+    sprintf(filename, "/proc/%d", (int)pid);
+
+    err = stat(filename, &statbuf);
+
+    if (!err) {
+        if (S_ISDIR(statbuf.st_mode)) {
+            return ProcessRunning;
+        } else {
+            return UnknownProcessStatus;
+        }
+    } else if (errno == ENOENT) {
+        return ProcessNotRunning;
+    } else {
+        perror("stat failed");
+        return UnknownProcessStatus;
+    }
+
+#endif
+}
+
