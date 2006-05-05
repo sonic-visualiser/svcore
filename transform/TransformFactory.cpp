@@ -175,7 +175,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                  !plugin->getParameterDescriptors().empty());
 
 	    transforms[transformName] = 
-                TransformDesc(tr("Analysis Plugin"),
+                TransformDesc(tr("Analysis Plugins"),
                               transformName,
                               userDescription,
                               friendlyName,
@@ -255,7 +255,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             bool configurable = (descriptor->parameterCount > 0);
 
 	    transforms[transformName] = 
-                TransformDesc(tr("Real-Time Plugin"),
+                TransformDesc(tr("Other Plugins"),
                               transformName,
                               userDescription,
                               userDescription,

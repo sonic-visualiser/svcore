@@ -739,8 +739,13 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     if (!visible) return;
 
     bool modifierPressed = // we only care about these ones
-	((QApplication::keyboardModifiers() & Qt::ShiftModifier) ||
-	 (QApplication::keyboardModifiers() & Qt::ControlModifier));
+	((QApplication::keyboardModifiers() & Qt::ShiftModifier)
+#ifndef Q_WS_MAC
+         /* OS/X reports that CtrlModifier is pressed after we've
+            imported a file with Apple+I even though we then released it */
+         || (QApplication::keyboardModifiers() & Qt::ControlModifier)
+#endif
+            );
 
     switch (m_followPlay) {
 
