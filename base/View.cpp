@@ -738,20 +738,10 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     m_playPointerFrame = f;
     if (!visible) return;
 
-    bool modifierPressed = // we only care about these ones
-	((QApplication::keyboardModifiers() & Qt::ShiftModifier)
-#ifndef Q_WS_MAC
-         /* OS/X reports that CtrlModifier is pressed after we've
-            imported a file with Apple+I even though we then released it */
-         || (QApplication::keyboardModifiers() & Qt::ControlModifier)
-#endif
-            );
-
     switch (m_followPlay) {
 
     case PlaybackScrollContinuous:
-	if (QApplication::mouseButtons() == Qt::NoButton &&
-	    !modifierPressed) {
+	if (QApplication::mouseButtons() == Qt::NoButton) {
 	    setCentreFrame(f, false);
 	}
 	break;
@@ -759,7 +749,7 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
     case PlaybackScrollPage:
     { 
 	int xold = getXForFrame(oldPlayPointerFrame);
-	repaint(xold - 1, 0, 3, height());
+	update(xold - 1, 0, 3, height());
 
 	long w = getEndFrame() - getStartFrame();
 	w -= w/5;
@@ -792,8 +782,7 @@ View::viewManagerPlaybackFrameChanged(unsigned long f)
 #endif
 
 	if (xnew < width()/8 || xnew > (width()*7)/8) {
-	    if (QApplication::mouseButtons() == Qt::NoButton &&
-		!modifierPressed) {
+	    if (QApplication::mouseButtons() == Qt::NoButton) {
 		long offset = getFrameForX(width()/2) - getStartFrame();
 		long newCentre = sf + offset;
 		bool changed = setCentreFrame(newCentre, false);
