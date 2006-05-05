@@ -410,7 +410,51 @@ void
 LADSPAPluginFactory::loadLibrary(QString soName)
 {
     void *libraryHandle = DLOPEN(soName, RTLD_NOW);
-    if (libraryHandle) m_libraryHandles[soName] = libraryHandle;
+    if (libraryHandle) {
+        m_libraryHandles[soName] = libraryHandle;
+        std::cerr << "LADSPAPluginFactory::loadLibrary: Loaded library \"" << soName.toStdString() << "\"" << std::endl;
+        return;
+    }
+
+    if (QFileInfo(soName).exists()) {
+        DLERROR();
+        std::cerr << "LADSPAPluginFactory::loadLibrary: Library \"" << soName.toStdString() << "\" exists, but failed to load it" << std::endl;
+        return;
+    }
+
+    std::vector<QString> pathList = getPluginPath();
+
+    QString fileName = QFile(soName).fileName();
+    QString base = QFileInfo(soName).baseName();
+
+    for (std::vector<QString>::iterator i = pathList.begin();
+	 i != pathList.end(); ++i) {
+        
+        std::cerr << "Looking at: " << (*i).toStdString() << std::endl;
+
+        QDir dir(*i, PLUGIN_GLOB,
+                 QDir::Name | QDir::IgnoreCase,
+                 QDir::Files | QDir::Readable);
+
+        if (QFileInfo(dir.filePath(fileName)).exists()) {
+            std::cerr << "Loading: " << fileName.toStdString() << std::endl;
+            libraryHandle = DLOPEN(dir.filePath(fileName), RTLD_NOW);
+            if (libraryHandle) m_libraryHandles[soName] = libraryHandle;
+            return;
+        }
+
+	for (unsigned int j = 0; j < dir.count(); ++j) {
+            QString file = dir.filePath(dir[j]);
+            if (QFileInfo(file).baseName() == base) {
+                std::cerr << "Loading: " << file.toStdString() << std::endl;
+                libraryHandle = DLOPEN(file, RTLD_NOW);
+                if (libraryHandle) m_libraryHandles[soName] = libraryHandle;
+                return;
+            }
+        }
+    }
+
+    std::cerr << "LADSPAPluginFactory::loadLibrary: Failed to locate plugin library \"" << soName.toStdString() << "\"" << std::endl;
 }
 
 void
