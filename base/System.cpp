@@ -27,7 +27,7 @@ extern "C" {
 
 void usleep(unsigned long usec)
 {
-    Sleep(usec / 1000);
+    ::Sleep(usec / 1000);
 }
 
 void gettimeofday(struct timeval *tv, void *tz)
@@ -37,7 +37,7 @@ void gettimeofday(struct timeval *tv, void *tz)
 	FILETIME ft; 
     } now; 
     
-    GetSystemTimeAsFileTime(&now.ft); 
+    ::GetSystemTimeAsFileTime(&now.ft); 
     tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
     tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
 }
