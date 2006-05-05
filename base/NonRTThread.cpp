@@ -28,7 +28,7 @@ NonRTThread::start()
 {
     QThread::start();
 
-#ifndef Q_WS_WIN32
+#ifndef _WIN32
     struct sched_param param;
     ::memset(&param, 0, sizeof(param));
 
