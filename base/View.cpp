@@ -31,7 +31,7 @@
 #include <cassert>
 #include <math.h>
 
-//#define DEBUG_VIEW_WIDGET_PAINT 1
+#define DEBUG_VIEW_WIDGET_PAINT 1
 
 using std::cerr;
 using std::endl;

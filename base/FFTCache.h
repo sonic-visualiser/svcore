@@ -36,11 +36,7 @@ public:
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
-    virtual void setNormalizationFactor(size_t x, float factor) = 0;
-    virtual void setMagnitudeAt(size_t x, size_t y, float mag) = 0;
-    virtual void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) = 0;
-    virtual void setPhaseAt(size_t x, size_t y, float phase) = 0;
-
+    virtual bool haveColumnAt(size_t x) const = 0;
     virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
 
     bool isLocalPeak(size_t x, size_t y) const {
@@ -124,6 +120,10 @@ public:
         }
     }
     
+    virtual bool haveColumnAt(size_t x) const {
+        return true;
+    }
+
     virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) {
         setNormalizationFactor(x, factor);
         for (size_t y = 0; y < m_height; ++y) {
