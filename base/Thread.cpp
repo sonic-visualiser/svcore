@@ -13,20 +13,21 @@
     COPYING included with this distribution for more information.
 */
 
-#include "NonRTThread.h"
+#include "Thread.h"
 
 #ifndef _WIN32
 #include <pthread.h>
 #endif
 
-NonRTThread::NonRTThread(QObject *parent) :
-    QThread(parent)
+Thread::Thread(Type type, QObject *parent) :
+    QThread(parent),
+    m_type(type)
 {
     setStackSize(512 * 1024);
 }
 
 void
-NonRTThread::start()
+Thread::start()
 {
     QThread::start();
 
@@ -34,9 +35,21 @@ NonRTThread::start()
     struct sched_param param;
     ::memset(&param, 0, sizeof(param));
 
-    if (::pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) {
-        ::perror("pthread_setschedparam to SCHED_OTHER failed");
-    }
+    if (m_type == RTThread) {
+
+        param.sched_priority = 5;
+
+        if (::pthread_setschedparam(pthread_self(), SCHED_FIFO, &param)) {
+            ::perror("INFO: pthread_setschedparam to SCHED_FIFO failed");
+        }
+
+    } else {
+
+        if (::pthread_setschedparam(pthread_self(), SCHED_OTHER, &param)) {
+            ::perror("WARNING: pthread_setschedparam to SCHED_OTHER failed");
+        }
+    }        
+
 #endif
 }
 

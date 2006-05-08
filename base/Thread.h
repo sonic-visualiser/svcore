@@ -13,20 +13,25 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _NON_RT_THREAD_H_
-#define _NON_RT_THREAD_H_
+#ifndef _THREAD_H_
+#define _THREAD_H_
 
 #include <QThread>
 
-class NonRTThread : public QThread
+class Thread : public QThread
 {
 Q_OBJECT
 
 public:
-    NonRTThread(QObject *parent = 0);
+    enum Type { RTThread, NonRTThread };
+
+    Thread(Type type = NonRTThread, QObject *parent = 0);
 
 public slots:
     void start();
+
+private:    
+    Type m_type;
 };
 
 #endif

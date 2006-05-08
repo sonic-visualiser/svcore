@@ -32,7 +32,7 @@
 #include "api/dssi.h"
 
 #include "base/RingBuffer.h"
-#include "base/NonRTThread.h"
+#include "base/Thread.h"
 #include "RealTimePluginInstance.h"
 #include "base/Scavenger.h"
 
@@ -198,7 +198,7 @@ protected:
 
     static Scavenger<ScavengerArrayWrapper<snd_seq_event_t *> > m_bufferScavenger;
 
-    class NonRTPluginThread : public NonRTThread
+    class NonRTPluginThread : public Thread
     {
     public:
 	NonRTPluginThread(LADSPA_Handle handle,
