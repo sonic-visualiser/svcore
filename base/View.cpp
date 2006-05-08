@@ -1403,7 +1403,8 @@ View::drawSelections(QPainter &paint)
 	    paint.restore();
 	}
 
-	if (sampleRate && shouldLabelSelections()) {
+	if (sampleRate && shouldLabelSelections() && m_manager &&
+            m_manager->getOverlayMode() != ViewManager::NoOverlays) {
 	    
 	    QString startText = QString("%1 / %2")
 		.arg(QString::fromStdString
