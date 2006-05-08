@@ -16,7 +16,7 @@
 #ifndef _TRANSFORM_H_
 #define _TRANSFORM_H_
 
-#include "NonRTThread.h"
+#include "Thread.h"
 
 #include "base/Model.h"
 
@@ -35,7 +35,7 @@ typedef QString TransformName;
  * the background thread has populated it.
  */
 
-class Transform : public NonRTThread
+class Transform : public Thread
 {
 public:
     virtual ~Transform();
