@@ -52,12 +52,16 @@ public:
         return ((*m_bits)[column / 8]) & (1u << (column % 8));
     }
     
-    void set(size_t column, bool state) {
-        if (state) {
-            ((*m_bits)[column / 8]) |=  (uint8_t(1) << (column % 8));
-        } else {
-            ((*m_bits)[column / 8]) &= ~(uint8_t(1) << (column % 8));
-        }
+    void set(size_t column) {
+        ((*m_bits)[column / 8]) |=  (uint8_t(1) << (column % 8));
+    }
+
+    void reset(size_t column) {
+        ((*m_bits)[column / 8]) &= ~(uint8_t(1) << (column % 8));
+    }
+
+    void copy(size_t source, size_t dest) {
+        get(source) ? set(dest) : reset(dest);
     }
     
 private:
