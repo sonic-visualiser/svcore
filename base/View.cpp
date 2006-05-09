@@ -906,14 +906,20 @@ View::getScrollableBackLayers(bool testChanged, bool &changed) const
     // backmost non-scrollable layer.
 
     LayerList scrollables;
+    bool metUnscrollable = false;
+
     for (LayerList::const_iterator i = m_layers.begin(); i != m_layers.end(); ++i) {
 	if ((*i)->isLayerDormant(this)) continue;
 	if ((*i)->isLayerOpaque()) {
 	    // You can't see anything behind an opaque layer!
 	    scrollables.clear();
+            if (metUnscrollable) break;
 	}
-	if ((*i)->isLayerScrollable(this)) scrollables.push_back(*i);
-	else break;
+	if (!metUnscrollable && (*i)->isLayerScrollable(this)) {
+            scrollables.push_back(*i);
+        } else {
+            metUnscrollable = true;
+        }
     }
 
     if (testChanged && scrollables != m_lastScrollableBackLayers) {
@@ -927,7 +933,6 @@ View::LayerList
 View::getNonScrollableFrontLayers(bool testChanged, bool &changed) const
 {
     changed = false;
-    LayerList scrollables = getScrollableBackLayers(testChanged, changed);
     LayerList nonScrollables;
 
     // Everything in front of the first non-scrollable from the back
