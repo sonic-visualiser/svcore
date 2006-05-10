@@ -108,8 +108,8 @@ void Window<T>::encache()
 	    
     case GaussianWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * exp((-1.0 / (n*n)) * ((T(2*i) - n) *
-						      (T(2*i) - n)));
+            mult[i] = mult[i] * exp(-(pow(i - (n-1)/2.0, 2) /
+                                      (2 * pow(0.25 * n, 2)))); // sd = 0.25
 	}
 	break;
 	    

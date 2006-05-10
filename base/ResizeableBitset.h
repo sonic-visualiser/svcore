@@ -19,24 +19,24 @@
 #include <vector>
 #include <stdint.h>
 
-class ResizeableBitmap {
+class ResizeableBitset {
 
 public:
-    ResizeableBitmap() : m_bits(0) {
+    ResizeableBitset() : m_bits(0) {
     }
-    ResizeableBitmap(size_t size) : m_bits(new std::vector<uint8_t>) {
+    ResizeableBitset(size_t size) : m_bits(new std::vector<uint8_t>) {
         m_bits->assign(size / 8 + 1, 0);
     }
-    ResizeableBitmap(const ResizeableBitmap &b) {
+    ResizeableBitset(const ResizeableBitset &b) {
         m_bits = new std::vector<uint8_t>(*b.m_bits);
     }
-    ResizeableBitmap &operator=(const ResizeableBitmap &b) {
+    ResizeableBitset &operator=(const ResizeableBitset &b) {
         if (&b != this) return *this;
         delete m_bits;
         m_bits = new std::vector<uint8_t>(*b.m_bits);
         return *this;
     }
-    ~ResizeableBitmap() {
+    ~ResizeableBitset() {
         delete m_bits;
     }
     
