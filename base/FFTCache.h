@@ -36,7 +36,7 @@ public:
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
-    virtual bool haveColumnAt(size_t x) const = 0;
+    virtual bool haveSetColumnAt(size_t x) const = 0;
     virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
 
     bool isLocalPeak(size_t x, size_t y) const {
@@ -120,7 +120,7 @@ public:
         }
     }
     
-    virtual bool haveColumnAt(size_t x) const {
+    virtual bool haveSetColumnAt(size_t x) const {
         return true;
     }
 
