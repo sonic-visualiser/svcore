@@ -73,6 +73,28 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     if (m_blockSize == 0) m_blockSize = 1024; //!!! todo: ask user
     if (m_stepSize == 0) m_stepSize = m_blockSize; //!!! likewise
 
+    DenseTimeValueModel *input = getInput();
+    if (!input) return;
+
+    size_t channelCount = input->getChannelCount();
+    if (m_plugin->getMaxChannelCount() < channelCount) {
+	channelCount = 1;
+    }
+    if (m_plugin->getMinChannelCount() > channelCount) {
+	std::cerr << "FeatureExtractionPluginTransform:: "
+		  << "Can't provide enough channels to plugin (plugin min "
+		  << m_plugin->getMinChannelCount() << ", max "
+		  << m_plugin->getMaxChannelCount() << ", input model has "
+		  << input->getChannelCount() << ")" << std::endl;
+	return;
+    }
+
+    if (!m_plugin->initialise(channelCount, m_stepSize, m_blockSize)) {
+        std::cerr << "FeatureExtractionPluginTransform: Plugin "
+                  << m_plugin->getName() << " failed to initialise!" << std::endl;
+        return;
+    }
+
     //!!! cope with plugins that request non-power-of-2 block sizes in
     // the frequency domain!
 
@@ -109,6 +131,9 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     if (m_descriptor->hasFixedBinCount) {
 	binCount = m_descriptor->binCount;
     }
+
+    std::cerr << "FeatureExtractionPluginTransform: output bin count "
+	      << binCount << std::endl;
 
     if (binCount > 0 && m_descriptor->hasKnownExtents) {
 	minValue = m_descriptor->minValue;
@@ -193,25 +218,11 @@ FeatureExtractionPluginTransform::run()
 
     if (!m_output) return;
 
+    size_t sampleRate = m_input->getSampleRate();
+
     size_t channelCount = input->getChannelCount();
     if (m_plugin->getMaxChannelCount() < channelCount) {
 	channelCount = 1;
-    }
-    if (m_plugin->getMinChannelCount() > channelCount) {
-	std::cerr << "FeatureExtractionPluginTransform::run: "
-		  << "Can't provide enough channels to plugin (plugin min "
-		  << m_plugin->getMinChannelCount() << ", max "
-		  << m_plugin->getMaxChannelCount() << ", input model has "
-		  << input->getChannelCount() << ")" << std::endl;
-	return;
-    }
-
-    size_t sampleRate = m_input->getSampleRate();
-
-    if (!m_plugin->initialise(channelCount, m_stepSize, m_blockSize)) {
-        std::cerr << "FeatureExtractionPluginTransform::run: Plugin "
-                  << m_plugin->getName() << " failed to initialise!" << std::endl;
-        return;
     }
 
     float **buffers = new float*[channelCount];
