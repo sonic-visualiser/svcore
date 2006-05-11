@@ -26,6 +26,7 @@
 #include "model/SparseTimeValueModel.h"
 #include "model/DenseThreeDimensionalModel.h"
 #include "model/DenseTimeValueModel.h"
+#include "model/NoteModel.h"
 
 #include <fftw3.h>
 
@@ -165,13 +166,26 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
 						 false);
 
-    } else if (binCount == 1 ||
+    } else if (binCount == 1) {
 
-	       // We don't have a sparse 3D model
-	       m_descriptor->sampleType ==
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
-	
         SparseTimeValueModel *model = new SparseTimeValueModel
+            (modelRate, modelResolution, minValue, maxValue, false);
+        model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
+
+        m_output = model;
+
+    } else if (m_descriptor->sampleType ==
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+
+        // We don't have a sparse 3D model, so interpret this as a
+        // note model.  There's nothing to define which values to use
+        // as which parameters of the note -- for the moment let's
+        // treat the first as pitch, second as duration in frames,
+        // third (if present) as velocity. (Our note model doesn't
+        // yet store velocity.)
+        //!!! todo: ask the user!
+	
+        NoteModel *model = new NoteModel
             (modelRate, modelResolution, minValue, maxValue, false);
         model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
 
@@ -415,9 +429,7 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 	if (!model) return;
 	model->addPoint(SparseOneDimensionalModel::Point(frame, feature.label.c_str()));
 	
-    } else if (binCount == 1 ||
-	       m_descriptor->sampleType == 
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+    } else if (binCount == 1) {
 
 	float value = 0.0;
 	if (feature.values.size() > 0) value = feature.values[0];
@@ -425,6 +437,23 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 	SparseTimeValueModel *model = getOutput<SparseTimeValueModel>();
 	if (!model) return;
 	model->addPoint(SparseTimeValueModel::Point(frame, value, feature.label.c_str()));
+
+    } else if (m_descriptor->sampleType == 
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+
+        float pitch = 0.0;
+        if (feature.values.size() > 0) pitch = feature.values[0];
+
+        float duration = 1;
+        if (feature.values.size() > 1) duration = feature.values[1];
+        
+        float velocity = 100;
+        if (feature.values.size() > 2) velocity = feature.values[2];
+
+        NoteModel *model = getOutput<NoteModel>();
+        if (!model) return;
+
+        model->addPoint(NoteModel::Point(frame, pitch, duration, feature.label.c_str()));
 	
     } else {
 	
@@ -451,11 +480,16 @@ FeatureExtractionPluginTransform::setCompletion(int completion)
 	if (!model) return;
 	model->setCompletion(completion);
 
-    } else if (binCount == 1 ||
-	       m_descriptor->sampleType ==
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+    } else if (binCount == 1) {
 
 	SparseTimeValueModel *model = getOutput<SparseTimeValueModel>();
+	if (!model) return;
+	model->setCompletion(completion);
+
+    } else if (m_descriptor->sampleType ==
+	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+
+	NoteModel *model = getOutput<NoteModel>();
 	if (!model) return;
 	model->setCompletion(completion);
 
