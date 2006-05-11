@@ -39,6 +39,7 @@ public:
 	RangeProperty, // range of integers
 	ValueProperty, // range of integers given string labels
 	ColourProperty, // colours, get/set as qRgb
+        UnitsProperty, // unit from UnitDatabase, get/set unit id
 	InvalidProperty, // property not found!
     };
 
