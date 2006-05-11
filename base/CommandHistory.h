@@ -65,6 +65,16 @@ public:
 
     /**
      * Add a command to the command history.
+     * 
+     * The command will normally be executed before being added; but
+     * if a compound operation is in use (see startCompoundOperation
+     * below), the execute status of the compound operation will
+     * determine whether the command is executed or not.
+     */
+    void addCommand(Command *command);
+    
+    /**
+     * Add a command to the command history.
      *
      * If execute is true, the command will be executed before being
      * added.  Otherwise it will be assumed to have been already
@@ -72,8 +82,10 @@ public:
      * its work has actually been done somehow!
      *
      * If a compound operation is in use (see startCompoundOperation
-     * below), the execute status of the compound operation will
-     * override any value of execute passed to this method.
+     * below), the execute value passed to this method will override
+     * the execute status of the compound operation.  In this way it's
+     * possible to have a compound operation mixing both to-execute
+     * and pre-executed commands.
      *
      * If bundle is true, the command will be a candidate for bundling
      * with any adjacent bundeable commands that have the same name,
@@ -83,7 +95,7 @@ public:
      * not known in advance.  The bundle parameter will be ignored if
      * a compound operation is already in use.
      */
-    void addCommand(Command *command, bool execute = true, bool bundle = false);
+    void addCommand(Command *command, bool execute, bool bundle = false);
     
     /// Return the maximum number of items in the undo history.
     int getUndoLimit() const { return m_undoLimit; }
@@ -192,7 +204,7 @@ protected:
 
     MacroCommand *m_currentCompound;
     bool m_executeCompound;
-    void addToCompound(Command *command);
+    void addToCompound(Command *command, bool execute);
 
     MacroCommand *m_currentBundle;
     QString m_currentBundleName;

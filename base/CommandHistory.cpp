@@ -115,12 +115,25 @@ CommandHistory::registerToolbar(QToolBar *toolbar)
 }
 
 void
+CommandHistory::addCommand(Command *command)
+{
+    if (!command) return;
+
+    if (m_currentCompound) {
+	addToCompound(command, m_executeCompound);
+	return;
+    }
+
+    addCommand(command, true);
+}
+
+void
 CommandHistory::addCommand(Command *command, bool execute, bool bundle)
 {
     if (!command) return;
 
     if (m_currentCompound) {
-	addToCompound(command);
+	addToCompound(command, execute);
 	return;
     }
 
@@ -198,11 +211,11 @@ CommandHistory::bundleTimerTimeout()
 }
 
 void
-CommandHistory::addToCompound(Command *command)
+CommandHistory::addToCompound(Command *command, bool execute)
 {
 //    std::cerr << "CommandHistory::addToCompound: " << command->getName().toLocal8Bit().data() << std::endl;
 
-    if (m_executeCompound) command->execute();
+    if (execute) command->execute();
     m_currentCompound->addCommand(command);
 }
 
