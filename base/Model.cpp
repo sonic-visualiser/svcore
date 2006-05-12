@@ -22,7 +22,7 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-    std::cerr << "Model::~Model(" << this << ")" << std::endl;
+//    std::cerr << "Model::~Model(" << this << ")" << std::endl;
 
     // Subclasses have to handle adding themselves to the repository,
     // if they want to be played.  We can't do it from here because

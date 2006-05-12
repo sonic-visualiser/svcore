@@ -217,7 +217,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
         if (descriptor->controlOutputPortCount == 0 ||
             descriptor->audioInputPortCount == 0) continue;
 
-        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " output ports" << std::endl;
+//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " output ports" << std::endl;
 	
 	QString pluginDescription = descriptor->name.c_str();
 
@@ -359,7 +359,7 @@ TransformFactory::getConfigurationForTransform(TransformName name,
     bool ok = false;
     configurationXml = m_lastConfigurations[name];
 
-    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+//    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
 
     Vamp::PluginBase *plugin = 0;
 

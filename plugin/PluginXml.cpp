@@ -166,7 +166,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  (QString(i->name.c_str())));
 
         if (attrs.value(name) == "") {
-            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
+//            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
             continue;
         }
 
@@ -204,8 +204,8 @@ PluginXml::setParametersFromXml(QString xml)
     for (unsigned int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
-        std::cerr << "Adding attribute \"" << attr.name().toStdString()
-                  << "\" with value \"" << attr.value().toStdString() << "\"" << std::endl;
+//        std::cerr << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name().toStdString()
+//                  << "\" with value \"" << attr.value().toStdString() << "\"" << std::endl;
         attrs.append(attr.name(), "", "", attr.value());
     }
 

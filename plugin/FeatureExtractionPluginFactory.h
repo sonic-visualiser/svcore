@@ -40,6 +40,7 @@ public:
                                             float inputSampleRate);
 
 protected:
+    std::vector<QString> m_pluginPath;
 };
 
 #endif

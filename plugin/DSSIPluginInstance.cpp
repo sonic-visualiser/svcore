@@ -25,7 +25,7 @@
 #include "PluginIdentifier.h"
 #include "LADSPAPluginFactory.h"
 
-#define DEBUG_DSSI 1
+//#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
 
 #define EVENT_BUFFER_SIZE 1023
@@ -161,12 +161,18 @@ DSSIPluginInstance::getParameterDescriptors() const
 float
 DSSIPluginInstance::getParameter(std::string name) const
 {
+#ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::getParameter(" << name << ")" << std::endl;
+#endif
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
+#ifdef DEBUG_DSSI
             std::cerr << "Matches port " << i << std::endl;
+#endif
             float v = getParameterValue(i);
+#ifdef DEBUG_DSSI
             std::cerr << "Returning " << v << std::endl;
+#endif
             return v;
         }
     }
@@ -177,7 +183,9 @@ DSSIPluginInstance::getParameter(std::string name) const
 void
 DSSIPluginInstance::setParameter(std::string name, float value)
 {
+#ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::setParameter(" << name << ", " << value << ")" << std::endl;
+#endif
 
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
@@ -370,7 +378,9 @@ DSSIPluginInstance::initialiseGroupMembership()
 
 DSSIPluginInstance::~DSSIPluginInstance()
 {
+#ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::~DSSIPluginInstance" << std::endl;
+#endif
 
     if (m_threads.find(m_instanceHandle) != m_threads.end()) {
 
@@ -654,9 +664,11 @@ void
 DSSIPluginInstance::connectPorts()
 {
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->connect_port) return;
+#ifdef DEBUG_DSSI
     std::cerr << "DSSIPluginInstance::connectPorts: " << m_audioPortsIn.size() 
 	      << " audio ports in, " << m_audioPortsOut.size() << " out, "
 	      << m_outputBufferCount << " output buffers" << std::endl;
+#endif
 
     assert(sizeof(LADSPA_Data) == sizeof(float));
     assert(sizeof(sample_t) == sizeof(float));
@@ -691,7 +703,9 @@ DSSIPluginInstance::connectPorts()
                 (m_descriptor->LADSPA_Plugin, m_controlPortsIn[i].first);
             *m_controlPortsIn[i].second = defaultValue;
             m_backupControlPortsIn[i] = defaultValue;
+#ifdef DEBUG_DSSI
             std::cerr << "DSSIPluginInstance::connectPorts: set control port " << i << " to default value " << defaultValue << std::endl;
+#endif
         }
     }
 

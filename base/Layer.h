@@ -232,7 +232,12 @@ public:
 
     virtual bool needsTextLabelHeight() const { return false; }
 
-    virtual bool getValueExtents(float &min, float &max, QString &unit) const = 0;
+    virtual bool getValueExtents(float &min, float &max,
+                                 bool &logarithmic, QString &unit) const = 0;
+
+    virtual bool getDisplayExtents(float &min, float &max) const {
+        return false;
+    }
 
 public slots:
     void showLayer(View *, bool show);

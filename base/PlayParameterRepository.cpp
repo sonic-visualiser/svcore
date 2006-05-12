@@ -39,7 +39,7 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addModel(const Model *model)
 {
-    std::cerr << "PlayParameterRepository:addModel " << model <<  std::endl;
+//    std::cerr << "PlayParameterRepository:addModel " << model <<  std::endl;
 
     if (!getPlayParameters(model)) {
 
@@ -48,7 +48,7 @@ PlayParameterRepository::addModel(const Model *model)
 
 	if (AudioGenerator::canPlay(model)) {
 
-	    std::cerr << "PlayParameterRepository: Adding play parameters for " << model << std::endl;
+//	    std::cerr << "PlayParameterRepository: Adding play parameters for " << model << std::endl;
 
             PlayParameters *params = new PlayParameters;
 	    m_playParameters[model] = params;
@@ -68,12 +68,12 @@ PlayParameterRepository::addModel(const Model *model)
 	    connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
 		    this, SLOT(playPluginConfigurationChanged(QString)));
 
-            std::cerr << "Connected play parameters " << params << " for model "
-                      << model << " to this " << this << std::endl;
+//            std::cerr << "Connected play parameters " << params << " for model "
+//                      << model << " to this " << this << std::endl;
 
 	} else {
 
-	    std::cerr << "PlayParameterRepository: Model " << model << " not playable" <<  std::endl;
+//	    std::cerr << "PlayParameterRepository: Model " << model << " not playable" <<  std::endl;
 	}	    
     }
 }    
@@ -116,7 +116,7 @@ void
 PlayParameterRepository::playPluginConfigurationChanged(QString config)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-    std::cerr << "PlayParameterRepository::playPluginConfigurationChanged" << std::endl;
+//    std::cerr << "PlayParameterRepository::playPluginConfigurationChanged" << std::endl;
     for (ModelParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
@@ -129,7 +129,7 @@ PlayParameterRepository::playPluginConfigurationChanged(QString config)
 void
 PlayParameterRepository::clear()
 {
-    std::cerr << "PlayParameterRepository: PlayParameterRepository::clear" << std::endl;
+//    std::cerr << "PlayParameterRepository: PlayParameterRepository::clear" << std::endl;
     while (!m_playParameters.empty()) {
 	delete m_playParameters.begin()->second;
 	m_playParameters.erase(m_playParameters.begin());

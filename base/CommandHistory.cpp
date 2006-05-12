@@ -386,7 +386,7 @@ CommandHistory::clearStack(CommandStack &stack)
     while (!stack.empty()) {
 	Command *command = stack.top();
 	// Not safe to call getName() on a command about to be deleted
-	std::cerr << "CommandHistory::clearStack: About to delete command " << command << std::endl;
+//	std::cerr << "CommandHistory::clearStack: About to delete command " << command << std::endl;
 	delete command;
 	stack.pop();
     }

@@ -223,7 +223,8 @@ public:
 
     virtual int getTextLabelHeight(const Layer *layer, QPainter &) const;
 
-    virtual bool getValueExtents(QString unit, float &min, float &max) const;
+    virtual bool getValueExtents(QString unit, float &min, float &max,
+                                 bool &log) const;
 
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
