@@ -28,7 +28,7 @@ Layer::Layer()
 
 Layer::~Layer()
 {
-    std::cerr << "Layer::~Layer(" << this << ")" << std::endl;
+//    std::cerr << "Layer::~Layer(" << this << ")" << std::endl;
 }
 
 QString

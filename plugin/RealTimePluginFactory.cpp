@@ -37,16 +37,16 @@ RealTimePluginFactory::instance(QString pluginType)
 {
     if (pluginType == "ladspa") {
 	if (!_ladspaInstance) {
-	    std::cerr << "RealTimePluginFactory::instance(" << pluginType.toStdString()
-		      << "): creating new LADSPAPluginFactory" << std::endl;
+//	    std::cerr << "RealTimePluginFactory::instance(" << pluginType.toStdString()
+//		      << "): creating new LADSPAPluginFactory" << std::endl;
 	    _ladspaInstance = new LADSPAPluginFactory();
 	    _ladspaInstance->discoverPlugins();
 	}
 	return _ladspaInstance;
     } else if (pluginType == "dssi") {
 	if (!_dssiInstance) {
-	    std::cerr << "RealTimePluginFactory::instance(" << pluginType.toStdString()
-		      << "): creating new DSSIPluginFactory" << std::endl;
+//	    std::cerr << "RealTimePluginFactory::instance(" << pluginType.toStdString()
+//		      << "): creating new DSSIPluginFactory" << std::endl;
 	    _dssiInstance = new DSSIPluginFactory();
 	    _dssiInstance->discoverPlugins();
 	}

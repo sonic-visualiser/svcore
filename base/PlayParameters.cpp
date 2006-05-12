@@ -41,7 +41,7 @@ PlayParameters::toXmlString(QString indent,
 void
 PlayParameters::setPlayMuted(bool muted)
 {
-    std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
+//    std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
     m_playMuted = muted;
     emit playMutedChanged(muted);
     emit playAudibleChanged(!muted);
@@ -51,7 +51,7 @@ PlayParameters::setPlayMuted(bool muted)
 void
 PlayParameters::setPlayAudible(bool audible)
 {
-    std::cerr << "PlayParameters(" << this << "): setPlayAudible(" << audible << ")" << std::endl;
+//    std::cerr << "PlayParameters(" << this << "): setPlayAudible(" << audible << ")" << std::endl;
     setPlayMuted(!audible);
 }
 
@@ -90,7 +90,7 @@ PlayParameters::setPlayPluginConfiguration(QString configuration)
 {
     if (m_playPluginConfiguration != configuration) {
         m_playPluginConfiguration = configuration;
-        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration.toStdString() << "\"" << std::endl;
+//        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration.toStdString() << "\"" << std::endl;
         emit playPluginConfigurationChanged(configuration);
         emit playParametersChanged();
     }

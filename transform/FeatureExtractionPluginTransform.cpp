@@ -45,7 +45,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
-    std::cerr << "FeatureExtractionPluginTransform::FeatureExtractionPluginTransform: plugin " << pluginId.toStdString() << ", outputName " << outputName.toStdString() << std::endl;
+//    std::cerr << "FeatureExtractionPluginTransform::FeatureExtractionPluginTransform: plugin " << pluginId.toStdString() << ", outputName " << outputName.toStdString() << std::endl;
 
     FeatureExtractionPluginFactory *factory =
 	FeatureExtractionPluginFactory::instanceFor(pluginId);
@@ -123,8 +123,8 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	return;
     }
 
-    std::cerr << "FeatureExtractionPluginTransform: output sample type "
-	      << m_descriptor->sampleType << std::endl;
+//    std::cerr << "FeatureExtractionPluginTransform: output sample type "
+//	      << m_descriptor->sampleType << std::endl;
 
     int binCount = 1;
     float minValue = 0.0, maxValue = 0.0;
@@ -133,8 +133,8 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	binCount = m_descriptor->binCount;
     }
 
-    std::cerr << "FeatureExtractionPluginTransform: output bin count "
-	      << binCount << std::endl;
+//    std::cerr << "FeatureExtractionPluginTransform: output bin count "
+//	      << binCount << std::endl;
 
     if (binCount > 0 && m_descriptor->hasKnownExtents) {
 	minValue = m_descriptor->minValue;

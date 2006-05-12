@@ -308,7 +308,7 @@ SamplePlayer::workThreadCallback(LADSPA_Handle handle)
 
     if (player->m_pendingProgramChange >= 0) {
 
-	std::cerr << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << std::endl;
+//	std::cerr << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << std::endl;
 
 	player->m_mutex.lock();
 
@@ -359,7 +359,7 @@ SamplePlayer::searchSamples()
         if (file.isReadable()) {
             m_samples.push_back(std::pair<QString, QString>
                                 (file.baseName(), file.filePath()));
-            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+//            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
         }
     }
     

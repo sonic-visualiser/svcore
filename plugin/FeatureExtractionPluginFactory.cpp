@@ -55,6 +55,8 @@ FeatureExtractionPluginFactory::instanceFor(QString identifier)
 std::vector<QString>
 FeatureExtractionPluginFactory::getPluginPath()
 {
+    if (!m_pluginPath.empty()) return m_pluginPath;
+
     std::vector<QString> path;
     std::string envPath;
 
@@ -93,6 +95,7 @@ FeatureExtractionPluginFactory::getPluginPath()
     
     path.push_back(envPath.substr(index).c_str());
 
+    m_pluginPath = path;
     return path;
 }
 
@@ -123,7 +126,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     
     for (std::vector<QString>::iterator i = path.begin(); i != path.end(); ++i) {
 
-        std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << i->toStdString() << std::endl;
+//        std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << i->toStdString() << std::endl;
 
 	QDir pluginDir(*i, PLUGIN_GLOB,
                        QDir::Name | QDir::IgnoreCase,
@@ -240,8 +243,10 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     if (found == "") {
         std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find library file " << soname.toStdString() << std::endl;
+        return 0;
     } else if (found != soname) {
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: WARNING: Given library name was " << soname.toStdString() << ", found at " << found.toStdString() << std::endl;
+//        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: WARNING: Given library name was " << soname.toStdString() << ", found at " << found.toStdString() << std::endl;
+//        std::cerr << soname.toStdString() << " -> " << found.toStdString() << std::endl;
     }
 
     soname = found;
@@ -273,7 +278,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     rv = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
 
-    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Constructed Vamp plugin, rv is " << rv << std::endl;
+//    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Constructed Vamp plugin, rv is " << rv << std::endl;
 
     //!!! need to dlclose() when plugins from a given library are unloaded
 

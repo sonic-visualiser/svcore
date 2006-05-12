@@ -59,7 +59,7 @@ View::View(QWidget *w, bool showProgress) :
 
 View::~View()
 {
-    std::cerr << "View::~View(" << this << ")" << std::endl;
+//    std::cerr << "View::~View(" << this << ")" << std::endl;
 
     m_deleting = true;
     delete m_propertyContainer;
@@ -162,7 +162,7 @@ View::getPropertyContainer(size_t i)
 }
 
 bool
-View::getValueExtents(QString unit, float &min, float &max) const
+View::getValueExtents(QString unit, float &min, float &max, bool &log) const
 {
     bool have = false;
 
@@ -170,14 +170,28 @@ View::getValueExtents(QString unit, float &min, float &max) const
          i != m_layers.end(); ++i) { 
 
         QString layerUnit;
-        float layerMin, layerMax;
+        float layerMin = 0.0, layerMax = 0.0;
+        float displayMin = 0.0, displayMax = 0.0;
+        bool layerLog = false;
 
-        if ((*i)->getValueExtents(layerMin, layerMax, layerUnit) &&
+        if ((*i)->getValueExtents(layerMin, layerMax, layerLog, layerUnit) &&
             layerUnit.toLower() == unit.toLower()) {
 
-            if (!have || layerMin < min) min = layerMin;
-            if (!have || layerMax > max) max = layerMax;
-            have = true;
+            if ((*i)->getDisplayExtents(displayMin, displayMax)) {
+
+                min = displayMin;
+                max = displayMax;
+                log = layerLog;
+                have = true;
+                break;
+
+            } else {
+
+                if (!have || layerMin < min) min = layerMin;
+                if (!have || layerMax > max) max = layerMax;
+                if (layerLog) log = true;
+                have = true;
+            }
         }
     }
 
@@ -245,7 +259,7 @@ View::propertyContainerSelected(View *client, PropertyContainer *pc)
 void
 View::toolModeChanged()
 {
-    std::cerr << "View::toolModeChanged(" << m_manager->getToolMode() << ")" << std::endl;
+//    std::cerr << "View::toolModeChanged(" << m_manager->getToolMode() << ")" << std::endl;
 }
 
 long
