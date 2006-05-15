@@ -96,9 +96,6 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
         return;
     }
 
-    //!!! cope with plugins that request non-power-of-2 block sizes in
-    // the frequency domain!
-
     Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {
