@@ -361,8 +361,10 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
     }
     
     if (!stillInUse) {
-	std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
-	unloadLibrary(soname);
+        if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
+            std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
+            unloadLibrary(soname);
+        }
     }
 
     std::cerr << "LADSPAPluginFactory::releasePlugin("
@@ -494,7 +496,9 @@ LADSPAPluginFactory::unloadUnusedLibraries()
 
     for (std::vector<QString>::iterator i = toUnload.begin();
 	 i != toUnload.end(); ++i) {
-	unloadLibrary(*i);
+        if (*i != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
+            unloadLibrary(*i);
+        }
     }
 }
 
