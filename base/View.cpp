@@ -1084,7 +1084,7 @@ View::checkProgress(void *object)
 void
 View::paintEvent(QPaintEvent *e)
 {
-//    Profiler prof("View::paintEvent", true);
+//    Profiler prof("View::paintEvent", false);
 //    std::cerr << "View::paintEvent" << std::endl;
 
     if (m_layers.empty()) {
@@ -1315,6 +1315,7 @@ View::paintEvent(QPaintEvent *e)
     paint.setBrush(Qt::NoBrush);
 	
     for (LayerList::iterator i = nonScrollables.begin(); i != nonScrollables.end(); ++i) {
+//        Profiler profiler2("View::paintEvent non-cacheable");
 	(*i)->paint(this, paint, nonCacheRect);
     }
 	
