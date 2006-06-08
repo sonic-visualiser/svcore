@@ -102,7 +102,7 @@ std::ostream &operator<<(std::ostream &out, const RealTime &rt)
 }
 
 std::string
-RealTime::toString() const
+RealTime::toString(bool align) const
 {
     std::stringstream out;
     out << *this;
@@ -112,6 +112,11 @@ RealTime::toString() const
 #endif
 
     std::string s = out.str();
+
+    if (!align && *this >= RealTime::zeroTime) {
+        // remove leading " "
+        s = s.substr(1, s.length() - 1);
+    }
 
     // remove trailing R
     return s.substr(0, s.length() - 1);
