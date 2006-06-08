@@ -21,10 +21,10 @@
 #ifndef _REAL_TIME_H_
 #define _REAL_TIME_H_
 
-#include "vamp-sdk/RealTime.h"
-using Vamp::RealTime;
+//#include "vamp-sdk/RealTime.h"
+//using Vamp::RealTime;
 
-#ifdef NOT_DEFINED
+//#ifdef NOT_DEFINED
 
 #include <iostream>
 #include <string>
@@ -104,9 +104,11 @@ struct RealTime
     double operator/(const RealTime &r) const;
 
     // Return a human-readable debug-type string to full precision
-    // (probably not a format to show to a user directly)
+    // (probably not a format to show to a user directly).  If align
+    // is true, prepend " " to the start of positive values so that
+    // they line up with negative ones (which start with "-").
     // 
-    std::string toString() const;
+    std::string toString(bool align = false) const;
 
     // Return a user-readable string to the nearest millisecond
     // in a form like HH:MM:SS.mmm
@@ -123,6 +125,6 @@ struct RealTime
 
 std::ostream &operator<<(std::ostream &out, const RealTime &rt);
 
-#endif
+//#endif
     
 #endif
