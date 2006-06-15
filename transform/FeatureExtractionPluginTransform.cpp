@@ -241,17 +241,17 @@ FeatureExtractionPluginTransform::run()
 	buffers[ch] = new float[m_blockSize];
     }
 
-    double *fftInput = 0;
-    fftw_complex *fftOutput = 0;
-    fftw_plan fftPlan = 0;
-    Window<double> windower(HanningWindow, m_blockSize);
+    float *fftInput = 0;
+    fftwf_complex *fftOutput = 0;
+    fftwf_plan fftPlan = 0;
+    Window<float> windower(HanningWindow, m_blockSize);
 
     if (m_plugin->getInputDomain() == Vamp::Plugin::FrequencyDomain) {
 
-        fftInput = (double *)fftw_malloc(m_blockSize * sizeof(double));
-        fftOutput = (fftw_complex *)fftw_malloc(m_blockSize * sizeof(fftw_complex));
-        fftPlan = fftw_plan_dft_r2c_1d(m_blockSize, fftInput, fftOutput,
-                                       FFTW_ESTIMATE);
+        fftInput = (float *)fftwf_malloc(m_blockSize * sizeof(double));
+        fftOutput = (fftwf_complex *)fftwf_malloc(m_blockSize * sizeof(fftwf_complex));
+        fftPlan = fftwf_plan_dft_r2c_1d(m_blockSize, fftInput, fftOutput,
+                                        FFTW_ESTIMATE);
         if (!fftPlan) {
             std::cerr << "ERROR: FeatureExtractionPluginTransform::run(): fftw_plan failed! Results will be garbage" << std::endl;
         }
@@ -297,11 +297,11 @@ FeatureExtractionPluginTransform::run()
                 }
                 windower.cut(fftInput);
                 for (size_t i = 0; i < m_blockSize/2; ++i) {
-                    double temp = fftInput[i];
+                    float temp = fftInput[i];
                     fftInput[i] = fftInput[i + m_blockSize/2];
                     fftInput[i + m_blockSize/2] = temp;
                 }
-                fftw_execute(fftPlan);
+                fftwf_execute(fftPlan);
                 for (size_t i = 0; i < m_blockSize/2; ++i) {
                     buffers[ch][i*2] = fftOutput[i][0];
                     buffers[ch][i*2 + 1] = fftOutput[i][1];
@@ -327,9 +327,9 @@ FeatureExtractionPluginTransform::run()
     }
 
     if (fftPlan) {
-        fftw_destroy_plan(fftPlan);
-        fftw_free(fftInput);
-        fftw_free(fftOutput);
+        fftwf_destroy_plan(fftPlan);
+        fftwf_free(fftInput);
+        fftwf_free(fftOutput);
     }
 
     Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
