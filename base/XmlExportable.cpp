@@ -17,6 +17,14 @@
 #include <map>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTextStream>
+
+void
+XmlExportable::toXml(QTextStream &stream, QString indent,
+                     QString extraAttributes) const
+{
+    stream << toXmlString(indent, extraAttributes);
+}
 
 QString
 XmlExportable::encodeEntities(QString s)

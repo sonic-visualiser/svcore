@@ -19,11 +19,30 @@
 #include <QString>
 #include <QColor>
 
+class QTextStream;
+
 class XmlExportable
 {
 public:
     virtual ~XmlExportable() { }
 
+    /**
+     * Stream this exportable object out to XML on a text stream.
+     * 
+     * The default implementation calls toXmlString and streams the
+     * resulting string.  This is only appropriate for objects with
+     * short representations.  Bigger objects should override this
+     * method so as to write to the stream directly and override
+     * toXmlString with a method that calls this one, so that the
+     * direct streaming method can be used when appropriate.
+     */
+    virtual void toXml(QTextStream &stream,
+                       QString indent = "",
+                       QString extraAttributes = "") const;
+
+    /**
+     * Convert this exportable object to XML in a string.
+     */
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const = 0;
 
