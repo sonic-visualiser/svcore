@@ -397,7 +397,8 @@ TransformFactory::getConfigurationForTransform(TransformName name,
         PluginParameterDialog *dialog = new PluginParameterDialog(plugin,
                                                                   sourceChannels,
                                                                   targetChannels,
-                                                                  defaultChannel);
+                                                                  defaultChannel,
+                                                                  output);
         if (dialog->exec() == QDialog::Accepted) {
             ok = true;
         }
