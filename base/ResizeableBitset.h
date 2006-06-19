@@ -45,7 +45,7 @@ public:
             delete m_bits;
             m_bits = new std::vector<uint8_t>;
         }
-        m_bits->assign(bits / 8, 0);
+        m_bits->assign(bits / 8 + 1, 0);
     }
     
     bool get(size_t column) const {
