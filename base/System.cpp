@@ -70,3 +70,9 @@ GetProcessStatus(int pid)
 #endif
 }
 
+double mod(double x, double y) { return x - (y * floor(x / y)); }
+float modf(float x, float y) { return x - (y * floorf(x / y)); }
+
+double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
+float princargf(float a) { return modf(a + M_PI, -2 * M_PI) + M_PI; }
+

@@ -75,6 +75,14 @@ void gettimeofday(struct timeval *p, void *tz);
 enum ProcessStatus { ProcessRunning, ProcessNotRunning, UnknownProcessStatus };
 extern ProcessStatus GetProcessStatus(int pid);
 
+#include <cmath>
+
+extern double mod(double x, double y);
+extern float modf(float x, float y);
+
+extern double princarg(double a);
+extern float princargf(float a);
+
 #endif /* ! _SYSTEM_H_ */
 
 
