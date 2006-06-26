@@ -71,7 +71,7 @@ TempDirectory::getPath()
     
     if (m_tmpdir != "") return m_tmpdir;
 
-    QString svDirBase = ".sv";
+    QString svDirBase = ".sv1";
     QString svDir = QDir::home().filePath(svDirBase);
     if (!QFileInfo(svDir).exists()) {
         if (!QDir::home().mkdir(svDirBase)) {
