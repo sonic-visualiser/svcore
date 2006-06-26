@@ -99,3 +99,20 @@ FFTMemoryCache::reset()
     }
 }	    
 
+void
+FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
+{
+    float max = 0.0;
+
+    for (size_t y = 0; y < m_height; ++y) {
+        float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
+        float phase = atan2f(imags[y], reals[y]);
+        phase = princargf(phase);
+        reals[y] = mag;
+        imags[y] = phase;
+        if (mag > max) max = mag;
+    }
+
+    setColumnAt(x, reals, imags, max);
+}
+
