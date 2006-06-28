@@ -37,17 +37,6 @@ public:
     
     virtual ~TempDirectory();
 
-    class DirectoryCreationFailed : virtual public std::exception
-    {
-    public:
-        DirectoryCreationFailed(QString directory) throw();
-        virtual DirectoryCreationFailed::~DirectoryCreationFailed() throw() { }
-        virtual const char *what() const throw();
-
-    protected:
-        QString m_directory;
-    };
-
     /**
      * Create the root temporary directory if necessary, and return
      * its path.  Throw DirectoryCreationFailed if the directory

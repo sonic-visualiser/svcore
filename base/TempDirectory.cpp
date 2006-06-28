@@ -15,6 +15,7 @@
 
 #include "TempDirectory.h"
 #include "System.h"
+#include "Exceptions.h"
 
 #include <QDir>
 #include <QFile>
@@ -30,20 +31,6 @@ TempDirectory *
 TempDirectory::instance()
 {
     return m_instance;
-}
-
-TempDirectory::DirectoryCreationFailed::DirectoryCreationFailed(QString directory) throw() :
-    m_directory(directory)
-{
-    std::cerr << "ERROR: Directory creation failed for directory: "
-              << directory.toLocal8Bit().data() << std::endl;
-}
-
-const char *
-TempDirectory::DirectoryCreationFailed::what() const throw()
-{
-    return QString("Directory creation failed for \"%1\"")
-        .arg(m_directory).toLocal8Bit().data();
 }
 
 TempDirectory::TempDirectory() :
