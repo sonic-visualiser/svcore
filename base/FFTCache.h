@@ -21,10 +21,10 @@
 
 #include <stdint.h>
 
-class FFTCacheBase
+class FFTCache
 {
 public:
-    virtual ~FFTCacheBase() { }
+    virtual ~FFTCache() { }
 
     virtual size_t getWidth() const = 0;
     virtual size_t getHeight() const = 0;
@@ -46,6 +46,8 @@ public:
     // may modify argument arrays
     virtual void setColumnAt(size_t x, float *reals, float *imags) = 0;
 
+    virtual void suspend() { }
+
     bool isLocalPeak(size_t x, size_t y) const {
         float mag = getMagnitudeAt(x, y);
         if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
@@ -57,7 +59,7 @@ public:
     }
 
 protected:
-    FFTCacheBase() { }
+    FFTCache() { }
 };
 
 
@@ -80,7 +82,7 @@ protected:
  * set appropriately.
  */
 
-class FFTMemoryCache : public FFTCacheBase
+class FFTMemoryCache : public FFTCache
 {
 public:
     FFTMemoryCache(); // of size zero, call resize() before using
