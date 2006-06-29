@@ -48,16 +48,6 @@ public:
 
     virtual void suspend() { }
 
-    bool isLocalPeak(size_t x, size_t y) const {
-        float mag = getMagnitudeAt(x, y);
-        if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
-        if (y < getHeight()-1 && mag < getMagnitudeAt(x, y + 1)) return false;
-        return true;
-    }
-    bool isOverThreshold(size_t x, size_t y, float threshold) const {
-        return getMagnitudeAt(x, y) > threshold;
-    }
-
 protected:
     FFTCache() { }
 };

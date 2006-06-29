@@ -264,6 +264,8 @@ FeatureExtractionPluginTransform::run()
                             Vamp::Plugin::FrequencyDomain);
     std::vector<FFTDataServer *> fftServers;
 
+    //!!! use fuzzy fft server matching!
+
     if (frequencyDomain) {
         for (size_t ch = 0; ch < channelCount; ++ch) {
             fftServers.push_back(FFTDataServer::getInstance
