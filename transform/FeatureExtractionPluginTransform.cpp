@@ -26,8 +26,7 @@
 #include "model/DenseThreeDimensionalModel.h"
 #include "model/DenseTimeValueModel.h"
 #include "model/NoteModel.h"
-
-#include "fileio/FFTDataServer.h"
+#include "fileio/FFTFuzzyAdapter.h"
 
 #include <fftw3.h>
 
@@ -242,40 +241,20 @@ FeatureExtractionPluginTransform::run()
 	buffers[ch] = new float[m_blockSize];
     }
 
-/*!!!
-    float *fftInput = 0;
-    fftwf_complex *fftOutput = 0;
-    fftwf_plan fftPlan = 0;
-    Window<float> windower(HanningWindow, m_blockSize);
-
-    if (m_plugin->getInputDomain() == Vamp::Plugin::FrequencyDomain) {
-
-        fftInput = (float *)fftwf_malloc(m_blockSize * sizeof(double));
-        fftOutput = (fftwf_complex *)fftwf_malloc(m_blockSize * sizeof(fftwf_complex));
-        fftPlan = fftwf_plan_dft_r2c_1d(m_blockSize, fftInput, fftOutput,
-                                        FFTW_ESTIMATE);
-        if (!fftPlan) {
-            std::cerr << "ERROR: FeatureExtractionPluginTransform::run(): fftw_plan failed! Results will be garbage" << std::endl;
-        }
-    }
-*/
-
     bool frequencyDomain = (m_plugin->getInputDomain() ==
                             Vamp::Plugin::FrequencyDomain);
-    std::vector<FFTDataServer *> fftServers;
-
-    //!!! use fuzzy fft server matching!
+    std::vector<FFTFuzzyAdapter *> fftAdapters;
 
     if (frequencyDomain) {
         for (size_t ch = 0; ch < channelCount; ++ch) {
-            fftServers.push_back(FFTDataServer::getInstance
-                                 (getInput(),
-                                  channelCount == 1 ? m_channel : ch,
-                                  HanningWindow,
-                                  m_blockSize,
-                                  m_stepSize,
-                                  m_blockSize,
-                                  false));
+            fftAdapters.push_back(new FFTFuzzyAdapter
+                                  (getInput(),
+                                   channelCount == 1 ? m_channel : ch,
+                                   HanningWindow,
+                                   m_blockSize,
+                                   m_stepSize,
+                                   m_blockSize,
+                                   false));
         }
     }
 
@@ -303,14 +282,10 @@ FeatureExtractionPluginTransform::run()
 	// channelCount is either m_input->channelCount or 1
 
         for (size_t ch = 0; ch < channelCount; ++ch) {
-//!!!            if (fftPlan) {
-//                getFrames(ch, channelCount, 
-//                          blockFrame - m_blockSize/2, m_blockSize, buffers[ch]);
-      
             if (frequencyDomain) {
                 int column = (blockFrame - startFrame) / m_stepSize;
                 for (size_t i = 0; i < m_blockSize/2; ++i) {
-                    fftServers[ch]->getValuesAt
+                    fftAdapters[ch]->getValuesAt
                         (column, i, buffers[ch][i*2], buffers[ch][i*2+1]);
                 }
             } else {
@@ -318,26 +293,7 @@ FeatureExtractionPluginTransform::run()
                           blockFrame, m_blockSize, buffers[ch]);
             }                
         }
-    /*!!!
-        if (fftPlan) {
-            for (size_t ch = 0; ch < channelCount; ++ch) {
-                for (size_t i = 0; i < m_blockSize; ++i) {
-                    fftInput[i] = buffers[ch][i];
-                }
-                windower.cut(fftInput);
-                for (size_t i = 0; i < m_blockSize/2; ++i) {
-                    float temp = fftInput[i];
-                    fftInput[i] = fftInput[i + m_blockSize/2];
-                    fftInput[i + m_blockSize/2] = temp;
-                }
-                fftwf_execute(fftPlan);
-                for (size_t i = 0; i < m_blockSize/2; ++i) {
-                    buffers[ch][i*2] = fftOutput[i][0];
-                    buffers[ch][i*2 + 1] = fftOutput[i][1];
-                }
-            }
-        }
-    */
+
 	Vamp::Plugin::FeatureSet features = m_plugin->process
 	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
 
@@ -354,19 +310,19 @@ FeatureExtractionPluginTransform::run()
 
 	blockFrame += m_stepSize;
     }
-/*!!!
-    if (fftPlan) {
-        fftwf_destroy_plan(fftPlan);
-        fftwf_free(fftInput);
-        fftwf_free(fftOutput);
-    }
-*/
+
     Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
     for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
 	Vamp::Plugin::Feature feature =
 	    features[m_outputFeatureNo][fi];
 	addFeature(blockFrame, feature);
+    }
+
+    if (frequencyDomain) {
+        for (size_t ch = 0; ch < channelCount; ++ch) {
+            delete fftAdapters[ch];
+        }
     }
 
     setCompletion(100);
