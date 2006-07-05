@@ -31,7 +31,7 @@
 #include <cassert>
 #include <math.h>
 
-//#define DEBUG_VIEW_WIDGET_PAINT 1
+#define DEBUG_VIEW_WIDGET_PAINT 1
 
 using std::cerr;
 using std::endl;
@@ -1056,7 +1056,7 @@ View::checkProgress(void *object)
 
 	if (i->first == object) {
 
-	    int completion = i->first->getCompletion();
+	    int completion = i->first->getCompletion(this);
 
 	    if (completion >= 100) {
 
