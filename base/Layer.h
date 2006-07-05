@@ -186,7 +186,7 @@ public:
      * isReady(int *) call.  The widget may choose to show a progress
      * meter if it finds that this returns < 100 at any given moment.
      */
-    virtual int getCompletion() const { return 100; }
+    virtual int getCompletion(View *) const { return 100; }
 
     virtual void setObjectName(const QString &name);
 
