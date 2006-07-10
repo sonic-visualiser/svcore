@@ -102,6 +102,7 @@ public slots:
 
     /**
      * Set a property using a command, supporting undo and redo.
+     * The default implementation should work for most subclasses.
      */
     virtual void setPropertyWithCommand(const PropertyName &, int value);
 
