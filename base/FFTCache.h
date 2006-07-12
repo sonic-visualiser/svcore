@@ -126,7 +126,7 @@ public:
         }
     }
     
-    virtual bool haveSetColumnAt(size_t x) const {
+    virtual bool haveSetColumnAt(size_t) const {
         return true;
     }
 
