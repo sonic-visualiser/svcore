@@ -19,7 +19,7 @@ Preferences *
 Preferences::m_instance = new Preferences();
 
 Preferences::Preferences() :
-    m_smoothSpectrogram(false),
+    m_smoothSpectrogram(true),
     m_tuningFrequency(440)
 {
 }
