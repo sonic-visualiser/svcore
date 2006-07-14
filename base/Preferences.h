@@ -36,11 +36,19 @@ public:
     bool getSmoothSpectrogram() const { return m_smoothSpectrogram; }
     float getTuningFrequency() const { return m_tuningFrequency; }
 
+    //!!! harmonise with PaneStack
+    enum PropertyBoxLayout {
+        VerticallyStacked,
+        Layered
+    };
+    PropertyBoxLayout getPropertyBoxLayout() const { return m_propertyBoxLayout; }
+
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
     void setSmoothSpectrogram(bool smooth);
     void setTuningFrequency(float freq);
+    void setPropertyBoxLayout(PropertyBoxLayout layout);
 
 private:
     Preferences(); 
@@ -50,6 +58,7 @@ private:
 
     bool m_smoothSpectrogram;
     float m_tuningFrequency;
+    PropertyBoxLayout m_propertyBoxLayout;
 };
 
 #endif
