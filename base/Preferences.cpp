@@ -30,6 +30,7 @@ Preferences::getProperties() const
     PropertyList props;
     props.push_back("Smooth Spectrogram");
     props.push_back("Tuning Frequency");
+    props.push_back("Property Box Layout");
     return props;
 }
 
@@ -42,6 +43,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     if (name == "Tuning Frequency") {
         return tr("Tuning Frequency (concert A)");
     }
+    if (name == "Property Box Layout") {
+        return tr("Arrangement of Layer Properties");
+    }
     return name;
 }
 
@@ -53,6 +57,9 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Tuning Frequency") {
         return RangeProperty;
+    }
+    if (name == "Property Box Layout") {
+        return ValueProperty;
     }
     return InvalidProperty;
 }
@@ -69,6 +76,12 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 
     //!!! freq mapping
 
+    if (name == "Property Box Layout") {
+        if (min) *min = 0;
+        if (max) *max = 1;
+        return m_propertyBoxLayout == Layered ? 1 : 0;
+    }        
+
     return 0;
 }
 
@@ -76,7 +89,10 @@ QString
 Preferences::getPropertyValueLabel(const PropertyName &name,
                                    int value) const
 {
-    //!!!
+    if (name == "Property Box Layout") {
+        if (value == 0) return tr("Vertically Stacked");
+        else return tr("Layered");
+    }
     return "";
 }
 
@@ -99,20 +115,35 @@ Preferences::setProperty(const PropertyName &name, int value)
         setSmoothSpectrogram(value > 0.1);
     } else if (name == "Tuning Frequency") {
         //!!!
+    } else if (name == "Property Box Layout") {
+        setPropertyBoxLayout(value == 0 ? VerticallyStacked : Layered);
     }
 }
 
 void
 Preferences::setSmoothSpectrogram(bool smooth)
 {
-    m_smoothSpectrogram = smooth;
+    if (m_smoothSpectrogram != smooth) {
+        m_smoothSpectrogram = smooth;
 //!!!    emit 
+    }
 }
 
 void
 Preferences::setTuningFrequency(float freq)
 {
-    m_tuningFrequency = freq;
-    //!!! emit
+    if (m_tuningFrequency != freq) {
+        m_tuningFrequency = freq;
+        //!!! emit
+    }
+}
+
+void
+Preferences::setPropertyBoxLayout(PropertyBoxLayout layout)
+{
+    if (m_propertyBoxLayout != layout) {
+        m_propertyBoxLayout = layout;
+        //!!! emit
+    }
 }
 

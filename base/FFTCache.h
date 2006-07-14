@@ -34,6 +34,7 @@ public:
 	
     virtual float getMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
+    virtual float getMaximumMagnitudeAt(size_t x) const = 0;
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
     virtual void getValuesAt(size_t x, size_t y, float &real, float &imaginary) const = 0;
@@ -90,6 +91,10 @@ public:
     
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const {
         return float(m_magnitude[x][y]) / 65535.0;
+    }
+    
+    virtual float getMaximumMagnitudeAt(size_t x) const {
+        return m_factor[x];
     }
     
     virtual float getPhaseAt(size_t x, size_t y) const {
