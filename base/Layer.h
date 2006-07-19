@@ -232,10 +232,38 @@ public:
 
     virtual bool needsTextLabelHeight() const { return false; }
 
+    /**
+     * Return the minimum and maximum values for the y axis of the
+     * model in this layer, as well as whether the layer is configured
+     * to use a logarithmic y axis display.  Also return the unit for
+     * these values if known.
+     *
+     * This function returns the "normal" extents for the layer, not
+     * necessarily the extents actually in use in the display.
+     */
     virtual bool getValueExtents(float &min, float &max,
                                  bool &logarithmic, QString &unit) const = 0;
 
+    /**
+     * Return the minimum and maximum values within the displayed
+     * range for the y axis, if only a subset of the whole range of
+     * the model (returned by getValueExtents) is being displayed.
+     * Return false if the layer is not imposing a particular display
+     * extent (using the normal layer extents or deferring to whatever
+     * is in use for the same units elsewhere in the view).
+     */
     virtual bool getDisplayExtents(float &min, float &max) const {
+        return false;
+    }
+
+    /**
+     * Set the displayed minimum and maximum values for the y axis to
+     * the given range, if supported.  Return false if not supported
+     * on this layer (and set nothing).  In most cases, layers that
+     * return false for getDisplayExtents should also return false for
+     * this function.
+     */
+    virtual bool setDisplayExtents(float min, float max) {
         return false;
     }
 
