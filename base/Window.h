@@ -53,6 +53,8 @@ public:
 	for (size_t i = 0; i < m_size; ++i) dst[i] = src[i] * m_cache[i];
     }
 
+    T getValue(size_t i) { return m_cache[i]; }
+
     WindowType getType() const { return m_type; }
     size_t getSize() const { return m_size; }
 

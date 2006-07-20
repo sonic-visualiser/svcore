@@ -18,6 +18,8 @@
 
 #include "PropertyContainer.h"
 
+#include "Window.h"
+
 class Preferences : public PropertyContainer
 {
     Q_OBJECT
@@ -35,6 +37,7 @@ public:
 
     bool getSmoothSpectrogram() const { return m_smoothSpectrogram; }
     float getTuningFrequency() const { return m_tuningFrequency; }
+    WindowType getWindowType() const { return m_windowType; }
 
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
@@ -49,6 +52,7 @@ public slots:
     void setSmoothSpectrogram(bool smooth);
     void setTuningFrequency(float freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
+    void setWindowType(WindowType type);
 
 private:
     Preferences(); 
@@ -59,6 +63,7 @@ private:
     bool m_smoothSpectrogram;
     float m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
+    WindowType m_windowType;
 };
 
 #endif

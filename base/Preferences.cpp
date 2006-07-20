@@ -20,7 +20,9 @@ Preferences::m_instance = new Preferences();
 
 Preferences::Preferences() :
     m_smoothSpectrogram(true),
-    m_tuningFrequency(440)
+    m_tuningFrequency(440),
+    m_propertyBoxLayout(VerticallyStacked),
+    m_windowType(HanningWindow)
 {
 }
 
@@ -31,6 +33,7 @@ Preferences::getProperties() const
     props.push_back("Smooth Spectrogram");
     props.push_back("Tuning Frequency");
     props.push_back("Property Box Layout");
+    props.push_back("Window Type");
     return props;
 }
 
@@ -46,6 +49,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     if (name == "Property Box Layout") {
         return tr("Arrangement of Layer Properties");
     }
+    if (name == "Window Type") {
+        return tr("Spectral Analysis Window Shape");
+    }
     return name;
 }
 
@@ -59,6 +65,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return RangeProperty;
     }
     if (name == "Property Box Layout") {
+        return ValueProperty;
+    }
+    if (name == "Window Type") {
         return ValueProperty;
     }
     return InvalidProperty;
@@ -82,6 +91,12 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return m_propertyBoxLayout == Layered ? 1 : 0;
     }        
 
+    if (name == "Window Type") {
+        if (min) *min = int(RectangularWindow);
+        if (max) *max = int(ParzenWindow);
+        return int(m_windowType);
+    }
+
     return 0;
 }
 
@@ -92,6 +107,17 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
     if (name == "Property Box Layout") {
         if (value == 0) return tr("Vertically Stacked");
         else return tr("Layered");
+    }
+    if (name == "Window Type") {
+        switch (WindowType(value)) {
+        case RectangularWindow: return tr("Rectangular");
+        case BartlettWindow: return tr("Bartlett");
+        case HammingWindow: return tr("Hamming");
+        case HanningWindow: return tr("Hanning");
+        case BlackmanWindow: return tr("Blackman");
+        case GaussianWindow: return tr("Gaussian");
+        case ParzenWindow: return tr("Parzen");
+        }
     }
     return "";
 }
@@ -117,6 +143,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         //!!!
     } else if (name == "Property Box Layout") {
         setPropertyBoxLayout(value == 0 ? VerticallyStacked : Layered);
+    } else if (name == "Window Type") {
+        setWindowType(WindowType(value));
     }
 }
 
@@ -143,6 +171,15 @@ Preferences::setPropertyBoxLayout(PropertyBoxLayout layout)
 {
     if (m_propertyBoxLayout != layout) {
         m_propertyBoxLayout = layout;
+        //!!! emit
+    }
+}
+
+void
+Preferences::setWindowType(WindowType type)
+{
+    if (m_windowType != type) {
+        m_windowType = type;
         //!!! emit
     }
 }
