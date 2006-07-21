@@ -69,56 +69,67 @@ protected:
 template <typename T>
 void Window<T>::encache()
 {
-    size_t n = m_size;
+    int n = int(m_size);
     T *mult = new T[n];
-    size_t i;
+    int i;
     for (i = 0; i < n; ++i) mult[i] = 1.0;
 
     switch (m_type) {
 		
     case RectangularWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * 0.5;
+	    mult[i] *= 0.5;
 	}
 	break;
 	    
     case BartlettWindow:
 	for (i = 0; i < n/2; ++i) {
-	    mult[i] = mult[i] * (i / T(n/2));
-	    mult[i + n/2] = mult[i + n/2] * (1.0 - (i / T(n/2)));
+	    mult[i] *= (i / T(n/2));
+	    mult[i + n/2] *= (1.0 - (i / T(n/2)));
 	}
 	break;
 	    
     case HammingWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * (0.54 - 0.46 * cos(2 * M_PI * i / n));
+	    mult[i] *= (0.54 - 0.46 * cos(2 * M_PI * i / n));
 	}
 	break;
 	    
     case HanningWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * (0.50 - 0.50 * cos(2 * M_PI * i / n));
+	    mult[i] *= (0.50 - 0.50 * cos(2 * M_PI * i / n));
 	}
 	break;
 	    
     case BlackmanWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * (0.42 - 0.50 * cos(2 * M_PI * i / n)
+	    mult[i] *= (0.42 - 0.50 * cos(2 * M_PI * i / n)
 				 + 0.08 * cos(4 * M_PI * i / n));
 	}
 	break;
 	    
     case GaussianWindow:
 	for (i = 0; i < n; ++i) {
-            mult[i] = mult[i] * exp(-(pow(i - (n-1)/2.0, 2) /
+            mult[i] *= exp(-(pow(i - (n-1)/2.0, 2) /
                                       (2 * pow(0.25 * n, 2)))); // sd = 0.25
 	}
 	break;
 	    
     case ParzenWindow:
-	for (i = 0; i < n; ++i) {
-	    mult[i] = mult[i] * (1.0 - fabs((T(2*i) - n) / T(n + 1)));
-	}
+    {
+        int N = n-1;
+        for (i = 0; i < N/4; ++i) {
+            T m = 2 * pow(1.0 - (T(N)/2 - i) / (T(N)/2), 3);
+            mult[i] *= m;
+            mult[N-i] *= m;
+        }
+        for (i = N/4; i <= N/2; ++i) {
+            int wn = i - N/2;
+            T m = 1.0 - 6 * pow(wn / (T(N)/2), 2) * (1.0 - abs(wn) / (T(N)/2));
+            mult[i] *= m;
+            mult[N-i] *= m;
+        }            
+    }            
 	break;
     }
 	

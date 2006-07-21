@@ -237,7 +237,7 @@ signals:
     void propertyContainerRemoved(PropertyContainer *pc);
     void propertyContainerPropertyChanged(PropertyContainer *pc);
     void propertyContainerNameChanged(PropertyContainer *pc);
-    void propertyChanged(PropertyName);
+    void propertyChanged(PropertyContainer::PropertyName);
 
     void centreFrameChanged(void *, unsigned long, bool);
     void zoomLevelChanged(void *, unsigned long, bool);

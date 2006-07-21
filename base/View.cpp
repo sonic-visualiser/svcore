@@ -1514,8 +1514,8 @@ View::toXmlString(QString indent, QString extraAttributes) const
 ViewPropertyContainer::ViewPropertyContainer(View *v) :
     m_v(v)
 {
-    connect(m_v, SIGNAL(propertyChanged(PropertyName)),
-	    this, SIGNAL(propertyChanged(PropertyName)));
+    connect(m_v, SIGNAL(propertyChanged(PropertyContainer::PropertyName)),
+	    this, SIGNAL(propertyChanged(PropertyContainer::PropertyName)));
 }
 
 #ifdef INCLUDE_MOCFILES

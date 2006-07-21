@@ -90,7 +90,7 @@ public:
     virtual PlayParameters *getPlayParameters() { return 0; }
 
 signals:
-    void propertyChanged(PropertyName);
+    void propertyChanged(PropertyContainer::PropertyName);
     
 public slots:
     /**
