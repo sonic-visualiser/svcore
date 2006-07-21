@@ -41,16 +41,16 @@ QString
 Preferences::getPropertyLabel(const PropertyName &name) const
 {
     if (name == "Smooth Spectrogram") {
-        return tr("Spectrogram Display Smoothing");
+        return tr("Smooth spectrogram display by zero padding FFT");
     }
     if (name == "Tuning Frequency") {
-        return tr("Tuning Frequency (concert A)");
+        return tr("Frequency of concert A");
     }
     if (name == "Property Box Layout") {
-        return tr("Arrangement of Layer Properties");
+        return tr("Property box layout");
     }
     if (name == "Window Type") {
-        return tr("Spectral Analysis Window Shape");
+        return tr("Spectral analysis window shape");
     }
     return name;
 }
@@ -105,13 +105,13 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
                                    int value) const
 {
     if (name == "Property Box Layout") {
-        if (value == 0) return tr("Vertically Stacked");
-        else return tr("Layered");
+        if (value == 0) return tr("Show boxes for all panes");
+        else return tr("Show box for current pane only");
     }
     if (name == "Window Type") {
         switch (WindowType(value)) {
         case RectangularWindow: return tr("Rectangular");
-        case BartlettWindow: return tr("Bartlett");
+        case BartlettWindow: return tr("Triangular");
         case HammingWindow: return tr("Hamming");
         case HanningWindow: return tr("Hanning");
         case BlackmanWindow: return tr("Blackman");
@@ -153,7 +153,7 @@ Preferences::setSmoothSpectrogram(bool smooth)
 {
     if (m_smoothSpectrogram != smooth) {
         m_smoothSpectrogram = smooth;
-//!!!    emit 
+        emit propertyChanged("Smooth Spectrogram");
     }
 }
 
@@ -162,7 +162,7 @@ Preferences::setTuningFrequency(float freq)
 {
     if (m_tuningFrequency != freq) {
         m_tuningFrequency = freq;
-        //!!! emit
+        emit propertyChanged("Tuning Frequency");
     }
 }
 
@@ -171,7 +171,7 @@ Preferences::setPropertyBoxLayout(PropertyBoxLayout layout)
 {
     if (m_propertyBoxLayout != layout) {
         m_propertyBoxLayout = layout;
-        //!!! emit
+        emit propertyChanged("Property Box Layout");
     }
 }
 
@@ -180,7 +180,7 @@ Preferences::setWindowType(WindowType type)
 {
     if (m_windowType != type) {
         m_windowType = type;
-        //!!! emit
+        emit propertyChanged("Window Type");
     }
 }
 

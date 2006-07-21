@@ -14,6 +14,7 @@
 */
 
 #include "Pitch.h"
+#include "Preferences.h"
 
 #include <cmath>
 
@@ -22,6 +23,9 @@ Pitch::getFrequencyForPitch(int midiPitch,
 			    float centsOffset,
 			    float concertA)
 {
+    if (concertA <= 0.0) {
+        concertA = Preferences::getInstance()->getTuningFrequency();
+    }
     float p = float(midiPitch) + (centsOffset / 100);
     return concertA * powf(2.0, (p - 69.0) / 12.0);
 }
@@ -31,6 +35,9 @@ Pitch::getPitchForFrequency(float frequency,
 			    float *centsOffsetReturn,
 			    float concertA)
 {
+    if (concertA <= 0.0) {
+        concertA = Preferences::getInstance()->getTuningFrequency();
+    }
     float p = 12.0 * (log(frequency / (concertA / 2.0)) / log(2.0)) + 57.0;
 
     int midiPitch = int(p + 0.00001);
@@ -86,6 +93,9 @@ Pitch::getPitchLabelForFrequency(float frequency,
 				 float concertA,
 				 bool useFlats)
 {
+    if (concertA <= 0.0) {
+        concertA = Preferences::getInstance()->getTuningFrequency();
+    }
     float centsOffset = 0.0;
     int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
     return getPitchLabel(midiPitch, centsOffset, useFlats);
