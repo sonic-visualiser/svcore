@@ -27,7 +27,9 @@ enum WindowType {
     HanningWindow,
     BlackmanWindow,
     GaussianWindow,
-    ParzenWindow
+    ParzenWindow,
+    NuttallWindow,
+    BlackmanHarrisWindow
 };
 
 template <typename T>
@@ -46,7 +48,7 @@ public:
 	encache();
 	return *this;
     }
-    virtual ~Window() { delete m_cache; }
+    virtual ~Window() { delete[] m_cache; }
     
     void cut(T *src) const { cut(src, src); }
     void cut(T *src, T *dst) const {
@@ -64,6 +66,7 @@ protected:
     T *m_cache;
     
     void encache();
+    void cosinewin(T *, T, T, T, T);
 };
 
 template <typename T>
@@ -90,28 +93,20 @@ void Window<T>::encache()
 	break;
 	    
     case HammingWindow:
-	for (i = 0; i < n; ++i) {
-	    mult[i] *= (0.54 - 0.46 * cos(2 * M_PI * i / n));
-	}
+        cosinewin(mult, 0.54, 0.46, 0.0, 0.0);
 	break;
 	    
     case HanningWindow:
-	for (i = 0; i < n; ++i) {
-	    mult[i] *= (0.50 - 0.50 * cos(2 * M_PI * i / n));
-	}
+        cosinewin(mult, 0.50, 0.50, 0.0, 0.0);
 	break;
 	    
     case BlackmanWindow:
-	for (i = 0; i < n; ++i) {
-	    mult[i] *= (0.42 - 0.50 * cos(2 * M_PI * i / n)
-				 + 0.08 * cos(4 * M_PI * i / n));
-	}
+        cosinewin(mult, 0.42, 0.50, 0.08, 0.0);
 	break;
 	    
     case GaussianWindow:
 	for (i = 0; i < n; ++i) {
-            mult[i] *= exp(-(pow(i - (n-1)/2.0, 2) /
-                                      (2 * pow(0.25 * n, 2)))); // sd = 0.25
+            mult[i] *= pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2));
 	}
 	break;
 	    
@@ -129,11 +124,31 @@ void Window<T>::encache()
             mult[i] *= m;
             mult[N-i] *= m;
         }            
-    }            
+        break;
+    }
+
+    case NuttallWindow:
+        cosinewin(mult, 0.3635819, 0.4891775, 0.1365995, 0.0106411);
 	break;
+
+    case BlackmanHarrisWindow:
+        cosinewin(mult, 0.35875, 0.48829, 0.14128, 0.01168);
+        break;
     }
 	
     m_cache = mult;
+}
+
+template <typename T>
+void Window<T>::cosinewin(T *mult, T a0, T a1, T a2, T a3)
+{
+    int n = int(m_size);
+    for (int i = 0; i < n; ++i) {
+        mult[i] *= (a0
+                    - a1 * cos(2 * M_PI * i / n)
+                    + a2 * cos(4 * M_PI * i / n)
+                    - a3 * cos(6 * M_PI * i / n));
+    }
 }
 
 #endif

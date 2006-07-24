@@ -93,7 +93,7 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 
     if (name == "Window Type") {
         if (min) *min = int(RectangularWindow);
-        if (max) *max = int(ParzenWindow);
+        if (max) *max = int(BlackmanHarrisWindow);
         return int(m_windowType);
     }
 
@@ -117,6 +117,8 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case BlackmanWindow: return tr("Blackman");
         case GaussianWindow: return tr("Gaussian");
         case ParzenWindow: return tr("Parzen");
+        case NuttallWindow: return tr("Nuttall");
+        case BlackmanHarrisWindow: return tr("Blackman-Harris");
         }
     }
     return "";
