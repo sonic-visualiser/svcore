@@ -36,6 +36,7 @@ SamplePlayer::portNames[PortCount] =
     "Output",
     "Tuned (on/off)",
     "Base Pitch (MIDI)",
+    "Tuning of A (Hz)",
     "Sustain (on/off)",
     "Release time (s)"
 };
@@ -58,6 +59,8 @@ SamplePlayer::hints[PortCount] =
       LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0, 1 },
     { LADSPA_HINT_DEFAULT_MIDDLE | LADSPA_HINT_INTEGER |
       LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0, 120 },
+    { LADSPA_HINT_DEFAULT_440 | LADSPA_HINT_LOGARITHMIC |
+      LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 220, 880 },
     { LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_INTEGER |
       LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0, 1 },
     { LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_LOGARITHMIC |
@@ -122,6 +125,7 @@ SamplePlayer::SamplePlayer(int sampleRate) :
     m_output(0),
     m_retune(0),
     m_basePitch(0),
+    m_concertA(0),
     m_sustain(0),
     m_release(0),
     m_sampleData(0),
@@ -168,6 +172,7 @@ SamplePlayer::connectPort(LADSPA_Handle handle,
 	&player->m_output,
 	&player->m_retune,
 	&player->m_basePitch,
+        &player->m_concertA,
 	&player->m_sustain,
 	&player->m_release
     };
@@ -529,13 +534,16 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 void
 SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 {
-    float ratio = 1.0;
-    float gain = 1.0;
+    float ratio = 1.f;
+    float gain = 1.f;
     unsigned long i, s;
 
     if (m_retune && *m_retune) {
+        if (m_concertA) {
+            ratio *= *m_concertA / 440.f;
+        }
 	if (m_basePitch && n != *m_basePitch) {
-	    ratio = powf(1.059463094, n - *m_basePitch);
+	    ratio *= powf(1.059463094f, n - *m_basePitch);
 	}
     }
 
