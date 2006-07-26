@@ -39,9 +39,10 @@ private:
 	OutputPort    = 0,
 	RetunePort    = 1,
 	BasePitchPort = 2,
-	SustainPort   = 3,
-	ReleasePort   = 4,
-	PortCount     = 5
+        ConcertAPort  = 3,
+	SustainPort   = 4,
+	ReleasePort   = 5,
+	PortCount     = 6
     };
 
     enum {
@@ -79,6 +80,7 @@ private:
     float *m_output;
     float *m_retune;
     float *m_basePitch;
+    float *m_concertA;
     float *m_sustain;
     float *m_release;
 
