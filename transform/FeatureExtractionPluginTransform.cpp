@@ -288,7 +288,7 @@ FeatureExtractionPluginTransform::run()
                     fftAdapters[ch]->getValuesAt
                         (column, i, buffers[ch][i*2], buffers[ch][i*2+1]);
                 }
-                //!!!
+/*!!!
                 float sum = 0.0;
                 for (size_t i = 0; i < m_blockSize/2; ++i) {
                     sum += buffers[ch][i*2];
@@ -296,6 +296,7 @@ FeatureExtractionPluginTransform::run()
                 if (fabs(sum) < 0.0001) {
                     std::cerr << "WARNING: small sum for column " << column << " (sum is " << sum << ")" << std::endl;
                 }
+*/
             } else {
                 getFrames(ch, channelCount, 
                           blockFrame, m_blockSize, buffers[ch]);

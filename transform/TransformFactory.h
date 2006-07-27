@@ -29,7 +29,7 @@ class TransformFactory : public QObject
 public:
     virtual ~TransformFactory();
 
-    static TransformFactory *instance();
+    static TransformFactory *getInstance();
 
     // The name is intended to be computer-referenceable, and unique
     // within the application.  The description is intended to be

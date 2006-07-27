@@ -15,6 +15,15 @@
 
 #include "Preferences.h"
 
+#include "Exceptions.h"
+
+#include "TempDirectory.h"
+
+#include "fileio/ConfigFile.h" //!!! reorg
+
+#include <QDir>
+#include <QFileInfo>
+
 Preferences *
 Preferences::m_instance = new Preferences();
 
@@ -22,8 +31,41 @@ Preferences::Preferences() :
     m_smoothSpectrogram(true),
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
-    m_windowType(HanningWindow)
+    m_windowType(HanningWindow),
+    m_configFile(0)
 {
+    // Let TempDirectory do its thing first, so as to avoid any race
+    // condition if it happens that we both want to use the same directory
+    TempDirectory::getInstance();
+
+    QString svDirBase = ".sv1";
+    QString svDir = QDir::home().filePath(svDirBase);
+    if (!QFileInfo(svDir).exists()) {
+        if (!QDir::home().mkdir(svDirBase)) {
+            throw DirectoryCreationFailed(QString("%1 directory in $HOME")
+                                          .arg(svDirBase));
+        }
+    } else if (!QFileInfo(svDir).isDir()) {
+        throw DirectoryCreationFailed(QString("$HOME/%1 is not a directory")
+                                      .arg(svDirBase));
+    }
+
+    m_configFile = new ConfigFile(QDir(svDir).filePath("preferences.cfg"));
+
+    m_smoothSpectrogram =
+        m_configFile->getBool("preferences-smooth-spectrogram", true);
+    m_tuningFrequency =
+        m_configFile->getFloat("preferences-tuning-frequency", 440.f);
+    m_propertyBoxLayout = PropertyBoxLayout
+        (m_configFile->getInt("preferences-property-box-layout",
+                              int(VerticallyStacked)));
+    m_windowType = WindowType
+        (m_configFile->getInt("preferences-window-type", int(HanningWindow)));
+}
+
+Preferences::~Preferences()
+{
+    delete m_configFile;
 }
 
 Preferences::PropertyList
@@ -155,6 +197,7 @@ Preferences::setSmoothSpectrogram(bool smooth)
 {
     if (m_smoothSpectrogram != smooth) {
         m_smoothSpectrogram = smooth;
+        m_configFile->set("preferences-smooth-spectrogram", smooth);
         emit propertyChanged("Smooth Spectrogram");
     }
 }
@@ -164,6 +207,7 @@ Preferences::setTuningFrequency(float freq)
 {
     if (m_tuningFrequency != freq) {
         m_tuningFrequency = freq;
+        m_configFile->set("preferences-tuning-frequency", freq);
         emit propertyChanged("Tuning Frequency");
     }
 }
@@ -173,6 +217,7 @@ Preferences::setPropertyBoxLayout(PropertyBoxLayout layout)
 {
     if (m_propertyBoxLayout != layout) {
         m_propertyBoxLayout = layout;
+        m_configFile->set("preferences-property-box-layout", int(layout));
         emit propertyChanged("Property Box Layout");
     }
 }
@@ -182,6 +227,7 @@ Preferences::setWindowType(WindowType type)
 {
     if (m_windowType != type) {
         m_windowType = type;
+        m_configFile->set("preferences-window-type", int(type));
         emit propertyChanged("Window Type");
     }
 }

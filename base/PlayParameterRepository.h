@@ -28,7 +28,7 @@ class PlayParameterRepository : public QObject
     Q_OBJECT
 
 public:
-    static PlayParameterRepository *instance();
+    static PlayParameterRepository *getInstance();
 
     virtual ~PlayParameterRepository();
 
