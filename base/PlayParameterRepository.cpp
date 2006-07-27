@@ -27,7 +27,7 @@ PlayParameterRepository *
 PlayParameterRepository::m_instance = new PlayParameterRepository;
 
 PlayParameterRepository *
-PlayParameterRepository::instance()
+PlayParameterRepository::getInstance()
 {
     return m_instance;
 }

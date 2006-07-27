@@ -28,7 +28,7 @@ Model::~Model()
     // if they want to be played.  We can't do it from here because
     // the repository would be unable to tell whether we were playable
     // or not (because dynamic_cast won't work from the base class ctor)
-    PlayParameterRepository::instance()->removeModel(this);
+    PlayParameterRepository::getInstance()->removeModel(this);
 }
 
 QString

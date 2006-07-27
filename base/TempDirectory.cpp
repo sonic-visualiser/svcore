@@ -28,7 +28,7 @@ TempDirectory *
 TempDirectory::m_instance = new TempDirectory;
 
 TempDirectory *
-TempDirectory::instance()
+TempDirectory::getInstance()
 {
     return m_instance;
 }

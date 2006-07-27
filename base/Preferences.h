@@ -20,6 +20,8 @@
 
 #include "Window.h"
 
+class ConfigFile;
+
 class Preferences : public PropertyContainer
 {
     Q_OBJECT
@@ -39,6 +41,8 @@ public:
     float getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
 
+    ConfigFile *getConfigFile() { return m_configFile; }
+
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
         VerticallyStacked,
@@ -55,8 +59,8 @@ public slots:
     void setWindowType(WindowType type);
 
 private:
-    Preferences(); 
-    virtual ~Preferences() { }
+    Preferences(); // may throw DirectoryCreationFailed
+    virtual ~Preferences();
 
     static Preferences *m_instance;
 
@@ -64,6 +68,7 @@ private:
     float m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
+    ConfigFile *m_configFile;
 };
 
 #endif

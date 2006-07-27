@@ -33,7 +33,7 @@
 class TempDirectory
 {
 public:
-    static TempDirectory *instance();
+    static TempDirectory *getInstance();
     
     virtual ~TempDirectory();
 

@@ -34,8 +34,8 @@ Layer::~Layer()
 QString
 Layer::getPropertyContainerIconName() const
 {
-    return LayerFactory::instance()->getLayerIconName
-	(LayerFactory::instance()->getLayerType(this));
+    return LayerFactory::getInstance()->getLayerIconName
+	(LayerFactory::getInstance()->getLayerType(this));
 }
 
 QString
@@ -70,8 +70,8 @@ Layer::toXmlString(QString indent, QString extraAttributes) const
     s += indent;
 
     s += QString("<layer id=\"%2\" type=\"%1\" name=\"%3\" model=\"%4\" %5/>\n")
-	.arg(encodeEntities(LayerFactory::instance()->getLayerTypeName
-                            (LayerFactory::instance()->getLayerType(this))))
+	.arg(encodeEntities(LayerFactory::getInstance()->getLayerTypeName
+                            (LayerFactory::getInstance()->getLayerType(this))))
 	.arg(getObjectExportId(this))
 	.arg(encodeEntities(objectName()))
 	.arg(getObjectExportId(getModel()))
@@ -86,7 +86,7 @@ Layer::getPlayParameters()
 //    std::cerr << "Layer (" << this << ", " << objectName().toStdString() << ")::getPlayParameters: model is "<< getModel() << std::endl;
     const Model *model = getModel();
     if (model) {
-	return PlayParameterRepository::instance()->getPlayParameters(model);
+	return PlayParameterRepository::getInstance()->getPlayParameters(model);
     }
     return 0;
 }

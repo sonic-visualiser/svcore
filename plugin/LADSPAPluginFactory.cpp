@@ -31,6 +31,7 @@
 #include "PluginIdentifier.h"
 
 #include "base/System.h"
+#include "base/Preferences.h"
 
 #ifdef HAVE_LRDF
 #include "lrdf.h"
@@ -261,7 +262,8 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
 	
     } else if (LADSPA_IS_HINT_DEFAULT_440(d)) {
 	
-	deft = 440.0;
+//	deft = 440.0;
+        deft = Preferences::getInstance()->getTuningFrequency();
 	
     } else {
 	

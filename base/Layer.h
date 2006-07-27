@@ -78,8 +78,10 @@ public:
     virtual int getVerticalScaleWidth(View *, QPainter &) const { return 0; }
     virtual void paintVerticalScale(View *, QPainter &, QRect) const { }
 
-    virtual bool getCrosshairExtents(View *, QPainter &, QPoint cursorPos,
-                                     std::vector<QRect> &) const { return false; }
+    virtual bool getCrosshairExtents(View *, QPainter &, QPoint /* cursorPos */,
+                                     std::vector<QRect> &) const {
+        return false;
+    }
     virtual void paintCrosshairs(View *, QPainter &, QPoint) const { }
 
     virtual QString getFeatureDescription(View *, QPoint &) const {
@@ -112,10 +114,10 @@ public:
      * available.  Also return the resolution of the model in this
      * layer in sample frames.
      */
-    virtual bool snapToFeatureFrame(View *v,
-				    int &frame,
+    virtual bool snapToFeatureFrame(View *   /* v */,
+				    int &    /* frame */,
 				    size_t &resolution,
-				    SnapType snap) const {
+				    SnapType /* snap */) const {
 	resolution = 1;
 	return false;
     }
@@ -135,12 +137,22 @@ public:
 
     virtual void editOpen(View *, QMouseEvent *) { } // on double-click
 
-    virtual void moveSelection(Selection s, size_t newStartFrame) { }
-    virtual void resizeSelection(Selection s, Selection newSize) { }
-    virtual void deleteSelection(Selection s) { }
+    virtual void moveSelection(Selection, size_t /* newStartFrame */) { }
+    virtual void resizeSelection(Selection, Selection /* newSize */) { }
+    virtual void deleteSelection(Selection) { }
 
-    virtual void copy(Selection s, Clipboard &to) { }
-    virtual void paste(const Clipboard &from, int frameOffset) { }
+    virtual void copy(Selection, Clipboard & /* to */) { }
+
+    /**
+     * Paste from the given clipboard onto the layer at the given
+     * frame offset.  If interactive is true, the layer may ask the
+     * user about paste options through a dialog if desired, and may
+     * return false if the user cancelled the paste operation.  This
+     * function should return true if a paste actually occurred.
+     */
+    virtual bool paste(const Clipboard & /* from */,
+                       int /* frameOffset */,
+                       bool /* interactive */) { return false; }
 
     // Text mode:
     //
@@ -252,7 +264,8 @@ public:
      * extent (using the normal layer extents or deferring to whatever
      * is in use for the same units elsewhere in the view).
      */
-    virtual bool getDisplayExtents(float &min, float &max) const {
+    virtual bool getDisplayExtents(float & /* min */,
+                                   float & /* max */) const {
         return false;
     }
 
@@ -263,7 +276,8 @@ public:
      * return false for getDisplayExtents should also return false for
      * this function.
      */
-    virtual bool setDisplayExtents(float min, float max) {
+    virtual bool setDisplayExtents(float /* min */,
+                                   float /* max */) {
         return false;
     }
 

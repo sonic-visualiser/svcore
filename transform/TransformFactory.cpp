@@ -35,7 +35,7 @@ TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
 
 TransformFactory *
-TransformFactory::instance()
+TransformFactory::getInstance()
 {
     return m_instance;
 }
