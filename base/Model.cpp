@@ -16,6 +16,8 @@
 #include "Model.h"
 #include "PlayParameterRepository.h"
 
+#include <QTextStream>
+
 #include <iostream>
 
 const int Model::COMPLETION_UNKNOWN = -1;
@@ -29,6 +31,20 @@ Model::~Model()
     // the repository would be unable to tell whether we were playable
     // or not (because dynamic_cast won't work from the base class ctor)
     PlayParameterRepository::getInstance()->removeModel(this);
+}
+
+void
+Model::toXml(QTextStream &stream, QString indent,
+             QString extraAttributes) const
+{
+    stream << indent;
+    stream << QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
+	.arg(getObjectExportId(this))
+	.arg(encodeEntities(objectName()))
+	.arg(getSampleRate())
+	.arg(getStartFrame())
+	.arg(getEndFrame())
+	.arg(extraAttributes);
 }
 
 QString
