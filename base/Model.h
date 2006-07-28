@@ -93,6 +93,10 @@ public:
     }
     static const int COMPLETION_UNKNOWN;
 
+    virtual void toXml(QTextStream &stream,
+                       QString indent = "",
+                       QString extraAttributes = "") const;
+
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 

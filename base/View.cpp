@@ -678,7 +678,7 @@ View::modelChanged(size_t startFrame, size_t endFrame)
     checkProgress(obj);
 
     update();
-//!!    update(x0, 0, x1 - x0 + 1, height());
+//!!!    update(x0, 0, x1 - x0 + 1, height());
 }    
 
 void
