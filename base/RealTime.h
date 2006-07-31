@@ -21,11 +21,6 @@
 #ifndef _REAL_TIME_H_
 #define _REAL_TIME_H_
 
-//#include "vamp-sdk/RealTime.h"
-//using Vamp::RealTime;
-
-//#ifdef NOT_DEFINED
-
 #include <iostream>
 #include <string>
 
@@ -124,7 +119,5 @@ struct RealTime
 };
 
 std::ostream &operator<<(std::ostream &out, const RealTime &rt);
-
-//#endif
     
 #endif
