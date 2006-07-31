@@ -19,7 +19,7 @@
 #include "base/RealTime.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
-#include "model/DenseThreeDimensionalModel.h"
+#include "model/EditableDenseThreeDimensionalModel.h"
 
 #include <QFile>
 #include <QString>
@@ -112,7 +112,7 @@ CSVFileReader::load() const
 
     SparseOneDimensionalModel *model1 = 0;
     SparseTimeValueModel *model2 = 0;
-    DenseThreeDimensionalModel *model3 = 0;
+    EditableDenseThreeDimensionalModel *model3 = 0;
     Model *model = 0;
 
     QTextStream in(m_file);
@@ -149,8 +149,9 @@ CSVFileReader::load() const
 		break;
 		
 	    case CSVFormatDialog::ThreeDimensionalModel:
-		model3 = new DenseThreeDimensionalModel(sampleRate, windowSize,
-							list.size());
+		model3 = new EditableDenseThreeDimensionalModel(sampleRate,
+                                                                windowSize,
+                                                                list.size());
 		model = model3;
 		break;
 	    }

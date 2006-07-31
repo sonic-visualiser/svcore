@@ -112,11 +112,11 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
     // smaller increment, we can draw the results from it (provided
     // our increment is a multiple of its)
     //
-    // The FFTFuzzyAdapter knows how to interpret these things.  In
+    // The FFTModel knows how to interpret these things.  In
     // both cases we require that the larger one is a power-of-two
     // multiple of the smaller (e.g. even though in principle you can
     // draw the results at increment 256 from those at increment 768
-    // or 1536, the fuzzy adapter doesn't support this).
+    // or 1536, the model doesn't support this).
 
     {
         QMutexLocker locker(&m_serverMapMutex);
@@ -205,6 +205,23 @@ FFTDataServer::findServer(QString n)
     }
 
     return 0;
+}
+
+void
+FFTDataServer::claimInstance(FFTDataServer *server)
+{
+    
+    QMutexLocker locker(&m_serverMapMutex);
+
+    for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
+        if (i->second.first == server) {
+            ++i->second.second;
+            return;
+        }
+    }
+    
+    std::cerr << "ERROR: FFTDataServer::claimInstance: instance "
+              << server << " unknown!" << std::endl;
 }
 
 void

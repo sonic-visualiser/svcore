@@ -13,23 +13,24 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FFT_FUZZY_ADAPTER_H_
-#define _FFT_FUZZY_ADAPTER_H_
+#ifndef _FFT_MODEL_H_
+#define _FFT_MODEL_H_
 
-#include "FFTDataServer.h"
+#include "data/fft/FFTDataServer.h"
+#include "DenseThreeDimensionalModel.h"
 
-class FFTFuzzyAdapter
+class FFTModel : public DenseThreeDimensionalModel
 {
 public:
-    FFTFuzzyAdapter(const DenseTimeValueModel *model,
-                    int channel,
-                    WindowType windowType,
-                    size_t windowSize,
-                    size_t windowIncrement,
-                    size_t fftSize,
-                    bool polar,
-                    size_t fillFromColumn = 0);
-    ~FFTFuzzyAdapter();
+    FFTModel(const DenseTimeValueModel *model,
+             int channel,
+             WindowType windowType,
+             size_t windowSize,
+             size_t windowIncrement,
+             size_t fftSize,
+             bool polar,
+             size_t fillFromColumn = 0);
+    ~FFTModel();
 
     size_t getWidth() const {
         return m_server->getWidth() >> m_xshift;
@@ -65,12 +66,43 @@ public:
         return getMagnitudeAt(x, y) > threshold;
     }
 
-    size_t getFillCompletion() const { return m_server->getFillCompletion(); }
     size_t getFillExtent() const { return m_server->getFillExtent(); }
 
+    // DenseThreeDimensionalModel and Model methods:
+    //
+    virtual bool isOK() const {
+        return m_server && m_server->getModel();
+    }
+    virtual size_t getStartFrame() const {
+        return 0;
+    }
+    virtual size_t getEndFrame() const {
+        return getWidth() * getResolution() + getResolution();
+    }
+    virtual size_t getSampleRate() const;
+    virtual size_t getResolution() const {
+        return m_server->getWindowIncrement() << m_xshift;
+    }
+    virtual size_t getYBinCount() const {
+        return getHeight();
+    }
+    virtual float getMinimumLevel() const {
+        return 0.f; // Can't provide
+    }
+    virtual float getMaximumLevel() const {
+        return 1.f; // Can't provide
+    }
+    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const;
+    virtual float getBinValue(long windowStartFrame, size_t n) const;
+    virtual QString getBinName(size_t n) const;
+
+    virtual int getCompletion() const { return m_server->getFillCompletion(); }
+
+    virtual Model *clone() const;
+
 private:
-    FFTFuzzyAdapter(const FFTFuzzyAdapter &); // not implemented
-    FFTFuzzyAdapter &operator=(const FFTFuzzyAdapter &); // not implemented
+    FFTModel(const FFTModel &);
+    FFTModel &operator=(const FFTModel &); // not implemented
 
     FFTDataServer *m_server;
     int m_xshift;

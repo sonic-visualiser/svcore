@@ -29,60 +29,25 @@ class DenseThreeDimensionalModel : public Model,
     Q_OBJECT
 
 public:
-    //!!! need to reconcile terminology -- windowSize here, resolution in sparse models
-    DenseThreeDimensionalModel(size_t sampleRate,
-			       size_t windowSize,
-			       size_t yBinCount,
-			       bool notifyOnAdd = true);
-
-    virtual bool isOK() const;
-
-    virtual size_t getSampleRate() const;
-    virtual size_t getStartFrame() const;
-    virtual size_t getEndFrame() const;
-
-    virtual Model *clone() const;
-    
-
     /**
      * Return the number of sample frames covered by each set of bins.
      */
-    virtual size_t getWindowSize() const;
-
-    /**
-     * Set the number of sample frames covered by each set of bins.
-     */
-    virtual void setWindowSize(size_t sz);
+    virtual size_t getResolution() const = 0;
 
     /**
      * Return the number of bins in each set of bins.
      */
-    virtual size_t getYBinCount() const; 
-
-    /**
-     * Set the number of bins in each set of bins.
-     */
-    virtual void setYBinCount(size_t sz);
+    virtual size_t getYBinCount() const = 0; 
 
     /**
      * Return the minimum value of the value in each bin.
      */
-    virtual float getMinimumLevel() const;
-
-    /**
-     * Set the minimum value of the value in a bin.
-     */
-    virtual void setMinimumLevel(float sz);
+    virtual float getMinimumLevel() const = 0;
 
     /**
      * Return the maximum value of the value in each bin.
      */
-    virtual float getMaximumLevel() const;
-
-    /**
-     * Set the maximum value of the value in a bin.
-     */
-    virtual void setMaximumLevel(float sz);
+    virtual float getMaximumLevel() const = 0;
 
     typedef std::vector<float> BinValueSet;
 
@@ -90,50 +55,20 @@ public:
      * Get the set of bin values at the given sample frame (i.e. the
      * windowStartFrame/getWindowSize()'th set of bins).
      */
-    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const;
+    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const = 0;
 
     /**
      * Get a single value, the one at the n'th bin of the set of bins
      * starting at the given sample frame.
      */
-    virtual float getBinValue(long windowStartFrame, size_t n) const;
+    virtual float getBinValue(long windowStartFrame, size_t n) const = 0;
 
-    /**
-     * Set the entire set of bin values at the given sample frame.
-     */
-    virtual void setBinValues(long windowStartFrame, const BinValueSet &values);
+    virtual QString getBinName(size_t n) const = 0;
 
-    virtual QString getBinName(size_t n) const;
-    virtual void setBinName(size_t n, QString);
-    virtual void setBinNames(std::vector<QString> names);
-
-    virtual void setCompletion(int completion);
-    virtual int getCompletion() const { return m_completion; }
-
-    virtual void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const;
-
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
+    virtual int getCompletion() const = 0;
 
 protected:
-    typedef std::vector<BinValueSet> ValueMatrix;
-    ValueMatrix m_data;
-
-    std::vector<QString> m_binNames;
-
-    size_t m_sampleRate;
-    size_t m_windowSize;
-    size_t m_yBinCount;
-    float m_minimum;
-    float m_maximum;
-    bool m_notifyOnAdd;
-    long m_sinceLastNotifyMin;
-    long m_sinceLastNotifyMax;
-    int m_completion;
-
-    mutable QMutex m_mutex;
+    DenseThreeDimensionalModel() { }
 };
 
 #endif

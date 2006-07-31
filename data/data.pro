@@ -13,9 +13,9 @@ OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
 # Input
-HEADERS += fft/FFTDataServer.h \
+HEADERS += fft/FFTCache.h \
+           fft/FFTDataServer.h \
            fft/FFTFileCache.h \
-           fft/FFTFuzzyAdapter.h \
            fileio/AudioFileReader.h \
            fileio/AudioFileReaderFactory.h \
            fileio/BZipFileDevice.h \
@@ -33,6 +33,8 @@ HEADERS += fft/FFTDataServer.h \
            fileio/WavFileWriter.h \
            model/DenseThreeDimensionalModel.h \
            model/DenseTimeValueModel.h \
+           model/EditableDenseThreeDimensionalModel.h \
+           model/FFTModel.h \
            model/Model.h \
            model/NoteModel.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
@@ -44,9 +46,9 @@ HEADERS += fft/FFTDataServer.h \
            model/SparseValueModel.h \
            model/TextModel.h \
            model/WaveFileModel.h
-SOURCES += fft/FFTDataServer.cpp \
+SOURCES += fft/FFTCache.cpp \
+           fft/FFTDataServer.cpp \
            fft/FFTFileCache.cpp \
-           fft/FFTFuzzyAdapter.cpp \
            fileio/AudioFileReaderFactory.cpp \
            fileio/BZipFileDevice.cpp \
            fileio/CodedAudioFileReader.cpp \
@@ -60,8 +62,9 @@ SOURCES += fft/FFTDataServer.cpp \
            fileio/OggVorbisFileReader.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
-           model/DenseThreeDimensionalModel.cpp \
            model/DenseTimeValueModel.cpp \
+           model/EditableDenseThreeDimensionalModel.cpp \
+           model/FFTModel.cpp \
            model/Model.cpp \
            model/NoteModel.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
