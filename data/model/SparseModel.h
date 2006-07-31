@@ -16,7 +16,7 @@
 #ifndef _SPARSE_MODEL_H_
 #define _SPARSE_MODEL_H_
 
-#include "base/Model.h"
+#include "Model.h"
 #include "base/Command.h"
 #include "base/CommandHistory.h"
 

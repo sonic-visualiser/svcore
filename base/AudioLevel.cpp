@@ -18,7 +18,7 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#include "base/AudioLevel.h"
+#include "AudioLevel.h"
 #include <cmath>
 #include <iostream>
 #include <map>

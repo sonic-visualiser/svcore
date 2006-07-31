@@ -16,7 +16,7 @@
 #ifndef _FILE_READ_THREAD_H_
 #define _FILE_READ_THREAD_H_
 
-#include "Thread.h"
+#include "base/Thread.h"
 
 #include <QMutex>
 #include <QWaitCondition>

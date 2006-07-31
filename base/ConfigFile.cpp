@@ -15,7 +15,7 @@
 
 #include "ConfigFile.h"
 
-#include "base/Exceptions.h"
+#include "Exceptions.h"
 
 #include <iostream>
 

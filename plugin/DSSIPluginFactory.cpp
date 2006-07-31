@@ -27,9 +27,9 @@
 #include "PluginIdentifier.h"
 
 //!!!
-#include "plugins/SamplePlayer.h"
+#include "plugin/plugins/SamplePlayer.h"
 
-#include "base/System.h"
+#include "system/System.h"
 
 #ifdef HAVE_LRDF
 #include "lrdf.h"
@@ -225,12 +225,13 @@ DSSIPluginFactory::getPluginPath()
 }
 
 
-#ifdef HAVE_LRDF
 std::vector<QString>
 DSSIPluginFactory::getLRDFPath(QString &baseUri)
 {
-    std::vector<QString> pathList = getPluginPath();
     std::vector<QString> lrdfPaths;
+
+#ifdef HAVE_LRDF
+    std::vector<QString> pathList = getPluginPath();
 
     lrdfPaths.push_back("/usr/local/share/dssi/rdf");
     lrdfPaths.push_back("/usr/share/dssi/rdf");
@@ -248,10 +249,10 @@ DSSIPluginFactory::getLRDFPath(QString &baseUri)
 #else
     baseUri = "http://dssi.sourceforge.net/ontology#";
 #endif
+#endif
 
     return lrdfPaths;
 }    
-#endif
 
 
 void

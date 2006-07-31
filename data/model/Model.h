@@ -19,7 +19,7 @@
 #include <vector>
 #include <QObject>
 
-#include "XmlExportable.h"
+#include "base/XmlExportable.h"
 
 typedef std::vector<float> SampleBlock;
 

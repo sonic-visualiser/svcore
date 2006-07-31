@@ -15,7 +15,7 @@
 
 #include "FFTFileCache.h"
 
-#include "MatrixFile.h"
+#include "fileio/MatrixFile.h"
 
 #include "base/Profiler.h"
 

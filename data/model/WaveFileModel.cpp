@@ -13,12 +13,12 @@
     COPYING included with this distribution for more information.
 */
 
-#include "model/WaveFileModel.h"
+#include "WaveFileModel.h"
 
 #include "fileio/AudioFileReader.h"
 #include "fileio/AudioFileReaderFactory.h"
 
-#include "base/System.h"
+#include "system/System.h"
 
 #include <QMessageBox>
 #include <QFileInfo>

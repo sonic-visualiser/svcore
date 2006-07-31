@@ -14,7 +14,7 @@
 */
 
 #include "Model.h"
-#include "PlayParameterRepository.h"
+#include "base/PlayParameterRepository.h"
 
 #include <QTextStream>
 

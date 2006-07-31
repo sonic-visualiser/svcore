@@ -17,7 +17,7 @@
 #define _SPARSE_TIME_VALUE_MODEL_H_
 
 #include "SparseValueModel.h"
-#include "PlayParameterRepository.h"
+#include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
 /**

@@ -28,7 +28,7 @@
 
 #include "MIDIFileReader.h"
 
-#include "base/Model.h"
+#include "model/Model.h"
 #include "base/Pitch.h"
 #include "base/RealTime.h"
 #include "model/NoteModel.h"

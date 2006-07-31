@@ -15,7 +15,7 @@
 
 #include "CSVFileReader.h"
 
-#include "base/Model.h"
+#include "model/Model.h"
 #include "base/RealTime.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"

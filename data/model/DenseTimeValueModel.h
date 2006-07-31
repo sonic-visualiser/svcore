@@ -18,7 +18,7 @@
 
 #include <QObject>
 
-#include "base/Model.h"
+#include "Model.h"
 
 /**
  * Base class for models containing dense two-dimensional data (value

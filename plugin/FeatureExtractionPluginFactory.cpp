@@ -19,7 +19,7 @@
 #include "vamp/vamp.h"
 #include "vamp-sdk/PluginHostAdapter.h"
 
-#include "base/System.h"
+#include "system/System.h"
 
 #include <QDir>
 #include <QFile>
