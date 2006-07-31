@@ -17,7 +17,7 @@
 #include "MIDIFileReader.h"
 #include "CSVFileReader.h"
 
-#include "base/Model.h"
+#include "model/Model.h"
 
 #include <QString>
 

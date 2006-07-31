@@ -17,7 +17,7 @@
 #ifdef HAVE_MAD
 
 #include "MP3FileReader.h"
-#include "base/System.h"
+#include "system/System.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

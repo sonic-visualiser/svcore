@@ -16,7 +16,7 @@
 #ifndef _WAVE_FILE_MODEL_H_
 #define _WAVE_FILE_MODEL_H_
 
-#include "Thread.h"
+#include "base/Thread.h"
 #include <QMutex>
 #include <QTimer>
 

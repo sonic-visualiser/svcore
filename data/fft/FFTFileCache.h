@@ -16,8 +16,8 @@
 #ifndef _FFT_FILE_CACHE_H_
 #define _FFT_FILE_CACHE_H_
 
-#include "FFTCache.h"
-#include "MatrixFile.h"
+#include "base/FFTCache.h"
+#include "fileio/MatrixFile.h"
 
 #include <QMutex>
 

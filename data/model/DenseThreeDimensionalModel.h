@@ -16,7 +16,7 @@
 #ifndef _DENSE_THREE_DIMENSIONAL_MODEL_H_
 #define _DENSE_THREE_DIMENSIONAL_MODEL_H_
 
-#include "base/Model.h"
+#include "Model.h"
 #include "base/ZoomConstraint.h"
 
 #include <QMutex>

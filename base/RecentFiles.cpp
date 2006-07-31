@@ -16,7 +16,7 @@
 #include "RecentFiles.h"
 #include "ConfigFile.h"
 
-#include "base/Preferences.h"
+#include "Preferences.h"
 
 #include <QFileInfo>
 

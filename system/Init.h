@@ -13,16 +13,9 @@
     COPYING included with this distribution for more information.
 */
 
-#include "DenseTimeValueModel.h"
-#include "base/PlayParameterRepository.h"
+#ifndef _SV_SYSTEM_INIT_H_
+#define _SV_SYSTEM_INIT_H_
 
-DenseTimeValueModel::DenseTimeValueModel()
-{
-    PlayParameterRepository::getInstance()->addModel(this);
-}
-	
+extern void svSystemSpecificInitialisation();
 
-#ifdef INCLUDE_MOCFILES
-#include "DenseTimeValueModel.moc.cpp"
 #endif
-

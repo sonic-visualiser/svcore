@@ -22,7 +22,7 @@
 #ifndef _SCAVENGER_H_
 #define _SCAVENGER_H_
 
-#include "System.h"
+#include "system/System.h"
 
 #include <vector>
 #include <sys/time.h>

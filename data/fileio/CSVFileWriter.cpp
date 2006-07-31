@@ -15,7 +15,7 @@
 
 #include "CSVFileWriter.h"
 
-#include "base/Model.h"
+#include "model/Model.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/NoteModel.h"

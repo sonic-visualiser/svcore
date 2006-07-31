@@ -17,7 +17,7 @@
 #define _SPARSE_VALUE_MODEL_H_
 
 #include "SparseModel.h"
-#include "UnitDatabase.h"
+#include "base/UnitDatabase.h"
 
 /**
  * Model containing sparse data (points with some properties) of which

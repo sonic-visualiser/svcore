@@ -17,7 +17,7 @@
 #define _AUDIO_FILE_READER_H_
 
 #include <QString>
-#include "base/Model.h" // for SampleBlock
+#include "model/Model.h" // for SampleBlock
 
 class AudioFileReader
 {

@@ -17,7 +17,7 @@
 #define _SPARSE_ONE_DIMENSIONAL_MODEL_H_
 
 #include "SparseModel.h"
-#include "PlayParameterRepository.h"
+#include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
 struct OneDimensionalPoint

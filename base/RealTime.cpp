@@ -30,7 +30,7 @@
 using std::cerr;
 using std::endl;
 
-#include "base/RealTime.h"
+#include "RealTime.h"
 #include "sys/time.h"
 
 // A RealTime consists of two ints that must be at least 32 bits each.

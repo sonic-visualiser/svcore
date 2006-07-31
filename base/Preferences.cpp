@@ -19,7 +19,7 @@
 
 #include "TempDirectory.h"
 
-#include "fileio/ConfigFile.h" //!!! reorg
+#include "ConfigFile.h" //!!! reorg
 
 #include <QDir>
 #include <QFileInfo>

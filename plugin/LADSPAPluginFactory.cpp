@@ -30,7 +30,7 @@
 #include "LADSPAPluginInstance.h"
 #include "PluginIdentifier.h"
 
-#include "base/System.h"
+#include "system/System.h"
 #include "base/Preferences.h"
 
 #ifdef HAVE_LRDF
@@ -541,12 +541,13 @@ LADSPAPluginFactory::getPluginPath()
 }
 
 
-#ifdef HAVE_LRDF
 std::vector<QString>
 LADSPAPluginFactory::getLRDFPath(QString &baseUri)
 {
-    std::vector<QString> pathList = getPluginPath();
     std::vector<QString> lrdfPaths;
+
+#ifdef HAVE_LRDF
+    std::vector<QString> pathList = getPluginPath();
 
     lrdfPaths.push_back("/usr/local/share/ladspa/rdf");
     lrdfPaths.push_back("/usr/share/ladspa/rdf");
@@ -557,9 +558,10 @@ LADSPAPluginFactory::getLRDFPath(QString &baseUri)
     }
 
     baseUri = LADSPA_BASE;
+#endif
+
     return lrdfPaths;
 }    
-#endif
 
 void
 LADSPAPluginFactory::discoverPlugins()
