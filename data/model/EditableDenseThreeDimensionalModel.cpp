@@ -13,16 +13,16 @@
     COPYING included with this distribution for more information.
 */
 
-#include "DenseThreeDimensionalModel.h"
+#include "EditableDenseThreeDimensionalModel.h"
 
 #include <QTextStream>
 
-DenseThreeDimensionalModel::DenseThreeDimensionalModel(size_t sampleRate,
-						       size_t windowSize,
-						       size_t yBinCount,
-						       bool notifyOnAdd) :
+EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
+                                                                       size_t resolution,
+                                                                       size_t yBinCount,
+                                                                       bool notifyOnAdd) :
     m_sampleRate(sampleRate),
-    m_windowSize(windowSize),
+    m_resolution(resolution),
     m_yBinCount(yBinCount),
     m_minimum(0.0),
     m_maximum(0.0),
@@ -34,100 +34,101 @@ DenseThreeDimensionalModel::DenseThreeDimensionalModel(size_t sampleRate,
 }    
 
 bool
-DenseThreeDimensionalModel::isOK() const
+EditableDenseThreeDimensionalModel::isOK() const
 {
     return true;
 }
 
 size_t
-DenseThreeDimensionalModel::getSampleRate() const
+EditableDenseThreeDimensionalModel::getSampleRate() const
 {
     return m_sampleRate;
 }
 
 size_t
-DenseThreeDimensionalModel::getStartFrame() const
+EditableDenseThreeDimensionalModel::getStartFrame() const
 {
     return 0;
 }
 
 size_t
-DenseThreeDimensionalModel::getEndFrame() const
+EditableDenseThreeDimensionalModel::getEndFrame() const
 {
-    return m_windowSize * m_data.size() + (m_windowSize - 1);
+    return m_resolution * m_data.size() + (m_resolution - 1);
 }
 
 Model *
-DenseThreeDimensionalModel::clone() const
+EditableDenseThreeDimensionalModel::clone() const
 {
-    DenseThreeDimensionalModel *model = new DenseThreeDimensionalModel
-	(m_sampleRate, m_windowSize, m_yBinCount);
+    EditableDenseThreeDimensionalModel *model =
+        new EditableDenseThreeDimensionalModel
+	(m_sampleRate, m_resolution, m_yBinCount);
 
     model->m_minimum = m_minimum;
     model->m_maximum = m_maximum;
 
     for (size_t i = 0; i < m_data.size(); ++i) {
-	model->setBinValues(i * m_windowSize, m_data[i]);
+	model->setBinValues(i * m_resolution, m_data[i]);
     }
 
     return model;
 }
 
 size_t
-DenseThreeDimensionalModel::getWindowSize() const
+EditableDenseThreeDimensionalModel::getResolution() const
 {
-    return m_windowSize;
+    return m_resolution;
 }
 
 void
-DenseThreeDimensionalModel::setWindowSize(size_t sz)
+EditableDenseThreeDimensionalModel::setResolution(size_t sz)
 {
-    m_windowSize = sz;
+    m_resolution = sz;
 }
 
 size_t
-DenseThreeDimensionalModel::getYBinCount() const
+EditableDenseThreeDimensionalModel::getYBinCount() const
 {
     return m_yBinCount;
 }
 
 void
-DenseThreeDimensionalModel::setYBinCount(size_t sz)
+EditableDenseThreeDimensionalModel::setYBinCount(size_t sz)
 {
     m_yBinCount = sz;
 }
 
 float
-DenseThreeDimensionalModel::getMinimumLevel() const
+EditableDenseThreeDimensionalModel::getMinimumLevel() const
 {
     return m_minimum;
 }
 
 void
-DenseThreeDimensionalModel::setMinimumLevel(float level)
+EditableDenseThreeDimensionalModel::setMinimumLevel(float level)
 {
     m_minimum = level;
 }
 
 float
-DenseThreeDimensionalModel::getMaximumLevel() const
+EditableDenseThreeDimensionalModel::getMaximumLevel() const
 {
     return m_maximum;
 }
 
 void
-DenseThreeDimensionalModel::setMaximumLevel(float level)
+EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 {
     m_maximum = level;
 }
 
 void
-DenseThreeDimensionalModel::getBinValues(long windowStart,
+EditableDenseThreeDimensionalModel::getBinValues(long windowStart,
 					 BinValueSet &result) const
 {
     QMutexLocker locker(&m_mutex);
     
-    long index = windowStart / m_windowSize;
+    long index = windowStart / m_resolution;
 
     if (index >= 0 && index < long(m_data.size())) {
 	result = m_data[index];
@@ -139,12 +140,12 @@ DenseThreeDimensionalModel::getBinValues(long windowStart,
 }
 
 float
-DenseThreeDimensionalModel::getBinValue(long windowStart,
+EditableDenseThreeDimensionalModel::getBinValue(long windowStart,
 					size_t n) const
 {
     QMutexLocker locker(&m_mutex);
     
-    long index = windowStart / m_windowSize;
+    long index = windowStart / m_resolution;
 
     if (index >= 0 && index < long(m_data.size())) {
 	const BinValueSet &s = m_data[index];
@@ -155,12 +156,12 @@ DenseThreeDimensionalModel::getBinValue(long windowStart,
 }
 
 void
-DenseThreeDimensionalModel::setBinValues(long windowStart,
+EditableDenseThreeDimensionalModel::setBinValues(long windowStart,
 					 const BinValueSet &values)
 {
     QMutexLocker locker(&m_mutex);
 
-    long index = windowStart / m_windowSize;
+    long index = windowStart / m_resolution;
 
     while (index >= long(m_data.size())) {
 	m_data.push_back(BinValueSet());
@@ -186,7 +187,7 @@ DenseThreeDimensionalModel::setBinValues(long windowStart,
 	if (allChange) {
 	    emit modelChanged();
 	} else {
-	    emit modelChanged(windowStart, windowStart + m_windowSize);
+	    emit modelChanged(windowStart, windowStart + m_resolution);
 	}
     } else {
 	if (allChange) {
@@ -207,14 +208,14 @@ DenseThreeDimensionalModel::setBinValues(long windowStart,
 }
 
 QString
-DenseThreeDimensionalModel::getBinName(size_t n) const
+EditableDenseThreeDimensionalModel::getBinName(size_t n) const
 {
     if (m_binNames.size() > n) return m_binNames[n];
     else return "";
 }
 
 void
-DenseThreeDimensionalModel::setBinName(size_t n, QString name)
+EditableDenseThreeDimensionalModel::setBinName(size_t n, QString name)
 {
     while (m_binNames.size() <= n) m_binNames.push_back("");
     m_binNames[n] = name;
@@ -222,14 +223,14 @@ DenseThreeDimensionalModel::setBinName(size_t n, QString name)
 }
 
 void
-DenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
+EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 {
     m_binNames = names;
     emit modelChanged();
 }
 
 void
-DenseThreeDimensionalModel::setCompletion(int completion)
+EditableDenseThreeDimensionalModel::setCompletion(int completion)
 {
     if (m_completion != completion) {
 	m_completion = completion;
@@ -244,7 +245,7 @@ DenseThreeDimensionalModel::setCompletion(int completion)
 	    if (m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
 		emit modelChanged(m_sinceLastNotifyMin,
-				  m_sinceLastNotifyMax + m_windowSize);
+				  m_sinceLastNotifyMax + m_resolution);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
 	    } else {
 		emit completionChanged();
@@ -256,13 +257,15 @@ DenseThreeDimensionalModel::setCompletion(int completion)
 }
 
 void
-DenseThreeDimensionalModel::toXml(QTextStream &out,
+EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
                                   QString indent,
                                   QString extraAttributes) const
 {
+    // For historical reasons we read and write "resolution" as "windowSize"
+
     out << Model::toXmlString
 	(indent, QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" %6")
-	 .arg(m_windowSize)
+	 .arg(m_resolution)
 	 .arg(m_yBinCount)
 	 .arg(m_minimum)
 	 .arg(m_maximum)
@@ -295,7 +298,7 @@ DenseThreeDimensionalModel::toXml(QTextStream &out,
 }
 
 QString
-DenseThreeDimensionalModel::toXmlString(QString indent,
+EditableDenseThreeDimensionalModel::toXmlString(QString indent,
 					QString extraAttributes) const
 {
     QString s;
@@ -309,6 +312,6 @@ DenseThreeDimensionalModel::toXmlString(QString indent,
 }
 
 #ifdef INCLUDE_MOCFILES
-#include "DenseThreeDimensionalModel.moc.cpp"
+#include "EditableDenseThreeDimensionalModel.moc.cpp"
 #endif
 

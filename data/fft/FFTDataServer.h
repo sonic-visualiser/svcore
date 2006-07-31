@@ -52,6 +52,7 @@ public:
                                            bool polar,
                                            size_t fillFromColumn = 0);
 
+    static void claimInstance(FFTDataServer *);
     static void releaseInstance(FFTDataServer *);
 
     const DenseTimeValueModel *getModel() const { return m_model; }

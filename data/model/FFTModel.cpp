@@ -13,18 +13,20 @@
     COPYING included with this distribution for more information.
 */
 
-#include "FFTFuzzyAdapter.h"
+#include "FFTModel.h"
+#include "DenseTimeValueModel.h"
 
 #include <cassert>
 
-FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
-				 int channel,
-				 WindowType windowType,
-				 size_t windowSize,
-				 size_t windowIncrement,
-				 size_t fftSize,
-				 bool polar,
-				 size_t fillFromColumn) :
+FFTModel::FFTModel(const DenseTimeValueModel *model,
+                   int channel,
+                   WindowType windowType,
+                   size_t windowSize,
+                   size_t windowIncrement,
+                   size_t fftSize,
+                   bool polar,
+                   size_t fillFromColumn) :
+    //!!! ZoomConstraint!
     m_server(0),
     m_xshift(0),
     m_yshift(0)
@@ -43,7 +45,7 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
 
     while (xratio > 1) {
         if (xratio & 0x1) {
-            std::cerr << "ERROR: FFTFuzzyAdapter: Window increment ratio "
+            std::cerr << "ERROR: FFTModel: Window increment ratio "
                       << windowIncrement << " / "
                       << m_server->getWindowIncrement()
                       << " must be a power of two" << std::endl;
@@ -55,7 +57,7 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
 
     while (yratio > 1) {
         if (yratio & 0x1) {
-            std::cerr << "ERROR: FFTFuzzyAdapter: FFT size ratio "
+            std::cerr << "ERROR: FFTModel: FFT size ratio "
                       << m_server->getFFTSize() << " / " << fftSize
                       << " must be a power of two" << std::endl;
             assert(!(yratio & 0x1));
@@ -65,8 +67,60 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
     }
 }
 
-FFTFuzzyAdapter::~FFTFuzzyAdapter()
+FFTModel::~FFTModel()
 {
     FFTDataServer::releaseInstance(m_server);
+}
+
+size_t
+FFTModel::getSampleRate() const
+{
+    return isOK() ? m_server->getModel()->getSampleRate() : 0;
+}
+
+void
+FFTModel::getBinValues(long windowStartFrame, BinValueSet &result) const
+{
+    if (windowStartFrame < 0) windowStartFrame = 0;
+    size_t x = windowStartFrame / getResolution();
+    result.clear();
+    size_t height(getHeight());
+    for (size_t y = 0; y < height; ++y) {
+        result.push_back(const_cast<FFTModel *>(this)->getMagnitudeAt(x, y));
+    }
+}
+
+float
+FFTModel::getBinValue(long windowStartFrame, size_t n) const
+{
+    if (windowStartFrame < 0) windowStartFrame = 0;
+    size_t x = windowStartFrame / getResolution();
+    return const_cast<FFTModel *>(this)->getMagnitudeAt(x, n);
+}
+
+QString
+FFTModel::getBinName(size_t n) const
+{
+    size_t sr = getSampleRate();
+    if (!sr) return "";
+    QString name = tr("%1 Hz").arg((n * sr) / (getHeight() * 2));
+    return name;
+}
+
+Model *
+FFTModel::clone() const
+{
+    return new FFTModel(*this);
+}
+
+FFTModel::FFTModel(const FFTModel &model) :
+    QObject(),
+    ZoomConstraint(),  //!!!  want a real ZoomConstraint for this!
+    DenseThreeDimensionalModel(),
+    m_server(model.m_server),
+    m_xshift(model.m_xshift),
+    m_yshift(model.m_yshift)
+{
+    FFTDataServer::claimInstance(m_server);
 }
 

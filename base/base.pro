@@ -20,7 +20,6 @@ HEADERS += AudioLevel.h \
            CommandHistory.h \
            ConfigFile.h \
            Exceptions.h \
-           FFTCache.h \
            Pitch.h \
            PlayParameterRepository.h \
            PlayParameters.h \
@@ -45,7 +44,6 @@ SOURCES += AudioLevel.cpp \
            CommandHistory.cpp \
            ConfigFile.cpp \
            Exceptions.cpp \
-           FFTCache.cpp \
            Pitch.cpp \
            PlayParameterRepository.cpp \
            PlayParameters.cpp \
