@@ -1,0 +1,72 @@
+/* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
+
+/*
+    Sonic Visualiser
+    An audio file viewer and annotation editor.
+    Centre for Digital Music, Queen Mary, University of London.
+    This file copyright 2006 Chris Cannam.
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of the
+    License, or (at your option) any later version.  See the file
+    COPYING included with this distribution for more information.
+*/
+
+#include "AudioFileReaderFactory.h"
+
+#include "WavFileReader.h"
+#include "OggVorbisFileReader.h"
+#include "MP3FileReader.h"
+
+#include <QString>
+
+QString
+AudioFileReaderFactory::getKnownExtensions()
+{
+    return
+	"*.wav *.aiff *.aif"
+#ifdef HAVE_MAD
+	" *.mp3"
+#endif
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
+	" *.ogg"
+#endif
+#endif
+	;
+}
+
+AudioFileReader *
+AudioFileReaderFactory::createReader(QString path)
+{
+    QString err;
+
+    AudioFileReader *reader = 0;
+
+    reader = new WavFileReader(path);
+    if (reader->isOK()) return reader;
+    if (reader->getError() != "") err = reader->getError();
+    delete reader;
+
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
+    reader = new OggVorbisFileReader(path, true,
+                                     OggVorbisFileReader::CacheInTemporaryFile);
+    if (reader->isOK()) return reader;
+    if (reader->getError() != "") err = reader->getError();
+    delete reader;
+#endif
+#endif
+ 
+#ifdef HAVE_MAD
+    reader = new MP3FileReader(path, true,
+                               MP3FileReader::CacheInTemporaryFile);
+    if (reader->isOK()) return reader;
+    if (reader->getError() != "") err = reader->getError();
+    delete reader;
+#endif
+
+    return 0;
+}
+
