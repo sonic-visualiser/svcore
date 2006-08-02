@@ -32,11 +32,13 @@
 #include <QFileInfo>
 #include <QDir>
 
-//#define DEBUG_MATRIX_FILE 1
-//#define DEBUG_MATRIX_FILE_READ_SET 1
+#define DEBUG_MATRIX_FILE 1
+#define DEBUG_MATRIX_FILE_READ_SET 1
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
+#ifndef DEBUG_MATRIX_FILE
 #define DEBUG_MATRIX_FILE 1
+#endif
 #endif
 
 std::map<QString, int> MatrixFile::m_refcount;
