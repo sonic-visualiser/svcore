@@ -21,11 +21,13 @@
 
 #include "system/System.h"
 
-//#define DEBUG_FFT_SERVER 1
-//#define DEBUG_FFT_SERVER_FILL 1
+#define DEBUG_FFT_SERVER 1
+#define DEBUG_FFT_SERVER_FILL 1
 
 #ifdef DEBUG_FFT_SERVER_FILL
-#define DEBUG_FFT_SERVER
+#ifndef DEBUG_FFT_SERVER
+#define DEBUG_FFT_SERVER 1
+#endif
 #endif
 
 FFTDataServer::ServerMap FFTDataServer::m_servers;
@@ -310,6 +312,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_lastUsedCache(-1),
     m_fftInput(0),
     m_exiting(false),
+    m_suspended(true), //!!! or false?
     m_fillThread(0)
 {
     size_t start = m_model->getStartFrame();
