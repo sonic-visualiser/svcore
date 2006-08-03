@@ -18,7 +18,6 @@ HEADERS += AudioLevel.h \
            Clipboard.h \
            Command.h \
            CommandHistory.h \
-           ConfigFile.h \
            Exceptions.h \
            Pitch.h \
            PlayParameterRepository.h \
@@ -42,7 +41,6 @@ SOURCES += AudioLevel.cpp \
            Clipboard.cpp \
            Command.cpp \
            CommandHistory.cpp \
-           ConfigFile.cpp \
            Exceptions.cpp \
            Pitch.cpp \
            PlayParameterRepository.cpp \
