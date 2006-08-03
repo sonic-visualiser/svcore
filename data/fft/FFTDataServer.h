@@ -74,6 +74,7 @@ public:
     bool       isColumnReady(size_t x);
 
     void       suspend();
+    void       resume(); // also happens automatically if new data needed
 
     // Convenience functions:
 
@@ -131,7 +132,6 @@ private:
 
     int m_lastUsedCache;
     FFTCache *getCache(size_t x, size_t &col) {
-        if (m_suspended) resume();
         col   = x % m_cacheWidth;
         int c = x / m_cacheWidth;
         // The only use of m_lastUsedCache without a lock is to
@@ -179,7 +179,6 @@ private:
 
     void deleteProcessingData();
     void fillColumn(size_t x);
-    void resume();
 
     QString generateFileBasename() const;
     static QString generateFileBasename(const DenseTimeValueModel *model,

@@ -100,6 +100,9 @@ public:
 
     virtual Model *clone() const;
 
+    virtual void suspend() { m_server->suspend(); }
+    virtual void resume() { m_server->resume(); }
+
 private:
     FFTModel(const FFTModel &);
     FFTModel &operator=(const FFTModel &); // not implemented
