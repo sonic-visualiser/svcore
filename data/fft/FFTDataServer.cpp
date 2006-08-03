@@ -22,7 +22,7 @@
 #include "system/System.h"
 
 #define DEBUG_FFT_SERVER 1
-#define DEBUG_FFT_SERVER_FILL 1
+//#define DEBUG_FFT_SERVER_FILL 1
 
 #ifdef DEBUG_FFT_SERVER_FILL
 #ifndef DEBUG_FFT_SERVER
@@ -413,6 +413,9 @@ FFTDataServer::suspend()
 void
 FFTDataServer::resume()
 {
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << "): resume" << std::endl;
+#endif
     m_suspended = false;
     m_condition.wakeAll();
 }
@@ -553,6 +556,7 @@ FFTDataServer::isColumnReady(size_t x)
 {
     if (!haveCache(x)) {
         if (m_lastUsedCache == -1) {
+            if (m_suspended) resume();
             m_fillThread->start();
         }
         return false;
@@ -646,6 +650,8 @@ FFTDataServer::fillColumn(size_t x)
                        m_workbuffer,
                        m_workbuffer + m_fftSize/2,
                        factor);
+
+    if (m_suspended) resume();
 }    
 
 size_t
