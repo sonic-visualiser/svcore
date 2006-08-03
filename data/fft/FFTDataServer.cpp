@@ -369,6 +369,7 @@ FFTDataServer::~FFTDataServer()
     std::cerr << "FFTDataServer(" << this << ")::~FFTDataServer()" << std::endl;
 #endif
 
+    m_suspended = false;
     m_exiting = true;
     m_condition.wakeAll();
     if (m_fillThread) {
@@ -408,6 +409,15 @@ FFTDataServer::suspend()
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
         if (*i) (*i)->suspend();
     }
+}
+
+void
+FFTDataServer::suspendWrites()
+{
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << "): suspendWrites" << std::endl;
+#endif
+    m_suspended = true;
 }
 
 void
