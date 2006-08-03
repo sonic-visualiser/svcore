@@ -74,6 +74,7 @@ public:
     bool       isColumnReady(size_t x);
 
     void       suspend();
+    void       suspendWrites();
     void       resume(); // also happens automatically if new data needed
 
     // Convenience functions:

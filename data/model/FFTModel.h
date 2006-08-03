@@ -101,6 +101,7 @@ public:
     virtual Model *clone() const;
 
     virtual void suspend() { m_server->suspend(); }
+    virtual void suspendWrites() { m_server->suspendWrites(); }
     virtual void resume() { m_server->resume(); }
 
 private:
