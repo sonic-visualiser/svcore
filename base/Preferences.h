@@ -20,14 +20,12 @@
 
 #include "Window.h"
 
-class ConfigFile;
-
 class Preferences : public PropertyContainer
 {
     Q_OBJECT
 
 public:
-    static Preferences *getInstance() { return m_instance; }
+    static Preferences *getInstance();
 
     virtual PropertyList getProperties() const;
     virtual QString getPropertyLabel(const PropertyName &) const;
@@ -40,8 +38,6 @@ public:
     bool getSmoothSpectrogram() const { return m_smoothSpectrogram; }
     float getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
-
-    ConfigFile *getConfigFile() { return m_configFile; }
 
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
@@ -68,7 +64,6 @@ private:
     float m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
-    ConfigFile *m_configFile;
 };
 
 #endif

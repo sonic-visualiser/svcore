@@ -19,53 +19,40 @@
 
 #include "TempDirectory.h"
 
-#include "ConfigFile.h" //!!! reorg
-
 #include <QDir>
 #include <QFileInfo>
+#include <QMutex>
+#include <QSettings>
 
 Preferences *
-Preferences::m_instance = new Preferences();
+Preferences::m_instance = 0;
+
+Preferences *
+Preferences::getInstance()
+{
+    if (!m_instance) m_instance = new Preferences();
+    return m_instance;
+}
 
 Preferences::Preferences() :
     m_smoothSpectrogram(true),
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
-    m_windowType(HanningWindow),
-    m_configFile(0)
+    m_windowType(HanningWindow)
 {
-    // Let TempDirectory do its thing first, so as to avoid any race
-    // condition if it happens that we both want to use the same directory
-    TempDirectory::getInstance();
-
-    QString svDirBase = ".sv1";
-    QString svDir = QDir::home().filePath(svDirBase);
-    if (!QFileInfo(svDir).exists()) {
-        if (!QDir::home().mkdir(svDirBase)) {
-            throw DirectoryCreationFailed(QString("%1 directory in $HOME")
-                                          .arg(svDirBase));
-        }
-    } else if (!QFileInfo(svDir).isDir()) {
-        throw DirectoryCreationFailed(QString("$HOME/%1 is not a directory")
-                                      .arg(svDirBase));
-    }
-
-    m_configFile = new ConfigFile(QDir(svDir).filePath("preferences.cfg"));
-
-    m_smoothSpectrogram =
-        m_configFile->getBool("preferences-smooth-spectrogram", true);
-    m_tuningFrequency =
-        m_configFile->getFloat("preferences-tuning-frequency", 440.f);
+    QSettings settings;
+    settings.beginGroup("Preferences");
+    m_smoothSpectrogram = settings.value("smooth-spectrogram", true).toBool();
+    m_tuningFrequency = settings.value("tuning-frequency", 440.f).toDouble();
     m_propertyBoxLayout = PropertyBoxLayout
-        (m_configFile->getInt("preferences-property-box-layout",
-                              int(VerticallyStacked)));
+        (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
     m_windowType = WindowType
-        (m_configFile->getInt("preferences-window-type", int(HanningWindow)));
+        (settings.value("window-type", int(HanningWindow)).toInt());
+    settings.endGroup();
 }
 
 Preferences::~Preferences()
 {
-    delete m_configFile;
 }
 
 Preferences::PropertyList
@@ -197,7 +184,10 @@ Preferences::setSmoothSpectrogram(bool smooth)
 {
     if (m_smoothSpectrogram != smooth) {
         m_smoothSpectrogram = smooth;
-        m_configFile->set("preferences-smooth-spectrogram", smooth);
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("smooth-spectrogram", smooth);
+        settings.endGroup();
         emit propertyChanged("Smooth Spectrogram");
     }
 }
@@ -207,7 +197,10 @@ Preferences::setTuningFrequency(float freq)
 {
     if (m_tuningFrequency != freq) {
         m_tuningFrequency = freq;
-        m_configFile->set("preferences-tuning-frequency", freq);
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("tuning-frequency", freq);
+        settings.endGroup();
         emit propertyChanged("Tuning Frequency");
     }
 }
@@ -217,7 +210,10 @@ Preferences::setPropertyBoxLayout(PropertyBoxLayout layout)
 {
     if (m_propertyBoxLayout != layout) {
         m_propertyBoxLayout = layout;
-        m_configFile->set("preferences-property-box-layout", int(layout));
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("property-box-layout", int(layout));
+        settings.endGroup();
         emit propertyChanged("Property Box Layout");
     }
 }
@@ -227,7 +223,10 @@ Preferences::setWindowType(WindowType type)
 {
     if (m_windowType != type) {
         m_windowType = type;
-        m_configFile->set("preferences-window-type", int(type));
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("window-type", int(type));
+        settings.endGroup();
         emit propertyChanged("Window Type");
     }
 }

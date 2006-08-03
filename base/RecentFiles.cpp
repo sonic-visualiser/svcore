@@ -14,11 +14,11 @@
 */
 
 #include "RecentFiles.h"
-#include "ConfigFile.h"
 
 #include "Preferences.h"
 
 #include <QFileInfo>
+#include <QSettings>
 
 RecentFiles *
 RecentFiles::m_instance = 0;
@@ -47,28 +47,34 @@ void
 RecentFiles::readFiles()
 {
     m_files.clear();
-    ConfigFile *cf = Preferences::getInstance()->getConfigFile();
+    QSettings settings;
+    settings.beginGroup("RecentFiles");
+
     for (unsigned int i = 0; i < 100; ++i) {
         QString key = QString("recent-file-%1").arg(i);
-        QString filename = cf->get(key);
+        QString filename = settings.value(key, "").toString();
         if (filename == "") break;
         if (i < m_maxFileCount) m_files.push_back(filename);
-        else cf->set(key, "");
+        else settings.setValue(key, "");
     }
-    cf->commit();
+
+    settings.endGroup();
 }
 
 void
 RecentFiles::writeFiles()
 {
-    ConfigFile *cf = Preferences::getInstance()->getConfigFile();
+    QSettings settings;
+    settings.beginGroup("RecentFiles");
+
     for (unsigned int i = 0; i < m_maxFileCount; ++i) {
         QString key = QString("recent-file-%1").arg(i);
         QString filename = "";
         if (i < m_files.size()) filename = m_files[i];
-        cf->set(key, filename);
+        settings.setValue(key, filename);
     }
-    cf->commit();
+
+    settings.endGroup();
 }
 
 void
