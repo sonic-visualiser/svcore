@@ -359,8 +359,6 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     }
 
     m_fillThread = new FillThread(*this, fillFromColumn);
-
-    //!!! respond appropriately when thread exits (deleteProcessingData etc)
 }
 
 FFTDataServer::~FFTDataServer()
@@ -427,7 +425,15 @@ FFTDataServer::resume()
     std::cerr << "FFTDataServer(" << this << "): resume" << std::endl;
 #endif
     m_suspended = false;
-    m_condition.wakeAll();
+    if (m_fillThread) {
+        if (m_fillThread->isFinished()) {
+            delete m_fillThread;
+            m_fillThread = 0;
+            deleteProcessingData();
+        } else {
+            m_condition.wakeAll();
+        }
+    }
 }
 
 FFTCache *

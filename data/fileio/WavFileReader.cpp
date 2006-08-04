@@ -110,3 +110,23 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
     return;
 }
 
+void
+WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
+{
+    int count;
+
+    if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
+        extensions.insert("wav");
+        extensions.insert("aiff");
+        extensions.insert("aif");
+        return;
+    }
+
+    SF_FORMAT_INFO info;
+    for (int i = 0; i < count; ++i) {
+        info.format = i;
+        if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
+            extensions.insert(info.extension);
+        }
+    }
+}

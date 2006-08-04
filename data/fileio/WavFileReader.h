@@ -21,6 +21,8 @@
 #include <sndfile.h>
 #include <QMutex>
 
+#include <set>
+
 class WavFileReader : public AudioFileReader
 {
 public:
@@ -36,6 +38,8 @@ public:
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const;
     
+    static void getSupportedExtensions(std::set<QString> &extensions);
+
 protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
