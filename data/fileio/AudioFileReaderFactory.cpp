@@ -24,17 +24,26 @@
 QString
 AudioFileReaderFactory::getKnownExtensions()
 {
-    return
-	"*.wav *.aiff *.aif"
+    std::set<QString> extensions;
+
+    WavFileReader::getSupportedExtensions(extensions);
 #ifdef HAVE_MAD
-	" *.mp3"
+    MP3FileReader::getSupportedExtensions(extensions);
 #endif
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
-	" *.ogg"
+    OggVorbisFileReader::getSupportedExtensions(extensions);
 #endif
 #endif
-	;
+
+    QString rv;
+    for (std::set<QString>::const_iterator i = extensions.begin();
+         i != extensions.end(); ++i) {
+        if (i != extensions.begin()) rv += " ";
+        rv += "*." + *i;
+    }
+
+    return rv;
 }
 
 AudioFileReader *

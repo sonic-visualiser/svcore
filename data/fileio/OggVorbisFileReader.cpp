@@ -155,5 +155,11 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
     return 0;
 }
 
+void
+OggVorbisFileReader::getSupportedExtensions(std::set<QString> &extensions)
+{
+    extensions.insert("ogg");
+}
+
 #endif
 #endif

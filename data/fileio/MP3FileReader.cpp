@@ -224,4 +224,10 @@ MP3FileReader::error(void *dp,
     return MAD_FLOW_CONTINUE;
 }
 
+void
+MP3FileReader::getSupportedExtensions(std::set<QString> &extensions)
+{
+    extensions.insert("mp3");
+}
+
 #endif

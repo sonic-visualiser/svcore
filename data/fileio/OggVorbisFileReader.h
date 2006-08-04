@@ -24,6 +24,8 @@
 #include <oggz/oggz.h>
 #include <fishsound/fishsound.h>
 
+#include <set>
+
 class QProgressDialog;
 
 class OggVorbisFileReader : public CodedAudioFileReader
@@ -33,6 +35,8 @@ public:
     virtual ~OggVorbisFileReader();
 
     virtual QString getError() const { return m_error; }
+
+    static void getSupportedExtensions(std::set<QString> &extensions);
 
 protected:
     QString m_path;

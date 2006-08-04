@@ -22,6 +22,8 @@
 
 #include <mad.h>
 
+#include <set>
+
 class QProgressDialog;
 
 class MP3FileReader : public CodedAudioFileReader
@@ -31,6 +33,8 @@ public:
     virtual ~MP3FileReader();
 
     virtual QString getError() const { return m_error; }
+
+    static void getSupportedExtensions(std::set<QString> &extensions);
     
 protected:
     QString m_path;
