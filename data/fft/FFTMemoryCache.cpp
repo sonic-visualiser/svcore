@@ -13,14 +13,10 @@
     COPYING included with this distribution for more information.
 */
 
-#include "FFTCache.h"
+#include "FFTMemoryCache.h"
 #include "system/System.h"
 
 #include <iostream>
-
-//!!! This class is a work in progress -- it does only as much as we
-// need for the current SpectrogramLayer.  Slated for substantial
-// refactoring and extension.
 
 FFTMemoryCache::FFTMemoryCache() :
     m_width(0),
@@ -54,6 +50,7 @@ FFTMemoryCache::resize(size_t width, size_t height)
 
     resize(m_magnitude, width, height);
     resize(m_phase, width, height);
+    m_colset.resize(width);
 
     m_factor = (float *)realloc(m_factor, width * sizeof(float));
 
