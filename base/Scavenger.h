@@ -25,7 +25,10 @@
 #include "system/System.h"
 
 #include <vector>
+#include <list>
 #include <sys/time.h>
+#include <pthread.h>
+#include <iostream>
 
 /**
  * A very simple class that facilitates running things like plugins
@@ -43,6 +46,7 @@ class Scavenger
 {
 public:
     Scavenger(int sec = 2, int defaultObjectListSize = 200);
+    ~Scavenger();
 
     /**
      * Call from an RT thread etc., to pass ownership of t to us.
@@ -61,6 +65,13 @@ protected:
     typedef std::vector<ObjectTimePair> ObjectTimeList;
     ObjectTimeList m_objects;
     int m_sec;
+
+    typedef std::list<T *> ObjectList;
+    ObjectList m_excess;
+    int m_lastExcess;
+    pthread_mutex_t m_excessMutex;
+    void pushExcess(T *);
+    void clearExcess(int);
 
     unsigned int m_claimed;
     unsigned int m_scavenged;
@@ -89,6 +100,27 @@ Scavenger<T>::Scavenger(int sec, int defaultObjectListSize) :
     m_claimed(0),
     m_scavenged(0)
 {
+    pthread_mutex_init(&m_excessMutex, NULL);
+}
+
+template <typename T>
+Scavenger<T>::~Scavenger()
+{
+    if (m_scavenged < m_claimed) {
+	for (size_t i = 0; i < m_objects.size(); ++i) {
+	    ObjectTimePair &pair = m_objects[i];
+	    if (pair.first != 0) {
+		T *ot = pair.first;
+		pair.first = 0;
+		delete ot;
+		++m_scavenged;
+	    }
+	}
+    }
+
+    clearExcess(0);
+
+    pthread_mutex_destroy(&m_excessMutex);
 }
 
 template <typename T>
@@ -111,18 +143,9 @@ Scavenger<T>::claim(T *t)
 	}
     }
 
-    // Oh no -- run out of slots!  Warn and discard something at
-    // random (without deleting it -- it's probably safer to leak).
-
-    for (size_t i = 0; i < m_objects.size(); ++i) {
-	ObjectTimePair &pair = m_objects[i];
-	if (pair.first != 0) {
-	    pair.second = sec;
-	    pair.first = t;
-	    ++m_claimed;
-	    ++m_scavenged;
-	}
-    }
+    std::cerr << "WARNING: Scavenger::claim(" << t << "): run out of slots, "
+	      << "using non-RT-safe method" << std::endl;
+    pushExcess(t);
 }
 
 template <typename T>
@@ -147,6 +170,36 @@ Scavenger<T>::scavenge(bool clearNow)
 	    ++m_scavenged;
 	}
     }
+
+    if (sec > m_lastExcess + m_sec) {
+        clearExcess(sec);
+    }
+}
+
+template <typename T>
+void
+Scavenger<T>::pushExcess(T *t)
+{
+    pthread_mutex_lock(&m_excessMutex);
+    m_excess.push_back(t);
+    struct timeval tv;
+    (void)gettimeofday(&tv, 0);
+    m_lastExcess = tv.tv_sec;
+    pthread_mutex_unlock(&m_excessMutex);
+}
+
+template <typename T>
+void
+Scavenger<T>::clearExcess(int sec)
+{
+    pthread_mutex_lock(&m_excessMutex);
+    for (typename ObjectList::iterator i = m_excess.begin();
+	 i != m_excess.end(); ++i) {
+	delete *i;
+    }
+    m_excess.clear();
+    m_lastExcess = sec;
+    pthread_mutex_unlock(&m_excessMutex);
 }
 
 #endif
