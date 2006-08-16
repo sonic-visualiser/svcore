@@ -16,6 +16,7 @@ MOC_DIR = tmp_moc
 HEADERS += fft/FFTCache.h \
            fft/FFTDataServer.h \
            fft/FFTFileCache.h \
+           fft/FFTMemoryCache.h \
            fileio/AudioFileReader.h \
            fileio/AudioFileReaderFactory.h \
            fileio/BZipFileDevice.h \
@@ -46,9 +47,9 @@ HEADERS += fft/FFTCache.h \
            model/SparseValueModel.h \
            model/TextModel.h \
            model/WaveFileModel.h
-SOURCES += fft/FFTCache.cpp \
-           fft/FFTDataServer.cpp \
+SOURCES += fft/FFTDataServer.cpp \
            fft/FFTFileCache.cpp \
+           fft/FFTMemoryCache.cpp \
            fileio/AudioFileReaderFactory.cpp \
            fileio/BZipFileDevice.cpp \
            fileio/CodedAudioFileReader.cpp \

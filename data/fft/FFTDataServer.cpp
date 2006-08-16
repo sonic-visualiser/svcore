@@ -16,6 +16,7 @@
 #include "FFTDataServer.h"
 
 #include "FFTFileCache.h"
+#include "FFTMemoryCache.h"
 
 #include "model/DenseTimeValueModel.h"
 
@@ -487,6 +488,8 @@ FFTDataServer::getCacheAux(size_t c)
                                        m_polar ? FFTFileCache::Polar :
                                                  FFTFileCache::Rectangular);
 
+//    FFTCache *cache = new FFTMemoryCache();
+
     size_t width = m_cacheWidth;
     if (c * m_cacheWidth + width > m_width) {
         width = m_width - c * m_cacheWidth;
@@ -744,6 +747,9 @@ FFTDataServer::FillThread::run()
                 m_server.m_writeMutex.lock();
                 m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
                 m_server.m_writeMutex.unlock();
+#ifdef DEBUG_FFT_SERVER
+                std::cerr << "FFTDataServer(" << this << "): waited" << std::endl;
+#endif
                 if (m_server.m_exiting) return;
             }
 
