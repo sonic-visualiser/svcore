@@ -56,6 +56,9 @@ public:
 	else return requestedBlockSize;
     }
 
+    /**
+     * Return the maximum zoom level within range for this constraint.
+     */
     virtual size_t getMaxZoomLevel() const { return 262144; }
 };
 
