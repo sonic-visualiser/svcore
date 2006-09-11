@@ -24,6 +24,8 @@ namespace Vamp { class Plugin; }
 class FeatureExtractionPluginFactory
 {
 public:
+    virtual ~FeatureExtractionPluginFactory() { }
+
     static FeatureExtractionPluginFactory *instance(QString pluginType);
     static FeatureExtractionPluginFactory *instanceFor(QString identifier);
     static std::vector<QString> getAllPluginIdentifiers();
