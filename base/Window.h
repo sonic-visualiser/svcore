@@ -55,6 +55,7 @@ public:
 	for (size_t i = 0; i < m_size; ++i) dst[i] = src[i] * m_cache[i];
     }
 
+    T getArea() { return m_area; }
     T getValue(size_t i) { return m_cache[i]; }
 
     WindowType getType() const { return m_type; }
@@ -64,6 +65,7 @@ protected:
     WindowType m_type;
     size_t m_size;
     T *m_cache;
+    T m_area;
     
     void encache();
     void cosinewin(T *, T, T, T, T);
@@ -137,6 +139,12 @@ void Window<T>::encache()
     }
 	
     m_cache = mult;
+
+    m_area = 0;
+    for (int i = 0; i < n; ++i) {
+        m_area += m_cache[i];
+    }
+    m_area /= n;
 }
 
 template <typename T>
