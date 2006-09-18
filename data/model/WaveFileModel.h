@@ -62,6 +62,10 @@ public:
 
     virtual Range getRange(size_t channel, size_t start, size_t end) const;
 
+    virtual void toXml(QTextStream &out,
+                       QString indent = "",
+                       QString extraAttributes = "") const;
+
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 

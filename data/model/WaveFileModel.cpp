@@ -479,6 +479,16 @@ WaveFileModel::RangeCacheFillThread::run()
 //    }
 }
 
+void
+WaveFileModel::toXml(QTextStream &out,
+                     QString indent,
+                     QString extraAttributes) const
+{
+    Model::toXml(out, indent,
+                 QString("type=\"wavefile\" file=\"%1\" %2")
+                 .arg(m_path).arg(extraAttributes));
+}
+
 QString
 WaveFileModel::toXmlString(QString indent,
 			   QString extraAttributes) const

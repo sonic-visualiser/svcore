@@ -211,7 +211,7 @@ PluginXml::setParametersFromXml(QString xml)
 
     setParameters(attrs);
 }
-    
+
 QString
 PluginXml::stripInvalidParameterNameCharacters(QString s) const
 {
