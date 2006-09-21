@@ -31,6 +31,14 @@ PluginIdentifier::createIdentifier(QString type,
     return identifier;
 }
 
+QString
+PluginIdentifier::canonicalise(QString identifier)
+{
+    QString type, soName, label;
+    parseIdentifier(identifier, type, soName, label);
+    return createIdentifier(type, soName, label);
+}
+
 void
 PluginIdentifier::parseIdentifier(QString identifier,
 				  QString &type,

@@ -51,6 +51,8 @@ public:
 						      unsigned int blockSize,
 						      unsigned int channels);
 
+    virtual QString getPluginCategory(QString identifier);
+
     float getPortMinimum(const LADSPA_Descriptor *, int port);
     float getPortMaximum(const LADSPA_Descriptor *, int port);
     float getPortDefault(const LADSPA_Descriptor *, int port);
@@ -80,8 +82,8 @@ protected:
     std::vector<QString> m_identifiers;
     std::map<QString, RealTimePluginDescriptor *> m_rtDescriptors;
 
-    std::map<unsigned long, QString> m_taxonomy;
-    std::map<QString, QString> m_fallbackCategories;
+    std::map<QString, QString> m_taxonomy;
+    std::map<unsigned long, QString> m_lrdfTaxonomy;
     std::map<unsigned long, std::map<int, float> > m_portDefaults;
 
     std::set<RealTimePluginInstance *> m_instances;

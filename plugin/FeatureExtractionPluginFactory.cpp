@@ -24,6 +24,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QTextStream>
 
 #include <iostream>
 
@@ -171,6 +172,8 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 	}
     }
 
+    generateTaxonomy();
+
     return rv;
 }
 
@@ -294,3 +297,54 @@ done:
     return rv;
 }
 
+QString
+FeatureExtractionPluginFactory::getPluginCategory(QString identifier)
+{
+    return m_taxonomy[identifier];
+}
+
+void
+FeatureExtractionPluginFactory::generateTaxonomy()
+{
+    std::vector<QString> pluginPath = getPluginPath();
+    std::vector<QString> path;
+
+    for (size_t i = 0; i < pluginPath.size(); ++i) {
+	if (pluginPath[i].contains("/lib/")) {
+	    QString p(pluginPath[i]);
+            path.push_back(p);
+	    p.replace("/lib/", "/share/");
+	    path.push_back(p);
+	}
+	path.push_back(pluginPath[i]);
+    }
+
+    for (size_t i = 0; i < path.size(); ++i) {
+
+	QDir dir(path[i], "*.cat");
+
+//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i].toStdString() << " has " << dir.count() << " .cat files" << std::endl;
+	for (unsigned int j = 0; j < dir.count(); ++j) {
+
+	    QFile file(path[i] + "/" + dir[j]);
+
+//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i].toStdString() + "/" + dir[j].toStdString()) << std::endl;
+
+	    if (file.open(QIODevice::ReadOnly)) {
+//		    std::cerr << "...opened" << std::endl;
+		QTextStream stream(&file);
+		QString line;
+
+		while (!stream.atEnd()) {
+		    line = stream.readLine();
+//		    std::cerr << "line is: \"" << line.toStdString() << "\"" << std::endl;
+		    QString id = PluginIdentifier::canonicalise
+                        (line.section("::", 0, 0));
+		    QString cat = line.section("::", 1, 1);
+		    m_taxonomy[id] = cat;
+//		    std::cerr << "FeatureExtractionPluginFactory: set id \"" << id.toStdString() << "\" to cat \"" << cat.toStdString() << "\"" << std::endl;
+		}
+	    }
+	}
+    }
+}    

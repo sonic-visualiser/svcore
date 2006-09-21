@@ -80,16 +80,10 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	list.push_back(descriptor->Copyright);
 	list.push_back("false"); // is synth
 	list.push_back("false"); // is grouped
-	
-	if (m_taxonomy.find(descriptor->UniqueID) != m_taxonomy.end() &&
-	    m_taxonomy[descriptor->UniqueID] != "") {
-//		std::cerr << "LADSPAPluginFactory: cat for " << i->toStdString()<< " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << std::endl;
-	    list.push_back(m_taxonomy[descriptor->UniqueID]);
 
-	} else if (m_fallbackCategories.find(*i) !=
-		   m_fallbackCategories.end()) {
-	    list.push_back(m_fallbackCategories[*i]);
-//		std::cerr << "LADSPAPluginFactory: cat for " << i->toStdString()  <<" found in fallbacks as " << m_fallbackCategories[*i] << std::endl;
+	if (m_taxonomy.find(*i) != m_taxonomy.end() && m_taxonomy[*i] != "") {
+//		std::cerr << "LADSPAPluginFactory: cat for " << i->toStdString()<< " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << std::endl;
+	    list.push_back(m_taxonomy[*i]);
 
 	} else {
 	    list.push_back("");
@@ -655,18 +649,26 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
         rtd->audioInputPortCount = 0;
         rtd->controlOutputPortCount = 0;
 
+	QString identifier = PluginIdentifier::createIdentifier
+	    ("ladspa", soname, descriptor->Label);
+
 #ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
 		
-	QString category = m_taxonomy[descriptor->UniqueID];
+        if (m_lrdfTaxonomy[descriptor->UniqueID] != "") {
+            m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->UniqueID];
+//            std::cerr << "set id \"" << identifier.toStdString() << "\" to cat \"" << m_taxonomy[identifier].toStdString() << "\" from LRDF" << std::endl;
+        }
+
+	QString category = m_taxonomy[identifier];
 	
 	if (category == "" && descriptor->Name != 0) {
 	    std::string name = descriptor->Name;
 	    if (name.length() > 4 &&
 		name.substr(name.length() - 4) == " VST") {
 		category = "VST effects";
-		m_taxonomy[descriptor->UniqueID] = category;
+		m_taxonomy[identifier] = category;
 	    }
 	}
 	
@@ -724,8 +726,6 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
             }
         }
 
-	QString identifier = PluginIdentifier::createIdentifier
-	    ("ladspa", soname, descriptor->Label);
 	m_identifiers.push_back(identifier);
 
         m_rtDescriptors[identifier] = rtd;
@@ -748,24 +748,25 @@ LADSPAPluginFactory::generateFallbackCategories()
     for (size_t i = 0; i < pluginPath.size(); ++i) {
 	if (pluginPath[i].contains("/lib/")) {
 	    QString p(pluginPath[i]);
+            path.push_back(p);
 	    p.replace("/lib/", "/share/");
 	    path.push_back(p);
-//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << p << std::endl;
+//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << p.toStdString() << std::endl;
 	}
 	path.push_back(pluginPath[i]);
-//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i] << std::endl;
+//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i].toStdString() << std::endl;
     }
 
     for (size_t i = 0; i < path.size(); ++i) {
 
 	QDir dir(path[i], "*.cat");
 
-//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << std::endl;
+//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i].toStdString() << " has " << dir.count() << " .cat files" << std::endl;
 	for (unsigned int j = 0; j < dir.count(); ++j) {
 
 	    QFile file(path[i] + "/" + dir[j]);
 
-//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i] + "/" + dir[j]) << std::endl;
+//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i].toStdString() + "/" + dir[j].toStdString()) << std::endl;
 
 	    if (file.open(QIODevice::ReadOnly)) {
 //		    std::cerr << "...opened" << std::endl;
@@ -774,11 +775,12 @@ LADSPAPluginFactory::generateFallbackCategories()
 
 		while (!stream.atEnd()) {
 		    line = stream.readLine();
-//		    std::cerr << "line is: \"" << line << "\"" << std::endl;
-		    QString id = line.section("::", 0, 0);
+//		    std::cerr << "line is: \"" << line.toStdString() << "\"" << std::endl;
+		    QString id = PluginIdentifier::canonicalise
+                        (line.section("::", 0, 0));
 		    QString cat = line.section("::", 1, 1);
-		    m_fallbackCategories[id] = cat;
-//		    std::cerr << "set id \"" << id << "\" to cat \"" << cat << "\"" << std::endl;
+		    m_taxonomy[id] = cat;
+//		    std::cerr << "set id \"" << id.toStdString() << "\" to cat \"" << cat.toStdString() << "\"" << std::endl;
 		}
 	    }
 	}
@@ -793,7 +795,7 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 
     if (uris != NULL) {
 	for (int i = 0; i < uris->count; ++i) {
-	    m_taxonomy[lrdf_get_uid(uris->items[i])] = base;
+	    m_lrdfTaxonomy[lrdf_get_uid(uris->items[i])] = base;
 	}
 	lrdf_free_uris(uris);
     }
@@ -811,4 +813,9 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 #endif
 }
     
+QString
+LADSPAPluginFactory::getPluginCategory(QString identifier)
+{
+    return m_taxonomy[identifier];
+}
 
