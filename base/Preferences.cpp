@@ -38,7 +38,8 @@ Preferences::Preferences() :
     m_smoothSpectrogram(true),
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
-    m_windowType(HanningWindow)
+    m_windowType(HanningWindow),
+    m_resampleQuality(1)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -48,6 +49,7 @@ Preferences::Preferences() :
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
+    m_resampleQuality = settings.value("resample-quality", 1).toInt();
     settings.endGroup();
 }
 
@@ -63,6 +65,7 @@ Preferences::getProperties() const
     props.push_back("Tuning Frequency");
     props.push_back("Property Box Layout");
     props.push_back("Window Type");
+    props.push_back("Resample Quality");
     return props;
 }
 
@@ -81,6 +84,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     if (name == "Window Type") {
         return tr("Spectral analysis window shape");
     }
+    if (name == "Resample Quality") {
+        return tr("Resampler quality");
+    }
     return name;
 }
 
@@ -97,6 +103,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ValueProperty;
     }
     if (name == "Window Type") {
+        return ValueProperty;
+    }
+    if (name == "Resample Quality") {
         return ValueProperty;
     }
     return InvalidProperty;
@@ -126,6 +135,12 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return int(m_windowType);
     }
 
+    if (name == "Resample Quality") {
+        if (min) *min = 0;
+        if (max) *max = 2;
+        return m_resampleQuality;
+    }
+
     return 0;
 }
 
@@ -148,6 +163,13 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case ParzenWindow: return tr("Parzen");
         case NuttallWindow: return tr("Nuttall");
         case BlackmanHarrisWindow: return tr("Blackman-Harris");
+        }
+    }
+    if (name == "Resample Quality") {
+        switch (value) {
+        case 0: return tr("Fastest");
+        case 1: return tr("Medium quality");
+        case 2: return tr("Highest quality");
         }
     }
     return "";
@@ -176,6 +198,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setPropertyBoxLayout(value == 0 ? VerticallyStacked : Layered);
     } else if (name == "Window Type") {
         setWindowType(WindowType(value));
+    } else if (name == "Resample Quality") {
+        setResampleQuality(value);
     }
 }
 
@@ -231,3 +255,15 @@ Preferences::setWindowType(WindowType type)
     }
 }
 
+void
+Preferences::setResampleQuality(int q)
+{
+    if (m_resampleQuality != q) {
+        m_resampleQuality = q;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("resample-quality", q);
+        settings.endGroup();
+        emit propertyChanged("Resample Quality");
+    }
+}

@@ -38,6 +38,7 @@ public:
     bool getSmoothSpectrogram() const { return m_smoothSpectrogram; }
     float getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
+    int getResampleQuality() const { return m_resampleQuality; }
 
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
@@ -53,6 +54,7 @@ public slots:
     void setTuningFrequency(float freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
+    void setResampleQuality(int quality);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -64,6 +66,7 @@ private:
     float m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
+    int m_resampleQuality;
 };
 
 #endif
