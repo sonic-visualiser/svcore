@@ -33,6 +33,8 @@ public:
  
     static QString createIdentifier(QString type, QString soName, QString label);
 
+    static QString canonicalise(QString identifier);
+
     static void parseIdentifier(QString identifier,
 				QString &type, QString &soName, QString &label);
 

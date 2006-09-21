@@ -18,6 +18,7 @@
 
 #include <QString>
 #include <vector>
+#include <map>
 
 namespace Vamp { class Plugin; }
 
@@ -41,8 +42,16 @@ public:
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
                                             float inputSampleRate);
 
+    /**
+     * Get category metadata about a plugin (without instantiating it).
+     */
+    virtual QString getPluginCategory(QString identifier);
+
 protected:
     std::vector<QString> m_pluginPath;
+    std::map<QString, QString> m_taxonomy;
+
+    void generateTaxonomy();
 };
 
 #endif

@@ -73,7 +73,7 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	list.push_back(descriptor->Copyright);
 	list.push_back((ddesc->run_synth || ddesc->run_multiple_synths) ? "true" : "false");
 	list.push_back(ddesc->run_multiple_synths ? "true" : "false");
-	list.push_back(m_taxonomy[descriptor->UniqueID]);
+	list.push_back(m_taxonomy[*i]);
 	list.push_back(QString("%1").arg(descriptor->PortCount));
 
 	for (unsigned long p = 0; p < descriptor->PortCount; ++p) {
@@ -301,11 +301,19 @@ DSSIPluginFactory::discoverPlugins(QString soname)
         rtd->audioInputPortCount = 0;
         rtd->controlOutputPortCount = 0;
 
+	QString identifier = PluginIdentifier::createIdentifier
+	    ("dssi", soname, ladspaDescriptor->Label);
+
 #ifdef HAVE_LRDF
 	char *def_uri = 0;
 	lrdf_defaults *defs = 0;
 		
-	QString category = m_taxonomy[ladspaDescriptor->UniqueID];
+	QString category = m_taxonomy[identifier];
+
+        if (category == "" && m_lrdfTaxonomy[descriptor->LADSPA_Plugin->UniqueID] != "") {
+            m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->LADSPA_Plugin->UniqueID];
+            category = m_taxonomy[identifier];
+        }
 
 	if (category == "" && ladspaDescriptor->Name != 0) {
 	    std::string name = ladspaDescriptor->Name;
@@ -316,7 +324,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 		} else {
 		    category = "VST effects";
 		}
-		m_taxonomy[ladspaDescriptor->UniqueID] = category;
+		m_taxonomy[identifier] = category;
 	    }
 	}
 
@@ -374,8 +382,6 @@ DSSIPluginFactory::discoverPlugins(QString soname)
             }
         }
 
-	QString identifier = PluginIdentifier::createIdentifier
-	    ("dssi", soname, ladspaDescriptor->Label);
 	m_identifiers.push_back(identifier);
 
         m_rtDescriptors[identifier] = rtd;

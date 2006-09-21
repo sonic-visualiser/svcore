@@ -86,6 +86,11 @@ public:
 						      unsigned int blockSize,
 						      unsigned int channels) = 0;
 
+    /**
+     * Get category metadata about a plugin (without instantiating it).
+     */
+    virtual QString getPluginCategory(QString identifier) = 0;
+
 protected:
     RealTimePluginFactory() { }
 

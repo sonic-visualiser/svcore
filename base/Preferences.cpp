@@ -85,7 +85,7 @@ Preferences::getPropertyLabel(const PropertyName &name) const
         return tr("Spectral analysis window shape");
     }
     if (name == "Resample Quality") {
-        return tr("Resampler quality");
+        return tr("Playback resampler type");
     }
     return name;
 }
@@ -168,7 +168,7 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
     if (name == "Resample Quality") {
         switch (value) {
         case 0: return tr("Fastest");
-        case 1: return tr("Medium quality");
+        case 1: return tr("Standard");
         case 2: return tr("Highest quality");
         }
     }
