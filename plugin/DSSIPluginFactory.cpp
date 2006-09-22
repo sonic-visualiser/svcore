@@ -331,12 +331,12 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 
         rtd->category = category.toStdString();
 	
-	std::cerr << "Plugin id is " << ladspaDescriptor->UniqueID
-                  << ", identifier is \"" << identifier.toStdString()
-		  << "\", category is \"" << category.toStdString()
-		  << "\", name is " << ladspaDescriptor->Name
-		  << ", label is " << ladspaDescriptor->Label
-		  << std::endl;
+//	std::cerr << "Plugin id is " << ladspaDescriptor->UniqueID
+//                  << ", identifier is \"" << identifier.toStdString()
+//		  << "\", category is \"" << category.toStdString()
+//		  << "\", name is " << ladspaDescriptor->Name
+//		  << ", label is " << ladspaDescriptor->Label
+//		  << std::endl;
 	
 	def_uri = lrdf_get_default_uri(ladspaDescriptor->UniqueID);
 	if (def_uri) {
