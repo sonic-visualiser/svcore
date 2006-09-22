@@ -15,27 +15,14 @@
 
 #include "RecentFiles.h"
 
-#include "Preferences.h"
-
 #include <QFileInfo>
 #include <QSettings>
 
-RecentFiles *
-RecentFiles::m_instance = 0;
-
-RecentFiles *
-RecentFiles::getInstance(int maxFileCount)
+RecentFiles::RecentFiles(QString settingsGroup, size_t maxCount) :
+    m_settingsGroup(settingsGroup),
+    m_maxCount(maxCount)
 {
-    if (!m_instance) {
-        m_instance = new RecentFiles(maxFileCount);
-    }
-    return m_instance;
-}
-
-RecentFiles::RecentFiles(int maxFileCount) :
-    m_maxFileCount(maxFileCount)
-{
-    readFiles();
+    read();
 }
 
 RecentFiles::~RecentFiles()
@@ -44,17 +31,17 @@ RecentFiles::~RecentFiles()
 }
 
 void
-RecentFiles::readFiles()
+RecentFiles::read()
 {
-    m_files.clear();
+    m_names.clear();
     QSettings settings;
-    settings.beginGroup("RecentFiles");
+    settings.beginGroup(m_settingsGroup);
 
-    for (unsigned int i = 0; i < 100; ++i) {
-        QString key = QString("recent-file-%1").arg(i);
-        QString filename = settings.value(key, "").toString();
-        if (filename == "") break;
-        if (i < m_maxFileCount) m_files.push_back(filename);
+    for (size_t i = 0; i < 100; ++i) {
+        QString key = QString("recent-%1").arg(i);
+        QString name = settings.value(key, "").toString();
+        if (name == "") break;
+        if (i < m_maxCount) m_names.push_back(name);
         else settings.setValue(key, "");
     }
 
@@ -62,16 +49,16 @@ RecentFiles::readFiles()
 }
 
 void
-RecentFiles::writeFiles()
+RecentFiles::write()
 {
     QSettings settings;
-    settings.beginGroup("RecentFiles");
+    settings.beginGroup(m_settingsGroup);
 
-    for (unsigned int i = 0; i < m_maxFileCount; ++i) {
-        QString key = QString("recent-file-%1").arg(i);
-        QString filename = "";
-        if (i < m_files.size()) filename = m_files[i];
-        settings.setValue(key, filename);
+    for (size_t i = 0; i < m_maxCount; ++i) {
+        QString key = QString("recent-%1").arg(i);
+        QString name = "";
+        if (i < m_names.size()) name = m_names[i];
+        settings.setValue(key, name);
     }
 
     settings.endGroup();
@@ -80,50 +67,54 @@ RecentFiles::writeFiles()
 void
 RecentFiles::truncateAndWrite()
 {
-    while (m_files.size() > m_maxFileCount) {
-        m_files.pop_back();
+    while (m_names.size() > m_maxCount) {
+        m_names.pop_back();
     }
-    writeFiles();
+    write();
 }
 
 std::vector<QString>
-RecentFiles::getRecentFiles() const
+RecentFiles::getRecent() const
 {
-    std::vector<QString> files;
-    for (unsigned int i = 0; i < m_maxFileCount; ++i) {
-        if (i < m_files.size()) {
-            files.push_back(m_files[i]);
+    std::vector<QString> names;
+    for (size_t i = 0; i < m_maxCount; ++i) {
+        if (i < m_names.size()) {
+            names.push_back(m_names[i]);
         }
     }
-    return files;
+    return names;
 }
 
 void
-RecentFiles::addFile(QString filename)
+RecentFiles::add(QString name)
 {
-    filename = QFileInfo(filename).absoluteFilePath();
-
     bool have = false;
-    for (unsigned int i = 0; i < m_files.size(); ++i) {
-        if (m_files[i] == filename) {
+    for (size_t i = 0; i < m_names.size(); ++i) {
+        if (m_names[i] == name) {
             have = true;
             break;
         }
     }
     
     if (!have) {
-        m_files.push_front(filename);
+        m_names.push_front(name);
     } else {
-        std::deque<QString> newfiles;
-        newfiles.push_back(filename);
-        for (unsigned int i = 0; i < m_files.size(); ++i) {
-            if (m_files[i] == filename) continue;
-            newfiles.push_back(m_files[i]);
+        std::deque<QString> newnames;
+        newnames.push_back(name);
+        for (size_t i = 0; i < m_names.size(); ++i) {
+            if (m_names[i] == name) continue;
+            newnames.push_back(m_names[i]);
         }
     }
 
     truncateAndWrite();
-    emit recentFilesChanged();
+    emit recentChanged();
+}
+
+void
+RecentFiles::addFile(QString name)
+{
+    add(QFileInfo(name).absoluteFilePath());
 }
 
 

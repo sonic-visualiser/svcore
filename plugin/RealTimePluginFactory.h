@@ -38,6 +38,7 @@ public:
     bool isSynth;
     unsigned int parameterCount;
     unsigned int audioInputPortCount;
+    unsigned int audioOutputPortCount;
     unsigned int controlOutputPortCount;
     std::vector<std::string> controlOutputPortNames;
 };
