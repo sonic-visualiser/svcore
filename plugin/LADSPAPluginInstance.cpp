@@ -24,6 +24,10 @@
 #include "LADSPAPluginInstance.h"
 #include "LADSPAPluginFactory.h"
 
+#ifdef HAVE_LRDF
+#include "lrdf.h"
+#endif // HAVE_LRDF
+
 //#define DEBUG_LADSPA 1
 
 
@@ -120,6 +124,45 @@ LADSPAPluginInstance::getParameterDescriptors() const
         } else {
             pd.isQuantized = true;
             pd.quantizeStep = q;
+        }
+
+        bool haveLabels = false;
+
+#ifdef HAVE_LRDF
+        if (pd.isQuantized && pd.quantizeStep == 1.0) {
+
+            lrdf_defaults *defaults =
+                lrdf_get_scale_values(m_descriptor->UniqueID, pn);
+
+            if (defaults) {
+                if (defaults->count > 0) {
+                    std::map<int, std::string> values;
+                    int v = 0;
+                    for (size_t i = 0; i < defaults->count; ++i) {
+                        v = defaults->items[i].value;
+                        values[v] = defaults->items[i].label;
+                    }
+                    for (size_t i = 0; i <= v; ++i) {
+                        pd.valueNames.push_back(values[i]);
+                    }
+                    haveLabels = true;
+                }
+                lrdf_free_setting_values(defaults);
+            }
+        }
+#endif
+
+        if (haveLabels) {
+            pd.description = QString(pd.description.c_str())
+                .replace(QRegExp("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
+                .toStdString();
+        } else {
+            static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
+            if (unitRE.indexIn(pd.name.c_str()) >= 0) {
+                pd.unit = unitRE.cap(1).toStdString();
+                pd.description = QString(pd.description.c_str())
+                    .replace(unitRE, "").toStdString();
+            }
         }
 
         list.push_back(pd);

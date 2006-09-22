@@ -299,6 +299,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
                         descriptor->run_multiple_synths);
         rtd->parameterCount = 0;
         rtd->audioInputPortCount = 0;
+        rtd->audioOutputPortCount = 0;
         rtd->controlOutputPortCount = 0;
 
 	QString identifier = PluginIdentifier::createIdentifier
@@ -310,8 +311,8 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 		
 	QString category = m_taxonomy[identifier];
 
-        if (category == "" && m_lrdfTaxonomy[descriptor->LADSPA_Plugin->UniqueID] != "") {
-            m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->LADSPA_Plugin->UniqueID];
+        if (category == "" && m_lrdfTaxonomy[ladspaDescriptor->UniqueID] != "") {
+            m_taxonomy[identifier] = m_lrdfTaxonomy[ladspaDescriptor->UniqueID];
             category = m_taxonomy[identifier];
         }
 
@@ -330,11 +331,12 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 
         rtd->category = category.toStdString();
 	
-//	std::cerr << "Plugin id is " << ladspaDescriptor->UniqueID
-//		  << ", category is \"" << (category ? category : QString("(none)"))
-//		  << "\", name is " << ladspaDescriptor->Name
-//		  << ", label is " << ladspaDescriptor->Label
-//		  << std::endl;
+	std::cerr << "Plugin id is " << ladspaDescriptor->UniqueID
+                  << ", identifier is \"" << identifier.toStdString()
+		  << "\", category is \"" << category.toStdString()
+		  << "\", name is " << ladspaDescriptor->Name
+		  << ", label is " << ladspaDescriptor->Label
+		  << std::endl;
 	
 	def_uri = lrdf_get_default_uri(ladspaDescriptor->UniqueID);
 	if (def_uri) {
@@ -378,6 +380,8 @@ DSSIPluginFactory::discoverPlugins(QString soname)
             } else {
                 if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
                     ++rtd->audioInputPortCount;
+                } else if (LADSPA_IS_PORT_OUTPUT(ladspaDescriptor->PortDescriptors[i])) {
+                    ++rtd->audioOutputPortCount;
                 }
             }
         }

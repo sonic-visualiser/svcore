@@ -21,36 +21,55 @@
 #include <vector>
 #include <deque>
 
+/**
+ * RecentFiles manages a list of the names of recently-used objects,
+ * saving and restoring that list via QSettings.  The names do not
+ * actually have to refer to files.
+ */
+
 class RecentFiles : public QObject
 {
     Q_OBJECT
 
 public:
-    // The maxFileCount argument will only be used the first time this is called
-    static RecentFiles *getInstance(int maxFileCount = 10);
+    /**
+     * Construct a RecentFiles object that saves and restores in the
+     * given QSettings group and truncates when the given count of
+     * strings is reached.
+     */
+    RecentFiles(QString settingsGroup = "RecentFiles", size_t maxCount = 10);
 
     virtual ~RecentFiles();
 
-    int getMaxFileCount() const { return m_maxFileCount; }
+    QString getSettingsGroup() const { return m_settingsGroup; }
 
-    std::vector<QString> getRecentFiles() const;
+    int getMaxCount() const { return m_maxCount; }
+
+    std::vector<QString> getRecent() const;
+
+    /**
+     * Add a name that should be treated as a literal string.
+     */
+    void add(QString name);
     
-    void addFile(QString filename);
+    /**
+     * Add a name that should be treated as a file path and
+     * canonicalised appropriately.
+     */
+    void addFile(QString name);
 
 signals:
-    void recentFilesChanged();
+    void recentChanged();
 
 protected:
-    RecentFiles(int maxFileCount);
+    QString m_settingsGroup;
+    size_t m_maxCount;
 
-    int m_maxFileCount;
-    std::deque<QString> m_files;
+    std::deque<QString> m_names;
 
-    void readFiles();
-    void writeFiles();
+    void read();
+    void write();
     void truncateAndWrite();
-
-    static RecentFiles *m_instance;
 };
 
 #endif

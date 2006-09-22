@@ -40,6 +40,9 @@
 
 LADSPAPluginFactory::LADSPAPluginFactory()
 {
+#ifdef HAVE_LRDF
+    lrdf_init();
+#endif
 }
  
 LADSPAPluginFactory::~LADSPAPluginFactory()
@@ -51,6 +54,10 @@ LADSPAPluginFactory::~LADSPAPluginFactory()
     }
     m_instances.clear();
     unloadUnusedLibraries();
+
+#ifdef HAVE_LRDF
+    lrdf_cleanup();
+#endif // HAVE_LRDF
 }
 
 const std::vector<QString> &
@@ -437,8 +444,10 @@ LADSPAPluginFactory::loadLibrary(QString soName)
         if (QFileInfo(dir.filePath(fileName)).exists()) {
             std::cerr << "Loading: " << fileName.toStdString() << std::endl;
             libraryHandle = DLOPEN(dir.filePath(fileName), RTLD_NOW);
-            if (libraryHandle) m_libraryHandles[soName] = libraryHandle;
-            return;
+            if (libraryHandle) {
+                m_libraryHandles[soName] = libraryHandle;
+                return;
+            }
         }
 
 	for (unsigned int j = 0; j < dir.count(); ++j) {
@@ -446,8 +455,10 @@ LADSPAPluginFactory::loadLibrary(QString soName)
             if (QFileInfo(file).baseName() == base) {
                 std::cerr << "Loading: " << file.toStdString() << std::endl;
                 libraryHandle = DLOPEN(file, RTLD_NOW);
-                if (libraryHandle) m_libraryHandles[soName] = libraryHandle;
-                return;
+                if (libraryHandle) {
+                    m_libraryHandles[soName] = libraryHandle;
+                    return;
+                }
             }
         }
     }
@@ -571,10 +582,8 @@ LADSPAPluginFactory::discoverPlugins()
     std::cerr << std::endl;
 
 #ifdef HAVE_LRDF
-    // Initialise liblrdf and read the description files 
+    // read the description files 
     //
-    lrdf_init();
-
     QString baseUri;
     std::vector<QString> lrdfPaths = getLRDFPath(baseUri);
 
@@ -606,12 +615,6 @@ LADSPAPluginFactory::discoverPlugins()
 	    discoverPlugins(QString("%1/%2").arg(*i).arg(pluginDir[j]));
 	}
     }
-
-#ifdef HAVE_LRDF
-    // Cleanup after the RDF library
-    //
-    lrdf_cleanup();
-#endif // HAVE_LRDF
 }
 
 void
@@ -647,6 +650,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
         rtd->isSynth = false;
         rtd->parameterCount = 0;
         rtd->audioInputPortCount = 0;
+        rtd->audioOutputPortCount = 0;
         rtd->controlOutputPortCount = 0;
 
 	QString identifier = PluginIdentifier::createIdentifier
@@ -722,6 +726,8 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
             } else {
                 if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
                     ++rtd->audioInputPortCount;
+                } else if (LADSPA_IS_PORT_OUTPUT(descriptor->PortDescriptors[i])) {
+                    ++rtd->audioOutputPortCount;
                 }
             }
         }
