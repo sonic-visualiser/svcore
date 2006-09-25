@@ -15,8 +15,14 @@
 
 #include "System.h"
 
+#include <QFile>
+#include <QTextStream>
+#include <QStringList>
+#include <QString>
+
 #ifndef _WIN32
 #include <signal.h>
+#include <sys/statvfs.h>
 #endif
 
 #include <iostream>
@@ -69,6 +75,62 @@ GetProcessStatus(int pid)
     }
 #endif
 }
+
+int
+GetRealMemoryMBAvailable()
+{
+    // ugh
+    QFile meminfo("/proc/meminfo");
+    if (meminfo.open(QFile::ReadOnly)) {
+        std::cerr << "opened meminfo" << std::endl;
+        QTextStream in(&meminfo);
+        while (!in.atEnd()) {
+            QString line = in.readLine(256);
+            std::cerr << "read: \"" << line.toStdString() << "\"" << std::endl;
+            if (line.startsWith("MemFree:")) {
+                QStringList elements = line.split(' ', QString::SkipEmptyParts);
+                QString unit = "kB";
+                if (elements.size() > 2) unit = elements[2];
+                int size = elements[1].toInt();
+                std::cerr << "have size \"" << size << "\", unit \""
+                          << unit.toStdString() << "\"" << std::endl;
+                if (unit.toLower() == "gb") return size * 1024;
+                if (unit.toLower() == "mb") return size;
+                if (unit.toLower() == "kb") return size / 1024;
+                return size / 1048576;
+            }
+        }
+    }
+    return -1;
+}
+
+int
+GetDiscSpaceMBAvailable(const char *path)
+{
+#ifdef _WIN32
+    __int64 available, total, totalFree;
+    if (GetDiskFreeSpaceEx(path, &available, &total, &totalFree)) {
+        available /= 1048576;
+        return int(available);
+    } else {
+        std::cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
+                  << GetLastError() << std::endl;
+        return -1;
+    }
+#else
+    struct statvfs buf;
+    if (!statvfs(path, &buf)) {
+        // do the multiplies and divides in this order to reduce the
+        // likelihood of arithmetic overflow
+        std::cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << std::endl;
+        return ((buf.f_bavail / 1024) * buf.f_bsize) / 1024;
+    } else {
+        perror("statvfs failed");
+        return -1;
+    }
+#endif
+}
+    
 
 double mod(double x, double y) { return x - (y * floor(x / y)); }
 float modf(float x, float y) { return x - (y * floorf(x / y)); }

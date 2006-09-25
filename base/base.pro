@@ -31,6 +31,7 @@ HEADERS += AudioLevel.h \
            RingBuffer.h \
            Scavenger.h \
            Selection.h \
+           StorageAdviser.h \
            TempDirectory.h \
            Thread.h \
            UnitDatabase.h \
@@ -51,6 +52,7 @@ SOURCES += AudioLevel.cpp \
            RealTime.cpp \
            RecentFiles.cpp \
            Selection.cpp \
+           StorageAdviser.cpp \
            TempDirectory.cpp \
            Thread.cpp \
            UnitDatabase.cpp \

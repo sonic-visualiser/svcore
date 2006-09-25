@@ -22,6 +22,9 @@
 
 #include "system/System.h"
 
+#include "base/StorageAdviser.h"
+
+
 #define DEBUG_FFT_SERVER 1
 //#define DEBUG_FFT_SERVER_FILL 1
 
@@ -71,6 +74,13 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
     if ((server = findServer(npn))) {
         return server;
     }
+
+
+    //!!!
+
+    StorageAdviser::Recommendation recommendation =
+        StorageAdviser::recommend(StorageAdviser::Criteria(0), 0, 0);
+
 
     m_servers[n] = ServerCountPair
         (new FFTDataServer(n,
