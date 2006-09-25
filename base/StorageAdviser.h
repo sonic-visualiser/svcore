@@ -39,9 +39,17 @@ public:
         UseAsMuchAsYouLike = 8
     };
 
-    // may throw InsufficientDiscSpace exception if it looks like
-    // minimumSize won't fit on the disc
+    // May throw InsufficientDiscSpace exception if it looks like
+    // minimumSize won't fit on the disc.  
 
+    /**
+     * Recommend where to store some data, given certain storage and
+     * recall criteria.  The minimum size is the approximate amount of
+     * data in bytes that will be stored if the recommendation is to
+     * ConserveSpace; the maximum size is approximately the amount
+     * that will be used if UseAsMuchAsYouLike is returned.
+     **!!! sizes should be longer types
+     */
     static Recommendation recommend(Criteria criteria,
                                     int minimumSize,
                                     int maximumSize);
