@@ -15,8 +15,6 @@
 
 #include "System.h"
 
-#include <QFile>
-#include <QTextStream>
 #include <QStringList>
 #include <QString>
 
@@ -79,28 +77,28 @@ GetProcessStatus(int pid)
 int
 GetRealMemoryMBAvailable()
 {
-    // ugh
-    QFile meminfo("/proc/meminfo");
-    if (meminfo.open(QFile::ReadOnly)) {
-        std::cerr << "opened meminfo" << std::endl;
-        QTextStream in(&meminfo);
-        while (!in.atEnd()) {
-            QString line = in.readLine(256);
-            std::cerr << "read: \"" << line.toStdString() << "\"" << std::endl;
-            if (line.startsWith("MemFree:")) {
-                QStringList elements = line.split(' ', QString::SkipEmptyParts);
-                QString unit = "kB";
-                if (elements.size() > 2) unit = elements[2];
-                int size = elements[1].toInt();
-                std::cerr << "have size \"" << size << "\", unit \""
-                          << unit.toStdString() << "\"" << std::endl;
-                if (unit.toLower() == "gb") return size * 1024;
-                if (unit.toLower() == "mb") return size;
-                if (unit.toLower() == "kb") return size / 1024;
-                return size / 1048576;
-            }
+    FILE *meminfo = fopen("/proc/meminfo", "r");
+    if (!meminfo) return -1;
+
+    char buf[256];
+    while (!feof(meminfo)) {
+        fgets(buf, 256, meminfo);
+        if (strncmp(buf, "MemFree:", 8)) {
+            fclose(meminfo);
+            QString line = QString(buf).trimmed();
+            QStringList elements = line.split(' ', QString::SkipEmptyParts);
+            QString unit = "kB";
+            if (elements.size() > 2) unit = elements[2];
+            int size = elements[1].toInt();
+//            std::cerr << "have size \"" << size << "\", unit \""
+//                      << unit.toStdString() << "\"" << std::endl;
+            if (unit.toLower() == "gb") return size * 1024;
+            if (unit.toLower() == "mb") return size;
+            if (unit.toLower() == "kb") return size / 1024;
+            return size / 1048576;
         }
     }
+    fclose(meminfo);
     return -1;
 }
 
