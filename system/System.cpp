@@ -82,6 +82,48 @@ GetRealMemoryMBAvailable(int &available, int &total)
     available = -1;
     total = -1;
 
+#ifdef _WIN32
+
+    MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    if (!GlobalMemoryStatusEx(&status)) {
+        std::cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
+                  << GetLastError() << std::endl;
+        return;
+    }
+    DWORDLONG size = status.ullAvailPhys / 1048576;
+    if (size > INT_MAX) size = INT_MAX;
+    available = int(size);
+
+    size = status.ullTotalPhys / 1048576;
+    if (size > INT_MAX) size = INT_MAX;
+    total = int(size);
+
+    return;
+
+#else
+#ifdef __APPLE__
+
+    unsigned int val;
+    int mib[2];
+    size_t size_sys;
+    
+    mib[0] = CTL_HW;
+
+    mib[1] = HW_PHYSMEM;
+    size_sys = sizeof(val);
+    sysctl(mib, 2, &val, &size_sys, NULL, 0);
+    if (val) total = val / 1048576;
+
+    mib[1] = HW_USERMEM;
+    size_sys = sizeof(val);
+    sysctl(mib, 2, &val, &size_sys, NULL, 0);
+    if (val) available = val / 1048576;
+
+    return;
+
+#else
+
     FILE *meminfo = fopen("/proc/meminfo", "r");
     if (!meminfo) return;
 
@@ -112,6 +154,11 @@ GetRealMemoryMBAvailable(int &available, int &total)
         }
     }
     fclose(meminfo);
+
+    return;
+
+#endif
+#endif
 }
 
 int
