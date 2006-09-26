@@ -75,20 +75,6 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
         return server;
     }
 
-    StorageAdviser::Criteria criteria =
-        StorageAdviser::Criteria
-        (StorageAdviser::SpeedCritical | StorageAdviser::LongRetentionLikely);
-
-    int cells = fftSize * ((model->getEndFrame() - model->getStartFrame())
-                           / windowIncrement + 1);
-    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
-    int maximumSize = (cells / 1024) * sizeof(float); // kb
-    
-    StorageAdviser::Recommendation recommendation =
-        StorageAdviser::recommend(criteria, minimumSize, maximumSize);
-
-    std::cerr << "Recommendation was: " << recommendation << std::endl;
-
     m_servers[n] = ServerCountPair
         (new FFTDataServer(n,
                            model,
@@ -327,6 +313,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_windowIncrement(windowIncrement),
     m_fftSize(fftSize),
     m_polar(polar),
+    m_memoryCache(false),
+    m_compactCache(false),
     m_lastUsedCache(-1),
     m_fftInput(0),
     m_exiting(false),
@@ -348,6 +336,37 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     while (m_cacheWidth) { m_cacheWidth >>= 1; ++bits; }
     m_cacheWidth = 2;
     while (bits) { m_cacheWidth <<= 1; --bits; }
+
+    //!!! Need to pass in what this server is intended for
+    // (e.g. playback processing, spectrogram, feature extraction),
+    // or pass in something akin to the storage adviser criteria.
+    // That probably goes alongside the polar argument.
+    // For now we'll assume "spectrogram" criteria for polar ffts,
+    // and "feature extraction" criteria for rectangular ones.
+
+    StorageAdviser::Criteria criteria;
+    if (m_polar) {
+        criteria = StorageAdviser::Criteria
+            (StorageAdviser::SpeedCritical | StorageAdviser::LongRetentionLikely);
+    } else {
+        criteria = StorageAdviser::Criteria(StorageAdviser::PrecisionCritical);
+    }
+
+    int cells = m_width * m_height;
+    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
+    int maximumSize = (cells / 1024) * sizeof(float); // kb
+
+    //!!! catch InsufficientDiscSpace
+    
+    StorageAdviser::Recommendation recommendation =
+        StorageAdviser::recommend(criteria, minimumSize, maximumSize);
+
+    std::cerr << "Recommendation was: " << recommendation << std::endl;
+
+    m_memoryCache = ((recommendation & StorageAdviser::UseMemory) ||
+                     (recommendation & StorageAdviser::PreferMemory));
+
+    m_compactCache = (recommendation & StorageAdviser::ConserveSpace);
     
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "Width " << m_width << ", cache width " << m_cacheWidth << " (size " << m_cacheWidth * columnSize << ")" << std::endl;
@@ -501,9 +520,23 @@ FFTDataServer::getCacheAux(size_t c)
 
     QString name = QString("%1-%2").arg(m_fileBaseName).arg(c);
 
-    FFTCache *cache = new FFTFileCache(name, MatrixFile::ReadWrite,
-                                       m_polar ? FFTFileCache::Polar :
-                                                 FFTFileCache::Rectangular);
+    FFTCache *cache = 0;
+
+    if (m_memoryCache) {
+
+        cache = new FFTMemoryCache();
+
+    } else if (m_compactCache) {
+
+        cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                                 FFTFileCache::Compact);
+
+    } else {
+
+        cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                                 m_polar ? FFTFileCache::Polar :
+                                           FFTFileCache::Rectangular);
+    }
 
 //    FFTCache *cache = new FFTMemoryCache();
 
