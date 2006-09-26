@@ -77,7 +77,7 @@ extern ProcessStatus GetProcessStatus(int pid);
 
 // Return a vague approximation to the number of free megabytes of real memory.
 // Return -1 if unknown.
-extern int GetRealMemoryMBAvailable();
+extern void GetRealMemoryMBAvailable(int &available, int &total);
 
 // Return a vague approximation to the number of free megabytes of disc space
 // on the partition containing the given path.  Return -1 if unknown.

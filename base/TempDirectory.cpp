@@ -20,6 +20,7 @@
 #include <QDir>
 #include <QFile>
 #include <QMutexLocker>
+#include <QSettings>
 
 #include <iostream>
 #include <cassert>
@@ -58,16 +59,23 @@ TempDirectory::getPath()
     
     if (m_tmpdir != "") return m_tmpdir;
 
+    QSettings settings;
+    settings.beginGroup("TempDirectory");
+    QString svDirParent = settings.value("create-in", "$HOME").toString();
+    settings.endGroup();
+
+    svDirParent.replace("$HOME", QDir::home().absolutePath());
+
     QString svDirBase = ".sv1";
-    QString svDir = QDir::home().filePath(svDirBase);
+    QString svDir = QDir(svDirParent).filePath(svDirBase);
     if (!QFileInfo(svDir).exists()) {
-        if (!QDir::home().mkdir(svDirBase)) {
-            throw DirectoryCreationFailed(QString("%1 directory in $HOME")
-                                          .arg(svDirBase));
+        if (!QDir(svDirParent).mkdir(svDirBase)) {
+            throw DirectoryCreationFailed(QString("%1 directory in %2")
+                                          .arg(svDirBase).arg(svDirParent));
         }
     } else if (!QFileInfo(svDir).isDir()) {
-        throw DirectoryCreationFailed(QString("$HOME/%1 is not a directory")
-                                      .arg(svDirBase));
+        throw DirectoryCreationFailed(QString("%1/%2 is not a directory")
+                                      .arg(svDirParent).arg(svDirBase));
     }
 
     cleanupAbandonedDirectories(svDir);

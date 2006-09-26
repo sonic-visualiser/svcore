@@ -286,3 +286,11 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
     m_mfc->setColumnAt(x, m_writebuf);
 }
 
+size_t
+FFTFileCache::getCacheSize(size_t width, size_t height, StorageType type)
+{
+    return (height * 2 + 1) * width *
+        (type == Compact ? sizeof(uint16_t) : sizeof(float)) +
+        2 * sizeof(size_t); // matrix file header size
+}
+

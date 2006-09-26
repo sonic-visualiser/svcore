@@ -27,15 +27,118 @@ StorageAdviser::recommend(Criteria criteria,
 			  int minimumSize,
 			  int maximumSize)
 {
+    std::cerr << "StorageAdviser::recommend: Criteria " << criteria 
+              << ", minimumSize " << minimumSize
+              << ", maximumSize " << maximumSize << std::endl;
+
     QString path = TempDirectory::getInstance()->getPath();
+    int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
+    int memoryFree, memoryTotal;
+    GetRealMemoryMBAvailable(memoryFree, memoryTotal);
 
-    int discSpace = GetDiscSpaceMBAvailable(path.toLocal8Bit());
-    int memory = GetRealMemoryMBAvailable();
+    std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << std::endl;
 
-    std::cerr << "Disc space: " << discSpace << ", memory: " << memory << std::endl;
+    enum StorageStatus {
+        Unknown,
+        Insufficient,
+        Marginal,
+        Sufficient
+    };
 
-    return Recommendation(0);
+    StorageStatus memoryStatus = Unknown;
+    StorageStatus discStatus = Unknown;
+
+    int minmb = minimumSize / 1024 + 1;
+    int maxmb = maximumSize / 1024 + 1;
+
+    if (memoryFree == -1) memoryStatus = Unknown;
+    else if (minmb > (memoryFree * 3) / 4) memoryStatus = Insufficient;
+    else if (maxmb > (memoryFree * 3) / 4) memoryStatus = Marginal;
+    else if (minmb > (memoryFree / 3)) memoryStatus = Marginal;
+    else if (memoryTotal == -1 ||
+             minmb > (memoryTotal / 10)) memoryStatus = Marginal;
+    else memoryStatus = Sufficient;
+
+    if (discFree == -1) discStatus = Unknown;
+    else if (minmb > (discFree * 3) / 4) discStatus = Insufficient;
+    else if (maxmb > (discFree * 3) / 4) discStatus = Marginal;
+    else if (minmb > (discFree / 3)) discStatus = Marginal;
+    else discStatus = Sufficient;
+
+    std::cerr << "Memory status: " << memoryStatus << ", disc status "
+              << discStatus << std::endl;
+
+    int recommendation = NoRecommendation;
+
+    if (memoryStatus == Insufficient || memoryStatus == Unknown) {
+
+        recommendation |= UseDisc;
+
+        if (discStatus == Insufficient && minmb > discFree) {
+            throw InsufficientDiscSpace(path, minmb, discFree);
+        }
+
+        if (discStatus == Insufficient || discStatus == Marginal) {
+            recommendation |= ConserveSpace;
+        } else if (discStatus == Unknown && !(criteria & PrecisionCritical)) {
+            recommendation |= ConserveSpace;
+        } else {
+            recommendation |= UseAsMuchAsYouLike;
+        }
+
+    } else if (memoryStatus == Marginal) {
+
+        if (((criteria & SpeedCritical) ||
+             (criteria & FrequentLookupLikely)) &&
+            !(criteria & PrecisionCritical) &&
+            !(criteria & LongRetentionLikely)) {
+
+            // requirements suggest a preference for memory
+
+            if (discStatus != Insufficient) {
+                recommendation |= PreferMemory;
+            } else {
+                recommendation |= UseMemory;
+            }
+
+            recommendation |= ConserveSpace;
+
+        } else {
+
+            if (discStatus == Insufficient) {
+                recommendation |= (UseMemory | ConserveSpace);
+            } else if (discStatus == Marginal) {
+                recommendation |= (PreferMemory | ConserveSpace);
+            } else if (discStatus == Unknown) {
+                recommendation |= (PreferDisc | ConserveSpace);
+            } else {
+                recommendation |= (UseDisc | UseAsMuchAsYouLike);
+            }
+        }    
+
+    } else {
+
+        if (discStatus == Insufficient) {
+            recommendation |= (UseMemory | ConserveSpace);
+        } else if (discStatus != Sufficient) {
+            recommendation |= (PreferMemory | ConserveSpace);
+        } else {
+
+            if ((criteria & SpeedCritical) ||
+                (criteria & FrequentLookupLikely)) {
+                recommendation |= PreferMemory;
+                if (criteria & PrecisionCritical) {
+                    recommendation |= UseAsMuchAsYouLike;
+                } else {
+                    recommendation |= ConserveSpace;
+                }
+            } else {
+                recommendation |= PreferDisc;
+                recommendation |= UseAsMuchAsYouLike;
+            }
+        }
+    }
+
+    return Recommendation(recommendation);
 }
 
-
-    

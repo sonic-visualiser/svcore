@@ -113,3 +113,9 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     setColumnAt(x, reals, imags, max);
 }
 
+size_t
+FFTMemoryCache::getCacheSize(size_t width, size_t height)
+{
+    return (height * 2 + 1) * width * sizeof(uint16_t);
+}
+
