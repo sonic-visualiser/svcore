@@ -124,6 +124,8 @@ private:
     size_t m_width;
     size_t m_height;
     size_t m_cacheWidth;
+    bool m_memoryCache;
+    bool m_compactCache;
 
     typedef std::vector<FFTCache *> CacheVector;
     CacheVector m_caches;
