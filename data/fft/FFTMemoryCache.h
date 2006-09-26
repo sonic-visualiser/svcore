@@ -112,6 +112,8 @@ public:
 
     virtual void setColumnAt(size_t x, float *reals, float *imags);
 
+    static size_t getCacheSize(size_t width, size_t height);
+
 private:
     size_t m_width;
     size_t m_height;

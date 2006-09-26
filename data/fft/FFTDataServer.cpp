@@ -75,12 +75,19 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
         return server;
     }
 
+    StorageAdviser::Criteria criteria =
+        StorageAdviser::Criteria
+        (StorageAdviser::SpeedCritical | StorageAdviser::LongRetentionLikely);
 
-    //!!!
-
+    int cells = fftSize * ((model->getEndFrame() - model->getStartFrame())
+                           / windowIncrement + 1);
+    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
+    int maximumSize = (cells / 1024) * sizeof(float); // kb
+    
     StorageAdviser::Recommendation recommendation =
-        StorageAdviser::recommend(StorageAdviser::Criteria(0), 0, 0);
+        StorageAdviser::recommend(criteria, minimumSize, maximumSize);
 
+    std::cerr << "Recommendation was: " << recommendation << std::endl;
 
     m_servers[n] = ServerCountPair
         (new FFTDataServer(n,

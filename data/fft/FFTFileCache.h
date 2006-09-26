@@ -56,6 +56,8 @@ public:
 
     virtual void suspend() { m_mfc->suspend(); }
 
+    static size_t getCacheSize(size_t width, size_t height, StorageType type);
+
 protected:
     char *m_writebuf;
     mutable char *m_readbuf;
