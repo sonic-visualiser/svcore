@@ -61,8 +61,8 @@ StorageAdviser::recommend(Criteria criteria,
 
     if (discFree == -1) discStatus = Unknown;
     else if (minmb > (discFree * 3) / 4) discStatus = Insufficient;
-    else if (maxmb > (discFree * 3) / 4) discStatus = Marginal;
-    else if (minmb > (discFree / 3)) discStatus = Marginal;
+    else if (maxmb > (discFree / 4)) discStatus = Marginal;
+    else if (minmb > (discFree / 10)) discStatus = Marginal;
     else discStatus = Sufficient;
 
     std::cerr << "Memory status: " << memoryStatus << ", disc status "
