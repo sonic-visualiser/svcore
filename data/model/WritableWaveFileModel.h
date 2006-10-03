@@ -13,36 +13,32 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAVE_FILE_MODEL_H_
-#define _WAVE_FILE_MODEL_H_
+#ifndef _WRITABLE_WAVE_FILE_MODEL_H_
+#define _WRITABLE_WAVE_FILE_MODEL_H_
 
-#include "base/Thread.h"
-#include <QMutex>
-#include <QTimer>
+#include "WaveFileModel.h"
 
-#include "RangeSummarisableTimeValueModel.h"
-#include "PowerOfSqrtTwoZoomConstraint.h"
+class WavFileWriter;
+class WavFileReader;
 
-#include <stdlib.h>
-
-class AudioFileReader;
-
-class WaveFileModel : public RangeSummarisableTimeValueModel,
-		      virtual public PowerOfSqrtTwoZoomConstraint
+class WritableWaveFileModel : public RangeSummarisableTimeValueModel,
+                              virtual public PowerOfSqrtTwoZoomConstraint
 {
     Q_OBJECT
 
 public:
-    WaveFileModel(QString path);
-    WaveFileModel(QString path, AudioFileReader *reader);
-    ~WaveFileModel();
+    WritableWaveFileModel(size_t sampleRate, size_t channels, QString path = "");
+    ~WritableWaveFileModel();
 
+    virtual bool addSamples(float **samples, size_t count);
+    virtual void sync();
+    
     bool isOK() const;
     bool isReady(int *) const;
 
     size_t getFrameCount() const;
-    size_t getChannelCount() const;
-    size_t getSampleRate() const;
+    size_t getChannelCount() const { return m_channels; }
+    size_t getSampleRate() const { return m_sampleRate; }
 
     virtual Model *clone() const;
 
@@ -70,43 +66,14 @@ public:
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
-protected slots:
-    void fillTimerTimedOut();
-    void frameCountChanged();
-    void cacheFilled();
-    
 protected:
-    void initialize();
-
-    class RangeCacheFillThread : public Thread
-    {
-    public:
-        RangeCacheFillThread(WaveFileModel &model) :
-	    m_model(model), m_fillExtent(0),
-            m_frameCount(model.getFrameCount()) { }
-    
-	size_t getFillExtent() const { return m_fillExtent; }
-        void frameCountChanged();
-        virtual void run();
-
-    protected:
-        WaveFileModel &m_model;
-	size_t m_fillExtent;
-        size_t m_frameCount;
-    };
-         
-    void fillCache();
-    
-    QString m_path;
-    AudioFileReader *m_reader;
-    bool m_myReader;
-
-    RangeBlock m_cache[2]; // interleaved at two base resolutions
-    mutable QMutex m_mutex;
-    RangeCacheFillThread *m_fillThread;
-    QTimer *m_updateTimer;
-    size_t m_lastFillExtent;
-    bool m_exiting;
-};    
+    WaveFileModel *m_model;
+    WavFileWriter *m_writer;
+    WavFileReader *m_reader;
+    size_t m_sampleRate;
+    size_t m_channels;
+    size_t m_frameCount;
+};
 
 #endif
+

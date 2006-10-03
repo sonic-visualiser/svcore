@@ -33,6 +33,8 @@ public:
 
     virtual QString getError() const;
 
+    QString getPath() const { return m_path; }
+
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 

@@ -46,10 +46,12 @@ HEADERS += fft/FFTCache.h \
            model/SparseTimeValueModel.h \
            model/SparseValueModel.h \
            model/TextModel.h \
-           model/WaveFileModel.h
+           model/WaveFileModel.h \
+           model/WritableWaveFileModel.h
 SOURCES += fft/FFTDataServer.cpp \
            fft/FFTFileCache.cpp \
            fft/FFTMemoryCache.cpp \
+           fileio/AudioFileReader.cpp \
            fileio/AudioFileReaderFactory.cpp \
            fileio/BZipFileDevice.cpp \
            fileio/CodedAudioFileReader.cpp \
@@ -71,4 +73,5 @@ SOURCES += fft/FFTDataServer.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
            model/RangeSummarisableTimeValueModel.cpp \
-           model/WaveFileModel.cpp
+           model/WaveFileModel.cpp \
+           model/WritableWaveFileModel.cpp
