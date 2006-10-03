@@ -26,7 +26,7 @@
 class WavFileReader : public AudioFileReader
 {
 public:
-    WavFileReader(QString path);
+    WavFileReader(QString path, bool fileUpdating = false);
     virtual ~WavFileReader();
 
     virtual QString getError() const { return m_error; }
@@ -40,7 +40,10 @@ public:
     
     static void getSupportedExtensions(std::set<QString> &extensions);
 
+    bool isUpdating() const { return m_updating; }
+
     void updateFrameCount();
+    void updateDone();
 
 protected:
     SF_INFO m_fileInfo;
@@ -54,6 +57,8 @@ protected:
     mutable size_t m_bufsiz;
     mutable size_t m_lastStart;
     mutable size_t m_lastCount;
+
+    bool m_updating;
 };
 
 #endif
