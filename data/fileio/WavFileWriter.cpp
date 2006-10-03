@@ -19,23 +19,34 @@
 #include "base/Selection.h"
 
 #include <QFileInfo>
-#include <sndfile.h>
 
 #include <iostream>
 
 WavFileWriter::WavFileWriter(QString path,
 			     size_t sampleRate,
-			     DenseTimeValueModel *source,
-			     MultiSelection *selection) :
+                             size_t channels) :
     m_path(path),
     m_sampleRate(sampleRate),
-    m_model(source),
-    m_selection(selection)
+    m_channels(channels),
+    m_file(0)
 {
+    SF_INFO fileInfo;
+    fileInfo.samplerate = m_sampleRate;
+    fileInfo.channels = m_channels;
+    fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+    
+    m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
+    if (!m_file) {
+	std::cerr << "WavFileWriter: Failed to open file ("
+		  << sf_strerror(m_file) << ")" << std::endl;
+	m_error = QString("Failed to open audio file '%1' for writing")
+	    .arg(m_path);
+    }
 }
 
 WavFileWriter::~WavFileWriter()
 {
+    if (m_file) close();
 }
 
 bool
@@ -50,36 +61,36 @@ WavFileWriter::getError() const
     return m_error;
 }
 
-void
-WavFileWriter::write()
+bool
+WavFileWriter::writeModel(DenseTimeValueModel *source,
+                          MultiSelection *selection)
 {
-    int channels = m_model->getChannelCount();
-
-    SF_INFO fileInfo;
-    fileInfo.samplerate = m_sampleRate;
-    fileInfo.channels = channels;
-    fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-    
-    SNDFILE *file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
-    if (!file) {
-	std::cerr << "WavFileWriter::write: Failed to open file ("
-		  << sf_strerror(file) << ")" << std::endl;
-	m_error = QString("Failed to open audio file '%1' for writing")
-	    .arg(m_path);
-	return;
+    if (source->getChannelCount() != m_channels) {
+        std::cerr << "WavFileWriter::writeModel: Wrong number of channels ("
+                  << source->getChannelCount()  << " != " << m_channels << ")"
+                  << std::endl;
+        m_error = QString("Failed to write model to audio file '%1'")
+            .arg(m_path);
+        return false;
     }
 
-    MultiSelection *selection = m_selection;
+    if (!m_file) {
+        m_error = QString("Failed to write model to audio file '%1': File not open")
+            .arg(m_path);
+	return false;
+    }
 
-    if (!m_selection) {
+    bool ownSelection = false;
+    if (!selection) {
 	selection = new MultiSelection;
-	selection->setSelection(Selection(m_model->getStartFrame(),
-					  m_model->getEndFrame()));
+	selection->setSelection(Selection(source->getStartFrame(),
+					  source->getEndFrame()));
+        ownSelection = true;
     }
 
     size_t bs = 2048;
     float *ub = new float[bs]; // uninterleaved buffer (one channel)
-    float *ib = new float[bs * channels]; // interleaved buffer
+    float *ib = new float[bs * m_channels]; // interleaved buffer
 
     for (MultiSelection::SelectionList::iterator i =
 	     selection->getSelections().begin();
@@ -91,14 +102,14 @@ WavFileWriter::write()
 	    
 	    size_t n = std::min(bs, f1 - f);
 
-	    for (int c = 0; c < channels; ++c) {
-		m_model->getValues(c, f, f + n, ub);
+	    for (int c = 0; c < int(m_channels); ++c) {
+		source->getValues(c, f, f + n, ub);
 		for (size_t i = 0; i < n; ++i) {
-		    ib[i * channels + c] = ub[i];
+		    ib[i * m_channels + c] = ub[i];
 		}
 	    }	    
 
-	    sf_count_t written = sf_writef_float(file, ib, n);
+	    sf_count_t written = sf_writef_float(m_file, ib, n);
 
 	    if (written < n) {
 		m_error = QString("Only wrote %1 of %2 frames at file frame %3")
@@ -108,13 +119,48 @@ WavFileWriter::write()
 	}
     }
 
-    sf_close(file);
-
     delete[] ub;
     delete[] ib;
-    if (!m_selection) delete selection;
+    if (ownSelection) delete selection;
+
+    return isOK();
+}
+	
+bool
+WavFileWriter::writeSamples(float **samples, size_t count)
+{
+    if (!m_file) {
+        m_error = QString("Failed to write model to audio file '%1': File not open")
+            .arg(m_path);
+	return false;
+    }
+
+    float *b = new float[count * m_channels];
+    for (size_t i = 0; i < count; ++i) {
+        for (size_t c = 0; c < m_channels; ++c) {
+            b[i * m_channels + c] = samples[c][i];
+        }
+    }
+
+    sf_count_t written = sf_writef_float(m_file, b, count);
+
+    delete[] b;
+
+    if (written < count) {
+        m_error = QString("Only wrote %1 of %2 frames")
+            .arg(written).arg(count);
+    }
+
+    return isOK();
+}
+    
+bool
+WavFileWriter::close()
+{
+    if (m_file) {
+        sf_close(m_file);
+        m_file = 0;
+    }
+    return true;
 }
 
-
-	    
-	    

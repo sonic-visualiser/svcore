@@ -29,7 +29,7 @@ static int handle_x11_error(Display *dpy, XErrorEvent *err)
     char errstr[256];
     XGetErrorText(dpy, err->error_code, errstr, 256);
     if (err->error_code != BadWindow) {
-	std::cerr << "waveform: X Error: "
+	std::cerr << "Sonic Visualiser: X Error: "
 		  << errstr << " " << int(err->error_code)
 		  << "\nin major opcode:  "
 		  << int(err->request_code) << std::endl;
