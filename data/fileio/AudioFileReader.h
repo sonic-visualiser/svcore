@@ -42,6 +42,8 @@ public:
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const = 0;
 
+    virtual bool isUpdating() const { return false; }
+
 signals:
     void frameCountChanged();
     

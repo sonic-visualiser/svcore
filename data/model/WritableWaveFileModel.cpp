@@ -77,7 +77,7 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 
     if (!m_model) {
 
-        m_reader = new WavFileReader(m_writer->getPath());
+        m_reader = new WavFileReader(m_writer->getPath(), true);
         if (!m_reader->getError().isEmpty()) {
             std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
             delete m_reader;
@@ -108,7 +108,8 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 void
 WritableWaveFileModel::sync()
 {
-    if (m_reader) m_reader->updateFrameCount();
+    //!!! use setCompletion instead
+    if (m_reader) m_reader->updateDone();
 }    
 
 bool

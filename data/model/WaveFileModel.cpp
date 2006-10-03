@@ -60,7 +60,10 @@ WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
     connect(m_reader, SIGNAL(frameCountChanged()),
             this, SLOT(frameCountChanged()));
     setObjectName(QFileInfo(path).fileName());
-    if (isOK()) fillCache();
+    if (isOK()) {
+        std::cerr << "OK; filling cache" << std::endl;
+        fillCache();
+    }
 }
 
 WaveFileModel::~WaveFileModel()
@@ -431,6 +434,8 @@ void
 WaveFileModel::RangeCacheFillThread::frameCountChanged()
 {
     m_frameCount = m_model.getFrameCount();
+    std::cerr << "WaveFileModel::RangeCacheFillThread::frameCountChanged: now "
+              << m_frameCount << std::endl;
 }
 
 void
@@ -452,54 +457,67 @@ WaveFileModel::RangeCacheFillThread::run()
     Range *range = new Range[2 * channels];
     size_t count[2];
     count[0] = count[1] = 0;
-    
-    while (frame < m_frameCount) {
+
+    bool first = true;
+    bool updating = m_model.m_reader->isUpdating();
+
+    while (first || updating) {
+
+        updating = m_model.m_reader->isUpdating();
 
         std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
 
-	m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
+        while (frame < m_frameCount) {
 
-        for (size_t i = 0; i < readBlockSize; ++i) {
+            if (updating && (frame + readBlockSize > m_frameCount)) break;
+
+            m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
+
+            for (size_t i = 0; i < readBlockSize; ++i) {
 		
-	    for (size_t ch = 0; ch < size_t(channels); ++ch) {
+                for (size_t ch = 0; ch < size_t(channels); ++ch) {
 
-                size_t index = channels * i + ch;
-		if (index >= block.size()) continue;
-                float sample = block[index];
-                
-                for (size_t ct = 0; ct < 2; ++ct) {
-                
-                    size_t rangeIndex = ch * 2 + ct;
+                    size_t index = channels * i + ch;
+                    if (index >= block.size()) continue;
+                    float sample = block[index];
                     
-                    if (sample > range[rangeIndex].max || count[ct] == 0) {
-                        range[rangeIndex].max = sample;
-                    }
-                    if (sample < range[rangeIndex].min || count[ct] == 0) {
-                        range[rangeIndex].min = sample;
-                    }
-                    range[rangeIndex].absmean += fabsf(sample);
-                }
-	    }
-            
-	    QMutexLocker locker(&m_model.m_mutex);
-            for (size_t ct = 0; ct < 2; ++ct) {
-                if (++count[ct] == cacheBlockSize[ct]) {
-                    for (size_t ch = 0; ch < size_t(channels); ++ch) {
+                    for (size_t ct = 0; ct < 2; ++ct) {
+                        
                         size_t rangeIndex = ch * 2 + ct;
-                        range[rangeIndex].absmean /= count[ct];
-                        m_model.m_cache[ct].push_back(range[rangeIndex]);
-                        range[rangeIndex] = Range();
+                        
+                        if (sample > range[rangeIndex].max || count[ct] == 0) {
+                            range[rangeIndex].max = sample;
+                        }
+                        if (sample < range[rangeIndex].min || count[ct] == 0) {
+                            range[rangeIndex].min = sample;
+                        }
+                        range[rangeIndex].absmean += fabsf(sample);
                     }
-                    count[ct] = 0;
                 }
+                
+                QMutexLocker locker(&m_model.m_mutex);
+                for (size_t ct = 0; ct < 2; ++ct) {
+                    if (++count[ct] == cacheBlockSize[ct]) {
+                        for (size_t ch = 0; ch < size_t(channels); ++ch) {
+                            size_t rangeIndex = ch * 2 + ct;
+                            range[rangeIndex].absmean /= count[ct];
+                            m_model.m_cache[ct].push_back(range[rangeIndex]);
+                            range[rangeIndex] = Range();
+                        }
+                        count[ct] = 0;
+                    }
+                }
+                
+                ++frame;
             }
             
-            ++frame;
+            if (m_model.m_exiting) break;
+            
+            m_fillExtent = frame;
         }
 
-	if (m_model.m_exiting) break;
-
-	m_fillExtent = frame;
+        first = false;
+        if (updating) sleep(1);
     }
 
     QMutexLocker locker(&m_model.m_mutex);

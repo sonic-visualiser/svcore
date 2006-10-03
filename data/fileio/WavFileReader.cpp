@@ -19,13 +19,14 @@
 
 #include <QMutexLocker>
 
-WavFileReader::WavFileReader(QString path) :
+WavFileReader::WavFileReader(QString path, bool fileUpdating) :
     m_file(0),
     m_path(path),
     m_buffer(0),
     m_bufsiz(0),
     m_lastStart(0),
-    m_lastCount(0)
+    m_lastCount(0),
+    m_updating(fileUpdating)
 {
     m_frameCount = 0;
     m_channelCount = 0;
@@ -80,7 +81,16 @@ WavFileReader::updateFrameCount()
 
     std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
 
-    if (m_fileInfo.frames != prevCount) emit frameCountChanged();
+    m_frameCount = m_fileInfo.frames;
+
+    if (m_frameCount != prevCount) emit frameCountChanged();
+}
+
+void
+WavFileReader::updateDone()
+{
+    updateFrameCount();
+    m_updating = false;
 }
 
 void
