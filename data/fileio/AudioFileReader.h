@@ -19,8 +19,10 @@
 #include <QString>
 #include "model/Model.h" // for SampleBlock
 
-class AudioFileReader
+class AudioFileReader : public QObject
 {
+    Q_OBJECT
+
 public:
     virtual ~AudioFileReader() { }
 
@@ -39,6 +41,9 @@ public:
      */
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const = 0;
+
+signals:
+    void frameCountChanged();
     
 protected:
     size_t m_frameCount;

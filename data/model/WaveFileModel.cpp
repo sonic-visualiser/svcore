@@ -35,12 +35,30 @@ using std::endl;
 
 WaveFileModel::WaveFileModel(QString path) :
     m_path(path),
+    m_myReader(true),
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
     m_exiting(false)
 {
     m_reader = AudioFileReaderFactory::createReader(path);
+    connect(m_reader, SIGNAL(frameCountChanged()),
+            this, SLOT(frameCountChanged()));
+    setObjectName(QFileInfo(path).fileName());
+    if (isOK()) fillCache();
+}
+
+WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
+    m_path(path),
+    m_myReader(false),
+    m_fillThread(0),
+    m_updateTimer(0),
+    m_lastFillExtent(0),
+    m_exiting(false)
+{
+    m_reader = reader;
+    connect(m_reader, SIGNAL(frameCountChanged()),
+            this, SLOT(frameCountChanged()));
     setObjectName(QFileInfo(path).fileName());
     if (isOK()) fillCache();
 }
@@ -49,7 +67,7 @@ WaveFileModel::~WaveFileModel()
 {
     m_exiting = true;
     if (m_fillThread) m_fillThread->wait();
-    delete m_reader;
+    if (m_myReader) delete m_reader;
     m_reader = 0;
 }
 
@@ -111,6 +129,9 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
     }
 
     if (!m_reader || !m_reader->isOK()) return 0;
+
+//    std::cerr << "WaveFileModel::getValues(" << channel << ", "
+//              << start << ", " << end << "): calling reader" << std::endl;
 
     SampleBlock frames;
     m_reader->getInterleavedFrames(start, end - start, frames);
@@ -357,18 +378,38 @@ WaveFileModel::fillCache()
     connect(m_fillThread, SIGNAL(finished()), this, SLOT(cacheFilled()));
     m_mutex.unlock();
     m_fillThread->start();
+    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
 }   
+
+void
+WaveFileModel::frameCountChanged()
+{
+    m_mutex.lock();
+    if (m_updateTimer) {
+        std::cerr << "WaveFileModel::frameCountChanged: updating existing fill thread" << std::endl;
+        m_fillThread->frameCountChanged();
+        m_mutex.unlock();
+    } else {
+        std::cerr << "WaveFileModel::frameCountChanged: restarting [inefficient]" << std::endl;
+        m_cache[0].clear();
+        m_cache[1].clear();
+        m_mutex.unlock();
+        fillCache();
+    }
+}
 
 void
 WaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
 	size_t fillExtent = m_fillThread->getFillExtent();
+        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 	if (fillExtent > m_lastFillExtent) {
 	    emit modelChanged(m_lastFillExtent, fillExtent);
 	    m_lastFillExtent = fillExtent;
 	}
     } else {
+        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
 	emit modelChanged();
     }
 }
@@ -383,7 +424,13 @@ WaveFileModel::cacheFilled()
     m_updateTimer = 0;
     m_mutex.unlock();
     emit modelChanged();
-//    cerr << "WaveFileModel::cacheFilled" << endl;
+    cerr << "WaveFileModel::cacheFilled" << endl;
+}
+
+void
+WaveFileModel::RangeCacheFillThread::frameCountChanged()
+{
+    m_frameCount = m_model.getFrameCount();
 }
 
 void
@@ -401,13 +448,14 @@ WaveFileModel::RangeCacheFillThread::run()
     if (!m_model.isOK()) return;
     
     size_t channels = m_model.getChannelCount();
-    size_t frames = m_model.getFrameCount();
 
     Range *range = new Range[2 * channels];
     size_t count[2];
     count[0] = count[1] = 0;
     
-    while (frame < frames) {
+    while (frame < m_frameCount) {
+
+        std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
 
 	m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
 
@@ -472,11 +520,11 @@ WaveFileModel::RangeCacheFillThread::run()
     
     delete[] range;
 
-    m_fillExtent = frames;
+    m_fillExtent = m_frameCount;
         
-//    for (size_t ct = 0; ct < 2; ++ct) {
-//        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
-//    }
+    for (size_t ct = 0; ct < 2; ++ct) {
+        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
+    }
 }
 
 void

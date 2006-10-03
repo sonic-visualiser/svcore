@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <QMutexLocker>
+
 WavFileReader::WavFileReader(QString path) :
     m_file(0),
     m_path(path),
@@ -33,7 +35,7 @@ WavFileReader::WavFileReader(QString path) :
     m_fileInfo.frames = 0;
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
-    if (!m_file || m_fileInfo.frames <= 0 || m_fileInfo.channels <= 0) {
+    if (!m_file || m_fileInfo.channels <= 0) {
 	std::cerr << "WavFileReader::initialize: Failed to open file ("
 		  << sf_strerror(m_file) << ")" << std::endl;
 
@@ -50,6 +52,9 @@ WavFileReader::WavFileReader(QString path) :
     m_frameCount = m_fileInfo.frames;
     m_channelCount = m_fileInfo.channels;
     m_sampleRate = m_fileInfo.samplerate;
+
+    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << std::endl;
+
 }
 
 WavFileReader::~WavFileReader()
@@ -58,14 +63,42 @@ WavFileReader::~WavFileReader()
 }
 
 void
+WavFileReader::updateFrameCount()
+{
+    QMutexLocker locker(&m_mutex);
+
+    size_t prevCount = m_fileInfo.frames;
+
+    if (m_file) {
+        sf_close(m_file);
+        m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
+        if (!m_file || m_fileInfo.channels <= 0) {
+            std::cerr << "WavFileReader::updateFrameCount: Failed to open file ("
+                      << sf_strerror(m_file) << ")" << std::endl;
+        }
+    }
+
+    std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
+
+    if (m_fileInfo.frames != prevCount) emit frameCountChanged();
+}
+
+void
 WavFileReader::getInterleavedFrames(size_t start, size_t count,
 				    SampleBlock &results) const
 {
-    results.clear();
-    if (!m_file || !m_channelCount) return;
     if (count == 0) return;
+    results.clear();
+
+    QMutexLocker locker(&m_mutex);
+
+    if (!m_file || !m_channelCount) {
+        return;
+    }
 
     if ((long)start >= m_fileInfo.frames) {
+//        std::cerr << "WavFileReader::getInterleavedFrames: " << start
+//                  << " > " << m_fileInfo.frames << std::endl;
 	return;
     }
 
@@ -75,12 +108,10 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 
     sf_count_t readCount = 0;
 
-    m_mutex.lock();
-
     if (start != m_lastStart || count != m_lastCount) {
 
 	if (sf_seek(m_file, start, SEEK_SET) < 0) {
-	    m_mutex.unlock();
+//            std::cerr << "sf_seek failed" << std::endl;
 	    return;
 	}
 	
@@ -94,7 +125,7 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 	}
 	
 	if ((readCount = sf_readf_float(m_file, m_buffer, count)) < 0) {
-	    m_mutex.unlock();
+//            std::cerr << "sf_readf_float failed" << std::endl;
 	    return;
 	}
 
@@ -106,7 +137,6 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 	results.push_back(m_buffer[i]);
     }
 
-    m_mutex.unlock();
     return;
 }
 

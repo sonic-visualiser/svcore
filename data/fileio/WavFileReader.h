@@ -40,6 +40,8 @@ public:
     
     static void getSupportedExtensions(std::set<QString> &extensions);
 
+    void updateFrameCount();
+
 protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
