@@ -18,28 +18,33 @@
 
 #include <QString>
 
+#include <sndfile.h>
+
 class DenseTimeValueModel;
 class MultiSelection;
 
 class WavFileWriter
 {
 public:
-    WavFileWriter(QString path, size_t sampleRate,
-		  DenseTimeValueModel *source,
-		  MultiSelection *selection);
+    WavFileWriter(QString path, size_t sampleRate, size_t channels);
     virtual ~WavFileWriter();
 
     bool isOK() const;
 
     virtual QString getError() const;
 
-    void write();
+    bool writeModel(DenseTimeValueModel *source,
+                    MultiSelection *selection = 0);
+
+    bool writeSamples(float **samples, size_t count); // count per channel
+
+    bool close();
 
 protected:
     QString m_path;
     size_t m_sampleRate;
-    DenseTimeValueModel *m_model;
-    MultiSelection *m_selection;
+    size_t m_channels;
+    SNDFILE *m_file;
     QString m_error;
 };
 
