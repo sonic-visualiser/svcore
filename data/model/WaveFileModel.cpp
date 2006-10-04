@@ -517,23 +517,27 @@ WaveFileModel::RangeCacheFillThread::run()
         }
 
         first = false;
+        if (m_model.m_exiting) break;
         if (updating) sleep(1);
     }
 
-    QMutexLocker locker(&m_model.m_mutex);
-    for (size_t ct = 0; ct < 2; ++ct) {
-        if (count[ct] > 0) {
-            for (size_t ch = 0; ch < size_t(channels); ++ch) {
-                size_t rangeIndex = ch * 2 + ct;
-                range[rangeIndex].absmean /= count[ct];
-                m_model.m_cache[ct].push_back(range[rangeIndex]);
-                range[rangeIndex] = Range();
-            }
-            count[ct] = 0;
-        }
+    if (!m_model.m_exiting) {
 
-	const Range &rr = *m_model.m_cache[ct].begin();
-	MUNLOCK(&rr, m_model.m_cache[ct].capacity() * sizeof(Range));
+        QMutexLocker locker(&m_model.m_mutex);
+        for (size_t ct = 0; ct < 2; ++ct) {
+            if (count[ct] > 0) {
+                for (size_t ch = 0; ch < size_t(channels); ++ch) {
+                    size_t rangeIndex = ch * 2 + ct;
+                    range[rangeIndex].absmean /= count[ct];
+                    m_model.m_cache[ct].push_back(range[rangeIndex]);
+                    range[rangeIndex] = Range();
+                }
+                count[ct] = 0;
+            }
+            
+            const Range &rr = *m_model.m_cache[ct].begin();
+            MUNLOCK(&rr, m_model.m_cache[ct].capacity() * sizeof(Range));
+        }
     }
     
     delete[] range;
