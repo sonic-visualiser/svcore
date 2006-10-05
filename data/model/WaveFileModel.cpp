@@ -89,6 +89,7 @@ WaveFileModel::isReady(int *completion) const
     bool ready = (isOK() && (m_fillThread == 0));
     double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
     if (completion) *completion = int(c * 100.0 + 0.01);
+    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
     return ready;
 }
 

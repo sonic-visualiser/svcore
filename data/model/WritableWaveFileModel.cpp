@@ -124,7 +124,7 @@ bool
 WritableWaveFileModel::isReady(int *completion) const
 {
     bool ready = (m_model && m_model->isReady(completion));
-    std::cerr << "WritableWaveFileModel::isReady(): ready = " << ready << std::endl;
+    std::cerr << "WritableWaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
     return ready;
 }
 
