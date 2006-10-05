@@ -25,8 +25,7 @@
  * against time).  For example, audio waveform data.
  */
 
-class DenseTimeValueModel : public Model,
-			    virtual public QObject
+class DenseTimeValueModel : public Model
 {
     Q_OBJECT
 

@@ -28,9 +28,7 @@
  * example: think "peaks and minima" for "ranges".
  */
 
-class RangeSummarisableTimeValueModel : public DenseTimeValueModel,
-					virtual public ZoomConstraint,
-					virtual public QObject
+class RangeSummarisableTimeValueModel : public DenseTimeValueModel
 {
     Q_OBJECT
 

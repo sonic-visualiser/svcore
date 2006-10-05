@@ -21,8 +21,7 @@
 class WavFileWriter;
 class WavFileReader;
 
-class WritableWaveFileModel : public RangeSummarisableTimeValueModel,
-                              virtual public PowerOfSqrtTwoZoomConstraint
+class WritableWaveFileModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
 
@@ -35,6 +34,11 @@ public:
     
     bool isOK() const;
     bool isReady(int *) const;
+
+    const ZoomConstraint *getZoomConstraint() const {
+        static PowerOfSqrtTwoZoomConstraint zc;
+        return &zc;
+    }
 
     size_t getFrameCount() const;
     size_t getChannelCount() const { return m_channels; }

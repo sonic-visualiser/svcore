@@ -22,9 +22,7 @@
 #include <QMutex>
 #include <vector>
 
-class DenseThreeDimensionalModel : public Model,
-				   virtual public ZoomConstraint,
-				   virtual public QObject
+class DenseThreeDimensionalModel : public Model
 {
     Q_OBJECT
 
