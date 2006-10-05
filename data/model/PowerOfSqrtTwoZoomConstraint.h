@@ -25,7 +25,6 @@ public:
 				       RoundingDirection dir = RoundNearest)
 	const;
     
-protected:
     virtual size_t getNearestBlockSize(size_t requestedBlockSize,
 				       int &type,
 				       int &power,

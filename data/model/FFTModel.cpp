@@ -114,8 +114,6 @@ FFTModel::clone() const
 }
 
 FFTModel::FFTModel(const FFTModel &model) :
-    QObject(),
-    ZoomConstraint(),  //!!!  want a real ZoomConstraint for this!
     DenseThreeDimensionalModel(),
     m_server(model.m_server),
     m_xshift(model.m_xshift),

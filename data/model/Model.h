@@ -23,12 +23,14 @@
 
 typedef std::vector<float> SampleBlock;
 
+class ZoomConstraint;
+
 /** 
  * Model is the base class for all data models that represent any sort
  * of data on a time scale based on an audio frame rate.
  */
 
-class Model : virtual public QObject,
+class Model : public QObject,
 	      public XmlExportable
 {
     Q_OBJECT
@@ -92,6 +94,15 @@ public:
 	return ok;
     }
     static const int COMPLETION_UNKNOWN;
+
+    /**
+     * If this model imposes a zoom constraint, i.e. some limit to the
+     * set of resolutions at which its data can meaningfully be
+     * displayed, then return it.
+     */
+    virtual const ZoomConstraint *getZoomConstraint() const {
+        return 0;
+    }
 
     virtual void toXml(QTextStream &stream,
                        QString indent = "",

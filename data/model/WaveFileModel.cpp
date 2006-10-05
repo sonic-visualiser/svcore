@@ -33,6 +33,9 @@
 using std::cerr;
 using std::endl;
 
+PowerOfSqrtTwoZoomConstraint
+WaveFileModel::m_zoomConstraint;
+
 WaveFileModel::WaveFileModel(QString path) :
     m_path(path),
     m_myReader(true),
@@ -221,9 +224,9 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
     }
 
     int cacheType = 0;
-    int power = getMinCachePower();
-    blockSize = getNearestBlockSize(blockSize, cacheType, power,
-				    ZoomConstraint::RoundUp);
+    int power = m_zoomConstraint.getMinCachePower();
+    blockSize = m_zoomConstraint.getNearestBlockSize
+        (blockSize, cacheType, power, ZoomConstraint::RoundUp);
 
     size_t channels = getChannelCount();
 
@@ -277,10 +280,10 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	size_t cacheBlock, div;
         
 	if (cacheType == 0) {
-	    cacheBlock = (1 << getMinCachePower());
+	    cacheBlock = (1 << m_zoomConstraint.getMinCachePower());
             div = (1 << power) / cacheBlock;
 	} else {
-	    cacheBlock = ((unsigned int)((1 << getMinCachePower()) * sqrt(2) + 0.01));
+	    cacheBlock = ((unsigned int)((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2) + 0.01));
             div = ((unsigned int)((1 << power) * sqrt(2) + 0.01)) / cacheBlock;
 	}
 
@@ -442,8 +445,8 @@ void
 WaveFileModel::RangeCacheFillThread::run()
 {
     size_t cacheBlockSize[2];
-    cacheBlockSize[0] = (1 << m_model.getMinCachePower());
-    cacheBlockSize[1] = ((unsigned int)((1 << m_model.getMinCachePower()) *
+    cacheBlockSize[0] = (1 << m_model.m_zoomConstraint.getMinCachePower());
+    cacheBlockSize[1] = ((unsigned int)((1 << m_model.m_zoomConstraint.getMinCachePower()) *
                                         sqrt(2) + 0.01));
     
     size_t frame = 0;

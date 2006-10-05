@@ -27,8 +27,7 @@
 
 class AudioFileReader;
 
-class WaveFileModel : public RangeSummarisableTimeValueModel,
-		      virtual public PowerOfSqrtTwoZoomConstraint
+class WaveFileModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
 
@@ -39,6 +38,8 @@ public:
 
     bool isOK() const;
     bool isReady(int *) const;
+
+    const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
     size_t getFrameCount() const;
     size_t getChannelCount() const;
@@ -107,6 +108,7 @@ protected:
     QTimer *m_updateTimer;
     size_t m_lastFillExtent;
     bool m_exiting;
+    static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 };    
 
 #endif

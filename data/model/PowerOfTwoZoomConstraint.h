@@ -24,11 +24,6 @@ public:
     virtual size_t getNearestBlockSize(size_t requestedBlockSize,
 				       RoundingDirection dir = RoundNearest)
 	const;
-/*
-    virtual size_t getNextBlockSize(size_t blockSize,
-				    RoundingDirection dir = RoundNearest)
-	const;
-*/
 };
 
 #endif
