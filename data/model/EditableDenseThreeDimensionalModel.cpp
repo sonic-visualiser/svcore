@@ -17,6 +17,8 @@
 
 #include <QTextStream>
 
+#include <iostream>
+
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
                                                                        size_t resolution,
                                                                        size_t yBinCount,
@@ -124,7 +126,7 @@ EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 
 void
 EditableDenseThreeDimensionalModel::getBinValues(long windowStart,
-					 BinValueSet &result) const
+                                                 BinValueSet &result) const
 {
     QMutexLocker locker(&m_mutex);
     
@@ -141,7 +143,7 @@ EditableDenseThreeDimensionalModel::getBinValues(long windowStart,
 
 float
 EditableDenseThreeDimensionalModel::getBinValue(long windowStart,
-					size_t n) const
+                                                size_t n) const
 {
     QMutexLocker locker(&m_mutex);
     
@@ -149,6 +151,8 @@ EditableDenseThreeDimensionalModel::getBinValue(long windowStart,
 
     if (index >= 0 && index < long(m_data.size())) {
 	const BinValueSet &s = m_data[index];
+        std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
+                  << std::endl;
 	if (n < s.size()) return s[n];
     }
 
