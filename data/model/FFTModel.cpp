@@ -79,23 +79,13 @@ FFTModel::getSampleRate() const
 }
 
 void
-FFTModel::getBinValues(long windowStartFrame, BinValueSet &result) const
+FFTModel::getColumn(size_t x, Column &result) const
 {
-    if (windowStartFrame < 0) windowStartFrame = 0;
-    size_t x = windowStartFrame / getResolution();
     result.clear();
     size_t height(getHeight());
     for (size_t y = 0; y < height; ++y) {
         result.push_back(const_cast<FFTModel *>(this)->getMagnitudeAt(x, y));
     }
-}
-
-float
-FFTModel::getBinValue(long windowStartFrame, size_t n) const
-{
-    if (windowStartFrame < 0) windowStartFrame = 0;
-    size_t x = windowStartFrame / getResolution();
-    return const_cast<FFTModel *>(this)->getMagnitudeAt(x, n);
 }
 
 QString

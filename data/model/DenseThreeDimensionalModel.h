@@ -28,40 +28,76 @@ class DenseThreeDimensionalModel : public Model
 
 public:
     /**
-     * Return the number of sample frames covered by each set of bins.
+     * Return the number of sample frames covered by each column of bins.
      */
     virtual size_t getResolution() const = 0;
 
     /**
-     * Return the number of bins in each set of bins.
+     * Return the number of columns of bins in the model.
      */
-    virtual size_t getYBinCount() const = 0; 
+    virtual size_t getWidth() const = 0;
 
     /**
-     * Return the minimum value of the value in each bin.
+     * Return the number of bins in each column.
+     */
+    virtual size_t getHeight() const = 0; 
+
+    /**
+     * Return the minimum permissible value in each bin.
      */
     virtual float getMinimumLevel() const = 0;
 
     /**
-     * Return the maximum value of the value in each bin.
+     * Return the maximum permissible value in each bin.
      */
     virtual float getMaximumLevel() const = 0;
 
-    typedef std::vector<float> BinValueSet;
+    /**
+     * Return true if there are data available for the given column.
+     * This should return true only if getBinValues(windowStartFrame)
+     * would not have to do any substantial work to calculate its
+     * return values.  If this function returns false, it may still be
+     * possible to get the bin values for that column, but they may
+     * have to be calculated.
+     */
+    virtual bool isColumnAvailable(size_t column) const = 0;
+
+    typedef std::vector<float> Column;
 
     /**
-     * Get the set of bin values at the given sample frame (i.e. the
-     * windowStartFrame/getWindowSize()'th set of bins).
+     * Get data from the given column of bin values.
      */
-    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const = 0;
+    virtual void getColumn(size_t column, Column &result) const = 0;
 
     /**
-     * Get a single value, the one at the n'th bin of the set of bins
-     * starting at the given sample frame.
+     * Get the single data point from the n'th bin of the given column.
      */
-    virtual float getBinValue(long windowStartFrame, size_t n) const = 0;
+    virtual float getValueAt(size_t column, size_t n) const = 0;
 
+    /**
+     * Get the name of a given bin (i.e. a label to associate with
+     * that bin across all columns).
+     */
     virtual QString getBinName(size_t n) const = 0;
+
+    /**
+     * Utility function to query whether a given bin is greater than
+     * its (vertical) neighbours.
+     */
+    bool isLocalPeak(size_t x, size_t y) {
+        float value = getValueAt(x, y);
+        if (y > 0 && value < getValueAt(x, y - 1)) return false;
+        if (y < getHeight() - 1 && value < getValueAt(x, y + 1)) return false;
+        return true;
+    }
+
+    /**
+     * Utility function to query whether a given bin is greater than a
+     * certain threshold.
+     */
+    bool isOverThreshold(size_t x, size_t y, float threshold) {
+        return getValueAt(x, y) > threshold;
+    }
 
     virtual int getCompletion() const = 0;
 

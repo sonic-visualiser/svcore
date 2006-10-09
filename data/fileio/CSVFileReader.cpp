@@ -227,7 +227,7 @@ CSVFileReader::load() const
 
 	} else if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
 
-	    DenseThreeDimensionalModel::BinValueSet values;
+	    DenseThreeDimensionalModel::Column values;
 
 	    for (int i = 0; i < tidyList.size(); ++i) {
 
@@ -254,7 +254,7 @@ CSVFileReader::load() const
 	    std::cerr << "Setting bin values for count " << lineno << ", frame "
 		      << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
 
-	    model3->setBinValues(frameNo, values);
+	    model3->setColumn(frameNo / model3->getResolution(), values);
 	}
 
 	++lineno;
