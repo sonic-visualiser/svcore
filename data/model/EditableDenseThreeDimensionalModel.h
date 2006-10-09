@@ -48,14 +48,19 @@ public:
     virtual void setResolution(size_t sz);
 
     /**
+     * Return the number of columns.
+     */
+    virtual size_t getWidth() const;
+
+    /**
      * Return the number of bins in each set of bins.
      */
-    virtual size_t getYBinCount() const; 
+    virtual size_t getHeight() const; 
 
     /**
      * Set the number of bins in each set of bins.
      */
-    virtual void setYBinCount(size_t sz);
+    virtual void setHeight(size_t sz);
 
     /**
      * Return the minimum value of the value in each bin.
@@ -77,24 +82,25 @@ public:
      */
     virtual void setMaximumLevel(float sz);
 
-    typedef std::vector<float> BinValueSet;
+    /**
+     * Return true if there are data available for the given column.
+     */
+    virtual bool isColumnAvailable(size_t x) const { return x < getWidth(); }
 
     /**
-     * Get the set of bin values at the given sample frame (i.e. the
-     * windowStartFrame/getResolution()'th set of bins).
+     * Get the set of bin values at the given column.
      */
-    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const;
+    virtual void getColumn(size_t x, Column &) const;
 
     /**
-     * Get a single value, the one at the n'th bin of the set of bins
-     * starting at the given sample frame.
+     * Get a single value, from the n'th bin of the given column.
      */
-    virtual float getBinValue(long windowStartFrame, size_t n) const;
+    virtual float getValueAt(size_t x, size_t n) const;
 
     /**
-     * Set the entire set of bin values at the given sample frame.
+     * Set the entire set of bin values at the given column.
      */
-    virtual void setBinValues(long windowStartFrame, const BinValueSet &values);
+    virtual void setColumn(size_t x, const Column &values);
 
     virtual QString getBinName(size_t n) const;
     virtual void setBinName(size_t n, QString);
@@ -111,7 +117,7 @@ public:
 				QString extraAttributes = "") const;
 
 protected:
-    typedef std::vector<BinValueSet> ValueMatrix;
+    typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
 
     std::vector<QString> m_binNames;

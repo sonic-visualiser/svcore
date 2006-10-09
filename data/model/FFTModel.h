@@ -32,12 +32,6 @@ public:
              size_t fillFromColumn = 0);
     ~FFTModel();
 
-    size_t getWidth() const {
-        return m_server->getWidth() >> m_xshift;
-    }
-    size_t getHeight() const {
-        return m_server->getHeight() >> m_yshift;
-    }
     float getMagnitudeAt(size_t x, size_t y) {
         return m_server->getMagnitudeAt(x << m_xshift, y << m_yshift);
     }
@@ -53,23 +47,23 @@ public:
     void getValuesAt(size_t x, size_t y, float &real, float &imaginary) {
         m_server->getValuesAt(x << m_xshift, y << m_yshift, real, imaginary);
     }
-    bool isColumnReady(size_t x) {
+    bool isColumnAvailable(size_t x) const {
         return m_server->isColumnReady(x << m_xshift);
-    }
-    bool isLocalPeak(size_t x, size_t y) {
-        float mag = getMagnitudeAt(x, y);
-        if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
-        if (y < getHeight() - 1 && mag < getMagnitudeAt(x, y + 1)) return false;
-        return true;
-    }
-    bool isOverThreshold(size_t x, size_t y, float threshold) {
-        return getMagnitudeAt(x, y) > threshold;
     }
 
     size_t getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
     //
+    virtual size_t getWidth() const {
+        return m_server->getWidth() >> m_xshift;
+    }
+    virtual size_t getHeight() const {
+        return m_server->getHeight() >> m_yshift;
+    }
+    virtual float getValueAt(size_t x, size_t y) const {
+        return const_cast<FFTModel *>(this)->getMagnitudeAt(x, y);
+    }
     virtual bool isOK() const {
         return m_server && m_server->getModel();
     }
@@ -92,8 +86,7 @@ public:
     virtual float getMaximumLevel() const {
         return 1.f; // Can't provide
     }
-    virtual void getBinValues(long windowStartFrame, BinValueSet &result) const;
-    virtual float getBinValue(long windowStartFrame, size_t n) const;
+    virtual void getColumn(size_t x, Column &result) const;
     virtual QString getBinName(size_t n) const;
 
     virtual int getCompletion() const { return m_server->getFillCompletion(); }

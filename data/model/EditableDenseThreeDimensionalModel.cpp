@@ -70,7 +70,7 @@ EditableDenseThreeDimensionalModel::clone() const
     model->m_maximum = m_maximum;
 
     for (size_t i = 0; i < m_data.size(); ++i) {
-	model->setBinValues(i * m_resolution, m_data[i]);
+	model->setColumn(i, m_data[i]);
     }
 
     return model;
@@ -89,13 +89,19 @@ EditableDenseThreeDimensionalModel::setResolution(size_t sz)
 }
 
 size_t
-EditableDenseThreeDimensionalModel::getYBinCount() const
+EditableDenseThreeDimensionalModel::getWidth() const
+{
+    return m_data.size();
+}
+
+size_t
+EditableDenseThreeDimensionalModel::getHeight() const
 {
     return m_yBinCount;
 }
 
 void
-EditableDenseThreeDimensionalModel::setYBinCount(size_t sz)
+EditableDenseThreeDimensionalModel::setHeight(size_t sz)
 {
     m_yBinCount = sz;
 }
@@ -125,14 +131,12 @@ EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 }
 
 void
-EditableDenseThreeDimensionalModel::getBinValues(long windowStart,
-                                                 BinValueSet &result) const
+EditableDenseThreeDimensionalModel::getColumn(size_t index,
+                                              Column &result) const
 {
     QMutexLocker locker(&m_mutex);
-    
-    long index = windowStart / m_resolution;
 
-    if (index >= 0 && index < long(m_data.size())) {
+    if (index < m_data.size()) {
 	result = m_data[index];
     } else {
 	result.clear();
@@ -142,15 +146,12 @@ EditableDenseThreeDimensionalModel::getBinValues(long windowStart,
 }
 
 float
-EditableDenseThreeDimensionalModel::getBinValue(long windowStart,
-                                                size_t n) const
+EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
 {
     QMutexLocker locker(&m_mutex);
-    
-    long index = windowStart / m_resolution;
 
-    if (index >= 0 && index < long(m_data.size())) {
-	const BinValueSet &s = m_data[index];
+    if (index < m_data.size()) {
+	const Column &s = m_data[index];
         std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
                   << std::endl;
 	if (n < s.size()) return s[n];
@@ -160,15 +161,13 @@ EditableDenseThreeDimensionalModel::getBinValue(long windowStart,
 }
 
 void
-EditableDenseThreeDimensionalModel::setBinValues(long windowStart,
-					 const BinValueSet &values)
+EditableDenseThreeDimensionalModel::setColumn(size_t index,
+                                              const Column &values)
 {
     QMutexLocker locker(&m_mutex);
 
-    long index = windowStart / m_resolution;
-
-    while (index >= long(m_data.size())) {
-	m_data.push_back(BinValueSet());
+    while (index >= m_data.size()) {
+	m_data.push_back(Column());
     }
 
     bool newExtents = (m_data.empty() && (m_minimum == m_maximum));
@@ -186,6 +185,9 @@ EditableDenseThreeDimensionalModel::setBinValues(long windowStart,
     }
 
     m_data[index] = values;
+
+    long windowStart = index;
+    windowStart *= m_resolution;
 
     if (m_notifyOnAdd) {
 	if (allChange) {
