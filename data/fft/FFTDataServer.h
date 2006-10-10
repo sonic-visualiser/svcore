@@ -124,6 +124,8 @@ private:
     size_t m_width;
     size_t m_height;
     size_t m_cacheWidth;
+    size_t m_cacheWidthPower;
+    size_t m_cacheWidthMask;
     bool m_memoryCache;
     bool m_compactCache;
 

@@ -23,6 +23,7 @@
 #include "system/System.h"
 
 #include "base/StorageAdviser.h"
+#include "base/Profiler.h"
 
 
 #define DEBUG_FFT_SERVER 1
@@ -313,6 +314,9 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_windowIncrement(windowIncrement),
     m_fftSize(fftSize),
     m_polar(polar),
+    m_width(0),
+    m_height(0),
+    m_cacheWidth(0),
     m_memoryCache(false),
     m_compactCache(false),
     m_lastUsedCache(-1),
@@ -439,6 +443,8 @@ FFTDataServer::suspend()
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer(" << this << "): suspend" << std::endl;
 #endif
+    Profiler profiler("FFTDataServer::suspend", false);
+
     QMutexLocker locker(&m_writeMutex);
     m_suspended = true;
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
@@ -452,6 +458,8 @@ FFTDataServer::suspendWrites()
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer(" << this << "): suspendWrites" << std::endl;
 #endif
+    Profiler profiler("FFTDataServer::suspendWrites", false);
+
     m_suspended = true;
 }
 
@@ -461,6 +469,8 @@ FFTDataServer::resume()
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer(" << this << "): resume" << std::endl;
 #endif
+    Profiler profiler("FFTDataServer::resume", false);
+
     m_suspended = false;
     if (m_fillThread) {
         if (m_fillThread->isFinished()) {
@@ -476,6 +486,8 @@ FFTDataServer::resume()
 FFTCache *
 FFTDataServer::getCacheAux(size_t c)
 {
+    Profiler profiler("FFTDataServer::getCacheAux", false);
+
     QMutexLocker locker(&m_writeMutex);
 
     if (m_lastUsedCache == -1) {
@@ -557,10 +569,14 @@ FFTDataServer::getCacheAux(size_t c)
 float
 FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 {
+    Profiler profiler("FFTDataServer::getMagnitudeAt", false);
+
     size_t col;
     FFTCache *cache = getCache(x, col);
 
     if (!cache->haveSetColumnAt(col)) {
+        std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
+                  << x << ")" << std::endl;
         fillColumn(x);
     }
     return cache->getMagnitudeAt(col, y);
@@ -569,6 +585,8 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 float
 FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 {
+    Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt", false);
+
     size_t col;
     FFTCache *cache = getCache(x, col);
 
@@ -581,6 +599,8 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 float
 FFTDataServer::getMaximumMagnitudeAt(size_t x)
 {
+    Profiler profiler("FFTDataServer::getMaximumMagnitudeAt", false);
+
     size_t col;
     FFTCache *cache = getCache(x, col);
 
@@ -593,6 +613,8 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 float
 FFTDataServer::getPhaseAt(size_t x, size_t y)
 {
+    Profiler profiler("FFTDataServer::getPhaseAt", false);
+
     size_t col;
     FFTCache *cache = getCache(x, col);
 
@@ -605,6 +627,8 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
 void
 FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 {
+    Profiler profiler("FFTDataServer::getValuesAt", false);
+
     size_t col;
     FFTCache *cache = getCache(x, col);
 
@@ -623,9 +647,14 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 bool
 FFTDataServer::isColumnReady(size_t x)
 {
+    Profiler profiler("FFTDataServer::isColumnReady", false);
+
     if (!haveCache(x)) {
         if (m_lastUsedCache == -1) {
-            if (m_suspended) resume();
+            if (m_suspended) {
+                std::cerr << "FFTDataServer::isColumnReady(" << x << "): no cache, calling resume" << std::endl;
+                resume();
+            }
             m_fillThread->start();
         }
         return false;
@@ -640,6 +669,8 @@ FFTDataServer::isColumnReady(size_t x)
 void
 FFTDataServer::fillColumn(size_t x)
 {
+    Profiler profiler("FFTDataServer::fillColumn", false);
+
     size_t col;
 #ifdef DEBUG_FFT_SERVER_FILL
     std::cout << "FFTDataServer::fillColumn(" << x << ")" << std::endl;
@@ -720,7 +751,10 @@ FFTDataServer::fillColumn(size_t x)
                        m_workbuffer + m_fftSize/2,
                        factor);
 
-    if (m_suspended) resume();
+    if (m_suspended) {
+//        std::cerr << "FFTDataServer::fillColumn(" << x << "): calling resume" << std::endl;
+//        resume();
+    }
 }    
 
 size_t

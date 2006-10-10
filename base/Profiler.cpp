@@ -23,16 +23,8 @@
 
 #include <vector>
 #include <algorithm>
-
-//#define NO_TIMING 1
-
-#define WANT_TIMING 1
-
-#ifdef NDEBUG
-#ifndef WANT_TIMING
-#define NO_TIMING 1
-#endif
-#endif
+#include <set>
+#include <map>
 
 using std::cerr;
 using std::endl;
@@ -63,72 +55,133 @@ void Profiles::accumulate(const char* id, clock_t time, RealTime rt)
     pair.second.first += time;
     pair.second.second = pair.second.second + rt;
 
-    TimePair &timePair(m_lastCalls[id]);
-    timePair.first = time;
-    timePair.second = rt;
+    TimePair &lastPair(m_lastCalls[id]);
+    lastPair.first = time;
+    lastPair.second = rt;
+
+    TimePair &worstPair(m_worstCalls[id]);
+    if (time > worstPair.first) {
+        worstPair.first = time;
+    }
+    if (rt > worstPair.second) {
+        worstPair.second = rt;
+    }
 #endif
 }
 
-void Profiles::dump()
+void Profiles::dump() const
 {
-#ifndef NO_TIMING    
-    cerr << "Profiles::dump() :\n";
+#ifndef NO_TIMING
 
-    // I'm finding these two confusing dumped out in random order,
-    // so I'm going to sort them alphabetically:
+    fprintf(stderr, "Profiling points:\n");
 
-    std::vector<const char *> profileNames;
-    for (ProfileMap::iterator i = m_profiles.begin();
-	 i != m_profiles.end(); ++i) {
-	profileNames.push_back((*i).first);
+    fprintf(stderr, "\nBy name:\n");
+
+    typedef std::set<const char *, std::less<std::string> > StringSet;
+
+    StringSet profileNames;
+    for (ProfileMap::const_iterator i = m_profiles.begin();
+         i != m_profiles.end(); ++i) {
+        profileNames.insert(i->first);
     }
 
-    std::sort(profileNames.begin(), profileNames.end());
+    for (StringSet::const_iterator i = profileNames.begin();
+         i != profileNames.end(); ++i) {
 
-    for (std::vector<const char *>::iterator i = profileNames.begin();
-	 i != profileNames.end(); ++i) {
+        ProfileMap::const_iterator j = m_profiles.find(*i);
 
-        cerr << "-> " << *i << ":  CPU: " 
-	     << m_profiles[*i].first << " calls, "
-	     << int((m_profiles[*i].second.first * 1000.0) / CLOCKS_PER_SEC) << "ms, "
-	     << (((double)m_profiles[*i].second.first * 1000000.0 /
-		  (double)m_profiles[*i].first) / CLOCKS_PER_SEC) << "us/call"
-	     << endl;
+        if (j == m_profiles.end()) continue;
 
-        cerr << "-> " << *i << ": real: " 
-	     << m_profiles[*i].first << " calls, "
-	     << m_profiles[*i].second.second << ", "
-	     << (m_profiles[*i].second.second / m_profiles[*i].first)
-	     << "/call"
-	     << endl;
+        const ProfilePair &pp(j->second);
 
-	cerr << "-> " << *i << ": last:  CPU: "
-	     << int((m_lastCalls[*i].first * 1000.0) / CLOCKS_PER_SEC) << "ms, "
-	     << "   real: "
-	     << m_lastCalls[*i].second << endl;
+        fprintf(stderr, "%s(%d):\n", *i, pp.first);
+
+        fprintf(stderr, "\tCPU:  \t%.9g ms/call \t[%d ms total]\n",
+                (((double)pp.second.first * 1000.0 /
+		  (double)pp.first) / CLOCKS_PER_SEC),
+                int((pp.second.first * 1000.0) / CLOCKS_PER_SEC));
+
+        fprintf(stderr, "\tReal: \t%s ms      \t[%s ms total]\n",
+                ((pp.second.second / pp.first) * 1000).toString().c_str(),
+                (pp.second.second * 1000).toString().c_str());
+
+        WorstCallMap::const_iterator k = m_worstCalls.find(*i);
+        if (k == m_worstCalls.end()) continue;
+        
+        const TimePair &wc(k->second);
+
+        fprintf(stderr, "\tWorst:\t%s ms/call \t[%d ms CPU]\n",
+                (wc.second * 1000).toString().c_str(),
+                int((wc.first * 1000.0) / CLOCKS_PER_SEC));
     }
 
-    cerr << "Profiles::dump() finished\n";
+    typedef std::multimap<RealTime, const char *> TimeRMap;
+    typedef std::multimap<int, const char *> IntRMap;
+    
+    TimeRMap totmap, avgmap, worstmap;
+    IntRMap ncallmap;
+
+    for (ProfileMap::const_iterator i = m_profiles.begin();
+         i != m_profiles.end(); ++i) {
+        totmap.insert(TimeRMap::value_type(i->second.second.second, i->first));
+        avgmap.insert(TimeRMap::value_type(i->second.second.second /
+                                           i->second.first, i->first));
+        ncallmap.insert(IntRMap::value_type(i->second.first, i->first));
+    }
+
+    for (WorstCallMap::const_iterator i = m_worstCalls.begin();
+         i != m_worstCalls.end(); ++i) {
+        worstmap.insert(TimeRMap::value_type(i->second.second,
+                                             i->first));
+    }
+
+
+    fprintf(stderr, "\nBy total:\n");
+    for (TimeRMap::const_iterator i = totmap.end(); i != totmap.begin(); ) {
+        --i;
+        fprintf(stderr, "%-40s  %s ms\n", i->second,
+                (i->first * 1000).toString().c_str());
+    }
+
+    fprintf(stderr, "\nBy average:\n");
+    for (TimeRMap::const_iterator i = avgmap.end(); i != avgmap.begin(); ) {
+        --i;
+        fprintf(stderr, "%-40s  %s ms\n", i->second,
+                (i->first * 1000).toString().c_str());
+    }
+
+    fprintf(stderr, "\nBy worst case:\n");
+    for (TimeRMap::const_iterator i = worstmap.end(); i != worstmap.begin(); ) {
+        --i;
+        fprintf(stderr, "%-40s  %s ms\n", i->second,
+                (i->first * 1000).toString().c_str(), i->second);
+    }
+
+    fprintf(stderr, "\nBy number of calls:\n");
+    for (IntRMap::const_iterator i = ncallmap.end(); i != ncallmap.begin(); ) {
+        --i;
+        fprintf(stderr, "%-40s  %d\n", i->second, i->first);
+    }
+
 #endif
 }
+
+#ifndef NO_TIMING    
 
 Profiler::Profiler(const char* c, bool showOnDestruct)
     : m_c(c),
       m_showOnDestruct(showOnDestruct)
 {
-#ifndef NO_TIMING
     m_startCPU = clock();
 
     struct timeval tv;
     (void)gettimeofday(&tv, 0);
     m_startTime = RealTime::fromTimeval(tv);
-#endif
 }
 
 void
-Profiler::update()
+Profiler::update() const
 {
-#ifndef NO_TIMING
     clock_t elapsedCPU = clock() - m_startCPU;
 
     struct timeval tv;
@@ -138,12 +191,10 @@ Profiler::update()
     cerr << "Profiler : id = " << m_c
 	 << " - elapsed so far = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
 	 << "ms CPU, " << elapsedTime << " real" << endl;
-#endif
 }    
 
 Profiler::~Profiler()
 {
-#ifndef NO_TIMING
     clock_t elapsedCPU = clock() - m_startCPU;
 
     struct timeval tv;
@@ -156,6 +207,7 @@ Profiler::~Profiler()
         cerr << "Profiler : id = " << m_c
              << " - elapsed = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
 	     << "ms CPU, " << elapsedTime << " real" << endl;
-#endif
 }
  
+#endif
+
