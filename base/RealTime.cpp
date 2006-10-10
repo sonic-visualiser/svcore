@@ -173,6 +173,13 @@ RealTime::toText(bool fixedDp) const
     return s;
 }
 
+RealTime
+RealTime::operator*(int m) const
+{
+    double t = (double(nsec) / ONE_BILLION) * m;
+    t += sec * m;
+    return fromSeconds(t);
+}
 
 RealTime
 RealTime::operator/(int d) const

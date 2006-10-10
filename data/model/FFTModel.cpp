@@ -16,6 +16,8 @@
 #include "FFTModel.h"
 #include "DenseTimeValueModel.h"
 
+#include "base/Profiler.h"
+
 #include <cassert>
 
 FFTModel::FFTModel(const DenseTimeValueModel *model,
@@ -81,6 +83,8 @@ FFTModel::getSampleRate() const
 void
 FFTModel::getColumn(size_t x, Column &result) const
 {
+    Profiler profiler("FFTModel::getColumn", false);
+
     result.clear();
     size_t height(getHeight());
     for (size_t y = 0; y < height; ++y) {

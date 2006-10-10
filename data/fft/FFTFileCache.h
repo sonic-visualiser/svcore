@@ -94,20 +94,7 @@ protected:
         }
     }
 
-    void populateReadBuf(size_t x) const {
-        if (!m_readbuf) {
-            m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];
-        }
-        m_mfc->getColumnAt(x, m_readbuf);
-        if (m_mfc->haveSetColumnAt(x + 1)) {
-            m_mfc->getColumnAt
-                (x + 1, m_readbuf + m_mfc->getCellSize() * m_mfc->getHeight());
-            m_readbufWidth = 2;
-        } else {
-            m_readbufWidth = 1;
-        }
-        m_readbufCol = x;
-    }
+    void populateReadBuf(size_t x) const;
 
     float getNormalizationFactor(size_t col) const {
         if (m_storageType != Compact) {

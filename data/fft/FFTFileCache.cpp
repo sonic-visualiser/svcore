@@ -89,6 +89,8 @@ FFTFileCache::reset()
 float
 FFTFileCache::getMagnitudeAt(size_t x, size_t y) const
 {
+    Profiler profiler("FFTFileCache::getMagnitudeAt", false);
+
     float value = 0.f;
 
     switch (m_storageType) {
@@ -292,5 +294,24 @@ FFTFileCache::getCacheSize(size_t width, size_t height, StorageType type)
     return (height * 2 + 1) * width *
         (type == Compact ? sizeof(uint16_t) : sizeof(float)) +
         2 * sizeof(size_t); // matrix file header size
+}
+
+void
+FFTFileCache::populateReadBuf(size_t x) const
+{
+    Profiler profiler("FFTFileCache::populateReadBuf", false);
+
+    if (!m_readbuf) {
+        m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];
+    }
+    m_mfc->getColumnAt(x, m_readbuf);
+    if (m_mfc->haveSetColumnAt(x + 1)) {
+        m_mfc->getColumnAt
+            (x + 1, m_readbuf + m_mfc->getCellSize() * m_mfc->getHeight());
+        m_readbufWidth = 2;
+    } else {
+        m_readbufWidth = 1;
+    }
+    m_readbufCol = x;
 }
 

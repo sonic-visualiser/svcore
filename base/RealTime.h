@@ -92,6 +92,7 @@ struct RealTime
         else return sec <= r.sec;
     }
 
+    RealTime operator*(int m) const;
     RealTime operator/(int d) const;
 
     // Find the fractional difference between times

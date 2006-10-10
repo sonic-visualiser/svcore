@@ -30,6 +30,15 @@
 
 #include "RealTime.h"
 
+//#define NO_TIMING 1
+
+#define WANT_TIMING 1
+
+#ifdef NDEBUG
+#ifndef WANT_TIMING
+#define NO_TIMING 1
+#endif
+#endif
 
 /**
  * Profiling classes
@@ -47,7 +56,7 @@ public:
     ~Profiles();
 
     void accumulate(const char* id, clock_t time, RealTime rt);
-    void dump();
+    void dump() const;
 
 protected:
     Profiles();
@@ -56,19 +65,38 @@ protected:
     typedef std::pair<int, TimePair> ProfilePair;
     typedef std::map<const char *, ProfilePair> ProfileMap;
     typedef std::map<const char *, TimePair> LastCallMap;
+    typedef std::map<const char *, TimePair> WorstCallMap;
     ProfileMap m_profiles;
     LastCallMap m_lastCalls;
+    WorstCallMap m_worstCalls;
 
     static Profiles* m_instance;
 };
 
+#ifndef NO_TIMING
+
+/**
+ * Profile point instance class.  Construct one of these on the stack
+ * at the start of a function, in order to record the time consumed
+ * within that function.  The profiler object should be effectively
+ * optimised out if NO_TIMING is defined, so any overhead in a release
+ * build should be negligible so long as you remember to define that.
+ */
 class Profiler
 {
 public:
-    Profiler(const char*, bool showOnDestruct = false);
+    /**
+     * Create a profile point instance that records time consumed
+     * against the given profiling point name.  If showOnDestruct is
+     * true, the time consumed will be printed to stderr when the
+     * object is destroyed; otherwise, only the accumulated, mean and
+     * worst-case times will be shown when the program exits or
+     * Profiles::dump() is called.
+     */
+    Profiler(const char *name, bool showOnDestruct = false);
     ~Profiler();
 
-    void update();
+    void update() const;
 
 protected:
     const char* m_c;
@@ -76,6 +104,18 @@ protected:
     RealTime m_startTime;
     bool m_showOnDestruct;
 };
- 
+
+#else
+
+class Profiler
+{
+public:
+    Profiler(const char *, bool) { }
+    ~Profiler() { }
+    
+    void update() { }
+};
+
+#endif
 
 #endif

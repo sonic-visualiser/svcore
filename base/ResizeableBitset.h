@@ -25,7 +25,7 @@ public:
     ResizeableBitset() : m_bits(0) {
     }
     ResizeableBitset(size_t size) : m_bits(new std::vector<uint8_t>) {
-        m_bits->assign(size / 8 + 1, 0);
+        m_bits->assign((size >> 3) + 1, 0);
     }
     ResizeableBitset(const ResizeableBitset &b) {
         m_bits = new std::vector<uint8_t>(*b.m_bits);
@@ -45,19 +45,19 @@ public:
             delete m_bits;
             m_bits = new std::vector<uint8_t>;
         }
-        m_bits->assign(bits / 8 + 1, 0);
+        m_bits->assign((bits >> 3) + 1, 0);
     }
     
     bool get(size_t column) const {
-        return ((*m_bits)[column / 8]) & (1u << (column % 8));
+        return ((*m_bits)[column >> 3]) & (1u << (column & 0x07));
     }
     
     void set(size_t column) {
-        ((*m_bits)[column / 8]) |=  (uint8_t(1) << (column % 8));
+        ((*m_bits)[column >> 3]) |=  (uint8_t(1) << (column & 0x07));
     }
 
     void reset(size_t column) {
-        ((*m_bits)[column / 8]) &= ~(uint8_t(1) << (column % 8));
+        ((*m_bits)[column >> 3]) &= ~(uint8_t(1) << (column & 0x07));
     }
 
     void copy(size_t source, size_t dest) {
