@@ -337,10 +337,10 @@ LADSPAPluginInstance::~LADSPAPluginInstance()
     m_controlPortsOut.clear();
 
     if (m_ownBuffers) {
-	for (size_t i = 0; i < m_audioPortsIn.size(); ++i) {
+	for (size_t i = 0; i < m_instanceCount * m_audioPortsIn.size(); ++i) {
 	    delete[] m_inputBuffers[i];
 	}
-	for (size_t i = 0; i < m_audioPortsOut.size(); ++i) {
+	for (size_t i = 0; i < m_instanceCount * m_audioPortsOut.size(); ++i) {
 	    delete[] m_outputBuffers[i];
 	}
 
