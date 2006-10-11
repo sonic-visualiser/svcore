@@ -105,6 +105,7 @@ RecentFiles::add(QString name)
             if (m_names[i] == name) continue;
             newnames.push_back(m_names[i]);
         }
+        m_names = newnames;
     }
 
     truncateAndWrite();
