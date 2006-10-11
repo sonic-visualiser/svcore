@@ -77,6 +77,11 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
 
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
+
+//        std::cerr << "PluginXml::toXmlString: parameter name \""
+//                  << i->name.c_str() << "\" has value "
+//                  << m_plugin->getParameter(i->name) << std::endl;
+
         s += QString("param-%1=\"%2\" ")
             .arg(stripInvalidParameterNameCharacters(QString(i->name.c_str())))
             .arg(m_plugin->getParameter(i->name));
@@ -188,6 +193,9 @@ PluginXml::setParametersFromXml(QString xml)
     QString error;
     int errorLine;
     int errorColumn;
+
+//    std::cerr << "PluginXml::setParametersFromXml: XML is \""
+//              << xml.toLocal8Bit().data() << "\"" << std::endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
         std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error.toStdString() << " at line " << errorLine << ", column " << errorColumn << std::endl;
