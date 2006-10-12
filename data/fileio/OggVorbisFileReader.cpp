@@ -66,7 +66,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path, bool showProgress,
 
     if (showProgress) {
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding Ogg file..."),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
     }

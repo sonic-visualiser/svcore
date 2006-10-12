@@ -32,8 +32,12 @@
 #define DLERROR()    ""
 
 #define PLUGIN_GLOB  "*.dll"
-#define PATH_SEPARATOR ';'
-#define DEFAULT_VAMP_PATH "%ProgramFiles%\\Vamp Plugins"
+
+// The default Vamp plugin path is obtained from a function in the Vamp SDK
+// (Vamp::PluginHostAdapter::getPluginPath).
+
+#define DEFAULT_LADSPA_PATH "%ProgramFiles%\\LADSPA Plugins"
+#define DEFAULT_DSSI_PATH   "%ProgramFiles%\\DSSI Plugins"
 
 #define getpid _getpid
 
@@ -56,17 +60,19 @@ void gettimeofday(struct timeval *p, void *tz);
 #define DLCLOSE(a)   dlclose((a))
 #define DLERROR()    dlerror()
 
-#define PATH_SEPARATOR ':'
-
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib"
-#define DEFAULT_VAMP_PATH "/Library/Audio/Plug-Ins/Vamp/:$HOME/Library/Audio/Plug-Ins/Vamp"
+
+#define DEFAULT_LADSPA_PATH "$HOME/Library/Audio/Plug-Ins/LADSPA:/Library/Audio/Plug-Ins/LADSPA"
+#define DEFAULT_DSSI_PATH   "$HOME/Library/Audio/Plug-Ins/DSSI:/Library/Audio/Plug-Ins/DSSI"
 
 #else 
 
 #define PLUGIN_GLOB  "*.so"
-#define DEFAULT_VAMP_PATH "/usr/local/lib/vamp:/usr/lib/vamp:$HOME/vamp:$HOME/.vamp"
+
+#define DEFAULT_LADSPA_PATH "$HOME/ladspa:$HOME/.ladspa:/usr/local/lib/ladspa:/usr/lib/ladspa"
+#define DEFAULT_DSSI_PATH "$HOME/dssi:$HOME/.dssi:/usr/local/lib/dssi:/usr/lib/dssi"
 
 #endif /* __APPLE__ */
 

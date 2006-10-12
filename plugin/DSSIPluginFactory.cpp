@@ -204,12 +204,27 @@ DSSIPluginFactory::getPluginPath()
     if (cpath) path = cpath;
 
     if (path == "") {
-	path = "/usr/local/lib/dssi:/usr/lib/dssi";
+
+        path = DEFAULT_DSSI_PATH;
+
 	char *home = getenv("HOME");
 	if (home) {
-            path = std::string(home) + "/dssi:" +
-                   std::string(home) + "/.dssi:" + path;
+            std::string::size_type f;
+            while ((f = path.find("$HOME")) != std::string::npos &&
+                   f < path.length()) {
+                path.replace(f, 5, home);
+            }
         }
+
+#ifdef _WIN32
+        home = getenv("ProgramFiles");
+        if (!home) home = "C:\\Program Files";
+        std::string::size_type f;
+        while ((f = path.find("%ProgramFiles%")) != std::string::npos &&
+               f < path.length()) {
+            path.replace(f, 14, pfiles);
+        }
+#endif
     }
 
     std::string::size_type index = 0, newindex = 0;
