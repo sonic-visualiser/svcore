@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <QApplication>
+#include <QFileInfo>
 #include <QProgressDialog>
 
 MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
@@ -76,7 +77,7 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 
     if (showProgress) {
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding MP3 file..."),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
     }

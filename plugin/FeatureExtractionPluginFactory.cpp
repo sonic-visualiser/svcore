@@ -58,46 +58,9 @@ FeatureExtractionPluginFactory::getPluginPath()
 {
     if (!m_pluginPath.empty()) return m_pluginPath;
 
-    std::vector<QString> path;
-    std::string envPath;
-
-    char *cpath = getenv("VAMP_PATH");
-    if (cpath) envPath = cpath;
-
-    if (envPath == "") {
-        envPath = DEFAULT_VAMP_PATH;
-        char *chome = getenv("HOME");
-        if (chome) {
-            std::string home(chome);
-            int f;
-            while ((f = envPath.find("$HOME")) >= 0 && f < envPath.length()) {
-                envPath.replace(f, 5, home);
-            }
-        }
-#ifdef Q_WS_WIN32
-        char *cpfiles = getenv("ProgramFiles");
-        if (!cpfiles) cpfiles = "C:\\Program Files";
-        std::string pfiles(cpfiles);
-        int f;
-        while ((f = envPath.find("%ProgramFiles%")) >= 0 && f < envPath.length()) {
-            envPath.replace(f, 14, pfiles);
-        }
-#endif
-    }
-
-    std::cerr << "VAMP path is: \"" << envPath << "\"" << std::endl;
-
-    std::string::size_type index = 0, newindex = 0;
-
-    while ((newindex = envPath.find(PATH_SEPARATOR, index)) < envPath.size()) {
-	path.push_back(envPath.substr(index, newindex - index).c_str());
-	index = newindex + 1;
-    }
-    
-    path.push_back(envPath.substr(index).c_str());
-
-    m_pluginPath = path;
-    return path;
+    std::vector<std::string> p = Vamp::PluginHostAdapter::getPluginPath();
+    for (size_t i = 0; i < p.size(); ++i) m_pluginPath.push_back(p[i].c_str());
+    return m_pluginPath;
 }
 
 std::vector<QString>

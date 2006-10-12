@@ -528,9 +528,27 @@ LADSPAPluginFactory::getPluginPath()
     if (cpath) path = cpath;
 
     if (path == "") {
-	path = "/usr/local/lib/ladspa:/usr/lib/ladspa";
+
+        path = DEFAULT_LADSPA_PATH;
+
 	char *home = getenv("HOME");
-	if (home) path = std::string(home) + "/.ladspa:" + path;
+	if (home) {
+            std::string::size_type f;
+            while ((f = path.find("$HOME")) != std::string::npos &&
+                   f < path.length()) {
+                path.replace(f, 5, home);
+            }
+        }
+
+#ifdef _WIN32
+        home = getenv("ProgramFiles");
+        if (!home) home = "C:\\Program Files";
+        std::string::size_type f;
+        while ((f = path.find("%ProgramFiles%")) != std::string::npos &&
+               f < path.length()) {
+            path.replace(f, 14, pfiles);
+        }
+#endif
     }
 
     std::string::size_type index = 0, newindex = 0;
