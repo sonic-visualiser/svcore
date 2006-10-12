@@ -26,6 +26,8 @@
 #include <cassert>
 #include <iostream>
 
+//!!! This class needs completing.
+
 WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
 					     size_t channels,
 					     QString path) :
@@ -54,6 +56,28 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         m_writer = 0;
         return;
     }
+
+    m_reader = new WavFileReader(m_writer->getPath(), true);
+    if (!m_reader->getError().isEmpty()) {
+        std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
+        delete m_reader;
+        m_reader = 0;
+        return;
+    }
+    
+    m_model = new WaveFileModel(m_writer->getPath(), m_reader);
+    if (!m_model->isOK()) {
+        std::cerr << "WritableWaveFileModel: Error in creating wave file model" << std::endl;
+        delete m_model;
+        m_model = 0;
+        delete m_reader;
+        m_reader = 0;
+        return;
+    }
+
+    connect(m_model, SLOT(modelChanged()), this, SIGNAL(modelChanged()));
+    connect(m_model, SLOT(modelChanged(size_t, size_t)),
+            this, SIGNAL(modelChanged(size_t, size_t)));
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
@@ -75,29 +99,11 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 
     m_frameCount += count;
 
-    if (!m_model) {
-
-        m_reader = new WavFileReader(m_writer->getPath(), true);
-        if (!m_reader->getError().isEmpty()) {
-            std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
-            delete m_reader;
-            m_reader = 0;
-            return false;
-        }
-
-        m_model = new WaveFileModel(m_writer->getPath(), m_reader);
-        if (!m_model->isOK()) {
-            std::cerr << "WritableWaveFileModel: Error in creating wave file model" << std::endl;
-            delete m_model;
-            m_model = 0;
-            delete m_reader;
-            m_reader = 0;
-            return false;
-        }
-    }
-    
     static int updateCounter = 0;
-    if (++updateCounter == 100) {
+
+    if (m_reader && m_reader->getChannelCount() == 0) {
+        m_reader->updateFrameCount();
+    } else if (++updateCounter == 100) {
         if (m_reader) m_reader->updateFrameCount();
         updateCounter = 0;
     }
@@ -115,7 +121,7 @@ WritableWaveFileModel::sync()
 bool
 WritableWaveFileModel::isOK() const
 {
-    bool ok = (m_model && m_model->isOK());
+    bool ok = (m_writer && m_writer->isOK());
     std::cerr << "WritableWaveFileModel::isOK(): ok = " << ok << std::endl;
     return ok;
 }
@@ -145,7 +151,7 @@ size_t
 WritableWaveFileModel::getValues(int channel, size_t start, size_t end,
                                  float *buffer) const
 {
-    if (!m_model) return 0;
+    if (!m_model || m_model->getChannelCount() == 0) return 0;
     return m_model->getValues(channel, start, end, buffer);
 }
 
@@ -153,7 +159,7 @@ size_t
 WritableWaveFileModel::getValues(int channel, size_t start, size_t end,
                                  double *buffer) const
 {
-    if (!m_model) return 0;
+    if (!m_model || m_model->getChannelCount() == 0) return 0;
 //    std::cerr << "WritableWaveFileModel::getValues(" << channel << ", "
 //              << start << ", " << end << "): calling model" << std::endl;
     return m_model->getValues(channel, start, end, buffer);
@@ -163,14 +169,14 @@ WritableWaveFileModel::RangeBlock
 WritableWaveFileModel::getRanges(size_t channel, size_t start, size_t end,
                                  size_t &blockSize) const
 {
-    if (!m_model) return RangeBlock();
+    if (!m_model || m_model->getChannelCount() == 0) return RangeBlock();
     return m_model->getRanges(channel, start, end, blockSize);
 }
 
 WritableWaveFileModel::Range
 WritableWaveFileModel::getRange(size_t channel, size_t start, size_t end) const
 {
-    if (!m_model) return Range();
+    if (!m_model || m_model->getChannelCount() == 0) return Range();
     return m_model->getRange(channel, start, end);
 }
 
@@ -179,6 +185,9 @@ WritableWaveFileModel::toXml(QTextStream &out,
                              QString indent,
                              QString extraAttributes) const
 {
+    //!!! need to indicate that some models are not saved but must be
+    //regenerated -- same goes for those very large dense 3d models
+
     assert(0); //!!!
 }
 
