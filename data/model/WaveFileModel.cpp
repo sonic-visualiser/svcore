@@ -45,8 +45,6 @@ WaveFileModel::WaveFileModel(QString path) :
     m_exiting(false)
 {
     m_reader = AudioFileReaderFactory::createReader(path);
-    connect(m_reader, SIGNAL(frameCountChanged()),
-            this, SLOT(frameCountChanged()));
     setObjectName(QFileInfo(path).fileName());
     if (isOK()) fillCache();
 }
@@ -60,13 +58,8 @@ WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
     m_exiting(false)
 {
     m_reader = reader;
-    connect(m_reader, SIGNAL(frameCountChanged()),
-            this, SLOT(frameCountChanged()));
     setObjectName(QFileInfo(path).fileName());
-    if (isOK()) {
-        std::cerr << "OK; filling cache" << std::endl;
-        fillCache();
-    }
+    fillCache();
 }
 
 WaveFileModel::~WaveFileModel()
@@ -389,23 +382,6 @@ WaveFileModel::fillCache()
 }   
 
 void
-WaveFileModel::frameCountChanged()
-{
-    m_mutex.lock();
-    if (m_updateTimer) {
-        std::cerr << "WaveFileModel::frameCountChanged: updating existing fill thread" << std::endl;
-        m_fillThread->frameCountChanged();
-        m_mutex.unlock();
-    } else {
-        std::cerr << "WaveFileModel::frameCountChanged: restarting [inefficient]" << std::endl;
-        m_cache[0].clear();
-        m_cache[1].clear();
-        m_mutex.unlock();
-        fillCache();
-    }
-}
-
-void
 WaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
@@ -435,14 +411,6 @@ WaveFileModel::cacheFilled()
 }
 
 void
-WaveFileModel::RangeCacheFillThread::frameCountChanged()
-{
-    m_frameCount = m_model.getFrameCount();
-    std::cerr << "WaveFileModel::RangeCacheFillThread::frameCountChanged: now "
-              << m_frameCount << std::endl;
-}
-
-void
 WaveFileModel::RangeCacheFillThread::run()
 {
     size_t cacheBlockSize[2];
@@ -457,17 +425,26 @@ WaveFileModel::RangeCacheFillThread::run()
     if (!m_model.isOK()) return;
     
     size_t channels = m_model.getChannelCount();
+    bool updating = m_model.m_reader->isUpdating();
+
+    if (updating) {
+        while (channels == 0 && !m_model.m_exiting) {
+            std::cerr << "WaveFileModel::fill: Waiting for channels..." << std::endl;
+            sleep(1);
+            channels = m_model.getChannelCount();
+        }
+    }
 
     Range *range = new Range[2 * channels];
     size_t count[2];
     count[0] = count[1] = 0;
 
     bool first = true;
-    bool updating = m_model.m_reader->isUpdating();
 
     while (first || updating) {
 
         updating = m_model.m_reader->isUpdating();
+        m_frameCount = m_model.getFrameCount();
 
         std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
 
@@ -522,7 +499,9 @@ WaveFileModel::RangeCacheFillThread::run()
 
         first = false;
         if (m_model.m_exiting) break;
-        if (updating) sleep(1);
+        if (updating) {
+            sleep(1);
+        }
     }
 
     if (!m_model.m_exiting) {

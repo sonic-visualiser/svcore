@@ -36,7 +36,7 @@ WavFileReader::WavFileReader(QString path, bool fileUpdating) :
     m_fileInfo.frames = 0;
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
-    if (!m_file || m_fileInfo.channels <= 0) {
+    if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
 	std::cerr << "WavFileReader::initialize: Failed to open file ("
 		  << sf_strerror(m_file) << ")" << std::endl;
 
@@ -50,9 +50,11 @@ WavFileReader::WavFileReader(QString path, bool fileUpdating) :
 	return;
     }
 
-    m_frameCount = m_fileInfo.frames;
-    m_channelCount = m_fileInfo.channels;
-    m_sampleRate = m_fileInfo.samplerate;
+    if (m_fileInfo.channels > 0) {
+        m_frameCount = m_fileInfo.frames;
+        m_channelCount = m_fileInfo.channels;
+        m_sampleRate = m_fileInfo.samplerate;
+    }
 
     std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << std::endl;
 
@@ -82,6 +84,11 @@ WavFileReader::updateFrameCount()
     std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
 
     m_frameCount = m_fileInfo.frames;
+
+    if (m_channelCount == 0) {
+        m_channelCount = m_fileInfo.channels;
+        m_sampleRate = m_fileInfo.samplerate;
+    }
 
     if (m_frameCount != prevCount) emit frameCountChanged();
 }

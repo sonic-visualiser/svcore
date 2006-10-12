@@ -73,7 +73,6 @@ public:
 
 protected slots:
     void fillTimerTimedOut();
-    void frameCountChanged();
     void cacheFilled();
     
 protected:
@@ -87,7 +86,6 @@ protected:
             m_frameCount(model.getFrameCount()) { }
     
 	size_t getFillExtent() const { return m_fillExtent; }
-        void frameCountChanged();
         virtual void run();
 
     protected:
