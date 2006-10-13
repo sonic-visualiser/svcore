@@ -29,11 +29,19 @@ public:
     WritableWaveFileModel(size_t sampleRate, size_t channels, QString path = "");
     ~WritableWaveFileModel();
 
+    /**
+     * Call addSamples to append a block of samples to the end of the
+     * file.  Caller should also call setCompletion to update the
+     * progress of this file, if it has a known end point, and should
+     * call setCompletion(100) when the file has been written.
+     */
     virtual bool addSamples(float **samples, size_t count);
-    virtual void sync();
     
     bool isOK() const;
     bool isReady(int *) const;
+
+    virtual void setCompletion(int completion); // percentage
+    virtual int getCompletion() const { return m_completion; }
 
     const ZoomConstraint *getZoomConstraint() const {
         static PowerOfSqrtTwoZoomConstraint zc;
@@ -77,6 +85,7 @@ protected:
     size_t m_sampleRate;
     size_t m_channels;
     size_t m_frameCount;
+    int m_completion;
 };
 
 #endif

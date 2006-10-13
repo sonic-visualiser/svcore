@@ -81,7 +81,7 @@ WavFileReader::updateFrameCount()
         }
     }
 
-    std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
+//    std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
 
     m_frameCount = m_fileInfo.frames;
 

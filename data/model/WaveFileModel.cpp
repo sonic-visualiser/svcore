@@ -82,7 +82,7 @@ WaveFileModel::isReady(int *completion) const
     bool ready = (isOK() && (m_fillThread == 0));
     double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
     if (completion) *completion = int(c * 100.0 + 0.01);
-    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
+//    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
     return ready;
 }
 
@@ -371,14 +371,18 @@ void
 WaveFileModel::fillCache()
 {
     m_mutex.lock();
+
     m_updateTimer = new QTimer(this);
     connect(m_updateTimer, SIGNAL(timeout()), this, SLOT(fillTimerTimedOut()));
     m_updateTimer->start(100);
+
     m_fillThread = new RangeCacheFillThread(*this);
     connect(m_fillThread, SIGNAL(finished()), this, SLOT(cacheFilled()));
+
     m_mutex.unlock();
     m_fillThread->start();
-    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
+
+//    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
 }   
 
 void
@@ -386,13 +390,13 @@ WaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
 	size_t fillExtent = m_fillThread->getFillExtent();
-        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+//        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 	if (fillExtent > m_lastFillExtent) {
 	    emit modelChanged(m_lastFillExtent, fillExtent);
 	    m_lastFillExtent = fillExtent;
 	}
     } else {
-        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
+//        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
 	emit modelChanged();
     }
 }
@@ -407,7 +411,7 @@ WaveFileModel::cacheFilled()
     m_updateTimer = 0;
     m_mutex.unlock();
     emit modelChanged();
-    cerr << "WaveFileModel::cacheFilled" << endl;
+//    cerr << "WaveFileModel::cacheFilled" << endl;
 }
 
 void
@@ -429,7 +433,7 @@ WaveFileModel::RangeCacheFillThread::run()
 
     if (updating) {
         while (channels == 0 && !m_model.m_exiting) {
-            std::cerr << "WaveFileModel::fill: Waiting for channels..." << std::endl;
+//            std::cerr << "WaveFileModel::fill: Waiting for channels..." << std::endl;
             sleep(1);
             channels = m_model.getChannelCount();
         }
@@ -446,7 +450,7 @@ WaveFileModel::RangeCacheFillThread::run()
         updating = m_model.m_reader->isUpdating();
         m_frameCount = m_model.getFrameCount();
 
-        std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
+//        std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
 
         while (frame < m_frameCount) {
 
@@ -527,9 +531,9 @@ WaveFileModel::RangeCacheFillThread::run()
 
     m_fillExtent = m_frameCount;
         
-    for (size_t ct = 0; ct < 2; ++ct) {
-        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
-    }
+//    for (size_t ct = 0; ct < 2; ++ct) {
+//        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
+//    }
 }
 
 void

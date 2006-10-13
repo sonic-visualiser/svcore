@@ -26,7 +26,6 @@
 #include <cassert>
 #include <iostream>
 
-//!!! This class needs completing.
 
 WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
 					     size_t channels,
@@ -36,7 +35,8 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     m_reader(0),
     m_sampleRate(sampleRate),
     m_channels(channels),
-    m_frameCount(0)
+    m_frameCount(0),
+    m_completion(0)
 {
     if (path.isEmpty()) {
         try {
@@ -111,33 +111,34 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
     return true;
 }
 
-void
-WritableWaveFileModel::sync()
-{
-    //!!! use setCompletion instead
-    if (m_reader) m_reader->updateDone();
-}    
-
 bool
 WritableWaveFileModel::isOK() const
 {
     bool ok = (m_writer && m_writer->isOK());
-    std::cerr << "WritableWaveFileModel::isOK(): ok = " << ok << std::endl;
+//    std::cerr << "WritableWaveFileModel::isOK(): ok = " << ok << std::endl;
     return ok;
 }
 
 bool
 WritableWaveFileModel::isReady(int *completion) const
 {
-    bool ready = (m_model && m_model->isReady(completion));
-    std::cerr << "WritableWaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
-    return ready;
+    if (completion) *completion = m_completion;
+    return (m_completion == 100);
+}
+
+void
+WritableWaveFileModel::setCompletion(int completion)
+{
+    m_completion = completion;
+    if (completion == 100) {
+        if (m_reader) m_reader->updateDone();
+    }
 }
 
 size_t
 WritableWaveFileModel::getFrameCount() const
 {
-    std::cerr << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << std::endl;
+//    std::cerr << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << std::endl;
     return m_frameCount;
 }
 
@@ -145,6 +146,7 @@ Model *
 WritableWaveFileModel::clone() const
 {
     assert(0); //!!!
+    return 0;
 }
 
 size_t
@@ -185,17 +187,26 @@ WritableWaveFileModel::toXml(QTextStream &out,
                              QString indent,
                              QString extraAttributes) const
 {
-    //!!! need to indicate that some models are not saved but must be
-    //regenerated -- same goes for those very large dense 3d models
+    // We don't actually write the data to XML.  We just write a brief
+    // description of the model.  Any code that uses this class is
+    // going to need to be aware that it will have to make separate
+    // arrangements for the audio file itself.
 
-    assert(0); //!!!
+    Model::toXml
+        (out, indent,
+         QString("type=\"writablewavefile\" file=\"%1\" channels=\"%2\" %3")
+         .arg(m_writer->getPath()).arg(m_model->getChannelCount()).arg(extraAttributes));
 }
 
 QString
 WritableWaveFileModel::toXmlString(QString indent,
                                    QString extraAttributes) const
 {
-    assert(0); //!!!
-    return "";
+    // As above.
+
+    return Model::toXmlString
+        (indent,
+         QString("type=\"writablewavefile\" file=\"%1\" channels=\"%2\" %3")
+         .arg(m_writer->getPath()).arg(m_model->getChannelCount()).arg(extraAttributes));
 }
 
