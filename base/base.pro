@@ -25,6 +25,7 @@ HEADERS += AudioLevel.h \
            Preferences.h \
            Profiler.h \
            PropertyContainer.h \
+           RangeMapper.h \
            RealTime.h \
            RecentFiles.h \
            ResizeableBitset.h \
@@ -49,6 +50,7 @@ SOURCES += AudioLevel.cpp \
            Preferences.cpp \
            Profiler.cpp \
            PropertyContainer.cpp \
+           RangeMapper.cpp \
            RealTime.cpp \
            RecentFiles.cpp \
            Selection.cpp \
