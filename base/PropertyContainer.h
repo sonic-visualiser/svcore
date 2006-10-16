@@ -23,6 +23,7 @@
 #include <vector>
 
 class PlayParameters;
+class RangeMapper;
 
 class PropertyContainer : public QObject
 {
@@ -83,6 +84,16 @@ public:
      */
     virtual QString getPropertyValueLabel(const PropertyName &,
 					  int value) const;
+
+    /**
+     * If the given property is a RangeProperty, return a new
+     * RangeMapper object mapping its integer range onto an underlying
+     * floating point value range for human-intelligible display, if
+     * appropriate.  The RangeMapper should be allocated with new, and
+     * the caller takes responsibility for deleting it.  Return NULL
+     * (as in the default implementation) if there is no such mapping.
+     */
+    virtual RangeMapper *getNewPropertyRangeMapper(const PropertyName &) const;
 
     virtual QString getPropertyContainerName() const = 0;
     virtual QString getPropertyContainerIconName() const = 0;
