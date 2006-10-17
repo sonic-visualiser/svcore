@@ -38,6 +38,11 @@ StorageAdviser::recommend(Criteria criteria,
 
     std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << std::endl;
 
+    //!!! We have a potentially serious problem here if multiple
+    //recommendations are made in advance of any of the resulting
+    //allocations, as the allocations that have been recommended for
+    //won't be taken into account in subsequent recommendations.
+
     enum StorageStatus {
         Unknown,
         Insufficient,
