@@ -18,6 +18,7 @@
 #include "WavFileReader.h"
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
+#include "base/Profiler.h"
 
 #include <iostream>
 #include <QDir>
@@ -116,6 +117,8 @@ CodedAudioFileReader::addSampleToDecodeCache(float sample)
 void
 CodedAudioFileReader::finishDecodeCache()
 {
+    Profiler profiler("CodedAudioFileReader::finishDecodeCache", true);
+
     if (!m_initialised) {
         std::cerr << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << std::endl;
         return;
