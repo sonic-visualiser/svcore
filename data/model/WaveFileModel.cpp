@@ -130,8 +130,8 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 
     if (!m_reader || !m_reader->isOK()) return 0;
 
-//    std::cerr << "WaveFileModel::getValues(" << channel << ", "
-//              << start << ", " << end << "): calling reader" << std::endl;
+    std::cerr << "WaveFileModel::getValues(" << channel << ", "
+              << start << ", " << end << "): calling reader" << std::endl;
 
     SampleBlock frames;
     m_reader->getInterleavedFrames(start, end - start, frames);

@@ -27,7 +27,7 @@
 
 
 #define DEBUG_FFT_SERVER 1
-//#define DEBUG_FFT_SERVER_FILL 1
+#define DEBUG_FFT_SERVER_FILL 1
 
 #ifdef DEBUG_FFT_SERVER_FILL
 #ifndef DEBUG_FFT_SERVER
@@ -325,6 +325,10 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_suspended(true), //!!! or false?
     m_fillThread(0)
 {
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::FFTDataServer" << std::endl;
+#endif
+
     size_t start = m_model->getStartFrame();
     size_t end = m_model->getEndFrame();
 
@@ -405,7 +409,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 FFTDataServer::~FFTDataServer()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << ")::~FFTDataServer()" << std::endl;
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::~FFTDataServer()" << std::endl;
 #endif
 
     m_suspended = false;
@@ -428,6 +432,9 @@ FFTDataServer::~FFTDataServer()
 void
 FFTDataServer::deleteProcessingData()
 {
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): deleteProcessingData" << std::endl;
+#endif
     if (m_fftInput) {
         fftwf_destroy_plan(m_fftPlan);
         fftwf_free(m_fftInput);
@@ -441,7 +448,7 @@ void
 FFTDataServer::suspend()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << "): suspend" << std::endl;
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspend" << std::endl;
 #endif
     Profiler profiler("FFTDataServer::suspend", false);
 
@@ -456,7 +463,7 @@ void
 FFTDataServer::suspendWrites()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << "): suspendWrites" << std::endl;
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspendWrites" << std::endl;
 #endif
     Profiler profiler("FFTDataServer::suspendWrites", false);
 
@@ -467,7 +474,7 @@ void
 FFTDataServer::resume()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << "): resume" << std::endl;
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): resume" << std::endl;
 #endif
     Profiler profiler("FFTDataServer::resume", false);
 
@@ -487,6 +494,9 @@ FFTCache *
 FFTDataServer::getCacheAux(size_t c)
 {
     Profiler profiler("FFTDataServer::getCacheAux", false);
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::getCacheAux" << std::endl;
+#endif
 
     QMutexLocker locker(&m_writeMutex);
 
@@ -702,6 +712,13 @@ FFTDataServer::fillColumn(size_t x)
 	}
     }
 
+    std::cerr << "FFTDataServer::fillColumn: requesting frames "
+              << startFrame + pfx << " -> " << endFrame << " ( = "
+              << endFrame - (startFrame + pfx) << ") at index "
+              << off + pfx << " in buffer of size " << m_fftSize
+              << " with window size " << m_windowSize 
+              << " from channel " << m_channel << std::endl;
+
     size_t got = m_model->getValues(m_channel, startFrame + pfx,
 				    endFrame, m_fftInput + off + pfx);
 
@@ -826,13 +843,13 @@ FFTDataServer::FillThread::run()
 
             while (m_server.m_suspended) {
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer(" << this << "): suspended, waiting..." << std::endl;
+                std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
 #endif
                 m_server.m_writeMutex.lock();
                 m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
                 m_server.m_writeMutex.unlock();
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer(" << this << "): waited" << std::endl;
+                std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): waited" << std::endl;
 #endif
                 if (m_server.m_exiting) return;
             }
@@ -860,7 +877,7 @@ FFTDataServer::FillThread::run()
 
         while (m_server.m_suspended) {
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer(" << this << "): suspended, waiting..." << std::endl;
+            std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
 #endif
             m_server.m_writeMutex.lock();
             m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
