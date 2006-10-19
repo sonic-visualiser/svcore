@@ -712,12 +712,14 @@ FFTDataServer::fillColumn(size_t x)
 	}
     }
 
+#ifdef DEBUG_FFT_SERVER_FILL
     std::cerr << "FFTDataServer::fillColumn: requesting frames "
               << startFrame + pfx << " -> " << endFrame << " ( = "
               << endFrame - (startFrame + pfx) << ") at index "
               << off + pfx << " in buffer of size " << m_fftSize
               << " with window size " << m_windowSize 
               << " from channel " << m_channel << std::endl;
+#endif
 
     size_t got = m_model->getValues(m_channel, startFrame + pfx,
 				    endFrame, m_fftInput + off + pfx);
