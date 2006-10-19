@@ -26,8 +26,8 @@
 #include "base/Profiler.h"
 
 
-#define DEBUG_FFT_SERVER 1
-#define DEBUG_FFT_SERVER_FILL 1
+//#define DEBUG_FFT_SERVER 1
+//#define DEBUG_FFT_SERVER_FILL 1
 
 #ifdef DEBUG_FFT_SERVER_FILL
 #ifndef DEBUG_FFT_SERVER
