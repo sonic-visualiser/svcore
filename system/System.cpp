@@ -25,6 +25,11 @@
 #include <sys/statvfs.h>
 #endif
 
+#ifdef __APPLE__
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
+
 #include <iostream>
 
 #ifdef _WIN32
