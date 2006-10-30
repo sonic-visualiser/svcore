@@ -235,7 +235,9 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
             return 0;
 
         } else {
-            return strdup("Sample directory does not exist, leaving unchanged");
+            char *buffer = (char *)malloc(strlen(value) + 80);
+            sprintf(buffer, "Sample directory \"%s\" does not exist, leaving unchanged", value);
+            return buffer;
         }
     }
 
