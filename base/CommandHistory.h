@@ -148,9 +148,10 @@ public slots:
      */
     void addCommandAndExecute(Command *);
 
-protected slots:
     void undo();
     void redo();
+
+protected slots:
     void undoActivated(QAction *);
     void redoActivated(QAction *);
     void bundleTimerTimeout();
