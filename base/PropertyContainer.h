@@ -117,6 +117,28 @@ public slots:
      */
     virtual void setPropertyWithCommand(const PropertyName &, int value);
 
+    /**
+     * Set a property using a fuzzy match.  Compare nameString with
+     * the property labels and underlying names, and if it matches one
+     * (with preference given to labels), try to convert valueString
+     * appropriately and set it.  The valueString should contain a
+     * value label for value properties, a mapped value for range
+     * properties, "on" or "off" for toggle properties, a colour or
+     * unit name, or the underlying integer value for the property.
+     *
+     * Note that as property and value labels may be translatable, the
+     * results of this function may vary by locale.  It is intended
+     * for handling user-originated strings, _not_ persistent storage.
+     *
+     * The default implementation should work for most subclasses.
+     */
+    virtual void setProperty(QString nameString, QString valueString);
+
+    /**
+     * As above, but using a command.
+     */
+    virtual void setPropertyWithCommand(QString nameString, QString valueString);
+
 protected:
 
     class SetPropertyCommand : public Command
@@ -135,6 +157,9 @@ protected:
 	int m_value;
 	int m_oldValue;
     };
+
+    virtual bool convertPropertyStrings(QString nameString, QString valueString,
+                                        PropertyName &name, int &value);
 };
 
 #endif

@@ -35,8 +35,14 @@ public:
 
     QStringList getKnownUnits() const;
     void registerUnit(QString unit);
-    
-    int getUnitId(QString unit);
+
+    /**
+     * Return the reference id for a given unit name.  If registerNew is
+     * true and the unit is not known, register it and return its new
+     * id.  If register is false and the unit is not known, return -1.
+     */
+    int getUnitId(QString unit, bool registerNew = true);
+
     QString getUnitById(int id);
 
 signals:
