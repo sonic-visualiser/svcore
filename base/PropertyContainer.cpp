@@ -15,6 +15,10 @@
 
 #include "PropertyContainer.h"
 #include "CommandHistory.h"
+#include "RangeMapper.h"
+#include "UnitDatabase.h"
+
+#include <QColor>
 
 #include <iostream>
 
@@ -76,6 +80,151 @@ PropertyContainer::setPropertyWithCommand(const PropertyName &name, int value)
 
     CommandHistory::getInstance()->addCommand
 	(new SetPropertyCommand(this, name, value), true, true); // bundled
+}
+ 
+void
+PropertyContainer::setProperty(QString nameString, QString valueString)
+{
+    PropertyName name;
+    int value;
+    if (!convertPropertyStrings(nameString, valueString, name, value)) {
+        std::cerr << "WARNING: PropertyContainer::setProperty(\""
+                  << nameString.toStdString() << "\", \""
+                  << valueString.toStdString()
+                  << "\"): Name and value conversion failed" << std::endl;
+        return;
+    }
+    setProperty(name, value);
+}
+ 
+void
+PropertyContainer::setPropertyWithCommand(QString nameString, QString valueString)
+{
+    PropertyName name;
+    int value;
+    if (!convertPropertyStrings(nameString, valueString, name, value)) {
+        std::cerr << "WARNING: PropertyContainer::setPropertyWithCommand(\""
+                  << nameString.toStdString() << "\", \""
+                  << valueString.toStdString()
+                  << "\"): Name and value conversion failed" << std::endl;
+        return;
+    }
+    setPropertyWithCommand(name, value);
+}
+
+bool
+PropertyContainer::convertPropertyStrings(QString nameString, QString valueString,
+                                          PropertyName &name, int &value)
+{
+    PropertyList pl = getProperties();
+
+    QString adjusted = nameString.trimmed();
+    adjusted.replace('_', ' ');
+    adjusted.replace('-', ' ');
+    
+    name = "";
+
+    for (PropertyList::iterator pli = pl.begin(); pli != pl.end(); ++pli) {
+
+        QString label = getPropertyLabel(*pli);
+
+        if (label != "" && (nameString == label || adjusted == label)) {
+            name = *pli;
+            break;
+        } else if (nameString == *pli) {
+            name = *pli;
+            break;
+        }
+    }
+
+    if (name == "") {
+        std::cerr << "PropertyContainer::convertPropertyStrings: Unable to match name string \"" << nameString.toStdString() << "\"" << std::endl;
+        return false;
+    }
+
+    value = 0;
+    bool success = false;
+    
+    bool isDouble = false;
+    double dval = valueString.toDouble(&isDouble);
+
+    switch (getPropertyType(name)) {
+
+    case ToggleProperty:
+        if (valueString == tr("yes") || 
+            valueString == tr("on") ||
+            valueString == tr("true")) {
+            value = 1; success = true;
+        } else if (valueString == tr("no") ||
+                   valueString == tr("off") ||
+                   valueString == tr("false")) {
+            value = 0; success = true;
+        }
+        break;
+
+    case RangeProperty:
+        if (isDouble) {
+            RangeMapper *mapper = getNewPropertyRangeMapper(name);
+            if (mapper) {
+                value = mapper->getPositionForValue(dval);
+                delete mapper;
+                success = true;
+            }
+        }
+        break;
+
+    case ValueProperty:
+    {
+        int min, max;
+        getPropertyRangeAndValue(name, &min, &max);
+        for (int i = min; i <= max; ++i) {
+            if (valueString == getPropertyValueLabel(name, i)) {
+                value = i;
+                success = true;
+                break;
+            }
+        }
+        break;
+    }
+
+    case ColourProperty:
+    {
+        QColor c(valueString);
+        if (c.isValid()) {
+            value = c.rgb();
+            success = true;
+        }
+        break;
+    }
+        
+    case UnitsProperty:
+        value = UnitDatabase::getInstance()->getUnitId(valueString, false);
+        if (value >= 0) success = true;
+        else value = 0;
+        break;
+
+    case InvalidProperty:
+        std::cerr << "PropertyContainer::convertPropertyStrings: Invalid property name \"" << name.toStdString() << "\"" << std::endl;
+        return false;
+    }
+
+    if (success) return true;
+
+    int min, max;
+    getPropertyRangeAndValue(name, &min, &max);
+    
+    bool ok = false;
+    int i = valueString.toInt(&ok);
+    if (!ok) {
+        std::cerr << "PropertyContainer::convertPropertyStrings: Unable to parse value string \"" << valueString.toStdString() << "\"" << std::endl;
+        return false;
+    } else if (i < min || i > max) {
+        std::cerr << "PropertyContainer::convertPropertyStrings: Property value \"" << i << "\" outside valid range " << min << " to " << max << std::endl;
+        return false;
+    }
+
+    value = i;
+    return true;
 }
 
 PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,

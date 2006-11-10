@@ -49,10 +49,11 @@ UnitDatabase::registerUnit(QString unit)
 }
 
 int
-UnitDatabase::getUnitId(QString unit)
+UnitDatabase::getUnitId(QString unit, bool registerNew)
 {
     if (m_units.find(unit) == m_units.end()) {
-        registerUnit(unit);
+        if (registerNew) registerUnit(unit);
+        else return -1;
     }
     return m_units[unit];
 }
