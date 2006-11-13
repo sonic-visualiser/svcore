@@ -42,6 +42,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                                                polar,
                                                fillFromColumn);
 
+    if (!m_server) return; // caller should check isOK()
+
     size_t xratio = windowIncrement / m_server->getWindowIncrement();
     size_t yratio = m_server->getFFTSize() / fftSize;
 
@@ -71,7 +73,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 
 FFTModel::~FFTModel()
 {
-    FFTDataServer::releaseInstance(m_server);
+    if (m_server) FFTDataServer::releaseInstance(m_server);
 }
 
 size_t
