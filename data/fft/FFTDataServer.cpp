@@ -23,7 +23,11 @@
 #include "system/System.h"
 
 #include "base/StorageAdviser.h"
+#include "base/Exceptions.h"
 #include "base/Profiler.h"
+
+#include <QMessageBox>
+#include <QApplication>
 
 
 //#define DEBUG_FFT_SERVER 1
@@ -76,19 +80,26 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
         return server;
     }
 
-    m_servers[n] = ServerCountPair
-        (new FFTDataServer(n,
-                           model,
-                           channel,
-                           windowType,
-                           windowSize,
-                           windowIncrement,
-                           fftSize,
-                           polar,
-                           fillFromColumn),
-         1);
+    try {
+        server = new FFTDataServer(n,
+                                   model,
+                                   channel,
+                                   windowType,
+                                   windowSize,
+                                   windowIncrement,
+                                   fftSize,
+                                   polar,
+                                   fillFromColumn);
+    } catch (InsufficientDiscSpace) {
+        delete server;
+        server = 0;
+    }
 
-    return m_servers[n].first;
+    if (server) {
+        m_servers[n] = ServerCountPair(server, 1);
+    }
+
+    return server;
 }
 
 FFTDataServer *
@@ -364,9 +375,11 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
     int maximumSize = (cells / 1024) * sizeof(float); // kb
 
-    //!!! catch InsufficientDiscSpace
+    // This can throw InsufficientDiscSpace.  We don't catch it here -- we
+    // haven't allocated anything yet and can safely let the exception out.
+    // Caller needs to check for it.
     
-    StorageAdviser::Recommendation recommendation =
+    StorageAdviser::Recommendation recommendation = 
         StorageAdviser::recommend(criteria, minimumSize, maximumSize);
 
     std::cerr << "Recommendation was: " << recommendation << std::endl;
@@ -544,31 +557,45 @@ FFTDataServer::getCacheAux(size_t c)
 
     FFTCache *cache = 0;
 
-    if (m_memoryCache) {
+    try {
+        
+        if (m_memoryCache) {
 
-        cache = new FFTMemoryCache();
+            cache = new FFTMemoryCache();
 
-    } else if (m_compactCache) {
+        } else if (m_compactCache) {
 
-        cache = new FFTFileCache(name, MatrixFile::ReadWrite,
-                                 FFTFileCache::Compact);
+            cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                                     FFTFileCache::Compact);
 
-    } else {
+        } else {
 
-        cache = new FFTFileCache(name, MatrixFile::ReadWrite,
-                                 m_polar ? FFTFileCache::Polar :
-                                           FFTFileCache::Rectangular);
+            cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                                     m_polar ? FFTFileCache::Polar :
+                                               FFTFileCache::Rectangular);
+        }
+
+        size_t width = m_cacheWidth;
+        if (c * m_cacheWidth + width > m_width) {
+            width = m_width - c * m_cacheWidth;
+        }
+
+        cache->resize(width, m_height);
+        cache->reset();
+
+    } catch (std::bad_alloc) {
+        std::cerr << "ERROR: Memory allocation failed in FFTFileCache::resize:"
+                  << " abandoning this cache" << std::endl;
+        //!!! Shouldn't be using QtGui here.  Need a better way to report this.
+        QMessageBox::critical
+            (0, QApplication::tr("FFT cache resize failed"),
+             QApplication::tr
+             ("Failed to create or resize an FFT model slice.\n"
+              "There may be insufficient memory or disc space to continue."));
+        delete cache;
+        m_caches[c] = 0;
+        return 0;
     }
-
-//    FFTCache *cache = new FFTMemoryCache();
-
-    size_t width = m_cacheWidth;
-    if (c * m_cacheWidth + width > m_width) {
-        width = m_width - c * m_cacheWidth;
-    }
-
-    cache->resize(width, m_height);
-    cache->reset();
 
     m_caches[c] = cache;
     m_lastUsedCache = c;
@@ -583,6 +610,7 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
         std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
@@ -599,6 +627,7 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
         fillColumn(x);
@@ -613,6 +642,7 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
         fillColumn(x);
@@ -627,6 +657,7 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
         fillColumn(x);
@@ -641,6 +672,7 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) { real = 0; imaginary = 0; return; }
 
     if (!cache->haveSetColumnAt(col)) {
 #ifdef DEBUG_FFT_SERVER
@@ -672,6 +704,7 @@ FFTDataServer::isColumnReady(size_t x)
 
     size_t col;
     FFTCache *cache = getCache(x, col);
+    if (!cache) return true;
 
     return cache->haveSetColumnAt(col);
 }    
@@ -686,6 +719,7 @@ FFTDataServer::fillColumn(size_t x)
     std::cout << "FFTDataServer::fillColumn(" << x << ")" << std::endl;
 #endif
     FFTCache *cache = getCache(x, col);
+    if (!cache) return;
 
     QMutexLocker locker(&m_writeMutex);
 
