@@ -15,7 +15,7 @@
 /*
    This is a modified version of a source file from the 
    Rosegarden MIDI and audio sequencer and notation editor.
-   This file copyright 2000-2006 Chris Cannam and Richard Bown.
+   This file copyright 2000-2006 Chris Cannam, Richard Bown, and QMUL.
 */
 
 #include <iostream>
