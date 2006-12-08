@@ -36,6 +36,8 @@ BZipFileDevice::~BZipFileDevice()
 bool
 BZipFileDevice::open(OpenMode mode)
 {
+    setErrorString("");
+
     if (m_bzFile) {
         setErrorString(tr("File is already open"));
         return false;
