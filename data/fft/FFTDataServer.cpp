@@ -344,7 +344,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     size_t end = m_model->getEndFrame();
 
     m_width = (end - start) / m_windowIncrement + 1;
-    m_height = m_fftSize / 2;
+    m_height = m_fftSize / 2 + 1; // DC == 0, Nyquist == fftsize/2
 
     size_t maxCacheSize = 20 * 1024 * 1024;
     size_t columnSize = m_height * sizeof(fftsample) * 2 + sizeof(fftsample);
@@ -401,10 +401,10 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
         fftwf_malloc(fftSize * sizeof(fftsample));
 
     m_fftOutput = (fftwf_complex *)
-        fftwf_malloc(fftSize * sizeof(fftwf_complex));
+        fftwf_malloc((fftSize/2 + 1) * sizeof(fftwf_complex));
 
     m_workbuffer = (float *)
-        fftwf_malloc(fftSize * sizeof(float));
+        fftwf_malloc((fftSize+2) * sizeof(float));
 
     m_fftPlan = fftwf_plan_dft_r2c_1d(m_fftSize,
                                       m_fftInput,
@@ -784,7 +784,7 @@ FFTDataServer::fillColumn(size_t x)
 
     fftsample factor = 0.0;
 
-    for (size_t i = 0; i < m_fftSize/2; ++i) {
+    for (size_t i = 0; i <= m_fftSize/2; ++i) {
 
 	fftsample mag = sqrtf(m_fftOutput[i][0] * m_fftOutput[i][0] +
                               m_fftOutput[i][1] * m_fftOutput[i][1]);
@@ -796,12 +796,12 @@ FFTDataServer::fillColumn(size_t x)
 	phase = princargf(phase);
 
         m_workbuffer[i] = mag;
-        m_workbuffer[i + m_fftSize/2] = phase;
+        m_workbuffer[i + m_fftSize/2+1] = phase;
     }
 
     cache->setColumnAt(col,
                        m_workbuffer,
-                       m_workbuffer + m_fftSize/2,
+                       m_workbuffer + m_fftSize/2+1,
                        factor);
 
     if (m_suspended) {
