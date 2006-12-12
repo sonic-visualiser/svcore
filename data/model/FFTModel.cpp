@@ -99,7 +99,7 @@ FFTModel::getBinName(size_t n) const
 {
     size_t sr = getSampleRate();
     if (!sr) return "";
-    QString name = tr("%1 Hz").arg((n * sr) / (getHeight() * 2));
+    QString name = tr("%1 Hz").arg((n * sr) / ((getHeight()-1) * 2));
     return name;
 }
 
