@@ -22,6 +22,9 @@
 
 #include <iostream>
 
+long StorageAdviser::m_discPlanned = 0;
+long StorageAdviser::m_memoryPlanned = 0;
+
 StorageAdviser::Recommendation
 StorageAdviser::recommend(Criteria criteria,
 			  int minimumSize,
@@ -35,6 +38,18 @@ StorageAdviser::recommend(Criteria criteria,
     int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
     int memoryFree, memoryTotal;
     GetRealMemoryMBAvailable(memoryFree, memoryTotal);
+
+    if (discFree > m_discPlanned / 1024 + 1) {
+        discFree -= m_discPlanned / 1024 + 1;
+    } else if (discFree > 0) { // can also be -1 for unknown
+        discFree = 0;
+    }
+
+    if (memoryFree > m_memoryPlanned / 1024 + 1) {
+        memoryFree -= m_memoryPlanned / 1024 + 1;
+    } else if (memoryFree > 0) { // can also be -1 for unknown
+        memoryFree = 0;
+    }
 
     std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << std::endl;
 
@@ -145,5 +160,28 @@ StorageAdviser::recommend(Criteria criteria,
     }
 
     return Recommendation(recommendation);
+}
+
+void
+StorageAdviser::notifyPlannedAllocation(AllocationArea area, int size)
+{
+    if (area == MemoryAllocation) m_memoryPlanned += size;
+    else if (area == DiscAllocation) m_discPlanned += size;
+    std::cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
+              << m_discPlanned << std::endl;
+}
+
+void
+StorageAdviser::notifyDoneAllocation(AllocationArea area, int size)
+{
+    if (area == MemoryAllocation) {
+        if (m_memoryPlanned > size) m_memoryPlanned -= size;
+        else m_memoryPlanned = 0;
+    } else if (area == DiscAllocation) {
+        if (m_discPlanned > size) m_discPlanned -= size; 
+        else m_discPlanned = 0;
+    }
+    std::cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
+              << m_discPlanned << std::endl;
 }
 

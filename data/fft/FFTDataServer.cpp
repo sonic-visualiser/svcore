@@ -393,6 +393,11 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     std::cerr << "Width " << m_width << ", cache width " << m_cacheWidth << " (size " << m_cacheWidth * columnSize << ")" << std::endl;
 #endif
 
+    StorageAdviser::notifyPlannedAllocation
+        (m_memoryCache ? StorageAdviser::MemoryAllocation :
+                         StorageAdviser::DiscAllocation,
+         m_compactCache ? minimumSize : maximumSize);
+
     for (size_t i = 0; i <= m_width / m_cacheWidth; ++i) {
         m_caches.push_back(0);
     }
@@ -436,7 +441,15 @@ FFTDataServer::~FFTDataServer()
     QMutexLocker locker(&m_writeMutex);
 
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
-        delete *i;
+        if (*i) {
+            delete *i;
+        } else {
+            StorageAdviser::notifyDoneAllocation
+                (m_memoryCache ? StorageAdviser::MemoryAllocation :
+                                 StorageAdviser::DiscAllocation,
+                 m_cacheWidth * m_height *
+                 (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
+        }
     }
 
     deleteProcessingData();
@@ -582,6 +595,12 @@ FFTDataServer::getCacheAux(size_t c)
 
         cache->resize(width, m_height);
         cache->reset();
+
+        StorageAdviser::notifyDoneAllocation
+            (m_memoryCache ? StorageAdviser::MemoryAllocation :
+                             StorageAdviser::DiscAllocation,
+             width * m_height *
+             (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
 
     } catch (std::bad_alloc) {
         std::cerr << "ERROR: Memory allocation failed in FFTFileCache::resize:"
