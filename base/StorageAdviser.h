@@ -58,6 +58,28 @@ public:
     static Recommendation recommend(Criteria criteria,
                                     int minimumSize,
                                     int maximumSize);
+
+    enum AllocationArea {
+        MemoryAllocation,
+        DiscAllocation
+    };
+
+    /**
+     * Specify that we are planning to use a given amount of storage
+     * (in kilobytes), but haven't allocated it yet.
+     */
+    static void notifyPlannedAllocation(AllocationArea area, int size);
+
+    /**
+     * Specify that we have now allocated, or abandoned the allocation
+     * of, the given amount (in kilobytes) of a storage area that was
+     * previously notified using notifyPlannedAllocation.
+     */
+    static void notifyDoneAllocation(AllocationArea area, int size);
+
+private:
+    static long m_discPlanned;
+    static long m_memoryPlanned;
 };
 
 #endif
