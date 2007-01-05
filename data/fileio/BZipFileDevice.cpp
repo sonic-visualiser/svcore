@@ -23,7 +23,8 @@ BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
     m_file(0),
     m_bzFile(0),
-    m_atEnd(true)
+    m_atEnd(true),
+    m_ok(true)
 {
 }
 
@@ -31,6 +32,12 @@ BZipFileDevice::~BZipFileDevice()
 {
 //    std::cerr << "BZipFileDevice::~BZipFileDevice(" << m_fileName.toStdString() << ")" << std::endl;
     if (m_bzFile) close();
+}
+
+bool
+BZipFileDevice::isOK() const
+{
+    return m_ok;
 }
 
 bool
@@ -45,16 +52,19 @@ BZipFileDevice::open(OpenMode mode)
 
     if (mode & Append) {
         setErrorString(tr("Append mode not supported"));
+        m_ok = false;
         return false;
     }
 
     if ((mode & (ReadOnly | WriteOnly)) == 0) {
         setErrorString(tr("File access mode not specified"));
+        m_ok = false;
         return false;
     }
 
     if ((mode & ReadOnly) && (mode & WriteOnly)) {
         setErrorString(tr("Read and write modes both specified"));
+        m_ok = false;
         return false;
     }
 
@@ -63,6 +73,7 @@ BZipFileDevice::open(OpenMode mode)
         m_file = fopen(m_fileName.toLocal8Bit().data(), "wb");
         if (!m_file) {
             setErrorString(tr("Failed to open file for writing"));
+            m_ok = false;
             return false;
         }
 
@@ -73,6 +84,7 @@ BZipFileDevice::open(OpenMode mode)
             fclose(m_file);
             m_file = 0;
             setErrorString(tr("Failed to open bzip2 stream for writing"));
+            m_ok = false;
             return false;
         }
 
@@ -88,6 +100,7 @@ BZipFileDevice::open(OpenMode mode)
         m_file = fopen(m_fileName.toLocal8Bit().data(), "rb");
         if (!m_file) {
             setErrorString(tr("Failed to open file for reading"));
+            m_ok = false;
             return false;
         }
 
@@ -98,6 +111,7 @@ BZipFileDevice::open(OpenMode mode)
             fclose(m_file);
             m_file = 0;
             setErrorString(tr("Failed to open bzip2 stream for reading"));
+            m_ok = false;
             return false;
         }
 
@@ -111,6 +125,7 @@ BZipFileDevice::open(OpenMode mode)
     }
 
     setErrorString(tr("Internal error (open for neither read nor write)"));
+    m_ok = false;
     return false;
 }
 
@@ -119,6 +134,7 @@ BZipFileDevice::close()
 {
     if (!m_bzFile) {
         setErrorString(tr("File not open"));
+        m_ok = false;
         return;
     }
 
@@ -134,6 +150,7 @@ BZipFileDevice::close()
         fclose(m_file);
         m_bzFile = 0;
         m_file = 0;
+        m_ok = false;
         return;
     }
 
@@ -145,6 +162,7 @@ BZipFileDevice::close()
         fclose(m_file);
         m_bzFile = 0;
         m_file = 0;
+        m_ok = false;
         return;
     }
 
@@ -166,6 +184,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
         if (bzError != BZ_STREAM_END) {
             std::cerr << "BZipFileDevice::readData: error condition" << std::endl;
             setErrorString(tr("bzip2 stream read error"));
+            m_ok = false;
             return -1;
         } else {
 //            std::cerr << "BZipFileDevice::readData: reached end of file" << std::endl;
@@ -173,7 +192,6 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
         }            
     }
 
-    setErrorString("");
     return read;
 }
 
@@ -188,12 +206,12 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
     if (bzError != BZ_OK) {
         std::cerr << "BZipFileDevice::writeData: error condition" << std::endl;
         setErrorString("bzip2 stream write error");
+        m_ok = false;
         return -1;
     }
 
 //    std::cerr << "BZipFileDevice::writeData: wrote " << maxSize << std::endl;
 
-    setErrorString("");
     return maxSize;
 }
 
