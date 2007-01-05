@@ -31,6 +31,8 @@ public:
     virtual bool open(OpenMode mode);
     virtual void close();
 
+    virtual bool isOK() const;
+
     virtual bool isSequential() const { return true; }
 
 protected:
@@ -42,6 +44,7 @@ protected:
     FILE *m_file;
     BZFILE *m_bzFile;
     bool m_atEnd;
+    bool m_ok;
 };
 
 #endif
