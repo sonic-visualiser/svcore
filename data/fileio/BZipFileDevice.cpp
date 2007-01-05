@@ -173,6 +173,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
         }            
     }
 
+    setErrorString("");
     return read;
 }
 
@@ -192,6 +193,7 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
 
 //    std::cerr << "BZipFileDevice::writeData: wrote " << maxSize << std::endl;
 
+    setErrorString("");
     return maxSize;
 }
 
