@@ -4,6 +4,7 @@ SV_UNIT_PACKAGES = fftw3f sndfile mad oggz fishsound
 load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
+QT += network
 
 TARGET = svdata
 
@@ -30,6 +31,7 @@ HEADERS += fft/FFTCache.h \
            fileio/MIDIFileReader.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
+           fileio/RemoteFile.h \
            fileio/WavFileReader.h \
            fileio/WavFileWriter.h \
            model/DenseThreeDimensionalModel.h \
@@ -63,6 +65,7 @@ SOURCES += fft/FFTDataServer.cpp \
            fileio/MIDIFileReader.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
+           fileio/RemoteFile.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
            model/DenseTimeValueModel.cpp \
