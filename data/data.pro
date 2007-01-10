@@ -26,6 +26,7 @@ HEADERS += fft/FFTCache.h \
            fileio/CSVFileWriter.h \
            fileio/DataFileReader.h \
            fileio/DataFileReaderFactory.h \
+           fileio/FileFinder.h \
            fileio/FileReadThread.h \
            fileio/MatrixFile.h \
            fileio/MIDIFileReader.h \
@@ -60,6 +61,7 @@ SOURCES += fft/FFTDataServer.cpp \
            fileio/CSVFileReader.cpp \
            fileio/CSVFileWriter.cpp \
            fileio/DataFileReaderFactory.cpp \
+           fileio/FileFinder.cpp \
            fileio/FileReadThread.cpp \
            fileio/MatrixFile.cpp \
            fileio/MIDIFileReader.cpp \
