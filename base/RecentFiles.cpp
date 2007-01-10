@@ -17,6 +17,7 @@
 
 #include <QFileInfo>
 #include <QSettings>
+#include <QRegExp>
 
 RecentFiles::RecentFiles(QString settingsGroup, size_t maxCount) :
     m_settingsGroup(settingsGroup),
@@ -115,7 +116,12 @@ RecentFiles::add(QString name)
 void
 RecentFiles::addFile(QString name)
 {
-    add(QFileInfo(name).absoluteFilePath());
+    static QRegExp schemeRE("^[a-zA-Z]{2,5}://");
+    if (schemeRE.indexIn(name) == 0) {
+        add(name);
+    } else {
+        add(QFileInfo(name).absoluteFilePath());
+    }
 }
 
 
