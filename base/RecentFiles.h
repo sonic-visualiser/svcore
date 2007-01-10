@@ -53,8 +53,9 @@ public:
     void add(QString name);
     
     /**
-     * Add a name that should be treated as a file path and
-     * canonicalised appropriately.
+     * Add a name that is known to be either a file path or a URL.  If
+     * it looks like a URL, add it literally; otherwise treat it as a
+     * file path and canonicalise it appropriately.
      */
     void addFile(QString name);
 
