@@ -23,6 +23,7 @@
 #include <QDir>
 #include <QApplication>
 #include <QProgressDialog>
+#include <QHttpResponseHeader>
 
 #include <iostream>
 
@@ -37,8 +38,10 @@ RemoteFile::RemoteFile(QUrl url) :
     m_http(0),
     m_localFile(0),
     m_ok(false),
+    m_lastStatus(0),
     m_done(false),
-    m_progressDialog(0)
+    m_progressDialog(0),
+    m_progressShowTimer(this)
 {
     if (!canHandleScheme(url)) {
         std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << url.toString().toStdString() << "\"" << std::endl;
@@ -58,6 +61,8 @@ RemoteFile::RemoteFile(QUrl url) :
         connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
         connect(m_http, SIGNAL(dataReadProgress(int, int)),
                 this, SLOT(dataReadProgress(int, int)));
+        connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
+                this, SLOT(responseHeaderReceived(const QHttpResponseHeader &)));
         m_http->get(url.path(), m_localFile);
         m_ok = true;
 
@@ -95,7 +100,12 @@ RemoteFile::RemoteFile(QUrl url) :
 
     if (m_ok) {
         m_progressDialog = new QProgressDialog(tr("Downloading %1...").arg(url.toString()), tr("Cancel"), 0, 100);
-        m_progressDialog->show();
+        m_progressDialog->hide();
+        connect(&m_progressShowTimer, SIGNAL(timeout()),
+                this, SLOT(showProgressDialog()));
+        connect(m_progressDialog, SIGNAL(canceled()), this, SLOT(cancelled()));
+        m_progressShowTimer.setSingleShot(true);
+        m_progressShowTimer.start(2000);
     }
 }
 
@@ -112,6 +122,15 @@ RemoteFile::canHandleScheme(QUrl url)
 {
     QString scheme = url.scheme().toLower();
     return (scheme == "http" || scheme == "ftp");
+}
+
+bool
+RemoteFile::isAvailable()
+{
+    while (!m_done && m_lastStatus == 0) {
+        QApplication::processEvents();
+    }
+    return (m_lastStatus / 100 == 2);
 }
 
 void
@@ -153,27 +172,57 @@ RemoteFile::dataReadProgress(int done, int total)
 }
 
 void
+RemoteFile::responseHeaderReceived(const QHttpResponseHeader &resp)
+{
+    m_lastStatus = resp.statusCode();
+    if (m_lastStatus / 100 >= 4) {
+        m_errorString = QString("%1 %2")
+            .arg(resp.statusCode()).arg(resp.reasonPhrase());
+    }
+}
+
+void
 RemoteFile::dataTransferProgress(qint64 done, qint64 total)
 {
     int percent = int((double(done) / double(total)) * 100.0 - 0.1);
     emit progress(percent);
 
     m_progressDialog->setValue(percent);
+    m_progressDialog->show();
+}
+
+void
+RemoteFile::cancelled()
+{
+    delete m_http;
+    m_http = 0;
+    delete m_ftp;
+    m_ftp = 0;
+    delete m_progressDialog;
+    m_progressDialog = 0;
+    delete m_localFile;
+    m_localFile = 0;
+    m_done = true;
+    m_ok = false;
+    m_errorString = tr("Download cancelled");
 }
 
 void
 RemoteFile::done(bool error)
 {
-    //!!! need to identify 404s etc in the return headers
-
     emit progress(100);
     m_ok = !error;
+
     if (error) {
         if (m_http) {
             m_errorString = m_http->errorString();
         } else if (m_ftp) {
             m_errorString = m_ftp->errorString();
         }
+    }
+
+    if (m_lastStatus / 100 >= 4) {
+        m_ok = false;
     }
 
     delete m_localFile;
@@ -193,6 +242,12 @@ RemoteFile::done(bool error)
         }
     }
     m_done = true;
+}
+
+void
+RemoteFile::showProgressDialog()
+{
+    if (m_progressDialog) m_progressDialog->show();
 }
 
 QString

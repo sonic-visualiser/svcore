@@ -19,11 +19,13 @@
 #include <QUrl>
 #include <QMutex>
 #include <QString>
+#include <QTimer>
 
 class QFtp;
 class QHttp;
 class QFile;
 class QProgressDialog;
+class QHttpResponseHeader;
 
 class RemoteFile : public QObject
 {
@@ -33,10 +35,13 @@ public:
     RemoteFile(QUrl url);
     virtual ~RemoteFile();
 
+    bool isAvailable();
+
     void wait();
 
     bool isOK() const;
     bool isDone() const;
+
     QString getLocalFilename() const;
     QString getErrorString() const;
 
@@ -48,8 +53,11 @@ signals:
 
 protected slots:
     void dataReadProgress(int done, int total);
+    void responseHeaderReceived(const QHttpResponseHeader &resp);
     void dataTransferProgress(qint64 done, qint64 total);
     void done(bool error);
+    void showProgressDialog();
+    void cancelled();
 
 protected:
     QFtp *m_ftp;
@@ -58,8 +66,10 @@ protected:
     QString m_localFilename;
     QString m_errorString;
     bool m_ok;
+    int m_lastStatus;
     bool m_done;
     QProgressDialog *m_progressDialog;
+    QTimer m_progressShowTimer;
 
     QString createLocalFile(QUrl url);
 
