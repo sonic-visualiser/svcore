@@ -33,7 +33,8 @@ class WaveFileModel : public RangeSummarisableTimeValueModel
 
 public:
     WaveFileModel(QString path);
-    WaveFileModel(QString path, AudioFileReader *reader);
+    WaveFileModel(QString path, QString originalLocation);
+    WaveFileModel(QString originalLocation, AudioFileReader *reader);
     ~WaveFileModel();
 
     bool isOK() const;
