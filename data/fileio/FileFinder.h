@@ -17,30 +17,38 @@
 #define _FILE_FINDER_H_
 
 #include <QString>
+#include <QObject>
 
-class FileFinder
+class FileFinder : public QObject
 {
+    Q_OBJECT
+
 public:
-    /**
-     * Find a file.
-     *
-     * "location" is what we know about where the file is supposed to
-     * be: it may be a relative path, an absolute path, a URL, or just
-     * a filename.
-     *
-     * "lastKnownLocation", if provided, is a path or URL of something
-     * that can be used as a reference point to locate it -- for
-     * example, the location of the session file that is referring to
-     * the file we're looking for.
-     */
-    FileFinder(QString location, QString lastKnownLocation = "");
     virtual ~FileFinder();
 
-    QString getLocation();
+    enum FileType {
+        SessionFile,
+        AudioFile,
+        LayerFile,
+        SessionOrAudioFile,
+        AnyFile
+    };
+
+    QString getOpenFileName(FileType type, QString fallbackLocation = "");
+    QString getSaveFileName(FileType type, QString fallbackLocation = "");
+    void registerLastOpenedFilePath(FileType type, QString path);
+
+    QString find(FileType type, QString location, QString lastKnownLocation = "");
+
+    static FileFinder *getInstance();
 
 protected:
-    QString m_location;
-    QString m_lastKnownLocation;
+    FileFinder();
+    static FileFinder *m_instance;
+
+    QString findRelative(QString location, QString relativeTo);
+    QString locateInteractive(FileType type, QString thing);
+
     QString m_lastLocatedLocation;
 };
 

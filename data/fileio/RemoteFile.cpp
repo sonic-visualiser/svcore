@@ -57,6 +57,7 @@ RemoteFile::RemoteFile(QUrl url) :
 
     if (scheme == "http") {
 
+        m_ok = true;
         m_http = new QHttp(url.host(), url.port(80));
         connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
         connect(m_http, SIGNAL(dataReadProgress(int, int)),
@@ -64,10 +65,10 @@ RemoteFile::RemoteFile(QUrl url) :
         connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
                 this, SLOT(responseHeaderReceived(const QHttpResponseHeader &)));
         m_http->get(url.path(), m_localFile);
-        m_ok = true;
 
     } else if (scheme == "ftp") {
 
+        m_ok = true;
         m_ftp = new QFtp;
         connect(m_ftp, SIGNAL(done(bool)), this, SLOT(done(bool)));
         connect(m_ftp, SIGNAL(dataTransferProgress(qint64, qint64)),
@@ -94,8 +95,6 @@ RemoteFile::RemoteFile(QUrl url) :
                 m_ftp->get(*i, m_localFile);
             }
         }
-
-        m_ok = true;
     }
 
     if (m_ok) {
@@ -111,10 +110,22 @@ RemoteFile::RemoteFile(QUrl url) :
 
 RemoteFile::~RemoteFile()
 {
-    delete m_ftp;
+    cleanup();
+}
+
+void
+RemoteFile::cleanup()
+{
+//    std::cerr << "RemoteFile::cleanup" << std::endl;
+    m_done = true;
     delete m_http;
-    delete m_localFile;
+    m_http = 0;
+    delete m_ftp;
+    m_ftp = 0;
     delete m_progressDialog;
+    m_progressDialog = 0;
+    delete m_localFile;
+    m_localFile = 0;
 }
 
 bool
@@ -127,16 +138,21 @@ RemoteFile::canHandleScheme(QUrl url)
 bool
 RemoteFile::isAvailable()
 {
-    while (!m_done && m_lastStatus == 0) {
+    while (m_ok && (!m_done && m_lastStatus == 0)) {
         QApplication::processEvents();
     }
-    return (m_lastStatus / 100 == 2);
+    bool available = true;
+    if (!m_ok) available = false;
+    else available = (m_lastStatus / 100 == 2);
+    std::cerr << "RemoteFile::isAvailable: " << (available ? "yes" : "no")
+              << std::endl;
+    return available;
 }
 
 void
 RemoteFile::wait()
 {
-    while (!m_done) {
+    while (m_ok && !m_done) {
         QApplication::processEvents();
     }
 }
@@ -178,30 +194,32 @@ RemoteFile::responseHeaderReceived(const QHttpResponseHeader &resp)
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
             .arg(resp.statusCode()).arg(resp.reasonPhrase());
-    }
+        std::cerr << "RemoteFile::responseHeaderReceived: "
+                  << m_errorString.toStdString() << std::endl;
+    } else {
+        std::cerr << "RemoteFile::responseHeaderReceived: "
+                  << m_lastStatus << std::endl;
+    }        
 }
 
 void
 RemoteFile::dataTransferProgress(qint64 done, qint64 total)
 {
+    if (!m_progressDialog) return;
+
     int percent = int((double(done) / double(total)) * 100.0 - 0.1);
     emit progress(percent);
 
-    m_progressDialog->setValue(percent);
-    m_progressDialog->show();
+    if (percent > 0) {
+        m_progressDialog->setValue(percent);
+        m_progressDialog->show();
+    }
 }
 
 void
 RemoteFile::cancelled()
 {
-    delete m_http;
-    m_http = 0;
-    delete m_ftp;
-    m_ftp = 0;
-    delete m_progressDialog;
-    m_progressDialog = 0;
-    delete m_localFile;
-    m_localFile = 0;
+    deleteLocalFile();
     m_done = true;
     m_ok = false;
     m_errorString = tr("Download cancelled");
@@ -210,8 +228,11 @@ RemoteFile::cancelled()
 void
 RemoteFile::done(bool error)
 {
+//    std::cerr << "RemoteFile::done(" << error << ")" << std::endl;
+
+    if (m_done) return;
+
     emit progress(100);
-    m_ok = !error;
 
     if (error) {
         if (m_http) {
@@ -222,25 +243,49 @@ RemoteFile::done(bool error)
     }
 
     if (m_lastStatus / 100 >= 4) {
-        m_ok = false;
+        error = true;
     }
 
-    delete m_localFile;
-    m_localFile = 0;
+    cleanup();
 
-    delete m_progressDialog;
-    m_progressDialog = 0;
-
-    if (m_ok) {
+    if (!error) {
         QFileInfo fi(m_localFilename);
         if (!fi.exists()) {
             m_errorString = tr("Failed to create local file %1").arg(m_localFilename);
-            m_ok = false;
+            error = true;
         } else if (fi.size() == 0) {
             m_errorString = tr("File contains no data!");
-            m_ok = false;
+            error = true;
         }
     }
+
+    if (error) {
+        deleteLocalFile();
+    }
+
+    m_ok = !error;
+    m_done = true;
+}
+
+void
+RemoteFile::deleteLocalFile()
+{
+//    std::cerr << "RemoteFile::deleteLocalFile" << std::endl;
+
+    cleanup();
+
+    if (m_localFilename == "") return;
+
+    m_fileCreationMutex.lock();
+
+    if (!QFile(m_localFilename).remove()) {
+        std::cerr << "RemoteFile::deleteLocalFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+    } else {
+        m_localFilename = "";
+    }
+
+    m_fileCreationMutex.unlock();
+
     m_done = true;
 }
 
@@ -253,8 +298,6 @@ RemoteFile::showProgressDialog()
 QString
 RemoteFile::createLocalFile(QUrl url)
 {
-    //!!! should we actually put up dialogs for these errors? or propagate an exception?
-    
     QDir dir;
     try {
         dir = TempDirectory::getInstance()->getSubDirectoryPath("download");

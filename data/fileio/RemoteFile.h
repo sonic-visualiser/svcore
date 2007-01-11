@@ -45,6 +45,8 @@ public:
     QString getLocalFilename() const;
     QString getErrorString() const;
 
+    void deleteLocalFile();
+
     static bool canHandleScheme(QUrl url);
 
 signals:
@@ -70,6 +72,8 @@ protected:
     bool m_done;
     QProgressDialog *m_progressDialog;
     QTimer m_progressShowTimer;
+
+    void cleanup();
 
     QString createLocalFile(QUrl url);
 
