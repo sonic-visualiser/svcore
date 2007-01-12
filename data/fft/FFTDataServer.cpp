@@ -570,6 +570,11 @@ FFTDataServer::getCacheAux(size_t c)
 
     FFTCache *cache = 0;
 
+    size_t width = m_cacheWidth;
+    if (c * m_cacheWidth + width > m_width) {
+        width = m_width - c * m_cacheWidth;
+    }
+
     try {
         
         if (m_memoryCache) {
@@ -588,37 +593,59 @@ FFTDataServer::getCacheAux(size_t c)
                                                FFTFileCache::Rectangular);
         }
 
-        size_t width = m_cacheWidth;
-        if (c * m_cacheWidth + width > m_width) {
-            width = m_width - c * m_cacheWidth;
-        }
-
         cache->resize(width, m_height);
         cache->reset();
 
-        StorageAdviser::notifyDoneAllocation
-            (m_memoryCache ? StorageAdviser::MemoryAllocation :
-                             StorageAdviser::DiscAllocation,
-             width * m_height *
-             (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
-
     } catch (std::bad_alloc) {
-        std::cerr << "ERROR: Memory allocation failed in FFTFileCache::resize:"
-                  << " abandoning this cache" << std::endl;
+
+        delete cache;
+        cache = 0;
+
+        if (m_memoryCache) {
+            
+            std::cerr << "WARNING: Memory allocation failed when resizing"
+                      << " FFT memory cache no. " << c << " to " << width 
+                      << "x" << m_height << " (of total width " << m_width
+                      << "): falling back to disc cache" << std::endl;
+
+            try {
+
+                cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                                         FFTFileCache::Compact);
+
+                cache->resize(width, m_height);
+                cache->reset();
+
+            } catch (std::bad_alloc) {
+
+                delete cache;
+                cache = 0;
+            }
+        }
+
+        if (cache) {
+            std::cerr << "ERROR: Memory allocation failed when resizing"
+                      << " FFT file cache no. " << c << " to " << width
+                      << "x" << m_height << " (of total width " << m_width
+                      << "): abandoning this cache" << std::endl;
+        }
+
         //!!! Shouldn't be using QtGui here.  Need a better way to report this.
         QMessageBox::critical
             (0, QApplication::tr("FFT cache resize failed"),
              QApplication::tr
              ("Failed to create or resize an FFT model slice.\n"
               "There may be insufficient memory or disc space to continue."));
-        delete cache;
-        m_caches[c] = 0;
-        return 0;
     }
+
+    StorageAdviser::notifyDoneAllocation
+        (m_memoryCache ? StorageAdviser::MemoryAllocation :
+         StorageAdviser::DiscAllocation,
+         width * m_height *
+         (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
 
     m_caches[c] = cache;
     m_lastUsedCache = c;
-
     return cache;
 }
 
