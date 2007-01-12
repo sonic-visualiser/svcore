@@ -59,7 +59,13 @@ public:
         return m_server->getWidth() >> m_xshift;
     }
     virtual size_t getHeight() const {
-        return m_server->getHeight() >> m_yshift;
+        // If there is no y-shift, the server's height (based on its
+        // fftsize/2 + 1) is correct.  If there is a shift, then the
+        // server is using a larger fft size than we want, so we shift
+        // it right as many times as necessary, but then we need to
+        // re-add the "+1" part (because ((fftsize*2)/2 + 1) / 2 !=
+        // fftsize/2 + 1).
+        return (m_server->getHeight() >> m_yshift) + (m_yshift > 0 ? 1 : 0);
     }
     virtual float getValueAt(size_t x, size_t y) const {
         return const_cast<FFTModel *>(this)->getMagnitudeAt(x, y);
