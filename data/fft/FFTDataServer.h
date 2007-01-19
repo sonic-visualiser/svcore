@@ -29,6 +29,7 @@
 #include <deque>
 
 class DenseTimeValueModel;
+class Model;
 class FFTCache;
 
 class FFTDataServer
@@ -54,6 +55,8 @@ public:
 
     static void claimInstance(FFTDataServer *);
     static void releaseInstance(FFTDataServer *);
+
+    static void modelAboutToBeDeleted(Model *);
 
     const DenseTimeValueModel *getModel() const { return m_model; }
     int        getChannel() const { return m_channel; }
@@ -196,8 +199,10 @@ private:
 
     typedef std::pair<FFTDataServer *, int> ServerCountPair;
     typedef std::map<QString, ServerCountPair> ServerMap;
+    typedef std::deque<FFTDataServer *> ServerQueue;
 
     static ServerMap m_servers;
+    static ServerQueue m_releasedServers; // these are still in m_servers as well, with zero refcount
     static QMutex m_serverMapMutex;
     static FFTDataServer *findServer(QString); // call with serverMapMutex held
     static void purgeLimbo(int maxSize = 3); // call with serverMapMutex held

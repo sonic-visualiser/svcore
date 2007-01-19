@@ -40,6 +40,7 @@
 #endif
 
 FFTDataServer::ServerMap FFTDataServer::m_servers;
+FFTDataServer::ServerQueue FFTDataServer::m_releasedServers;
 QMutex FFTDataServer::m_serverMapMutex;
 
 FFTDataServer *
@@ -233,6 +234,15 @@ FFTDataServer::claimInstance(FFTDataServer *server)
 
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
         if (i->second.first == server) {
+
+            for (ServerQueue::iterator j = m_releasedServers.begin();
+                 j != m_releasedServers.end(); ++j) {
+                if (*j == server) {
+                    m_releasedServers.erase(j);
+                    break;
+                }
+            }
+
             ++i->second.second;
             return;
         }
@@ -251,8 +261,6 @@ FFTDataServer::releaseInstance(FFTDataServer *server)
 
     QMutexLocker locker(&m_serverMapMutex);
 
-    //!!! not a good strategy.  Want something like:
-
     // -- if ref count > 0, decrement and return
     // -- if the instance hasn't been used at all, delete it immediately 
     // -- if fewer than N instances (N = e.g. 3) remain with zero refcounts,
@@ -264,9 +272,6 @@ FFTDataServer::releaseInstance(FFTDataServer *server)
     // -- have an additional method to indicate that a model has been
     //    destroyed, so that we can delete all of its fft server instances
 
-    // also:
-    //
-
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
         if (i->second.first == server) {
             if (i->second.second == 0) {
@@ -277,6 +282,7 @@ FFTDataServer::releaseInstance(FFTDataServer *server)
                     delete server;
                     m_servers.erase(i);
                 } else {
+                    m_releasedServers.push_back(server);
                     server->suspend();
                     purgeLimbo();
                 }
@@ -292,18 +298,63 @@ FFTDataServer::releaseInstance(FFTDataServer *server)
 void
 FFTDataServer::purgeLimbo(int maxSize)
 {
-    ServerMap::iterator i = m_servers.end();
+    while (m_releasedServers.size() > maxSize) {
 
-    int count = 0;
+        FFTDataServer *server = *m_releasedServers.begin();
 
-    while (i != m_servers.begin()) {
-        --i;
-        if (i->second.second == 0) {
-            if (++count > maxSize) {
-                delete i->second.first;
+        bool found = false;
+
+        for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
+
+            if (i->second.first == server) {
+                found = true;
+                if (i->second.second > 0) {
+                    std::cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
+                              << server << " is in released queue, but still has non-zero refcount "
+                              << i->second.second << std::endl;
+                    // ... so don't delete it
+                    break;
+                }
                 m_servers.erase(i);
-                return;
+                delete server;
+                break;
             }
+        }
+
+        if (!found) {
+            std::cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
+                      << server << " is in released queue, but not in server map!"
+                      << std::endl;
+            delete server;
+        }
+
+        m_releasedServers.pop_front();
+    }
+}
+
+void
+FFTDataServer::modelAboutToBeDeleted(Model *model)
+{
+    QMutexLocker locker(&m_serverMapMutex);
+
+    for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
+        
+        FFTDataServer *server = i->second.first;
+
+        if (server->getModel() == model) {
+            if (i->second.second > 0) {
+                std::cerr << "ERROR: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+            }
+            for (ServerQueue::iterator j = m_releasedServers.begin();
+                 j != m_releasedServers.end(); ++j) {
+                if (*j == server) {
+                    m_releasedServers.erase(j);
+                    break;
+                }
+            }
+            m_servers.erase(i);
+            delete server;
+            return;
         }
     }
 }
@@ -374,13 +425,29 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     int cells = m_width * m_height;
     int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
     int maximumSize = (cells / 1024) * sizeof(float); // kb
-
-    // This can throw InsufficientDiscSpace.  We don't catch it here -- we
-    // haven't allocated anything yet and can safely let the exception out.
-    // Caller needs to check for it.
     
-    StorageAdviser::Recommendation recommendation = 
-        StorageAdviser::recommend(criteria, minimumSize, maximumSize);
+    StorageAdviser::Recommendation recommendation;
+
+    try {
+
+        recommendation =
+            StorageAdviser::recommend(criteria, minimumSize, maximumSize);
+
+    } catch (InsufficientDiscSpace s) {
+
+        // Delete any unused servers we may have been leaving around
+        // in case we wanted them again
+
+        purgeLimbo(0);
+
+        // This time we don't catch InsufficientDiscSpace -- we
+        // haven't allocated anything yet and can safely let the
+        // exception out to indicate to the caller that we can't
+        // handle it.
+
+        recommendation =
+            StorageAdviser::recommend(criteria, minimumSize, maximumSize);
+    }
 
     std::cerr << "Recommendation was: " << recommendation << std::endl;
 
