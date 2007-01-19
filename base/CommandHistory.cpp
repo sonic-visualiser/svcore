@@ -49,6 +49,7 @@ CommandHistory::CommandHistory() :
 {
     m_undoAction = new QAction(QIcon(":/icons/undo.png"), tr("&Undo"), this);
     m_undoAction->setShortcut(tr("Ctrl+Z"));
+    m_undoAction->setStatusTip(tr("Undo the last editing operation"));
     connect(m_undoAction, SIGNAL(triggered()), this, SLOT(undo()));
     
     m_undoMenuAction = new QAction(QIcon(":/icons/undo.png"), tr("&Undo"), this);
@@ -61,6 +62,7 @@ CommandHistory::CommandHistory() :
 
     m_redoAction = new QAction(QIcon(":/icons/redo.png"), tr("Re&do"), this);
     m_redoAction->setShortcut(tr("Ctrl+Shift+Z"));
+    m_redoAction->setStatusTip(tr("Redo the last operation that was undone"));
     connect(m_redoAction, SIGNAL(triggered()), this, SLOT(redo()));
     
     m_redoMenuAction = new QAction(QIcon(":/icons/redo.png"), tr("Re&do"), this);

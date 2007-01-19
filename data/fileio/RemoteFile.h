@@ -55,7 +55,8 @@ signals:
 
 protected slots:
     void dataReadProgress(int done, int total);
-    void responseHeaderReceived(const QHttpResponseHeader &resp);
+    void httpResponseHeaderReceived(const QHttpResponseHeader &resp);
+    void ftpCommandFinished(int, bool);
     void dataTransferProgress(qint64 done, qint64 total);
     void done(bool error);
     void showProgressDialog();

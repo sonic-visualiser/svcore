@@ -63,7 +63,7 @@ RemoteFile::RemoteFile(QUrl url) :
         connect(m_http, SIGNAL(dataReadProgress(int, int)),
                 this, SLOT(dataReadProgress(int, int)));
         connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
-                this, SLOT(responseHeaderReceived(const QHttpResponseHeader &)));
+                this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
         m_http->get(url.path(), m_localFile);
 
     } else if (scheme == "ftp") {
@@ -71,6 +71,8 @@ RemoteFile::RemoteFile(QUrl url) :
         m_ok = true;
         m_ftp = new QFtp;
         connect(m_ftp, SIGNAL(done(bool)), this, SLOT(done(bool)));
+        connect(m_ftp, SIGNAL(commandFinished(int, bool)),
+                this, SLOT(ftpCommandFinished(int, bool)));
         connect(m_ftp, SIGNAL(dataTransferProgress(qint64, qint64)),
                 this, SLOT(dataTransferProgress(qint64, qint64)));
         m_ftp->connectToHost(url.host(), url.port(21));
@@ -85,16 +87,14 @@ RemoteFile::RemoteFile(QUrl url) :
             password = QString("%1@%2").arg(getenv("USER")).arg(getenv("HOST"));
         }
 
-        QStringList path = url.path().split('/');
-        for (QStringList::iterator i = path.begin(); i != path.end(); ) {
-            QString bit = *i;
-            ++i;
-            if (i != path.end()) {
-                m_ftp->cd(*i);
-            } else {
-                m_ftp->get(*i, m_localFile);
-            }
-        }
+        m_ftp->login(username, password);
+
+        QString dirpath = url.path().section('/', 0, -2);
+        QString filename = url.path().section('/', -1);
+
+        if (dirpath == "") dirpath = "/";
+        m_ftp->cd(dirpath);
+        m_ftp->get(filename, m_localFile);
     }
 
     if (m_ok) {
@@ -118,10 +118,15 @@ RemoteFile::cleanup()
 {
 //    std::cerr << "RemoteFile::cleanup" << std::endl;
     m_done = true;
-    delete m_http;
-    m_http = 0;
-    delete m_ftp;
-    m_ftp = 0;
+    if (m_http) {
+        delete m_http;
+        m_http = 0;
+    }
+    if (m_ftp) {
+        m_ftp->abort();
+        m_ftp->deleteLater();
+        m_ftp = 0;
+    }
     delete m_progressDialog;
     m_progressDialog = 0;
     delete m_localFile;
@@ -188,7 +193,7 @@ RemoteFile::dataReadProgress(int done, int total)
 }
 
 void
-RemoteFile::responseHeaderReceived(const QHttpResponseHeader &resp)
+RemoteFile::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
 {
     m_lastStatus = resp.statusCode();
     if (m_lastStatus / 100 >= 4) {
@@ -200,6 +205,34 @@ RemoteFile::responseHeaderReceived(const QHttpResponseHeader &resp)
         std::cerr << "RemoteFile::responseHeaderReceived: "
                   << m_lastStatus << std::endl;
     }        
+}
+
+void
+RemoteFile::ftpCommandFinished(int id, bool error)
+{
+    std::cerr << "RemoteFile::ftpCommandFinished(" << id << ", " << error << ")" << std::endl;
+
+    if (!m_ftp) return;
+
+    QFtp::Command command = m_ftp->currentCommand();
+
+    if (!error) {
+        std::cerr << "RemoteFile::ftpCommandFinished: success for command "
+                  << command << std::endl;
+        return;
+    }
+
+    if (command == QFtp::ConnectToHost) {
+        m_errorString = tr("Failed to connect to FTP server");
+    } else if (command == QFtp::Login) {
+        m_errorString = tr("Login failed");
+    } else if (command == QFtp::Cd) {
+        m_errorString = tr("Failed to change to correct directory");
+    } else if (command == QFtp::Get) {
+        m_errorString = tr("FTP download aborted");
+    }
+
+    m_lastStatus = 400; // for done()
 }
 
 void
@@ -228,7 +261,7 @@ RemoteFile::cancelled()
 void
 RemoteFile::done(bool error)
 {
-//    std::cerr << "RemoteFile::done(" << error << ")" << std::endl;
+    std::cerr << "RemoteFile::done(" << error << ")" << std::endl;
 
     if (m_done) return;
 
