@@ -206,6 +206,10 @@ private:
     static QMutex m_serverMapMutex;
     static FFTDataServer *findServer(QString); // call with serverMapMutex held
     static void purgeLimbo(int maxSize = 3); // call with serverMapMutex held
+
+    static void claimInstance(FFTDataServer *, bool needLock);
+    static void releaseInstance(FFTDataServer *, bool needLock);
+
 };
 
 #endif
