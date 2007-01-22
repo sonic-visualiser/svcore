@@ -834,6 +834,8 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 {
     Profiler profiler("FFTDataServer::getMagnitudeAt", false);
 
+    if (x >= m_width || y >= m_height) return 0;
+
     size_t col;
     FFTCache *cache = getCache(x, col);
     if (!cache) return 0;
@@ -851,6 +853,8 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 {
     Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt", false);
 
+    if (x >= m_width || y >= m_height) return 0;
+
     size_t col;
     FFTCache *cache = getCache(x, col);
     if (!cache) return 0;
@@ -866,6 +870,8 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 {
     Profiler profiler("FFTDataServer::getMaximumMagnitudeAt", false);
 
+    if (x >= m_width) return 0;
+
     size_t col;
     FFTCache *cache = getCache(x, col);
     if (!cache) return 0;
@@ -880,6 +886,8 @@ float
 FFTDataServer::getPhaseAt(size_t x, size_t y)
 {
     Profiler profiler("FFTDataServer::getPhaseAt", false);
+
+    if (x >= m_width || y >= m_height) return 0;
 
     size_t col;
     FFTCache *cache = getCache(x, col);
@@ -928,6 +936,8 @@ FFTDataServer::isColumnReady(size_t x)
 {
     Profiler profiler("FFTDataServer::isColumnReady", false);
 
+    if (x >= m_width) return true;
+
     if (!haveCache(x)) {
         if (m_lastUsedCache == -1) {
             if (m_suspended) {
@@ -950,6 +960,20 @@ void
 FFTDataServer::fillColumn(size_t x)
 {
     Profiler profiler("FFTDataServer::fillColumn", false);
+
+    if (!m_fftInput) {
+        std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
+                  << "input has already been completed and discarded?"
+                  << std::endl;
+        return;
+    }
+
+    if (x >= m_width) {
+        std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
+                  << "x > width (" << x << " > " << m_width << ")"
+                  << std::endl;
+        return;
+    }
 
     size_t col;
 #ifdef DEBUG_FFT_SERVER_FILL
