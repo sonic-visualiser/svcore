@@ -81,6 +81,24 @@ GetProcessStatus(int pid)
 #endif
 }
 
+#ifdef _WIN32
+/*  MEMORYSTATUSEX is missing from older Windows headers, so define a
+    local replacement.  This trick from MinGW source code.  Ugh */
+typedef struct
+{
+    DWORD dwLength;
+    DWORD dwMemoryLoad;
+    DWORDLONG ullTotalPhys;
+    DWORDLONG ullAvailPhys;
+    DWORDLONG ullTotalPageFile;
+    DWORDLONG ullAvailPageFile;
+    DWORDLONG ullTotalVirtual;
+    DWORDLONG ullAvailVirtual;
+    DWORDLONG ullAvailExtendedVirtual;
+} lMEMORYSTATUSEX;
+typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+#endif
+
 void
 GetRealMemoryMBAvailable(int &available, int &total)
 {
@@ -89,18 +107,54 @@ GetRealMemoryMBAvailable(int &available, int &total)
 
 #ifdef _WIN32
 
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    if (!GlobalMemoryStatusEx(&status)) {
-        std::cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-                  << GetLastError() << std::endl;
-        return;
+    static bool checked = false;
+    static bool exFound = false;
+    static PFN_MS_EX ex;
+
+    if (!checked) {
+
+        HMODULE h = GetModuleHandle("kernel32.dll");
+
+        if (h) {
+            if ((ex = (PFN_MS_EX)GetProcAddress(h, "GlobalMemoryStatusEx"))) {
+                exFound = true;
+            }
+        }
+        
+        checked = true;
     }
-    DWORDLONG size = status.ullAvailPhys / 1048576;
+
+    DWORDLONG avail = 0;
+    DWORDLONG total = 0;
+
+    if (exFound) {
+
+        lMEMORYSTATUSEX lms;
+	lms.dwLength = sizeof(lms);
+	if (!ex(&lms)) {
+            std::cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
+                      << GetLastError() << std::endl;
+            return;
+        }
+        avail = lms.ullAvailPhys;
+        total = lms.ullTotalPhys;
+
+    } else {
+
+        /* Fall back to GlobalMemoryStatus which is always available.
+           but returns wrong results for physical memory > 4GB  */
+
+	MEMORYSTATUS ms;
+	GlobalMemoryStatus(&ms);
+	avail = ms.dwAvailPhys;
+        total = ms.dwTotalPhys;
+    }
+
+    DWORDLONG size = avail / 1048576;
     if (size > INT_MAX) size = INT_MAX;
     available = int(size);
 
-    size = status.ullTotalPhys / 1048576;
+    size = total / 1048576;
     if (size > INT_MAX) size = INT_MAX;
     total = int(size);
 
