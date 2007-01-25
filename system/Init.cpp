@@ -41,10 +41,11 @@ static int handle_x11_error(Display *dpy, XErrorEvent *err)
 #ifdef Q_WS_WIN32
 
 #include <fcntl.h>
+#include <windows.h>
 
 // Set default file open mode to binary
-#undef _fmode
-int _fmode = _O_BINARY;
+//#undef _fmode
+//int _fmode = _O_BINARY;
 
 void redirectStderr()
 {

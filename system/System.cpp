@@ -23,6 +23,7 @@
 #ifndef _WIN32
 #include <signal.h>
 #include <sys/statvfs.h>
+#include <windows.h>
 #endif
 
 #ifdef __APPLE__
@@ -113,7 +114,7 @@ GetRealMemoryMBAvailable(int &available, int &total)
 
     if (!checked) {
 
-        HMODULE h = GetModuleHandle("kernel32.dll");
+        HMODULE h = GetModuleHandleA("kernel32.dll");
 
         if (h) {
             if ((ex = (PFN_MS_EX)GetProcAddress(h, "GlobalMemoryStatusEx"))) {
@@ -124,8 +125,8 @@ GetRealMemoryMBAvailable(int &available, int &total)
         checked = true;
     }
 
-    DWORDLONG avail = 0;
-    DWORDLONG total = 0;
+    DWORDLONG wavail = 0;
+    DWORDLONG wtotal = 0;
 
     if (exFound) {
 
@@ -136,8 +137,8 @@ GetRealMemoryMBAvailable(int &available, int &total)
                       << GetLastError() << std::endl;
             return;
         }
-        avail = lms.ullAvailPhys;
-        total = lms.ullTotalPhys;
+        wavail = lms.ullAvailPhys;
+        wtotal = lms.ullTotalPhys;
 
     } else {
 
@@ -146,15 +147,15 @@ GetRealMemoryMBAvailable(int &available, int &total)
 
 	MEMORYSTATUS ms;
 	GlobalMemoryStatus(&ms);
-	avail = ms.dwAvailPhys;
-        total = ms.dwTotalPhys;
+	wavail = ms.dwAvailPhys;
+        wtotal = ms.dwTotalPhys;
     }
 
-    DWORDLONG size = avail / 1048576;
+    DWORDLONG size = wavail / 1048576;
     if (size > INT_MAX) size = INT_MAX;
     available = int(size);
 
-    size = total / 1048576;
+    size = wtotal / 1048576;
     if (size > INT_MAX) size = INT_MAX;
     total = int(size);
 
@@ -224,11 +225,12 @@ int
 GetDiscSpaceMBAvailable(const char *path)
 {
 #ifdef _WIN32
-    __int64 available, total, totalFree;
-    if (GetDiskFreeSpaceEx(path, &available, &total, &totalFree)) {
-        available /= 1048576;
-        if (available > INT_MAX) available = INT_MAX;
-        return int(available);
+    ULARGE_INTEGER available, total, totalFree;
+    if (GetDiskFreeSpaceExA(path, &available, &total, &totalFree)) {
+	  __int64 a = available.QuadPart;
+        a /= 1048576;
+        if (a > INT_MAX) a = INT_MAX;
+        return int(a);
     } else {
         std::cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
                   << GetLastError() << std::endl;
