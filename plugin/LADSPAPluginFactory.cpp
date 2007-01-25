@@ -91,7 +91,6 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	if (m_taxonomy.find(*i) != m_taxonomy.end() && m_taxonomy[*i] != "") {
 //		std::cerr << "LADSPAPluginFactory: cat for " << i->toStdString()<< " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << std::endl;
 	    list.push_back(m_taxonomy[*i]);
-
 	} else {
 	    list.push_back("");
 //		std::cerr << "LADSPAPluginFactory: cat for " << i->toStdString() << " not found (despite having " << m_fallbackCategories.size() << " fallbacks)" << std::endl;
@@ -681,6 +680,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
         if (m_lrdfTaxonomy[descriptor->UniqueID] != "") {
             m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->UniqueID];
 //            std::cerr << "set id \"" << identifier.toStdString() << "\" to cat \"" << m_taxonomy[identifier].toStdString() << "\" from LRDF" << std::endl;
+//            std::cout << identifier.toStdString() << "::" << m_taxonomy[identifier].toStdString() << std::endl;
         }
 
 	QString category = m_taxonomy[identifier];
