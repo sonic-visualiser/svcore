@@ -217,12 +217,14 @@ DSSIPluginFactory::getPluginPath()
         }
 
 #ifdef _WIN32
-        home = getenv("ProgramFiles");
-        if (!home) home = "C:\\Program Files";
+        char *pfiles = getenv("ProgramFiles");
+        if (!pfiles) pfiles = "C:\\Program Files";
+        {
         std::string::size_type f;
         while ((f = path.find("%ProgramFiles%")) != std::string::npos &&
                f < path.length()) {
             path.replace(f, 14, pfiles);
+        }
         }
 #endif
     }
