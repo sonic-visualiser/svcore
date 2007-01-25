@@ -33,10 +33,20 @@
 
 #define PLUGIN_GLOB  "*.dll"
 
-// The default Vamp plugin path is obtained from a function in the Vamp SDK
-// (Vamp::PluginHostAdapter::getPluginPath).
+// The default Vamp plugin path is obtained from a function in the
+// Vamp SDK (Vamp::PluginHostAdapter::getPluginPath).
 
-#define DEFAULT_LADSPA_PATH "%ProgramFiles%\\LADSPA Plugins"
+// At the time of writing, at least, the vast majority of LADSPA
+// plugins on Windows hosts will have been put there for use in
+// Audacity.  It's a bit of a shame that Audacity uses its own Program
+// Files directory for plugins that any host may want to use... maybe
+// they were just following the example of VSTs, which are usually
+// found in Steinberg's Program Files directory.  Anyway, we can
+// greatly increase our chances of picking up some LADSPA plugins by
+// default if we include the Audacity plugin location as well as an
+// (imho) more sensible place.
+
+#define DEFAULT_LADSPA_PATH "%ProgramFiles%\\LADSPA Plugins:%ProgramFiles%\\Audacity\\Plug-Ins"
 #define DEFAULT_DSSI_PATH   "%ProgramFiles%\\DSSI Plugins"
 
 #define getpid _getpid
