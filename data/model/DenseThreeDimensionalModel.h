@@ -54,11 +54,10 @@ public:
 
     /**
      * Return true if there are data available for the given column.
-     * This should return true only if getBinValues(windowStartFrame)
-     * would not have to do any substantial work to calculate its
-     * return values.  If this function returns false, it may still be
-     * possible to get the bin values for that column, but they may
-     * have to be calculated.
+     * This should return true only if getColumn(column) would not
+     * have to do any substantial work to calculate its return values.
+     * If this function returns false, it may still be possible to
+     * retrieve the column, but its values may have to be calculated.
      */
     virtual bool isColumnAvailable(size_t column) const = 0;
 

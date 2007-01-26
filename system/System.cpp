@@ -23,7 +23,6 @@
 #ifndef _WIN32
 #include <signal.h>
 #include <sys/statvfs.h>
-#include <windows.h>
 #endif
 
 #ifdef __APPLE__

@@ -28,10 +28,11 @@
 
 #define DLOPEN(a,b)  LoadLibrary((a).toStdWString().c_str())
 #define DLSYM(a,b)   GetProcAddress((HINSTANCE)(a),(b))
-#define DLCLOSE(a)   FreeLibrary((HINSTANCE)(a))
+#define DLCLOSE(a)   (!FreeLibrary((HINSTANCE)(a)))
 #define DLERROR()    ""
 
 #define PLUGIN_GLOB  "*.dll"
+#define PATH_SEPARATOR ';'
 
 // The default Vamp plugin path is obtained from a function in the
 // Vamp SDK (Vamp::PluginHostAdapter::getPluginPath).
@@ -46,7 +47,7 @@
 // default if we include the Audacity plugin location as well as an
 // (imho) more sensible place.
 
-#define DEFAULT_LADSPA_PATH "%ProgramFiles%\\LADSPA Plugins:%ProgramFiles%\\Audacity\\Plug-Ins"
+#define DEFAULT_LADSPA_PATH "%ProgramFiles%\\LADSPA Plugins;%ProgramFiles%\\Audacity\\Plug-Ins"
 #define DEFAULT_DSSI_PATH   "%ProgramFiles%\\DSSI Plugins"
 
 #define getpid _getpid
@@ -73,6 +74,7 @@ void gettimeofday(struct timeval *p, void *tz);
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib"
+#define PATH_SEPARATOR ':'
 
 #define DEFAULT_LADSPA_PATH "$HOME/Library/Audio/Plug-Ins/LADSPA:/Library/Audio/Plug-Ins/LADSPA"
 #define DEFAULT_DSSI_PATH   "$HOME/Library/Audio/Plug-Ins/DSSI:/Library/Audio/Plug-Ins/DSSI"
@@ -80,6 +82,7 @@ void gettimeofday(struct timeval *p, void *tz);
 #else 
 
 #define PLUGIN_GLOB  "*.so"
+#define PATH_SEPARATOR ':'
 
 #define DEFAULT_LADSPA_PATH "$HOME/ladspa:$HOME/.ladspa:/usr/local/lib/ladspa:/usr/lib/ladspa"
 #define DEFAULT_DSSI_PATH "$HOME/dssi:$HOME/.dssi:/usr/local/lib/dssi:/usr/lib/dssi"

@@ -554,7 +554,7 @@ LADSPAPluginFactory::getPluginPath()
 
     std::string::size_type index = 0, newindex = 0;
 
-    while ((newindex = path.find(':', index)) < path.size()) {
+    while ((newindex = path.find(PATH_SEPARATOR, index)) < path.size()) {
 	pathList.push_back(path.substr(index, newindex - index).c_str());
 	index = newindex + 1;
     }
