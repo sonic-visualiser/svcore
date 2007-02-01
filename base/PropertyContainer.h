@@ -102,7 +102,7 @@ public:
 
 signals:
     void propertyChanged(PropertyContainer::PropertyName);
-    
+
 public slots:
     /**
      * Set a property.  This is used for all property types.  For
