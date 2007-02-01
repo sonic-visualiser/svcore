@@ -19,6 +19,7 @@ HEADERS += AudioLevel.h \
            Command.h \
            CommandHistory.h \
            Exceptions.h \
+           LogRange.h \
            Pitch.h \
            PlayParameterRepository.h \
            PlayParameters.h \
@@ -44,6 +45,7 @@ SOURCES += AudioLevel.cpp \
            Command.cpp \
            CommandHistory.cpp \
            Exceptions.cpp \
+           LogRange.cpp \
            Pitch.cpp \
            PlayParameterRepository.cpp \
            PlayParameters.cpp \
