@@ -218,16 +218,16 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
     return i;
 }
 
-WaveFileModel::RangeBlock
+void
 WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
-			 size_t &blockSize) const
+                         RangeBlock &ranges, size_t &blockSize) const
 {
-    RangeBlock ranges;
-    if (!isOK()) return ranges;
+    ranges.clear();
+    if (!isOK()) return;
 
     if (end <= start) {
 	std::cerr << "WARNING: Internal error: end <= start in WaveFileModel::getRanges (end = " << end << ", start = " << start << ", blocksize = " << blockSize << ")" << std::endl;
-	return ranges;
+	return;
     }
 
     int cacheType = 0;
@@ -276,7 +276,7 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
             ranges.push_back(Range(min, max, total / count));
 	}
 
-	return ranges;
+	return;
 
     } else {
 
@@ -328,7 +328,7 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
     }
 
     //cerr << "returning " << ranges.size() << " ranges" << endl;
-    return ranges;
+    return;
 }
 
 WaveFileModel::Range
@@ -354,7 +354,8 @@ WaveFileModel::getRange(size_t channel, size_t start, size_t end) const
     if (blockStart < start) blockStart += blockSize;
         
     if (blockEnd > blockStart) {
-        RangeBlock ranges = getRanges(channel, blockStart, blockEnd, blockSize);
+        RangeBlock ranges;
+        getRanges(channel, blockStart, blockEnd, ranges, blockSize);
         for (size_t i = 0; i < ranges.size(); ++i) {
             if (first || ranges[i].min < range.min) range.min = ranges[i].min;
             if (first || ranges[i].max > range.max) range.max = ranges[i].max;

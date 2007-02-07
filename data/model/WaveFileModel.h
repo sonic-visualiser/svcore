@@ -60,8 +60,9 @@ public:
     virtual size_t getValues(int channel, size_t start, size_t end,
 			     double *buffer) const;
 
-    virtual RangeBlock getRanges(size_t channel, size_t start, size_t end,
-				 size_t &blockSize) const;
+    virtual void getRanges(size_t channel, size_t start, size_t end,
+                           RangeBlock &ranges,
+                           size_t &blockSize) const;
 
     virtual Range getRange(size_t channel, size_t start, size_t end) const;
 
