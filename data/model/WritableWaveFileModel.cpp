@@ -167,12 +167,14 @@ WritableWaveFileModel::getValues(int channel, size_t start, size_t end,
     return m_model->getValues(channel, start, end, buffer);
 }
 
-WritableWaveFileModel::RangeBlock
+void
 WritableWaveFileModel::getRanges(size_t channel, size_t start, size_t end,
+                                 RangeBlock &ranges,
                                  size_t &blockSize) const
 {
-    if (!m_model || m_model->getChannelCount() == 0) return RangeBlock();
-    return m_model->getRanges(channel, start, end, blockSize);
+    ranges.clear();
+    if (!m_model || m_model->getChannelCount() == 0) return;
+    m_model->getRanges(channel, start, end, ranges, blockSize);
 }
 
 WritableWaveFileModel::Range

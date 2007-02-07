@@ -58,8 +58,9 @@ public:
      * parameter so as to return the block size that was actually
      * obtained.
      */
-    virtual RangeBlock getRanges(size_t channel, size_t start, size_t end,
-				 size_t &blockSize) const = 0;
+    virtual void getRanges(size_t channel, size_t start, size_t end,
+                           RangeBlock &ranges,
+                           size_t &blockSize) const = 0;
 
     /**
      * Return the range between the given start and end frames,
