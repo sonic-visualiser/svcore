@@ -583,21 +583,21 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     }
 
     m_fftInput = (fftsample *)
-        fftwf_malloc(fftSize * sizeof(fftsample));
+        fftf_malloc(fftSize * sizeof(fftsample));
 
-    m_fftOutput = (fftwf_complex *)
-        fftwf_malloc((fftSize/2 + 1) * sizeof(fftwf_complex));
+    m_fftOutput = (fftf_complex *)
+        fftf_malloc((fftSize/2 + 1) * sizeof(fftf_complex));
 
     m_workbuffer = (float *)
-        fftwf_malloc((fftSize+2) * sizeof(float));
+        fftf_malloc((fftSize+2) * sizeof(float));
 
-    m_fftPlan = fftwf_plan_dft_r2c_1d(m_fftSize,
+    m_fftPlan = fftf_plan_dft_r2c_1d(m_fftSize,
                                       m_fftInput,
                                       m_fftOutput,
                                       FFTW_ESTIMATE);
 
     if (!m_fftPlan) {
-        std::cerr << "ERROR: fftwf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << std::endl;
+        std::cerr << "ERROR: fftf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << std::endl;
         throw(0);
     }
 
@@ -642,10 +642,10 @@ FFTDataServer::deleteProcessingData()
     std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): deleteProcessingData" << std::endl;
 #endif
     if (m_fftInput) {
-        fftwf_destroy_plan(m_fftPlan);
-        fftwf_free(m_fftInput);
-        fftwf_free(m_fftOutput);
-        fftwf_free(m_workbuffer);
+        fftf_destroy_plan(m_fftPlan);
+        fftf_free(m_fftInput);
+        fftf_free(m_fftOutput);
+        fftf_free(m_workbuffer);
     }
     m_fftInput = 0;
 }
@@ -1041,7 +1041,7 @@ FFTDataServer::fillColumn(size_t x)
 	m_fftInput[i + m_fftSize/2] = temp;
     }
 
-    fftwf_execute(m_fftPlan);
+    fftf_execute(m_fftPlan);
 
     fftsample factor = 0.0;
 

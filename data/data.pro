@@ -14,7 +14,8 @@ OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
 # Input
-HEADERS += fft/FFTCache.h \
+HEADERS += fft/FFTapi.h \
+           fft/FFTCache.h \
            fft/FFTDataServer.h \
            fft/FFTFileCache.h \
            fft/FFTMemoryCache.h \
@@ -51,7 +52,8 @@ HEADERS += fft/FFTCache.h \
            model/TextModel.h \
            model/WaveFileModel.h \
            model/WritableWaveFileModel.h
-SOURCES += fft/FFTDataServer.cpp \
+SOURCES += fft/FFTapi.cpp \
+           fft/FFTDataServer.cpp \
            fft/FFTFileCache.cpp \
            fft/FFTMemoryCache.cpp \
            fileio/AudioFileReader.cpp \

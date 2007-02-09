@@ -19,7 +19,7 @@
 #include "base/Window.h"
 #include "base/Thread.h"
 
-#include <fftw3.h>
+#include "FFTapi.h"
 
 #include <QMutex>
 #include <QWaitCondition>
@@ -159,9 +159,9 @@ private:
     QWaitCondition m_condition;
 
     fftsample *m_fftInput;
-    fftwf_complex *m_fftOutput;
+    fftf_complex *m_fftOutput;
     float *m_workbuffer;
-    fftwf_plan m_fftPlan;
+    fftf_plan m_fftPlan;
 
     class FillThread : public Thread
     {
