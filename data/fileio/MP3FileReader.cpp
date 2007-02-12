@@ -66,8 +66,9 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 	return;
     }
     
-    if (::read(fd, filebuffer, stat.st_size) < stat.st_size) {
-	m_error = QString("Failed to read file %1.").arg(path);
+    size_t sz = 0;
+    if ((sz = ::read(fd, filebuffer, stat.st_size)) < stat.st_size) {
+	m_error = QString("Failed to read file %1 (expected %2 bytes, got %3 bytes).").arg(path).arg(stat.st_size).arg(sz);
         delete[] filebuffer;
         ::close(fd);
 	return;
