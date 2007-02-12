@@ -50,7 +50,7 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 
     m_fileSize = stat.st_size;
 
-    int fd;
+    int fd = -1;
     if ((fd = ::open(path.toLocal8Bit().data(), O_RDONLY, 0)) < 0) {
 	m_error = QString("Failed to open file %1 for reading.").arg(path);
 	return;
@@ -59,19 +59,24 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
     unsigned char *filebuffer = 0;
 
     try {
-        filebuffer = new unsigned char[stat.st_size];
+        filebuffer = new unsigned char[m_fileSize];
     } catch (...) {
         m_error = QString("Out of memory");
         ::close(fd);
 	return;
     }
     
-    size_t sz = 0;
-    if ((sz = ::read(fd, filebuffer, stat.st_size)) < stat.st_size) {
-	m_error = QString("Failed to read file %1 (expected %2 bytes, got %3 bytes).").arg(path).arg(stat.st_size).arg(sz);
-        delete[] filebuffer;
-        ::close(fd);
-	return;
+    ssize_t sz = 0;
+    size_t offset = 0;
+    while (offset < m_fileSize) {
+        sz = ::read(fd, filebuffer + offset, m_fileSize - offset);
+        if (sz < 0) {
+            m_error = QString("Read error for file %1 (after %2 bytes)").arg(path).arg(offset);
+            delete[] filebuffer;
+            ::close(fd);
+            return;
+        }
+        offset += sz;
     }
 
     ::close(fd);
@@ -83,7 +88,7 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 	m_progress->hide();
     }
 
-    if (!decode(filebuffer, stat.st_size)) {
+    if (!decode(filebuffer, m_fileSize)) {
 	m_error = QString("Failed to decode file %1.").arg(path);
         delete[] filebuffer;
 	return;
