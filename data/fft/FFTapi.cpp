@@ -19,6 +19,7 @@
 #ifndef HAVE_FFTW3F
 
 #include <cmath>
+#include <iostream>
 
 void
 fft(unsigned int n, bool inverse, double *ri, double *ii, double *ro, double *io)
@@ -44,28 +45,18 @@ fft(unsigned int n, bool inverse, double *ri, double *ii, double *ro, double *io
 	}
     }
 
-    static unsigned int tableSize = 0;
-    static int *table = 0;
+    int *table = new int[n];
 
-    if (tableSize != n) {
-
-	delete[] table;
-
-	table = new int[n];
-
-	for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
 	
-	    m = i;
-
-	    for (j = k = 0; j < bits; ++j) {
-		k = (k << 1) | (m & 1);
-		m >>= 1;
-	    }
-
-	    table[i] = k;
-	}
-
-	tableSize = n;
+        m = i;
+        
+        for (j = k = 0; j < bits; ++j) {
+            k = (k << 1) | (m & 1);
+            m >>= 1;
+        }
+        
+        table[i] = k;
     }
 
     if (ii) {
@@ -125,6 +116,8 @@ fft(unsigned int n, bool inverse, double *ri, double *ii, double *ro, double *io
 	blockEnd = blockSize;
     }
 
+/* fftw doesn't normalise, so nor will we
+
     if (inverse) {
 
 	double denom = (double)n;
@@ -134,6 +127,8 @@ fft(unsigned int n, bool inverse, double *ri, double *ii, double *ro, double *io
 	    io[i] /= denom;
 	}
     }
+*/
+    delete[] table;
 }
 
 struct fftf_plan_ {
@@ -180,21 +175,19 @@ fftf_destroy_plan(fftf_plan p)
 void
 fftf_execute(const fftf_plan p)
 {
-    //!!! doesn't work yet for inverse transforms
-
     float *real = p->real;
     fftf_complex *cplx = p->cplx;
     int n = p->size;
-    int inv = p->inverse;
+    int forward = !p->inverse;
 
     double *ri = new double[n];
     double *ro = new double[n];
     double *io = new double[n];
 
     double *ii = 0;
-    if (inv) ii = new double[n];
+    if (!forward) ii = new double[n];
 
-    if (!inv) {
+    if (forward) {
         for (int i = 0; i < n; ++i) {
             ri[i] = real[i];
         }
@@ -209,9 +202,9 @@ fftf_execute(const fftf_plan p)
         }
     }
 
-    fft(n, inv, ri, ii, ro, io);
+    fft(n, !forward, ri, ii, ro, io);
 
-    if (!inv) {
+    if (forward) {
         for (int i = 0; i < n/2+1; ++i) {
             cplx[i][0] = ro[i];
             cplx[i][1] = io[i];
@@ -225,7 +218,7 @@ fftf_execute(const fftf_plan p)
     delete[] ri;
     delete[] ro;
     delete[] io;
-    delete[] ii;
+    if (ii) delete[] ii;
 }
 
 #endif
