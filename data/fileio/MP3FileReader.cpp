@@ -75,6 +75,9 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
             delete[] filebuffer;
             ::close(fd);
             return;
+        } else if (sz == 0) {
+            std::cerr << QString("MP3FileReader::MP3FileReader: Warning: read only %1 of %2 bytes").arg(offset).arg(m_fileSize).toStdString() << std::endl;
+            break;
         }
         offset += sz;
     }
