@@ -51,7 +51,11 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
     m_fileSize = stat.st_size;
 
     int fd = -1;
-    if ((fd = ::open(path.toLocal8Bit().data(), O_RDONLY, 0)) < 0) {
+    if ((fd = ::open(path.toLocal8Bit().data(), O_RDONLY
+#ifdef _WIN32
+                     | O_BINARY
+#endif
+                     , 0)) < 0) {
 	m_error = QString("Failed to open file %1 for reading.").arg(path);
 	return;
     }	
@@ -71,12 +75,15 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
     while (offset < m_fileSize) {
         sz = ::read(fd, filebuffer + offset, m_fileSize - offset);
         if (sz < 0) {
-            m_error = QString("Read error for file %1 (after %2 bytes)").arg(path).arg(offset);
+            m_error = QString("Read error for file %1 (after %2 bytes)")
+                .arg(path).arg(offset);
             delete[] filebuffer;
             ::close(fd);
             return;
         } else if (sz == 0) {
-            std::cerr << QString("MP3FileReader::MP3FileReader: Warning: read only %1 of %2 bytes").arg(offset).arg(m_fileSize).toStdString() << std::endl;
+            std::cerr << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
+                .arg(offset).arg(m_fileSize).toStdString() << std::endl;
+            m_fileSize = offset;
             break;
         }
         offset += sz;
