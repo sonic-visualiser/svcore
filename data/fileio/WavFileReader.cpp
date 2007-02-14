@@ -151,6 +151,9 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
     }
 
     for (size_t i = 0; i < count * m_fileInfo.channels; ++i) {
+        if (i >= m_bufsiz) {
+            std::cerr << "INTERNAL ERROR: WavFileReader::getInterleavedFrames: " << i << " >= " << m_bufsiz << std::endl;
+        }
 	results.push_back(m_buffer[i]);
     }
 
