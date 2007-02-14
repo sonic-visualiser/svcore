@@ -300,7 +300,7 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	float max = 0.0, min = 0.0, total = 0.0;
 	size_t i = 0, count = 0;
 
-	//cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", end " << end << ", power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
+	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", end " << end << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
 
 	for (i = 0; i < endIndex - startIndex; ) {
         
@@ -327,7 +327,7 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	}
     }
 
-    //cerr << "returning " << ranges.size() << " ranges" << endl;
+    cerr << "returning " << ranges.size() << " ranges" << endl;
     return;
 }
 
@@ -474,13 +474,14 @@ WaveFileModel::RangeCacheFillThread::run()
 
             for (size_t i = 0; i < readBlockSize; ++i) {
 		
+                if (channels * i + channels > block.size()) break;
+
                 for (size_t ch = 0; ch < size_t(channels); ++ch) {
 
                     size_t index = channels * i + ch;
-                    if (index >= block.size()) continue;
                     float sample = block[index];
                     
-                    for (size_t ct = 0; ct < 2; ++ct) {
+                    for (size_t ct = 0; ct < 2; ++ct) { // cache type
                         
                         size_t rangeIndex = ch * 2 + ct;
                         
@@ -495,14 +496,18 @@ WaveFileModel::RangeCacheFillThread::run()
                 }
                 
                 QMutexLocker locker(&m_model.m_mutex);
+
                 for (size_t ct = 0; ct < 2; ++ct) {
+
                     if (++count[ct] == cacheBlockSize[ct]) {
+
                         for (size_t ch = 0; ch < size_t(channels); ++ch) {
                             size_t rangeIndex = ch * 2 + ct;
                             range[rangeIndex].absmean /= count[ct];
                             m_model.m_cache[ct].push_back(range[rangeIndex]);
                             range[rangeIndex] = Range();
                         }
+
                         count[ct] = 0;
                     }
                 }
@@ -525,14 +530,18 @@ WaveFileModel::RangeCacheFillThread::run()
     if (!m_model.m_exiting) {
 
         QMutexLocker locker(&m_model.m_mutex);
+
         for (size_t ct = 0; ct < 2; ++ct) {
+
             if (count[ct] > 0) {
+
                 for (size_t ch = 0; ch < size_t(channels); ++ch) {
                     size_t rangeIndex = ch * 2 + ct;
                     range[rangeIndex].absmean /= count[ct];
                     m_model.m_cache[ct].push_back(range[rangeIndex]);
                     range[rangeIndex] = Range();
                 }
+
                 count[ct] = 0;
             }
             
