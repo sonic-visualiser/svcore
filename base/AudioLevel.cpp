@@ -52,7 +52,8 @@ static const LevelList &getPreviewLevelCache(int levels);
 float
 AudioLevel::multiplier_to_dB(float multiplier)
 {
-    if (multiplier == 0.0) return DB_FLOOR;
+    if (multiplier == 0.f) return DB_FLOOR;
+    else if (multiplier < 0.f) return multiplier_to_dB(-multiplier);
     float dB = 10 * log10f(multiplier);
     return dB;
 }
@@ -231,6 +232,10 @@ int
 AudioLevel::multiplier_to_preview(float m, int levels)
 {
     assert(levels > 0);
+    return multiplier_to_fader(m, levels, PreviewLevel);
+
+    /* The original multiplier_to_preview which follows is not thread-safe.
+
     if (m < 0.0) return -multiplier_to_preview(-m, levels);
 
     const LevelList &ll = getPreviewLevelCache(levels);
@@ -259,15 +264,20 @@ AudioLevel::multiplier_to_preview(float m, int levels)
     }
 		   
     return result;
+
+    */
 }
 
 float
 AudioLevel::preview_to_multiplier(int level, int levels)
 {
     assert(levels > 0);
+    return fader_to_multiplier(level, levels, PreviewLevel);
+/*
     if (level < 0) return -preview_to_multiplier(-level, levels);
     const LevelList &ll = getPreviewLevelCache(levels);
     return ll[level];
+*/
 }
 	
 
