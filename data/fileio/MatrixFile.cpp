@@ -111,6 +111,10 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
         m_flags = O_RDONLY;
     }
 
+#ifdef _WIN32
+    m_flags |= O_BINARY;
+#endif
+
 #ifdef DEBUG_MATRIX_FILE
     std::cerr << "MatrixFile::MatrixFile: opening " << fileName.toStdString() << "..." << std::endl;
 #endif
