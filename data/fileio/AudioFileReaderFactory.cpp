@@ -20,6 +20,7 @@
 #include "MP3FileReader.h"
 
 #include <QString>
+#include <iostream>
 
 QString
 AudioFileReaderFactory::getKnownExtensions()
@@ -58,6 +59,12 @@ AudioFileReaderFactory::createReader(QString path)
     if (reader->getError() != "") err = reader->getError();
     delete reader;
 
+	if (err != "") {
+	std::cerr << "AudioFileReaderFactory: WAV file reader error: \""
+			<< err.toStdString() << "\"" << std::endl;
+	}
+
+
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
     reader = new OggVorbisFileReader(path, true,
@@ -65,6 +72,12 @@ AudioFileReaderFactory::createReader(QString path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") err = reader->getError();
     delete reader;
+
+	if (err != "") {
+	std::cerr << "AudioFileReaderFactory: Ogg file reader error: \""
+			<< err.toStdString() << "\"" << std::endl;
+	}
+
 #endif
 #endif
  
@@ -74,6 +87,12 @@ AudioFileReaderFactory::createReader(QString path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") err = reader->getError();
     delete reader;
+
+	if (err != "") {
+	std::cerr << "AudioFileReaderFactory: mp3 file reader error: \""
+			<< err.toStdString() << "\"" << std::endl;
+	}
+
 #endif
 
     return 0;
