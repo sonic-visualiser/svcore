@@ -81,7 +81,8 @@ public:
 
     virtual bool isOK() const = 0;
 
-    virtual QString getIdentifier() const = 0;
+    virtual QString getPluginIdentifier() const = 0;
+    virtual std::string getIdentifier() const;
 
     /**
      * Run for one block, starting at the given time.  The start time

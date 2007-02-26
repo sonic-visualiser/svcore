@@ -354,7 +354,7 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
     for (std::set<RealTimePluginInstance *>::iterator ii = m_instances.begin();
 	 ii != m_instances.end(); ++ii) {
 	QString itype, isoname, ilabel;
-	PluginIdentifier::parseIdentifier((*ii)->getIdentifier(), itype, isoname, ilabel);
+	PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
 	if (isoname == soname) {
 	    std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " is still in use for plugin " << ilabel.toStdString() << std::endl;
 	    stillInUse = true;
@@ -490,7 +490,7 @@ LADSPAPluginFactory::unloadUnusedLibraries()
 	     ii != m_instances.end(); ++ii) {
 
 	    QString itype, isoname, ilabel;
-	    PluginIdentifier::parseIdentifier((*ii)->getIdentifier(), itype, isoname, ilabel);
+	    PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
 	    if (isoname == i->first) {
 		stillInUse = true;
 		break;

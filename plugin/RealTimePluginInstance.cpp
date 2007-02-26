@@ -21,6 +21,8 @@
 #include "RealTimePluginInstance.h"
 #include "RealTimePluginFactory.h"
 
+#include "PluginIdentifier.h"
+
 #include <iostream>
 
 
@@ -33,5 +35,14 @@ RealTimePluginInstance::~RealTimePluginInstance()
 
 	m_factory->releasePlugin(this, m_identifier);
     }
+}
+
+std::string
+RealTimePluginInstance::getIdentifier() const
+{
+    QString plid = getPluginIdentifier();
+    QString type, soname, label;
+    PluginIdentifier::parseIdentifier(plid, type, soname, label);
+    return label.toStdString();
 }
 
