@@ -30,6 +30,8 @@
 
 #include <cassert>
 
+//#define DEBUG_WAVE_FILE_MODEL 1
+
 using std::cerr;
 using std::endl;
 
@@ -95,7 +97,9 @@ WaveFileModel::isReady(int *completion) const
     bool ready = (isOK() && (m_fillThread == 0));
     double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
     if (completion) *completion = int(c * 100.0 + 0.01);
-//    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
+#endif
     return ready;
 }
 
@@ -143,8 +147,10 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 
     if (!m_reader || !m_reader->isOK()) return 0;
 
-//    std::cerr << "WaveFileModel::getValues(" << channel << ", "
-//              << start << ", " << end << "): calling reader" << std::endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cerr << "WaveFileModel::getValues(" << channel << ", "
+              << start << ", " << end << "): calling reader" << std::endl;
+#endif
 
     SampleBlock frames;
     m_reader->getInterleavedFrames(start, end - start, frames);
@@ -300,7 +306,9 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	float max = 0.0, min = 0.0, total = 0.0;
 	size_t i = 0, count = 0;
 
+#ifdef DEBUG_WAVE_FILE_MODEL
 	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", end " << end << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
+#endif
 
 	for (i = 0; i < endIndex - startIndex; ) {
         
@@ -327,7 +335,9 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	}
     }
 
+#ifdef DEBUG_WAVE_FILE_MODEL
     cerr << "returning " << ranges.size() << " ranges" << endl;
+#endif
     return;
 }
 
@@ -396,7 +406,9 @@ WaveFileModel::fillCache()
     m_mutex.unlock();
     m_fillThread->start();
 
-//    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
+#endif
 }   
 
 void
@@ -404,13 +416,17 @@ WaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
 	size_t fillExtent = m_fillThread->getFillExtent();
-//        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+#endif
 	if (fillExtent > m_lastFillExtent) {
 	    emit modelChanged(m_lastFillExtent, fillExtent);
 	    m_lastFillExtent = fillExtent;
 	}
     } else {
-//        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
+#endif
 	emit modelChanged();
     }
 }
@@ -425,7 +441,9 @@ WaveFileModel::cacheFilled()
     m_updateTimer = 0;
     m_mutex.unlock();
     emit modelChanged();
-//    cerr << "WaveFileModel::cacheFilled" << endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+    cerr << "WaveFileModel::cacheFilled" << endl;
+#endif
 }
 
 void
@@ -553,10 +571,12 @@ WaveFileModel::RangeCacheFillThread::run()
     delete[] range;
 
     m_fillExtent = m_frameCount;
-        
-//    for (size_t ct = 0; ct < 2; ++ct) {
-//        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
-//    }
+
+#ifdef DEBUG_WAVE_FILE_MODEL        
+    for (size_t ct = 0; ct < 2; ++ct) {
+        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
+    }
+#endif
 }
 
 void
@@ -578,10 +598,3 @@ WaveFileModel::toXmlString(QString indent,
 			      .arg(m_path).arg(extraAttributes));
 }
     
-
-#ifdef INCLUDE_MOCFILES
-#ifdef INCLUDE_MOCFILES
-#include "WaveFileModel.moc.cpp"
-#endif
-#endif
-

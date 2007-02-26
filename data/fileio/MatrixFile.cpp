@@ -134,7 +134,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     } else {
         size_t header[2];
         if (::read(m_fd, header, 2 * sizeof(size_t)) < 0) {
-            perror("Read failed");
+            ::perror("MatrixFile::MatrixFile: read failed");
             std::cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Failed to read header (fd " << m_fd << ", file \""
                       << fileName.toStdString() << "\")" << std::endl;
@@ -359,6 +359,9 @@ MatrixFile::getColumnAt(size_t x, void *data)
     
     if (r < 0) {
         ::perror("MatrixFile::getColumnAt: read failed");
+        std::cerr << "ERROR: MatrixFile::getColumnAt: "
+                  << "Failed to read column " << x << " (height " << m_height << ", cell size " << m_cellSize << ", fd " << m_fd << ", file \""
+                  << m_fileName.toStdString() << "\")" << std::endl;
         throw FileReadFailed(m_fileName);
     }
 
