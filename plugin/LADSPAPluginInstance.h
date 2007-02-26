@@ -40,7 +40,7 @@ public:
     virtual bool isOK() const { return m_instanceHandles.size() != 0; }
 
     int getClientId() const { return m_client; }
-    virtual QString getIdentifier() const { return m_identifier; }
+    virtual QString getPluginIdentifier() const { return m_identifier; }
     int getPosition() const { return m_position; }
 
     virtual std::string getName() const;
