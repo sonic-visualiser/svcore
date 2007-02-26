@@ -123,7 +123,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 
             while ((descriptor = fn(index))) {
                 QString id = PluginIdentifier::createIdentifier
-                    ("vamp", soname, descriptor->name);
+                    ("vamp", soname, descriptor->identifier);
                 rv.push_back(id);
                 std::cerr << "Found id " << id.toStdString() << std::endl;
                 ++index;
@@ -233,7 +233,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     }
 
     while ((descriptor = fn(index))) {
-        if (label == descriptor->name) break;
+        if (label == descriptor->identifier) break;
         ++index;
     }
 
