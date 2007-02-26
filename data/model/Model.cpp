@@ -65,7 +65,3 @@ Model::toXmlString(QString indent, QString extraAttributes) const
     return s;
 }
 
-#ifdef INCLUDE_MOCFILES
-#include "Model.moc.cpp"
-#endif
-

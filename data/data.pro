@@ -79,6 +79,5 @@ SOURCES += fft/FFTapi.cpp \
            model/NoteModel.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
-           model/RangeSummarisableTimeValueModel.cpp \
            model/WaveFileModel.cpp \
            model/WritableWaveFileModel.cpp

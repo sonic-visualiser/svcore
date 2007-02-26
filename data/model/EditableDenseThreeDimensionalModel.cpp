@@ -317,7 +317,3 @@ EditableDenseThreeDimensionalModel::toXmlString(QString indent,
     return s;
 }
 
-#ifdef INCLUDE_MOCFILES
-#include "EditableDenseThreeDimensionalModel.moc.cpp"
-#endif
-

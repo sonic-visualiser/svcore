@@ -21,8 +21,3 @@ DenseTimeValueModel::DenseTimeValueModel()
     PlayParameterRepository::getInstance()->addModel(this);
 }
 	
-
-#ifdef INCLUDE_MOCFILES
-#include "DenseTimeValueModel.moc.cpp"
-#endif
-
