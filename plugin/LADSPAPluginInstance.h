@@ -43,6 +43,7 @@ public:
     virtual QString getPluginIdentifier() const { return m_identifier; }
     int getPosition() const { return m_position; }
 
+    virtual std::string getIdentifier() const;
     virtual std::string getName() const;
     virtual std::string getDescription() const;
     virtual std::string getMaker() const;

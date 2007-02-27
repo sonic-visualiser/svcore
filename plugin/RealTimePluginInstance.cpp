@@ -37,12 +37,3 @@ RealTimePluginInstance::~RealTimePluginInstance()
     }
 }
 
-std::string
-RealTimePluginInstance::getIdentifier() const
-{
-    QString plid = getPluginIdentifier();
-    QString type, soname, label;
-    PluginIdentifier::parseIdentifier(plid, type, soname, label);
-    return label.toStdString();
-}
-

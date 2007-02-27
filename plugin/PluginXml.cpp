@@ -59,7 +59,8 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
     QString s;
     s += indent;
 
-    s += QString("<plugin name=\"%1\" description=\"%2\" maker=\"%3\" version=\"%4\" copyright=\"%5\" %6 ")
+    s += QString("<plugin identifier=\"%1\" name=\"%2\" description=\"%3\" maker=\"%4\" version=\"%5\" copyright=\"%6\" %7 ")
+        .arg(encodeEntities(QString(m_plugin->getIdentifier().c_str())))
         .arg(encodeEntities(QString(m_plugin->getName().c_str())))
         .arg(encodeEntities(QString(m_plugin->getDescription().c_str())))
         .arg(encodeEntities(QString(m_plugin->getMaker().c_str())))
@@ -83,8 +84,8 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
 //                  << m_plugin->getParameter(i->name) << std::endl;
 
         s += QString("param-%1=\"%2\" ")
-            .arg(stripInvalidParameterNameCharacters(QString(i->name.c_str())))
-            .arg(m_plugin->getParameter(i->name));
+            .arg(stripInvalidParameterNameCharacters(QString(i->identifier.c_str())))
+            .arg(m_plugin->getParameter(i->identifier));
     }
 
     RealTimePluginInstance *rtpi =
@@ -124,6 +125,7 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
 void
 PluginXml::setParameters(const QXmlAttributes &attrs)
 {
+    CHECK_ATTRIBUTE(identifier, m_plugin->getIdentifier);
     CHECK_ATTRIBUTE(name, m_plugin->getName);
     CHECK_ATTRIBUTE(description, m_plugin->getDescription);
     CHECK_ATTRIBUTE(maker, m_plugin->getMaker);
@@ -166,21 +168,23 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
     for (Vamp::PluginBase::ParameterList::const_iterator i =
              parameters.begin(); i != parameters.end(); ++i) {
 
-        QString name = QString("param-%1")
+        QString pname = QString("param-%1")
             .arg(stripInvalidParameterNameCharacters
-                 (QString(i->name.c_str())));
+                 (QString(i->identifier.c_str())));
 
-        if (attrs.value(name) == "") {
+        if (attrs.value(pname) == "") {
 //            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
             continue;
         }
 
         bool ok;
-        float value = attrs.value(name).trimmed().toFloat(&ok);
+        float value = attrs.value(pname).trimmed().toFloat(&ok);
         if (ok) {
-            m_plugin->setParameter(i->name, value);
+            std::cerr << "PluginXml::setParameters: setting parameter \""
+                      << i->identifier << "\" to value " << value << std::endl;
+            m_plugin->setParameter(i->identifier, value);
         } else {
-            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(name).toStdString() << "\" for parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
+            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname).toStdString() << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname.toStdString() << "\")" << std::endl;
         }
     }
 }

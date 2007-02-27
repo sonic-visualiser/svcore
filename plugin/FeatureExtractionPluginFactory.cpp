@@ -121,7 +121,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             const VampPluginDescriptor *descriptor = 0;
             int index = 0;
 
-            while ((descriptor = fn(index))) {
+            while ((descriptor = fn(VAMP_API_VERSION, index))) {
                 QString id = PluginIdentifier::createIdentifier
                     ("vamp", soname, descriptor->identifier);
                 rv.push_back(id);
@@ -232,7 +232,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
         goto done;
     }
 
-    while ((descriptor = fn(index))) {
+    while ((descriptor = fn(VAMP_API_VERSION, index))) {
         if (label == descriptor->identifier) break;
         ++index;
     }

@@ -73,6 +73,11 @@ public:
     virtual QString toXmlString(QString indent = "",
 				QString extraAttributes = "") const;
 
+signals:
+    void modelChanged();
+    void modelChanged(size_t startFrame, size_t endFrame);
+    void completionChanged();
+
 protected slots:
     void fillTimerTimedOut();
     void cacheFilled();

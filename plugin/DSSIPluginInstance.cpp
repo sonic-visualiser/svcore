@@ -98,15 +98,21 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
 }
 
 std::string
-DSSIPluginInstance::getName() const
+DSSIPluginInstance::getIdentifier() const
 {
     return m_descriptor->LADSPA_Plugin->Label;
+}
+
+std::string
+DSSIPluginInstance::getName() const
+{
+    return m_descriptor->LADSPA_Plugin->Name;
 }
 
 std::string 
 DSSIPluginInstance::getDescription() const
 {
-    return m_descriptor->LADSPA_Plugin->Name;
+    return "";
 }
 
 std::string
@@ -138,8 +144,9 @@ DSSIPluginInstance::getParameterDescriptors() const
         ParameterDescriptor pd;
         unsigned int pn = m_controlPortsIn[i].first;
 
-        pd.name = m_descriptor->LADSPA_Plugin->PortNames[pn];
-        pd.description = pd.name;
+        pd.identifier = m_descriptor->LADSPA_Plugin->PortNames[pn];
+        pd.name = pd.identifier;
+        pd.description = "";
         pd.minValue = f->getPortMinimum(m_descriptor->LADSPA_Plugin, pn);
         pd.maxValue = f->getPortMaximum(m_descriptor->LADSPA_Plugin, pn);
         pd.defaultValue = f->getPortDefault(m_descriptor->LADSPA_Plugin, pn);
@@ -159,13 +166,13 @@ DSSIPluginInstance::getParameterDescriptors() const
 }
 
 float
-DSSIPluginInstance::getParameter(std::string name) const
+DSSIPluginInstance::getParameter(std::string id) const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getParameter(" << name << ")" << std::endl;
+    std::cerr << "DSSIPluginInstance::getParameter(" << id << ")" << std::endl;
 #endif
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
-        if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
+        if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
 #ifdef DEBUG_DSSI
             std::cerr << "Matches port " << i << std::endl;
 #endif
@@ -181,14 +188,14 @@ DSSIPluginInstance::getParameter(std::string name) const
 }
 
 void
-DSSIPluginInstance::setParameter(std::string name, float value)
+DSSIPluginInstance::setParameter(std::string id, float value)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::setParameter(" << name << ", " << value << ")" << std::endl;
+    std::cerr << "DSSIPluginInstance::setParameter(" << id << ", " << value << ")" << std::endl;
 #endif
 
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
-        if (name == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
+        if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
             setParameterValue(i, value);
             break;
         }
