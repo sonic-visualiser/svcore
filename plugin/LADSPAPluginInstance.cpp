@@ -81,15 +81,21 @@ LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
 }
 
 std::string
-LADSPAPluginInstance::getName() const
+LADSPAPluginInstance::getIdentifier() const
 {
     return m_descriptor->Label;
+}
+
+std::string
+LADSPAPluginInstance::getName() const
+{
+    return m_descriptor->Name;
 }
 
 std::string 
 LADSPAPluginInstance::getDescription() const
 {
-    return m_descriptor->Name;
+    return "";
 }
 
 std::string
@@ -121,8 +127,9 @@ LADSPAPluginInstance::getParameterDescriptors() const
         ParameterDescriptor pd;
         unsigned int pn = m_controlPortsIn[i].first;
 
-        pd.name = m_descriptor->PortNames[pn];
-        pd.description = pd.name;
+        pd.identifier = m_descriptor->PortNames[pn];
+        pd.name = pd.identifier;
+        pd.description = "";
         pd.minValue = f->getPortMinimum(m_descriptor, pn);
         pd.maxValue = f->getPortMaximum(m_descriptor, pn);
         pd.defaultValue = f->getPortDefault(m_descriptor, pn);
@@ -162,14 +169,14 @@ LADSPAPluginInstance::getParameterDescriptors() const
 #endif
 
         if (haveLabels) {
-            pd.description = QString(pd.description.c_str())
+            pd.name = QString(pd.name.c_str())
                 .replace(QRegExp("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
                 .toStdString();
         } else {
             static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
             if (unitRE.indexIn(pd.name.c_str()) >= 0) {
                 pd.unit = unitRE.cap(1).toStdString();
-                pd.description = QString(pd.description.c_str())
+                pd.name = QString(pd.name.c_str())
                     .replace(unitRE, "").toStdString();
             }
         }
@@ -181,10 +188,10 @@ LADSPAPluginInstance::getParameterDescriptors() const
 }
 
 float
-LADSPAPluginInstance::getParameter(std::string name) const
+LADSPAPluginInstance::getParameter(std::string id) const
 {
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
-        if (name == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+        if (id == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
             return getParameterValue(i);
         }
     }
@@ -193,10 +200,12 @@ LADSPAPluginInstance::getParameter(std::string name) const
 }
 
 void
-LADSPAPluginInstance::setParameter(std::string name, float value)
+LADSPAPluginInstance::setParameter(std::string id, float value)
 {
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
-        if (name == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+        if (id == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+            std::cerr << "LADSPAPluginInstance::setParameter: Found id "
+                      << id << " at control port " << i << std::endl;
             setParameterValue(i, value);
             break;
         }
