@@ -20,6 +20,7 @@
 #include "MP3FileReader.h"
 
 #include <QString>
+#include <QFileInfo>
 #include <iostream>
 
 QString
@@ -54,45 +55,95 @@ AudioFileReaderFactory::createReader(QString path)
 
     AudioFileReader *reader = 0;
 
+    // First try to construct a preferred reader based on the
+    // extension.  If we can't identify one or it fails to load the
+    // file, fall back to trying all readers in no particular order.
+
+    QString ext = QFileInfo(path).suffix().toLower();
+    std::set<QString> extensions;
+
+    WavFileReader::getSupportedExtensions(extensions);
+    if (extensions.find(ext) != extensions.end()) {
+        reader = new WavFileReader(path);
+    }
+    
+#ifdef HAVE_MAD
+    if (!reader) {
+        extensions.clear();
+        MP3FileReader::getSupportedExtensions(extensions);
+        if (extensions.find(ext) != extensions.end()) {
+            reader = new MP3FileReader
+                (path, true, MP3FileReader::CacheInTemporaryFile);
+        }
+    }
+#endif
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
+    if (!reader) {
+        extensions.clear();
+        OggVorbisFileReader::getSupportedExtensions(extensions);
+        if (extensions.find(ext) != extensions.end()) {
+            reader = new OggVorbisFileReader
+                (path, true, OggVorbisFileReader::CacheInTemporaryFile);
+        }
+    }
+#endif
+#endif
+
+    if (reader) {
+        if (reader->isOK()) return reader;
+        if (reader->getError() != "") {
+            std::cerr << "AudioFileReaderFactory: Preferred reader for "
+                      << "extension \"" << ext.toStdString() << "\" failed: \""
+                      << reader->getError().toStdString() << "\"" << std::endl;
+        } else {
+            std::cerr << "AudioFileReaderFactory: Preferred reader for "
+                      << "extension \"" << ext.toStdString() << "\" failed"
+                      << std::endl;
+        }            
+        delete reader;
+        reader = 0;
+    }
+
     reader = new WavFileReader(path);
     if (reader->isOK()) return reader;
-    if (reader->getError() != "") err = reader->getError();
-    delete reader;
-
-	if (err != "") {
+    if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: WAV file reader error: \""
-			<< err.toStdString() << "\"" << std::endl;
-	}
-
+                  << reader->getError().toStdString() << "\"" << std::endl;
+    } else {
+	std::cerr << "AudioFileReaderFactory: WAV file reader failed"
+                  << std::endl;
+    }        
+    delete reader;
 
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
-    reader = new OggVorbisFileReader(path, true,
-                                     OggVorbisFileReader::CacheInTemporaryFile);
+    reader = new OggVorbisFileReader
+        (path, true, OggVorbisFileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
-    if (reader->getError() != "") err = reader->getError();
-    delete reader;
-
-	if (err != "") {
+    if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: Ogg file reader error: \""
-			<< err.toStdString() << "\"" << std::endl;
-	}
-
+                  << reader->getError().toStdString() << "\"" << std::endl;
+    } else {
+	std::cerr << "AudioFileReaderFactory: Ogg file reader failed"
+                  << std::endl;
+    }        
+    delete reader;
 #endif
 #endif
  
 #ifdef HAVE_MAD
-    reader = new MP3FileReader(path, true,
-                               MP3FileReader::CacheInTemporaryFile);
+    reader = new MP3FileReader
+        (path, true, MP3FileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
-    if (reader->getError() != "") err = reader->getError();
+    if (reader->getError() != "") {
+	std::cerr << "AudioFileReaderFactory: MP3 file reader error: \""
+                  << reader->getError().toStdString() << "\"" << std::endl;
+    } else {
+	std::cerr << "AudioFileReaderFactory: MP3 file reader failed"
+                  << std::endl;
+    }        
     delete reader;
-
-	if (err != "") {
-	std::cerr << "AudioFileReaderFactory: mp3 file reader error: \""
-			<< err.toStdString() << "\"" << std::endl;
-	}
-
 #endif
 
     return 0;
