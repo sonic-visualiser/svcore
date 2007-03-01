@@ -204,8 +204,10 @@ LADSPAPluginInstance::setParameter(std::string id, float value)
 {
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (id == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
+#ifdef DEBUG_LADSPA
             std::cerr << "LADSPAPluginInstance::setParameter: Found id "
                       << id << " at control port " << i << std::endl;
+#endif
             setParameterValue(i, value);
             break;
         }
@@ -222,10 +224,10 @@ LADSPAPluginInstance::init(int idealChannelCount)
 
     // Discover ports numbers and identities
     //
-    for (unsigned long i = 0; i < m_descriptor->PortCount; ++i)
-    {
-        if (LADSPA_IS_PORT_AUDIO(m_descriptor->PortDescriptors[i]))
-        {
+    for (unsigned long i = 0; i < m_descriptor->PortCount; ++i) {
+
+        if (LADSPA_IS_PORT_AUDIO(m_descriptor->PortDescriptors[i])) {
+
             if (LADSPA_IS_PORT_INPUT(m_descriptor->PortDescriptors[i])) {
 #ifdef DEBUG_LADSPA
 		std::cerr << "LADSPAPluginInstance::init: port " << i << " is audio in" << std::endl;
@@ -237,18 +239,20 @@ LADSPAPluginInstance::init(int idealChannelCount)
 #endif
                 m_audioPortsOut.push_back(i);
 	    }
-        }
-        else
-        if (LADSPA_IS_PORT_CONTROL(m_descriptor->PortDescriptors[i]))
-        {
+
+        } else if (LADSPA_IS_PORT_CONTROL(m_descriptor->PortDescriptors[i])) {
+
 	    if (LADSPA_IS_PORT_INPUT(m_descriptor->PortDescriptors[i])) {
+
 #ifdef DEBUG_LADSPA
 		std::cerr << "LADSPAPluginInstance::init: port " << i << " is control in" << std::endl;
 #endif
 		LADSPA_Data *data = new LADSPA_Data(0.0);
 		m_controlPortsIn.push_back(
                     std::pair<unsigned long, LADSPA_Data*>(i, data));
+
 	    } else {
+
 #ifdef DEBUG_LADSPA
 		std::cerr << "LADSPAPluginInstance::init: port " << i << " is control out" << std::endl;
 #endif
@@ -262,6 +266,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 #endif
 		    m_latencyPort = data;
 		}
+
 	    }
         }
 #ifdef DEBUG_LADSPA
@@ -285,7 +290,14 @@ size_t
 LADSPAPluginInstance::getLatency()
 {
     if (m_latencyPort) {
-	if (!m_run) run(Vamp::RealTime::zeroTime);
+	if (!m_run) {
+            for (int i = 0; i < getAudioInputCount(); ++i) {
+                for (int j = 0; j < m_blockSize; ++j) {
+                    m_inputBuffers[i][j] = 0.f;
+                }
+            }
+            run(Vamp::RealTime::zeroTime);
+        }
 	if (*m_latencyPort > 0) return (size_t)*m_latencyPort;
     }
     return 0;
@@ -506,8 +518,11 @@ LADSPAPluginInstance::run(const Vamp::RealTime &)
 {
     if (!m_descriptor || !m_descriptor->run) return;
 
+    int inbuf = 0, outbuf = 0;
+
     for (std::vector<LADSPA_Handle>::iterator hi = m_instanceHandles.begin();
 	 hi != m_instanceHandles.end(); ++hi) {
+
         m_descriptor->run(*hi, m_blockSize);
     }
 

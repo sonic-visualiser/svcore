@@ -268,7 +268,14 @@ DSSIPluginInstance::getLatency()
 #endif
 
     if (m_latencyPort) {
-	if (!m_run) run(Vamp::RealTime::zeroTime);
+	if (!m_run) {
+            for (int i = 0; i < getAudioInputCount(); ++i) {
+                for (int j = 0; j < m_blockSize; ++j) {
+                    m_inputBuffers[i][j] = 0.f;
+                }
+            }
+            run(Vamp::RealTime::zeroTime);
+        }
 	latency = (size_t)(*m_latencyPort + 0.1);
     }
     
