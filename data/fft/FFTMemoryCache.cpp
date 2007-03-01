@@ -29,7 +29,7 @@ FFTMemoryCache::FFTMemoryCache() :
 
 FFTMemoryCache::~FFTMemoryCache()
 {
-    std::cerr << "FFTMemoryCache[" << this << "]::~Cache" << std::endl;
+//    std::cerr << "FFTMemoryCache[" << this << "]::~Cache" << std::endl;
 
     for (size_t i = 0; i < m_width; ++i) {
 	if (m_magnitude && m_magnitude[i]) free(m_magnitude[i]);
@@ -44,7 +44,7 @@ FFTMemoryCache::~FFTMemoryCache()
 void
 FFTMemoryCache::resize(size_t width, size_t height)
 {
-    std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
+//    std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
     
     if (m_width == width && m_height == height) return;
 
@@ -57,7 +57,7 @@ FFTMemoryCache::resize(size_t width, size_t height)
     m_width = width;
     m_height = height;
 
-    std::cerr << "done, width = " << m_width << " height = " << m_height << std::endl;
+//    std::cerr << "done, width = " << m_width << " height = " << m_height << std::endl;
 }
 
 void
