@@ -76,7 +76,7 @@ public:
      * passed as NULL if their values are not required.
      */
     virtual int getPropertyRangeAndValue(const PropertyName &,
-					 int *min, int *max) const;
+					 int *min, int *max, int *deflt) const;
 
     /**
      * If the given property is a ValueProperty, return the display
