@@ -25,10 +25,10 @@
 #include "base/StorageAdviser.h"
 #include "base/Exceptions.h"
 #include "base/Profiler.h"
+#include "base/Thread.h" // for debug mutex locker
 
 #include <QMessageBox>
 #include <QApplication>
-
 
 //#define DEBUG_FFT_SERVER 1
 //#define DEBUG_FFT_SERVER_FILL 1
@@ -38,6 +38,7 @@
 #define DEBUG_FFT_SERVER 1
 #endif
 #endif
+
 
 FFTDataServer::ServerMap FFTDataServer::m_servers;
 FFTDataServer::ServerQueue FFTDataServer::m_releasedServers;
@@ -63,7 +64,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
 
     FFTDataServer *server = 0;
     
-    QMutexLocker locker(&m_serverMapMutex);
+    MutexLocker locker(&m_serverMapMutex, "FFTDataServer::m_serverMapMutex[getInstance]");
 
     if ((server = findServer(n))) {
         return server;
@@ -138,7 +139,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
     // or 1536, the model doesn't support this).
 
     {
-        QMutexLocker locker(&m_serverMapMutex);
+        MutexLocker locker(&m_serverMapMutex, "FFTDataServer::m_serverMapMutex[getFuzzyInstance]");
 
         ServerMap::iterator best = m_servers.end();
         int bestdist = -1;
@@ -255,7 +256,8 @@ FFTDataServer::claimInstance(FFTDataServer *server)
 void
 FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
 {
-    QMutexLocker locker(needLock ? &m_serverMapMutex : 0);
+    MutexLocker locker(needLock ? &m_serverMapMutex : 0,
+                       "FFTDataServer::m_serverMapMutex[claimInstance]");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::claimInstance(" << server << ")" << std::endl;
@@ -299,7 +301,8 @@ FFTDataServer::releaseInstance(FFTDataServer *server)
 void
 FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 {    
-    QMutexLocker locker(needLock ? &m_serverMapMutex : 0);
+    MutexLocker locker(needLock ? &m_serverMapMutex : 0,
+                       "FFTDataServer::m_serverMapMutex[releaseInstance]");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::releaseInstance(" << server << ")" << std::endl;
@@ -426,7 +429,8 @@ FFTDataServer::purgeLimbo(int maxSize)
 void
 FFTDataServer::modelAboutToBeDeleted(Model *model)
 {
-    QMutexLocker locker(&m_serverMapMutex);
+    MutexLocker locker(&m_serverMapMutex,
+                       "FFTDataServer::m_serverMapMutex[modelAboutToBeDeleted]");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
@@ -618,7 +622,8 @@ FFTDataServer::~FFTDataServer()
         delete m_fillThread;
     }
 
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex,
+                       "FFTDataServer::m_writeMutex[~FFTDataServer]");
 
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
         if (*i) {
@@ -658,7 +663,8 @@ FFTDataServer::suspend()
 #endif
     Profiler profiler("FFTDataServer::suspend", false);
 
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex,
+                       "FFTDataServer::m_writeMutex[suspend]");
     m_suspended = true;
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
         if (*i) (*i)->suspend();
@@ -704,7 +710,8 @@ FFTDataServer::getCacheAux(size_t c)
     std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::getCacheAux" << std::endl;
 #endif
 
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex,
+                       "FFTDataServer::m_writeMutex[getCacheAux]");
 
     if (m_lastUsedCache == -1) {
         m_fillThread->start();
@@ -982,7 +989,8 @@ FFTDataServer::fillColumn(size_t x)
     FFTCache *cache = getCache(x, col);
     if (!cache) return;
 
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex,
+                       "FFTDataServer::m_writeMutex[fillColumn]");
 
     if (cache->haveSetColumnAt(col)) return;
 
@@ -1142,9 +1150,11 @@ FFTDataServer::FillThread::run()
 #ifdef DEBUG_FFT_SERVER
                 std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
 #endif
-                m_server.m_writeMutex.lock();
-                m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
-                m_server.m_writeMutex.unlock();
+                {
+                    MutexLocker locker(&m_server.m_writeMutex,
+                                       "FFTDataServer::m_writeMutex[run/1]");
+                    m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
+                }
 #ifdef DEBUG_FFT_SERVER
                 std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): waited" << std::endl;
 #endif
@@ -1176,9 +1186,11 @@ FFTDataServer::FillThread::run()
 #ifdef DEBUG_FFT_SERVER
             std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
 #endif
-            m_server.m_writeMutex.lock();
-            m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
-            m_server.m_writeMutex.unlock();
+            {
+                MutexLocker locker(&m_server.m_writeMutex,
+                                   "FFTDataServer::m_writeMutex[run/2]");
+                m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
+            }
             if (m_server.m_exiting) return;
         }
 		    

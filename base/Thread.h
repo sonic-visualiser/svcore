@@ -17,6 +17,7 @@
 #define _THREAD_H_
 
 #include <QThread>
+#include <QMutexLocker>
 
 class Thread : public QThread
 {
@@ -32,6 +33,27 @@ public slots:
 
 private:    
     Type m_type;
+};
+
+
+class MutexLocker
+{
+public:
+    MutexLocker(QMutex *mutex, const char *name);
+    ~MutexLocker();
+
+private:
+    class Printer {
+    public:
+        Printer(const char *name);
+        ~Printer();
+
+    private:
+        const char *m_name;
+    };
+
+    Printer m_printer;
+    QMutexLocker m_locker;
 };
 
 #endif
