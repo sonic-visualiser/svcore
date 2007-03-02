@@ -19,6 +19,10 @@
 #include <pthread.h>
 #endif
 
+//#define DEBUG_MUTEX_LOCKER 1
+
+#include <iostream>
+
 Thread::Thread(Type type, QObject *parent) :
     QThread(parent),
     m_type(type)
@@ -50,6 +54,36 @@ Thread::start()
         }
     }        
 
+#endif
+}
+
+MutexLocker::MutexLocker(QMutex *mutex, const char *name) :
+    m_printer(name),
+    m_locker(mutex)
+{
+#ifdef DEBUG_MUTEX_LOCKER
+    std::cerr << "... locked mutex " << mutex << std::endl;
+#endif
+}
+
+MutexLocker::~MutexLocker()
+{
+}
+
+MutexLocker::Printer::Printer(const char *name) :
+    m_name(name)
+{
+#ifdef DEBUG_MUTEX_LOCKER
+    std::cerr << "MutexLocker: Locking   \"" << m_name << "\" in "
+              << (void *)QThread::currentThreadId() << std::endl;
+#endif
+}
+
+MutexLocker::Printer::~Printer()
+{
+#ifdef DEBUG_MUTEX_LOCKER
+    std::cerr << "MutexLocker: Unlocking \"" << m_name
+              << "\" in " << (void *)QThread::currentThreadId() << std::endl;
 #endif
 }
 
