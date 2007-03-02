@@ -113,11 +113,12 @@ Preferences::getPropertyType(const PropertyName &name) const
 
 int
 Preferences::getPropertyRangeAndValue(const PropertyName &name,
-                                      int *min, int *max) const
+                                      int *min, int *max, int *deflt) const
 {
     if (name == "Smooth Spectrogram") {
         if (min) *min = 0;
         if (max) *max = 1;
+        if (deflt) *deflt = 1;
         return m_smoothSpectrogram ? 1 : 0;
     }
 
@@ -126,18 +127,21 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
     if (name == "Property Box Layout") {
         if (min) *min = 0;
         if (max) *max = 1;
+        if (deflt) *deflt = 0;
         return m_propertyBoxLayout == Layered ? 1 : 0;
     }        
 
     if (name == "Window Type") {
         if (min) *min = int(RectangularWindow);
         if (max) *max = int(BlackmanHarrisWindow);
+        if (deflt) *deflt = int(HanningWindow);
         return int(m_windowType);
     }
 
     if (name == "Resample Quality") {
         if (min) *min = 0;
         if (max) *max = 2;
+        if (deflt) *deflt = 1;
         return m_resampleQuality;
     }
 

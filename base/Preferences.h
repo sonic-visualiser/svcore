@@ -30,7 +30,7 @@ public:
     virtual PropertyList getProperties() const;
     virtual QString getPropertyLabel(const PropertyName &) const;
     virtual PropertyType getPropertyType(const PropertyName &) const;
-    virtual int getPropertyRangeAndValue(const PropertyName &, int *, int *) const;
+    virtual int getPropertyRangeAndValue(const PropertyName &, int *, int *, int *) const;
     virtual QString getPropertyValueLabel(const PropertyName &, int value) const;
     virtual QString getPropertyContainerName() const;
     virtual QString getPropertyContainerIconName() const;

@@ -47,10 +47,12 @@ PropertyContainer::getPropertyGroupName(const PropertyName &) const
 }
 
 int
-PropertyContainer::getPropertyRangeAndValue(const PropertyName &, int *min, int *max) const
+PropertyContainer::getPropertyRangeAndValue(const PropertyName &,
+                                            int *min, int *max, int *deflt) const
 {
     if (min) *min = 0;
     if (max) *max = 0;
+    if (deflt) *deflt = 0;
     return 0;
 }
 
@@ -75,7 +77,7 @@ PropertyContainer::setProperty(const PropertyName &name, int)
 void
 PropertyContainer::setPropertyWithCommand(const PropertyName &name, int value)
 {
-    int currentValue = getPropertyRangeAndValue(name, 0, 0);
+    int currentValue = getPropertyRangeAndValue(name, 0, 0, 0);
     if (value == currentValue) return;
 
     CommandHistory::getInstance()->addCommand
@@ -176,7 +178,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     case ValueProperty:
     {
         int min, max;
-        getPropertyRangeAndValue(name, &min, &max);
+        getPropertyRangeAndValue(name, &min, &max, 0);
         for (int i = min; i <= max; ++i) {
             if (valueString == getPropertyValueLabel(name, i)) {
                 value = i;
@@ -211,7 +213,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     if (success) return true;
 
     int min, max;
-    getPropertyRangeAndValue(name, &min, &max);
+    getPropertyRangeAndValue(name, &min, &max, 0);
     
     bool ok = false;
     int i = valueString.toInt(&ok);
@@ -240,7 +242,7 @@ PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
 void
 PropertyContainer::SetPropertyCommand::execute()
 {
-    m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, 0, 0);
+    m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, 0, 0, 0);
     m_pc->setProperty(m_pn, m_value);
 }
 
