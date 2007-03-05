@@ -35,7 +35,7 @@ Preferences::getInstance()
 }
 
 Preferences::Preferences() :
-    m_smoothSpectrogram(true),
+    m_spectrogramSmoothing(SpectrogramZeroPadded),
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
@@ -43,7 +43,8 @@ Preferences::Preferences() :
 {
     QSettings settings;
     settings.beginGroup("Preferences");
-    m_smoothSpectrogram = settings.value("smooth-spectrogram", true).toBool();
+    m_spectrogramSmoothing = SpectrogramSmoothing
+        (settings.value("spectrogram-smoothing", int(m_spectrogramSmoothing)).toInt());
     m_tuningFrequency = settings.value("tuning-frequency", 440.f).toDouble();
     m_propertyBoxLayout = PropertyBoxLayout
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
@@ -61,7 +62,7 @@ Preferences::PropertyList
 Preferences::getProperties() const
 {
     PropertyList props;
-    props.push_back("Smooth Spectrogram");
+    props.push_back("Spectrogram Smoothing");
     props.push_back("Tuning Frequency");
     props.push_back("Property Box Layout");
     props.push_back("Window Type");
@@ -72,8 +73,8 @@ Preferences::getProperties() const
 QString
 Preferences::getPropertyLabel(const PropertyName &name) const
 {
-    if (name == "Smooth Spectrogram") {
-        return tr("Smooth spectrogram display by zero padding FFT");
+    if (name == "Spectrogram Smoothing") {
+        return tr("Spectrogram y-axis smoothing:");
     }
     if (name == "Tuning Frequency") {
         return tr("Frequency of concert A");
@@ -93,8 +94,8 @@ Preferences::getPropertyLabel(const PropertyName &name) const
 Preferences::PropertyType
 Preferences::getPropertyType(const PropertyName &name) const
 {
-    if (name == "Smooth Spectrogram") {
-        return ToggleProperty;
+    if (name == "Spectrogram Smoothing") {
+        return ValueProperty;
     }
     if (name == "Tuning Frequency") {
         return RangeProperty;
@@ -115,11 +116,11 @@ int
 Preferences::getPropertyRangeAndValue(const PropertyName &name,
                                       int *min, int *max, int *deflt) const
 {
-    if (name == "Smooth Spectrogram") {
+    if (name == "Spectrogram Smoothing") {
         if (min) *min = 0;
-        if (max) *max = 1;
-        if (deflt) *deflt = 1;
-        return m_smoothSpectrogram ? 1 : 0;
+        if (max) *max = 2;
+        if (deflt) *deflt = int(SpectrogramZeroPadded);
+        return int(m_spectrogramSmoothing);
     }
 
     //!!! freq mapping
@@ -176,6 +177,14 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case 2: return tr("Highest quality");
         }
     }
+    if (name == "Spectrogram Smoothing") {
+        switch (value) {
+        case NoSpectrogramSmoothing: return tr("None - blocky but accurate");
+        case SpectrogramInterpolated: return tr("Interpolate - fast but fuzzy");
+        case SpectrogramZeroPadded: return tr("Zero pad FFT - slow but clear");
+        }
+    }
+            
     return "";
 }
 
@@ -194,8 +203,8 @@ Preferences::getPropertyContainerIconName() const
 void
 Preferences::setProperty(const PropertyName &name, int value) 
 {
-    if (name == "Smooth Spectrogram") {
-        setSmoothSpectrogram(value > 0.1);
+    if (name == "Spectrogram Smoothing") {
+        setSpectrogramSmoothing(SpectrogramSmoothing(value));
     } else if (name == "Tuning Frequency") {
         //!!!
     } else if (name == "Property Box Layout") {
@@ -208,15 +217,19 @@ Preferences::setProperty(const PropertyName &name, int value)
 }
 
 void
-Preferences::setSmoothSpectrogram(bool smooth)
+Preferences::setSpectrogramSmoothing(SpectrogramSmoothing smoothing)
 {
-    if (m_smoothSpectrogram != smooth) {
-        m_smoothSpectrogram = smooth;
+    if (m_spectrogramSmoothing != smoothing) {
+
+        // "smoothing" is one of those words that looks increasingly
+        // ridiculous the more you see it.  Smoothing smoothing smoothing.
+        m_spectrogramSmoothing = smoothing;
+
         QSettings settings;
         settings.beginGroup("Preferences");
-        settings.setValue("smooth-spectrogram", smooth);
+        settings.setValue("spectrogram-smoothing", int(smoothing));
         settings.endGroup();
-        emit propertyChanged("Smooth Spectrogram");
+        emit propertyChanged("Spectrogram Smoothing");
     }
 }
 

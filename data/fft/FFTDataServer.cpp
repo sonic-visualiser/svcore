@@ -1135,8 +1135,9 @@ FFTDataServer::FillThread::run()
     size_t remainingEnd = end;
 
     int counter = 0;
-    int updateAt = (end / m_server.m_windowIncrement) / 20;
-    if (updateAt < 100) updateAt = 100;
+    int updateAt = 1;
+    int maxUpdateAt = (end / m_server.m_windowIncrement) / 20;
+    if (maxUpdateAt < 100) maxUpdateAt = 100;
 
     if (m_fillFrom > start) {
 
@@ -1166,6 +1167,10 @@ FFTDataServer::FillThread::run()
                 m_completion = size_t(100 * fabsf(float(f - m_fillFrom) /
                                                   float(end - start)));
                 counter = 0;
+                if (updateAt < maxUpdateAt) {
+                    updateAt *= 2;
+                    if (updateAt > maxUpdateAt) updateAt = maxUpdateAt;
+                }
             }
         }
 
@@ -1200,6 +1205,10 @@ FFTDataServer::FillThread::run()
                 size_t(100 * fabsf(float(f - start) /
                                    float(end - start)));
             counter = 0;
+            if (updateAt < maxUpdateAt) {
+                updateAt *= 2;
+                if (updateAt > maxUpdateAt) updateAt = maxUpdateAt;
+            }
         }
     }
 
