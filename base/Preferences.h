@@ -35,7 +35,14 @@ public:
     virtual QString getPropertyContainerName() const;
     virtual QString getPropertyContainerIconName() const;
 
-    bool getSmoothSpectrogram() const { return m_smoothSpectrogram; }
+    enum SpectrogramSmoothing {
+        NoSpectrogramSmoothing,
+        SpectrogramInterpolated,
+        SpectrogramZeroPadded,
+        SpectrogramZeroPaddedAndInterpolated
+    };
+
+    SpectrogramSmoothing getSpectrogramSmoothing() const { return m_spectrogramSmoothing; }
     float getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
     int getResampleQuality() const { return m_resampleQuality; }
@@ -50,7 +57,7 @@ public:
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
-    void setSmoothSpectrogram(bool smooth);
+    void setSpectrogramSmoothing(SpectrogramSmoothing smoothing);
     void setTuningFrequency(float freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
@@ -62,7 +69,7 @@ private:
 
     static Preferences *m_instance;
 
-    bool m_smoothSpectrogram;
+    SpectrogramSmoothing m_spectrogramSmoothing;
     float m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
