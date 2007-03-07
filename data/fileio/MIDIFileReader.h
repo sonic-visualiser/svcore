@@ -33,7 +33,7 @@
 
 class MIDIEvent;
 
-class MIDIFileReader : public DataFileReader, public QObject
+class MIDIFileReader : public DataFileReader
 {
     Q_OBJECT
 
