@@ -35,6 +35,8 @@ class MIDIEvent;
 
 class MIDIFileReader : public DataFileReader, public QObject
 {
+    Q_OBJECT
+
 public:
     MIDIFileReader(QString path, size_t mainModelSampleRate);
     virtual ~MIDIFileReader();

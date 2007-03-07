@@ -21,6 +21,8 @@
 
 class FFTModel : public DenseThreeDimensionalModel
 {
+    Q_OBJECT
+
 public:
     FFTModel(const DenseTimeValueModel *model,
              int channel,

@@ -111,6 +111,11 @@ struct RealTime
     //
     std::string toText(bool fixedDp = false) const;
 
+    // Return a user-readable string to the nearest second in a form
+    // like "6s" (for less than a minute) or "2:21" (for more).
+    //
+    std::string toSecText() const;
+
     // Convenience functions for handling sample frames
     //
     static long realTime2Frame(const RealTime &r, unsigned int sampleRate);

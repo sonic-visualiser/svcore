@@ -125,7 +125,7 @@ RealTime::toString(bool align) const
 std::string
 RealTime::toText(bool fixedDp) const
 {
-    if (*this < RealTime::zeroTime) return "-" + (-*this).toText();
+    if (*this < RealTime::zeroTime) return "-" + (-*this).toText(fixedDp);
 
     std::stringstream out;
 
@@ -163,6 +163,41 @@ RealTime::toText(bool fixedDp) const
     } else if (fixedDp) {
 	out << ".000";
     }
+	
+#if (__GNUC__ < 3)
+    out << std::ends;
+#endif
+
+    std::string s = out.str();
+
+    return s;
+}
+
+std::string
+RealTime::toSecText() const
+{
+    if (*this < RealTime::zeroTime) return "-" + (-*this).toSecText();
+
+    std::stringstream out;
+
+    if (sec >= 3600) {
+	out << (sec / 3600) << ":";
+    }
+
+    if (sec >= 60) {
+	out << (sec % 3600) / 60 << ":";
+    }
+
+    if (sec >= 10) {
+	out << ((sec % 60) / 10);
+    }
+
+    out << (sec % 10);
+    
+    if (sec < 60) {
+        out << "s";
+    }
+
 	
 #if (__GNUC__ < 3)
     out << std::ends;
