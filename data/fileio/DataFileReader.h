@@ -17,10 +17,11 @@
 #define _DATA_FILE_READER_H_
 
 #include <QString>
+#include <QObject>
 
 class Model;
 
-class DataFileReader
+class DataFileReader : public QObject
 {
 public:
     /**
