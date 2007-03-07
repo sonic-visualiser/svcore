@@ -255,6 +255,6 @@ PropertyContainer::SetPropertyCommand::unexecute()
 QString
 PropertyContainer::SetPropertyCommand::getName() const
 {
-    return m_pc->tr("Set %1 Property").arg(m_pn);
+    return tr("Set %1 Property").arg(m_pn);
 }
 

@@ -35,6 +35,8 @@
 template <typename PointType>
 class SparseModel : public Model
 {
+    Q_OBJECT
+
 public:
     SparseModel(size_t sampleRate, size_t resolution,
 		bool notifyOnAdd = true);
