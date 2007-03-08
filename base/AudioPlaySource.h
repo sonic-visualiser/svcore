@@ -58,10 +58,18 @@ public:
     virtual bool getOutputLevels(float &left, float &right) = 0;
 
     /**
+     * Return the sample rate of the source material -- any material
+     * that wants to play at a different rate will sound wrong.
+     */
+    virtual size_t getSourceSampleRate() const = 0;
+
+    /**
      * Return the sample rate set by the target audio device (or the
-     * source sample rate if the target hasn't set one).
+     * source sample rate if the target hasn't set one).  If the
+     * source and target sample rates differ, resampling will occur.
      */
     virtual size_t getTargetSampleRate() const = 0;
+     
 };
 
 #endif
