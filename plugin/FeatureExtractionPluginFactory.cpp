@@ -28,6 +28,8 @@
 
 #include <iostream>
 
+//#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
+
 static FeatureExtractionPluginFactory *_nativeInstance = 0;
 
 FeatureExtractionPluginFactory *
@@ -90,7 +92,9 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     
     for (std::vector<QString>::iterator i = path.begin(); i != path.end(); ++i) {
 
-//        std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << i->toStdString() << std::endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << i->toStdString() << std::endl;
+#endif
 
 	QDir pluginDir(*i, PLUGIN_GLOB,
                        QDir::Name | QDir::IgnoreCase,
@@ -100,12 +104,20 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 
             QString soname = pluginDir.filePath(pluginDir[j]);
 
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+            std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname.toStdString() << std::endl;
+#endif
+
             void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
             
             if (!libraryHandle) {
                 std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname.toStdString() << ": " << DLERROR() << std::endl;
                 continue;
             }
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+            std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << std::endl;
+#endif
 
             VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
                 DLSYM(libraryHandle, "vampGetPluginDescriptor");
@@ -118,6 +130,10 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                 continue;
             }
 
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+            std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Vamp descriptor found" << std::endl;
+#endif
+
             const VampPluginDescriptor *descriptor = 0;
             int index = 0;
 
@@ -125,7 +141,9 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                 QString id = PluginIdentifier::createIdentifier
                     ("vamp", soname, descriptor->identifier);
                 rv.push_back(id);
-//                std::cerr << "Found id " << id.toStdString() << std::endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+                std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id.toStdString() << std::endl;
+#endif
                 ++index;
             }
             
@@ -145,6 +163,12 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
 {
     QString file = "";
 
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    std::cerr << "FeatureExtractionPluginFactory::findPluginFile(\""
+              << soname.toStdString() << "\", \"" << inDir.toStdString() << "\")"
+              << std::endl;
+#endif
+
     if (inDir != "") {
 
         QDir dir(inDir, PLUGIN_GLOB,
@@ -153,23 +177,48 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
         if (!dir.exists()) return "";
 
         file = dir.filePath(QFileInfo(soname).fileName());
-        if (QFileInfo(file).exists()) {
+
+        if (QFileInfo(file).exists() && QFileInfo(file).isFile()) {
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+            std::cerr << "FeatureExtractionPluginFactory::findPluginFile: "
+                      << "found trivially at " << file.toStdString() << std::endl;
+#endif
+
             return file;
         }
 
 	for (unsigned int j = 0; j < dir.count(); ++j) {
             file = dir.filePath(dir[j]);
             if (QFileInfo(file).baseName() == QFileInfo(soname).baseName()) {
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+                std::cerr << "FeatureExtractionPluginFactory::findPluginFile: "
+                          << "found at " << file.toStdString() << std::endl;
+#endif
+
                 return file;
             }
         }
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        std::cerr << "FeatureExtractionPluginFactory::findPluginFile (with dir): "
+                  << "not found" << std::endl;
+#endif
 
         return "";
 
     } else {
 
         QFileInfo fi(soname);
-        if (fi.exists()) return soname;
+
+        if (fi.isAbsolute() && fi.exists() && fi.isFile()) {
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+            std::cerr << "FeatureExtractionPluginFactory::findPluginFile: "
+                      << "found trivially at " << soname.toStdString() << std::endl;
+#endif
+            return soname;
+        }
 
         if (fi.isAbsolute() && fi.absolutePath() != "") {
             file = findPluginFile(soname, fi.absolutePath());
@@ -184,6 +233,11 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
                 if (file != "") return file;
             }
         }
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        std::cerr << "FeatureExtractionPluginFactory::findPluginFile: "
+                  << "not found" << std::endl;
+#endif
 
         return "";
     }
@@ -211,9 +265,13 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
         std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find library file " << soname.toStdString() << std::endl;
         return 0;
     } else if (found != soname) {
-//        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: WARNING: Given library name was " << soname.toStdString() << ", found at " << found.toStdString() << std::endl;
-//        std::cerr << soname.toStdString() << " -> " << found.toStdString() << std::endl;
-    }
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Given library name was " << soname.toStdString() << ", found at " << found.toStdString() << std::endl;
+        std::cerr << soname.toStdString() << " -> " << found.toStdString() << std::endl;
+#endif
+
+    }        
 
     soname = found;
 
