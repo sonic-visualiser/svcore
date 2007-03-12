@@ -31,6 +31,7 @@ public:
         AudioFile,
         LayerFile,
         SessionOrAudioFile,
+        ImageFile,
         AnyFile
     };
 
