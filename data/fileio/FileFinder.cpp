@@ -82,6 +82,11 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
             .arg(AudioFileReaderFactory::getKnownExtensions());
         break;
 
+    case ImageFile:
+        settingsKey = "imagepath";
+        filter = tr("Portable Network Graphics files (*.png)\nAll files (*.*)");
+        break;
+
     case AnyFile:
         settingsKey = "lastpath";
         filter = tr("All supported files (*.sv %1 %2)\nSonic Visualiser session files (*.sv)\nAudio files (%1)\nLayer files (%2)\nAll files (*.*)")
@@ -196,6 +201,12 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
         std::cerr << "ERROR: Internal error: FileFinder::getSaveFileName: SessionOrAudioFile cannot be used here" << std::endl;
         abort();
 
+    case ImageFile:
+        settingsKey = "saveimagepath";
+        title = tr("Select a file to export to");
+        filter = tr("Portable Network Graphics files (*.png)\nAll files (*.*)");
+        break;
+
     case AnyFile:
         std::cerr << "ERROR: Internal error: FileFinder::getSaveFileName: AnyFile cannot be used here" << std::endl;
         abort();
@@ -233,6 +244,8 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
         dialog.setDefaultSuffix("sv");
     } else if (type == AudioFile) {
         dialog.setDefaultSuffix("wav");
+    } else if (type == ImageFile) {
+        dialog.setDefaultSuffix("png");
     }
 
     bool good = false;
@@ -311,6 +324,10 @@ FileFinder::registerLastOpenedFilePath(FileType type, QString path)
 
     case SessionOrAudioFile:
         settingsKey = "lastpath";
+        break;
+
+    case ImageFile:
+        settingsKey = "imagepath";
         break;
 
     case AnyFile:
