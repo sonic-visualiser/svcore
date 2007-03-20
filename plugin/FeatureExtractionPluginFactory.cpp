@@ -137,14 +137,42 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             const VampPluginDescriptor *descriptor = 0;
             int index = 0;
 
+            std::map<std::string, int> known;
+            bool ok = true;
+
             while ((descriptor = fn(VAMP_API_VERSION, index))) {
-                QString id = PluginIdentifier::createIdentifier
-                    ("vamp", soname, descriptor->identifier);
-                rv.push_back(id);
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id.toStdString() << std::endl;
-#endif
+
+                if (known.find(descriptor->identifier) != known.end()) {
+                    std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
+                              << soname.toStdString()
+                              << " returns the same plugin identifier \""
+                              << descriptor->identifier << "\" at indices "
+                              << known[descriptor->identifier] << " and "
+                              << index << std::endl;
+                    std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << std::endl;
+                    ok = false;
+                    break;
+                } else {
+                    known[descriptor->identifier] = index;
+                }
+
                 ++index;
+            }
+
+            if (ok) {
+
+                index = 0;
+
+                while ((descriptor = fn(VAMP_API_VERSION, index))) {
+
+                    QString id = PluginIdentifier::createIdentifier
+                        ("vamp", soname, descriptor->identifier);
+                    rv.push_back(id);
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+                    std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id.toStdString() << " at index " << index << std::endl;
+#endif
+                    ++index;
+                }
             }
             
             if (DLCLOSE(libraryHandle) != 0) {
