@@ -21,7 +21,7 @@
 #include "base/ResizeableBitset.h"
 
 /**
- * For the in-memory FFT cache, we would like to cache magnitude with
+ * In-memory FFT cache.  For this we want to cache magnitude with
  * enough resolution to have gain applied afterwards and determine
  * whether something is a peak or not, and also cache phase rather
  * than only phase-adjusted frequency so that we don't have to
