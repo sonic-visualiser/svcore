@@ -19,11 +19,37 @@
 #include "data/fft/FFTDataServer.h"
 #include "DenseThreeDimensionalModel.h"
 
+/**
+ * An implementation of DenseThreeDimensionalModel that makes FFT data
+ * derived from a DenseTimeValueModel available as a generic data grid.
+ * The FFT data is acquired using FFTDataServer.
+ */
+
 class FFTModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
 
 public:
+    /**
+     * Construct an FFT model derived from the given
+     * DenseTimeValueModel, with the given window parameters and FFT
+     * size (which may exceed the window size, for zero-padded FFTs).
+     * 
+     * If the model has multiple channels use only the given channel,
+     * unless the channel is -1 in which case merge all available
+     * channels.
+     * 
+     * If polar is true, the data will normally be retrieved from the
+     * FFT model in magnitude/phase form; otherwise it will normally
+     * be retrieved in "cartesian" real/imaginary form.  The results
+     * should be the same either way, but a "polar" model addressed in
+     * "cartesian" form or vice versa may suffer a performance
+     * penalty.
+     *
+     * The fillFromColumn argument gives a hint that the FFT data
+     * server should aim to start calculating FFT data at that column
+     * number if possible, as that is likely to be requested first.
+     */
     FFTModel(const DenseTimeValueModel *model,
              int channel,
              WindowType windowType,
