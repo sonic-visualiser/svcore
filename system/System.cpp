@@ -32,6 +32,21 @@
 
 #include <iostream>
 
+#ifdef __APPLE__
+extern "C" {
+void *
+rpl_realloc (void *p, size_t n)
+{
+    p = realloc(p, n);
+    if (p == 0 && n == 0)
+    {
+    p = malloc(0);
+    }
+    return p;
+}
+}
+#endif
+
 #ifdef _WIN32
 
 extern "C" {

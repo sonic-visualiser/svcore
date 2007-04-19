@@ -76,7 +76,7 @@ void gettimeofday(struct timeval *p, void *tz);
 
 #ifdef __APPLE__
 
-#define PLUGIN_GLOB  "*.dylib"
+#define PLUGIN_GLOB  "*.dylib *.so"
 #define PATH_SEPARATOR ':'
 
 #define DEFAULT_LADSPA_PATH "$HOME/Library/Audio/Plug-Ins/LADSPA:/Library/Audio/Plug-Ins/LADSPA"
