@@ -127,6 +127,7 @@ protected:
     size_t m_yBinCount;
     float m_minimum;
     float m_maximum;
+    bool m_haveExtents;
     bool m_notifyOnAdd;
     long m_sinceLastNotifyMin;
     long m_sinceLastNotifyMax;

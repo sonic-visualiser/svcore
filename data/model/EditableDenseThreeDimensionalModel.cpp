@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+#include <cmath>
+
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
                                                                        size_t resolution,
                                                                        size_t yBinCount,
@@ -28,6 +30,7 @@ EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sa
     m_yBinCount(yBinCount),
     m_minimum(0.0),
     m_maximum(0.0),
+    m_haveExtents(false),
     m_notifyOnAdd(notifyOnAdd),
     m_sinceLastNotifyMin(-1),
     m_sinceLastNotifyMax(-1),
@@ -68,6 +71,7 @@ EditableDenseThreeDimensionalModel::clone() const
 
     model->m_minimum = m_minimum;
     model->m_maximum = m_maximum;
+    model->m_haveExtents = m_haveExtents;
 
     for (size_t i = 0; i < m_data.size(); ++i) {
 	model->setColumn(i, m_data[i]);
@@ -152,8 +156,8 @@ EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
 
     if (index < m_data.size()) {
 	const Column &s = m_data[index];
-        std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
-                  << std::endl;
+//        std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
+//                  << std::endl;
 	if (n < s.size()) return s[n];
     }
 
@@ -170,18 +174,22 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 	m_data.push_back(Column());
     }
 
-    bool newExtents = (m_data.empty() && (m_minimum == m_maximum));
     bool allChange = false;
 
     for (size_t i = 0; i < values.size(); ++i) {
-	if (newExtents || values[i] < m_minimum) {
-	    m_minimum = values[i];
+        float value = values[i];
+        if (isnan(value) || isinf(value)) {
+            continue;
+        }
+	if (!m_haveExtents || value < m_minimum) {
+	    m_minimum = value;
 	    allChange = true;
 	}
-	if (newExtents || values[i] > m_maximum) {
-	    m_maximum = values[i];
+	if (!m_haveExtents || value > m_maximum) {
+	    m_maximum = value;
 	    allChange = true;
 	}
+        m_haveExtents = true;
     }
 
     m_data[index] = values;

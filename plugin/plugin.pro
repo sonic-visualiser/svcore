@@ -8,6 +8,9 @@ QT += xml
 
 TARGET = svplugin
 
+# Doesn't work with this library, which contains C99 as well as C++
+PRECOMPILED_HEADER =
+
 DEPENDPATH += . .. api plugins api/alsa api/alsa/sound
 INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound
 OBJECTS_DIR = tmp_obj
