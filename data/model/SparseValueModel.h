@@ -19,6 +19,8 @@
 #include "SparseModel.h"
 #include "base/UnitDatabase.h"
 
+#include <cmath>
+
 /**
  * Model containing sparse data (points with some properties) of which
  * one of the properties is an arbitrary float value.  The other
@@ -62,7 +64,7 @@ public:
     {
 	bool allChange = false;
 
-        if (!isnan(point.value) && !isinf(point.value)) {
+        if (!std::isnan(point.value) && !std::isinf(point.value)) {
             if (!m_haveExtents || point.value < m_valueMinimum) {
                 m_valueMinimum = point.value; allChange = true;
             }

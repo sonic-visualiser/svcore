@@ -178,7 +178,7 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 
     for (size_t i = 0; i < values.size(); ++i) {
         float value = values[i];
-        if (isnan(value) || isinf(value)) {
+        if (std::isnan(value) || std::isinf(value)) {
             continue;
         }
 	if (!m_haveExtents || value < m_minimum) {
