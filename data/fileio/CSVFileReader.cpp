@@ -142,9 +142,7 @@ CSVFileReader::load() const
 		break;
 		
 	    case CSVFormatDialog::TwoDimensionalModel:
-		model2 = new SparseTimeValueModel(sampleRate, windowSize,
-						  0.0, 0.0,
-						  false);
+		model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
 		model = model2;
 		break;
 		

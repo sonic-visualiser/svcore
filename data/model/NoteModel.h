@@ -83,6 +83,15 @@ class NoteModel : public SparseValueModel<Note>
 {
 public:
     NoteModel(size_t sampleRate, size_t resolution,
+	      bool notifyOnAdd = true) :
+	SparseValueModel<Note>(sampleRate, resolution,
+			       notifyOnAdd),
+	m_valueQuantization(0)
+    {
+	PlayParameterRepository::getInstance()->addModel(this);
+    }
+
+    NoteModel(size_t sampleRate, size_t resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
 	SparseValueModel<Note>(sampleRate, resolution,

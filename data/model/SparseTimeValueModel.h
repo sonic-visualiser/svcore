@@ -77,6 +77,14 @@ class SparseTimeValueModel : public SparseValueModel<TimeValuePoint>
 {
 public:
     SparseTimeValueModel(size_t sampleRate, size_t resolution,
+			 bool notifyOnAdd = true) :
+	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
+					 notifyOnAdd)
+    {
+	PlayParameterRepository::getInstance()->addModel(this);
+    }
+
+    SparseTimeValueModel(size_t sampleRate, size_t resolution,
 			 float valueMinimum, float valueMaximum,
 			 bool notifyOnAdd = true) :
 	SparseValueModel<TimeValuePoint>(sampleRate, resolution,

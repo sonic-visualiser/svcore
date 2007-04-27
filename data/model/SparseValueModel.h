@@ -30,11 +30,20 @@ class SparseValueModel : public SparseModel<PointType>
 {
 public:
     SparseValueModel(size_t sampleRate, size_t resolution,
+		     bool notifyOnAdd = true) :
+	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
+	m_valueMinimum(0.f),
+	m_valueMaximum(0.f),
+        m_haveExtents(false)
+    { }
+
+    SparseValueModel(size_t sampleRate, size_t resolution,
 		     float valueMinimum, float valueMaximum,
 		     bool notifyOnAdd = true) :
 	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
 	m_valueMinimum(valueMinimum),
-	m_valueMaximum(valueMaximum)
+	m_valueMaximum(valueMaximum),
+        m_haveExtents(true)
     { }
 
     using SparseModel<PointType>::m_points;
@@ -52,12 +61,16 @@ public:
     virtual void addPoint(const PointType &point)
     {
 	bool allChange = false;
-	if (m_points.empty() || point.value < m_valueMinimum) {
-	    m_valueMinimum = point.value; allChange = true;
-	}
-	if (m_points.empty() || point.value > m_valueMaximum) {
-	    m_valueMaximum = point.value; allChange = true;
-	}
+
+        if (!isnan(point.value) && !isinf(point.value)) {
+            if (!m_haveExtents || point.value < m_valueMinimum) {
+                m_valueMinimum = point.value; allChange = true;
+            }
+            if (!m_haveExtents || point.value > m_valueMaximum) {
+                m_valueMaximum = point.value; allChange = true;
+            }
+            m_haveExtents = true;
+        }
 
 	SparseModel<PointType>::addPoint(point);
 	if (allChange) emit modelChanged();
@@ -103,6 +116,7 @@ public:
 protected:
     float m_valueMinimum;
     float m_valueMaximum;
+    bool m_haveExtents;
     QString m_units;
 };
 
