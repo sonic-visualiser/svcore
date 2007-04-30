@@ -33,6 +33,8 @@
 #include "system/System.h"
 #include "base/Preferences.h"
 
+//#define DEBUG_LADSPA_PLUGIN_FACTORY 1
+
 #ifdef HAVE_LRDF
 #include "lrdf.h"
 #endif // HAVE_LRDF
@@ -325,8 +327,10 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 
 	m_instances.insert(instance);
 
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
         std::cerr << "LADSPAPluginFactory::instantiatePlugin("
                   << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
+#endif
 
 	return instance;
     }
@@ -356,7 +360,9 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
 	QString itype, isoname, ilabel;
 	PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
 	if (isoname == soname) {
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
 	    std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " is still in use for plugin " << ilabel.toStdString() << std::endl;
+#endif
 	    stillInUse = true;
 	    break;
 	}
@@ -364,13 +370,17 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
     
     if (!stillInUse) {
         if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
             std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
+#endif
             unloadLibrary(soname);
         }
     }
 
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
     std::cerr << "LADSPAPluginFactory::releasePlugin("
                   << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
+#endif
 }
 
 const LADSPA_Descriptor *
@@ -434,14 +444,18 @@ LADSPAPluginFactory::loadLibrary(QString soName)
     for (std::vector<QString>::iterator i = pathList.begin();
 	 i != pathList.end(); ++i) {
         
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
         std::cerr << "Looking at: " << (*i).toStdString() << std::endl;
+#endif
 
         QDir dir(*i, PLUGIN_GLOB,
                  QDir::Name | QDir::IgnoreCase,
                  QDir::Files | QDir::Readable);
 
         if (QFileInfo(dir.filePath(fileName)).exists()) {
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
             std::cerr << "Loading: " << fileName.toStdString() << std::endl;
+#endif
             libraryHandle = DLOPEN(dir.filePath(fileName), RTLD_NOW);
             if (libraryHandle) {
                 m_libraryHandles[soName] = libraryHandle;
@@ -452,7 +466,9 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 	for (unsigned int j = 0; j < dir.count(); ++j) {
             QString file = dir.filePath(dir[j]);
             if (QFileInfo(file).baseName() == base) {
+#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
                 std::cerr << "Loading: " << file.toStdString() << std::endl;
+#endif
                 libraryHandle = DLOPEN(file, RTLD_NOW);
                 if (libraryHandle) {
                     m_libraryHandles[soName] = libraryHandle;
