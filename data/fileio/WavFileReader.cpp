@@ -90,7 +90,10 @@ WavFileReader::updateFrameCount()
         m_sampleRate = m_fileInfo.samplerate;
     }
 
-    if (m_frameCount != prevCount) emit frameCountChanged();
+    if (m_frameCount != prevCount) {
+//        std::cerr << "frameCountChanged" << std::endl;
+        emit frameCountChanged();
+    }
 }
 
 void

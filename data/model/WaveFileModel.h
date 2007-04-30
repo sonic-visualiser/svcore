@@ -75,7 +75,7 @@ public:
 
 signals:
     void modelChanged();
-    void modelChanged(size_t startFrame, size_t endFrame);
+    void modelChanged(size_t, size_t);
     void completionChanged();
 
 protected slots:

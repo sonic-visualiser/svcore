@@ -148,8 +148,8 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
     if (!m_reader || !m_reader->isOK()) return 0;
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cerr << "WaveFileModel::getValues(" << channel << ", "
-              << start << ", " << end << "): calling reader" << std::endl;
+//    std::cerr << "WaveFileModel::getValues(" << channel << ", "
+//              << start << ", " << end << "): calling reader" << std::endl;
 #endif
 
     SampleBlock frames;
