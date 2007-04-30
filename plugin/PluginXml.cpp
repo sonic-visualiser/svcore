@@ -180,8 +180,8 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
         bool ok;
         float value = attrs.value(pname).trimmed().toFloat(&ok);
         if (ok) {
-            std::cerr << "PluginXml::setParameters: setting parameter \""
-                      << i->identifier << "\" to value " << value << std::endl;
+//            std::cerr << "PluginXml::setParameters: setting parameter \""
+//                      << i->identifier << "\" to value " << value << std::endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
             std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname).toStdString() << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname.toStdString() << "\")" << std::endl;
