@@ -269,8 +269,8 @@ DSSIPluginInstance::getLatency()
 
     if (m_latencyPort) {
 	if (!m_run) {
-            for (int i = 0; i < getAudioInputCount(); ++i) {
-                for (int j = 0; j < m_blockSize; ++j) {
+            for (size_t i = 0; i < getAudioInputCount(); ++i) {
+                for (size_t j = 0; j < m_blockSize; ++j) {
                     m_inputBuffers[i][j] = 0.f;
                 }
             }
@@ -1229,9 +1229,9 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 }
 
 int
-DSSIPluginInstance::requestMidiSend(LADSPA_Handle instance,
-				    unsigned char ports,
-				    unsigned char channels)
+DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
+				    unsigned char /* ports */,
+				    unsigned char /* channels */)
 {
     // This is called from a non-RT context (during instantiate)
 
@@ -1240,9 +1240,9 @@ DSSIPluginInstance::requestMidiSend(LADSPA_Handle instance,
 }
 
 void
-DSSIPluginInstance::midiSend(LADSPA_Handle instance,
-			     snd_seq_event_t *events,
-			     unsigned long eventCount)
+DSSIPluginInstance::midiSend(LADSPA_Handle /* instance */,
+			     snd_seq_event_t * /* events */,
+			     unsigned long /* eventCount */)
 {
     // This is likely to be called from an RT context
 

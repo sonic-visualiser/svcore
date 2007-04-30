@@ -376,7 +376,7 @@ FFTDataServer::purgeLimbo(int maxSize)
               << m_releasedServers.size() << " candidates" << std::endl;
 #endif
 
-    while (m_releasedServers.size() > maxSize) {
+    while (int(m_releasedServers.size()) > maxSize) {
 
         FFTDataServer *server = *m_releasedServers.begin();
 
@@ -566,7 +566,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
             StorageAdviser::recommend(criteria, minimumSize, maximumSize);
     }
 
-    std::cerr << "Recommendation was: " << recommendation << std::endl;
+//    std::cerr << "Recommendation was: " << recommendation << std::endl;
 
     m_memoryCache = ((recommendation & StorageAdviser::UseMemory) ||
                      (recommendation & StorageAdviser::PreferMemory));
@@ -723,7 +723,7 @@ FFTDataServer::getCacheAux(size_t c)
 
         for (IntQueue::iterator i = m_dormantCaches.begin();
              i != m_dormantCaches.end(); ++i) {
-            if (*i == c) {
+            if (*i == int(c)) {
                 m_dormantCaches.erase(i);
                 break;
             }

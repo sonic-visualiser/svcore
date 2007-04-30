@@ -167,8 +167,8 @@ StorageAdviser::notifyPlannedAllocation(AllocationArea area, int size)
 {
     if (area == MemoryAllocation) m_memoryPlanned += size;
     else if (area == DiscAllocation) m_discPlanned += size;
-    std::cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
-              << m_discPlanned << std::endl;
+//    std::cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
+//              << m_discPlanned << std::endl;
 }
 
 void
@@ -181,7 +181,7 @@ StorageAdviser::notifyDoneAllocation(AllocationArea area, int size)
         if (m_discPlanned > size) m_discPlanned -= size; 
         else m_discPlanned = 0;
     }
-    std::cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
-              << m_discPlanned << std::endl;
+//    std::cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
+//              << m_discPlanned << std::endl;
 }
 

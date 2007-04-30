@@ -46,6 +46,8 @@ public:
 class RealTimePluginFactory
 {
 public:
+    virtual ~RealTimePluginFactory();
+
     static RealTimePluginFactory *instance(QString pluginType);
     static RealTimePluginFactory *instanceFor(QString identifier);
     static std::vector<QString> getAllPluginIdentifiers();

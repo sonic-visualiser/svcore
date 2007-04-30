@@ -37,8 +37,8 @@ FeatureExtractionPluginFactory::instance(QString pluginType)
 {
     if (pluginType == "vamp") {
 	if (!_nativeInstance) {
-	    std::cerr << "FeatureExtractionPluginFactory::instance(" << pluginType.toStdString()
-		      << "): creating new FeatureExtractionPluginFactory" << std::endl;
+//	    std::cerr << "FeatureExtractionPluginFactory::instance(" << pluginType.toStdString()
+//		      << "): creating new FeatureExtractionPluginFactory" << std::endl;
 	    _nativeInstance = new FeatureExtractionPluginFactory();
 	}
 	return _nativeInstance;

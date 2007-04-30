@@ -159,7 +159,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     QMutexLocker locker(&m_refcountMutex);
     ++m_refcount[fileName];
 
-    std::cerr << "MatrixFile(" << this << "): fd " << m_fd << ", file " << fileName.toStdString() << ", ref " << m_refcount[fileName] << std::endl;
+//    std::cerr << "MatrixFile(" << this << "): fd " << m_fd << ", file " << fileName.toStdString() << ", ref " << m_refcount[fileName] << std::endl;
 
 //    std::cerr << "MatrixFile::MatrixFile: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
 
@@ -196,10 +196,10 @@ MatrixFile::~MatrixFile()
         if (--m_refcount[m_fileName] == 0) {
 
             if (::unlink(m_fileName.toLocal8Bit())) {
-                ::perror("Unlink failed");
-                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
+//                ::perror("Unlink failed");
+//                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
             } else {
-                std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
+//                std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
             }
 
             QMutexLocker locker2(&m_columnBitsetWriteMutex);
@@ -212,9 +212,9 @@ MatrixFile::~MatrixFile()
     totalMemory -= (2 * m_defaultCacheWidth * m_height * m_cellSize);
     totalCount --;
 
-    std::cerr << "MatrixFile::~MatrixFile: " << std::endl;
-    std::cerr << "Total storage now " << totalStorage/1024 << "K, theoretical max memory "
-              << totalMemory/1024 << "K in " << totalCount << " instances" << std::endl;
+//    std::cerr << "MatrixFile::~MatrixFile: " << std::endl;
+//    std::cerr << "Total storage now " << totalStorage/1024 << "K, theoretical max memory "
+//              << totalMemory/1024 << "K in " << totalCount << " instances" << std::endl;
 
 }
 

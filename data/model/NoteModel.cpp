@@ -33,7 +33,7 @@ NoteModel::getPoints(long start, long end) const
     for (PointListIterator i = endItr; i != m_points.begin(); ) {
         --i;
         if (i->frame < start) {
-            if (i->frame + i->duration >= start) {
+            if (i->frame + long(i->duration) >= start) {
                 rv.insert(*i);
             }
         } else if (i->frame <= end) {
@@ -63,7 +63,7 @@ NoteModel::getPoints(long frame) const
     for (PointListIterator i = endItr; i != m_points.begin(); ) {
         --i;
         if (i->frame < start) {
-            if (i->frame + i->duration >= start) {
+            if (i->frame + long(i->duration) >= start) {
                 rv.insert(*i);
             }
         } else if (i->frame <= end) {

@@ -45,9 +45,9 @@ static const FaderDescription faderTypes[] = {
     FaderDescription(-40.f,   0.f, 1.00f), // preview
 };
 
-typedef std::vector<float> LevelList;
-static std::map<int, LevelList> previewLevelCache;
-static const LevelList &getPreviewLevelCache(int levels);
+//typedef std::vector<float> LevelList;
+//static std::map<int, LevelList> previewLevelCache;
+//static const LevelList &getPreviewLevelCache(int levels);
 
 float
 AudioLevel::multiplier_to_dB(float multiplier)
@@ -219,7 +219,7 @@ AudioLevel::multiplier_to_fader(float multiplier, int maxLevel, FaderType type)
     return fader;
 }
 
-
+/*
 const LevelList &
 getPreviewLevelCache(int levels)
 {
@@ -234,6 +234,7 @@ getPreviewLevelCache(int levels)
     }
     return ll;
 }
+*/
 
 int
 AudioLevel::multiplier_to_preview(float m, int levels)

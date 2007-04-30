@@ -56,7 +56,7 @@ WavFileReader::WavFileReader(QString path, bool fileUpdating) :
         m_sampleRate = m_fileInfo.samplerate;
     }
 
-    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << std::endl;
+//    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << std::endl;
 
 }
 

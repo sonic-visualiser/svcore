@@ -594,11 +594,11 @@ LADSPAPluginFactory::discoverPlugins()
 
 //    std::cerr << "LADSPAPluginFactory::discoverPlugins - "
 //	      << "discovering plugins; path is ";
-    for (std::vector<QString>::iterator i = pathList.begin();
-	 i != pathList.end(); ++i) {
-	std::cerr << "[" << i->toStdString() << "] ";
-    }
-    std::cerr << std::endl;
+//    for (std::vector<QString>::iterator i = pathList.begin();
+//	 i != pathList.end(); ++i) {
+//	std::cerr << "[" << i->toStdString() << "] ";
+//    }
+//    std::cerr << std::endl;
 
 #ifdef HAVE_LRDF
     // read the description files 
@@ -709,7 +709,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 	    defs = lrdf_get_setting_values(def_uri);
 	}
 
-	int controlPortNumber = 1;
+	unsigned int controlPortNumber = 1;
 	
 	for (unsigned long i = 0; i < descriptor->PortCount; i++) {
 	    
@@ -717,7 +717,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 		
 		if (def_uri && defs) {
 		    
-		    for (int j = 0; j < defs->count; j++) {
+		    for (unsigned int j = 0; j < defs->count; j++) {
 			if (defs->items[j].pid == controlPortNumber) {
 //			    std::cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << descriptor->PortNames[i] << std::endl;
 			    m_portDefaults[descriptor->UniqueID][i] =
@@ -820,7 +820,7 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
     lrdf_uris *uris = lrdf_get_instances(uri.toStdString().c_str());
 
     if (uris != NULL) {
-	for (int i = 0; i < uris->count; ++i) {
+	for (unsigned int i = 0; i < uris->count; ++i) {
 	    m_lrdfTaxonomy[lrdf_get_uid(uris->items[i])] = base;
 	}
 	lrdf_free_uris(uris);
@@ -829,7 +829,7 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
     uris = lrdf_get_subclasses(uri.toStdString().c_str());
 
     if (uris != NULL) {
-	for (int i = 0; i < uris->count; ++i) {
+	for (unsigned int i = 0; i < uris->count; ++i) {
 	    char *label = lrdf_get_label(uris->items[i]);
 	    generateTaxonomy(uris->items[i],
 			     base + (base.length() > 0 ? " > " : "") + label);
