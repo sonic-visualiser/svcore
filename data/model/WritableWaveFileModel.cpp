@@ -26,6 +26,7 @@
 #include <cassert>
 #include <iostream>
 
+//#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
 WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
 					     size_t channels,
@@ -75,8 +76,8 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         return;
     }
 
-    connect(m_model, SLOT(modelChanged()), this, SIGNAL(modelChanged()));
-    connect(m_model, SLOT(modelChanged(size_t, size_t)),
+    connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
+    connect(m_model, SIGNAL(modelChanged(size_t, size_t)),
             this, SIGNAL(modelChanged(size_t, size_t)));
 }
 
@@ -92,6 +93,10 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 {
     if (!m_writer) return false;
 
+#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
+//    std::cerr << "WritableWaveFileModel::addSamples(" << count << ")" << std::endl;
+#endif
+
     if (!m_writer->writeSamples(samples, count)) {
         std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError().toStdString() << std::endl;
         return false;
@@ -102,8 +107,14 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
     static int updateCounter = 0;
 
     if (m_reader && m_reader->getChannelCount() == 0) {
+#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
+        std::cerr << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << std::endl;
+#endif
         m_reader->updateFrameCount();
     } else if (++updateCounter == 100) {
+#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
+        std::cerr << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << std::endl;
+#endif
         if (m_reader) m_reader->updateFrameCount();
         updateCounter = 0;
     }
