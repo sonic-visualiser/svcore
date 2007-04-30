@@ -342,7 +342,7 @@ CSVFormatDialog::CSVFormatDialog(QWidget *parent, QFile *file,
     for (int i = 0; i <= 16; ++i) {
 	int value = 1 << i;
 	m_windowSizeCombo->addItem(QString("%1").arg(value));
-	if (value == m_windowSize) m_windowSizeCombo->setCurrentIndex(i);
+	if (value == int(m_windowSize)) m_windowSizeCombo->setCurrentIndex(i);
     }
     m_windowSizeCombo->setEditable(true);
 

@@ -48,7 +48,13 @@ Profiles::~Profiles()
     dump();
 }
 
-void Profiles::accumulate(const char* id, clock_t time, RealTime rt)
+void Profiles::accumulate(
+#ifndef NO_TIMING
+    const char* id, clock_t time, RealTime rt
+#else
+    const char*, clock_t, RealTime
+#endif
+)
 {
 #ifndef NO_TIMING    
     ProfilePair &pair(m_profiles[id]);

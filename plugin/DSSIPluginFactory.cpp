@@ -360,7 +360,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 	    defs = lrdf_get_setting_values(def_uri);
 	}
 	
-	int controlPortNumber = 1;
+	unsigned int controlPortNumber = 1;
 	
 	for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
 	    
@@ -368,7 +368,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 		
 		if (def_uri && defs) {
 		    
-		    for (int j = 0; j < defs->count; j++) {
+		    for (unsigned int j = 0; j < defs->count; j++) {
 			if (defs->items[j].pid == controlPortNumber) {
 //			    std::cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << ladspaDescriptor->PortNames[i] << std::endl;
 			    m_portDefaults[ladspaDescriptor->UniqueID][i] =

@@ -30,6 +30,8 @@
 
 //#define DEBUG_LADSPA 1
 
+#include <cmath>
+
 
 LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
 					   int clientId,
@@ -153,9 +155,9 @@ LADSPAPluginInstance::getParameterDescriptors() const
             if (defaults) {
                 if (defaults->count > 0) {
                     std::map<int, std::string> values;
-                    int v = 0;
+                    size_t v = 0;
                     for (size_t i = 0; i < defaults->count; ++i) {
-                        v = defaults->items[i].value;
+                        v = size_t(lrintf(fabsf(defaults->items[i].value)));
                         values[v] = defaults->items[i].label;
                     }
                     for (size_t i = 0; i <= v; ++i) {
@@ -291,8 +293,8 @@ LADSPAPluginInstance::getLatency()
 {
     if (m_latencyPort) {
 	if (!m_run) {
-            for (int i = 0; i < getAudioInputCount(); ++i) {
-                for (int j = 0; j < m_blockSize; ++j) {
+            for (size_t i = 0; i < getAudioInputCount(); ++i) {
+                for (size_t j = 0; j < m_blockSize; ++j) {
                     m_inputBuffers[i][j] = 0.f;
                 }
             }
@@ -517,8 +519,6 @@ void
 LADSPAPluginInstance::run(const Vamp::RealTime &)
 {
     if (!m_descriptor || !m_descriptor->run) return;
-
-    int inbuf = 0, outbuf = 0;
 
     for (std::vector<LADSPA_Handle>::iterator hi = m_instanceHandles.begin();
 	 hi != m_instanceHandles.end(); ++hi) {

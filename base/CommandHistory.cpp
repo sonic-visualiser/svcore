@@ -367,7 +367,7 @@ CommandHistory::clipStack(CommandStack &stack, int limit)
 	CommandStack tempStack;
 
 	for (i = 0; i < limit; ++i) {
-	    Command *command = stack.top();
+//	    Command *command = stack.top();
 //	    std::cerr << "CommandHistory::clipStack: Saving recent command: " << command->getName().toLocal8Bit().data() << " at " << command << std::endl;
 	    tempStack.push(stack.top());
 	    stack.pop();

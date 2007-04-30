@@ -40,7 +40,7 @@ FFTFileCache::FFTFileCache(QString fileBase, MatrixFile::Mode mode,
            mode == MatrixFile::ReadOnly)),
     m_storageType(storageType)
 {
-    std::cerr << "FFTFileCache: storage type is " << (storageType == Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << std::endl;
+//    std::cerr << "FFTFileCache: storage type is " << (storageType == Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << std::endl;
 }
 
 FFTFileCache::~FFTFileCache()
@@ -234,7 +234,12 @@ FFTFileCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 //    std::cerr << "Normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
 
     if (m_storageType == Compact) {
-        ((uint16_t *)m_writebuf)[h * 2] = factor * 65535.0;
+        if (factor < 0.f || factor > 1.f) {
+            std::cerr << "WARNING: FFTFileCache::setColumnAt: Normalization factor " << factor << " out of range" << std::endl;
+            if (factor < 0.f) factor = 0.f;
+            if (factor > 1.f) factor = 1.f;
+        }
+        ((uint16_t *)m_writebuf)[h * 2] = (uint16_t)(factor * 65535.0);
     } else {
         ((float *)m_writebuf)[h * 2] = factor;
     }
