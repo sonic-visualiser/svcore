@@ -128,7 +128,7 @@ CSVFileReader::load() const
     while (!in.atEnd()) {
 
 	QString line = in.readLine().trimmed();
-	if (line.startsWith("#")) continue;
+	if (line.startsWith("#") || line.trimmed() == "") continue;
 
 	QStringList list = line.split(separator);
 
