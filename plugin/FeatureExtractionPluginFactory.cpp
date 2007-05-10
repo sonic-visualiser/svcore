@@ -222,7 +222,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
                 std::cerr << "FeatureExtractionPluginFactory::findPluginFile: "
-                          << "found at " << file.toStdString() << std::endl;
+                          << "found \"" << soname.toStdString() << "\" at " << file.toStdString() << std::endl;
 #endif
 
                 return file;

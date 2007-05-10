@@ -153,9 +153,9 @@ void Window<T>::cosinewin(T *mult, T a0, T a1, T a2, T a3)
     int n = int(m_size);
     for (int i = 0; i < n; ++i) {
         mult[i] *= (a0
-                    - a1 * cos(2 * M_PI * i / n)
-                    + a2 * cos(4 * M_PI * i / n)
-                    - a3 * cos(6 * M_PI * i / n));
+                    - a1 * cos((2 * M_PI * i) / n)
+                    + a2 * cos((4 * M_PI * i) / n)
+                    - a3 * cos((6 * M_PI * i) / n));
     }
 }
 
