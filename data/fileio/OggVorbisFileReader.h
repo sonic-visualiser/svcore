@@ -21,6 +21,7 @@
 
 #include "CodedAudioFileReader.h"
 
+#include "base/Thread.h"
 #include <oggz/oggz.h>
 #include <fishsound/fishsound.h>
 
@@ -31,17 +32,28 @@ class QProgressDialog;
 class OggVorbisFileReader : public CodedAudioFileReader
 {
 public:
-    OggVorbisFileReader(QString path, bool showProgress, CacheMode cacheMode);
+    enum DecodeMode {
+        DecodeAtOnce, // decode the file on construction, with progress dialog
+        DecodeThreaded // decode in a background thread after construction
+    };
+
+    OggVorbisFileReader(QString path, DecodeMode decodeMode,
+                        CacheMode cacheMode);
     virtual ~OggVorbisFileReader();
 
     virtual QString getError() const { return m_error; }
 
     static void getSupportedExtensions(std::set<QString> &extensions);
 
+    virtual bool isUpdating() const {
+        return m_decodeThread && m_decodeThread->isRunning();
+    }
+
 protected:
     QString m_path;
     QString m_error;
 
+    OGGZ *m_oggz;
     FishSound *m_fishSound;
     QProgressDialog *m_progress;
     size_t m_fileSize;
@@ -50,6 +62,18 @@ protected:
  
     static int readPacket(OGGZ *, ogg_packet *, long, void *);
     static int acceptFrames(FishSound *, float **, long, void *);
+
+    class DecodeThread : public Thread
+    {
+    public:
+        DecodeThread(OggVorbisFileReader *reader) : m_reader(reader) { }
+        virtual void run();
+
+    protected:
+        OggVorbisFileReader *m_reader; 
+    };
+
+    DecodeThread *m_decodeThread;
 };
 
 #endif

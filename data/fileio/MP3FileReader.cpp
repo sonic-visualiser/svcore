@@ -29,7 +29,7 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
+MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode) :
     CodedAudioFileReader(mode),
     m_path(path)
 {
@@ -41,6 +41,8 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
     m_bitrateDenom = 0;
     m_frameCount = 0;
     m_cancelled = false;
+    m_done = false;
+    m_progress = 0;
 
     struct stat stat;
     if (::stat(path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
@@ -60,10 +62,10 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 	return;
     }	
 
-    unsigned char *filebuffer = 0;
+    m_filebuffer = 0;
 
     try {
-        filebuffer = new unsigned char[m_fileSize];
+        m_filebuffer = new unsigned char[m_fileSize];
     } catch (...) {
         m_error = QString("Out of memory");
         ::close(fd);
@@ -73,11 +75,11 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
     ssize_t sz = 0;
     size_t offset = 0;
     while (offset < m_fileSize) {
-        sz = ::read(fd, filebuffer + offset, m_fileSize - offset);
+        sz = ::read(fd, m_filebuffer + offset, m_fileSize - offset);
         if (sz < 0) {
             m_error = QString("Read error for file %1 (after %2 bytes)")
                 .arg(path).arg(offset);
-            delete[] filebuffer;
+            delete[] m_filebuffer;
             ::close(fd);
             return;
         } else if (sz == 0) {
@@ -91,32 +93,58 @@ MP3FileReader::MP3FileReader(QString path, bool showProgress, CacheMode mode) :
 
     ::close(fd);
 
-    if (showProgress) {
+    if (decodeMode == DecodeAtOnce) {
+
 	m_progress = new QProgressDialog
 	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
-    }
 
-    if (!decode(filebuffer, m_fileSize)) {
-	m_error = QString("Failed to decode file %1.").arg(path);
-        delete[] filebuffer;
-	return;
-    }
-    
-    if (isDecodeCacheInitialised()) finishDecodeCache();
+        if (!decode(m_filebuffer, m_fileSize)) {
+            m_error = QString("Failed to decode file %1.").arg(path);
+        }
+        
+        delete[] m_filebuffer;
+        m_filebuffer = 0;
 
-    if (showProgress) {
+        if (isDecodeCacheInitialised()) finishDecodeCache();
+
 	delete m_progress;
 	m_progress = 0;
-    }
 
-    delete[] filebuffer;
+    } else {
+
+        m_decodeThread = new DecodeThread(this);
+        m_decodeThread->start();
+
+        while (m_channelCount == 0 && !m_done) {
+            usleep(10);
+        }
+    }
 }
 
 MP3FileReader::~MP3FileReader()
 {
+    if (m_decodeThread) {
+        m_decodeThread->wait();
+        delete m_decodeThread;
+    }
 }
+
+void
+MP3FileReader::DecodeThread::run()
+{
+    if (!m_reader->decode(m_reader->m_filebuffer, m_reader->m_fileSize)) {
+        m_reader->m_error = QString("Failed to decode file %1.").arg(m_reader->m_path);
+    }
+
+    delete[] m_reader->m_filebuffer;
+    m_reader->m_filebuffer = 0;
+    
+    if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
+
+    m_reader->m_done = true;
+} 
 
 bool
 MP3FileReader::decode(void *mm, size_t sz)
@@ -132,6 +160,7 @@ MP3FileReader::decode(void *mm, size_t sz)
     mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
     mad_decoder_finish(&decoder);
 
+    m_done = true;
     return true;
 }
 
@@ -180,16 +209,18 @@ MP3FileReader::accept(struct mad_header const *header,
         double duration = double(m_fileSize * 8) / bitrate;
         double elapsed = double(m_frameCount) / m_sampleRate;
         double percent = ((elapsed * 100.0) / duration);
-        int progress = int(percent);
-        if (progress < 1) progress = 1;
-        if (progress > 99) progress = 99;
-        if (progress > m_progress->value()) {
-            m_progress->setValue(progress);
-            m_progress->show();
-            m_progress->raise();
-            qApp->processEvents();
-            if (m_progress->wasCanceled()) {
-                m_cancelled = true;
+        if (m_progress) {
+            int progress = int(percent);
+            if (progress < 1) progress = 1;
+            if (progress > 99) progress = 99;
+            if (progress > m_progress->value()) {
+                m_progress->setValue(progress);
+                m_progress->show();
+                m_progress->raise();
+                qApp->processEvents();
+                if (m_progress->wasCanceled()) {
+                    m_cancelled = true;
+                }
             }
         }
     }

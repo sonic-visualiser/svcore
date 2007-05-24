@@ -84,9 +84,9 @@ extern void svSystemSpecificInitialisation()
     qApp->setFont(fn);
 #else
 #ifdef Q_WS_X11
-    QFont fn = qApp->font();
-    fn.setPointSize(fn.pointSize() + 2);
-    qApp->setFont(fn);
+//    QFont fn = qApp->font();
+//    fn.setPointSize(fn.pointSize() + 2);
+//    qApp->setFont(fn);
 #endif
 #endif
 }

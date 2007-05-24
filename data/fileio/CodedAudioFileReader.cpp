@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <QDir>
+#include <QMutexLocker>
 
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode) :
     m_cacheMode(cacheMode),
@@ -36,6 +37,8 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode) :
 
 CodedAudioFileReader::~CodedAudioFileReader()
 {
+    QMutexLocker locker(&m_cacheMutex);
+
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
     if (m_cacheFileReader) delete m_cacheFileReader;
     if (m_cacheWriteBuffer) delete[] m_cacheWriteBuffer;
@@ -50,6 +53,8 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::initialiseDecodeCache()
 {
+    QMutexLocker locker(&m_cacheMutex);
+
     if (m_cacheMode == CacheInTemporaryFile) {
 
         m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];
@@ -88,6 +93,8 @@ CodedAudioFileReader::initialiseDecodeCache()
 void
 CodedAudioFileReader::addSampleToDecodeCache(float sample)
 {
+    QMutexLocker locker(&m_cacheMutex);
+
     if (!m_initialised) return;
 
     switch (m_cacheMode) {
@@ -117,6 +124,8 @@ CodedAudioFileReader::addSampleToDecodeCache(float sample)
 void
 CodedAudioFileReader::finishDecodeCache()
 {
+    QMutexLocker locker(&m_cacheMutex);
+
     Profiler profiler("CodedAudioFileReader::finishDecodeCache", true);
 
     if (!m_initialised) {
@@ -164,6 +173,9 @@ void
 CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
                                            SampleBlock &frames) const
 {
+    //!!! we want to ensure this doesn't require a lock -- at the
+    // moment it does need one, but it doesn't have one...
+
     if (!m_initialised) return;
 
     switch (m_cacheMode) {
