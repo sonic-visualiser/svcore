@@ -73,7 +73,9 @@ AudioFileReaderFactory::createReader(QString path)
         MP3FileReader::getSupportedExtensions(extensions);
         if (extensions.find(ext) != extensions.end()) {
             reader = new MP3FileReader
-                (path, true, MP3FileReader::CacheInTemporaryFile);
+                (path,
+                 MP3FileReader::DecodeAtOnce,
+                 MP3FileReader::CacheInTemporaryFile);
         }
     }
 #endif
@@ -84,7 +86,9 @@ AudioFileReaderFactory::createReader(QString path)
         OggVorbisFileReader::getSupportedExtensions(extensions);
         if (extensions.find(ext) != extensions.end()) {
             reader = new OggVorbisFileReader
-                (path, true, OggVorbisFileReader::CacheInTemporaryFile);
+                (path, 
+                 OggVorbisFileReader::DecodeAtOnce,
+                 OggVorbisFileReader::CacheInTemporaryFile);
         }
     }
 #endif
@@ -119,7 +123,9 @@ AudioFileReaderFactory::createReader(QString path)
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
     reader = new OggVorbisFileReader
-        (path, true, OggVorbisFileReader::CacheInTemporaryFile);
+        (path,
+         OggVorbisFileReader::DecodeAtOnce,
+         OggVorbisFileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: Ogg file reader error: \""
@@ -134,7 +140,9 @@ AudioFileReaderFactory::createReader(QString path)
  
 #ifdef HAVE_MAD
     reader = new MP3FileReader
-        (path, true, MP3FileReader::CacheInTemporaryFile);
+        (path,
+         MP3FileReader::DecodeAtOnce,
+         MP3FileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: MP3 file reader error: \""

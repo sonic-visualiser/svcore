@@ -32,14 +32,16 @@
 
 static int instances = 0;
 
-OggVorbisFileReader::OggVorbisFileReader(QString path, bool showProgress,
+OggVorbisFileReader::OggVorbisFileReader(QString path,
+                                         DecodeMode decodeMode,
                                          CacheMode mode) :
     CodedAudioFileReader(mode),
     m_path(path),
     m_progress(0),
     m_fileSize(0),
     m_bytesRead(0),
-    m_cancelled(false)
+    m_cancelled(false),
+    m_decodeThread(0)
 {
     m_frameCount = 0;
     m_channelCount = 0;
@@ -52,8 +54,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path, bool showProgress,
     QFileInfo info(path);
     m_fileSize = info.size();
 
-    OGGZ *oggz;
-    if (!(oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
+    if (!(m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
 	m_error = QString("File %1 is not an OGG file.").arg(path);
 	return;
     }
@@ -62,33 +63,62 @@ OggVorbisFileReader::OggVorbisFileReader(QString path, bool showProgress,
     m_fishSound = fish_sound_new(FISH_SOUND_DECODE, &fsinfo);
 
     fish_sound_set_decoded_callback(m_fishSound, acceptFrames, this);
-    oggz_set_read_callback(oggz, -1, readPacket, this);
+    oggz_set_read_callback(m_oggz, -1, readPacket, this);
 
-    if (showProgress) {
+    if (decodeMode == DecodeAtOnce) {
+
 	m_progress = new QProgressDialog
 	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
-    }
 
-    while (oggz_read(oggz, 1024) > 0);
+        while (oggz_read(m_oggz, 1024) > 0);
+        
+        fish_sound_delete(m_fishSound);
+        m_fishSound = 0;
+        oggz_close(m_oggz);
+        m_oggz = 0;
 
-    fish_sound_delete(m_fishSound);
-    m_fishSound = 0;
-    oggz_close(oggz);
+        if (isDecodeCacheInitialised()) finishDecodeCache();
 
-    if (isDecodeCacheInitialised()) finishDecodeCache();
+        if (decodeMode == DecodeAtOnce) {
+            delete m_progress;
+            m_progress = 0;
+        }
 
-    if (showProgress) {
-	delete m_progress;
-	m_progress = 0;
+    } else {
+
+        while (oggz_read(m_oggz, 1024) > 0 &&
+               m_channelCount == 0);
+
+        if (m_channelCount > 0) {
+            m_decodeThread = new DecodeThread(this);
+            m_decodeThread->start();
+        }
     }
 }
 
 OggVorbisFileReader::~OggVorbisFileReader()
 {
     std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
+    if (m_decodeThread) {
+        m_decodeThread->wait();
+        delete m_decodeThread;
+    }
 }
+
+void
+OggVorbisFileReader::DecodeThread::run()
+{
+    while (oggz_read(m_reader->m_oggz, 1024) > 0);
+        
+    fish_sound_delete(m_reader->m_fishSound);
+    m_reader->m_fishSound = 0;
+    oggz_close(m_reader->m_oggz);
+    m_reader->m_oggz = 0;
+    
+    if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
+} 
 
 int
 OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
@@ -144,7 +174,6 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
 	for (long i = 0; i < nframes; ++i) {
 	    for (size_t c = 0; c < reader->m_channelCount; ++c) {
                 reader->addSampleToDecodeCache(frames[c][i]);
-//		reader->m_data.push_back(frames[c][i]);
 	    }
 	}
 

@@ -19,6 +19,7 @@
 #include "AudioFileReader.h"
 
 #include <sndfile.h>
+#include <QMutex>
 
 class WavFileReader;
 
@@ -43,6 +44,7 @@ protected:
     void finishDecodeCache();
     bool isDecodeCacheInitialised() const { return m_initialised; }
 
+    QMutex m_cacheMutex;
     CacheMode m_cacheMode;
     SampleBlock m_data;
     bool m_initialised;

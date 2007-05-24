@@ -20,6 +20,7 @@
 
 #include "CodedAudioFileReader.h"
 
+#include "base/Thread.h"
 #include <mad.h>
 
 #include <set>
@@ -29,19 +30,31 @@ class QProgressDialog;
 class MP3FileReader : public CodedAudioFileReader
 {
 public:
-    MP3FileReader(QString path, bool showProgress, CacheMode cacheMode);
+    enum DecodeMode {
+        DecodeAtOnce, // decode the file on construction, with progress dialog
+        DecodeThreaded // decode in a background thread after construction
+    };
+
+    MP3FileReader(QString path, DecodeMode decodeMode, CacheMode cacheMode);
     virtual ~MP3FileReader();
 
     virtual QString getError() const { return m_error; }
 
     static void getSupportedExtensions(std::set<QString> &extensions);
     
+    virtual bool isUpdating() const {
+        return m_decodeThread && m_decodeThread->isRunning();
+    }
+
 protected:
     QString m_path;
     QString m_error;
     size_t m_fileSize;
     double m_bitrateNum;
     size_t m_bitrateDenom;
+    bool m_done;
+
+    unsigned char *m_filebuffer;
 
     QProgressDialog *m_progress;
     bool m_cancelled;
@@ -59,6 +72,18 @@ protected:
     static enum mad_flow input(void *, struct mad_stream *);
     static enum mad_flow output(void *, struct mad_header const *, struct mad_pcm *);
     static enum mad_flow error(void *, struct mad_stream *, struct mad_frame *);
+
+    class DecodeThread : public Thread
+    {
+    public:
+        DecodeThread(MP3FileReader *reader) : m_reader(reader) { }
+        virtual void run();
+
+    protected:
+        MP3FileReader *m_reader;
+    };
+
+    DecodeThread *m_decodeThread;
 };
 
 #endif
