@@ -18,26 +18,35 @@
 
 #include <iostream>
 
-FFTMemoryCache::FFTMemoryCache() :
+FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
     m_width(0),
     m_height(0),
     m_magnitude(0),
     m_phase(0),
-    m_factor(0)
+    m_fmagnitude(0),
+    m_fphase(0),
+    m_factor(0),
+    m_storageType(storageType)
 {
+    std::cerr << "FFTMemoryCache[" << this << "]::FFTMemoryCache (type "
+              << m_storageType << ")" << std::endl;
 }
 
 FFTMemoryCache::~FFTMemoryCache()
 {
-//    std::cerr << "FFTMemoryCache[" << this << "]::~Cache" << std::endl;
+//    std::cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << std::endl;
 
     for (size_t i = 0; i < m_width; ++i) {
 	if (m_magnitude && m_magnitude[i]) free(m_magnitude[i]);
 	if (m_phase && m_phase[i]) free(m_phase[i]);
+	if (m_fmagnitude && m_fmagnitude[i]) free(m_fmagnitude[i]);
+	if (m_fphase && m_fphase[i]) free(m_fphase[i]);
     }
 
     if (m_magnitude) free(m_magnitude);
     if (m_phase) free(m_phase);
+    if (m_fmagnitude) free(m_fmagnitude);
+    if (m_fphase) free(m_fphase);
     if (m_factor) free(m_factor);
 }
 
@@ -48,8 +57,14 @@ FFTMemoryCache::resize(size_t width, size_t height)
     
     if (m_width == width && m_height == height) return;
 
-    resize(m_magnitude, width, height);
-    resize(m_phase, width, height);
+    if (m_storageType == Compact) {
+        resize(m_magnitude, width, height);
+        resize(m_phase, width, height);
+    } else {
+        resize(m_fmagnitude, width, height);
+        resize(m_fphase, width, height);
+    }
+
     m_colset.resize(width);
 
     m_factor = (float *)realloc(m_factor, width * sizeof(float));
@@ -85,14 +100,53 @@ FFTMemoryCache::resize(uint16_t **&array, size_t width, size_t height)
 }
 
 void
+FFTMemoryCache::resize(float **&array, size_t width, size_t height)
+{
+    for (size_t i = width; i < m_width; ++i) {
+	free(array[i]);
+    }
+
+    if (width != m_width) {
+	array = (float **)realloc(array, width * sizeof(float *));
+	if (!array) throw std::bad_alloc();
+	MUNLOCK(array, width * sizeof(float *));
+    }
+
+    for (size_t i = m_width; i < width; ++i) {
+	array[i] = 0;
+    }
+
+    for (size_t i = 0; i < width; ++i) {
+	array[i] = (float *)realloc(array[i], height * sizeof(float));
+	if (!array[i]) throw std::bad_alloc();
+	MUNLOCK(array[i], height * sizeof(float));
+    }
+}
+
+void
 FFTMemoryCache::reset()
 {
-    for (size_t x = 0; x < m_width; ++x) {
-	for (size_t y = 0; y < m_height; ++y) {
-	    m_magnitude[x][y] = 0;
-	    m_phase[x][y] = 0;
-	}
-	m_factor[x] = 1.0;
+    switch (m_storageType) {
+
+    case Compact:
+        for (size_t x = 0; x < m_width; ++x) {
+            for (size_t y = 0; y < m_height; ++y) {
+                m_magnitude[x][y] = 0;
+                m_phase[x][y] = 0;
+            }
+            m_factor[x] = 1.0;
+        }
+        break;
+        
+    case Polar:
+        for (size_t x = 0; x < m_width; ++x) {
+            for (size_t y = 0; y < m_height; ++y) {
+                m_fmagnitude[x][y] = 0;
+                m_fphase[x][y] = 0;
+            }
+            m_factor[x] = 1.0;
+        }
+        break;
     }
 }	    
 
@@ -101,21 +155,38 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
 {
     float max = 0.0;
 
-    for (size_t y = 0; y < m_height; ++y) {
-        float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
-        float phase = atan2f(imags[y], reals[y]);
-        phase = princargf(phase);
-        reals[y] = mag;
-        imags[y] = phase;
-        if (mag > max) max = mag;
-    }
+    switch (m_storageType) {
+
+    case Compact:
+    case Polar:
+        for (size_t y = 0; y < m_height; ++y) {
+            float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
+            float phase = atan2f(imags[y], reals[y]);
+            phase = princargf(phase);
+            reals[y] = mag;
+            imags[y] = phase;
+            if (mag > max) max = mag;
+        }
+        break;
+    };
 
     setColumnAt(x, reals, imags, max);
 }
 
 size_t
-FFTMemoryCache::getCacheSize(size_t width, size_t height)
+FFTMemoryCache::getCacheSize(size_t width, size_t height, StorageType type)
 {
-    return (height * 2 + 1) * width * sizeof(uint16_t);
+    size_t sz = 0;
+
+    switch (type) {
+
+    case Compact:
+        sz = (height * 2 + 1) * width * sizeof(uint16_t);
+
+    case Polar:
+        sz = (height * 2 + 1) * width * sizeof(float);
+    }
+
+    return sz;
 }
 

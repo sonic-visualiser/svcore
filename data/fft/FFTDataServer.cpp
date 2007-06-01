@@ -534,9 +534,11 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     StorageAdviser::Criteria criteria;
     if (m_polar) {
         criteria = StorageAdviser::Criteria
-            (StorageAdviser::SpeedCritical | StorageAdviser::LongRetentionLikely);
+            (StorageAdviser::SpeedCritical |
+             StorageAdviser::LongRetentionLikely);
     } else {
-        criteria = StorageAdviser::Criteria(StorageAdviser::PrecisionCritical);
+        criteria = StorageAdviser::Criteria
+            (StorageAdviser::PrecisionCritical);
     }
 
     int cells = m_width * m_height;
@@ -566,10 +568,26 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
             StorageAdviser::recommend(criteria, minimumSize, maximumSize);
     }
 
-//    std::cerr << "Recommendation was: " << recommendation << std::endl;
+    std::cerr << "Recommendation was: " << recommendation << std::endl;
 
-    m_memoryCache = ((recommendation & StorageAdviser::UseMemory) ||
-                     (recommendation & StorageAdviser::PreferMemory));
+    m_memoryCache = false;
+
+    if (recommendation & StorageAdviser::UseMemory) {
+        
+        // can't use disc, must use memory
+
+        m_memoryCache = true;
+
+    } else if (recommendation & StorageAdviser::PreferMemory) {
+
+        // if memory is recommended, we use it if we're using polar
+        // coordinates; but we don't have a native rectangular memory
+        // cache, so we might as well use disc if we want rectangular
+        // coordinates rather than have all the bother of converting
+        // every time
+
+        if (m_polar) m_memoryCache = true;
+    }
 
     m_compactCache = (recommendation & StorageAdviser::ConserveSpace);
     
@@ -763,21 +781,27 @@ FFTDataServer::getCacheAux(size_t c)
     }
 
     try {
-        
+
         if (m_memoryCache) {
 
-            cache = new FFTMemoryCache();
+            cache = new FFTMemoryCache
+                (m_compactCache ? FFTMemoryCache::Compact :
+                                  FFTMemoryCache::Polar);
 
         } else if (m_compactCache) {
 
-            cache = new FFTFileCache(name, MatrixFile::ReadWrite,
-                                     FFTFileCache::Compact);
+            cache = new FFTFileCache
+                (name,
+                 MatrixFile::ReadWrite,
+                 FFTFileCache::Compact);
 
         } else {
 
-            cache = new FFTFileCache(name, MatrixFile::ReadWrite,
-                                     m_polar ? FFTFileCache::Polar :
-                                               FFTFileCache::Rectangular);
+            cache = new FFTFileCache
+                (name,
+                 MatrixFile::ReadWrite,
+                 m_polar ? FFTFileCache::Polar :
+                           FFTFileCache::Rectangular);
         }
 
         cache->resize(width, m_height);
@@ -932,10 +956,8 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 #endif
         fillColumn(x);
     }        
-    float magnitude = cache->getMagnitudeAt(col, y);
-    float phase = cache->getPhaseAt(col, y);
-    real = magnitude * cosf(phase);
-    imaginary = magnitude * sinf(phase);
+
+    cache->getValuesAt(col, y, real, imaginary);
 }
 
 bool
@@ -1055,23 +1077,13 @@ FFTDataServer::fillColumn(size_t x)
 
     for (size_t i = 0; i <= m_fftSize/2; ++i) {
 
-	fftsample mag = sqrtf(m_fftOutput[i][0] * m_fftOutput[i][0] +
-                              m_fftOutput[i][1] * m_fftOutput[i][1]);
-	mag /= m_windowSize / 2;
-
-	if (mag > factor) factor = mag;
-
-	fftsample phase = atan2f(m_fftOutput[i][1], m_fftOutput[i][0]);
-	phase = princargf(phase);
-
-        m_workbuffer[i] = mag;
-        m_workbuffer[i + m_fftSize/2+1] = phase;
+        m_workbuffer[i] = m_fftOutput[i][0];
+        m_workbuffer[i + m_fftSize/2 + 1] = m_fftOutput[i][1];
     }
 
     cache->setColumnAt(col,
                        m_workbuffer,
-                       m_workbuffer + m_fftSize/2+1,
-                       factor);
+                       m_workbuffer + m_fftSize/2+1);
 
     if (m_suspended) {
 //        std::cerr << "FFTDataServer::fillColumn(" << x << "): calling resume" << std::endl;

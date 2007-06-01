@@ -42,7 +42,12 @@
 class FFTMemoryCache : public FFTCache
 {
 public:
-    FFTMemoryCache(); // of size zero, call resize() before using
+    enum StorageType {
+        Compact, // 16 bits normalized polar
+        Polar, // floating point mag+phase
+    };
+
+    FFTMemoryCache(StorageType storageType); // of size zero, call resize() before using
     virtual ~FFTMemoryCache();
 	
     virtual size_t getWidth() const { return m_width; }
@@ -56,7 +61,8 @@ public:
     }
     
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const {
-        return float(m_magnitude[x][y]) / 65535.0;
+        if (m_storageType == Polar) return m_fmagnitude[x][y];
+        else return float(m_magnitude[x][y]) / 65535.0;
     }
     
     virtual float getMaximumMagnitudeAt(size_t x) const {
@@ -64,6 +70,7 @@ public:
     }
     
     virtual float getPhaseAt(size_t x, size_t y) const {
+        if (m_storageType == Polar) return m_fphase[x][y];
         int16_t i = (int16_t)m_phase[x][y];
         return (float(i) / 32767.0) * M_PI;
     }
@@ -86,14 +93,16 @@ public:
     
     virtual void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) {
         if (x < m_width && y < m_height) {
-            m_magnitude[x][y] = uint16_t(norm * 65535.0);
+            if (m_storageType == Polar) m_fmagnitude[x][y] = norm;
+            else m_magnitude[x][y] = uint16_t(norm * 65535.0);
         }
     }
     
     virtual void setPhaseAt(size_t x, size_t y, float phase) {
         // phase in range -pi -> pi
         if (x < m_width && y < m_height) {
-            m_phase[x][y] = uint16_t(int16_t((phase * 32767) / M_PI));
+            if (m_storageType == Polar) m_fphase[x][y] = phase;
+            else m_phase[x][y] = uint16_t(int16_t((phase * 32767) / M_PI));
         }
     }
     
@@ -112,17 +121,21 @@ public:
 
     virtual void setColumnAt(size_t x, float *reals, float *imags);
 
-    static size_t getCacheSize(size_t width, size_t height);
+    static size_t getCacheSize(size_t width, size_t height, StorageType type);
 
 private:
     size_t m_width;
     size_t m_height;
     uint16_t **m_magnitude;
     uint16_t **m_phase;
+    float **m_fmagnitude;
+    float **m_fphase;
     float *m_factor;
+    StorageType m_storageType;
     ResizeableBitset m_colset;
 
     void resize(uint16_t **&, size_t, size_t);
+    void resize(float **&, size_t, size_t);
 };
 
 
