@@ -31,7 +31,8 @@
 
 MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode) :
     CodedAudioFileReader(mode),
-    m_path(path)
+    m_path(path),
+    m_decodeThread(0)
 {
     m_frameCount = 0;
     m_channelCount = 0;
