@@ -40,6 +40,8 @@ public:
     
     static void getSupportedExtensions(std::set<QString> &extensions);
 
+    virtual int getDecodeCompletion() const { return 100; }
+
     bool isUpdating() const { return m_updating; }
 
     void updateFrameCount();

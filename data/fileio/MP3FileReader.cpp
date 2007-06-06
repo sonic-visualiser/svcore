@@ -42,6 +42,7 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode
     m_bitrateDenom = 0;
     m_frameCount = 0;
     m_cancelled = false;
+    m_completion = 0;
     m_done = false;
     m_progress = 0;
 
@@ -127,6 +128,7 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode
 MP3FileReader::~MP3FileReader()
 {
     if (m_decodeThread) {
+        m_cancelled = true;
         m_decodeThread->wait();
         delete m_decodeThread;
     }
@@ -145,6 +147,7 @@ MP3FileReader::DecodeThread::run()
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
 
     m_reader->m_done = true;
+    m_reader->m_completion = 100;
 } 
 
 bool
@@ -210,10 +213,11 @@ MP3FileReader::accept(struct mad_header const *header,
         double duration = double(m_fileSize * 8) / bitrate;
         double elapsed = double(m_frameCount) / m_sampleRate;
         double percent = ((elapsed * 100.0) / duration);
+        int progress = int(percent);
+        if (progress < 1) progress = 1;
+        if (progress > 99) progress = 99;
+        m_completion = progress;
         if (m_progress) {
-            int progress = int(percent);
-            if (progress < 1) progress = 1;
-            if (progress > 99) progress = 99;
             if (progress > m_progress->value()) {
                 m_progress->setValue(progress);
                 m_progress->show();

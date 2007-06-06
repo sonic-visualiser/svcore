@@ -96,7 +96,15 @@ WaveFileModel::isReady(int *completion) const
 {
     bool ready = (isOK() && (m_fillThread == 0));
     double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
-    if (completion) *completion = int(c * 100.0 + 0.01);
+    if (completion) {
+        *completion = int(c * 100.0 + 0.01);
+        if (m_reader) {
+            int decodeCompletion = m_reader->getDecodeCompletion();
+//            std::cerr << "decodeCompletion " << decodeCompletion << ", completion " << *completion << std::endl;
+//            if (decodeCompletion < *completion) *completion = decodeCompletion;
+            if (decodeCompletion < 100) *completion = decodeCompletion;
+        }
+    }
 #ifdef DEBUG_WAVE_FILE_MODEL
     std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
 #endif
@@ -486,9 +494,13 @@ WaveFileModel::RangeCacheFillThread::run()
 
         while (frame < m_frameCount) {
 
+//            std::cerr << "WaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << std::endl;
+
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 
             m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
+
+//            std::cerr << "block is " << block.size() << std::endl;
 
             for (size_t i = 0; i < readBlockSize; ++i) {
 		
@@ -538,9 +550,12 @@ WaveFileModel::RangeCacheFillThread::run()
             m_fillExtent = frame;
         }
 
+//        std::cerr << "WaveFileModel: inner loop ended" << std::endl;
+
         first = false;
         if (m_model.m_exiting) break;
         if (updating) {
+//            std::cerr << "sleeping..." << std::endl;
             sleep(1);
         }
     }

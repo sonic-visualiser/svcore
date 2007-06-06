@@ -42,6 +42,10 @@ public:
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const = 0;
 
+    // only subclasses that do not know exactly how long the audio
+    // file is until it's been completely decoded should implement this
+    virtual int getDecodeCompletion() const { return 100; } // %
+
     virtual bool isUpdating() const { return false; }
 
 signals:

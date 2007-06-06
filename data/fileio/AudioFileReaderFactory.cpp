@@ -74,7 +74,7 @@ AudioFileReaderFactory::createReader(QString path)
         if (extensions.find(ext) != extensions.end()) {
             reader = new MP3FileReader
                 (path,
-                 MP3FileReader::DecodeAtOnce,
+                 MP3FileReader::DecodeThreaded,
                  MP3FileReader::CacheInTemporaryFile);
         }
     }
@@ -87,7 +87,7 @@ AudioFileReaderFactory::createReader(QString path)
         if (extensions.find(ext) != extensions.end()) {
             reader = new OggVorbisFileReader
                 (path, 
-                 OggVorbisFileReader::DecodeAtOnce,
+                 OggVorbisFileReader::DecodeThreaded,
                  OggVorbisFileReader::CacheInTemporaryFile);
         }
     }
@@ -124,7 +124,7 @@ AudioFileReaderFactory::createReader(QString path)
 #ifdef HAVE_FISHSOUND
     reader = new OggVorbisFileReader
         (path,
-         OggVorbisFileReader::DecodeAtOnce,
+         OggVorbisFileReader::DecodeThreaded,
          OggVorbisFileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
@@ -141,7 +141,7 @@ AudioFileReaderFactory::createReader(QString path)
 #ifdef HAVE_MAD
     reader = new MP3FileReader
         (path,
-         MP3FileReader::DecodeAtOnce,
+         MP3FileReader::DecodeThreaded,
          MP3FileReader::CacheInTemporaryFile);
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
