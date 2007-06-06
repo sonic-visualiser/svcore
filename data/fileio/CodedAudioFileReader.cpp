@@ -73,10 +73,27 @@ CodedAudioFileReader::initialiseDecodeCache()
             m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
                                           SFM_WRITE, &fileInfo);
 
-            if (!m_cacheFileWritePtr) {
+            if (m_cacheFileWritePtr) {
+
+                //!!! really want to do this now only if we're in a
+                //threaded mode -- creating the reader later if we're
+                //not threaded -- but we don't have access to that
+                //information here
+
+                m_cacheFileReader = new WavFileReader(m_cacheFileName);
+
+                if (!m_cacheFileReader->isOK()) {
+                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
+                    delete m_cacheFileReader;
+                    m_cacheFileReader = 0;
+                    m_cacheMode = CacheInMemory;
+                    sf_close(m_cacheFileWritePtr);
+                }
+            } else {
                 std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName.toStdString() << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
                 m_cacheMode = CacheInMemory;
             }
+
         } catch (DirectoryCreationFailed f) {
             std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << std::endl;
             m_cacheMode = CacheInMemory;
@@ -112,6 +129,11 @@ CodedAudioFileReader::addSampleToDecodeCache(float sample)
                             m_cacheWriteBufferSize);
 
             m_cacheWriteBufferIndex = 0;
+
+            if (m_cacheWriteBufferIndex % 10240 == 0 &&
+                m_cacheFileReader) {
+                m_cacheFileReader->updateFrameCount();
+            }
         }
         break;
 
@@ -154,13 +176,16 @@ CodedAudioFileReader::finishDecodeCache()
         sf_close(m_cacheFileWritePtr);
         m_cacheFileWritePtr = 0;
 
+        m_cacheFileReader->updateFrameCount();
+/*
         m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
         if (!m_cacheFileReader->isOK()) {
             std::cerr << "ERROR: CodedAudioFileReader::finishDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
             delete m_cacheFileReader;
             m_cacheFileReader = 0;
-        }
+        }*/
+
         break;
 
     case CacheInMemory:
@@ -176,7 +201,10 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
     //!!! we want to ensure this doesn't require a lock -- at the
     // moment it does need one, but it doesn't have one...
 
-    if (!m_initialised) return;
+    if (!m_initialised) {
+        std::cerr << "CodedAudioFileReader::getInterleavedFrames: not initialised" << std::endl;
+        return;
+    }
 
     switch (m_cacheMode) {
 

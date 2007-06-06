@@ -42,6 +42,8 @@ public:
 
     static void getSupportedExtensions(std::set<QString> &extensions);
     
+    virtual int getDecodeCompletion() const { return m_completion; }
+
     virtual bool isUpdating() const {
         return m_decodeThread && m_decodeThread->isRunning();
     }
@@ -52,6 +54,7 @@ protected:
     size_t m_fileSize;
     double m_bitrateNum;
     size_t m_bitrateDenom;
+    int m_completion;
     bool m_done;
 
     unsigned char *m_filebuffer;

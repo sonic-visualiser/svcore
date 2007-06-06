@@ -41,6 +41,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     m_fileSize(0),
     m_bytesRead(0),
     m_cancelled(false),
+    m_completion(0),
     m_decodeThread(0)
 {
     m_frameCount = 0;
@@ -102,6 +103,7 @@ OggVorbisFileReader::~OggVorbisFileReader()
 {
     std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
     if (m_decodeThread) {
+        m_cancelled = true;
         m_decodeThread->wait();
         delete m_decodeThread;
     }
@@ -118,6 +120,7 @@ OggVorbisFileReader::DecodeThread::run()
     m_reader->m_oggz = 0;
     
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
+    m_reader->m_completion = 100;
 } 
 
 int
@@ -130,13 +133,15 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
     fish_sound_decode(fs, packet->packet, packet->bytes);
 
     reader->m_bytesRead += packet->bytes;
+
+    // The number of bytes read by this function is smaller than
+    // the file size because of the packet headers
+    int progress = lrint(double(reader->m_bytesRead) * 114 /
+                         double(reader->m_fileSize));
+    if (progress > 99) progress = 99;
+    reader->m_completion = progress;
     
     if (reader->m_fileSize > 0 && reader->m_progress) {
-	// The number of bytes read by this function is smaller than
-	// the file size because of the packet headers
-	int progress = lrint(double(reader->m_bytesRead) * 114 /
-			     double(reader->m_fileSize));
-	if (progress > 99) progress = 99;
 	if (progress > reader->m_progress->value()) {
 	    reader->m_progress->setValue(progress);
 	    reader->m_progress->show();
@@ -146,7 +151,7 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
 		reader->m_cancelled = true;
 	    }
 	}
-    } 
+    }
 
     if (reader->m_cancelled) return 1;
     return 0;

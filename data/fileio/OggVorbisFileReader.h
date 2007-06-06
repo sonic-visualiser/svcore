@@ -45,6 +45,8 @@ public:
 
     static void getSupportedExtensions(std::set<QString> &extensions);
 
+    virtual int getDecodeCompletion() const { return m_completion; }
+
     virtual bool isUpdating() const {
         return m_decodeThread && m_decodeThread->isRunning();
     }
@@ -59,6 +61,7 @@ protected:
     size_t m_fileSize;
     size_t m_bytesRead;
     bool m_cancelled;
+    int m_completion;
  
     static int readPacket(OGGZ *, ogg_packet *, long, void *);
     static int acceptFrames(FishSound *, float **, long, void *);
