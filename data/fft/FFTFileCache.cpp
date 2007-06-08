@@ -26,7 +26,7 @@
 // The underlying matrix has height (m_height * 2 + 1).  In each
 // column we store magnitude at [0], [2] etc and phase at [1], [3]
 // etc, and then store the normalization factor (maximum magnitude) at
-// [m_height * 2].
+// [m_height * 2].  In compact mode, the factor takes two cells.
 
 FFTFileCache::FFTFileCache(QString fileBase, MatrixFile::Mode mode,
                            StorageType storageType) :
@@ -38,7 +38,8 @@ FFTFileCache::FFTFileCache(QString fileBase, MatrixFile::Mode mode,
           (fileBase, mode, 
            storageType == Compact ? sizeof(uint16_t) : sizeof(float),
            mode == MatrixFile::ReadOnly)),
-    m_storageType(storageType)
+    m_storageType(storageType),
+    m_factorSize(storageType == Compact ? 2 : 1)
 {
 //    std::cerr << "FFTFileCache: storage type is " << (storageType == Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << std::endl;
 }
@@ -60,7 +61,7 @@ size_t
 FFTFileCache::getHeight() const
 {
     size_t mh = m_mfc->getHeight();
-    if (mh > 0) return (mh - 1) / 2;
+    if (mh > m_factorSize) return (mh - m_factorSize) / 2;
     else return 0;
 }
 
@@ -69,7 +70,7 @@ FFTFileCache::resize(size_t width, size_t height)
 {
     QMutexLocker locker(&m_writeMutex);
 
-    m_mfc->resize(width, height * 2 + 1);
+    m_mfc->resize(width, height * 2 + m_factorSize);
     if (m_readbuf) {
         delete[] m_readbuf;
         m_readbuf = 0;
@@ -77,7 +78,7 @@ FFTFileCache::resize(size_t width, size_t height)
     if (m_writebuf) {
         delete[] m_writebuf;
     }
-    m_writebuf = new char[(height * 2 + 1) * m_mfc->getCellSize()];
+    m_writebuf = new char[(height * 2 + m_factorSize) * m_mfc->getCellSize()];
 }
 
 void
@@ -229,20 +230,12 @@ FFTFileCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
         break;
     }
 
-    static float maxFactor = 0;
-    if (factor > maxFactor) maxFactor = factor;
-//    std::cerr << "Normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
+//    static float maxFactor = 0;
+//    if (factor > maxFactor) maxFactor = factor;
+//    std::cerr << "Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
 
-    if (m_storageType == Compact) {
-        if (factor < 0.f || factor > 1.f) {
-            std::cerr << "WARNING: FFTFileCache::setColumnAt: Normalization factor " << factor << " out of range" << std::endl;
-            if (factor < 0.f) factor = 0.f;
-            if (factor > 1.f) factor = 1.f;
-        }
-        ((uint16_t *)m_writebuf)[h * 2] = (uint16_t)(factor * 65535.0);
-    } else {
-        ((float *)m_writebuf)[h * 2] = factor;
-    }
+    setNormalizationFactorToWritebuf(factor);
+
     m_mfc->setColumnAt(x, m_writebuf);
 }
 
@@ -253,19 +246,19 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
 
     size_t h = getHeight();
 
-    float max = 0.0f;
+    float factor = 0.0f;
 
     switch (m_storageType) {
 
     case Compact:
         for (size_t y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
-            if (mag > max) max = mag;
+            if (mag > factor) factor = mag;
         }
         for (size_t y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             float phase = princargf(atan2f(imag[y], real[y]));
-            ((uint16_t *)m_writebuf)[y * 2] = uint16_t((mag / max) * 65535.0);
+            ((uint16_t *)m_writebuf)[y * 2] = uint16_t((mag / factor) * 65535.0);
             ((uint16_t *)m_writebuf)[y * 2 + 1] = uint16_t(int16_t((phase * 32767) / M_PI));
         }
         break;
@@ -275,28 +268,33 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
             ((float *)m_writebuf)[y * 2] = real[y];
             ((float *)m_writebuf)[y * 2 + 1] = imag[y];
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
-            if (mag > max) max = mag;
+            if (mag > factor) factor = mag;
         }
         break;
 
     case Polar:
         for (size_t y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
-            if (mag > max) max = mag;
+            if (mag > factor) factor = mag;
             ((float *)m_writebuf)[y * 2] = mag;
             ((float *)m_writebuf)[y * 2 + 1] = princargf(atan2f(imag[y], real[y]));
         }
         break;
     }
 
-    ((float *)m_writebuf)[h * 2] = max;
+//    static float maxFactor = 0;
+//    if (factor > maxFactor) maxFactor = factor;
+//    std::cerr << "[RI] Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
+
+    setNormalizationFactorToWritebuf(factor);
+
     m_mfc->setColumnAt(x, m_writebuf);
 }
 
 size_t
 FFTFileCache::getCacheSize(size_t width, size_t height, StorageType type)
 {
-    return (height * 2 + 1) * width *
+    return (height * 2 + (type == Compact ? 2 : 1)) * width *
         (type == Compact ? sizeof(uint16_t) : sizeof(float)) +
         2 * sizeof(size_t); // matrix file header size
 }

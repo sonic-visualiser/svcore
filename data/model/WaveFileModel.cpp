@@ -96,14 +96,22 @@ WaveFileModel::isReady(int *completion) const
 {
     bool ready = (isOK() && (m_fillThread == 0));
     double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
+    static int prevCompletion = 0;
     if (completion) {
         *completion = int(c * 100.0 + 0.01);
         if (m_reader) {
             int decodeCompletion = m_reader->getDecodeCompletion();
-//            std::cerr << "decodeCompletion " << decodeCompletion << ", completion " << *completion << std::endl;
-//            if (decodeCompletion < *completion) *completion = decodeCompletion;
-            if (decodeCompletion < 100) *completion = decodeCompletion;
+            if (decodeCompletion < 90) *completion = decodeCompletion;
+            else *completion = std::min(*completion, decodeCompletion);
         }
+        if (*completion != 0 &&
+            *completion != 100 &&
+            prevCompletion != 0 &&
+            prevCompletion > *completion) {
+            // just to avoid completion going backwards
+            *completion = prevCompletion;
+        }
+        prevCompletion = *completion;
     }
 #ifdef DEBUG_WAVE_FILE_MODEL
     std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
