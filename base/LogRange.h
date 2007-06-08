@@ -33,6 +33,12 @@ public:
      * value if the absolute value is zero.
      */
     static float map(float value, float thresh = -10);
+
+    /**
+     * Map a value from the logarithmic range back again.  This just
+     * means taking the value'th power of ten.
+     */
+    static float unmap(float value);
 };
 
 #endif

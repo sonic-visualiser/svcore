@@ -129,11 +129,11 @@ CodedAudioFileReader::addSampleToDecodeCache(float sample)
                             m_cacheWriteBufferSize);
 
             m_cacheWriteBufferIndex = 0;
+        }
 
-            if (m_cacheWriteBufferIndex % 10240 == 0 &&
-                m_cacheFileReader) {
-                m_cacheFileReader->updateFrameCount();
-            }
+        if (m_cacheWriteBufferIndex % 10240 == 0 &&
+            m_cacheFileReader) {
+            m_cacheFileReader->updateFrameCount();
         }
         break;
 

@@ -97,18 +97,47 @@ protected:
     void populateReadBuf(size_t x) const;
 
     float getNormalizationFactor(size_t col) const {
+        size_t h = m_mfc->getHeight();
+        if (h < m_factorSize) return 0;
         if (m_storageType != Compact) {
-            return getFromReadBufStandard(col, m_mfc->getHeight() - 1);
+            return getFromReadBufStandard(col, h - 1);
         } else {
-            float factor;
-            factor = getFromReadBufCompactUnsigned(col, m_mfc->getHeight() - 1);
-            return factor / 65535.0;
+            union {
+                float f;
+                uint16_t u[2];
+            } factor;
+            if (!m_readbuf ||
+                !(m_readbufCol == col ||
+                  (m_readbufWidth > 1 && m_readbufCol+1 == col))) {
+                populateReadBuf(col);
+            }
+            size_t ix = (col - m_readbufCol) * m_mfc->getHeight() + h;
+            factor.u[0] = ((uint16_t *)m_readbuf)[ix - 2];
+            factor.u[1] = ((uint16_t *)m_readbuf)[ix - 1];
+            return factor.f;
         }
     }
+
+    void setNormalizationFactorToWritebuf(float newfactor) {
+        size_t h = m_mfc->getHeight();
+        if (h < m_factorSize) return;
+        if (m_storageType != Compact) {
+            ((float *)m_writebuf)[h - 1] = newfactor;
+        } else {
+            union {
+                float f;
+                uint16_t u[2];
+            } factor;
+            factor.f = newfactor;
+            ((uint16_t *)m_writebuf)[h - 2] = factor.u[0];
+            ((uint16_t *)m_writebuf)[h - 1] = factor.u[1];
+        }
+    }            
 
     MatrixFile *m_mfc;
     QMutex m_writeMutex;
     StorageType m_storageType;
+    size_t m_factorSize;
 };
 
 #endif

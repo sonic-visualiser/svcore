@@ -58,3 +58,8 @@ LogRange::map(float value, float thresh)
     return log10f(fabsf(value));
 }
 
+float
+LogRange::unmap(float value)
+{
+    return powf(10.0, value);
+}
