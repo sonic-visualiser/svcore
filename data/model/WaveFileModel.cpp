@@ -456,6 +456,9 @@ WaveFileModel::cacheFilled()
     delete m_updateTimer;
     m_updateTimer = 0;
     m_mutex.unlock();
+    if (getEndFrame() > m_lastFillExtent) {
+        emit modelChanged(m_lastFillExtent, getEndFrame());
+    }
     emit modelChanged();
 #ifdef DEBUG_WAVE_FILE_MODEL
     cerr << "WaveFileModel::cacheFilled" << endl;
