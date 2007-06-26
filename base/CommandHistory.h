@@ -88,7 +88,7 @@ public:
      * and pre-executed commands.
      *
      * If bundle is true, the command will be a candidate for bundling
-     * with any adjacent bundeable commands that have the same name,
+     * with any adjacent bundleable commands that have the same name,
      * into a single compound command.  This is useful for small
      * commands that may be executed repeatedly altering the same data
      * (e.g. type text, set a parameter) whose number and extent is
