@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = fftw3f sndfile mad oggz fishsound
+SV_UNIT_PACKAGES = fftw3f sndfile mad id3tag oggz fishsound
 load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions

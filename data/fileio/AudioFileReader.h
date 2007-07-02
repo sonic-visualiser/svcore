@@ -34,6 +34,13 @@ public:
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
     
+    /**
+     * Return the title of the work in the audio file, if known.  This
+     * may be implemented by subclasses that support file tagging.
+     * This is not the same thing as the file name.
+     */
+    virtual QString getTitle() const { return ""; }
+
     /** 
      * The subclass implementations of this function must be
      * thread-safe -- that is, safe to call from multiple threads with

@@ -43,6 +43,8 @@ public:
 
     virtual QString getError() const { return m_error; }
 
+    virtual QString getTitle() const { return m_title; }
+    
     static void getSupportedExtensions(std::set<QString> &extensions);
 
     virtual int getDecodeCompletion() const { return m_completion; }
@@ -54,12 +56,14 @@ public:
 protected:
     QString m_path;
     QString m_error;
+    QString m_title;
 
     OGGZ *m_oggz;
     FishSound *m_fishSound;
     QProgressDialog *m_progress;
     size_t m_fileSize;
     size_t m_bytesRead;
+    bool m_commentsRead;
     bool m_cancelled;
     int m_completion;
  

@@ -25,6 +25,10 @@
 
 #include <iostream>
 
+#ifdef HAVE_ID3TAG
+#include <id3tag.h>
+#endif
+
 #include <QApplication>
 #include <QFileInfo>
 #include <QProgressDialog>
@@ -95,6 +99,8 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode
 
     ::close(fd);
 
+    loadTags();
+
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
@@ -132,6 +138,43 @@ MP3FileReader::~MP3FileReader()
         m_decodeThread->wait();
         delete m_decodeThread;
     }
+}
+
+void
+MP3FileReader::loadTags()
+{
+    m_title = "";
+
+#ifdef HAVE_ID3TAG
+
+    id3_file *file = id3_file_open(m_path.toLocal8Bit().data(),
+                                   ID3_FILE_MODE_READONLY);
+    if (!file) return;
+
+    id3_tag *tag = id3_file_tag(file);
+
+    if (tag) {
+        id3_frame *frame = id3_tag_findframe(tag, "TIT2", 0); // work title
+
+        if (frame && frame->nfields >= 2) {
+            unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
+
+            if (nstrings > 0) {
+                id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
+
+                if (ustr) {
+                    id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
+                    if (u8str) {
+                        m_title = QString::fromUtf8((const char *)u8str);
+                        free(u8str);
+                    }
+                }
+            }
+        }
+    }
+
+    id3_file_close(file);
+#endif
 }
 
 void
