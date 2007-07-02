@@ -503,6 +503,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::FFTDataServer" << std::endl;
 #endif
 
+    //!!! end is not correct until model finished reading -- what to do???
+
     size_t start = m_model->getStartFrame();
     size_t end = m_model->getEndFrame();
 
@@ -990,6 +992,12 @@ FFTDataServer::fillColumn(size_t x)
 {
     Profiler profiler("FFTDataServer::fillColumn", false);
 
+    if (!m_model->isReady()) {
+        std::cerr << "WARNING: FFTDataServer::fillColumn(" 
+                  << x << "): model not yet ready" << std::endl;
+        return;
+    }
+
     if (!m_fftInput) {
         std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
                   << "input has already been completed and discarded?"
@@ -1142,6 +1150,11 @@ FFTDataServer::FillThread::run()
     m_extent = 0;
     m_completion = 0;
     
+    while (!m_server.m_model->isReady() && !m_server.m_exiting) {
+        sleep(1);
+    }
+    if (m_server.m_exiting) return;
+
     size_t start = m_server.m_model->getStartFrame();
     size_t end = m_server.m_model->getEndFrame();
     size_t remainingEnd = end;
