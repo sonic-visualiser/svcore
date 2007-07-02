@@ -40,6 +40,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     m_progress(0),
     m_fileSize(0),
     m_bytesRead(0),
+    m_commentsRead(false),
     m_cancelled(false),
     m_completion(0),
     m_decodeThread(0)
@@ -162,6 +163,15 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
 				  void *data)
 {
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
+
+    if (!reader->m_commentsRead) {
+        const FishSoundComment *comment = fish_sound_comment_first_byname
+            (fs, "TITLE");
+        if (comment && comment->value) {
+            reader->m_title = QString::fromUtf8(comment->value);
+        }
+        reader->m_commentsRead = true;
+    }
 
     if (reader->m_channelCount == 0) {
 	FishSoundInfo fsinfo;

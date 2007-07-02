@@ -47,7 +47,8 @@ WaveFileModel::WaveFileModel(QString path) :
     m_exiting(false)
 {
     m_reader = AudioFileReaderFactory::createReader(path);
-    setObjectName(QFileInfo(path).fileName());
+    setObjectName(m_reader->getTitle());
+    if (objectName() == "") setObjectName(QFileInfo(path).fileName());
     if (isOK()) fillCache();
 }
 
@@ -60,7 +61,8 @@ WaveFileModel::WaveFileModel(QString path, QString originalLocation) :
     m_exiting(false)
 {
     m_reader = AudioFileReaderFactory::createReader(path);
-    setObjectName(QFileInfo(originalLocation).fileName());
+    setObjectName(m_reader->getTitle());
+    if (objectName() == "") setObjectName(QFileInfo(originalLocation).fileName());
     if (isOK()) fillCache();
 }
 
@@ -73,7 +75,8 @@ WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
     m_exiting(false)
 {
     m_reader = reader;
-    setObjectName(QFileInfo(path).fileName());
+    setObjectName(m_reader->getTitle());
+    if (objectName() == "") setObjectName(QFileInfo(path).fileName());
     fillCache();
 }
 
