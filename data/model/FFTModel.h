@@ -123,6 +123,11 @@ public:
     virtual void getColumn(size_t x, Column &result) const;
     virtual QString getBinName(size_t n) const;
 
+    virtual bool estimateStableFrequency(size_t x, size_t y, float &frequency) {
+        return m_server->estimateStableFrequency(x << m_xshift, y << m_yshift,
+                                                 getSampleRate(), frequency);
+    }
+
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
 
     virtual Model *clone() const;
