@@ -101,3 +101,12 @@ Pitch::getPitchLabelForFrequency(float frequency,
     return getPitchLabel(midiPitch, centsOffset, useFlats);
 }
 
+bool
+Pitch::isFrequencyInMidiRange(float frequency,
+                              float concertA)
+{
+    float centsOffset = 0.0;
+    int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
+    return (midiPitch >= 0 && midiPitch < 128);
+}
+
