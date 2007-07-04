@@ -19,6 +19,9 @@
 #include "data/fft/FFTDataServer.h"
 #include "DenseThreeDimensionalModel.h"
 
+#include <set>
+#include <map>
+
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
  * derived from a DenseTimeValueModel available as a generic data grid.
@@ -123,10 +126,35 @@ public:
     virtual void getColumn(size_t x, Column &result) const;
     virtual QString getBinName(size_t n) const;
 
-    virtual bool estimateStableFrequency(size_t x, size_t y, float &frequency) {
-        return m_server->estimateStableFrequency(x << m_xshift, y << m_yshift,
-                                                 getSampleRate(), frequency);
-    }
+    /**
+     * Calculate an estimated frequency for a stable signal in this
+     * bin, using phase unwrapping.  This will be completely wrong if
+     * the signal is not stable here.
+     */
+    virtual bool estimateStableFrequency(size_t x, size_t y, float &frequency);
+
+    enum PeakPickType
+    {
+        AllPeaks,                /// Any bin exceeding its immediate neighbours
+        MajorPeaks,              /// Peaks picked using sliding median window
+        MajorPitchAdaptivePeaks  /// Bigger window for higher frequencies
+    };
+
+    typedef std::set<size_t> PeakLocationSet;
+    typedef std::map<size_t, float> PeakSet;
+
+    /**
+     * Return locations of peak bins in the range [ymin,ymax].  If
+     * ymax is zero, getHeight()-1 will be used.
+     */
+    virtual PeakLocationSet getPeaks(PeakPickType type, size_t x,
+                                     size_t ymin = 0, size_t ymax = 0);
+
+    /**
+     * Return locations and estimated stable frequencies of peak bins.
+     */
+    virtual PeakSet getPeakFrequencies(PeakPickType type, size_t x,
+                                       size_t ymin = 0, size_t ymax = 0);
 
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
 
@@ -143,6 +171,8 @@ private:
     FFTDataServer *m_server;
     int m_xshift;
     int m_yshift;
+
+    size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate, size_t bin) const;
 };
 
 #endif

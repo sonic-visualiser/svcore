@@ -92,12 +92,6 @@ public:
         return getMagnitudeAt(x, y) > threshold;
     }
 
-    // Calculate an estimated frequency for a stable signal in this
-    // bin, using phase unwrapping.  This will be completely wrong if
-    // the signal is not stable here.
-    bool estimateStableFrequency(size_t x, size_t y,
-                                 float sampleRate, float &frequency);
-
     size_t getFillCompletion() const;
     size_t getFillExtent() const;
 

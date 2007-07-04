@@ -1099,43 +1099,6 @@ FFTDataServer::fillColumn(size_t x)
     }
 }    
 
-bool
-FFTDataServer::estimateStableFrequency(size_t x, size_t y,
-                                       float sampleRate, float &frequency)
-{
-    frequency = (float(y) * sampleRate) / m_fftSize;
-
-    if (x+1 >= m_width || y >= m_height) return false;
-
-    // At frequency f, a phase shift of 2pi (one cycle) happens in 1/f sec.
-    // At hopsize h and sample rate sr, one hop happens in h/sr sec.
-    // At window size w, for bin b, f is b*sr/w.
-    // thus 2pi phase shift happens in w/(b*sr) sec.
-    // We need to know what phase shift we expect from h/sr sec.
-    // -> 2pi * ((h/sr) / (w/(b*sr)))
-    //  = 2pi * ((h * b * sr) / (w * sr))
-    //  = 2pi * (h * b) / w.
-
-    float oldPhase = getPhaseAt(x, y);
-    float newPhase = getPhaseAt(x+1, y);
-
-    float expectedPhase =
-	oldPhase + (2.0 * M_PI * y * m_windowIncrement) / m_fftSize;
-
-    float phaseError = princargf(newPhase - expectedPhase);
-
-//    bool stable = (fabsf(phaseError) < (1.1f * (m_windowIncrement * M_PI) / m_fftSize));
-
-    // The new frequency estimate based on the phase error resulting
-    // from assuming the "native" frequency of this bin
-
-    frequency =
-        (sampleRate * (expectedPhase + phaseError - oldPhase)) /
-        (2 * M_PI * m_windowIncrement);
-
-    return true;
-}
-
 size_t
 FFTDataServer::getFillCompletion() const 
 {
