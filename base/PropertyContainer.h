@@ -39,7 +39,7 @@ public:
 	ToggleProperty, // on or off
 	RangeProperty, // range of integers
 	ValueProperty, // range of integers given string labels
-	ColourProperty, // colours, get/set as qRgb
+	ColourProperty, // colours, get/set as ColourDatabase indices
         UnitsProperty, // unit from UnitDatabase, get/set unit id
 	InvalidProperty, // property not found!
     };
@@ -107,7 +107,8 @@ public slots:
     /**
      * Set a property.  This is used for all property types.  For
      * boolean properties, zero is false and non-zero true; for
-     * colours, the integer value should be treated as a qRgb.
+     * colours, the integer value is an index into the colours in the
+     * global ColourDatabase.
      */
     virtual void setProperty(const PropertyName &, int value);
 

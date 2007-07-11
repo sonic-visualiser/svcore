@@ -39,7 +39,8 @@ Preferences::Preferences() :
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
-    m_resampleQuality(1)
+    m_resampleQuality(1),
+    m_omitRecentTemps(true)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -67,6 +68,7 @@ Preferences::getProperties() const
     props.push_back("Property Box Layout");
     props.push_back("Window Type");
     props.push_back("Resample Quality");
+    props.push_back("Omit Temporaries from Recent Files");
     return props;
 }
 
@@ -88,6 +90,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     if (name == "Resample Quality") {
         return tr("Playback resampler type");
     }
+    if (name == "Omit Temporaries from Recent Files") {
+        return tr("Omit Temporaries from Recent Files");
+    }
     return name;
 }
 
@@ -108,6 +113,9 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Resample Quality") {
         return ValueProperty;
+    }
+    if (name == "Omit Temporaries from Recent Files") {
+        return ToggleProperty;
     }
     return InvalidProperty;
 }
@@ -144,6 +152,10 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         if (max) *max = 2;
         if (deflt) *deflt = 1;
         return m_resampleQuality;
+    }
+
+    if (name == "Omit Temporaries from Recent Files") {
+        if (deflt) *deflt = 1;
     }
 
     return 0;
@@ -213,6 +225,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setWindowType(WindowType(value));
     } else if (name == "Resample Quality") {
         setResampleQuality(value);
+    } else if (name == "Omit Temporaries from Recent Files") {
+        setOmitTempsFromRecentFiles(value ? true : false);
     }
 }
 
@@ -282,5 +296,18 @@ Preferences::setResampleQuality(int q)
         settings.setValue("resample-quality", q);
         settings.endGroup();
         emit propertyChanged("Resample Quality");
+    }
+}
+
+void
+Preferences::setOmitTempsFromRecentFiles(bool omit)
+{
+    if (m_omitRecentTemps != omit) {
+        m_omitRecentTemps = omit;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("omit-recent-temporaries", omit);
+        settings.endGroup();
+        emit propertyChanged("Omit Temporaries from Recent Files");
     }
 }

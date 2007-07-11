@@ -16,6 +16,8 @@ MOC_DIR = tmp_moc
 HEADERS += AudioLevel.h \
            AudioPlaySource.h \
            Clipboard.h \
+	   ColourDatabase.h \
+	   ColourMapper.h \
            Command.h \
            CommandHistory.h \
            Exceptions.h \
@@ -42,6 +44,8 @@ HEADERS += AudioLevel.h \
            ZoomConstraint.h
 SOURCES += AudioLevel.cpp \
            Clipboard.cpp \
+	   ColourDatabase.cpp \
+	   ColourMapper.cpp \
            Command.cpp \
            CommandHistory.cpp \
            Exceptions.cpp \

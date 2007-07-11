@@ -15,6 +15,8 @@
 
 #include "RecentFiles.h"
 
+#include "Preferences.h"
+
 #include <QFileInfo>
 #include <QSettings>
 #include <QRegExp>
@@ -117,10 +119,19 @@ void
 RecentFiles::addFile(QString name)
 {
     static QRegExp schemeRE("^[a-zA-Z]{2,5}://");
+    static QRegExp tempRE("[\\/][Tt]e?mp[\\/]");
     if (schemeRE.indexIn(name) == 0) {
         add(name);
     } else {
-        add(QFileInfo(name).absoluteFilePath());
+        QString absPath = QFileInfo(name).absoluteFilePath();
+        if (tempRE.indexIn(absPath) != -1) {
+            Preferences *prefs = Preferences::getInstance();
+            if (prefs && !prefs->getOmitTempsFromRecentFiles()) {
+                add(absPath);
+            }
+        } else {
+            add(absPath);
+        }
     }
 }
 
