@@ -54,6 +54,8 @@ public:
     };
     PropertyBoxLayout getPropertyBoxLayout() const { return m_propertyBoxLayout; }
 
+    bool getOmitTempsFromRecentFiles() const { return m_omitRecentTemps; }
+
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
@@ -62,6 +64,7 @@ public slots:
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
     void setResampleQuality(int quality);
+    void setOmitTempsFromRecentFiles(bool omit);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -74,6 +77,7 @@ private:
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
     int m_resampleQuality;
+    bool m_omitRecentTemps;
 };
 
 #endif

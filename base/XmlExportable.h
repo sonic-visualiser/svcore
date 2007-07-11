@@ -48,7 +48,7 @@ public:
 
     static QString encodeEntities(QString);
 
-    static QString encodeColour(QColor);
+    static QString encodeColour(QColor); 
 
     static int getObjectExportId(const void *); // thread-safe
 };

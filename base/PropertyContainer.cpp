@@ -17,6 +17,7 @@
 #include "CommandHistory.h"
 #include "RangeMapper.h"
 #include "UnitDatabase.h"
+#include "ColourDatabase.h"
 
 #include <QColor>
 
@@ -57,8 +58,15 @@ PropertyContainer::getPropertyRangeAndValue(const PropertyName &,
 }
 
 QString
-PropertyContainer::getPropertyValueLabel(const PropertyName &, int) const
+PropertyContainer::getPropertyValueLabel(const PropertyName &name, int value) const
 {
+    if (getPropertyType(name) == ColourProperty) {
+        ColourDatabase *db = ColourDatabase::getInstance();
+        if (value >= 0 && size_t(value) < db->getColourCount()) {
+            return db->getColourName(value);
+        }
+    }
+
     return QString();
 }
 
@@ -190,14 +198,10 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     }
 
     case ColourProperty:
-    {
-        QColor c(valueString);
-        if (c.isValid()) {
-            value = c.rgb();
-            success = true;
-        }
+        value = ColourDatabase::getInstance()->getColourIndex(valueString);
+        if (value >= 0) success = true;
+        else value = 0;
         break;
-    }
         
     case UnitsProperty:
         value = UnitDatabase::getInstance()->getUnitId(valueString, false);

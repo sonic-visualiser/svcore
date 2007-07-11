@@ -55,7 +55,11 @@ public:
     /**
      * Add a name that is known to be either a file path or a URL.  If
      * it looks like a URL, add it literally; otherwise treat it as a
-     * file path and canonicalise it appropriately.
+     * file path and canonicalise it appropriately.  Also takes into
+     * account the user preference for whether to include temporary
+     * files in the recent files menu: the file will not be added if
+     * the preference is set and the file appears to be a temporary
+     * one.
      */
     void addFile(QString name);
 
