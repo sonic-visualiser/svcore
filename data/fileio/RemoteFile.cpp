@@ -64,7 +64,9 @@ RemoteFile::RemoteFile(QUrl url) :
                 this, SLOT(dataReadProgress(int, int)));
         connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
                 this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
-        m_http->get(url.path(), m_localFile);
+        QString path = url.path();
+        std::cerr << "RemoteFile: path is \"" << path.toStdString() << "\"" << std::endl;
+        m_http->get(path, m_localFile);
 
     } else if (scheme == "ftp") {
 

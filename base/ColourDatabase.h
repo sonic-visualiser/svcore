@@ -19,6 +19,8 @@
 #include <QObject>
 #include <QString>
 #include <QColor>
+#include <QSize>
+#include <QPixmap>
 #include <vector>
 
 class ColourDatabase : public QObject
@@ -58,6 +60,8 @@ public:
 
     // for use by PropertyContainer getPropertyRangeAndValue methods
     void getColourPropertyRange(int *min, int *max) const;
+
+    QPixmap getExamplePixmap(int index, QSize size) const;
     
 signals:
     void colourDatabaseChanged();
