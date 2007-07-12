@@ -16,6 +16,8 @@
 #include "ColourDatabase.h"
 #include "XmlExportable.h"
 
+#include <QPainter>
+
 ColourDatabase
 ColourDatabase::m_instance;
 
@@ -97,7 +99,10 @@ void
 ColourDatabase::setUseDarkBackground(int c, bool dark)
 {
     if (c < 0 || size_t(c) >= m_colours.size()) return;
-    m_colours[c].darkbg = dark;
+    if (m_colours[c].darkbg != dark) {
+        m_colours[c].darkbg = dark;
+        emit colourDatabaseChanged();
+    }
 }
 
 int
@@ -180,5 +185,22 @@ ColourDatabase::getColourPropertyRange(int *min, int *max) const
         *max = 0;
         if (db->getColourCount() > 0) *max = db->getColourCount()-1;
     }
+}
+
+QPixmap
+ColourDatabase::getExamplePixmap(int index, QSize size) const
+{
+    QPixmap pmap(size);
+    pmap.fill(useDarkBackground(index) ? Qt::black : Qt::white);
+    QPainter paint(&pmap);
+    QColor colour(getColour(index));
+    paint.setPen(colour);
+    paint.setBrush(colour);
+    int margin = 2;
+    if (size.width() < 4 || size.height() < 4) margin = 0;
+    else if (size.width() < 8 || size.height() < 8) margin = 1;
+    paint.drawRect(margin, margin,
+                   size.width() - margin*2 - 1, size.height() - margin*2 - 1);
+    return pmap;
 }
 
