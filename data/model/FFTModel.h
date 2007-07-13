@@ -172,7 +172,8 @@ private:
     int m_xshift;
     int m_yshift;
 
-    size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate, size_t bin) const;
+    size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
+                                 size_t bin, float &percentile) const;
 };
 
 #endif

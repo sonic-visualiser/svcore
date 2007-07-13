@@ -184,7 +184,8 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 
     std::deque<float> window;
     std::vector<size_t> inrange;
-    size_t medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin);
+    float dist = 0.5;
+    size_t medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin, dist);
     size_t halfWin = medianWinSize/2;
 
     size_t binmin;
@@ -201,7 +202,8 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 
         window.push_back(value);
 
-        medianWinSize = getPeakPickWindowSize(type, sampleRate, bin);
+        // so-called median will actually be the dist*100'th percentile
+        medianWinSize = getPeakPickWindowSize(type, sampleRate, bin, dist);
         halfWin = medianWinSize/2;
 
         while (window.size() > medianWinSize) window.pop_front();
@@ -213,7 +215,7 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 
         std::deque<float> sorted(window);
         std::sort(sorted.begin(), sorted.end());
-        float median = sorted[sorted.size()/2];
+        float median = sorted[int(sorted.size() * dist)];
 
         if (value > median) {
             inrange.push_back(bin);
@@ -241,16 +243,23 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 }
 
 size_t
-FFTModel::getPeakPickWindowSize(PeakPickType type, size_t sampleRate, size_t bin) const
+FFTModel::getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
+                                size_t bin, float &percentile) const
 {
+    percentile = 0.5;
     if (type == MajorPeaks) return 10;
     if (bin == 0) return 3;
+
     size_t fftSize = m_server->getFFTSize() >> m_yshift;
     float binfreq = (sampleRate * bin) / fftSize;
     float hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
+
     int hibin = lrintf((hifreq * fftSize) / sampleRate);
     int medianWinSize = hibin - bin;
     if (medianWinSize < 3) medianWinSize = 3;
+
+    percentile = 0.5 + (binfreq / sampleRate);
+
     return medianWinSize;
 }
 
