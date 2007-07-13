@@ -64,8 +64,54 @@ RemoteFile::RemoteFile(QUrl url) :
                 this, SLOT(dataReadProgress(int, int)));
         connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
                 this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
-        QString path = url.path();
-        std::cerr << "RemoteFile: path is \"" << path.toStdString() << "\"" << std::endl;
+
+        // I don't quite understand this.  url.path() returns a path
+        // without percent encoding; for example, spaces appear as
+        // literal spaces.  This generally won't work if sent to the
+        // server directly.  You can retrieve a correctly encoded URL
+        // from QUrl using url.toEncoded(), but that gives you the
+        // whole URL; there doesn't seem to be any way to retrieve
+        // only an encoded path.  Furthermore there doesn't seem to be
+        // any way to convert a retrieved path into an encoded path
+        // without explicitly specifying that you don't want the path
+        // separators ("/") to be encoded.  (Besides being painful to
+        // manage, I don't see how this can work correctly in any case
+        // where a percent-encoded "/" is supposed to appear within a
+        // path element?)  There also seems to be no way to retrieve
+        // the path plus query string, i.e. everything that I need to
+        // send to the HTTP server.  And no way for QHttp to take a
+        // QUrl argument.  I'm obviously missing something.
+
+        // So, two ways to do this: query the bits from the URL,
+        // encode them individually, and glue them back together
+        // again...
+        /*
+        QString path = QUrl::toPercentEncoding(url.path(), "/");
+        QList<QPair<QString, QString> > query = url.queryItems();
+        if (!query.empty()) {
+            QStringList q2;
+            for (QList<QPair<QString, QString> >::iterator i = query.begin();
+                 i != query.end(); ++i) {
+                q2.push_back(QString("%1=%3")
+                             .arg(QString(QUrl::toPercentEncoding(i->first)))
+                             .arg(QString(QUrl::toPercentEncoding(i->second))));
+            }
+            path = QString("%1%2%3")
+                .arg(path).arg("?")
+                .arg(q2.join("&"));
+        }
+        */
+
+        // ...or, much simpler but relying on knowledge about the
+        // scheme://host/path/path/query etc format of the URL, we can
+        // get the whole URL ready-encoded and then split it on "/" as
+        // appropriate...
+        
+        QString path = "/" + QString(url.toEncoded()).section('/', 3);
+
+        std::cerr << "RemoteFile: path is \""
+                  << path.toStdString() << "\"" << std::endl;
+
         m_http->get(path, m_localFile);
 
     } else if (scheme == "ftp") {
