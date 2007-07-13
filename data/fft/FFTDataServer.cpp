@@ -874,8 +874,10 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
     if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
+#ifdef DEBUG_FFT_SERVER
         std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
                   << x << ")" << std::endl;
+#endif
         fillColumn(x);
     }
     return cache->getMagnitudeAt(col, y);
