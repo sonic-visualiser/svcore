@@ -83,10 +83,8 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
 
-        if (decodeMode == DecodeAtOnce) {
-            delete m_progress;
-            m_progress = 0;
-        }
+        delete m_progress;
+        m_progress = 0;
 
     } else {
 

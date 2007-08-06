@@ -18,6 +18,7 @@
 #include "WavFileReader.h"
 #include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
+#include "QuickTimeFileReader.h"
 
 #include <QString>
 #include <QFileInfo>
@@ -36,6 +37,9 @@ AudioFileReaderFactory::getKnownExtensions()
 #ifdef HAVE_FISHSOUND
     OggVorbisFileReader::getSupportedExtensions(extensions);
 #endif
+#endif
+#ifdef HAVE_QUICKTIME
+    QuickTimeFileReader::getSupportedExtensions(extensions);
 #endif
 
     QString rv;
@@ -67,18 +71,6 @@ AudioFileReaderFactory::createReader(QString path)
         reader = new WavFileReader(path);
     }
     
-#ifdef HAVE_MAD
-    if (!reader) {
-        extensions.clear();
-        MP3FileReader::getSupportedExtensions(extensions);
-        if (extensions.find(ext) != extensions.end()) {
-            reader = new MP3FileReader
-                (path,
-                 MP3FileReader::DecodeThreaded,
-                 MP3FileReader::CacheInTemporaryFile);
-        }
-    }
-#endif
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
     if (!reader) {
@@ -92,6 +84,32 @@ AudioFileReaderFactory::createReader(QString path)
         }
     }
 #endif
+#endif
+
+#ifdef HAVE_MAD
+    if (!reader) {
+        extensions.clear();
+        MP3FileReader::getSupportedExtensions(extensions);
+        if (extensions.find(ext) != extensions.end()) {
+            reader = new MP3FileReader
+                (path,
+                 MP3FileReader::DecodeThreaded,
+                 MP3FileReader::CacheInTemporaryFile);
+        }
+    }
+#endif
+
+#ifdef HAVE_QUICKTIME
+    if (!reader) {
+        extensions.clear();
+        QuickTimeFileReader::getSupportedExtensions(extensions);
+        if (extensions.find(ext) != extensions.end()) {
+            reader = new QuickTimeFileReader
+                (path,
+                 QuickTimeFileReader::DecodeThreaded,
+                 QuickTimeFileReader::CacheInTemporaryFile);
+        }
+    }
 #endif
 
     if (reader) {
@@ -149,6 +167,22 @@ AudioFileReaderFactory::createReader(QString path)
                   << reader->getError().toStdString() << "\"" << std::endl;
     } else {
 	std::cerr << "AudioFileReaderFactory: MP3 file reader failed"
+                  << std::endl;
+    }        
+    delete reader;
+#endif
+
+#ifdef HAVE_QUICKTIME
+    reader = new QuickTimeFileReader
+        (path,
+         QuickTimeFileReader::DecodeThreaded,
+         QuickTimeFileReader::CacheInTemporaryFile);
+    if (reader->isOK()) return reader;
+    if (reader->getError() != "") {
+	std::cerr << "AudioFileReaderFactory: QuickTime file reader error: \""
+                  << reader->getError().toStdString() << "\"" << std::endl;
+    } else {
+	std::cerr << "AudioFileReaderFactory: QuickTime file reader failed"
                   << std::endl;
     }        
     delete reader;

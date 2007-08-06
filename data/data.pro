@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = fftw3f sndfile mad id3tag oggz fishsound
+SV_UNIT_PACKAGES = fftw3f sndfile mad quicktime id3tag oggz fishsound
 load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
@@ -33,6 +33,7 @@ HEADERS += fft/FFTapi.h \
            fileio/MIDIFileReader.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
+           fileio/QuickTimeFileReader.h \
            fileio/RemoteFile.h \
            fileio/WavFileReader.h \
            fileio/WavFileWriter.h \
@@ -69,6 +70,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/MIDIFileReader.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
+           fileio/QuickTimeFileReader.cpp \
            fileio/RemoteFile.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
