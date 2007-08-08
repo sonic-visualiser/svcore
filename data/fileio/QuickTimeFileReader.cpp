@@ -40,7 +40,7 @@ public:
 
     MovieAudioExtractionRef      extractionSessionRef;
     AudioBufferList              buffer;
-    float                       *data;
+    double                      *data;
     OSErr                        err; 
     AudioStreamBasicDescription  asbd;
     Movie                        movie;
@@ -65,6 +65,8 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
 
     Profiler profiler("QuickTimeFileReader::QuickTimeFileReader", true);
 
+std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << std::endl;
+
     long QTversion;
 
 #ifdef WIN32
@@ -82,11 +84,20 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
     Handle dataRef; 
     OSType dataRefType;
 
-    CFStringRef URLString = CFStringCreateWithCString
-        (0, m_path.toLocal8Bit().data(), 0);
+//    CFStringRef URLString = CFStringCreateWithCString
+ //       (0, m_path.toLocal8Bit().data(), 0);
 
-    m_d->err = QTNewDataReferenceFromURLCFString
-        (URLString, 0, &dataRef, &dataRefType);
+
+    CFURLRef url = CFURLCreateFromFileSystemRepresentation
+        (kCFAllocatorDefault,
+         (const UInt8 *)path.toLocal8Bit().data(),
+         (CFIndex)path.length(),
+         false);
+
+
+//    m_d->err = QTNewDataReferenceFromURLCFString
+    m_d->err = QTNewDataReferenceFromCFURL
+        (url, 0, &dataRef, &dataRefType);
 
     if (m_d->err) { 
         m_error = QString("Error creating data reference for QuickTime decoder: code %1").arg(m_d->err);
@@ -145,6 +156,9 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
             m_error = QString("Error in QuickTime decoder activation: code %1").arg(m_d->err);
             return;
         }
+    } else {
+	m_error = QString("Error in QuickTime decoder: Movie object not valid");
+	return;
     }
     
     m_d->err = MovieAudioExtractionBegin
@@ -153,18 +167,6 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
         m_error = QString("Error in QuickTime decoder extraction init: code %1").arg(m_d->err);
         return;
     }
-    /*
-    AudioChannelLayout monoLayout = {0};
-    monoLayout.mChannelLayoutTag =  kAudioChannelLayoutTag_Mono;
-    m_d->err = MovieAudioExtractionSetProperty(m_d->extractionSessionRef,
-                                               kQTPropertyClass_MovieAudioExtraction_Audio,
-                                               kQTMovieAudioExtractionAudioPropertyID_AudioChannelLayout,
-                                               sizeof(monoLayout), &monoLayout);
-    if (m_d->err) {
-        m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
-        return;
-    }
-    */
 
     m_d->err = MovieAudioExtractionGetProperty
         (m_d->extractionSessionRef,
@@ -187,8 +189,8 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
         kAudioFormatFlagsNativeEndian;
-    m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
-    m_d->asbd.mBytesPerFrame = sizeof(float) * m_d->asbd.mChannelsPerFrame;
+    m_d->asbd.mBitsPerChannel = sizeof(double) * 8;
+    m_d->asbd.mBytesPerFrame = sizeof(double) * m_d->asbd.mChannelsPerFrame;
     m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
 	
     m_d->err = MovieAudioExtractionSetProperty
@@ -199,16 +201,16 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
          &m_d->asbd);
 
     if (m_d->err) {
-        m_error = QString("Error in QuickTime decoder ASBD set: code %1").arg(m_d->err);
+        m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
         return;
     }
 
     m_d->buffer.mNumberBuffers = 1;
     m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
     m_d->buffer.mBuffers[0].mDataByteSize =
-        sizeof(float) * m_channelCount * m_d->blockSize;
-    m_d->data = new float[m_d->blockSize];
-    m_d->buffer[0].mData = m_d->data;
+        sizeof(double) * m_channelCount * m_d->blockSize;
+    m_d->data = new double[m_channelCount * m_d->blockSize];
+    m_d->buffer.mBuffers[0].mData = m_d->data;
 
     initialiseDecodeCache();
 
@@ -221,7 +223,7 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
 
         while (1) {
             
-            UInt32 framesRead = 0;
+            UInt32 framesRead = m_d->blockSize;
             UInt32 extractionFlags = 0;
             m_d->err = MovieAudioExtractionFillBuffer
                 (m_d->extractionSessionRef, &framesRead, &m_d->buffer,
@@ -231,6 +233,10 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
                     .arg(m_d->err);
                 break;
             }
+
+//    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
+
+            m_frameCount += framesRead;
 
             // QuickTime buffers are interleaved unless specified otherwise
             for (UInt32 i = 0; i < framesRead * m_channelCount; ++i) {
@@ -258,17 +264,21 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
             m_decodeThread->start();
         }
     }
+
+    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error.toStdString() << "\"" << std::endl;
 }
 
 QuickTimeFileReader::~QuickTimeFileReader()
 {
+    std::cerr << "QuickTimeFileReader::~QuickTimeFileReader" << std::endl;
+
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
         delete m_decodeThread;
     }
 
-    SetMovieActive(m_d->movie);
+    SetMovieActive(m_d->movie, FALSE);
     DisposeMovie(m_d->movie);
 
     delete[] m_d->data;
@@ -280,20 +290,22 @@ QuickTimeFileReader::DecodeThread::run()
 {
     while (1) {
             
-        UInt32 framesRead = 0;
+        UInt32 framesRead = m_reader->m_d->blockSize;
         UInt32 extractionFlags = 0;
         m_reader->m_d->err = MovieAudioExtractionFillBuffer
             (m_reader->m_d->extractionSessionRef, &framesRead,
              &m_reader->m_d->buffer, &extractionFlags);
         if (m_reader->m_d->err) {
-            m_error = QString("Error in QuickTime decoding: code %1")
+            m_reader->m_error = QString("Error in QuickTime decoding: code %1")
                 .arg(m_reader->m_d->err);
             break;
         }
-        
+       
+        m_reader->m_frameCount += framesRead;
+ 
         // QuickTime buffers are interleaved unless specified otherwise
-        for (UInt32 i = 0; i < framesRead * m_channelCount; ++i) {
-            addSampleToDecodeCache(m_reader->m_d->data[i]);
+        for (UInt32 i = 0; i < framesRead * m_reader->m_channelCount; ++i) {
+            m_reader->addSampleToDecodeCache(m_reader->m_d->data[i]);
         }
         
         if (framesRead < m_reader->m_d->blockSize) break;
