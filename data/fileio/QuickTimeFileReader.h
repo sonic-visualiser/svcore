@@ -60,6 +60,7 @@ protected:
     class D;
     D *m_d;
 
+    QProgressDialog *m_progress;
     bool m_cancelled;
     int m_completion;
 
