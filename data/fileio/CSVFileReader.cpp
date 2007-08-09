@@ -127,139 +127,157 @@ CSVFileReader::load() const
 
     while (!in.atEnd()) {
 
-	QString line = in.readLine().trimmed();
-	if (line.startsWith("#") || line.trimmed() == "") continue;
+        // QTextStream's readLine doesn't cope with old-style Mac
+        // CR-only line endings.  Why did they bother making the class
+        // cope with more than one sort of line ending, if it still
+        // can't be configured to cope with all the common sorts?
 
-	QStringList list = line.split(separator);
+        // For the time being we'll deal with this case (which is
+        // relatively uncommon for us, but still necessary to handle)
+        // by reading the entire file using a single readLine, and
+        // splitting it.  For CR and CR/LF line endings this will just
+        // read a line at a time, and that's obviously OK.
 
-	if (!model) {
+        QString chunk = in.readLine();
+        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+        
+        for (size_t li = 0; li < lines.size(); ++li) {
 
-	    switch (modelType) {
+            QString line = lines[li];
 
-	    case CSVFormatDialog::OneDimensionalModel:
-		model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
-		model = model1;
-		break;
+            if (line.startsWith("#")) continue;
+
+            QStringList list = line.split(separator, QString::KeepEmptyParts);
+
+            if (!model) {
+
+                switch (modelType) {
+
+                case CSVFormatDialog::OneDimensionalModel:
+                    model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
+                    model = model1;
+                    break;
 		
-	    case CSVFormatDialog::TwoDimensionalModel:
-		model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
-		model = model2;
-		break;
+                case CSVFormatDialog::TwoDimensionalModel:
+                    model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
+                    model = model2;
+                    break;
 		
-	    case CSVFormatDialog::ThreeDimensionalModel:
-		model3 = new EditableDenseThreeDimensionalModel(sampleRate,
-                                                                windowSize,
-                                                                list.size());
-		model = model3;
-		break;
-	    }
-	}
+                case CSVFormatDialog::ThreeDimensionalModel:
+                    model3 = new EditableDenseThreeDimensionalModel(sampleRate,
+                                                                    windowSize,
+                                                                    list.size());
+                    model = model3;
+                    break;
+                }
+            }
 
-	QStringList tidyList;
-        QRegExp nonNumericRx("[^0-9.,+-]");
+            QStringList tidyList;
+            QRegExp nonNumericRx("[^0-9.,+-]");
 
-	for (int i = 0; i < list.size(); ++i) {
+            for (int i = 0; i < list.size(); ++i) {
 	    
-	    QString s(list[i].trimmed());
+                QString s(list[i].trimmed());
 
-	    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
-		s = s.mid(1, s.length() - 2);
-	    } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
-		s = s.mid(1, s.length() - 2);
-	    }
+                if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
+                    s = s.mid(1, s.length() - 2);
+                } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
+                    s = s.mid(1, s.length() - 2);
+                }
 
-	    if (i == 0 && timingType == CSVFormatDialog::ExplicitTiming) {
+                if (i == 0 && timingType == CSVFormatDialog::ExplicitTiming) {
 
-		bool ok = false;
-                QString numeric = s;
-                numeric.remove(nonNumericRx);
+                    bool ok = false;
+                    QString numeric = s;
+                    numeric.remove(nonNumericRx);
 
-		if (timeUnits == CSVFormatDialog::TimeSeconds) {
+                    if (timeUnits == CSVFormatDialog::TimeSeconds) {
 
-		    double time = numeric.toDouble(&ok);
-		    frameNo = int(time * sampleRate + 0.00001);
+                        double time = numeric.toDouble(&ok);
+                        frameNo = int(time * sampleRate + 0.00001);
 
-		} else {
+                    } else {
 
-		    frameNo = numeric.toInt(&ok);
+                        frameNo = numeric.toInt(&ok);
 
-		    if (timeUnits == CSVFormatDialog::TimeWindows) {
-			frameNo *= windowSize;
-		    }
-		}
+                        if (timeUnits == CSVFormatDialog::TimeWindows) {
+                            frameNo *= windowSize;
+                        }
+                    }
 			       
-		if (!ok) {
-		    if (warnings < warnLimit) {
-			std::cerr << "WARNING: CSVFileReader::load: "
-				  << "Bad time format (\"" << s.toStdString()
-				  << "\") in data line "
-				  << lineno << ":" << std::endl;
-			std::cerr << line.toStdString() << std::endl;
-		    } else if (warnings == warnLimit) {
-			std::cerr << "WARNING: Too many warnings" << std::endl;
-		    }
-                    ++warnings;
-		}
-	    } else {
-		tidyList.push_back(s);
-	    }
-	}
+                    if (!ok) {
+                        if (warnings < warnLimit) {
+                            std::cerr << "WARNING: CSVFileReader::load: "
+                                      << "Bad time format (\"" << s.toStdString()
+                                      << "\") in data line "
+                                      << lineno << ":" << std::endl;
+                            std::cerr << line.toStdString() << std::endl;
+                        } else if (warnings == warnLimit) {
+                            std::cerr << "WARNING: Too many warnings" << std::endl;
+                        }
+                        ++warnings;
+                    }
+                } else {
+                    tidyList.push_back(s);
+                }
+            }
 
-	if (modelType == CSVFormatDialog::OneDimensionalModel) {
+            if (modelType == CSVFormatDialog::OneDimensionalModel) {
 	    
-	    SparseOneDimensionalModel::Point point
-		(frameNo,
-		 tidyList.size() > 0 ? tidyList[tidyList.size()-1] :
-		 QString("%1").arg(lineno));
+                SparseOneDimensionalModel::Point point
+                    (frameNo,
+                     tidyList.size() > 0 ? tidyList[tidyList.size()-1] :
+                     QString("%1").arg(lineno));
 
-	    model1->addPoint(point);
+                model1->addPoint(point);
 
-	} else if (modelType == CSVFormatDialog::TwoDimensionalModel) {
+            } else if (modelType == CSVFormatDialog::TwoDimensionalModel) {
 
-	    SparseTimeValueModel::Point point
-		(frameNo,
-		 tidyList.size() > 0 ? tidyList[0].toFloat() : 0.0,
-		 tidyList.size() > 1 ? tidyList[1] : QString("%1").arg(lineno));
+                SparseTimeValueModel::Point point
+                    (frameNo,
+                     tidyList.size() > 0 ? tidyList[0].toFloat() : 0.0,
+                     tidyList.size() > 1 ? tidyList[1] : QString("%1").arg(lineno));
 
-	    model2->addPoint(point);
+                model2->addPoint(point);
 
-	} else if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
+            } else if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
 
-	    DenseThreeDimensionalModel::Column values;
+                DenseThreeDimensionalModel::Column values;
 
-	    for (int i = 0; i < tidyList.size(); ++i) {
+                for (int i = 0; i < tidyList.size(); ++i) {
 
-		bool ok = false;
-		float value = list[i].toFloat(&ok);
-		values.push_back(value);
+                    bool ok = false;
+                    float value = list[i].toFloat(&ok);
+                    values.push_back(value);
 	    
-		if ((lineno == 0 && i == 0) || value < min) min = value;
-		if ((lineno == 0 && i == 0) || value > max) max = value;
+                    if ((lineno == 0 && i == 0) || value < min) min = value;
+                    if ((lineno == 0 && i == 0) || value > max) max = value;
 
-		if (!ok) {
-		    if (warnings < warnLimit) {
-			std::cerr << "WARNING: CSVFileReader::load: "
-				  << "Non-numeric value in data line " << lineno
-				  << ":" << std::endl;
-			std::cerr << line.toStdString() << std::endl;
-			++warnings;
-		    } else if (warnings == warnLimit) {
-			std::cerr << "WARNING: Too many warnings" << std::endl;
-		    }
-		}
-	    }
+                    if (!ok) {
+                        if (warnings < warnLimit) {
+                            std::cerr << "WARNING: CSVFileReader::load: "
+                                      << "Non-numeric value in data line " << lineno
+                                      << ":" << std::endl;
+                            std::cerr << line.toStdString() << std::endl;
+                            ++warnings;
+                        } else if (warnings == warnLimit) {
+                            std::cerr << "WARNING: Too many warnings" << std::endl;
+                        }
+                    }
+                }
 	
-	    std::cerr << "Setting bin values for count " << lineno << ", frame "
-		      << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
+                std::cerr << "Setting bin values for count " << lineno << ", frame "
+                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
 
-	    model3->setColumn(frameNo / model3->getResolution(), values);
-	}
+                model3->setColumn(frameNo / model3->getResolution(), values);
+            }
 
-	++lineno;
-	if (timingType == CSVFormatDialog::ImplicitTiming ||
-	    list.size() == 0) {
-	    frameNo += windowSize;
-	}
+            ++lineno;
+            if (timingType == CSVFormatDialog::ImplicitTiming ||
+                list.size() == 0) {
+                frameNo += windowSize;
+            }
+        }
     }
 
     if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
@@ -512,86 +530,95 @@ CSVFormatDialog::guessFormat(QFile *file)
     m_maxExampleCols = 0;
 
     while (!in.atEnd()) {
-	
-	QString line = in.readLine().trimmed();
-	if (line.startsWith("#")) continue;
 
-	if (m_separator == "") {
-	    //!!! to do: ask the user
-	    if (line.split(",").size() >= 2) m_separator = ",";
-	    else if (line.split("\t").size() >= 2) m_separator = "\t";
-	    else if (line.split("|").size() >= 2) m_separator = "|";
-	    else if (line.split("/").size() >= 2) m_separator = "/";
-	    else if (line.split(":").size() >= 2) m_separator = ":";
-	    else m_separator = " ";
-	}
+        // See comment about line endings in load() above
 
-	QStringList list = line.split(m_separator);
-	QStringList tidyList;
+        QString chunk = in.readLine();
+        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
 
-	for (int i = 0; i < list.size(); ++i) {
+        for (size_t li = 0; li < lines.size(); ++li) {
+
+            QString line = lines[li];
+
+            if (line.startsWith("#")) continue;
+
+            if (m_separator == "") {
+                //!!! to do: ask the user
+                if (line.split(",").size() >= 2) m_separator = ",";
+                else if (line.split("\t").size() >= 2) m_separator = "\t";
+                else if (line.split("|").size() >= 2) m_separator = "|";
+                else if (line.split("/").size() >= 2) m_separator = "/";
+                else if (line.split(":").size() >= 2) m_separator = ":";
+                else m_separator = " ";
+            }
+
+            QStringList list = line.split(m_separator);
+            QStringList tidyList;
+
+            for (int i = 0; i < list.size(); ++i) {
 	    
-	    QString s(list[i]);
-	    bool numeric = false;
+                QString s(list[i]);
+                bool numeric = false;
 
-	    if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
-		s = s.mid(1, s.length() - 2);
-	    } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
-		s = s.mid(1, s.length() - 2);
-	    } else {
-		(void)s.toFloat(&numeric);
-	    }
+                if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
+                    s = s.mid(1, s.length() - 2);
+                } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
+                    s = s.mid(1, s.length() - 2);
+                } else {
+                    (void)s.toFloat(&numeric);
+                }
 
-	    tidyList.push_back(s);
+                tidyList.push_back(s);
 
-	    if (lineno == 0 || (list.size() < itemCount)) {
-		itemCount = list.size();
-	    } else {
-		if (itemCount != list.size()) {
-		    variableItemCount = true;
-		}
-	    }
+                if (lineno == 0 || (list.size() < itemCount)) {
+                    itemCount = list.size();
+                } else {
+                    if (itemCount != list.size()) {
+                        variableItemCount = true;
+                    }
+                }
 	    
-	    if (i == 0) { // primary
+                if (i == 0) { // primary
 
-		if (numeric) {
+                    if (numeric) {
 
-		    float primary = s.toFloat();
+                        float primary = s.toFloat();
 
-		    if (lineno > 0 && primary <= prevPrimary) {
-			nonIncreasingPrimaries = true;
-		    }
+                        if (lineno > 0 && primary <= prevPrimary) {
+                            nonIncreasingPrimaries = true;
+                        }
 
-		    if (s.contains(".") || s.contains(",")) {
-			floatPrimaries = true;
-		    }
+                        if (s.contains(".") || s.contains(",")) {
+                            floatPrimaries = true;
+                        }
 
-		    prevPrimary = primary;
+                        prevPrimary = primary;
 
-		} else {
-		    nonNumericPrimaries = true;
-		}
-	    } else { // secondary
+                    } else {
+                        nonNumericPrimaries = true;
+                    }
+                } else { // secondary
 
-		if (!numeric) {
-		    if (earliestNonNumericItem < 0 ||
-			i < earliestNonNumericItem) {
-			earliestNonNumericItem = i;
-		    }
-		}
-	    }
-	}
+                    if (!numeric) {
+                        if (earliestNonNumericItem < 0 ||
+                            i < earliestNonNumericItem) {
+                            earliestNonNumericItem = i;
+                        }
+                    }
+                }
+            }
 
-	if (lineno < 10) {
-	    m_example.push_back(tidyList);
-	    if (lineno == 0 || tidyList.size() > m_maxExampleCols) {
-		m_maxExampleCols = tidyList.size();
-	    }
-	}
+            if (lineno < 10) {
+                m_example.push_back(tidyList);
+                if (lineno == 0 || tidyList.size() > m_maxExampleCols) {
+                    m_maxExampleCols = tidyList.size();
+                }
+            }
 
-	++lineno;
+            ++lineno;
 
-	if (lineno == 50) break;
+            if (lineno == 50) break;
+        }
     }
 
     if (nonNumericPrimaries || nonIncreasingPrimaries) {
