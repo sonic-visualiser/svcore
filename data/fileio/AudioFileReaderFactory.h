@@ -16,7 +16,7 @@
 #ifndef _AUDIO_FILE_READER_FACTORY_H_
 #define _AUDIO_FILE_READER_FACTORY_H_
 
-#include <QString>
+#include <string>
 
 class AudioFileReader;
 
@@ -28,7 +28,7 @@ public:
      * in a format suitable for use with QFileDialog.  For example,
      * "*.wav *.aiff *.ogg".
      */
-    static QString getKnownExtensions();
+    static std::string getKnownExtensions();
 
     /**
      * Return an audio file reader initialised to the file at the
@@ -36,7 +36,7 @@ public:
      * available or the file cannot be opened.
      * Caller owns the returned object and must delete it after use.
      */
-    static AudioFileReader *createReader(QString path);
+    static AudioFileReader *createReader(std::string path);
 };
 
 #endif

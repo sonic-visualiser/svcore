@@ -49,7 +49,7 @@ protected:
     SampleBlock m_data;
     bool m_initialised;
 
-    QString m_cacheFileName;
+    std::string m_cacheFileName;
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;

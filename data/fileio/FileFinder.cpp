@@ -68,7 +68,7 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
         settingsKey = "audiopath";
         title = "Select an audio file";
         filter = tr("Audio files (%1)\nAll files (*.*)")
-            .arg(AudioFileReaderFactory::getKnownExtensions());
+            .arg(AudioFileReaderFactory::getKnownExtensions().c_str());
         break;
 
     case LayerFile:
@@ -79,7 +79,7 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
     case SessionOrAudioFile:
         settingsKey = "lastpath";
         filter = tr("All supported files (*.sv %1)\nSonic Visualiser session files (*.sv)\nAudio files (%1)\nAll files (*.*)")
-            .arg(AudioFileReaderFactory::getKnownExtensions());
+            .arg(AudioFileReaderFactory::getKnownExtensions().c_str());
         break;
 
     case ImageFile:
@@ -90,7 +90,7 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
     case AnyFile:
         settingsKey = "lastpath";
         filter = tr("All supported files (*.sv %1 %2)\nSonic Visualiser session files (*.sv)\nAudio files (%1)\nLayer files (%2)\nAll files (*.*)")
-            .arg(AudioFileReaderFactory::getKnownExtensions())
+            .arg(AudioFileReaderFactory::getKnownExtensions().c_str())
             .arg(DataFileReaderFactory::getKnownExtensions());
         break;
     };

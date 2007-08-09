@@ -44,8 +44,8 @@ CodedAudioFileReader::~CodedAudioFileReader()
     if (m_cacheWriteBuffer) delete[] m_cacheWriteBuffer;
 
     if (m_cacheFileName != "") {
-        if (!QFile(m_cacheFileName).remove()) {
-            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName.toStdString() << "\"" << std::endl;
+        if (!QFile(m_cacheFileName.c_str()).remove()) {
+            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << std::endl;
         }
     }
 }
@@ -63,14 +63,14 @@ CodedAudioFileReader::initialiseDecodeCache()
         try {
             QDir dir(TempDirectory::getInstance()->getPath());
             m_cacheFileName = dir.filePath(QString("decoded_%1.wav")
-                                           .arg((intptr_t)this));
+                                           .arg((intptr_t)this)).toStdString();
 
             SF_INFO fileInfo;
             fileInfo.samplerate = m_sampleRate;
             fileInfo.channels = m_channelCount;
             fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
     
-            m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
+            m_cacheFileWritePtr = sf_open(m_cacheFileName.c_str(),
                                           SFM_WRITE, &fileInfo);
 
             if (m_cacheFileWritePtr) {
@@ -83,14 +83,14 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
                 if (!m_cacheFileReader->isOK()) {
-                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
+                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << std::endl;
                     delete m_cacheFileReader;
                     m_cacheFileReader = 0;
                     m_cacheMode = CacheInMemory;
                     sf_close(m_cacheFileWritePtr);
                 }
             } else {
-                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName.toStdString() << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
+                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
                 m_cacheMode = CacheInMemory;
             }
 
@@ -181,7 +181,7 @@ CodedAudioFileReader::finishDecodeCache()
         m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
         if (!m_cacheFileReader->isOK()) {
-            std::cerr << "ERROR: CodedAudioFileReader::finishDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
+            std::cerr << "ERROR: CodedAudioFileReader::finishDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << std::endl;
             delete m_cacheFileReader;
             m_cacheFileReader = 0;
         }*/

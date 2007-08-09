@@ -15,3 +15,19 @@
 
 #include "AudioFileReader.h"
 
+void
+AudioFileReader::setError(std::string text, std::string arg)
+{
+    if (arg == "") m_error = text;
+    else m_error = text + ": " + arg;
+}
+
+void
+AudioFileReader::setError(std::string text, int arg)
+{
+    char *buf = new char(text.length() + 100);
+    sprintf(buf, "%s: code %d", text.c_str(), arg);
+    m_error = buf;
+    delete[] buf;
+}
+

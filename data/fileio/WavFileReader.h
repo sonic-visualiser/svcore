@@ -26,10 +26,8 @@
 class WavFileReader : public AudioFileReader
 {
 public:
-    WavFileReader(QString path, bool fileUpdating = false);
+    WavFileReader(std::string path, bool fileUpdating = false);
     virtual ~WavFileReader();
-
-    virtual QString getError() const { return m_error; }
 
     /** 
      * Must be safe to call from multiple threads with different
@@ -38,7 +36,7 @@ public:
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const;
     
-    static void getSupportedExtensions(std::set<QString> &extensions);
+    static void getSupportedExtensions(std::set<std::string> &extensions);
 
     virtual int getDecodeCompletion() const { return 100; }
 
@@ -51,8 +49,7 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
-    QString m_path;
-    QString m_error;
+    std::string m_path;
 
     mutable QMutex m_mutex;
     mutable float *m_buffer;
