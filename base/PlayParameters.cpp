@@ -17,6 +17,16 @@
 
 #include <iostream>
 
+void
+PlayParameters::copyFrom(const PlayParameters *pp)
+{
+    m_playMuted = pp->isPlayMuted();
+    m_playPan = pp->getPlayPan();
+    m_playGain = pp->getPlayGain();
+    m_playPluginId = pp->getPlayPluginId();
+    m_playPluginConfiguration = pp->getPlayPluginConfiguration();
+}
+
 QString
 PlayParameters::toXmlString(QString indent,
                             QString extraAttributes) const

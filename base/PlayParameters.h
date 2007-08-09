@@ -34,6 +34,8 @@ public:
     virtual QString getPlayPluginId() const { return m_playPluginId; } 
     virtual QString getPlayPluginConfiguration() const { return m_playPluginConfiguration; }
 
+    virtual void copyFrom(const PlayParameters *);
+
     virtual QString toXmlString(QString indent = "",
                                 QString extraAttributes = "") const;
 
@@ -60,6 +62,10 @@ protected:
     float m_playGain;
     QString m_playPluginId;
     QString m_playPluginConfiguration;
+
+private:
+    PlayParameters(const PlayParameters &);
+    PlayParameters &operator=(const PlayParameters &);
 };
 
 #endif
