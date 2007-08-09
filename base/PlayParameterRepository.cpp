@@ -85,8 +85,22 @@ PlayParameterRepository::removeModel(const Model *model)
     m_playParameters.erase(model);
 }
 
+void
+PlayParameterRepository::copyParameters(const Model *from, const Model *to)
+{
+    if (!getPlayParameters(from)) {
+        std::cerr << "ERROR: PlayParameterRepository::copyParameters: source model unknown" << std::endl;
+        return;
+    }
+    if (!getPlayParameters(to)) {
+        std::cerr << "WARNING: PlayParameterRepository::copyParameters: target model unknown, adding it now" << std::endl;
+        addModel(to);
+    }
+    getPlayParameters(to)->copyFrom(getPlayParameters(from));
+}
+
 PlayParameters *
-PlayParameterRepository::getPlayParameters(const Model *model) const
+PlayParameterRepository::getPlayParameters(const Model *model) 
 {
     if (m_playParameters.find(model) == m_playParameters.end()) return 0;
     return m_playParameters.find(model)->second;

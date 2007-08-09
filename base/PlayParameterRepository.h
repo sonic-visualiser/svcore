@@ -34,8 +34,9 @@ public:
 
     void addModel(const Model *model);
     void removeModel(const Model *model);
+    void copyParameters(const Model *from, const Model *to);
 
-    PlayParameters *getPlayParameters(const Model *model) const;
+    PlayParameters *getPlayParameters(const Model *model);
 
     void clear();
 
