@@ -21,8 +21,6 @@
 
 #include "base/XmlExportable.h"
 
-typedef std::vector<float> SampleBlock;
-
 class ZoomConstraint;
 
 /** 

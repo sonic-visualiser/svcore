@@ -48,7 +48,7 @@ public:
 };
 
 
-QuickTimeFileReader::QuickTimeFileReader(QString path,
+QuickTimeFileReader::QuickTimeFileReader(std::string path,
                                          DecodeMode decodeMode,
                                          CacheMode mode) :
     CodedAudioFileReader(mode),
@@ -74,7 +74,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
 #else
     m_d->err = Gestalt(gestaltQuickTime,&QTversion);
     if ((m_d->err != noErr) || (QTversion < 0x07000000)) {
-        m_error = QString("Failed to find compatible version of QuickTime (version 7 or above required)");
+        setError("Failed to find compatible version of QuickTime (version 7 or above required)");
         return;
     }
 #endif 
@@ -100,7 +100,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
         (url, 0, &dataRef, &dataRefType);
 
     if (m_d->err) { 
-        m_error = QString("Error creating data reference for QuickTime decoder: code %1").arg(m_d->err);
+        setError("Error creating data reference for QuickTime decoder", m_d->err);
         return;
     }
     
@@ -111,7 +111,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
 
     DisposeHandle(dataRef);
     if (m_d->err) { 
-        m_error = QString("Error creating new movie for QuickTime decoder: code %1").arg(m_d->err); 
+        setError("Error creating new movie for QuickTime decoder", m_d->err); 
         return;
     }
 
@@ -140,10 +140,10 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
     }
 	
     if (m_d->err && m_d->err != kQTPropertyNotSupportedErr) { 
-        m_error = QString("Error checking for DRM in QuickTime decoder: code %1").arg(m_d->err);
+        setError("Error checking for DRM in QuickTime decoder", m_d->err);
         return;
     } else if (!m_d->err && isProtected) { 
-        m_error = QString("File is protected with DRM");
+        setError("File is protected with DRM");
         return;
     } else if (m_d->err == kQTPropertyNotSupportedErr && !isProtected) {
         std::cerr << "QuickTime: File is not protected with DRM" << std::endl;
@@ -153,18 +153,18 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
         SetMovieActive(m_d->movie, TRUE);
         m_d->err = GetMoviesError();
         if (m_d->err) {
-            m_error = QString("Error in QuickTime decoder activation: code %1").arg(m_d->err);
+            setError("Error in QuickTime decoder activation", m_d->err);
             return;
         }
     } else {
-	m_error = QString("Error in QuickTime decoder: Movie object not valid");
+	setError("Error in QuickTime decoder: Movie object not valid");
 	return;
     }
     
     m_d->err = MovieAudioExtractionBegin
         (m_d->movie, 0, &m_d->extractionSessionRef);
     if (m_d->err) {
-        m_error = QString("Error in QuickTime decoder extraction init: code %1").arg(m_d->err);
+        setError("Error in QuickTime decoder extraction init", m_d->err);
         return;
     }
 
@@ -176,7 +176,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
          nil);
 
     if (m_d->err) {
-        m_error = QString("Error in QuickTime decoder property get: code %1").arg(m_d->err);
+        setError("Error in QuickTime decoder property get", m_d->err);
         return;
     }
 	
@@ -201,7 +201,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
          &m_d->asbd);
 
     if (m_d->err) {
-        m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
+        setError("Error in QuickTime decoder property set", m_d->err);
         return;
     }
 
@@ -217,7 +217,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(path.c_str()).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
@@ -229,8 +229,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
                 (m_d->extractionSessionRef, &framesRead, &m_d->buffer,
                  &extractionFlags);
             if (m_d->err) {
-                m_error = QString("Error in QuickTime decoding: code %1")
-                    .arg(m_d->err);
+                setError("Error in QuickTime decoding", m_d->err);
                 break;
             }
 
@@ -250,7 +249,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
 
         m_d->err = MovieAudioExtractionEnd(m_d->extractionSessionRef);
         if (m_d->err) {
-            m_error = QString("Error ending QuickTime extraction session: code %1").arg(m_d->err);
+            setError("Error ending QuickTime extraction session", m_d->err);
         }
 
         m_completion = 100;
@@ -265,7 +264,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
         }
     }
 
-    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error.toStdString() << "\"" << std::endl;
+    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error << "\"" << std::endl;
 }
 
 QuickTimeFileReader::~QuickTimeFileReader()
@@ -296,8 +295,8 @@ QuickTimeFileReader::DecodeThread::run()
             (m_reader->m_d->extractionSessionRef, &framesRead,
              &m_reader->m_d->buffer, &extractionFlags);
         if (m_reader->m_d->err) {
-            m_reader->m_error = QString("Error in QuickTime decoding: code %1")
-                .arg(m_reader->m_d->err);
+            m_reader->setError("Error in QuickTime decoding",
+                               m_reader->m_d->err);
             break;
         }
        
@@ -315,14 +314,14 @@ QuickTimeFileReader::DecodeThread::run()
     
     m_reader->m_d->err = MovieAudioExtractionEnd(m_reader->m_d->extractionSessionRef);
     if (m_reader->m_d->err) {
-        m_reader->m_error = QString("Error ending QuickTime extraction session: code %1").arg(m_reader->m_d->err);
+        m_reader->setError("Error ending QuickTime extraction session", m_reader->m_d->err);
     }
     
     m_reader->m_completion = 100;
 } 
 
 void
-QuickTimeFileReader::getSupportedExtensions(std::set<QString> &extensions)
+QuickTimeFileReader::getSupportedExtensions(std::set<std::string> &extensions)
 {
     extensions.insert("aiff");
     extensions.insert("au");

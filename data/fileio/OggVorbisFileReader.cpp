@@ -32,7 +32,7 @@
 
 static int instances = 0;
 
-OggVorbisFileReader::OggVorbisFileReader(QString path,
+OggVorbisFileReader::OggVorbisFileReader(std::string path,
                                          DecodeMode decodeMode,
                                          CacheMode mode) :
     CodedAudioFileReader(mode),
@@ -49,15 +49,15 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     m_channelCount = 0;
     m_sampleRate = 0;
 
-    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
+    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << path << "): now have " << (++instances) << " instances" << std::endl;
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
 
-    QFileInfo info(path);
+    QFileInfo info(path.c_str());
     m_fileSize = info.size();
 
-    if (!(m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
-	m_error = QString("File %1 is not an OGG file.").arg(path);
+    if (!(m_oggz = oggz_open(path.c_str(), OGGZ_READ))) {
+        setError("File is not an OGG file", path);
 	return;
     }
 
@@ -70,7 +70,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(path.c_str()).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
@@ -100,7 +100,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
 
 OggVorbisFileReader::~OggVorbisFileReader()
 {
-    std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
+    std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path << "): now have " << (--instances) << " instances" << std::endl;
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
@@ -166,7 +166,7 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
         const FishSoundComment *comment = fish_sound_comment_first_byname
             (fs, "TITLE");
         if (comment && comment->value) {
-            reader->m_title = QString::fromUtf8(comment->value);
+            reader->m_title = comment->value;
         }
         reader->m_commentsRead = true;
     }
@@ -198,7 +198,7 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
 }
 
 void
-OggVorbisFileReader::getSupportedExtensions(std::set<QString> &extensions)
+OggVorbisFileReader::getSupportedExtensions(std::set<std::string> &extensions)
 {
     extensions.insert("ogg");
 }
