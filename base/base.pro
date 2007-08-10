@@ -37,6 +37,7 @@ HEADERS += AudioLevel.h \
            Selection.h \
            StorageAdviser.h \
            TempDirectory.h \
+           TextAbbrev.h \
            Thread.h \
            UnitDatabase.h \
            Window.h \
@@ -62,6 +63,7 @@ SOURCES += AudioLevel.cpp \
            Selection.cpp \
            StorageAdviser.cpp \
            TempDirectory.cpp \
+           TextAbbrev.cpp \
            Thread.cpp \
            UnitDatabase.cpp \
            XmlExportable.cpp
