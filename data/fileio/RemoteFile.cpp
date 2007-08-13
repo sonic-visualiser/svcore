@@ -164,16 +164,18 @@ RemoteFile::~RemoteFile()
 void
 RemoteFile::cleanup()
 {
-//    std::cerr << "RemoteFile::cleanup" << std::endl;
     m_done = true;
     if (m_http) {
-        delete m_http;
+        QHttp *h = m_http;
         m_http = 0;
+        h->abort();
+        h->deleteLater();
     }
     if (m_ftp) {
-        m_ftp->abort();
-        m_ftp->deleteLater();
+        QFtp *f = m_ftp;
         m_ftp = 0;
+        f->abort();
+        f->deleteLater();
     }
     delete m_progressDialog;
     m_progressDialog = 0;
