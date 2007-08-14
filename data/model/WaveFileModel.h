@@ -70,9 +70,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
-
 signals:
     void modelChanged();
     void modelChanged(size_t, size_t);

@@ -81,11 +81,13 @@ public:
 	SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const
+    virtual void toXml(QTextStream &out,
+                       QString indent = "",
+                       QString extraAttributes = "") const
     {
-	return SparseModel<TextPoint>::toXmlString
-	    (indent,
+        SparseModel<TextPoint>::toXml
+	    (out, 
+             indent,
 	     QString("%1 subtype=\"text\"")
 	     .arg(extraAttributes));
     }

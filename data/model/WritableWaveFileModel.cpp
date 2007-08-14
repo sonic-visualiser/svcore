@@ -211,15 +211,3 @@ WritableWaveFileModel::toXml(QTextStream &out,
          .arg(m_writer->getPath()).arg(m_model->getChannelCount()).arg(extraAttributes));
 }
 
-QString
-WritableWaveFileModel::toXmlString(QString indent,
-                                   QString extraAttributes) const
-{
-    // As above.
-
-    return Model::toXmlString
-        (indent,
-         QString("type=\"writablewavefile\" file=\"%1\" channels=\"%2\" %3")
-         .arg(m_writer->getPath()).arg(m_model->getChannelCount()).arg(extraAttributes));
-}
-
