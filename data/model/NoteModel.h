@@ -120,11 +120,13 @@ public:
      */
     virtual PointList getPoints(long frame) const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const
+    virtual void toXml(QTextStream &out,
+                       QString indent = "",
+                       QString extraAttributes = "") const
     {
-	return SparseValueModel<Note>::toXmlString
-	    (indent,
+	return SparseValueModel<Note>::toXml
+	    (out,
+             indent,
 	     QString("%1 valueQuantization=\"%2\"")
 	     .arg(extraAttributes).arg(m_valueQuantization));
     }

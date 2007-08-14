@@ -75,9 +75,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
-
 protected:
     WaveFileModel *m_model;
     WavFileWriter *m_writer;

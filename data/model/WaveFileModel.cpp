@@ -618,12 +618,4 @@ WaveFileModel::toXml(QTextStream &out,
                  .arg(encodeEntities(m_path)).arg(extraAttributes));
 }
 
-QString
-WaveFileModel::toXmlString(QString indent,
-			   QString extraAttributes) const
-{
-    return Model::toXmlString(indent,
-			      QString("type=\"wavefile\" file=\"%1\" %2")
-			      .arg(encodeEntities(m_path)).arg(extraAttributes));
-}
     
