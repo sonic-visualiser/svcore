@@ -618,7 +618,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_fftPlan = fftf_plan_dft_r2c_1d(m_fftSize,
                                       m_fftInput,
                                       m_fftOutput,
-                                      FFTW_ESTIMATE);
+                                      FFTW_MEASURE);
 
     if (!m_fftPlan) {
         std::cerr << "ERROR: fftf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << std::endl;
