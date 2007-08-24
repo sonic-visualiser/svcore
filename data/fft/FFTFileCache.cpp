@@ -277,7 +277,8 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             if (mag > factor) factor = mag;
             ((float *)m_writebuf)[y * 2] = mag;
-            ((float *)m_writebuf)[y * 2 + 1] = princargf(atan2f(imag[y], real[y]));
+            float phase = princargf(atan2f(imag[y], real[y]));
+            ((float *)m_writebuf)[y * 2 + 1] = phase;
         }
         break;
     }

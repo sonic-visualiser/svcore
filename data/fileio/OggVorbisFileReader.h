@@ -37,13 +37,15 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    OggVorbisFileReader(std::string path, DecodeMode decodeMode,
+    OggVorbisFileReader(QString path, DecodeMode decodeMode,
                         CacheMode cacheMode);
     virtual ~OggVorbisFileReader();
 
-    virtual std::string getTitle() const { return m_title; }
+    virtual QString getError() const { return m_error; }
+
+    virtual QString getTitle() const { return m_title; }
     
-    static void getSupportedExtensions(std::set<std::string> &extensions);
+    static void getSupportedExtensions(std::set<QString> &extensions);
 
     virtual int getDecodeCompletion() const { return m_completion; }
 
@@ -52,8 +54,9 @@ public:
     }
 
 protected:
-    std::string m_path;
-    std::string m_title;
+    QString m_path;
+    QString m_error;
+    QString m_title;
 
     OGGZ *m_oggz;
     FishSound *m_fishSound;

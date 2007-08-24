@@ -37,14 +37,14 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    QuickTimeFileReader(std::string path,
-                        DecodeMode decodeMode,
+    QuickTimeFileReader(QString path, DecodeMode decodeMode,
                         CacheMode cacheMode);
     virtual ~QuickTimeFileReader();
 
-    virtual std::string getTitle() const { return m_title; }
+    virtual QString getError() const { return m_error; }
+    virtual QString getTitle() const { return m_title; }
     
-    static void getSupportedExtensions(std::set<std::string> &extensions);
+    static void getSupportedExtensions(std::set<QString> &extensions);
 
     virtual int getDecodeCompletion() const { return m_completion; }
 
@@ -53,8 +53,9 @@ public:
     }
 
 protected:
-    std::string m_path;
-    std::string m_title;
+    QString m_path;
+    QString m_error;
+    QString m_title;
 
     class D;
     D *m_d;

@@ -46,8 +46,8 @@ WaveFileModel::WaveFileModel(QString path) :
     m_lastFillExtent(0),
     m_exiting(false)
 {
-    m_reader = AudioFileReaderFactory::createReader(path.toStdString());
-    setObjectName(m_reader->getTitle().c_str());
+    m_reader = AudioFileReaderFactory::createReader(path);
+    setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(path).fileName());
     if (isOK()) fillCache();
 }
@@ -60,8 +60,8 @@ WaveFileModel::WaveFileModel(QString path, QString originalLocation) :
     m_lastFillExtent(0),
     m_exiting(false)
 {
-    m_reader = AudioFileReaderFactory::createReader(path.toStdString());
-    setObjectName(m_reader->getTitle().c_str());
+    m_reader = AudioFileReaderFactory::createReader(path);
+    setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(originalLocation).fileName());
     if (isOK()) fillCache();
 }
@@ -75,7 +75,7 @@ WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
     m_exiting(false)
 {
     m_reader = reader;
-    setObjectName(m_reader->getTitle().c_str());
+    setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(path).fileName());
     fillCache();
 }
@@ -171,7 +171,7 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 //              << start << ", " << end << "): calling reader" << std::endl;
 #endif
 
-    AudioFileReader::SampleBlock frames;
+    SampleBlock frames;
     m_reader->getInterleavedFrames(start, end - start, frames);
 
     size_t i = 0;
@@ -213,7 +213,7 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 
     if (!m_reader || !m_reader->isOK()) return 0;
 
-    AudioFileReader::SampleBlock frames;
+    SampleBlock frames;
     m_reader->getInterleavedFrames(start, end - start, frames);
 
     size_t i = 0;
@@ -272,7 +272,7 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	// matter by putting a single cache in getInterleavedFrames
 	// for short queries.
 
-        AudioFileReader::SampleBlock frames;
+	SampleBlock frames;
 	m_reader->getInterleavedFrames(start, end - start, frames);
 	float max = 0.0, min = 0.0, total = 0.0;
 	size_t i = 0, count = 0;
@@ -478,7 +478,7 @@ WaveFileModel::RangeCacheFillThread::run()
     
     size_t frame = 0;
     size_t readBlockSize = 16384;
-    AudioFileReader::SampleBlock block;
+    SampleBlock block;
 
     if (!m_model.isOK()) return;
     
