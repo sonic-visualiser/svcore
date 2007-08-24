@@ -24,10 +24,10 @@
 #include <QFileInfo>
 #include <iostream>
 
-std::string
+QString
 AudioFileReaderFactory::getKnownExtensions()
 {
-    std::set<std::string> extensions;
+    std::set<QString> extensions;
 
     WavFileReader::getSupportedExtensions(extensions);
 #ifdef HAVE_MAD
@@ -42,8 +42,8 @@ AudioFileReaderFactory::getKnownExtensions()
     QuickTimeFileReader::getSupportedExtensions(extensions);
 #endif
 
-    std::string rv;
-    for (std::set<std::string>::const_iterator i = extensions.begin();
+    QString rv;
+    for (std::set<QString>::const_iterator i = extensions.begin();
          i != extensions.end(); ++i) {
         if (i != extensions.begin()) rv += " ";
         rv += "*." + *i;
@@ -53,9 +53,9 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(std::string path)
+AudioFileReaderFactory::createReader(QString path)
 {
-    std::string err;
+    QString err;
 
     AudioFileReader *reader = 0;
 
@@ -63,16 +63,8 @@ AudioFileReaderFactory::createReader(std::string path)
     // extension.  If we can't identify one or it fails to load the
     // file, fall back to trying all readers in no particular order.
 
-    std::string ext;
-    std::string::size_type idx = path.rfind('.');
-    if (idx != std::string::npos) {
-        ext = path.substr(idx + 1);
-        for (size_t i = 0; i < ext.length(); ++i) {
-            ext[i] = std::tolower(ext[i]);
-        }
-    }
-
-    std::set<std::string> extensions;
+    QString ext = QFileInfo(path).suffix().toLower();
+    std::set<QString> extensions;
 
     WavFileReader::getSupportedExtensions(extensions);
     if (extensions.find(ext) != extensions.end()) {
@@ -124,11 +116,11 @@ AudioFileReaderFactory::createReader(std::string path)
         if (reader->isOK()) return reader;
         if (reader->getError() != "") {
             std::cerr << "AudioFileReaderFactory: Preferred reader for "
-                      << "extension \"" << ext << "\" failed: \""
-                      << reader->getError() << "\"" << std::endl;
+                      << "extension \"" << ext.toStdString() << "\" failed: \""
+                      << reader->getError().toStdString() << "\"" << std::endl;
         } else {
             std::cerr << "AudioFileReaderFactory: Preferred reader for "
-                      << "extension \"" << ext << "\" failed"
+                      << "extension \"" << ext.toStdString() << "\" failed"
                       << std::endl;
         }            
         delete reader;
@@ -139,7 +131,7 @@ AudioFileReaderFactory::createReader(std::string path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: WAV file reader error: \""
-                  << reader->getError() << "\"" << std::endl;
+                  << reader->getError().toStdString() << "\"" << std::endl;
     } else {
 	std::cerr << "AudioFileReaderFactory: WAV file reader failed"
                   << std::endl;
@@ -155,7 +147,7 @@ AudioFileReaderFactory::createReader(std::string path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: Ogg file reader error: \""
-                  << reader->getError() << "\"" << std::endl;
+                  << reader->getError().toStdString() << "\"" << std::endl;
     } else {
 	std::cerr << "AudioFileReaderFactory: Ogg file reader failed"
                   << std::endl;
@@ -172,7 +164,7 @@ AudioFileReaderFactory::createReader(std::string path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: MP3 file reader error: \""
-                  << reader->getError() << "\"" << std::endl;
+                  << reader->getError().toStdString() << "\"" << std::endl;
     } else {
 	std::cerr << "AudioFileReaderFactory: MP3 file reader failed"
                   << std::endl;
@@ -188,7 +180,7 @@ AudioFileReaderFactory::createReader(std::string path)
     if (reader->isOK()) return reader;
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: QuickTime file reader error: \""
-                  << reader->getError() << "\"" << std::endl;
+                  << reader->getError().toStdString() << "\"" << std::endl;
     } else {
 	std::cerr << "AudioFileReaderFactory: QuickTime file reader failed"
                   << std::endl;

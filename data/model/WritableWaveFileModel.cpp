@@ -58,8 +58,8 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         return;
     }
 
-    m_reader = new WavFileReader(m_writer->getPath().toStdString(), true);
-    if (m_reader->getError() != "") {
+    m_reader = new WavFileReader(m_writer->getPath(), true);
+    if (!m_reader->getError().isEmpty()) {
         std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
         delete m_reader;
         m_reader = 0;

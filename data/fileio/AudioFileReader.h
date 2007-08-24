@@ -16,10 +16,8 @@
 #ifndef _AUDIO_FILE_READER_H_
 #define _AUDIO_FILE_READER_H_
 
-#include <QObject>
-
-#include <string>
-#include <vector>
+#include <QString>
+#include "model/Model.h" // for SampleBlock
 
 class AudioFileReader : public QObject
 {
@@ -28,11 +26,9 @@ class AudioFileReader : public QObject
 public:
     virtual ~AudioFileReader() { }
 
-    typedef std::vector<float> SampleBlock;
-
     bool isOK() const { return (m_channelCount > 0); }
 
-    virtual std::string getError() const { return m_error; }
+    virtual QString getError() const { return ""; }
 
     size_t getFrameCount() const { return m_frameCount; }
     size_t getChannelCount() const { return m_channelCount; }
@@ -43,7 +39,7 @@ public:
      * may be implemented by subclasses that support file tagging.
      * This is not the same thing as the file name.
      */
-    virtual std::string getTitle() const { return ""; }
+    virtual QString getTitle() const { return ""; }
 
     /** 
      * The subclass implementations of this function must be
@@ -66,10 +62,6 @@ protected:
     size_t m_frameCount;
     size_t m_channelCount;
     size_t m_sampleRate;
-
-    std::string m_error;
-    void setError(std::string text, std::string arg = "");
-    void setError(std::string text, int arg);
 };
 
 #endif

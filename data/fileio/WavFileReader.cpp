@@ -19,7 +19,7 @@
 
 #include <QMutexLocker>
 
-WavFileReader::WavFileReader(std::string path, bool fileUpdating) :
+WavFileReader::WavFileReader(QString path, bool fileUpdating) :
     m_file(0),
     m_path(path),
     m_buffer(0),
@@ -34,16 +34,18 @@ WavFileReader::WavFileReader(std::string path, bool fileUpdating) :
 
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
-    m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
+    m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
 	std::cerr << "WavFileReader::initialize: Failed to open file ("
 		  << sf_strerror(m_file) << ")" << std::endl;
 
 	if (m_file) {
-	    setError("Couldn't load audio file", sf_strerror(m_file));
+	    m_error = QString("Couldn't load audio file '%1':\n%2")
+		.arg(m_path).arg(sf_strerror(m_file));
 	} else {
-	    setError("Failed to open audio file");
+	    m_error = QString("Failed to open audio file '%1'")
+		.arg(m_path);
 	}
 	return;
     }
@@ -72,7 +74,7 @@ WavFileReader::updateFrameCount()
 
     if (m_file) {
         sf_close(m_file);
-        m_file = sf_open(m_path.c_str(), SFM_READ, &m_fileInfo);
+        m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
         if (!m_file || m_fileInfo.channels <= 0) {
             std::cerr << "WavFileReader::updateFrameCount: Failed to open file ("
                       << sf_strerror(m_file) << ")" << std::endl;
@@ -162,7 +164,7 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 }
 
 void
-WavFileReader::getSupportedExtensions(std::set<std::string> &extensions)
+WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     int count;
 
