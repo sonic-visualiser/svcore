@@ -325,6 +325,7 @@ void
 QuickTimeFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("aiff");
+    extensions.insert("aif");
     extensions.insert("au");
     extensions.insert("avi");
     extensions.insert("m4a");
