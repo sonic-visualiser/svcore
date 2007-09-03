@@ -46,6 +46,7 @@ void fftf_execute(const fftf_plan p);
 void fftf_destroy_plan(fftf_plan p);
 
 #define FFTW_ESTIMATE 0
+#define FFTW_MEASURE 0
 
 #endif
 
