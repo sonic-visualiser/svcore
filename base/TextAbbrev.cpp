@@ -18,6 +18,8 @@
 #include <QFontMetrics>
 #include <QApplication>
 
+#include <iostream>
+
 QString
 TextAbbrev::getDefaultEllipsis()
 {
@@ -253,11 +255,16 @@ TextAbbrev::getPrefixLength(const QStringList &texts)
 
     while (--candidate > 1) {
         if (splitChars.contains(reference[candidate])) {
-            if (havePrefix(reference.left(candidate - 1), texts)) {
+            if (havePrefix(reference.left(candidate), texts)) {
                 break;
             }
         }
     }
+
+//    std::cerr << "TextAbbrev::getPrefixLength: prefix length is " << candidate << std::endl;
+//    for (int i = 0; i < texts.size(); ++i) {
+//        std::cerr << texts[i].left(candidate).toStdString() << "|" << texts[i].right(texts[i].length() - candidate).toStdString() << std::endl;
+//    }
 
     return candidate;
 }
