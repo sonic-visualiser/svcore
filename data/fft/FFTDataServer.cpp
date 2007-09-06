@@ -1029,8 +1029,8 @@ FFTDataServer::fillColumn(size_t x)
     int startFrame = m_windowIncrement * x;
     int endFrame = startFrame + m_windowSize;
 
-    startFrame -= int(m_windowSize - m_windowIncrement) / 2;
-    endFrame   -= int(m_windowSize - m_windowIncrement) / 2;
+    startFrame -= int(m_windowSize) / 2;
+    endFrame   -= int(m_windowSize) / 2;
     size_t pfx = 0;
 
     size_t off = (m_fftSize - m_windowSize) / 2;
