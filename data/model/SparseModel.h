@@ -450,9 +450,6 @@ template <typename PointType>
 void
 SparseModel<PointType>::addPoint(const PointType &point)
 {
-//    std::cout << "SparseModel<Point>::addPoint(" << point.frame << ", "
-//	      << point.value << ")" << std::endl;
-
     {
 	QMutexLocker locker(&m_mutex);
 	m_points.insert(point);
