@@ -67,9 +67,11 @@ public:
         if (!std::isnan(point.value) && !std::isinf(point.value)) {
             if (!m_haveExtents || point.value < m_valueMinimum) {
                 m_valueMinimum = point.value; allChange = true;
+//                std::cerr << "addPoint: value min = " << m_valueMinimum << std::endl;
             }
             if (!m_haveExtents || point.value > m_valueMaximum) {
                 m_valueMaximum = point.value; allChange = true;
+//                std::cerr << "addPoint: value max = " << m_valueMaximum << " (min = " << m_valueMinimum << ")" << std::endl;
             }
             m_haveExtents = true;
         }
@@ -93,9 +95,11 @@ public:
 
 		if (i == m_points.begin() || i->value < m_valueMinimum) {
 		    m_valueMinimum = i->value;
+//                    std::cerr << "deletePoint: value min = " << m_valueMinimum << std::endl;
 		} 
 		if (i == m_points.begin() || i->value > m_valueMaximum) {
 		    m_valueMaximum = i->value;
+//                    std::cerr << "deletePoint: value max = " << m_valueMaximum << std::endl;
 		} 
 	    }
 
