@@ -51,6 +51,10 @@ protected:
     std::vector<QString> m_pluginPath;
     std::map<QString, QString> m_taxonomy;
 
+    friend class PluginDeletionNotifyAdapter;
+    void pluginDeleted(Vamp::Plugin *);
+    std::map<Vamp::Plugin *, void *> m_handleMap;
+
     void generateTaxonomy();
 };
 
