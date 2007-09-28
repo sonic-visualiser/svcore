@@ -18,6 +18,7 @@
 
 #include "vamp/vamp.h"
 #include "vamp-sdk/PluginHostAdapter.h"
+#include "vamp-sdk/hostext/PluginWrapper.h"
 
 #include "system/System.h"
 
@@ -29,6 +30,25 @@
 #include <iostream>
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
+
+class PluginDeletionNotifyAdapter : public Vamp::HostExt::PluginWrapper {
+public:
+    PluginDeletionNotifyAdapter(Vamp::Plugin *plugin,
+                                FeatureExtractionPluginFactory *factory) :
+        PluginWrapper(plugin), m_factory(factory) { }
+    virtual ~PluginDeletionNotifyAdapter();
+protected:
+    FeatureExtractionPluginFactory *m_factory;
+};
+
+PluginDeletionNotifyAdapter::~PluginDeletionNotifyAdapter()
+{
+    // see notes in vamp-sdk/hostext/PluginLoader.cpp from which this is drawn
+    Vamp::Plugin *p = m_plugin;
+    delete m_plugin;
+    m_plugin = 0;
+    if (m_factory) m_factory->pluginDeleted(p);
+}
 
 static FeatureExtractionPluginFactory *_nativeInstance = 0;
 
@@ -276,6 +296,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 						  float inputSampleRate)
 {
     Vamp::Plugin *rv = 0;
+    Vamp::PluginHostAdapter *plugin = 0;
 
     const VampPluginDescriptor *descriptor = 0;
     int index = 0;
@@ -328,7 +349,12 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
         goto done;
     }
 
-    rv = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
+    plugin = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
+
+    if (plugin) {
+        m_handleMap[plugin] = libraryHandle;
+        rv = new PluginDeletionNotifyAdapter(plugin, this);
+    }
 
 //    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Constructed Vamp plugin, rv is " << rv << std::endl;
 
@@ -344,6 +370,17 @@ done:
 //    std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label.toStdString() << " from library " << soname.toStdString() << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << std::endl;
     
     return rv;
+}
+
+void
+FeatureExtractionPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
+{
+    void *handle = m_handleMap[plugin];
+    if (handle) {
+        std::cerr << "unloading library " << handle << " for plugin " << plugin << std::endl;
+        DLCLOSE(handle);
+    }
+    m_handleMap.erase(plugin);
 }
 
 QString
