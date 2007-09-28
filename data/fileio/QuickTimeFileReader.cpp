@@ -50,8 +50,9 @@ public:
 
 QuickTimeFileReader::QuickTimeFileReader(QString path,
                                          DecodeMode decodeMode,
-                                         CacheMode mode) :
-    CodedAudioFileReader(mode),
+                                         CacheMode mode,
+                                         size_t targetRate) :
+    CodedAudioFileReader(mode, targetRate),
     m_path(path),
     m_d(new D),
     m_progress(0),
@@ -59,9 +60,8 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
     m_completion(0),
     m_decodeThread(0)
 {
-    m_frameCount = 0;
     m_channelCount = 0;
-    m_sampleRate = 0;
+    m_fileRate = 0;
 
     Profiler profiler("QuickTimeFileReader::QuickTimeFileReader", true);
 
@@ -181,9 +181,9 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
     }
 	
     m_channelCount = m_d->asbd.mChannelsPerFrame;
-    m_sampleRate = m_d->asbd.mSampleRate;
+    m_fileRate = m_d->asbd.mSampleRate;
 
-    std::cerr << "QuickTime: " << m_channelCount << " channels, " << m_sampleRate << " kHz" << std::endl;
+    std::cerr << "QuickTime: " << m_channelCount << " channels, " << m_fileRate << " kHz" << std::endl;
 
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
@@ -236,12 +236,8 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
 
 //    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
 
-            m_frameCount += framesRead;
-
             // QuickTime buffers are interleaved unless specified otherwise
-            for (UInt32 i = 0; i < framesRead * m_channelCount; ++i) {
-                addSampleToDecodeCache(m_d->data[i]);
-            }
+            addSamplesToDecodeCache(m_d->data, framesRead);
 
             if (framesRead < m_d->blockSize) break;
         }
@@ -288,6 +284,11 @@ QuickTimeFileReader::~QuickTimeFileReader()
 void
 QuickTimeFileReader::DecodeThread::run()
 {
+    if (m_reader->m_cacheMode == CacheInTemporaryFile) {
+        m_reader->m_completion = 1;
+        m_reader->startSerialised("QuickTimeFileReader::Decode");
+    }
+
     while (1) {
             
         UInt32 framesRead = m_reader->m_d->blockSize;
@@ -301,12 +302,8 @@ QuickTimeFileReader::DecodeThread::run()
             break;
         }
        
-        m_reader->m_frameCount += framesRead;
- 
         // QuickTime buffers are interleaved unless specified otherwise
-        for (UInt32 i = 0; i < framesRead * m_reader->m_channelCount; ++i) {
-            m_reader->addSampleToDecodeCache(m_reader->m_d->data[i]);
-        }
+        addSamplesToDecodeCache(m_d->data, framesRead);
         
         if (framesRead < m_reader->m_d->blockSize) break;
     }
@@ -319,6 +316,7 @@ QuickTimeFileReader::DecodeThread::run()
     }
     
     m_reader->m_completion = 100;
+    m_reader->endSerialised();
 } 
 
 void
@@ -339,3 +337,4 @@ QuickTimeFileReader::getSupportedExtensions(std::set<QString> &extensions)
 }
 
 #endif
+

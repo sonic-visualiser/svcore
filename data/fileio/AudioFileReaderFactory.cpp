@@ -16,6 +16,7 @@
 #include "AudioFileReaderFactory.h"
 
 #include "WavFileReader.h"
+#include "ResamplingWavFileReader.h"
 #include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
 #include "QuickTimeFileReader.h"
@@ -53,9 +54,11 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(QString path)
+AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 {
     QString err;
+
+    std::cerr << "AudioFileReaderFactory::createReader(\"" << path.toStdString() << "\"): Requested rate: " << targetRate << std::endl;
 
     AudioFileReader *reader = 0;
 
@@ -69,6 +72,20 @@ AudioFileReaderFactory::createReader(QString path)
     WavFileReader::getSupportedExtensions(extensions);
     if (extensions.find(ext) != extensions.end()) {
         reader = new WavFileReader(path);
+
+        if (targetRate != 0 &&
+            reader->isOK() &&
+            reader->getSampleRate() != targetRate) {
+
+            std::cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << std::endl;
+
+            delete reader;
+            reader = new ResamplingWavFileReader
+                (path,
+                 ResamplingWavFileReader::ResampleThreaded,
+                 ResamplingWavFileReader::CacheInTemporaryFile,
+                 targetRate);
+        }
     }
     
 #ifdef HAVE_OGGZ
@@ -80,7 +97,8 @@ AudioFileReaderFactory::createReader(QString path)
             reader = new OggVorbisFileReader
                 (path, 
                  OggVorbisFileReader::DecodeThreaded,
-                 OggVorbisFileReader::CacheInTemporaryFile);
+                 OggVorbisFileReader::CacheInTemporaryFile,
+                 targetRate);
         }
     }
 #endif
@@ -94,7 +112,8 @@ AudioFileReaderFactory::createReader(QString path)
             reader = new MP3FileReader
                 (path,
                  MP3FileReader::DecodeThreaded,
-                 MP3FileReader::CacheInTemporaryFile);
+                 MP3FileReader::CacheInTemporaryFile,
+                 targetRate);
         }
     }
 #endif
@@ -107,7 +126,8 @@ AudioFileReaderFactory::createReader(QString path)
             reader = new QuickTimeFileReader
                 (path,
                  QuickTimeFileReader::DecodeThreaded,
-                 QuickTimeFileReader::CacheInTemporaryFile);
+                 QuickTimeFileReader::CacheInTemporaryFile,
+                 targetRate);
         }
     }
 #endif
@@ -128,7 +148,21 @@ AudioFileReaderFactory::createReader(QString path)
     }
 
     reader = new WavFileReader(path);
+
+    if (targetRate != 0 &&
+        reader->isOK() &&
+        reader->getSampleRate() != targetRate) {
+
+        delete reader;
+        reader = new ResamplingWavFileReader
+            (path,
+             ResamplingWavFileReader::ResampleThreaded,
+             ResamplingWavFileReader::CacheInTemporaryFile,
+             targetRate);
+    }
+
     if (reader->isOK()) return reader;
+
     if (reader->getError() != "") {
 	std::cerr << "AudioFileReaderFactory: WAV file reader error: \""
                   << reader->getError().toStdString() << "\"" << std::endl;

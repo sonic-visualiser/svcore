@@ -34,18 +34,17 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode) :
-    CodedAudioFileReader(mode),
+MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, 
+                             CacheMode mode, size_t targetRate) :
+    CodedAudioFileReader(mode, targetRate),
     m_path(path),
     m_decodeThread(0)
 {
-    m_frameCount = 0;
     m_channelCount = 0;
-    m_sampleRate = 0;
+    m_fileRate = 0;
     m_fileSize = 0;
     m_bitrateNum = 0;
     m_bitrateDenom = 0;
-    m_frameCount = 0;
     m_cancelled = false;
     m_completion = 0;
     m_done = false;
@@ -70,6 +69,8 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, CacheMode mode
     }	
 
     m_filebuffer = 0;
+    m_samplebuffer = 0;
+    m_samplebuffersize = 0;
 
     try {
         m_filebuffer = new unsigned char[m_fileSize];
@@ -226,11 +227,21 @@ MP3FileReader::DecodeThread::run()
 
     delete[] m_reader->m_filebuffer;
     m_reader->m_filebuffer = 0;
-    
+
+    if (m_reader->m_samplebuffer) {
+        for (size_t c = 0; c < m_reader->m_channelCount; ++c) {
+            delete[] m_reader->m_samplebuffer[c];
+        }
+        delete[] m_reader->m_samplebuffer;
+        m_reader->m_samplebuffer = 0;
+    }
+
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
 
     m_reader->m_done = true;
     m_reader->m_completion = 100;
+
+    m_reader->endSerialised();
 } 
 
 bool
@@ -287,8 +298,17 @@ MP3FileReader::accept(struct mad_header const *header,
     if (frames < 1) return MAD_FLOW_CONTINUE;
 
     if (m_channelCount == 0) {
+
+        m_fileRate = pcm->samplerate;
         m_channelCount = channels;
-        m_sampleRate = pcm->samplerate;
+
+        initialiseDecodeCache();
+
+        if (m_cacheMode == CacheInTemporaryFile) {
+            m_completion = 1;
+            std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
+            startSerialised("MP3FileReader::Decode");
+        }
     }
     
     if (m_bitrateDenom > 0) {
@@ -315,33 +335,41 @@ MP3FileReader::accept(struct mad_header const *header,
 
     if (m_cancelled) return MAD_FLOW_STOP;
 
-    m_frameCount += frames;
-
     if (!isDecodeCacheInitialised()) {
         initialiseDecodeCache();
     }
 
-    for (int i = 0; i < frames; ++i) {
+    if (m_samplebuffersize < frames) {
+        if (!m_samplebuffer) {
+            m_samplebuffer = new float *[channels];
+            for (int c = 0; c < channels; ++c) {
+                m_samplebuffer[c] = 0;
+            }
+        }
+        for (int c = 0; c < channels; ++c) {
+            delete[] m_samplebuffer[c];
+            m_samplebuffer[c] = new float[frames];
+        }
+        m_samplebuffersize = frames;
+    }
 
-	for (int ch = 0; ch < channels; ++ch) {
+    int activeChannels = int(sizeof(pcm->samples) / sizeof(pcm->samples[0]));
+
+    for (int ch = 0; ch < channels; ++ch) {
+
+        for (int i = 0; i < frames; ++i) {
+
 	    mad_fixed_t sample = 0;
-	    if (ch < int(sizeof(pcm->samples) / sizeof(pcm->samples[0]))) {
+	    if (ch < activeChannels) {
 		sample = pcm->samples[ch][i];
 	    }
 	    float fsample = float(sample) / float(MAD_F_ONE);
-            addSampleToDecodeCache(fsample);
-	}
-
-	if (! (i & 0xffff)) {
-	    // periodically munlock to ensure we don't exhaust real memory
-	    // if running with memory locked down
-	    MUNLOCK_SAMPLEBLOCK(m_data);
+            
+            m_samplebuffer[ch][i] = fsample;
 	}
     }
 
-    if (frames > 0) {
-	MUNLOCK_SAMPLEBLOCK(m_data);
-    }
+    addSamplesToDecodeCache(m_samplebuffer, frames);
 
     return MAD_FLOW_CONTINUE;
 }

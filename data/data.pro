@@ -29,14 +29,19 @@ HEADERS += fft/FFTapi.h \
            fileio/DataFileReaderFactory.h \
            fileio/FileFinder.h \
            fileio/FileReadThread.h \
+           fileio/MatchFileReader.h \
            fileio/MatrixFile.h \
            fileio/MIDIFileReader.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
+           fileio/PlaylistFileReader.h \
            fileio/QuickTimeFileReader.h \
            fileio/RemoteFile.h \
+           fileio/ResamplingWavFileReader.h \
            fileio/WavFileReader.h \
            fileio/WavFileWriter.h \
+           model/AggregateWaveModel.h \
+           model/AlignmentModel.h \
            model/DenseThreeDimensionalModel.h \
            model/DenseTimeValueModel.h \
            model/EditableDenseThreeDimensionalModel.h \
@@ -66,14 +71,19 @@ SOURCES += fft/FFTapi.cpp \
            fileio/DataFileReaderFactory.cpp \
            fileio/FileFinder.cpp \
            fileio/FileReadThread.cpp \
+           fileio/MatchFileReader.cpp \
            fileio/MatrixFile.cpp \
            fileio/MIDIFileReader.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
+           fileio/PlaylistFileReader.cpp \
            fileio/QuickTimeFileReader.cpp \
            fileio/RemoteFile.cpp \
+           fileio/ResamplingWavFileReader.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
+           model/AggregateWaveModel.cpp \
+           model/AlignmentModel.cpp \
            model/DenseTimeValueModel.cpp \
            model/EditableDenseThreeDimensionalModel.cpp \
            model/FFTModel.cpp \
@@ -81,5 +91,6 @@ SOURCES += fft/FFTapi.cpp \
            model/NoteModel.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
+           model/RangeSummarisableTimeValueModel.cpp \
            model/WaveFileModel.cpp \
            model/WritableWaveFileModel.cpp

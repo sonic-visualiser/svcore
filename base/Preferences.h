@@ -56,6 +56,17 @@ public:
 
     bool getOmitTempsFromRecentFiles() const { return m_omitRecentTemps; }
 
+    QString getTemporaryDirectoryRoot() const { return m_tempDirRoot; }
+
+    bool getResampleOnLoad() const { return m_resampleOnLoad; }    
+    
+    enum BackgroundMode {
+        BackgroundFromTheme,
+        DarkBackground,
+        LightBackground 
+    };
+    BackgroundMode getBackgroundMode() const { return m_backgroundMode; }
+
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
@@ -65,6 +76,9 @@ public slots:
     void setWindowType(WindowType type);
     void setResampleQuality(int quality);
     void setOmitTempsFromRecentFiles(bool omit);
+    void setTemporaryDirectoryRoot(QString tempDirRoot);
+    void setResampleOnLoad(bool);
+    void setBackgroundMode(BackgroundMode mode);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -78,6 +92,9 @@ private:
     WindowType m_windowType;
     int m_resampleQuality;
     bool m_omitRecentTemps;
+    QString m_tempDirRoot;
+    bool m_resampleOnLoad;
+    BackgroundMode m_backgroundMode;
 };
 
 #endif

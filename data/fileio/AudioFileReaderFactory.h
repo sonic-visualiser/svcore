@@ -34,9 +34,15 @@ public:
      * Return an audio file reader initialised to the file at the
      * given path, or NULL if no suitable reader for this path is
      * available or the file cannot be opened.
+     *
+     * If targetRate is non-zero, the file will be resampled to that
+     * rate (transparently).  You can query reader->getNativeRate()
+     * if you want to find out whether the file is being resampled
+     * or not.
+     *
      * Caller owns the returned object and must delete it after use.
      */
-    static AudioFileReader *createReader(QString path);
+    static AudioFileReader *createReader(QString path, size_t targetRate = 0);
 };
 
 #endif

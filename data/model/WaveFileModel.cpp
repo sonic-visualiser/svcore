@@ -38,7 +38,7 @@ using std::endl;
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
-WaveFileModel::WaveFileModel(QString path) :
+WaveFileModel::WaveFileModel(QString path, size_t targetRate) :
     m_path(path),
     m_myReader(true),
     m_fillThread(0),
@@ -46,13 +46,14 @@ WaveFileModel::WaveFileModel(QString path) :
     m_lastFillExtent(0),
     m_exiting(false)
 {
-    m_reader = AudioFileReaderFactory::createReader(path);
+    m_reader = AudioFileReaderFactory::createReader(path, targetRate);
+    if (m_reader) std::cerr << "WaveFileModel::WaveFileModel: reader rate: " << m_reader->getSampleRate() << std::endl;
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(path).fileName());
     if (isOK()) fillCache();
 }
 
-WaveFileModel::WaveFileModel(QString path, QString originalLocation) :
+WaveFileModel::WaveFileModel(QString path, QString originalLocation, size_t targetRate) :
     m_path(originalLocation),
     m_myReader(true),
     m_fillThread(0),
@@ -60,7 +61,8 @@ WaveFileModel::WaveFileModel(QString path, QString originalLocation) :
     m_lastFillExtent(0),
     m_exiting(false)
 {
-    m_reader = AudioFileReaderFactory::createReader(path);
+    m_reader = AudioFileReaderFactory::createReader(path, targetRate);
+    if (m_reader) std::cerr << "WaveFileModel::WaveFileModel: reader rate: " << m_reader->getSampleRate() << std::endl;
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(originalLocation).fileName());
     if (isOK()) fillCache();
@@ -148,6 +150,15 @@ WaveFileModel::getSampleRate() const
 {
     if (!m_reader) return 0;
     return m_reader->getSampleRate();
+}
+
+size_t
+WaveFileModel::getNativeRate() const 
+{
+    if (!m_reader) return 0;
+    size_t rate = m_reader->getNativeRate();
+    if (rate == 0) rate = getSampleRate();
+    return rate;
 }
 
 size_t

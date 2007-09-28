@@ -33,6 +33,7 @@ public:
     size_t getFrameCount() const { return m_frameCount; }
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
+    size_t getNativeRate() const { return m_sampleRate; } // if resampled
     
     /**
      * Return the title of the work in the audio file, if known.  This

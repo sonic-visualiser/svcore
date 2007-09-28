@@ -87,6 +87,11 @@ public:
     virtual PointList getPoints(long frame) const;
 
     /**
+     * Get all points.
+     */
+    virtual const PointList &getPoints() const { return m_points; }
+
+    /**
      * Return all points that share the nearest frame number prior to
      * the given one at which there are any points.
      */
@@ -115,6 +120,12 @@ public:
      * may remain in the model.
      */
     virtual void deletePoint(const PointType &point);
+
+    virtual bool isReady(int *completion = 0) const {
+        bool ready = isOK() && (m_completion == 100);
+        if (completion) *completion = m_completion;
+        return ready;
+    }
 
     virtual void setCompletion(int completion);
     virtual int getCompletion() const { return m_completion; }
@@ -505,12 +516,16 @@ template <typename PointType>
 void
 SparseModel<PointType>::setCompletion(int completion)
 {
-//    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
+    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
 
     if (m_completion != completion) {
 	m_completion = completion;
 
 	if (completion == 100) {
+
+            if (!m_notifyOnAdd) {
+                emit completionChanged();
+            }
 
 	    m_notifyOnAdd = true; // henceforth
 	    emit modelChanged();

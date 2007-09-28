@@ -15,6 +15,7 @@
 
 #include "FFTModel.h"
 #include "DenseTimeValueModel.h"
+#include "AggregateWaveModel.h"
 
 #include "base/Profiler.h"
 #include "base/Pitch.h"
@@ -34,14 +35,16 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     m_xshift(0),
     m_yshift(0)
 {
-    m_server = FFTDataServer::getFuzzyInstance(model,
-                                               channel,
-                                               windowType,
-                                               windowSize,
-                                               windowIncrement,
-                                               fftSize,
-                                               polar,
-                                               fillFromColumn);
+    setSourceModel(const_cast<DenseTimeValueModel *>(model)); //!!! hmm.
+
+    m_server = getServer(model,
+                         channel,
+                         windowType,
+                         windowSize,
+                         windowIncrement,
+                         fftSize,
+                         polar,
+                         fillFromColumn);
 
     if (!m_server) return; // caller should check isOK()
 
@@ -75,6 +78,61 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 FFTModel::~FFTModel()
 {
     if (m_server) FFTDataServer::releaseInstance(m_server);
+}
+
+FFTDataServer *
+FFTModel::getServer(const DenseTimeValueModel *model,
+                    int channel,
+                    WindowType windowType,
+                    size_t windowSize,
+                    size_t windowIncrement,
+                    size_t fftSize,
+                    bool polar,
+                    size_t fillFromColumn)
+{
+    // Obviously, an FFT model of channel C (where C != -1) of an
+    // aggregate model is the same as the FFT model of the appropriate
+    // channel of whichever model that aggregate channel is drawn
+    // from.  We should use that model here, in case we already have
+    // the data for it or will be wanting the same data again later.
+
+    // If the channel is -1 (i.e. mixture of all channels), then we
+    // can't do this shortcut unless the aggregate model only has one
+    // channel or contains exactly all of the channels of a single
+    // other model.  That isn't very likely -- if it were the case,
+    // why would we be using an aggregate model?
+
+    if (channel >= 0) {
+
+        const AggregateWaveModel *aggregate =
+            dynamic_cast<const AggregateWaveModel *>(model);
+
+        if (aggregate && channel < aggregate->getComponentCount()) {
+
+            AggregateWaveModel::ModelChannelSpec spec =
+                aggregate->getComponent(channel);
+
+            return getServer(spec.model,
+                             spec.channel,
+                             windowType,
+                             windowSize,
+                             windowIncrement,
+                             fftSize,
+                             polar,
+                             fillFromColumn);
+        }
+    }
+
+    // The normal case
+
+    return FFTDataServer::getFuzzyInstance(model,
+                                           channel,
+                                           windowType,
+                                           windowSize,
+                                           windowIncrement,
+                                           fftSize,
+                                           polar,
+                                           fillFromColumn);
 }
 
 size_t

@@ -34,8 +34,9 @@ static int instances = 0;
 
 OggVorbisFileReader::OggVorbisFileReader(QString path,
                                          DecodeMode decodeMode,
-                                         CacheMode mode) :
-    CodedAudioFileReader(mode),
+                                         CacheMode mode,
+                                         size_t targetRate) :
+    CodedAudioFileReader(mode, targetRate),
     m_path(path),
     m_progress(0),
     m_fileSize(0),
@@ -45,9 +46,8 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     m_completion(0),
     m_decodeThread(0)
 {
-    m_frameCount = 0;
     m_channelCount = 0;
-    m_sampleRate = 0;
+    m_fileRate = 0;
 
     std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
 
@@ -111,6 +111,11 @@ OggVorbisFileReader::~OggVorbisFileReader()
 void
 OggVorbisFileReader::DecodeThread::run()
 {
+    if (m_reader->m_cacheMode == CacheInTemporaryFile) {
+        m_reader->m_completion = 1;
+        m_reader->startSerialised("OggVorbisFileReader::Decode");
+    }
+
     while (oggz_read(m_reader->m_oggz, 1024) > 0);
         
     fish_sound_delete(m_reader->m_fishSound);
@@ -120,6 +125,8 @@ OggVorbisFileReader::DecodeThread::run()
     
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
     m_reader->m_completion = 100;
+
+    m_reader->endSerialised();
 } 
 
 int
@@ -175,22 +182,13 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
 	FishSoundInfo fsinfo;
 	fish_sound_command(fs, FISH_SOUND_GET_INFO,
 			   &fsinfo, sizeof(FishSoundInfo));
+	reader->m_fileRate = fsinfo.samplerate;
 	reader->m_channelCount = fsinfo.channels;
-	reader->m_sampleRate = fsinfo.samplerate;
         reader->initialiseDecodeCache();
     }
 
     if (nframes > 0) {
-
-	reader->m_frameCount += nframes;
-    
-	for (long i = 0; i < nframes; ++i) {
-	    for (size_t c = 0; c < reader->m_channelCount; ++c) {
-                reader->addSampleToDecodeCache(frames[c][i]);
-	    }
-	}
-
-	MUNLOCK_SAMPLEBLOCK(reader->m_data);
+        reader->addSamplesToDecodeCache(frames, nframes);
     }
 
     if (reader->m_cancelled) return 1;

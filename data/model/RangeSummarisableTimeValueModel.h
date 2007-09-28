@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2007 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -21,6 +21,8 @@
 #include "DenseTimeValueModel.h"
 #include "base/ZoomConstraint.h"
 
+class AlignmentModel;
+
 /**
  * Base class for models containing dense two-dimensional data (value
  * against time) that may be meaningfully represented in a zoomed view
@@ -33,6 +35,8 @@ class RangeSummarisableTimeValueModel : public DenseTimeValueModel
     Q_OBJECT
 
 public:
+    RangeSummarisableTimeValueModel() : m_alignment(0) { }
+
     struct Range
     {
         float min;
@@ -68,6 +72,18 @@ public:
      * and end frames.
      */
     virtual Range getRange(size_t channel, size_t start, size_t end) const = 0;
+
+    virtual void setAlignment(AlignmentModel *alignment); // I take ownership
+    virtual const Model *getAlignmentReference() const;
+    virtual size_t alignToReference(size_t frame) const;
+    virtual size_t alignFromReference(size_t referenceFrame) const;
+    virtual int getAlignmentCompletion() const;
+
+signals:
+    void alignmentCompletionChanged();
+
+protected:
+    AlignmentModel *m_alignment;
 };
 
 #endif
