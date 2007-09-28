@@ -22,6 +22,8 @@
 #include <QMutex>
 
 class WavFileReader;
+class Serialiser;
+class Resampler;
 
 class CodedAudioFileReader : public AudioFileReader
 {
@@ -36,18 +38,31 @@ public:
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const;
 
+    virtual size_t getNativeRate() const { return m_fileRate; }
+
 protected:
-    CodedAudioFileReader(CacheMode cacheMode);
+    CodedAudioFileReader(CacheMode cacheMode, size_t targetRate);
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
-    void addSampleToDecodeCache(float sample);
+    void addSamplesToDecodeCache(float **samples, size_t nframes);
+    void addSamplesToDecodeCache(float *samplesInterleaved, size_t nframes);
+    void addSamplesToDecodeCache(const SampleBlock &interleaved);
     void finishDecodeCache();
     bool isDecodeCacheInitialised() const { return m_initialised; }
 
+    void startSerialised(QString id);
+    void endSerialised();
+
+private:
+    void pushBuffer(float *interleaved, size_t sz, bool final);
+
+protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
     SampleBlock m_data;
     bool m_initialised;
+    Serialiser *m_serialiser;
+    size_t m_fileRate;
 
     QString m_cacheFileName;
     SNDFILE *m_cacheFileWritePtr;
@@ -55,6 +70,9 @@ protected:
     float *m_cacheWriteBuffer;
     size_t m_cacheWriteBufferIndex;
     size_t m_cacheWriteBufferSize; // frames
+
+    Resampler *m_resampler;
+    float *m_resampleBuffer;
 };
 
 #endif

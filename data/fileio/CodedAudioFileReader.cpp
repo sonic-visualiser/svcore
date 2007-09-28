@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2007 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -19,35 +19,70 @@
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 #include "base/Profiler.h"
+#include "base/Serialiser.h"
+#include "base/Resampler.h"
 
 #include <iostream>
 #include <QDir>
 #include <QMutexLocker>
 
-CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode) :
+CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
+                                           size_t targetRate) :
     m_cacheMode(cacheMode),
     m_initialised(false),
+    m_serialiser(0),
+    m_fileRate(0),
     m_cacheFileWritePtr(0),
     m_cacheFileReader(0),
     m_cacheWriteBuffer(0),
     m_cacheWriteBufferIndex(0),
-    m_cacheWriteBufferSize(16384)
+    m_cacheWriteBufferSize(16384),
+    m_resampler(0),
+    m_resampleBuffer(0)
 {
+    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
+
+    m_frameCount = 0;
+    m_sampleRate = targetRate;
 }
 
 CodedAudioFileReader::~CodedAudioFileReader()
 {
     QMutexLocker locker(&m_cacheMutex);
 
+    endSerialised();
+
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
-    if (m_cacheFileReader) delete m_cacheFileReader;
-    if (m_cacheWriteBuffer) delete[] m_cacheWriteBuffer;
+
+    delete m_cacheFileReader;
+    delete[] m_cacheWriteBuffer;
 
     if (m_cacheFileName != "") {
         if (!QFile(m_cacheFileName).remove()) {
             std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName.toStdString() << "\"" << std::endl;
         }
     }
+
+    delete m_resampler;
+    delete[] m_resampleBuffer;
+}
+
+void
+CodedAudioFileReader::startSerialised(QString id)
+{
+//    std::cerr << "CodedAudioFileReader::startSerialised(" << id.toStdString() << ")" << std::endl;
+
+    delete m_serialiser;
+    m_serialiser = new Serialiser(id);
+}
+
+void
+CodedAudioFileReader::endSerialised()
+{
+//    std::cerr << "CodedAudioFileReader::endSerialised" << std::endl;
+
+    delete m_serialiser;
+    m_serialiser = 0;
 }
 
 void
@@ -55,10 +90,29 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-    if (m_cacheMode == CacheInTemporaryFile) {
+    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
 
-        m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];
-        m_cacheWriteBufferIndex = 0;
+    if (m_fileRate == 0) {
+        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;
+        m_fileRate = 48000; // got to have something
+    }
+    if (m_sampleRate == 0) {
+        m_sampleRate = m_fileRate;
+    }
+    if (m_fileRate != m_sampleRate) {
+        std::cerr << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << std::endl;
+        m_resampler = new Resampler(Resampler::FastestTolerable,
+                                    m_channelCount,
+                                    m_cacheWriteBufferSize);
+        float ratio = float(m_sampleRate) / float(m_fileRate);
+        m_resampleBuffer = new float
+            [lrintf(ceilf(m_cacheWriteBufferSize * m_channelCount * ratio))];
+    }
+
+    m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];
+    m_cacheWriteBufferIndex = 0;
+
+    if (m_cacheMode == CacheInTemporaryFile) {
 
         try {
             QDir dir(TempDirectory::getInstance()->getPath());
@@ -68,17 +122,21 @@ CodedAudioFileReader::initialiseDecodeCache()
             SF_INFO fileInfo;
             fileInfo.samplerate = m_sampleRate;
             fileInfo.channels = m_channelCount;
-            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
+
+            // No point in writing 24-bit or float; generally this
+            // class is used for decoding files that have come from a
+            // 16 bit source or that decode to only 16 bits anyway.
+            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
     
             m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
                                           SFM_WRITE, &fileInfo);
 
             if (m_cacheFileWritePtr) {
 
-                //!!! really want to do this now only if we're in a
-                //threaded mode -- creating the reader later if we're
-                //not threaded -- but we don't have access to that
-                //information here
+                // Ideally we would do this now only if we were in a
+                // threaded mode -- creating the reader later if we're
+                // not threaded -- but we don't have access to that
+                // information here
 
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
@@ -89,6 +147,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                     m_cacheMode = CacheInMemory;
                     sf_close(m_cacheFileWritePtr);
                 }
+
             } else {
                 std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName.toStdString() << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
                 m_cacheMode = CacheInMemory;
@@ -108,26 +167,82 @@ CodedAudioFileReader::initialiseDecodeCache()
 }
 
 void
-CodedAudioFileReader::addSampleToDecodeCache(float sample)
+CodedAudioFileReader::addSamplesToDecodeCache(float **samples, size_t nframes)
 {
     QMutexLocker locker(&m_cacheMutex);
 
     if (!m_initialised) return;
 
-    switch (m_cacheMode) {
+    for (size_t i = 0; i < nframes; ++i) {
+        
+        for (size_t c = 0; c < m_channelCount; ++c) {
 
-    case CacheInTemporaryFile:
+            float sample = samples[c][i];
+        
+            m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
+            if (m_cacheWriteBufferIndex ==
+                m_cacheWriteBufferSize * m_channelCount) {
+
+                pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
+                m_cacheWriteBufferIndex = 0;
+            }
+
+            if (m_cacheWriteBufferIndex % 10240 == 0 &&
+                m_cacheFileReader) {
+                m_cacheFileReader->updateFrameCount();
+            }
+        }
+    }
+}
+
+void
+CodedAudioFileReader::addSamplesToDecodeCache(float *samples, size_t nframes)
+{
+    QMutexLocker locker(&m_cacheMutex);
+
+    if (!m_initialised) return;
+
+    for (size_t i = 0; i < nframes; ++i) {
+        
+        for (size_t c = 0; c < m_channelCount; ++c) {
+
+            float sample = samples[i * m_channelCount + c];
+        
+            m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
+
+            if (m_cacheWriteBufferIndex ==
+                m_cacheWriteBufferSize * m_channelCount) {
+
+                pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
+                m_cacheWriteBufferIndex = 0;
+            }
+
+            if (m_cacheWriteBufferIndex % 10240 == 0 &&
+                m_cacheFileReader) {
+                m_cacheFileReader->updateFrameCount();
+            }
+        }
+    }
+}
+
+void
+CodedAudioFileReader::addSamplesToDecodeCache(const SampleBlock &samples)
+{
+    QMutexLocker locker(&m_cacheMutex);
+
+    if (!m_initialised) return;
+
+    for (size_t i = 0; i < samples.size(); ++i) {
+
+        float sample = samples[i];
+        
         m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
         if (m_cacheWriteBufferIndex ==
             m_cacheWriteBufferSize * m_channelCount) {
 
-            //!!! check for return value! out of disk space, etc!
-            sf_writef_float(m_cacheFileWritePtr,
-                            m_cacheWriteBuffer,
-                            m_cacheWriteBufferSize);
-
+            pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
             m_cacheWriteBufferIndex = 0;
         }
 
@@ -135,11 +250,6 @@ CodedAudioFileReader::addSampleToDecodeCache(float sample)
             m_cacheFileReader) {
             m_cacheFileReader->updateFrameCount();
         }
-        break;
-
-    case CacheInMemory:
-        m_data.push_back(sample);
-        break;
     }
 }
 
@@ -155,41 +265,63 @@ CodedAudioFileReader::finishDecodeCache()
         return;
     }
 
+    if (m_cacheWriteBufferIndex > 0) {
+        //!!! check for return value! out of disk space, etc!
+        pushBuffer(m_cacheWriteBuffer,
+                   m_cacheWriteBufferIndex / m_channelCount,
+                   true);
+    }        
+
+    delete[] m_cacheWriteBuffer;
+    m_cacheWriteBuffer = 0;
+
+    delete[] m_resampleBuffer;
+    m_resampleBuffer = 0;
+
+    delete m_resampler;
+    m_resampler = 0;
+
+    if (m_cacheMode == CacheInTemporaryFile) {
+        sf_close(m_cacheFileWritePtr);
+        m_cacheFileWritePtr = 0;
+        if (m_cacheFileReader) m_cacheFileReader->updateFrameCount();
+    }
+}
+
+void
+CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
+{
+    if (m_resampler) {
+        
+        float ratio = float(m_sampleRate) / float(m_fileRate);
+
+        if (ratio != 1.f) {
+            size_t out = m_resampler->resampleInterleaved
+                (buffer,
+                 m_resampleBuffer,
+                 sz,
+                 ratio,
+                 final);
+
+            buffer = m_resampleBuffer;
+            sz = out;
+        }
+    }
+
+    m_frameCount += sz;
+
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
-
-        if (m_cacheWriteBufferIndex > 0) {
-            //!!! check for return value! out of disk space, etc!
-            sf_writef_float(m_cacheFileWritePtr,
-                            m_cacheWriteBuffer,
-                            m_cacheWriteBufferIndex / m_channelCount);
-        }
-
-        if (m_cacheWriteBuffer) {
-            delete[] m_cacheWriteBuffer;
-            m_cacheWriteBuffer = 0;
-        }
-
-        m_cacheWriteBufferIndex = 0;
-
-        sf_close(m_cacheFileWritePtr);
-        m_cacheFileWritePtr = 0;
-
-        m_cacheFileReader->updateFrameCount();
-/*
-        m_cacheFileReader = new WavFileReader(m_cacheFileName);
-
-        if (!m_cacheFileReader->isOK()) {
-            std::cerr << "ERROR: CodedAudioFileReader::finishDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
-            delete m_cacheFileReader;
-            m_cacheFileReader = 0;
-        }*/
-
+        //!!! check for return value! out of disk space, etc!
+        sf_writef_float(m_cacheFileWritePtr, buffer, sz);
         break;
 
     case CacheInMemory:
-        // nothing to do 
+        for (size_t s = 0; s < sz; ++s) {
+            m_data.push_back(buffer[sz]);
+        }
+	MUNLOCK_SAMPLEBLOCK(m_data);
         break;
     }
 }

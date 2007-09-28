@@ -35,7 +35,10 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    MP3FileReader(QString path, DecodeMode decodeMode, CacheMode cacheMode);
+    MP3FileReader(QString path,
+                  DecodeMode decodeMode,
+                  CacheMode cacheMode,
+                  size_t targetRate = 0);
     virtual ~MP3FileReader();
 
     virtual QString getError() const { return m_error; }
@@ -61,6 +64,8 @@ protected:
     bool m_done;
 
     unsigned char *m_filebuffer;
+    float **m_samplebuffer;
+    size_t m_samplebuffersize;
 
     QProgressDialog *m_progress;
     bool m_cancelled;

@@ -37,8 +37,10 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    QuickTimeFileReader(QString path, DecodeMode decodeMode,
-                        CacheMode cacheMode);
+    QuickTimeFileReader(QString path,
+                        DecodeMode decodeMode,
+                        CacheMode cacheMode,
+                        size_t targetRate = 0);
     virtual ~QuickTimeFileReader();
 
     virtual QString getError() const { return m_error; }

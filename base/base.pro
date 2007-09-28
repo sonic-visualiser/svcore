@@ -31,10 +31,12 @@ HEADERS += AudioLevel.h \
            RangeMapper.h \
            RealTime.h \
            RecentFiles.h \
+           Resampler.h \
            ResizeableBitset.h \
            RingBuffer.h \
            Scavenger.h \
            Selection.h \
+           Serialiser.h \
            StorageAdviser.h \
            TempDirectory.h \
            TextAbbrev.h \
@@ -60,7 +62,9 @@ SOURCES += AudioLevel.cpp \
            RangeMapper.cpp \
            RealTime.cpp \
            RecentFiles.cpp \
+           Resampler.cpp \
            Selection.cpp \
+           Serialiser.cpp \
            StorageAdviser.cpp \
            TempDirectory.cpp \
            TextAbbrev.cpp \

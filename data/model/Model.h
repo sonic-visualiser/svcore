@@ -60,6 +60,12 @@ public:
     virtual size_t getSampleRate() const = 0;
 
     /**
+     * Return the frame rate of the underlying material, if the model
+     * itself has already been resampled.
+     */
+    virtual size_t getNativeRate() const { return getSampleRate(); }
+
+    /**
      * Return a copy of this model.
      *
      * If the model is not editable, this may be effectively a shallow
@@ -104,6 +110,24 @@ public:
         return 0;
     }
 
+    /**
+     * If this model was derived from another, return the model it was
+     * derived from.  The assumption is that the source model's
+     * alignment will also apply to this model, unless some other
+     * property indicates otherwise.
+     */
+    virtual Model *getSourceModel() const {
+        return m_sourceModel;
+    }
+
+    /**
+     * Set the source model for this model.
+     */
+     //!!! No way to handle source model deletion &c yet
+    virtual void setSourceModel(Model *model) {
+        m_sourceModel = model;
+    }
+
     virtual void toXml(QTextStream &stream,
                        QString indent = "",
                        QString extraAttributes = "") const;
@@ -135,11 +159,13 @@ signals:
     void completionChanged();
 
 protected:
-    Model() { }
+    Model() : m_sourceModel(0) { }
 
     // Not provided.
     Model(const Model &);
     Model &operator=(const Model &); 
+
+    Model *m_sourceModel;
 };
 
 #endif

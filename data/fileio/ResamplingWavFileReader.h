@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2007 QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,40 +13,34 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _OGG_VORBIS_FILE_READER_H_
-#define _OGG_VORBIS_FILE_READER_H_
-
-#ifdef HAVE_OGGZ
-#ifdef HAVE_FISHSOUND
+#ifndef _RESAMPLING_WAV_FILE_READER_H_
+#define _RESAMPLING_WAV_FILE_READER_H_
 
 #include "CodedAudioFileReader.h"
 
 #include "base/Thread.h"
-#include <oggz/oggz.h>
-#include <fishsound/fishsound.h>
 
 #include <set>
 
+class WavFileReader;
 class QProgressDialog;
 
-class OggVorbisFileReader : public CodedAudioFileReader
+class ResamplingWavFileReader : public CodedAudioFileReader
 {
 public:
-    enum DecodeMode {
-        DecodeAtOnce, // decode the file on construction, with progress dialog
-        DecodeThreaded // decode in a background thread after construction
+    enum ResampleMode {
+        ResampleAtOnce, // resample the file on construction, with progress dialog
+        ResampleThreaded // resample in a background thread after construction
     };
 
-    OggVorbisFileReader(QString path,
-                        DecodeMode decodeMode,
-                        CacheMode cacheMode,
-                        size_t targetRate = 0);
-    virtual ~OggVorbisFileReader();
+    ResamplingWavFileReader(QString path,
+                            ResampleMode resampleMode,
+                            CacheMode cacheMode,
+                            size_t targetRate = 0);
+    virtual ~ResamplingWavFileReader();
 
     virtual QString getError() const { return m_error; }
 
-    virtual QString getTitle() const { return m_title; }
-    
     static void getSupportedExtensions(std::set<QString> &extensions);
 
     virtual int getDecodeCompletion() const { return m_completion; }
@@ -58,34 +52,27 @@ public:
 protected:
     QString m_path;
     QString m_error;
-    QString m_title;
-
-    OGGZ *m_oggz;
-    FishSound *m_fishSound;
-    QProgressDialog *m_progress;
-    size_t m_fileSize;
-    size_t m_bytesRead;
-    bool m_commentsRead;
     bool m_cancelled;
+    size_t m_processed;
     int m_completion;
- 
-    static int readPacket(OGGZ *, ogg_packet *, long, void *);
-    static int acceptFrames(FishSound *, float **, long, void *);
 
+    WavFileReader *m_original;
+    QProgressDialog *m_progress;
+
+    void addBlock(const SampleBlock &frames);
+    
     class DecodeThread : public Thread
     {
     public:
-        DecodeThread(OggVorbisFileReader *reader) : m_reader(reader) { }
+        DecodeThread(ResamplingWavFileReader *reader) : m_reader(reader) { }
         virtual void run();
 
     protected:
-        OggVorbisFileReader *m_reader; 
+        ResamplingWavFileReader *m_reader;
     };
 
     DecodeThread *m_decodeThread;
 };
 
 #endif
-#endif
 
-#endif

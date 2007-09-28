@@ -165,12 +165,16 @@ public:
     virtual void resume() { m_server->resume(); }
 
 private:
-    FFTModel(const FFTModel &);
+    FFTModel(const FFTModel &); // not implemented
     FFTModel &operator=(const FFTModel &); // not implemented
 
     FFTDataServer *m_server;
     int m_xshift;
     int m_yshift;
+
+    FFTDataServer *getServer(const DenseTimeValueModel *,
+                             int, WindowType, size_t, size_t, size_t,
+                             bool, size_t);
 
     size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
                                  size_t bin, float &percentile) const;

@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+    This file copyright 2007 QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,39 +13,43 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAVE_FILE_MODEL_H_
-#define _WAVE_FILE_MODEL_H_
-
-#include "base/Thread.h"
-#include <QMutex>
-#include <QTimer>
+#ifndef _AGGREGATE_WAVE_MODEL_H_
+#define _AGGREGATE_WAVE_MODEL_H_
 
 #include "RangeSummarisableTimeValueModel.h"
 #include "PowerOfSqrtTwoZoomConstraint.h"
 
-#include <stdlib.h>
+#include <vector>
 
-class AudioFileReader;
-
-class WaveFileModel : public RangeSummarisableTimeValueModel
+class AggregateWaveModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
 
 public:
-    WaveFileModel(QString path, size_t targetRate = 0);
-    WaveFileModel(QString path, QString originalLocation, size_t targetRate = 0);
-    WaveFileModel(QString originalLocation, AudioFileReader *reader);
-    ~WaveFileModel();
+    struct ModelChannelSpec
+    {
+        ModelChannelSpec(RangeSummarisableTimeValueModel *m, int c) :
+            model(m), channel(c) { }
+        RangeSummarisableTimeValueModel *model;
+        int channel;
+    };
+
+    typedef std::vector<ModelChannelSpec> ChannelSpecList;
+
+    AggregateWaveModel(ChannelSpecList channelSpecs);
+    ~AggregateWaveModel();
 
     bool isOK() const;
     bool isReady(int *) const;
+
+    size_t getComponentCount() const;
+    ModelChannelSpec getComponent(size_t c) const;
 
     const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
     size_t getFrameCount() const;
     size_t getChannelCount() const;
     size_t getSampleRate() const;
-    size_t getNativeRate() const;
 
     virtual Model *clone() const;
 
@@ -77,41 +81,14 @@ signals:
     void completionChanged();
 
 protected slots:
-    void fillTimerTimedOut();
-    void cacheFilled();
-    
+    void componentModelChanged();
+    void componentModelChanged(size_t, size_t);
+    void componentModelCompletionChanged();
+
 protected:
-    void initialize();
-
-    class RangeCacheFillThread : public Thread
-    {
-    public:
-        RangeCacheFillThread(WaveFileModel &model) :
-	    m_model(model), m_fillExtent(0),
-            m_frameCount(model.getFrameCount()) { }
-    
-	size_t getFillExtent() const { return m_fillExtent; }
-        virtual void run();
-
-    protected:
-        WaveFileModel &m_model;
-	size_t m_fillExtent;
-        size_t m_frameCount;
-    };
-         
-    void fillCache();
-    
-    QString m_path;
-    AudioFileReader *m_reader;
-    bool m_myReader;
-
-    RangeBlock m_cache[2]; // interleaved at two base resolutions
-    mutable QMutex m_mutex;
-    RangeCacheFillThread *m_fillThread;
-    QTimer *m_updateTimer;
-    size_t m_lastFillExtent;
-    bool m_exiting;
+    ChannelSpecList m_components;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
-};    
+};
 
 #endif
+

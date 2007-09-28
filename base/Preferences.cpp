@@ -40,7 +40,9 @@ Preferences::Preferences() :
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
     m_resampleQuality(1),
-    m_omitRecentTemps(true)
+    m_omitRecentTemps(true),
+    m_tempDirRoot(""),
+    m_resampleOnLoad(true)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -52,6 +54,13 @@ Preferences::Preferences() :
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
     m_resampleQuality = settings.value("resample-quality", 1).toInt();
+    m_resampleOnLoad = settings.value("resample-on-load", true).toBool();
+    m_backgroundMode = BackgroundMode
+        (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
+    settings.endGroup();
+
+    settings.beginGroup("TempDirectory");
+    m_tempDirRoot = settings.value("create-in", "$HOME").toString();
     settings.endGroup();
 }
 
@@ -69,6 +78,9 @@ Preferences::getProperties() const
     props.push_back("Window Type");
     props.push_back("Resample Quality");
     props.push_back("Omit Temporaries from Recent Files");
+    props.push_back("Resample On Load");
+    props.push_back("Temporary Directory Root");
+    props.push_back("Background Mode");
     return props;
 }
 
@@ -91,7 +103,16 @@ Preferences::getPropertyLabel(const PropertyName &name) const
         return tr("Playback resampler type");
     }
     if (name == "Omit Temporaries from Recent Files") {
-        return tr("Omit Temporaries from Recent Files");
+        return tr("Omit temporaries from Recent Files menu");
+    }
+    if (name == "Resample On Load") {
+        return tr("Resample mismatching files on import");
+    }
+    if (name == "Temporary Directory Root") {
+        return tr("Location for cache file directory");
+    }
+    if (name == "Background Mode") {
+        return tr("Background colour preference");
     }
     return name;
 }
@@ -116,6 +137,16 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Omit Temporaries from Recent Files") {
         return ToggleProperty;
+    }
+    if (name == "Resample On Load") {
+        return ToggleProperty;
+    }
+    if (name == "Temporary Directory Root") {
+        // It's an arbitrary string, we don't have a set of values for this
+        return InvalidProperty;
+    }
+    if (name == "Background Mode") {
+        return ValueProperty;
     }
     return InvalidProperty;
 }
@@ -158,6 +189,13 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         if (deflt) *deflt = 1;
     }
 
+    if (name == "Background Mode") {
+        if (min) *min = 0;
+        if (max) *max = 2;
+        if (deflt) *deflt = 0;
+        return int(m_backgroundMode);
+    }        
+
     return 0;
 }
 
@@ -196,6 +234,13 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case SpectrogramZeroPadded: return tr("Zero pad FFT - slow but clear");
         }
     }
+    if (name == "Background Mode") {
+        switch (value) {
+        case BackgroundFromTheme: return tr("Follow desktop theme");
+        case DarkBackground: return tr("Dark background");
+        case LightBackground: return tr("Light background");
+        }
+    }
             
     return "";
 }
@@ -227,6 +272,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setResampleQuality(value);
     } else if (name == "Omit Temporaries from Recent Files") {
         setOmitTempsFromRecentFiles(value ? true : false);
+    } else if (name == "Background Mode") {
+        setBackgroundMode(BackgroundMode(value));
     }
 }
 
@@ -311,3 +358,49 @@ Preferences::setOmitTempsFromRecentFiles(bool omit)
         emit propertyChanged("Omit Temporaries from Recent Files");
     }
 }
+
+void
+Preferences::setTemporaryDirectoryRoot(QString root)
+{
+    if (root == QDir::home().absolutePath()) {
+        root = "$HOME";
+    }
+    if (m_tempDirRoot != root) {
+        m_tempDirRoot = root;
+        QSettings settings;
+        settings.beginGroup("TempDirectory");
+        settings.setValue("create-in", root);
+        settings.endGroup();
+        emit propertyChanged("Temporary Directory Root");
+    }
+}
+
+void
+Preferences::setResampleOnLoad(bool resample)
+{
+    if (m_resampleOnLoad != resample) {
+        m_resampleOnLoad = resample;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("resample-on-load", resample);
+        settings.endGroup();
+        emit propertyChanged("Resample On Load");
+    }
+}
+
+void
+Preferences::setBackgroundMode(BackgroundMode mode)
+{
+    if (m_backgroundMode != mode) {
+
+        m_backgroundMode = mode;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("background-mode", int(mode));
+        settings.endGroup();
+        emit propertyChanged("Background Mode");
+    }
+}
+
+
