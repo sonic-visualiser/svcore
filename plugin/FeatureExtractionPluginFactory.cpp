@@ -377,7 +377,7 @@ FeatureExtractionPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
 {
     void *handle = m_handleMap[plugin];
     if (handle) {
-        std::cerr << "unloading library " << handle << " for plugin " << plugin << std::endl;
+//        std::cerr << "unloading library " << handle << " for plugin " << plugin << std::endl;
         DLCLOSE(handle);
     }
     m_handleMap.erase(plugin);
