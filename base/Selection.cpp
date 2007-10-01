@@ -172,6 +172,25 @@ MultiSelection::clearSelections()
     }
 }
 
+void
+MultiSelection::getExtents(size_t &startFrame, size_t &endFrame) const
+{
+    startFrame = 0;
+    endFrame = 0;
+    
+    for (SelectionList::const_iterator i = m_selections.begin();
+	 i != m_selections.end(); ++i) {
+
+        if (i == m_selections.begin() || i->getStartFrame() < startFrame) {
+            startFrame = i->getStartFrame();
+        }
+
+        if (i == m_selections.begin() || i->getEndFrame() > endFrame) {
+            endFrame = i->getEndFrame();
+        }
+    }
+}
+
 Selection
 MultiSelection::getContainingSelection(size_t frame, bool defaultToFollowing) const
 {

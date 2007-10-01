@@ -97,8 +97,8 @@ AggregateWaveModel::clone() const
 }
 
 size_t
-AggregateWaveModel::getValues(int channel, size_t start, size_t end,
-                              float *buffer) const
+AggregateWaveModel::getData(int channel, size_t start, size_t count,
+                            float *buffer) const
 {
     int ch0 = channel, ch1 = channel;
     bool mixing = false;
@@ -110,22 +110,22 @@ AggregateWaveModel::getValues(int channel, size_t start, size_t end,
 
     float *readbuf = buffer;
     if (mixing) {
-        readbuf = new float[end - start];
-        for (size_t i = 0; i < end - start; ++i) {
+        readbuf = new float[count];
+        for (size_t i = 0; i < count; ++i) {
             buffer[i] = 0.f;
         }
     }
 
-    size_t sz = end - start;
-    
+    size_t sz = count;
+
     for (int c = ch0; c <= ch1; ++c) {
         size_t szHere = 
-            m_components[c].model->getValues(m_components[c].channel,
-                                             start, end,
-                                             readbuf);
+            m_components[c].model->getData(m_components[c].channel,
+                                           start, count,
+                                           readbuf);
         if (szHere < sz) sz = szHere;
         if (mixing) {
-            for (size_t i = 0; i < end - start; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -136,8 +136,8 @@ AggregateWaveModel::getValues(int channel, size_t start, size_t end,
 }
          
 size_t
-AggregateWaveModel::getValues(int channel, size_t start, size_t end,
-                              double *buffer) const
+AggregateWaveModel::getData(int channel, size_t start, size_t count,
+                            double *buffer) const
 {
     int ch0 = channel, ch1 = channel;
     bool mixing = false;
@@ -149,22 +149,22 @@ AggregateWaveModel::getValues(int channel, size_t start, size_t end,
 
     double *readbuf = buffer;
     if (mixing) {
-        readbuf = new double[end - start];
-        for (size_t i = 0; i < end - start; ++i) {
-            buffer[i] = 0.f;
+        readbuf = new double[count];
+        for (size_t i = 0; i < count; ++i) {
+            buffer[i] = 0.0;
         }
     }
 
-    size_t sz = end - start;
+    size_t sz = count;
     
     for (int c = ch0; c <= ch1; ++c) {
         size_t szHere = 
-            m_components[c].model->getValues(m_components[c].channel,
-                                             start, end,
-                                             readbuf);
+            m_components[c].model->getData(m_components[c].channel,
+                                           start, count,
+                                           readbuf);
         if (szHere < sz) sz = szHere;
         if (mixing) {
-            for (size_t i = 0; i < end - start; ++i) {
+            for (size_t i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -175,14 +175,14 @@ AggregateWaveModel::getValues(int channel, size_t start, size_t end,
 }
         
 void
-AggregateWaveModel::getRanges(size_t channel, size_t start, size_t end,
-                              RangeBlock &ranges, size_t &blockSize) const
+AggregateWaveModel::getSummaries(size_t channel, size_t start, size_t count,
+                                 RangeBlock &ranges, size_t &blockSize) const
 {
     //!!! complete
 }
 
 AggregateWaveModel::Range
-AggregateWaveModel::getRange(size_t channel, size_t start, size_t end) const
+AggregateWaveModel::getSummary(size_t channel, size_t start, size_t count) const
 {
     //!!! complete
     return Range();

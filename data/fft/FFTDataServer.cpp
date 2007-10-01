@@ -1056,8 +1056,11 @@ FFTDataServer::fillColumn(size_t x)
               << " from channel " << m_channel << std::endl;
 #endif
 
-    size_t got = m_model->getValues(m_channel, startFrame + pfx,
-				    endFrame, m_fftInput + off + pfx);
+    size_t count = 0;
+    if (endFrame > startFrame + pfx) count = endFrame - (startFrame + pfx);
+
+    size_t got = m_model->getData(m_channel, startFrame + pfx,
+                                  count, m_fftInput + off + pfx);
 
     while (got + pfx < m_windowSize) {
 	m_fftInput[off + got + pfx] = 0.0;

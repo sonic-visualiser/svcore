@@ -57,19 +57,21 @@ public:
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual size_t getStartFrame() const { return 0; }
-    virtual size_t getEndFrame() const { return getFrameCount(); }
+    virtual size_t getStartFrame() const { return m_startFrame; }
+    virtual size_t getEndFrame() const { return m_startFrame + getFrameCount(); }
 
-    virtual size_t getValues(int channel, size_t start, size_t end,
-			     float *buffer) const;
+    void setStartFrame(size_t startFrame);
 
-    virtual size_t getValues(int channel, size_t start, size_t end,
-			     double *buffer) const;
+    virtual size_t getData(int channel, size_t start, size_t count,
+                           float *buffer) const;
 
-    virtual void getRanges(size_t channel, size_t start, size_t end,
-                           RangeBlock &ranges, size_t &blockSize) const;
+    virtual size_t getData(int channel, size_t start, size_t count,
+                           double *buffer) const;
 
-    virtual Range getRange(size_t channel, size_t start, size_t end) const;
+    virtual void getSummaries(size_t channel, size_t start, size_t count,
+                              RangeBlock &ranges, size_t &blockSize) const;
+
+    virtual Range getSummary(size_t channel, size_t start, size_t count) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
@@ -82,6 +84,7 @@ protected:
     size_t m_sampleRate;
     size_t m_channels;
     size_t m_frameCount;
+    size_t m_startFrame;
     int m_completion;
 };
 

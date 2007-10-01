@@ -57,6 +57,8 @@ public:
     void removeSelection(const Selection &selection);
     void clearSelections();
 
+    void getExtents(size_t &startFrame, size_t &endFrame) const;
+
     /**
      * Return the selection that contains a given frame.
      * If defaultToFollowing is true, and if the frame is not in a

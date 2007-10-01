@@ -58,8 +58,8 @@ public:
      * If the channel is given as -1, mix all available channels and
      * return the result.
      */
-    virtual size_t getValues(int channel, size_t start, size_t end,
-			     float *buffer) const = 0;
+    virtual size_t getData(int channel, size_t start, size_t count,
+                           float *buffer) const = 0;
 
     /**
      * Get the specified set of samples from the given channel of the
@@ -68,8 +68,8 @@ public:
      * If the channel is given as -1, mix all available channels and
      * return the result.
      */
-    virtual size_t getValues(int channel, size_t start, size_t end,
-			     double *buffer) const = 0;
+    virtual size_t getData(int channel, size_t start, size_t count,
+                           double *buffer) const = 0;
 };
 
 #endif

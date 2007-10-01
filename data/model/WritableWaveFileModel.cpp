@@ -37,6 +37,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     m_sampleRate(sampleRate),
     m_channels(channels),
     m_frameCount(0),
+    m_startFrame(0),
     m_completion(0)
 {
     if (path.isEmpty()) {
@@ -75,6 +76,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         m_reader = 0;
         return;
     }
+    m_model->setStartFrame(m_startFrame);
 
     connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
     connect(m_model, SIGNAL(modelChanged(size_t, size_t)),
@@ -86,6 +88,13 @@ WritableWaveFileModel::~WritableWaveFileModel()
     delete m_model;
     delete m_writer;
     delete m_reader;
+}
+
+void
+WritableWaveFileModel::setStartFrame(size_t startFrame)
+{
+    m_startFrame = startFrame;
+    if (m_model) m_model->setStartFrame(startFrame);
 }
 
 bool
@@ -161,38 +170,38 @@ WritableWaveFileModel::clone() const
 }
 
 size_t
-WritableWaveFileModel::getValues(int channel, size_t start, size_t end,
-                                 float *buffer) const
+WritableWaveFileModel::getData(int channel, size_t start, size_t count,
+                               float *buffer) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getValues(channel, start, end, buffer);
+    return m_model->getData(channel, start, count, buffer);
 }
 
 size_t
-WritableWaveFileModel::getValues(int channel, size_t start, size_t end,
-                                 double *buffer) const
+WritableWaveFileModel::getData(int channel, size_t start, size_t count,
+                               double *buffer) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
 //    std::cerr << "WritableWaveFileModel::getValues(" << channel << ", "
 //              << start << ", " << end << "): calling model" << std::endl;
-    return m_model->getValues(channel, start, end, buffer);
+    return m_model->getData(channel, start, count, buffer);
 }
 
 void
-WritableWaveFileModel::getRanges(size_t channel, size_t start, size_t end,
-                                 RangeBlock &ranges,
-                                 size_t &blockSize) const
+WritableWaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
+                                    RangeBlock &ranges,
+                                    size_t &blockSize) const
 {
     ranges.clear();
     if (!m_model || m_model->getChannelCount() == 0) return;
-    m_model->getRanges(channel, start, end, ranges, blockSize);
+    m_model->getSummaries(channel, start, count, ranges, blockSize);
 }
 
 WritableWaveFileModel::Range
-WritableWaveFileModel::getRange(size_t channel, size_t start, size_t end) const
+WritableWaveFileModel::getSummary(size_t channel, size_t start, size_t count) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return Range();
-    return m_model->getRange(channel, start, end);
+    return m_model->getSummary(channel, start, count);
 }
 
 void
