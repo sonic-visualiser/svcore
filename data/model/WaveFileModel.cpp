@@ -41,6 +41,7 @@ WaveFileModel::m_zoomConstraint;
 WaveFileModel::WaveFileModel(QString path, size_t targetRate) :
     m_path(path),
     m_myReader(true),
+    m_startFrame(0),
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
@@ -56,6 +57,7 @@ WaveFileModel::WaveFileModel(QString path, size_t targetRate) :
 WaveFileModel::WaveFileModel(QString path, QString originalLocation, size_t targetRate) :
     m_path(originalLocation),
     m_myReader(true),
+    m_startFrame(0),
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
@@ -71,6 +73,7 @@ WaveFileModel::WaveFileModel(QString path, QString originalLocation, size_t targ
 WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
     m_path(path),
     m_myReader(false),
+    m_startFrame(0),
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
@@ -162,20 +165,29 @@ WaveFileModel::getNativeRate() const
 }
 
 size_t
-WaveFileModel::getValues(int channel, size_t start, size_t end,
-			 float *buffer) const
+WaveFileModel::getData(int channel, size_t start, size_t count,
+                       float *buffer) const
 {
     // Always read these directly from the file. 
     // This is used for e.g. audio playback.
     // Could be much more efficient (although compiler optimisation will help)
 
-    if (end < start) {
-	std::cerr << "ERROR: WaveFileModel::getValues[float]: end < start ("
-		  << end << " < " << start << ")" << std::endl;
-	assert(end >= start);
+    if (start > m_startFrame) {
+        start -= m_startFrame;
+    } else {
+        for (size_t i = 0; i < count; ++i) buffer[i] = 0.f;
+        if (count <= m_startFrame - start) {
+            return 0;
+        } else {
+            count -= (m_startFrame - start);
+            start = 0;
+        }
     }
 
-    if (!m_reader || !m_reader->isOK()) return 0;
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        for (size_t i = 0; i < count; ++i) buffer[i] = 0.f;
+        return 0;
+    }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
 //    std::cerr << "WaveFileModel::getValues(" << channel << ", "
@@ -183,7 +195,7 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 #endif
 
     SampleBlock frames;
-    m_reader->getInterleavedFrames(start, end - start, frames);
+    m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
@@ -193,7 +205,7 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 	ch1 = channels - 1;
     }
     
-    while (i < end - start) {
+    while (i < count) {
 
 	buffer[i] = 0.0;
 
@@ -213,19 +225,28 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 }
 
 size_t
-WaveFileModel::getValues(int channel, size_t start, size_t end,
-			 double *buffer) const
+WaveFileModel::getData(int channel, size_t start, size_t count,
+                       double *buffer) const
 {
-    if (end < start) {
-	std::cerr << "ERROR: WaveFileModel::getValues[double]: end < start ("
-		  << end << " < " << start << ")" << std::endl;
-	assert(end >= start);
+    if (start > m_startFrame) {
+        start -= m_startFrame;
+    } else {
+        for (size_t i = 0; i < count; ++i) buffer[i] = 0.0;
+        if (count <= m_startFrame - start) {
+            return 0;
+        } else {
+            count -= (m_startFrame - start);
+            start = 0;
+        }
     }
 
-    if (!m_reader || !m_reader->isOK()) return 0;
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        for (size_t i = 0; i < count; ++i) buffer[i] = 0.0;
+        return 0;
+    }
 
     SampleBlock frames;
-    m_reader->getInterleavedFrames(start, end - start, frames);
+    m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
@@ -235,7 +256,7 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 	ch1 = channels - 1;
     }
 
-    while (i < end - start) {
+    while (i < count) {
 
 	buffer[i] = 0.0;
 
@@ -255,15 +276,17 @@ WaveFileModel::getValues(int channel, size_t start, size_t end,
 }
 
 void
-WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
-                         RangeBlock &ranges, size_t &blockSize) const
+WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
+                            RangeBlock &ranges, size_t &blockSize) const
 {
     ranges.clear();
     if (!isOK()) return;
 
-    if (end <= start) {
-	std::cerr << "WARNING: Internal error: end <= start in WaveFileModel::getRanges (end = " << end << ", start = " << start << ", blocksize = " << blockSize << ")" << std::endl;
-	return;
+    if (start > m_startFrame) start -= m_startFrame;
+    else if (count <= m_startFrame - start) return;
+    else {
+        count -= (m_startFrame - start);
+        start = 0;
     }
 
     int cacheType = 0;
@@ -284,32 +307,32 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	// for short queries.
 
 	SampleBlock frames;
-	m_reader->getInterleavedFrames(start, end - start, frames);
+	m_reader->getInterleavedFrames(start, count, frames);
 	float max = 0.0, min = 0.0, total = 0.0;
-	size_t i = 0, count = 0;
+	size_t i = 0, got = 0;
 
-	while (i < end - start) {
+	while (i < count) {
 
 	    size_t index = i * channels + channel;
 	    if (index >= frames.size()) break;
             
 	    float sample = frames[index];
-            if (sample > max || count == 0) max = sample;
-	    if (sample < min || count == 0) min = sample;
+            if (sample > max || got == 0) max = sample;
+	    if (sample < min || got == 0) min = sample;
             total += fabsf(sample);
 	    
 	    ++i;
-            ++count;
+            ++got;
             
-            if (count == blockSize) {
-                ranges.push_back(Range(min, max, total / count));
+            if (got == blockSize) {
+                ranges.push_back(Range(min, max, total / got));
                 min = max = total = 0.0f;
-                count = 0;
+                got = 0;
 	    }
 	}
 
-	if (count > 0) {
-            ranges.push_back(Range(min, max, total / count));
+	if (got > 0) {
+            ranges.push_back(Range(min, max, total / got));
 	}
 
 	return;
@@ -331,37 +354,37 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 	}
 
 	size_t startIndex = start / cacheBlock;
-	size_t endIndex = end / cacheBlock;
+	size_t endIndex = (start + count) / cacheBlock;
 
 	float max = 0.0, min = 0.0, total = 0.0;
-	size_t i = 0, count = 0;
+	size_t i = 0, got = 0;
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", end " << end << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
+	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", count " << count << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
 #endif
 
-	for (i = 0; i < endIndex - startIndex; ) {
+	for (i = 0; i <= endIndex - startIndex; ) {
         
 	    size_t index = (i + startIndex) * channels + channel;
 	    if (index >= cache.size()) break;
             
             const Range &range = cache[index];
-            if (range.max > max || count == 0) max = range.max;
-            if (range.min < min || count == 0) min = range.min;
+            if (range.max > max || got == 0) max = range.max;
+            if (range.min < min || got == 0) min = range.min;
             total += range.absmean;
             
 	    ++i;
-            ++count;
+            ++got;
             
-	    if (count == div) {
-		ranges.push_back(Range(min, max, total / count));
+	    if (got == div) {
+		ranges.push_back(Range(min, max, total / got));
                 min = max = total = 0.0f;
-                count = 0;
+                got = 0;
 	    }
 	}
 		
-	if (count > 0) {
-            ranges.push_back(Range(min, max, total / count));
+	if (got > 0) {
+            ranges.push_back(Range(min, max, total / got));
 	}
     }
 
@@ -372,30 +395,32 @@ WaveFileModel::getRanges(size_t channel, size_t start, size_t end,
 }
 
 WaveFileModel::Range
-WaveFileModel::getRange(size_t channel, size_t start, size_t end) const
+WaveFileModel::getSummary(size_t channel, size_t start, size_t count) const
 {
     Range range;
     if (!isOK()) return range;
 
-    if (end <= start) {
-	std::cerr << "WARNING: Internal error: end <= start in WaveFileModel::getRange (end = " << end << ", start = " << start << ")" << std::endl;
-	return range;
+    if (start > m_startFrame) start -= m_startFrame;
+    else if (count <= m_startFrame - start) return range;
+    else {
+        count -= (m_startFrame - start);
+        start = 0;
     }
 
     size_t blockSize;
-    for (blockSize = 1; blockSize <= end - start; blockSize *= 2);
-    blockSize /= 2;
+    for (blockSize = 1; blockSize <= count; blockSize *= 2);
+    if (blockSize > 1) blockSize /= 2;
 
     bool first = false;
 
     size_t blockStart = (start / blockSize) * blockSize;
-    size_t blockEnd = (end / blockSize) * blockSize;
+    size_t blockEnd = ((start + count) / blockSize) * blockSize;
 
     if (blockStart < start) blockStart += blockSize;
         
     if (blockEnd > blockStart) {
         RangeBlock ranges;
-        getRanges(channel, blockStart, blockEnd, ranges, blockSize);
+        getSummaries(channel, blockStart, blockEnd - blockStart, ranges, blockSize);
         for (size_t i = 0; i < ranges.size(); ++i) {
             if (first || ranges[i].min < range.min) range.min = ranges[i].min;
             if (first || ranges[i].max > range.max) range.max = ranges[i].max;
@@ -405,14 +430,14 @@ WaveFileModel::getRange(size_t channel, size_t start, size_t end) const
     }
 
     if (blockStart > start) {
-        Range startRange = getRange(channel, start, blockStart);
+        Range startRange = getSummary(channel, start, blockStart - start);
         range.min = std::min(range.min, startRange.min);
         range.max = std::max(range.max, startRange.max);
         range.absmean = std::min(range.absmean, startRange.absmean);
     }
 
-    if (blockEnd < end) {
-        Range endRange = getRange(channel, blockEnd, end);
+    if (blockEnd < start + count) {
+        Range endRange = getSummary(channel, blockEnd, start + count - blockEnd);
         range.min = std::min(range.min, endRange.min);
         range.max = std::max(range.max, endRange.max);
         range.absmean = std::min(range.absmean, endRange.absmean);

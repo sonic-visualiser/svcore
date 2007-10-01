@@ -103,7 +103,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 	    size_t n = std::min(bs, f1 - f);
 
 	    for (int c = 0; c < int(m_channels); ++c) {
-		source->getValues(c, f, f + n, ub);
+		source->getData(c, f, n, ub);
 		for (size_t i = 0; i < n; ++i) {
 		    ib[i * m_channels + c] = ub[i];
 		}

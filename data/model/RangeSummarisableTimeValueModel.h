@@ -53,25 +53,26 @@ public:
     typedef std::vector<Range> RangeBlock;
 
     /**
-     * Return ranges between the given start and end frames,
-     * summarised at the given block size.  ((end - start + 1) /
-     * blockSize) ranges should ideally be returned.
+     * Return ranges from the given start frame, corresponding to the
+     * given number of underlying sample frames, summarised at the
+     * given block size.  duration / blockSize ranges should ideally
+     * be returned.
      *
      * If the given block size is not supported by this model
      * (according to its zoom constraint), also modify the blockSize
      * parameter so as to return the block size that was actually
      * obtained.
      */
-    virtual void getRanges(size_t channel, size_t start, size_t end,
-                           RangeBlock &ranges,
-                           size_t &blockSize) const = 0;
+    virtual void getSummaries(size_t channel, size_t start, size_t count,
+                              RangeBlock &ranges,
+                              size_t &blockSize) const = 0;
 
     /**
-     * Return the range between the given start and end frames,
-     * summarised at a block size equal to the distance between start
-     * and end frames.
+     * Return the range from the given start frame, corresponding to
+     * the given number of underlying sample frames, summarised at a
+     * block size equal to the distance between start and end frames.
      */
-    virtual Range getRange(size_t channel, size_t start, size_t end) const = 0;
+    virtual Range getSummary(size_t channel, size_t start, size_t count) const = 0;
 
     virtual void setAlignment(AlignmentModel *alignment); // I take ownership
     virtual const Model *getAlignmentReference() const;
