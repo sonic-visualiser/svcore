@@ -48,6 +48,7 @@ HEADERS += fft/FFTapi.h \
            model/DenseTimeValueModel.h \
            model/EditableDenseThreeDimensionalModel.h \
            model/FFTModel.h \
+           model/ImageModel.h \
            model/Model.h \
            model/NoteModel.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
