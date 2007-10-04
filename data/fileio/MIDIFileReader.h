@@ -33,6 +33,8 @@
 
 class MIDIEvent;
 
+typedef unsigned char MIDIByte;
+
 class MIDIFileReader : public DataFileReader
 {
     Q_OBJECT
@@ -44,8 +46,6 @@ public:
     virtual bool isOK() const;
     virtual QString getError() const;
     virtual Model *load() const;
-
-    typedef unsigned char MIDIByte;
 
 protected:
     typedef std::vector<MIDIEvent *> MIDITrack;

@@ -50,6 +50,7 @@ public:
 
     using SparseModel<PointType>::m_points;
     using SparseModel<PointType>::modelChanged;
+    using SparseModel<PointType>::getPoints;
 
     virtual float getValueMinimum() const { return m_valueMinimum; }
     virtual float getValueMaximum() const { return m_valueMaximum; }

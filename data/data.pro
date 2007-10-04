@@ -31,7 +31,9 @@ HEADERS += fft/FFTapi.h \
            fileio/FileReadThread.h \
            fileio/MatchFileReader.h \
            fileio/MatrixFile.h \
+           fileio/MIDIEvent.h \
            fileio/MIDIFileReader.h \
+           fileio/MIDIFileWriter.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
            fileio/PlaylistFileReader.h \
@@ -74,6 +76,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/MatchFileReader.cpp \
            fileio/MatrixFile.cpp \
            fileio/MIDIFileReader.cpp \
+           fileio/MIDIFileWriter.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
            fileio/PlaylistFileReader.cpp \

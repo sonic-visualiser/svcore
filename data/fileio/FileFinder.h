@@ -30,6 +30,7 @@ public:
         SessionFile,
         AudioFile,
         LayerFile,
+        LayerFileNoMidi,
         SessionOrAudioFile,
         ImageFile,
         AnyFile

@@ -28,6 +28,8 @@
 
 #include "MIDIFileReader.h"
 
+#include "MIDIEvent.h"
+
 #include "model/Model.h"
 #include "base/Pitch.h"
 #include "base/RealTime.h"
@@ -50,202 +52,9 @@ using std::vector;
 using std::map;
 using std::set;
 
+using namespace MIDIConstants;
+
 //#define MIDI_DEBUG 1
-
-static const char *const MIDI_FILE_HEADER         = "MThd";
-static const char *const MIDI_TRACK_HEADER        = "MTrk";
-
-static const MIDIFileReader::MIDIByte MIDI_STATUS_BYTE_MASK       = 0x80;
-static const MIDIFileReader::MIDIByte MIDI_MESSAGE_TYPE_MASK      = 0xF0;
-static const MIDIFileReader::MIDIByte MIDI_CHANNEL_NUM_MASK       = 0x0F;
-static const MIDIFileReader::MIDIByte MIDI_NOTE_OFF               = 0x80;
-static const MIDIFileReader::MIDIByte MIDI_NOTE_ON                = 0x90;
-static const MIDIFileReader::MIDIByte MIDI_POLY_AFTERTOUCH        = 0xA0;
-static const MIDIFileReader::MIDIByte MIDI_CTRL_CHANGE            = 0xB0;
-static const MIDIFileReader::MIDIByte MIDI_PROG_CHANGE            = 0xC0;
-static const MIDIFileReader::MIDIByte MIDI_CHNL_AFTERTOUCH        = 0xD0;
-static const MIDIFileReader::MIDIByte MIDI_PITCH_BEND             = 0xE0;
-static const MIDIFileReader::MIDIByte MIDI_SELECT_CHNL_MODE       = 0xB0;
-static const MIDIFileReader::MIDIByte MIDI_SYSTEM_EXCLUSIVE       = 0xF0;
-static const MIDIFileReader::MIDIByte MIDI_TC_QUARTER_FRAME       = 0xF1;
-static const MIDIFileReader::MIDIByte MIDI_SONG_POSITION_PTR      = 0xF2;
-static const MIDIFileReader::MIDIByte MIDI_SONG_SELECT            = 0xF3;
-static const MIDIFileReader::MIDIByte MIDI_TUNE_REQUEST           = 0xF6;
-static const MIDIFileReader::MIDIByte MIDI_END_OF_EXCLUSIVE       = 0xF7;
-static const MIDIFileReader::MIDIByte MIDI_TIMING_CLOCK           = 0xF8;
-static const MIDIFileReader::MIDIByte MIDI_START                  = 0xFA;
-static const MIDIFileReader::MIDIByte MIDI_CONTINUE               = 0xFB;
-static const MIDIFileReader::MIDIByte MIDI_STOP                   = 0xFC;
-static const MIDIFileReader::MIDIByte MIDI_ACTIVE_SENSING         = 0xFE;
-static const MIDIFileReader::MIDIByte MIDI_SYSTEM_RESET           = 0xFF;
-static const MIDIFileReader::MIDIByte MIDI_SYSEX_NONCOMMERCIAL    = 0x7D;
-static const MIDIFileReader::MIDIByte MIDI_SYSEX_NON_RT           = 0x7E;
-static const MIDIFileReader::MIDIByte MIDI_SYSEX_RT               = 0x7F;
-static const MIDIFileReader::MIDIByte MIDI_SYSEX_RT_COMMAND       = 0x06;
-static const MIDIFileReader::MIDIByte MIDI_SYSEX_RT_RESPONSE      = 0x07;
-static const MIDIFileReader::MIDIByte MIDI_MMC_STOP               = 0x01;
-static const MIDIFileReader::MIDIByte MIDI_MMC_PLAY               = 0x02;
-static const MIDIFileReader::MIDIByte MIDI_MMC_DEFERRED_PLAY      = 0x03;
-static const MIDIFileReader::MIDIByte MIDI_MMC_FAST_FORWARD       = 0x04;
-static const MIDIFileReader::MIDIByte MIDI_MMC_REWIND             = 0x05;
-static const MIDIFileReader::MIDIByte MIDI_MMC_RECORD_STROBE      = 0x06;
-static const MIDIFileReader::MIDIByte MIDI_MMC_RECORD_EXIT        = 0x07;
-static const MIDIFileReader::MIDIByte MIDI_MMC_RECORD_PAUSE       = 0x08;
-static const MIDIFileReader::MIDIByte MIDI_MMC_PAUSE              = 0x08;
-static const MIDIFileReader::MIDIByte MIDI_MMC_EJECT              = 0x0A;
-static const MIDIFileReader::MIDIByte MIDI_MMC_LOCATE             = 0x44;
-static const MIDIFileReader::MIDIByte MIDI_FILE_META_EVENT        = 0xFF;
-static const MIDIFileReader::MIDIByte MIDI_SEQUENCE_NUMBER        = 0x00;
-static const MIDIFileReader::MIDIByte MIDI_TEXT_EVENT             = 0x01;
-static const MIDIFileReader::MIDIByte MIDI_COPYRIGHT_NOTICE       = 0x02;
-static const MIDIFileReader::MIDIByte MIDI_TRACK_NAME             = 0x03;
-static const MIDIFileReader::MIDIByte MIDI_INSTRUMENT_NAME        = 0x04;
-static const MIDIFileReader::MIDIByte MIDI_LYRIC                  = 0x05;
-static const MIDIFileReader::MIDIByte MIDI_TEXT_MARKER            = 0x06;
-static const MIDIFileReader::MIDIByte MIDI_CUE_POINT              = 0x07;
-static const MIDIFileReader::MIDIByte MIDI_CHANNEL_PREFIX         = 0x20;
-static const MIDIFileReader::MIDIByte MIDI_CHANNEL_PREFIX_OR_PORT = 0x21;
-static const MIDIFileReader::MIDIByte MIDI_END_OF_TRACK           = 0x2F;
-static const MIDIFileReader::MIDIByte MIDI_SET_TEMPO              = 0x51;
-static const MIDIFileReader::MIDIByte MIDI_SMPTE_OFFSET           = 0x54;
-static const MIDIFileReader::MIDIByte MIDI_TIME_SIGNATURE         = 0x58;
-static const MIDIFileReader::MIDIByte MIDI_KEY_SIGNATURE          = 0x59;
-static const MIDIFileReader::MIDIByte MIDI_SEQUENCER_SPECIFIC     = 0x7F;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_BANK_MSB      = 0x00;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_VOLUME        = 0x07;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_BANK_LSB      = 0x20;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_MODULATION    = 0x01;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_PAN           = 0x0A;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_SUSTAIN       = 0x40;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_RESONANCE     = 0x47;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_RELEASE       = 0x48;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_ATTACK        = 0x49;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_FILTER        = 0x4A;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_REVERB        = 0x5B;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_CHORUS        = 0x5D;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_NRPN_1        = 0x62;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_NRPN_2        = 0x63;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_RPN_1         = 0x64;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_RPN_2         = 0x65;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_SOUNDS_OFF    = 0x78;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_RESET         = 0x79;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_LOCAL         = 0x7A;
-static const MIDIFileReader::MIDIByte MIDI_CONTROLLER_ALL_NOTES_OFF = 0x7B;
-static const MIDIFileReader::MIDIByte MIDI_PERCUSSION_CHANNEL       = 9;
-
-class MIDIEvent
-{
-public:
-    typedef MIDIFileReader::MIDIByte MIDIByte;
-
-    MIDIEvent(unsigned long deltaTime,
-              MIDIByte eventCode,
-              MIDIByte data1 = 0,
-              MIDIByte data2 = 0) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(data1),
-	m_data2(data2),
-	m_metaEventCode(0)
-    { }
-
-    MIDIEvent(unsigned long deltaTime,
-              MIDIByte eventCode,
-              MIDIByte metaEventCode,
-              const string &metaMessage) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(0),
-	m_data2(0),
-	m_metaEventCode(metaEventCode),
-	m_metaMessage(metaMessage)
-    { }
-
-    MIDIEvent(unsigned long deltaTime,
-              MIDIByte eventCode,
-              const string &sysEx) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(0),
-	m_data2(0),
-	m_metaEventCode(0),
-	m_metaMessage(sysEx)
-    { }
-
-    ~MIDIEvent() { }
-
-    void setTime(const unsigned long &time) { m_deltaTime = time; }
-    void setDuration(const unsigned long& duration) { m_duration = duration;}
-    unsigned long addTime(const unsigned long &time) {
-	m_deltaTime += time;
-	return m_deltaTime;
-    }
-
-    MIDIByte getMessageType() const
-        { return (m_eventCode & MIDI_MESSAGE_TYPE_MASK); }
-
-    MIDIByte getChannelNumber() const
-        { return (m_eventCode & MIDI_CHANNEL_NUM_MASK); }
-
-    unsigned long getTime() const { return m_deltaTime; }
-    unsigned long getDuration() const { return m_duration; }
-
-    MIDIByte getPitch() const { return m_data1; }
-    MIDIByte getVelocity() const { return m_data2; }
-    MIDIByte getData1() const { return m_data1; }
-    MIDIByte getData2() const { return m_data2; }
-    MIDIByte getEventCode() const { return m_eventCode; }
-
-    bool isMeta() const { return (m_eventCode == MIDI_FILE_META_EVENT); }
-
-    MIDIByte getMetaEventCode() const { return m_metaEventCode; }
-    string getMetaMessage() const { return m_metaMessage; }
-    void setMetaMessage(const string &meta) { m_metaMessage = meta; }
-
-    friend bool operator<(const MIDIEvent &a, const MIDIEvent &b);
-
-private:
-    MIDIEvent& operator=(const MIDIEvent);
-
-    unsigned long  m_deltaTime;
-    unsigned long  m_duration;
-    MIDIByte       m_eventCode;
-    MIDIByte       m_data1;         // or Note
-    MIDIByte       m_data2;         // or Velocity
-    MIDIByte       m_metaEventCode;
-    string         m_metaMessage;
-};
-
-// Comparator for sorting
-//
-struct MIDIEventCmp
-{
-    bool operator()(const MIDIEvent &mE1, const MIDIEvent &mE2) const
-    { return mE1.getTime() < mE2.getTime(); }
-
-    bool operator()(const MIDIEvent *mE1, const MIDIEvent *mE2) const
-    { return mE1->getTime() < mE2->getTime(); }
-};
-
-class MIDIException : virtual public std::exception
-{
-public:
-    MIDIException(QString message) throw() : m_message(message) {
-	cerr << "WARNING: MIDI exception: "
-		  << message.toLocal8Bit().data() << endl;
-    }
-    virtual ~MIDIException() throw() { }
-
-    virtual const char *what() const throw() {
-	return m_message.toLocal8Bit().data();
-    }
-
-protected:
-    QString m_message;
-};
 
 
 MIDIFileReader::MIDIFileReader(QString path,
@@ -325,7 +134,7 @@ MIDIFileReader::midiBytesToInt(const string& bytes)
 // section we can read only a specified number of bytes held in
 // m_trackByteCount.
 //
-MIDIFileReader::MIDIByte
+MIDIByte
 MIDIFileReader::getMIDIByte()
 {
     if (!m_midiFile) {
@@ -477,6 +286,7 @@ MIDIFileReader::parseFile()
 	m_error = "File not found or not readable.";
 	m_format = MIDI_FILE_BAD_FORMAT;
 	delete m_midiFile;
+        m_midiFile = 0;
 	return false;
     }
 
