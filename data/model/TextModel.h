@@ -17,6 +17,7 @@
 #define _TEXT_MODEL_H_
 
 #include "SparseModel.h"
+#include "base/XmlExportable.h"
 #include "base/RealTime.h"
 
 /**
@@ -25,7 +26,7 @@
  * of height on the window).  Intended for casual textual annotations.
  */
 
-struct TextPoint
+struct TextPoint : public XmlExportable
 {
 public:
     TextPoint(long _frame) : frame(_frame), height(0.0f) { }
@@ -42,7 +43,8 @@ public:
 			QString extraAttributes = "") const
     {
 	return QString("%1<point frame=\"%2\" height=\"%3\" label=\"%4\" %5/>\n")
-	    .arg(indent).arg(frame).arg(height).arg(label).arg(extraAttributes);
+	    .arg(indent).arg(frame).arg(height)
+            .arg(encodeEntities(label)).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const

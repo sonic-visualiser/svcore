@@ -22,6 +22,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QImageReader>
 #include <QSettings>
 
 #include <iostream>
@@ -89,7 +90,16 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
 
     case ImageFile:
         settingsKey = "imagepath";
-        filter = tr("Portable Network Graphics files (*.png)\nAll files (*.*)");
+        {
+            QStringList fmts;
+            QList<QByteArray> formats = QImageReader::supportedImageFormats();
+            for (QList<QByteArray>::iterator i = formats.begin();
+                 i != formats.end(); ++i) {
+                fmts.push_back(QString("*.%1")
+                               .arg(QString::fromLocal8Bit(*i).toLower()));
+            }
+            filter = tr("Image files (%1)\nAll files (*.*)").arg(fmts.join(" "));
+        }
         break;
 
     case AnyFile:
