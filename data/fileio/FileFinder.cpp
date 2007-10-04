@@ -76,6 +76,11 @@ FileFinder::getOpenFileName(FileType type, QString fallbackLocation)
         filter = tr("All supported files (%1)\nSonic Visualiser Layer XML files (*.svl)\nComma-separated data files (*.csv)\nSpace-separated .lab files (*.lab)\nMIDI files (*.mid)\nText files (*.txt)\nAll files (*.*)").arg(DataFileReaderFactory::getKnownExtensions());
         break;
 
+    case LayerFileNoMidi:
+        settingsKey = "layerpath";
+        filter = tr("All supported files (%1)\nSonic Visualiser Layer XML files (*.svl)\nComma-separated data files (*.csv)\nSpace-separated .lab files (*.lab)\nText files (*.txt)\nAll files (*.*)").arg(DataFileReaderFactory::getKnownExtensions());
+        break;
+
     case SessionOrAudioFile:
         settingsKey = "lastpath";
         filter = tr("All supported files (*.sv %1)\nSonic Visualiser session files (*.sv)\nAudio files (%1)\nAll files (*.*)")
@@ -194,6 +199,12 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
     case LayerFile:
         settingsKey = "savelayerpath";
         title = tr("Select a file to export to");
+        filter = tr("Sonic Visualiser Layer XML files (*.svl)\nComma-separated data files (*.csv)\nMIDI files (*.mid)\nText files (*.txt)\nAll files (*.*)");
+        break;
+
+    case LayerFileNoMidi:
+        settingsKey = "savelayerpath";
+        title = tr("Select a file to export to");
         filter = tr("Sonic Visualiser Layer XML files (*.svl)\nComma-separated data files (*.csv)\nText files (*.txt)\nAll files (*.*)");
         break;
 
@@ -271,6 +282,8 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
                 expectedExtension = "txt";
             } else if (selectedFilter.contains(".csv")) {
                 expectedExtension = "csv";
+            } else if (selectedFilter.contains(".mid")) {
+                expectedExtension = "mid";
             }
             if (expectedExtension != "") {
                 path = QString("%1.%2").arg(path).arg(expectedExtension);
@@ -319,6 +332,10 @@ FileFinder::registerLastOpenedFilePath(FileType type, QString path)
         break;
 
     case LayerFile:
+        settingsKey = "layerpath";
+        break;
+
+    case LayerFileNoMidi:
         settingsKey = "layerpath";
         break;
 

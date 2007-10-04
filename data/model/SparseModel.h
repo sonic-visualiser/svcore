@@ -516,7 +516,7 @@ template <typename PointType>
 void
 SparseModel<PointType>::setCompletion(int completion)
 {
-    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
+//    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
 
     if (m_completion != completion) {
 	m_completion = completion;
