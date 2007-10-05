@@ -265,7 +265,27 @@ GetDiscSpaceMBAvailable(const char *path)
     }
 #endif
 }
-    
+
+static char *startupLocale = 0;
+
+void
+StoreStartupLocale()
+{
+    char *loc = setlocale(LC_ALL, 0);
+    if (!loc) return;
+    if (startupLocale) free(startupLocale);
+    startupLocale = strdup(loc);
+}
+
+void
+RestoreStartupLocale()
+{
+    if (!startupLocale) {
+        setlocale(LC_ALL, "");
+    } else {
+        setlocale(LC_ALL, startupLocale);
+    }
+}
 
 double mod(double x, double y) { return x - (y * floor(x / y)); }
 float modf(float x, float y) { return x - (y * floorf(x / y)); }

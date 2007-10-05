@@ -105,6 +105,9 @@ extern void GetRealMemoryMBAvailable(int &available, int &total);
 // on the partition containing the given path.  Return -1 if unknown.
 extern int GetDiscSpaceMBAvailable(const char *path);
 
+extern void StoreStartupLocale();
+extern void RestoreStartupLocale();
+
 #include <cmath>
 
 extern double mod(double x, double y);

@@ -25,6 +25,8 @@
 #include "LADSPAPluginFactory.h"
 #include "DSSIPluginFactory.h"
 
+#include "system/System.h"
+
 #include <iostream>
 
 int RealTimePluginFactory::m_sampleRate = 48000;
@@ -98,7 +100,8 @@ RealTimePluginFactory::getAllPluginIdentifiers()
     }
 
     // Plugins can change the locale, revert it to default.
-    setlocale(LC_ALL, "C");
+    RestoreStartupLocale();
+
     return rv;
 }
 
