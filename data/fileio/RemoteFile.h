@@ -21,6 +21,8 @@
 #include <QString>
 #include <QTimer>
 
+#include <map>
+
 class QFtp;
 class QHttp;
 class QFile;
@@ -47,6 +49,7 @@ public:
 
     void deleteLocalFile();
 
+    static bool isRemote(QString fileOrUrl);
     static bool canHandleScheme(QUrl url);
 
 signals:
@@ -63,6 +66,7 @@ protected slots:
     void cancelled();
 
 protected:
+    QUrl m_url;
     QFtp *m_ftp;
     QHttp *m_http;
     QFile *m_localFile;
@@ -73,6 +77,13 @@ protected:
     bool m_done;
     QProgressDialog *m_progressDialog;
     QTimer m_progressShowTimer;
+
+    typedef std::map<QUrl, int> RemoteRefCountMap;
+    typedef std::map<QUrl, QString> RemoteLocalMap;
+    static RemoteRefCountMap m_refCountMap;
+    static RemoteLocalMap m_remoteLocalMap;
+    static QMutex m_mapMutex;
+    bool m_referenced;
 
     void cleanup();
 

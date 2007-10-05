@@ -42,7 +42,7 @@ Preferences::Preferences() :
     m_resampleQuality(1),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
-    m_resampleOnLoad(true)
+    m_resampleOnLoad(false)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -54,7 +54,7 @@ Preferences::Preferences() :
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
     m_resampleQuality = settings.value("resample-quality", 1).toInt();
-    m_resampleOnLoad = settings.value("resample-on-load", true).toBool();
+    m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     settings.endGroup();

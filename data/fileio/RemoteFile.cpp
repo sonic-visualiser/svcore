@@ -33,7 +33,17 @@ RemoteFile::m_count = 0;
 QMutex
 RemoteFile::m_fileCreationMutex;
 
+RemoteFile::RemoteRefCountMap
+RemoteFile::m_refCountMap;
+
+RemoteFile::RemoteLocalMap
+RemoteFile::m_remoteLocalMap;
+
+QMutex
+RemoteFile::m_mapMutex;
+
 RemoteFile::RemoteFile(QUrl url) :
+    m_url(url),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
@@ -41,10 +51,25 @@ RemoteFile::RemoteFile(QUrl url) :
     m_lastStatus(0),
     m_done(false),
     m_progressDialog(0),
-    m_progressShowTimer(this)
+    m_progressShowTimer(this),
+    m_referenced(false)
 {
     if (!canHandleScheme(url)) {
         std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << url.toString().toStdString() << "\"" << std::endl;
+        return;
+    }
+
+    QMutexLocker locker(&m_mapMutex);
+
+    std::cerr << "RemoteFile::RemoteFile: refcount is " << m_refCountMap[m_url] << std::endl;
+
+    if (m_refCountMap[m_url] > 0) {
+        m_refCountMap[m_url]++;
+        m_localFilename = m_remoteLocalMap[m_url];
+        std::cerr << "raising it" << std::endl;
+        m_ok = true;
+        m_done = true;
+        m_referenced = true;
         return;
     }
 
@@ -146,6 +171,11 @@ RemoteFile::RemoteFile(QUrl url) :
     }
 
     if (m_ok) {
+
+        m_remoteLocalMap[m_url] = m_localFilename;
+        m_refCountMap[m_url]++;
+        m_referenced = true;
+
         m_progressDialog = new QProgressDialog(tr("Downloading %1...").arg(url.toString()), tr("Cancel"), 0, 100);
         m_progressDialog->hide();
         connect(&m_progressShowTimer, SIGNAL(timeout()),
@@ -179,8 +209,14 @@ RemoteFile::cleanup()
     }
     delete m_progressDialog;
     m_progressDialog = 0;
-    delete m_localFile;
+    delete m_localFile; // does not actually delete the file
     m_localFile = 0;
+}
+
+bool
+RemoteFile::isRemote(QString fileOrUrl)
+{
+    return (fileOrUrl.startsWith("http:") || fileOrUrl.startsWith("ftp:"));
 }
 
 bool
@@ -348,6 +384,7 @@ RemoteFile::done(bool error)
 
     m_ok = !error;
     m_done = true;
+    emit ready();
 }
 
 void
@@ -358,6 +395,20 @@ RemoteFile::deleteLocalFile()
     cleanup();
 
     if (m_localFilename == "") return;
+
+    if (m_referenced) {
+
+        QMutexLocker locker(&m_mapMutex);
+        m_referenced = false;
+
+        if (m_refCountMap[m_url] > 0) {
+            m_refCountMap[m_url]--;
+            if (m_refCountMap[m_url] > 0) {
+                m_done = true;
+                return;
+            }
+        }
+    }
 
     m_fileCreationMutex.lock();
 

@@ -303,6 +303,11 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
                  ratio,
                  final);
 
+            for (size_t i = 0; i < out; ++i) {
+                if (m_resampleBuffer[i] >  1.f) m_resampleBuffer[i] =  1.f;
+                if (m_resampleBuffer[i] < -1.f) m_resampleBuffer[i] = -1.f;
+            }
+
             buffer = m_resampleBuffer;
             sz = out;
         }
