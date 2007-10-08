@@ -282,8 +282,11 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
         path = *files.begin();
         
         QFileInfo fi(path);
+
+        std::cerr << "type = " << type << ", suffix = " << fi.suffix().toStdString() << std::endl;
         
-        if (type == LayerFile && fi.suffix() == "") {
+        if ((type == LayerFile || type == LayerFileNoMidi)
+            && fi.suffix() == "") {
             QString expectedExtension;
             QString selectedFilter = dialog.selectedFilter();
             if (selectedFilter.contains(".svl")) {
@@ -295,6 +298,7 @@ FileFinder::getSaveFileName(FileType type, QString fallbackLocation)
             } else if (selectedFilter.contains(".mid")) {
                 expectedExtension = "mid";
             }
+            std::cerr << "expected extension = " << expectedExtension.toStdString() << std::endl;
             if (expectedExtension != "") {
                 path = QString("%1.%2").arg(path).arg(expectedExtension);
                 fi = QFileInfo(path);
