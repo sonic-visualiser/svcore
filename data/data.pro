@@ -49,6 +49,7 @@ HEADERS += fft/FFTapi.h \
            model/EditableDenseThreeDimensionalModel.h \
            model/FFTModel.h \
            model/ImageModel.h \
+           model/Labeller.h \
            model/Model.h \
            model/NoteModel.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
