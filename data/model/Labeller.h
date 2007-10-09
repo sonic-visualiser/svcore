@@ -82,14 +82,14 @@ public:
     TypeNameMap getTypeNames() const {
         TypeNameMap m;
         m[ValueNone] = tr("No numbering");
-        m[ValueFromSimpleCounter] = tr("Simple counter starting from 1");
-        m[ValueFromCyclicalCounter] = tr("Cyclical counter starting from 1");
+        m[ValueFromSimpleCounter] = tr("Simple counter");
+        m[ValueFromCyclicalCounter] = tr("Cyclical counter");
         m[ValueFromTwoLevelCounter] = tr("Cyclical two-level counter (bar/beat)");
         m[ValueFromFrameNumber] = tr("Audio sample frame number");
         m[ValueFromRealTime] = tr("Time in seconds");
         m[ValueFromRealTimeDifference] = tr("Duration to the following item");
         m[ValueFromTempo] = tr("Tempo (bpm) based on duration to following item");
-        m[ValueFromExistingNeighbour] = tr("Same value as the nearest previous item");
+        m[ValueFromExistingNeighbour] = tr("Same as the nearest previous item");
         m[ValueFromLabel] = tr("Value extracted from the item's label (where possible)");
         return m;
     }
@@ -133,6 +133,9 @@ public:
         } else if (m_type == ValueFromTwoLevelCounter) {
             newPoint.label = tr("%1.%2").arg(m_counter2).arg(m_counter);
             incrementCounter();
+        } else if (m_type == ValueFromFrameNumber) {
+            // avoid going through floating-point value
+            newPoint.label = tr("%1").arg(newPoint.frame);
         } else {
             float value = getValueFor<PointType>(newPoint, prevPoint);
             if (actingOnPrevPoint() && prevPoint) {
