@@ -177,7 +177,7 @@ AlignmentModel::constructReversePath() const
             (SparseTimeValueModel::Point(rframe, rvalue, ""));
     }
 
-    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points" << std::endl;
+    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(SparseTimeValueModel::Point))) << " bytes" << std::endl;
 }
 
 size_t
@@ -198,13 +198,37 @@ AlignmentModel::align(SparseTimeValueModel *path, size_t frame) const
     SparseTimeValueModel::Point point(frame);
     SparseTimeValueModel::PointList::const_iterator i = points.lower_bound(point);
     if (i == points.end()) --i;
-    float time = i->value;
-    size_t rv = lrintf(time * getSampleRate());
+    while (i != points.begin() && i->frame > frame) --i;
 
-    //!!! interpolate!
+    long foundFrame = i->frame;
+    float foundTime = i->value;
 
-//    std::cerr << "AlignmentModel::align: rv = " << rv << std::endl;
+    long followingFrame = foundFrame;
+    float followingTime = foundTime;
 
-    return rv;
+    if (++i != points.end()) {
+        followingFrame = i->frame;
+        followingTime = i->value;
+    }
+
+    float resultTime = foundTime;
+
+    if (followingFrame != foundFrame && frame > foundFrame) {
+
+        std::cerr << "AlignmentModel::align: foundFrame = " << foundFrame << ", frame = " << frame << ", followingFrame = " << followingFrame << std::endl;
+
+        float interp = float(frame - foundFrame) / float(followingFrame - foundFrame);
+        std::cerr << "AlignmentModel::align: interp = " << interp << ", result " << resultTime << " -> ";
+
+        resultTime += (followingTime - foundTime) * interp;
+
+        std::cerr << resultTime << std::endl;
+    }
+
+    size_t resultFrame = lrintf(resultTime * getSampleRate());
+
+    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+
+    return resultFrame;
 }
     
