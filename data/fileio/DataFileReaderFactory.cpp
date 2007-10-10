@@ -53,9 +53,13 @@ DataFileReaderFactory::load(QString path, size_t mainModelSampleRate)
     DataFileReader *reader = createReader(path, mainModelSampleRate);
     if (!reader) return NULL;
 
-    Model *model = reader->load();
-    delete reader;
-
-    return model;
+    try {
+        Model *model = reader->load();
+        delete reader;
+        return model;
+    } catch (Exception) {
+        delete reader;
+        throw;
+    }
 }
 

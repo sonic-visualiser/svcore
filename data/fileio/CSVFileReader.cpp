@@ -20,6 +20,7 @@
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
+#include "DataFileReaderFactory.h"
 
 #include <QFile>
 #include <QString>
@@ -91,7 +92,7 @@ CSVFileReader::load() const
 
     if (dialog->exec() == QDialog::Rejected) {
 	delete dialog;
-	return 0;
+        throw DataFileReaderFactory::ImportCancelled;
     }
 
     CSVFormatDialog::ModelType   modelType = dialog->getModelType();
@@ -304,7 +305,7 @@ CSVFormatDialog::CSVFormatDialog(QWidget *parent, QFile *file,
 
     QGridLayout *layout = new QGridLayout;
 
-    layout->addWidget(new QLabel(tr("\nPlease select the correct data format for this file.\n")),
+    layout->addWidget(new QLabel(tr("<b>Select Data Format</b><p>Please select the correct data format for this file.")),
 		      0, 0, 1, 4);
 
     layout->addWidget(new QLabel(tr("Each row specifies:")), 1, 0);

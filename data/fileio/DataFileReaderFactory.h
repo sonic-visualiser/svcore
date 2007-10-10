@@ -24,6 +24,8 @@ class Model;
 class DataFileReaderFactory
 {
 public:
+    enum Exception { ImportCancelled };
+
     /**
      * Return the file extensions that we have data file readers for,
      * in a format suitable for use with QFileDialog.  For example,

@@ -865,7 +865,7 @@ MIDIFileReader::load() const
 	bool ok = false;
 	QString selected = QInputDialog::getItem
 	    (0, tr("Select track or tracks to import"),
-	     tr("You can only import this file as a single annotation layer,\nbut the file contains more than one track,\nor notes on more than one channel.\n\nPlease select the track or merged tracks you wish to import:"),
+	     tr("<b>Select track to import</b><p>You can only import this file as a single annotation layer, but the file contains more than one track, or notes on more than one channel.<p>Please select the track or merged tracks you wish to import:"),
 	     available, 0, false, &ok);
 
 	if (!ok || selected.isEmpty()) return 0;
