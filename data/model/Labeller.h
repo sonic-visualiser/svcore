@@ -111,6 +111,7 @@ public:
             s /= 10;
             m_dp *= 10;
         }
+        if (m_counter > m_cycle) m_counter = 1;
     }
 
     void setSampleRate(float rate) { m_rate = rate; }
