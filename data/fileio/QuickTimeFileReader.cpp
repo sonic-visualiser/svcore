@@ -302,7 +302,7 @@ QuickTimeFileReader::DecodeThread::run()
         }
        
         // QuickTime buffers are interleaved unless specified otherwise
-        addSamplesToDecodeCache(m_d->data, framesRead);
+        addSamplesToDecodeCache(m_reader->m_d->data, framesRead);
         
         if (framesRead < m_reader->m_d->blockSize) break;
     }
