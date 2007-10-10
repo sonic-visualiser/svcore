@@ -40,7 +40,7 @@ public:
 
     MovieAudioExtractionRef      extractionSessionRef;
     AudioBufferList              buffer;
-    double                      *data;
+    float                       *data;
     OSErr                        err; 
     AudioStreamBasicDescription  asbd;
     Movie                        movie;
@@ -189,8 +189,8 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
         kAudioFormatFlagIsFloat |
         kAudioFormatFlagIsPacked |
         kAudioFormatFlagsNativeEndian;
-    m_d->asbd.mBitsPerChannel = sizeof(double) * 8;
-    m_d->asbd.mBytesPerFrame = sizeof(double) * m_d->asbd.mChannelsPerFrame;
+    m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
+    m_d->asbd.mBytesPerFrame = sizeof(float) * m_d->asbd.mChannelsPerFrame;
     m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
 	
     m_d->err = MovieAudioExtractionSetProperty
@@ -204,12 +204,11 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
         m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
         return;
     }
-
     m_d->buffer.mNumberBuffers = 1;
     m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
     m_d->buffer.mBuffers[0].mDataByteSize =
-        sizeof(double) * m_channelCount * m_d->blockSize;
-    m_d->data = new double[m_channelCount * m_d->blockSize];
+        sizeof(float) * m_channelCount * m_d->blockSize;
+    m_d->data = new float[m_channelCount * m_d->blockSize];
     m_d->buffer.mBuffers[0].mData = m_d->data;
 
     initialiseDecodeCache();
