@@ -215,19 +215,19 @@ AlignmentModel::align(SparseTimeValueModel *path, size_t frame) const
 
     if (followingFrame != foundFrame && frame > foundFrame) {
 
-        std::cerr << "AlignmentModel::align: foundFrame = " << foundFrame << ", frame = " << frame << ", followingFrame = " << followingFrame << std::endl;
+//        std::cerr << "AlignmentModel::align: foundFrame = " << foundFrame << ", frame = " << frame << ", followingFrame = " << followingFrame << std::endl;
 
         float interp = float(frame - foundFrame) / float(followingFrame - foundFrame);
-        std::cerr << "AlignmentModel::align: interp = " << interp << ", result " << resultTime << " -> ";
+//        std::cerr << "AlignmentModel::align: interp = " << interp << ", result " << resultTime << " -> ";
 
         resultTime += (followingTime - foundTime) * interp;
 
-        std::cerr << resultTime << std::endl;
+//        std::cerr << resultTime << std::endl;
     }
 
     size_t resultFrame = lrintf(resultTime * getSampleRate());
 
-    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+//    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
 
     return resultFrame;
 }
