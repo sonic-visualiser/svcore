@@ -22,12 +22,13 @@
 #include <QFileInfo>
 #include <QApplication>
 
-ResamplingWavFileReader::ResamplingWavFileReader(QString path,
+ResamplingWavFileReader::ResamplingWavFileReader(RemoteFile source,
 						 ResampleMode resampleMode,
 						 CacheMode mode,
 						 size_t targetRate) :
     CodedAudioFileReader(mode, targetRate),
-    m_path(path),
+    m_source(source),
+    m_path(source.getLocalFilename()),
     m_cancelled(false),
     m_processed(0),
     m_completion(0),
@@ -39,11 +40,11 @@ ResamplingWavFileReader::ResamplingWavFileReader(QString path,
     m_fileRate = 0;
 
     std::cerr << "ResamplingWavFileReader::ResamplingWavFileReader(\""
-              << path.toStdString() << "\"): rate " << targetRate << std::endl;
+              << m_path.toStdString() << "\"): rate " << targetRate << std::endl;
 
     Profiler profiler("ResamplingWavFileReader::ResamplingWavFileReader", true);
 
-    m_original = new WavFileReader(path);
+    m_original = new WavFileReader(m_path);
     if (!m_original->isOK()) {
         m_error = m_original->getError();
         return;
@@ -57,7 +58,7 @@ ResamplingWavFileReader::ResamplingWavFileReader(QString path,
     if (resampleMode == ResampleAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Resampling %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Resampling %1...").arg(QFileInfo(m_path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
@@ -165,6 +166,24 @@ void
 ResamplingWavFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     WavFileReader::getSupportedExtensions(extensions);
+}
+
+bool
+ResamplingWavFileReader::supportsExtension(QString extension)
+{
+    return WavFileReader::supportsExtension(extension);
+}
+
+bool
+ResamplingWavFileReader::supportsContentType(QString type)
+{
+    return WavFileReader::supportsContentType(type);
+}
+
+bool
+ResamplingWavFileReader::supports(RemoteFile &source)
+{
+    return WavFileReader::supports(source);
 }
 
 

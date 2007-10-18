@@ -20,6 +20,8 @@
 #include <QMutex>
 #include <QTimer>
 
+#include "data/fileio/RemoteFile.h"
+
 #include "RangeSummarisableTimeValueModel.h"
 #include "PowerOfSqrtTwoZoomConstraint.h"
 
@@ -32,9 +34,8 @@ class WaveFileModel : public RangeSummarisableTimeValueModel
     Q_OBJECT
 
 public:
-    WaveFileModel(QString path, size_t targetRate = 0);
-    WaveFileModel(QString path, QString originalLocation, size_t targetRate = 0);
-    WaveFileModel(QString originalLocation, AudioFileReader *reader);
+    WaveFileModel(RemoteFile source, size_t targetRate = 0);
+    WaveFileModel(RemoteFile source, AudioFileReader *reader);
     ~WaveFileModel();
 
     bool isOK() const;
@@ -102,7 +103,8 @@ protected:
     };
          
     void fillCache();
-    
+
+    RemoteFile m_source;
     QString m_path;
     AudioFileReader *m_reader;
     bool m_myReader;

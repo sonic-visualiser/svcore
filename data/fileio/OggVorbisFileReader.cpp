@@ -32,12 +32,13 @@
 
 static int instances = 0;
 
-OggVorbisFileReader::OggVorbisFileReader(QString path,
+OggVorbisFileReader::OggVorbisFileReader(RemoteFile source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
                                          size_t targetRate) :
     CodedAudioFileReader(mode, targetRate),
-    m_path(path),
+    m_source(source),
+    m_path(source.getLocalFilename()),
     m_progress(0),
     m_fileSize(0),
     m_bytesRead(0),
@@ -49,15 +50,15 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     m_channelCount = 0;
     m_fileRate = 0;
 
-    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
+    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
 
-    QFileInfo info(path);
+    QFileInfo info(m_path);
     m_fileSize = info.size();
 
-    if (!(m_oggz = oggz_open(path.toLocal8Bit().data(), OGGZ_READ))) {
-	m_error = QString("File %1 is not an OGG file.").arg(path);
+    if (!(m_oggz = oggz_open(m_path.toLocal8Bit().data(), OGGZ_READ))) {
+	m_error = QString("File %1 is not an OGG file.").arg(m_path);
 	return;
     }
 
@@ -70,7 +71,7 @@ OggVorbisFileReader::OggVorbisFileReader(QString path,
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
@@ -199,6 +200,27 @@ void
 OggVorbisFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("ogg");
+}
+
+bool
+OggVorbisFileReader::supportsExtension(QString extension)
+{
+    std::set<QString> extensions;
+    getSupportedExtensions(extensions);
+    return (extensions.find(extension.toLower()) != extensions.end());
+}
+
+bool
+OggVorbisFileReader::supportsContentType(QString type)
+{
+    return (type == "application/ogg");
+}
+
+bool
+OggVorbisFileReader::supports(RemoteFile &source)
+{
+    return (supportsExtension(source.getExtension()) ||
+            supportsContentType(source.getContentType()));
 }
 
 #endif

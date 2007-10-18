@@ -380,11 +380,11 @@ FileFinder::find(FileType type, QString location, QString lastKnownLocation)
 {
     if (QFileInfo(location).exists()) return location;
 
-    if (RemoteFile::canHandleScheme(QUrl(location))) {
-        RemoteFile rf(location);
-        bool available = rf.isAvailable();
-        rf.deleteLocalFile();
-        if (available) return location;
+    if (RemoteFile::isRemote(location)) {
+        if (RemoteFile(location).isAvailable()) {
+            std::cerr << "FileFinder::find: ok, it's available... returning" << std::endl;
+            return location;
+        }
     }
 
     QString foundAt = "";
@@ -411,19 +411,17 @@ FileFinder::findRelative(QString location, QString relativeTo)
     QString fileName;
     QString resolved;
 
-    if (RemoteFile::canHandleScheme(QUrl(location))) {
+    if (RemoteFile::isRemote(location)) {
         fileName = QUrl(location).path().section('/', -1, -1,
                                                  QString::SectionSkipEmpty);
     } else {
         fileName = QFileInfo(location).fileName();
     }
 
-    if (RemoteFile::canHandleScheme(QUrl(relativeTo))) {
+    if (RemoteFile::isRemote(relativeTo)) {
         resolved = QUrl(relativeTo).resolved(fileName).toString();
-        RemoteFile rf(resolved);
-        if (!rf.isAvailable()) resolved = "";
+        if (!RemoteFile(resolved).isAvailable()) resolved = "";
         std::cerr << "resolved: " << resolved.toStdString() << std::endl;
-        rf.deleteLocalFile();
     } else {
         resolved = QFileInfo(relativeTo).dir().filePath(fileName);
         if (!QFileInfo(resolved).exists() ||
@@ -481,8 +479,7 @@ FileFinder::locateInteractive(FileType type, QString thing)
                  QLineEdit::Normal, "", &ok);
 
             if (ok && path != "") {
-                RemoteFile rf(path);
-                if (rf.isAvailable()) {
+                if (RemoteFile(path).isAvailable()) {
                     done = true;
                 } else {
                     QMessageBox::critical
@@ -490,7 +487,6 @@ FileFinder::locateInteractive(FileType type, QString thing)
                          tr("URL \"%1\" could not be opened").arg(path));
                     path = "";
                 }
-                rf.deleteLocalFile();
             }
             break;
         }

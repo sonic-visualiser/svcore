@@ -18,10 +18,12 @@
 #include <iostream>
 
 #include <QMutexLocker>
+#include <QFileInfo>
 
-WavFileReader::WavFileReader(QString path, bool fileUpdating) :
+WavFileReader::WavFileReader(RemoteFile source, bool fileUpdating) :
     m_file(0),
-    m_path(path),
+    m_source(source),
+    m_path(source.getLocalFilename()),
     m_buffer(0),
     m_bufsiz(0),
     m_lastStart(0),
@@ -171,6 +173,7 @@ WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
     if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
         extensions.insert("wav");
         extensions.insert("aiff");
+        extensions.insert("aifc");
         extensions.insert("aif");
         return;
     }
@@ -179,7 +182,32 @@ WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.insert(info.extension);
+            extensions.insert(QString(info.extension).toLower());
         }
     }
 }
+
+bool
+WavFileReader::supportsExtension(QString extension)
+{
+    std::set<QString> extensions;
+    getSupportedExtensions(extensions);
+    return (extensions.find(extension.toLower()) != extensions.end());
+}
+
+bool
+WavFileReader::supportsContentType(QString type)
+{
+    return (type == "audio/x-wav" ||
+            type == "audio/x-aiff" ||
+            type == "audio/basic");
+}
+
+bool
+WavFileReader::supports(RemoteFile &source)
+{
+    return (supportsExtension(source.getExtension()) ||
+            supportsContentType(source.getContentType()));
+}
+
+

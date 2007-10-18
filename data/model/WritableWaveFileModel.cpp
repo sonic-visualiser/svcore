@@ -60,7 +60,9 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         return;
     }
 
-    m_reader = new WavFileReader(m_writer->getPath(), true);
+    RemoteFile source(m_writer->getPath());
+
+    m_reader = new WavFileReader(source, true);
     if (!m_reader->getError().isEmpty()) {
         std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
         delete m_reader;
@@ -68,7 +70,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         return;
     }
     
-    m_model = new WaveFileModel(m_writer->getPath(), m_reader);
+    m_model = new WaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
         std::cerr << "WritableWaveFileModel: Error in creating wave file model" << std::endl;
         delete m_model;

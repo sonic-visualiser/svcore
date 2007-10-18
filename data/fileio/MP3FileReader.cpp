@@ -34,10 +34,11 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode, 
+MP3FileReader::MP3FileReader(RemoteFile source, DecodeMode decodeMode, 
                              CacheMode mode, size_t targetRate) :
     CodedAudioFileReader(mode, targetRate),
-    m_path(path),
+    m_source(source),
+    m_path(source.getLocalFilename()),
     m_decodeThread(0)
 {
     m_channelCount = 0;
@@ -51,20 +52,20 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode,
     m_progress = 0;
 
     struct stat stat;
-    if (::stat(path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
-	m_error = QString("File %1 does not exist.").arg(path);
+    if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
+	m_error = QString("File %1 does not exist.").arg(m_path);
 	return;
     }
 
     m_fileSize = stat.st_size;
 
     int fd = -1;
-    if ((fd = ::open(path.toLocal8Bit().data(), O_RDONLY
+    if ((fd = ::open(m_path.toLocal8Bit().data(), O_RDONLY
 #ifdef _WIN32
                      | O_BINARY
 #endif
                      , 0)) < 0) {
-	m_error = QString("Failed to open file %1 for reading.").arg(path);
+	m_error = QString("Failed to open file %1 for reading.").arg(m_path);
 	return;
     }	
 
@@ -86,7 +87,7 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode,
         sz = ::read(fd, m_filebuffer + offset, m_fileSize - offset);
         if (sz < 0) {
             m_error = QString("Read error for file %1 (after %2 bytes)")
-                .arg(path).arg(offset);
+                .arg(m_path).arg(offset);
             delete[] m_filebuffer;
             ::close(fd);
             return;
@@ -106,12 +107,12 @@ MP3FileReader::MP3FileReader(QString path, DecodeMode decodeMode,
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
         if (!decode(m_filebuffer, m_fileSize)) {
-            m_error = QString("Failed to decode file %1.").arg(path);
+            m_error = QString("Failed to decode file %1.").arg(m_path);
         }
         
         delete[] m_filebuffer;
@@ -393,5 +394,27 @@ MP3FileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("mp3");
 }
+
+bool
+MP3FileReader::supportsExtension(QString extension)
+{
+    std::set<QString> extensions;
+    getSupportedExtensions(extensions);
+    return (extensions.find(extension.toLower()) != extensions.end());
+}
+
+bool
+MP3FileReader::supportsContentType(QString type)
+{
+    return (type == "audio/mpeg");
+}
+
+bool
+MP3FileReader::supports(RemoteFile &source)
+{
+    return (supportsExtension(source.getExtension()) ||
+            supportsContentType(source.getContentType()));
+}
+
 
 #endif
