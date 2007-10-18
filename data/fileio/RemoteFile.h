@@ -44,6 +44,8 @@ public:
     bool isOK() const;
     bool isDone() const;
 
+    QString getContentType() const;
+
     QString getLocalFilename() const;
     QString getErrorString() const;
 
@@ -72,6 +74,7 @@ protected:
     QFile *m_localFile;
     QString m_localFilename;
     QString m_errorString;
+    QString m_contentType;
     bool m_ok;
     int m_lastStatus;
     bool m_done;
