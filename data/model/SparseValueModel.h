@@ -110,11 +110,11 @@ public:
 	}
     }
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const
+    virtual void toXml(QTextStream &stream, QString indent = "",
+                       QString extraAttributes = "") const
     {
-	return SparseModel<PointType>::toXmlString
-	    (indent,
+	SparseModel<PointType>::toXml
+	    (stream, indent,
 	     QString("%1 minimum=\"%2\" maximum=\"%3\" units=\"%4\"")
 	     .arg(extraAttributes).arg(m_valueMinimum).arg(m_valueMaximum)
              .arg(this->encodeEntities(m_units)));

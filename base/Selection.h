@@ -67,8 +67,8 @@ public:
      */
     Selection getContainingSelection(size_t frame, bool defaultToFollowing) const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
+    virtual void toXml(QTextStream &stream, QString indent = "",
+                       QString extraAttributes = "") const;
 
 protected:
     SelectionList m_selections;

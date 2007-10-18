@@ -23,6 +23,8 @@
 #include <QDomNamedNodeMap>
 #include <QDomAttr>
 
+#include <QTextStream>
+
 #include "vamp-sdk/PluginBase.h"
 #include "RealTimePluginInstance.h"
 
@@ -53,13 +55,13 @@ PluginXml::decodeConfigurationChars(QString text)
     return rv;
 }
     
-QString
-PluginXml::toXmlString(QString indent, QString extraAttributes) const
+void
+PluginXml::toXml(QTextStream &stream,
+                 QString indent, QString extraAttributes) const
 {
-    QString s;
-    s += indent;
+    stream << indent;
 
-    s += QString("<plugin identifier=\"%1\" name=\"%2\" description=\"%3\" maker=\"%4\" version=\"%5\" copyright=\"%6\" %7 ")
+    stream << QString("<plugin identifier=\"%1\" name=\"%2\" description=\"%3\" maker=\"%4\" version=\"%5\" copyright=\"%6\" %7 ")
         .arg(encodeEntities(QString(m_plugin->getIdentifier().c_str())))
         .arg(encodeEntities(QString(m_plugin->getName().c_str())))
         .arg(encodeEntities(QString(m_plugin->getDescription().c_str())))
@@ -69,7 +71,7 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
         .arg(extraAttributes);
 
     if (!m_plugin->getPrograms().empty()) {
-        s += QString("program=\"%1\" ")
+        stream << QString("program=\"%1\" ")
             .arg(encodeEntities(m_plugin->getCurrentProgram().c_str()));
     }
 
@@ -79,11 +81,11 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
-//        std::cerr << "PluginXml::toXmlString: parameter name \""
+//        std::cerr << "PluginXml::toXml: parameter name \""
 //                  << i->name.c_str() << "\" has value "
 //                  << m_plugin->getParameter(i->name) << std::endl;
 
-        s += QString("param-%1=\"%2\" ")
+        stream << QString("param-%1=\"%2\" ")
             .arg(stripInvalidParameterNameCharacters(QString(i->identifier.c_str())))
             .arg(m_plugin->getParameter(i->identifier));
     }
@@ -104,13 +106,12 @@ PluginXml::toXmlString(QString indent, QString extraAttributes) const
             config += QString("%1=%2").arg(key).arg(value);
         }
         if (config != "") {
-            s += QString("configuration=\"%1\" ")
+            stream << QString("configuration=\"%1\" ")
                 .arg(encodeEntities(config));
         }
     }
 
-    s += "/>\n";
-    return s;
+    stream << "/>\n";
 }
 
 #define CHECK_ATTRIBUTE(ATTRIBUTE, ACCESSOR) \

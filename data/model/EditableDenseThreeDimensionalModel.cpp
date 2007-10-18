@@ -272,13 +272,14 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion)
 
 void
 EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
-                                  QString indent,
-                                  QString extraAttributes) const
+                                          QString indent,
+                                          QString extraAttributes) const
 {
     // For historical reasons we read and write "resolution" as "windowSize"
 
-    out << Model::toXmlString
-	(indent, QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" %6")
+    Model::toXml
+	(out, indent,
+         QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" %6")
 	 .arg(m_resolution)
 	 .arg(m_yBinCount)
 	 .arg(m_minimum)
@@ -311,17 +312,4 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     out << indent + "</dataset>\n";
 }
 
-QString
-EditableDenseThreeDimensionalModel::toXmlString(QString indent,
-					QString extraAttributes) const
-{
-    QString s;
-
-    {
-        QTextStream out(&s);
-        toXml(out, indent, extraAttributes);
-    }
-
-    return s;
-}
 

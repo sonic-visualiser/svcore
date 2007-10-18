@@ -39,10 +39,12 @@ public:
     QString image;
     QString label;
     
-    QString toXmlString(QString indent = "",
-			QString extraAttributes = "") const
+    void toXml(QTextStream &stream,
+               QString indent = "",
+               QString extraAttributes = "") const
     {
-	return QString("%1<point frame=\"%2\" image=\"%3\" label=\"%4\" %5/>\n")
+	stream <<
+            QString("%1<point frame=\"%2\" image=\"%3\" label=\"%4\" %5/>\n")
 	    .arg(indent).arg(frame)
             .arg(encodeEntities(image))
             .arg(encodeEntities(label))

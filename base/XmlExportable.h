@@ -28,23 +28,18 @@ public:
 
     /**
      * Stream this exportable object out to XML on a text stream.
-     * 
-     * The default implementation calls toXmlString and streams the
-     * resulting string.  This is only appropriate for objects with
-     * short representations.  Bigger objects should override this
-     * method so as to write to the stream directly and override
-     * toXmlString with a method that calls this one, so that the
-     * direct streaming method can be used when appropriate.
      */
     virtual void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const = 0;
 
     /**
-     * Convert this exportable object to XML in a string.
+     * Convert this exportable object to XML in a string.  The default
+     * implementation calls toXml and returns the result as a string.
+     * Do not override this unless you really know what you're doing.
      */
     virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const = 0;
+				QString extraAttributes = "") const;
 
     static QString encodeEntities(QString);
 

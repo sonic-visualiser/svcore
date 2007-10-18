@@ -36,8 +36,9 @@ public:
 
     virtual void copyFrom(const PlayParameters *);
 
-    virtual QString toXmlString(QString indent = "",
-                                QString extraAttributes = "") const;
+    virtual void toXml(QTextStream &stream,
+                       QString indent = "",
+                       QString extraAttributes = "") const;
 
 public slots:
     virtual void setPlayMuted(bool muted);

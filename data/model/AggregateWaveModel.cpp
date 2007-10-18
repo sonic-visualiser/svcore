@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <QTextStream>
+
 PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 

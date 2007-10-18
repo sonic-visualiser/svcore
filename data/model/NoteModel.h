@@ -43,10 +43,12 @@ public:
     size_t duration;
     QString label;
 
-    QString toXmlString(QString indent = "",
-			QString extraAttributes = "") const
+    void toXml(QTextStream &stream,
+               QString indent = "",
+               QString extraAttributes = "") const
     {
-	return QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
+	stream <<
+            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
 	    .arg(indent).arg(frame).arg(value).arg(duration).arg(label).arg(extraAttributes);
     }
 
@@ -124,7 +126,7 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const
     {
-	return SparseValueModel<Note>::toXml
+        SparseValueModel<Note>::toXml
 	    (out,
              indent,
 	     QString("%1 valueQuantization=\"%2\"")

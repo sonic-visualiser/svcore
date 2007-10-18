@@ -136,9 +136,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
-
     virtual QString toDelimitedDataString(QString delimiter) const
     { 
         QString s;
@@ -567,28 +564,13 @@ SparseModel<PointType>::toXml(QTextStream &out,
 	.arg(PointType(0).getDimensions());
 
     for (PointListIterator i = m_points.begin(); i != m_points.end(); ++i) {
-	out << i->toXmlString(indent + "  ");
+        i->toXml(out, indent + "  ");
     }
 
     out << indent;
     out << "</dataset>\n";
 }
 
-template <typename PointType>
-QString
-SparseModel<PointType>::toXmlString(QString indent,
-				    QString extraAttributes) const
-{
-    QString s;
-
-    {
-        QTextStream out(&s);
-        toXml(out, indent, extraAttributes);
-    }
-
-    return s;
-}
-    
 template <typename PointType>
 SparseModel<PointType>::EditCommand::EditCommand(SparseModel *model,
                                                  QString commandName) :

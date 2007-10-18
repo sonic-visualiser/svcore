@@ -31,10 +31,11 @@ public:
     long frame;
     QString label;
     
-    QString toXmlString(QString indent = "",
-			QString extraAttributes = "") const
+    void toXml(QTextStream &stream,
+               QString indent = "",
+               QString extraAttributes = "") const
     {
-	return QString("%1<point frame=\"%2\" label=\"%3\" %4/>\n")
+        stream << QString("%1<point frame=\"%2\" label=\"%3\" %4/>\n")
 	    .arg(indent).arg(frame).arg(label).arg(extraAttributes);
     }
 

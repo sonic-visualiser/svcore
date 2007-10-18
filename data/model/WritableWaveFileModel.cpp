@@ -22,6 +22,7 @@
 #include "fileio/WavFileReader.h"
 
 #include <QDir>
+#include <QTextStream>
 
 #include <cassert>
 #include <iostream>
