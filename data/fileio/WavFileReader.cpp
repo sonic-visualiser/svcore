@@ -20,7 +20,7 @@
 #include <QMutexLocker>
 #include <QFileInfo>
 
-WavFileReader::WavFileReader(RemoteFile source, bool fileUpdating) :
+WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file(0),
     m_source(source),
     m_path(source.getLocalFilename()),
@@ -204,7 +204,7 @@ WavFileReader::supportsContentType(QString type)
 }
 
 bool
-WavFileReader::supports(RemoteFile &source)
+WavFileReader::supports(FileSource &source)
 {
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));

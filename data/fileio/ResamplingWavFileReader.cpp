@@ -22,7 +22,7 @@
 #include <QFileInfo>
 #include <QApplication>
 
-ResamplingWavFileReader::ResamplingWavFileReader(RemoteFile source,
+ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
 						 ResampleMode resampleMode,
 						 CacheMode mode,
 						 size_t targetRate) :
@@ -181,7 +181,7 @@ ResamplingWavFileReader::supportsContentType(QString type)
 }
 
 bool
-ResamplingWavFileReader::supports(RemoteFile &source)
+ResamplingWavFileReader::supports(FileSource &source)
 {
     return WavFileReader::supports(source);
 }

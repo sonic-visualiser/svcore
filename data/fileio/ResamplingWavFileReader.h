@@ -33,7 +33,7 @@ public:
         ResampleThreaded // resample in a background thread after construction
     };
 
-    ResamplingWavFileReader(RemoteFile source,
+    ResamplingWavFileReader(FileSource source,
                             ResampleMode resampleMode,
                             CacheMode cacheMode,
                             size_t targetRate = 0);
@@ -43,7 +43,7 @@ public:
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
-    static bool supports(RemoteFile &source);
+    static bool supports(FileSource &source);
 
     virtual int getDecodeCompletion() const { return m_completion; }
 
@@ -52,7 +52,7 @@ public:
     }
 
 protected:
-    RemoteFile m_source;
+    FileSource m_source;
     QString m_path;
     QString m_error;
     bool m_cancelled;

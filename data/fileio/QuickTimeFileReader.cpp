@@ -48,7 +48,7 @@ public:
 };
 
 
-QuickTimeFileReader::QuickTimeFileReader(RemoteFile source,
+QuickTimeFileReader::QuickTimeFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
                                          size_t targetRate) :
@@ -357,7 +357,7 @@ QuickTimeFileReader::supportsContentType(QString type)
 }
 
 bool
-QuickTimeFileReader::supports(RemoteFile &source)
+QuickTimeFileReader::supports(FileSource &source)
 {
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));

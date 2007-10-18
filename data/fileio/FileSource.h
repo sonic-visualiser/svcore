@@ -29,16 +29,16 @@ class QFile;
 class QProgressDialog;
 class QHttpResponseHeader;
 
-class RemoteFile : public QObject
+class FileSource : public QObject
 {
     Q_OBJECT
 
 public:
-    RemoteFile(QString fileOrUrl, bool showProgress = true);
-    RemoteFile(QUrl url, bool showProgress = true);
-    RemoteFile(const RemoteFile &);
+    FileSource(QString fileOrUrl, bool showProgress = true);
+    FileSource(QUrl url, bool showProgress = true);
+    FileSource(const FileSource &);
 
-    virtual ~RemoteFile();
+    virtual ~FileSource();
 
     bool isAvailable();
 
@@ -75,7 +75,7 @@ protected slots:
     void cancelled();
 
 protected:
-    RemoteFile &operator=(const RemoteFile &); // not provided
+    FileSource &operator=(const FileSource &); // not provided
 
     QUrl m_url;
     QFtp *m_ftp;

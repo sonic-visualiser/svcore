@@ -14,7 +14,7 @@
 */
 
 #include "FileFinder.h"
-#include "RemoteFile.h"
+#include "FileSource.h"
 #include "AudioFileReaderFactory.h"
 #include "DataFileReaderFactory.h"
 
@@ -380,8 +380,8 @@ FileFinder::find(FileType type, QString location, QString lastKnownLocation)
 {
     if (QFileInfo(location).exists()) return location;
 
-    if (RemoteFile::isRemote(location)) {
-        if (RemoteFile(location).isAvailable()) {
+    if (FileSource::isRemote(location)) {
+        if (FileSource(location).isAvailable()) {
             std::cerr << "FileFinder::find: ok, it's available... returning" << std::endl;
             return location;
         }
@@ -411,16 +411,16 @@ FileFinder::findRelative(QString location, QString relativeTo)
     QString fileName;
     QString resolved;
 
-    if (RemoteFile::isRemote(location)) {
+    if (FileSource::isRemote(location)) {
         fileName = QUrl(location).path().section('/', -1, -1,
                                                  QString::SectionSkipEmpty);
     } else {
         fileName = QFileInfo(location).fileName();
     }
 
-    if (RemoteFile::isRemote(relativeTo)) {
+    if (FileSource::isRemote(relativeTo)) {
         resolved = QUrl(relativeTo).resolved(fileName).toString();
-        if (!RemoteFile(resolved).isAvailable()) resolved = "";
+        if (!FileSource(resolved).isAvailable()) resolved = "";
         std::cerr << "resolved: " << resolved.toStdString() << std::endl;
     } else {
         resolved = QFileInfo(relativeTo).dir().filePath(fileName);
@@ -479,7 +479,7 @@ FileFinder::locateInteractive(FileType type, QString thing)
                  QLineEdit::Normal, "", &ok);
 
             if (ok && path != "") {
-                if (RemoteFile(path).isAvailable()) {
+                if (FileSource(path).isAvailable()) {
                     done = true;
                 } else {
                     QMessageBox::critical

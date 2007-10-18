@@ -60,7 +60,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         return;
     }
 
-    RemoteFile source(m_writer->getPath());
+    FileSource source(m_writer->getPath());
 
     m_reader = new WavFileReader(source, true);
     if (!m_reader->getError().isEmpty()) {
