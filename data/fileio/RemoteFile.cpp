@@ -290,6 +290,7 @@ RemoteFile::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
     } else {
         std::cerr << "RemoteFile::responseHeaderReceived: "
                   << m_lastStatus << std::endl;
+        if (resp.hasContentType()) m_contentType = resp.contentType();
     }        
 }
 
