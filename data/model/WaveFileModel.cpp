@@ -22,6 +22,7 @@
 
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QTextStream>
 
 #include <iostream>
 #include <unistd.h>

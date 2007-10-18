@@ -113,9 +113,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
-
 protected:
     typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;

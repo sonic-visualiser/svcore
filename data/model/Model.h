@@ -132,9 +132,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
-
     virtual QString toDelimitedDataString(QString) const { return ""; }
 
 signals:

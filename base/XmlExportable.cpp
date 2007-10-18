@@ -19,11 +19,18 @@
 #include <QMutexLocker>
 #include <QTextStream>
 
-void
-XmlExportable::toXml(QTextStream &stream, QString indent,
-                     QString extraAttributes) const
+QString
+XmlExportable::toXmlString(QString indent,
+                           QString extraAttributes) const
 {
-    stream << toXmlString(indent, extraAttributes);
+    QString s;
+
+    {
+        QTextStream out(&s);
+        toXml(out, indent, extraAttributes);
+    }
+
+    return s;
 }
 
 QString

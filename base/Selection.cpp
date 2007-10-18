@@ -14,6 +14,7 @@
 */
 
 #include "Selection.h"
+#include <QTextStream>
 
 Selection::Selection() :
     m_startFrame(0),
@@ -212,18 +213,17 @@ MultiSelection::getContainingSelection(size_t frame, bool defaultToFollowing) co
     return Selection();
 }
 
-QString
-MultiSelection::toXmlString(QString indent,
-			    QString extraAttributes) const
+void
+MultiSelection::toXml(QTextStream &stream, QString indent,
+                      QString extraAttributes) const
 {
-    QString s;
-    s += indent + QString("<selections %1>\n").arg(extraAttributes);
+    stream << indent << QString("<selections %1>\n").arg(extraAttributes);
     for (SelectionList::iterator i = m_selections.begin();
 	 i != m_selections.end(); ++i) {
-	s += indent + QString("  <selection start=\"%1\" end=\"%2\"/>\n")
+	stream << indent
+               << QString("  <selection start=\"%1\" end=\"%2\"/>\n")
 	    .arg(i->getStartFrame()).arg(i->getEndFrame());
     }
-    s += indent + "</selections>\n";
-    return s;
+    stream << indent << "</selections>\n";
 }
 

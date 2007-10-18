@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <QTextStream>
+
 void
 PlayParameters::copyFrom(const PlayParameters *pp)
 {
@@ -27,25 +29,24 @@ PlayParameters::copyFrom(const PlayParameters *pp)
     m_playPluginConfiguration = pp->getPlayPluginConfiguration();
 }
 
-QString
-PlayParameters::toXmlString(QString indent,
-                            QString extraAttributes) const
+void
+PlayParameters::toXml(QTextStream &stream,
+                      QString indent,
+                      QString extraAttributes) const
 {
-    QString s;
-    s += indent;
-    s += QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
+    stream << indent;
+    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
         .arg(m_playMuted ? "true" : "false")
         .arg(m_playPan)
         .arg(m_playGain)
         .arg(m_playPluginId)
         .arg(extraAttributes);
     if (m_playPluginConfiguration != "") {
-        s += ">\n  " + indent + m_playPluginConfiguration
-            + "\n" + indent + "</playparameters>\n";
+        stream << ">\n  " << indent << m_playPluginConfiguration
+               << "\n" << indent << "</playparameters>\n";
     } else {
-        s += "/>\n";
+        stream << "/>\n";
     }
-    return s;
 }
 
 void

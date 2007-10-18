@@ -31,19 +31,20 @@ public:
     /**
      * Export plugin settings to XML.
      */
-    virtual QString toXmlString(QString indent = "",
-                                QString extraAttributes = "") const;
+    virtual void toXml(QTextStream &stream,
+                       QString indent = "",
+                       QString extraAttributes = "") const;
 
     /**
      * Set the parameters and program of a plugin from a set of XML
-     * attributes.  This is a partial inverse of toXmlString.
+     * attributes.  This is a partial inverse of toXml.
      */
     virtual void setParameters(const QXmlAttributes &);
 
     /**
      * Set the parameters and program of a plugin from an XML plugin
-     * element as returned by toXmlString.  This is a partial inverse
-     * of toXmlString.
+     * element as returned by toXml.  This is a partial inverse of
+     * toXml.
      */
     virtual void setParametersFromXml(QString xml);
 

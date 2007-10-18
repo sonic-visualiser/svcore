@@ -47,16 +47,4 @@ Model::toXml(QTextStream &stream, QString indent,
 	.arg(extraAttributes);
 }
 
-QString
-Model::toXmlString(QString indent, QString extraAttributes) const
-{
-    QString s;
-
-    {
-        QTextStream out(&s);
-        toXml(out, indent, extraAttributes);
-    }
-
-    return s;
-}
 
