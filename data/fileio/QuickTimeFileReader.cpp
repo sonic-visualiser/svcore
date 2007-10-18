@@ -48,12 +48,13 @@ public:
 };
 
 
-QuickTimeFileReader::QuickTimeFileReader(QString path,
+QuickTimeFileReader::QuickTimeFileReader(RemoteFile source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
                                          size_t targetRate) :
     CodedAudioFileReader(mode, targetRate),
-    m_path(path),
+    m_source(source),
+    m_path(source.getLocalFilename()),
     m_d(new D),
     m_progress(0),
     m_cancelled(false),
@@ -65,7 +66,7 @@ QuickTimeFileReader::QuickTimeFileReader(QString path,
 
     Profiler profiler("QuickTimeFileReader::QuickTimeFileReader", true);
 
-std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << std::endl;
+std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" << std::endl;
 
     long QTversion;
 
@@ -90,8 +91,8 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
 
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)path.toLocal8Bit().data(),
-         (CFIndex)path.length(),
+         (const UInt8 *)m_path.toLocal8Bit().data(),
+         (CFIndex)m_path.length(),
          false);
 
 
@@ -216,7 +217,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << path.toStdString() << "\"" << 
     if (decodeMode == DecodeAtOnce) {
 
 	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(path).fileName()),
+	    (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
 	     QObject::tr("Stop"), 0, 100);
 	m_progress->hide();
 
@@ -333,6 +334,33 @@ QuickTimeFileReader::getSupportedExtensions(std::set<QString> &extensions)
     extensions.insert("mp3");
     extensions.insert("mp4");
     extensions.insert("wav");
+}
+
+bool
+QuickTimeFileReader::supportsExtension(QString extension)
+{
+    std::set<QString> extensions;
+    getSupportedExtensions(extensions);
+    return (extensions.find(extension.toLower()) != extensions.end());
+}
+
+bool
+QuickTimeFileReader::supportsContentType(QString type)
+{
+    return (type == "audio/x-aiff" ||
+            type == "audio/x-wav" ||
+            type == "audio/mpeg" ||
+            type == "audio/basic" ||
+            type == "audio/x-aac" ||
+            type == "video/mp4" ||
+            type == "video/quicktime");
+}
+
+bool
+QuickTimeFileReader::supports(RemoteFile &source)
+{
+    return (supportsExtension(source.getExtension()) ||
+            supportsContentType(source.getContentType()));
 }
 
 #endif

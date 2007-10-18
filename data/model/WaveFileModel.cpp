@@ -39,8 +39,9 @@ using std::endl;
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
-WaveFileModel::WaveFileModel(QString path, size_t targetRate) :
-    m_path(path),
+WaveFileModel::WaveFileModel(RemoteFile source, size_t targetRate) :
+    m_source(source),
+    m_path(source.getLocation()),
     m_myReader(true),
     m_startFrame(0),
     m_fillThread(0),
@@ -48,31 +49,22 @@ WaveFileModel::WaveFileModel(QString path, size_t targetRate) :
     m_lastFillExtent(0),
     m_exiting(false)
 {
-    m_reader = AudioFileReaderFactory::createReader(path, targetRate);
-    if (m_reader) std::cerr << "WaveFileModel::WaveFileModel: reader rate: " << m_reader->getSampleRate() << std::endl;
+    m_source.waitForData();
+    if (m_source.isOK()) {
+        m_reader = AudioFileReaderFactory::createReader(m_source, targetRate);
+        if (m_reader) {
+            std::cerr << "WaveFileModel::WaveFileModel: reader rate: "
+                      << m_reader->getSampleRate() << std::endl;
+        }
+    }
     if (m_reader) setObjectName(m_reader->getTitle());
-    if (objectName() == "") setObjectName(QFileInfo(path).fileName());
+    if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     if (isOK()) fillCache();
 }
 
-WaveFileModel::WaveFileModel(QString path, QString originalLocation, size_t targetRate) :
-    m_path(originalLocation),
-    m_myReader(true),
-    m_startFrame(0),
-    m_fillThread(0),
-    m_updateTimer(0),
-    m_lastFillExtent(0),
-    m_exiting(false)
-{
-    m_reader = AudioFileReaderFactory::createReader(path, targetRate);
-    if (m_reader) std::cerr << "WaveFileModel::WaveFileModel: reader rate: " << m_reader->getSampleRate() << std::endl;
-    if (m_reader) setObjectName(m_reader->getTitle());
-    if (objectName() == "") setObjectName(QFileInfo(originalLocation).fileName());
-    if (isOK()) fillCache();
-}
-
-WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
-    m_path(path),
+WaveFileModel::WaveFileModel(RemoteFile source, AudioFileReader *reader) :
+    m_source(source),
+    m_path(source.getLocation()),
     m_myReader(false),
     m_startFrame(0),
     m_fillThread(0),
@@ -82,7 +74,7 @@ WaveFileModel::WaveFileModel(QString path, AudioFileReader *reader) :
 {
     m_reader = reader;
     if (m_reader) setObjectName(m_reader->getTitle());
-    if (objectName() == "") setObjectName(QFileInfo(path).fileName());
+    if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     fillCache();
 }
 
@@ -131,7 +123,7 @@ WaveFileModel::isReady(int *completion) const
 Model *
 WaveFileModel::clone() const
 {
-    WaveFileModel *model = new WaveFileModel(m_path);
+    WaveFileModel *model = new WaveFileModel(m_source);
     return model;
 }
 

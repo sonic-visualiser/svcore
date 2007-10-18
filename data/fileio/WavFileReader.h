@@ -26,7 +26,7 @@
 class WavFileReader : public AudioFileReader
 {
 public:
-    WavFileReader(QString path, bool fileUpdating = false);
+    WavFileReader(RemoteFile source, bool fileUpdating = false);
     virtual ~WavFileReader();
 
     virtual QString getError() const { return m_error; }
@@ -39,6 +39,9 @@ public:
 				      SampleBlock &frames) const;
     
     static void getSupportedExtensions(std::set<QString> &extensions);
+    static bool supportsExtension(QString ext);
+    static bool supportsContentType(QString type);
+    static bool supports(RemoteFile &source);
 
     virtual int getDecodeCompletion() const { return 100; }
 
@@ -51,6 +54,7 @@ protected:
     SF_INFO m_fileInfo;
     SNDFILE *m_file;
 
+    RemoteFile m_source;
     QString m_path;
     QString m_error;
 

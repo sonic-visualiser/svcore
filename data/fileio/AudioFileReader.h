@@ -19,6 +19,8 @@
 #include <QString>
 #include "model/Model.h" // for SampleBlock
 
+#include "RemoteFile.h"
+
 class AudioFileReader : public QObject
 {
     Q_OBJECT

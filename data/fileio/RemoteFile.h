@@ -34,22 +34,29 @@ class RemoteFile : public QObject
     Q_OBJECT
 
 public:
-    RemoteFile(QUrl url);
+    RemoteFile(QString fileOrUrl, bool showProgress = true);
+    RemoteFile(QUrl url, bool showProgress = true);
+    RemoteFile(const RemoteFile &);
+
     virtual ~RemoteFile();
 
     bool isAvailable();
 
-    void wait();
+    void waitForStatus();
+    void waitForData();
+
+    void setLeaveLocalFile(bool leave);
 
     bool isOK() const;
     bool isDone() const;
+    bool isRemote() const;
 
-    QString getContentType() const;
-
+    QString getLocation() const;
     QString getLocalFilename() const;
-    QString getErrorString() const;
+    QString getContentType() const;
+    QString getExtension() const;
 
-    void deleteLocalFile();
+    QString getErrorString() const;
 
     static bool isRemote(QString fileOrUrl);
     static bool canHandleScheme(QUrl url);
@@ -68,6 +75,8 @@ protected slots:
     void cancelled();
 
 protected:
+    RemoteFile &operator=(const RemoteFile &); // not provided
+
     QUrl m_url;
     QFtp *m_ftp;
     QHttp *m_http;
@@ -77,7 +86,9 @@ protected:
     QString m_contentType;
     bool m_ok;
     int m_lastStatus;
+    bool m_remote;
     bool m_done;
+    bool m_leaveLocalFile;
     QProgressDialog *m_progressDialog;
     QTimer m_progressShowTimer;
 
@@ -86,11 +97,18 @@ protected:
     static RemoteRefCountMap m_refCountMap;
     static RemoteLocalMap m_remoteLocalMap;
     static QMutex m_mapMutex;
-    bool m_referenced;
+    bool m_refCounted;
+
+    void init(bool showProgress);
+    void initHttp();
+    void initFtp();
 
     void cleanup();
 
-    QString createLocalFile(QUrl url);
+    // Create a local file for m_url.  If it already existed, return true.
+    // The local filename is stored in m_localFilename.
+    bool createCacheFile();
+    void deleteCacheFile();
 
     static QMutex m_fileCreationMutex;
     static int m_count;

@@ -42,153 +42,300 @@ RemoteFile::m_remoteLocalMap;
 QMutex
 RemoteFile::m_mapMutex;
 
-RemoteFile::RemoteFile(QUrl url) :
+RemoteFile::RemoteFile(QString fileOrUrl, bool showProgress) :
+    m_url(fileOrUrl),
+    m_ftp(0),
+    m_http(0),
+    m_localFile(0),
+    m_ok(false),
+    m_lastStatus(0),
+    m_remote(isRemote(fileOrUrl)),
+    m_done(false),
+    m_leaveLocalFile(false),
+    m_progressDialog(0),
+    m_progressShowTimer(this),
+    m_refCounted(false)
+{
+    std::cerr << "RemoteFile::RemoteFile(" << fileOrUrl.toStdString() << ")" << std::endl;
+
+    if (!canHandleScheme(m_url)) {
+        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        m_errorString = tr("Unsupported scheme in URL");
+        return;
+    }
+
+    init(showProgress);
+
+    if (isRemote() &&
+        (fileOrUrl.contains('%') ||
+         fileOrUrl.contains("--"))) { // for IDNA
+
+        waitForStatus();
+
+        if (!isAvailable()) {
+            // The URL was created on the assumption that the string
+            // was human-readable.  Let's try again, this time
+            // assuming it was already encoded.
+            std::cerr << "RemoteFile::RemoteFile: Failed to retrieve URL \""
+                      << fileOrUrl.toStdString() 
+                      << "\" as human-readable URL; "
+                      << "trying again treating it as encoded URL"
+                      << std::endl;
+            m_url.setEncodedUrl(fileOrUrl.toAscii());
+            init(showProgress);
+        }
+    }
+}
+
+RemoteFile::RemoteFile(QUrl url, bool showProgress) :
     m_url(url),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
     m_ok(false),
     m_lastStatus(0),
+    m_remote(isRemote(url.toString())),
     m_done(false),
+    m_leaveLocalFile(false),
     m_progressDialog(0),
     m_progressShowTimer(this),
-    m_referenced(false)
+    m_refCounted(false)
 {
-    if (!canHandleScheme(url)) {
-        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << url.toString().toStdString() << "\"" << std::endl;
+    std::cerr << "RemoteFile::RemoteFile(" << url.toString().toStdString() << ") [as url]" << std::endl;
+
+    if (!canHandleScheme(m_url)) {
+        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        m_errorString = tr("Unsupported scheme in URL");
         return;
     }
 
-    QMutexLocker locker(&m_mapMutex);
+    init(showProgress);
+}
 
-    std::cerr << "RemoteFile::RemoteFile: refcount is " << m_refCountMap[m_url] << std::endl;
+RemoteFile::RemoteFile(const RemoteFile &rf) :
+    QObject(),
+    m_url(rf.m_url),
+    m_ftp(0),
+    m_http(0),
+    m_localFile(0),
+    m_ok(rf.m_ok),
+    m_lastStatus(rf.m_lastStatus),
+    m_remote(rf.m_remote),
+    m_done(false),
+    m_leaveLocalFile(false),
+    m_progressDialog(0),
+    m_progressShowTimer(0),
+    m_refCounted(false)
+{
+    std::cerr << "RemoteFile::RemoteFile(" << m_url.toString().toStdString() << ") [copy ctor]" << std::endl;
 
-    if (m_refCountMap[m_url] > 0) {
-        m_refCountMap[m_url]++;
-        m_localFilename = m_remoteLocalMap[m_url];
-        std::cerr << "raising it" << std::endl;
-        m_ok = true;
-        m_done = true;
-        m_referenced = true;
+    if (!canHandleScheme(m_url)) {
+        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        m_errorString = tr("Unsupported scheme in URL");
         return;
     }
 
-    m_localFilename = createLocalFile(url);
-    if (m_localFilename == "") return;
-    m_localFile = new QFile(m_localFilename);
-    m_localFile->open(QFile::WriteOnly);
-
-    QString scheme = url.scheme().toLower();
-
-    if (scheme == "http") {
-
-        m_ok = true;
-        m_http = new QHttp(url.host(), url.port(80));
-        connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
-        connect(m_http, SIGNAL(dataReadProgress(int, int)),
-                this, SLOT(dataReadProgress(int, int)));
-        connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
-                this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
-
-        // I don't quite understand this.  url.path() returns a path
-        // without percent encoding; for example, spaces appear as
-        // literal spaces.  This generally won't work if sent to the
-        // server directly.  You can retrieve a correctly encoded URL
-        // from QUrl using url.toEncoded(), but that gives you the
-        // whole URL; there doesn't seem to be any way to retrieve
-        // only an encoded path.  Furthermore there doesn't seem to be
-        // any way to convert a retrieved path into an encoded path
-        // without explicitly specifying that you don't want the path
-        // separators ("/") to be encoded.  (Besides being painful to
-        // manage, I don't see how this can work correctly in any case
-        // where a percent-encoded "/" is supposed to appear within a
-        // path element?)  There also seems to be no way to retrieve
-        // the path plus query string, i.e. everything that I need to
-        // send to the HTTP server.  And no way for QHttp to take a
-        // QUrl argument.  I'm obviously missing something.
-
-        // So, two ways to do this: query the bits from the URL,
-        // encode them individually, and glue them back together
-        // again...
-        /*
-        QString path = QUrl::toPercentEncoding(url.path(), "/");
-        QList<QPair<QString, QString> > query = url.queryItems();
-        if (!query.empty()) {
-            QStringList q2;
-            for (QList<QPair<QString, QString> >::iterator i = query.begin();
-                 i != query.end(); ++i) {
-                q2.push_back(QString("%1=%3")
-                             .arg(QString(QUrl::toPercentEncoding(i->first)))
-                             .arg(QString(QUrl::toPercentEncoding(i->second))));
-            }
-            path = QString("%1%2%3")
-                .arg(path).arg("?")
-                .arg(q2.join("&"));
+    if (!isRemote()) {
+        m_localFilename = rf.m_localFilename;
+    } else {
+        QMutexLocker locker(&m_mapMutex);
+        std::cerr << "RemoteFile::RemoteFile(copy ctor): ref count is "
+                  << m_refCountMap[m_url] << std::endl;
+        if (m_refCountMap[m_url] > 0) {
+            m_refCountMap[m_url]++;
+            std::cerr << "raised it to " << m_refCountMap[m_url] << std::endl;
+            m_localFilename = m_remoteLocalMap[m_url];
+            m_refCounted = true;
+        } else {
+            m_ok = false;
+            m_lastStatus = 404;
         }
-        */
-
-        // ...or, much simpler but relying on knowledge about the
-        // scheme://host/path/path/query etc format of the URL, we can
-        // get the whole URL ready-encoded and then split it on "/" as
-        // appropriate...
-        
-        QString path = "/" + QString(url.toEncoded()).section('/', 3);
-
-        std::cerr << "RemoteFile: path is \""
-                  << path.toStdString() << "\"" << std::endl;
-
-        m_http->get(path, m_localFile);
-
-    } else if (scheme == "ftp") {
-
-        m_ok = true;
-        m_ftp = new QFtp;
-        connect(m_ftp, SIGNAL(done(bool)), this, SLOT(done(bool)));
-        connect(m_ftp, SIGNAL(commandFinished(int, bool)),
-                this, SLOT(ftpCommandFinished(int, bool)));
-        connect(m_ftp, SIGNAL(dataTransferProgress(qint64, qint64)),
-                this, SLOT(dataTransferProgress(qint64, qint64)));
-        m_ftp->connectToHost(url.host(), url.port(21));
-
-        QString username = url.userName();
-        if (username == "") {
-            username = "anonymous";
-        }
-
-        QString password = url.password();
-        if (password == "") {
-            password = QString("%1@%2").arg(getenv("USER")).arg(getenv("HOST"));
-        }
-
-        m_ftp->login(username, password);
-
-        QString dirpath = url.path().section('/', 0, -2);
-        QString filename = url.path().section('/', -1);
-
-        if (dirpath == "") dirpath = "/";
-        m_ftp->cd(dirpath);
-        m_ftp->get(filename, m_localFile);
     }
 
-    if (m_ok) {
-
-        m_remoteLocalMap[m_url] = m_localFilename;
-        m_refCountMap[m_url]++;
-        m_referenced = true;
-
-        m_progressDialog = new QProgressDialog(tr("Downloading %1...").arg(url.toString()), tr("Cancel"), 0, 100);
-        m_progressDialog->hide();
-        connect(&m_progressShowTimer, SIGNAL(timeout()),
-                this, SLOT(showProgressDialog()));
-        connect(m_progressDialog, SIGNAL(canceled()), this, SLOT(cancelled()));
-        m_progressShowTimer.setSingleShot(true);
-        m_progressShowTimer.start(2000);
-    }
+    m_done = true;
 }
 
 RemoteFile::~RemoteFile()
 {
+    std::cerr << "RemoteFile(" << m_url.toString().toStdString() << ")::~RemoteFile" << std::endl;
+
     cleanup();
+
+    if (isRemote() && !m_leaveLocalFile) deleteCacheFile();
+}
+
+void
+RemoteFile::init(bool showProgress)
+{
+    if (!isRemote()) {
+        m_localFilename = m_url.toLocalFile();
+        m_ok = true;
+        if (!QFileInfo(m_localFilename).exists()) {
+            m_lastStatus = 404;
+        } else {
+            m_lastStatus = 200;
+        }
+        m_done = true;
+        return;
+    }
+
+    if (createCacheFile()) {
+        std::cerr << "RemoteFile::init: Already have this one" << std::endl;
+        m_ok = true;
+        if (!QFileInfo(m_localFilename).exists()) {
+            m_lastStatus = 404;
+        } else {
+            m_lastStatus = 200;
+        }
+        m_done = true;
+        return;
+    }
+
+    if (m_localFilename == "") return;
+    m_localFile = new QFile(m_localFilename);
+    m_localFile->open(QFile::WriteOnly);
+
+    QString scheme = m_url.scheme().toLower();
+
+    std::cerr << "RemoteFile::init: Don't have local copy of \""
+              << m_url.toString().toStdString() << "\", retrieving" << std::endl;
+
+    if (scheme == "http") {
+        initHttp();
+    } else if (scheme == "ftp") {
+        initFtp();
+    } else {
+        m_remote = false;
+        m_ok = false;
+    }
+
+    if (m_ok) {
+        
+        QMutexLocker locker(&m_mapMutex);
+
+        if (m_refCountMap[m_url] > 0) {
+            // someone else has been doing the same thing at the same time,
+            // but has got there first
+            cleanup();
+            m_refCountMap[m_url]++;
+            std::cerr << "RemoteFile::init: Another RemoteFile has got there first, abandoning our download and using theirs" << std::endl;
+            m_localFilename = m_remoteLocalMap[m_url];
+            m_refCounted = true;
+            m_ok = true;
+            if (!QFileInfo(m_localFilename).exists()) {
+                m_lastStatus = 404;
+            }
+            m_done = true;
+            return;
+        }
+
+        m_remoteLocalMap[m_url] = m_localFilename;
+        m_refCountMap[m_url]++;
+        m_refCounted = true;
+
+        if (showProgress) {
+            m_progressDialog = new QProgressDialog(tr("Downloading %1...").arg(m_url.toString()), tr("Cancel"), 0, 100);
+            m_progressDialog->hide();
+            connect(&m_progressShowTimer, SIGNAL(timeout()),
+                    this, SLOT(showProgressDialog()));
+            connect(m_progressDialog, SIGNAL(canceled()), this, SLOT(cancelled()));
+            m_progressShowTimer.setSingleShot(true);
+            m_progressShowTimer.start(2000);
+        }
+    }
+}
+
+void
+RemoteFile::initHttp()
+{
+    m_ok = true;
+    m_http = new QHttp(m_url.host(), m_url.port(80));
+    connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
+    connect(m_http, SIGNAL(dataReadProgress(int, int)),
+            this, SLOT(dataReadProgress(int, int)));
+    connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
+            this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
+
+    // I don't quite understand this.  url.path() returns a path
+    // without percent encoding; for example, spaces appear as
+    // literal spaces.  This generally won't work if sent to the
+    // server directly.  You can retrieve a correctly encoded URL
+    // from QUrl using url.toEncoded(), but that gives you the
+    // whole URL; there doesn't seem to be any way to retrieve
+    // only an encoded path.  Furthermore there doesn't seem to be
+    // any way to convert a retrieved path into an encoded path
+    // without explicitly specifying that you don't want the path
+    // separators ("/") to be encoded.  (Besides being painful to
+    // manage, I don't see how this can work correctly in any case
+    // where a percent-encoded "/" is supposed to appear within a
+    // path element?)  There also seems to be no way to retrieve
+    // the path plus query string, i.e. everything that I need to
+    // send to the HTTP server.  And no way for QHttp to take a
+    // QUrl argument.  I'm obviously missing something.
+
+    // So, two ways to do this: query the bits from the URL,
+    // encode them individually, and glue them back together
+    // again...
+/*
+    QString path = QUrl::toPercentEncoding(m_url.path(), "/");
+    QList<QPair<QString, QString> > query = m_url.queryItems();
+    if (!query.empty()) {
+        QStringList q2;
+        for (QList<QPair<QString, QString> >::iterator i = query.begin();
+             i != query.end(); ++i) {
+            q2.push_back(QString("%1=%3")
+                         .arg(QString(QUrl::toPercentEncoding(i->first)))
+                         .arg(QString(QUrl::toPercentEncoding(i->second))));
+        }
+        path = QString("%1%2%3")
+            .arg(path).arg("?")
+            .arg(q2.join("&"));
+    }
+*/
+
+    // ...or, much simpler but relying on knowledge about the
+    // scheme://host/path/path/query etc format of the URL, we can
+    // get the whole URL ready-encoded and then split it on "/" as
+    // appropriate...
+        
+    QString path = "/" + QString(m_url.toEncoded()).section('/', 3);
+
+    std::cerr << "RemoteFile: path is \""
+              << path.toStdString() << "\"" << std::endl;
+        
+    m_http->get(path, m_localFile);
+}
+
+void
+RemoteFile::initFtp()
+{
+    m_ok = true;
+    m_ftp = new QFtp;
+    connect(m_ftp, SIGNAL(done(bool)), this, SLOT(done(bool)));
+    connect(m_ftp, SIGNAL(commandFinished(int, bool)),
+            this, SLOT(ftpCommandFinished(int, bool)));
+    connect(m_ftp, SIGNAL(dataTransferProgress(qint64, qint64)),
+            this, SLOT(dataTransferProgress(qint64, qint64)));
+    m_ftp->connectToHost(m_url.host(), m_url.port(21));
+    
+    QString username = m_url.userName();
+    if (username == "") {
+        username = "anonymous";
+    }
+    
+    QString password = m_url.password();
+    if (password == "") {
+        password = QString("%1@%2").arg(getenv("USER")).arg(getenv("HOST"));
+    }
+    
+    m_ftp->login(username, password);
+    
+    QString dirpath = m_url.path().section('/', 0, -2);
+    QString filename = m_url.path().section('/', -1);
+    
+    if (dirpath == "") dirpath = "/";
+    m_ftp->cd(dirpath);
+    m_ftp->get(filename, m_localFile);
 }
 
 void
@@ -216,22 +363,22 @@ RemoteFile::cleanup()
 bool
 RemoteFile::isRemote(QString fileOrUrl)
 {
-    return (fileOrUrl.startsWith("http:") || fileOrUrl.startsWith("ftp:"));
+    QString scheme = QUrl(fileOrUrl).scheme().toLower();
+    return (scheme == "http" || scheme == "ftp");
 }
 
 bool
 RemoteFile::canHandleScheme(QUrl url)
 {
     QString scheme = url.scheme().toLower();
-    return (scheme == "http" || scheme == "ftp");
+    return (scheme == "http" || scheme == "ftp" ||
+            scheme == "file" || scheme == "");
 }
 
 bool
 RemoteFile::isAvailable()
 {
-    while (m_ok && (!m_done && m_lastStatus == 0)) {
-        QApplication::processEvents();
-    }
+    waitForStatus();
     bool available = true;
     if (!m_ok) available = false;
     else available = (m_lastStatus / 100 == 2);
@@ -241,11 +388,26 @@ RemoteFile::isAvailable()
 }
 
 void
-RemoteFile::wait()
+RemoteFile::waitForStatus()
+{
+    while (m_ok && (!m_done && m_lastStatus == 0)) {
+//        std::cerr << "waitForStatus: processing (last status " << m_lastStatus << ")" << std::endl;
+        QApplication::processEvents();
+    }
+}
+
+void
+RemoteFile::waitForData()
 {
     while (m_ok && !m_done) {
         QApplication::processEvents();
     }
+}
+
+void
+RemoteFile::setLeaveLocalFile(bool leave)
+{
+    m_leaveLocalFile = leave;
 }
 
 bool
@@ -260,10 +422,38 @@ RemoteFile::isDone() const
     return m_done;
 }
 
+bool
+RemoteFile::isRemote() const
+{
+    return m_remote;
+}
+
+QString
+RemoteFile::getLocation() const
+{
+    return m_url.toString();
+}
+
 QString
 RemoteFile::getLocalFilename() const
 {
     return m_localFilename;
+}
+
+QString
+RemoteFile::getContentType() const
+{
+    return m_contentType;
+}
+
+QString
+RemoteFile::getExtension() const
+{
+    if (m_localFilename != "") {
+        return QFileInfo(m_localFilename).suffix().toLower();
+    } else {
+        return QFileInfo(m_url.toLocalFile()).suffix().toLower();
+    }
 }
 
 QString
@@ -339,8 +529,9 @@ RemoteFile::dataTransferProgress(qint64 done, qint64 total)
 void
 RemoteFile::cancelled()
 {
-    deleteLocalFile();
     m_done = true;
+    cleanup();
+
     m_ok = false;
     m_errorString = tr("Download cancelled");
 }
@@ -380,7 +571,8 @@ RemoteFile::done(bool error)
     }
 
     if (error) {
-        deleteLocalFile();
+        std::cerr << "RemoteFile::done: error is " << error << ", deleting cache file" << std::endl;
+        deleteCacheFile();
     }
 
     m_ok = !error;
@@ -389,21 +581,29 @@ RemoteFile::done(bool error)
 }
 
 void
-RemoteFile::deleteLocalFile()
+RemoteFile::deleteCacheFile()
 {
-//    std::cerr << "RemoteFile::deleteLocalFile" << std::endl;
+    std::cerr << "RemoteFile::deleteCacheFile(\"" << m_localFilename.toStdString() << "\")" << std::endl;
 
     cleanup();
 
-    if (m_localFilename == "") return;
+    if (m_localFilename == "") {
+        return;
+    }
 
-    if (m_referenced) {
+    if (!isRemote()) {
+        std::cerr << "not a cache file" << std::endl;
+        return;
+    }
+
+    if (m_refCounted) {
 
         QMutexLocker locker(&m_mapMutex);
-        m_referenced = false;
+        m_refCounted = false;
 
         if (m_refCountMap[m_url] > 0) {
             m_refCountMap[m_url]--;
+            std::cerr << "reduced ref count to " << m_refCountMap[m_url] << std::endl;
             if (m_refCountMap[m_url] > 0) {
                 m_done = true;
                 return;
@@ -414,8 +614,9 @@ RemoteFile::deleteLocalFile()
     m_fileCreationMutex.lock();
 
     if (!QFile(m_localFilename).remove()) {
-        std::cerr << "RemoteFile::deleteLocalFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "RemoteFile::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
     } else {
+        std::cerr << "RemoteFile::deleteCacheFile: Deleted cache file \"" << m_localFilename.toStdString() << "\"" << std::endl;
         m_localFilename = "";
     }
 
@@ -430,19 +631,33 @@ RemoteFile::showProgressDialog()
     if (m_progressDialog) m_progressDialog->show();
 }
 
-QString
-RemoteFile::createLocalFile(QUrl url)
+bool
+RemoteFile::createCacheFile()
 {
+    {
+        QMutexLocker locker(&m_mapMutex);
+
+        std::cerr << "RemoteFile::createCacheFile: refcount is " << m_refCountMap[m_url] << std::endl;
+
+        if (m_refCountMap[m_url] > 0) {
+            m_refCountMap[m_url]++;
+            m_localFilename = m_remoteLocalMap[m_url];
+            std::cerr << "raised it to " << m_refCountMap[m_url] << std::endl;
+            m_refCounted = true;
+            return true;
+        }
+    }
+
     QDir dir;
     try {
         dir = TempDirectory::getInstance()->getSubDirectoryPath("download");
     } catch (DirectoryCreationFailed f) {
-        std::cerr << "RemoteFile::createLocalFile: ERROR: Failed to create temporary directory: " << f.what() << std::endl;
+        std::cerr << "RemoteFile::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << std::endl;
         return "";
     }
 
-    QString filepart = url.path().section('/', -1, -1,
-                                          QString::SectionSkipEmpty);
+    QString filepart = m_url.path().section('/', -1, -1,
+                                            QString::SectionSkipEmpty);
 
     QString extension = filepart.section('.', -1);
     QString base = filepart;
@@ -461,17 +676,18 @@ RemoteFile::createLocalFile(QUrl url)
 
     QString filepath(dir.filePath(filename));
 
-    std::cerr << "RemoteFile::createLocalFile: URL is \"" << url.toString().toStdString() << "\", dir is \"" << dir.path().toStdString() << "\", base \"" << base.toStdString() << "\", extension \"" << extension.toStdString() << "\", filebase \"" << filename.toStdString() << "\", filename \"" << filepath.toStdString() << "\"" << std::endl;
+    std::cerr << "RemoteFile::createCacheFile: URL is \"" << m_url.toString().toStdString() << "\", dir is \"" << dir.path().toStdString() << "\", base \"" << base.toStdString() << "\", extension \"" << extension.toStdString() << "\", filebase \"" << filename.toStdString() << "\", filename \"" << filepath.toStdString() << "\"" << std::endl;
 
-    m_fileCreationMutex.lock();
+    QMutexLocker fcLocker(&m_fileCreationMutex);
+
     ++m_count;
 
     if (QFileInfo(filepath).exists() ||
         !QFile(filepath).open(QFile::WriteOnly)) {
 
-        std::cerr << "RemoteFile::createLocalFile: Failed to create local file \""
+        std::cerr << "RemoteFile::createCacheFile: Failed to create local file \""
                   << filepath.toStdString() << "\" for URL \""
-                  << url.toString().toStdString() << "\" (or file already exists): appending suffix instead" << std::endl;
+                  << m_url.toString().toStdString() << "\" (or file already exists): appending suffix instead" << std::endl;
 
 
         if (extension == "") {
@@ -484,20 +700,19 @@ RemoteFile::createLocalFile(QUrl url)
         if (QFileInfo(filepath).exists() ||
             !QFile(filepath).open(QFile::WriteOnly)) {
 
-            std::cerr << "RemoteFile::createLocalFile: ERROR: Failed to create local file \""
+            std::cerr << "RemoteFile::createCacheFile: ERROR: Failed to create local file \""
                       << filepath.toStdString() << "\" for URL \""
-                      << url.toString().toStdString() << "\" (or file already exists)" << std::endl;
+                      << m_url.toString().toStdString() << "\" (or file already exists)" << std::endl;
 
-            m_fileCreationMutex.unlock();
             return "";
         }
     }
 
-    m_fileCreationMutex.unlock();
-
-    std::cerr << "RemoteFile::createLocalFile: url "
-              << url.toString().toStdString() << " -> local filename "
+    std::cerr << "RemoteFile::createCacheFile: url "
+              << m_url.toString().toStdString() << " -> local filename "
               << filepath.toStdString() << std::endl;
+    
+    m_localFilename = filepath;
 
-    return filepath;
+    return false;
 }

@@ -35,7 +35,7 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    MP3FileReader(QString path,
+    MP3FileReader(RemoteFile source,
                   DecodeMode decodeMode,
                   CacheMode cacheMode,
                   size_t targetRate = 0);
@@ -46,7 +46,10 @@ public:
     virtual QString getTitle() const { return m_title; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
-    
+    static bool supportsExtension(QString ext);
+    static bool supportsContentType(QString type);
+    static bool supports(RemoteFile &source);
+
     virtual int getDecodeCompletion() const { return m_completion; }
 
     virtual bool isUpdating() const {
@@ -54,6 +57,7 @@ public:
     }
 
 protected:
+    RemoteFile m_source;
     QString m_path;
     QString m_error;
     QString m_title;

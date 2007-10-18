@@ -54,24 +54,25 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(QString path, size_t targetRate)
+AudioFileReaderFactory::createReader(RemoteFile source, size_t targetRate)
 {
     QString err;
 
-    std::cerr << "AudioFileReaderFactory::createReader(\"" << path.toStdString() << "\"): Requested rate: " << targetRate << std::endl;
+    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
+
+    if (!source.isOK() || !source.isAvailable()) {
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source unavailable" << std::endl;
+        return 0;
+    }
 
     AudioFileReader *reader = 0;
 
-    // First try to construct a preferred reader based on the
-    // extension.  If we can't identify one or it fails to load the
-    // file, fall back to trying all readers in no particular order.
+    // Try to construct a preferred reader based on the extension or
+    // MIME type.
 
-    QString ext = QFileInfo(path).suffix().toLower();
-    std::set<QString> extensions;
+    if (WavFileReader::supports(source)) {
 
-    WavFileReader::getSupportedExtensions(extensions);
-    if (extensions.find(ext) != extensions.end()) {
-        reader = new WavFileReader(path);
+        reader = new WavFileReader(source);
 
         if (targetRate != 0 &&
             reader->isOK() &&
@@ -81,7 +82,7 @@ AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 
             delete reader;
             reader = new ResamplingWavFileReader
-                (path,
+                (source,
                  ResamplingWavFileReader::ResampleThreaded,
                  ResamplingWavFileReader::CacheInTemporaryFile,
                  targetRate);
@@ -91,11 +92,9 @@ AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
     if (!reader) {
-        extensions.clear();
-        OggVorbisFileReader::getSupportedExtensions(extensions);
-        if (extensions.find(ext) != extensions.end()) {
+        if (OggVorbisFileReader::supports(source)) {
             reader = new OggVorbisFileReader
-                (path, 
+                (source,
                  OggVorbisFileReader::DecodeThreaded,
                  OggVorbisFileReader::CacheInTemporaryFile,
                  targetRate);
@@ -106,11 +105,9 @@ AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 
 #ifdef HAVE_MAD
     if (!reader) {
-        extensions.clear();
-        MP3FileReader::getSupportedExtensions(extensions);
-        if (extensions.find(ext) != extensions.end()) {
+        if (MP3FileReader::supports(source)) {
             reader = new MP3FileReader
-                (path,
+                (source,
                  MP3FileReader::DecodeThreaded,
                  MP3FileReader::CacheInTemporaryFile,
                  targetRate);
@@ -120,11 +117,9 @@ AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 
 #ifdef HAVE_QUICKTIME
     if (!reader) {
-        extensions.clear();
-        QuickTimeFileReader::getSupportedExtensions(extensions);
-        if (extensions.find(ext) != extensions.end()) {
+        if (QuickTimeFileReader::supports(source)) {
             reader = new QuickTimeFileReader
-                (path,
+                (source,
                  QuickTimeFileReader::DecodeThreaded,
                  QuickTimeFileReader::CacheInTemporaryFile,
                  targetRate);
@@ -133,20 +128,24 @@ AudioFileReaderFactory::createReader(QString path, size_t targetRate)
 #endif
 
     if (reader) {
-        if (reader->isOK()) return reader;
+        if (reader->isOK()) {
+            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
+            return reader;
+        }
+        std::cerr << "AudioFileReaderFactory: Preferred reader for "
+                  << "url \"" << source.getLocation().toStdString()
+                  << "\" (content type \""
+                  << source.getContentType().toStdString() << "\") failed";
+
         if (reader->getError() != "") {
-            std::cerr << "AudioFileReaderFactory: Preferred reader for "
-                      << "extension \"" << ext.toStdString() << "\" failed: \""
-                      << reader->getError().toStdString() << "\"" << std::endl;
-        } else {
-            std::cerr << "AudioFileReaderFactory: Preferred reader for "
-                      << "extension \"" << ext.toStdString() << "\" failed"
-                      << std::endl;
-        }            
+            std::cerr << ": \"" << reader->getError().toStdString() << "\"";
+        }
+        std::cerr << std::endl;
         delete reader;
         reader = 0;
     }
 
+    std::cerr << "AudioFileReaderFactory: No reader" << std::endl;
     return reader;
 }
 
