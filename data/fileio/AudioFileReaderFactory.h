@@ -18,7 +18,7 @@
 
 #include <QString>
 
-#include "RemoteFile.h"
+#include "FileSource.h"
 
 class AudioFileReader;
 
@@ -44,7 +44,7 @@ public:
      *
      * Caller owns the returned object and must delete it after use.
      */
-    static AudioFileReader *createReader(RemoteFile source, size_t targetRate = 0);
+    static AudioFileReader *createReader(FileSource source, size_t targetRate = 0);
 };
 
 #endif

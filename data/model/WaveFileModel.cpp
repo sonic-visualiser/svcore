@@ -39,7 +39,7 @@ using std::endl;
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
-WaveFileModel::WaveFileModel(RemoteFile source, size_t targetRate) :
+WaveFileModel::WaveFileModel(FileSource source, size_t targetRate) :
     m_source(source),
     m_path(source.getLocation()),
     m_myReader(true),
@@ -62,7 +62,7 @@ WaveFileModel::WaveFileModel(RemoteFile source, size_t targetRate) :
     if (isOK()) fillCache();
 }
 
-WaveFileModel::WaveFileModel(RemoteFile source, AudioFileReader *reader) :
+WaveFileModel::WaveFileModel(FileSource source, AudioFileReader *reader) :
     m_source(source),
     m_path(source.getLocation()),
     m_myReader(false),

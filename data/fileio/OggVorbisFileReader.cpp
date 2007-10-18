@@ -32,7 +32,7 @@
 
 static int instances = 0;
 
-OggVorbisFileReader::OggVorbisFileReader(RemoteFile source,
+OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
                                          size_t targetRate) :
@@ -217,7 +217,7 @@ OggVorbisFileReader::supportsContentType(QString type)
 }
 
 bool
-OggVorbisFileReader::supports(RemoteFile &source)
+OggVorbisFileReader::supports(FileSource &source)
 {
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));

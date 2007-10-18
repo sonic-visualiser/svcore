@@ -34,7 +34,7 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-MP3FileReader::MP3FileReader(RemoteFile source, DecodeMode decodeMode, 
+MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
                              CacheMode mode, size_t targetRate) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
@@ -410,7 +410,7 @@ MP3FileReader::supportsContentType(QString type)
 }
 
 bool
-MP3FileReader::supports(RemoteFile &source)
+MP3FileReader::supports(FileSource &source)
 {
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));

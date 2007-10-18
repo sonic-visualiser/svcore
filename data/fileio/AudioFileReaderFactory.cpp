@@ -54,7 +54,7 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(RemoteFile source, size_t targetRate)
+AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
 {
     QString err;
 

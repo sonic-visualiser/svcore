@@ -29,6 +29,7 @@ HEADERS += fft/FFTapi.h \
            fileio/DataFileReaderFactory.h \
            fileio/FileFinder.h \
            fileio/FileReadThread.h \
+           fileio/FileSource.h \
            fileio/MatchFileReader.h \
            fileio/MatrixFile.h \
            fileio/MIDIEvent.h \
@@ -38,7 +39,6 @@ HEADERS += fft/FFTapi.h \
            fileio/OggVorbisFileReader.h \
            fileio/PlaylistFileReader.h \
            fileio/QuickTimeFileReader.h \
-           fileio/RemoteFile.h \
            fileio/ResamplingWavFileReader.h \
            fileio/WavFileReader.h \
            fileio/WavFileWriter.h \
@@ -75,6 +75,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/DataFileReaderFactory.cpp \
            fileio/FileFinder.cpp \
            fileio/FileReadThread.cpp \
+           fileio/FileSource.cpp \
            fileio/MatchFileReader.cpp \
            fileio/MatrixFile.cpp \
            fileio/MIDIFileReader.cpp \
@@ -83,7 +84,6 @@ SOURCES += fft/FFTapi.cpp \
            fileio/OggVorbisFileReader.cpp \
            fileio/PlaylistFileReader.cpp \
            fileio/QuickTimeFileReader.cpp \
-           fileio/RemoteFile.cpp \
            fileio/ResamplingWavFileReader.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \

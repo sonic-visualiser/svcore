@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "RemoteFile.h"
+#include "FileSource.h"
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 
@@ -28,21 +28,21 @@
 #include <iostream>
 
 int
-RemoteFile::m_count = 0;
+FileSource::m_count = 0;
 
 QMutex
-RemoteFile::m_fileCreationMutex;
+FileSource::m_fileCreationMutex;
 
-RemoteFile::RemoteRefCountMap
-RemoteFile::m_refCountMap;
+FileSource::RemoteRefCountMap
+FileSource::m_refCountMap;
 
-RemoteFile::RemoteLocalMap
-RemoteFile::m_remoteLocalMap;
+FileSource::RemoteLocalMap
+FileSource::m_remoteLocalMap;
 
 QMutex
-RemoteFile::m_mapMutex;
+FileSource::m_mapMutex;
 
-RemoteFile::RemoteFile(QString fileOrUrl, bool showProgress) :
+FileSource::FileSource(QString fileOrUrl, bool showProgress) :
     m_url(fileOrUrl),
     m_ftp(0),
     m_http(0),
@@ -56,10 +56,10 @@ RemoteFile::RemoteFile(QString fileOrUrl, bool showProgress) :
     m_progressShowTimer(this),
     m_refCounted(false)
 {
-    std::cerr << "RemoteFile::RemoteFile(" << fileOrUrl.toStdString() << ")" << std::endl;
+    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ")" << std::endl;
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -76,7 +76,7 @@ RemoteFile::RemoteFile(QString fileOrUrl, bool showProgress) :
             // The URL was created on the assumption that the string
             // was human-readable.  Let's try again, this time
             // assuming it was already encoded.
-            std::cerr << "RemoteFile::RemoteFile: Failed to retrieve URL \""
+            std::cerr << "FileSource::FileSource: Failed to retrieve URL \""
                       << fileOrUrl.toStdString() 
                       << "\" as human-readable URL; "
                       << "trying again treating it as encoded URL"
@@ -87,7 +87,7 @@ RemoteFile::RemoteFile(QString fileOrUrl, bool showProgress) :
     }
 }
 
-RemoteFile::RemoteFile(QUrl url, bool showProgress) :
+FileSource::FileSource(QUrl url, bool showProgress) :
     m_url(url),
     m_ftp(0),
     m_http(0),
@@ -101,10 +101,10 @@ RemoteFile::RemoteFile(QUrl url, bool showProgress) :
     m_progressShowTimer(this),
     m_refCounted(false)
 {
-    std::cerr << "RemoteFile::RemoteFile(" << url.toString().toStdString() << ") [as url]" << std::endl;
+    std::cerr << "FileSource::FileSource(" << url.toString().toStdString() << ") [as url]" << std::endl;
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -112,7 +112,7 @@ RemoteFile::RemoteFile(QUrl url, bool showProgress) :
     init(showProgress);
 }
 
-RemoteFile::RemoteFile(const RemoteFile &rf) :
+FileSource::FileSource(const FileSource &rf) :
     QObject(),
     m_url(rf.m_url),
     m_ftp(0),
@@ -127,10 +127,10 @@ RemoteFile::RemoteFile(const RemoteFile &rf) :
     m_progressShowTimer(0),
     m_refCounted(false)
 {
-    std::cerr << "RemoteFile::RemoteFile(" << m_url.toString().toStdString() << ") [copy ctor]" << std::endl;
+    std::cerr << "FileSource::FileSource(" << m_url.toString().toStdString() << ") [copy ctor]" << std::endl;
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "RemoteFile::RemoteFile: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -139,7 +139,7 @@ RemoteFile::RemoteFile(const RemoteFile &rf) :
         m_localFilename = rf.m_localFilename;
     } else {
         QMutexLocker locker(&m_mapMutex);
-        std::cerr << "RemoteFile::RemoteFile(copy ctor): ref count is "
+        std::cerr << "FileSource::FileSource(copy ctor): ref count is "
                   << m_refCountMap[m_url] << std::endl;
         if (m_refCountMap[m_url] > 0) {
             m_refCountMap[m_url]++;
@@ -155,9 +155,9 @@ RemoteFile::RemoteFile(const RemoteFile &rf) :
     m_done = true;
 }
 
-RemoteFile::~RemoteFile()
+FileSource::~FileSource()
 {
-    std::cerr << "RemoteFile(" << m_url.toString().toStdString() << ")::~RemoteFile" << std::endl;
+    std::cerr << "FileSource(" << m_url.toString().toStdString() << ")::~FileSource" << std::endl;
 
     cleanup();
 
@@ -165,7 +165,7 @@ RemoteFile::~RemoteFile()
 }
 
 void
-RemoteFile::init(bool showProgress)
+FileSource::init(bool showProgress)
 {
     if (!isRemote()) {
         m_localFilename = m_url.toLocalFile();
@@ -180,7 +180,7 @@ RemoteFile::init(bool showProgress)
     }
 
     if (createCacheFile()) {
-        std::cerr << "RemoteFile::init: Already have this one" << std::endl;
+        std::cerr << "FileSource::init: Already have this one" << std::endl;
         m_ok = true;
         if (!QFileInfo(m_localFilename).exists()) {
             m_lastStatus = 404;
@@ -197,7 +197,7 @@ RemoteFile::init(bool showProgress)
 
     QString scheme = m_url.scheme().toLower();
 
-    std::cerr << "RemoteFile::init: Don't have local copy of \""
+    std::cerr << "FileSource::init: Don't have local copy of \""
               << m_url.toString().toStdString() << "\", retrieving" << std::endl;
 
     if (scheme == "http") {
@@ -218,7 +218,7 @@ RemoteFile::init(bool showProgress)
             // but has got there first
             cleanup();
             m_refCountMap[m_url]++;
-            std::cerr << "RemoteFile::init: Another RemoteFile has got there first, abandoning our download and using theirs" << std::endl;
+            std::cerr << "FileSource::init: Another FileSource has got there first, abandoning our download and using theirs" << std::endl;
             m_localFilename = m_remoteLocalMap[m_url];
             m_refCounted = true;
             m_ok = true;
@@ -246,7 +246,7 @@ RemoteFile::init(bool showProgress)
 }
 
 void
-RemoteFile::initHttp()
+FileSource::initHttp()
 {
     m_ok = true;
     m_http = new QHttp(m_url.host(), m_url.port(80));
@@ -300,14 +300,14 @@ RemoteFile::initHttp()
         
     QString path = "/" + QString(m_url.toEncoded()).section('/', 3);
 
-    std::cerr << "RemoteFile: path is \""
+    std::cerr << "FileSource: path is \""
               << path.toStdString() << "\"" << std::endl;
         
     m_http->get(path, m_localFile);
 }
 
 void
-RemoteFile::initFtp()
+FileSource::initFtp()
 {
     m_ok = true;
     m_ftp = new QFtp;
@@ -339,7 +339,7 @@ RemoteFile::initFtp()
 }
 
 void
-RemoteFile::cleanup()
+FileSource::cleanup()
 {
     m_done = true;
     if (m_http) {
@@ -361,14 +361,14 @@ RemoteFile::cleanup()
 }
 
 bool
-RemoteFile::isRemote(QString fileOrUrl)
+FileSource::isRemote(QString fileOrUrl)
 {
     QString scheme = QUrl(fileOrUrl).scheme().toLower();
     return (scheme == "http" || scheme == "ftp");
 }
 
 bool
-RemoteFile::canHandleScheme(QUrl url)
+FileSource::canHandleScheme(QUrl url)
 {
     QString scheme = url.scheme().toLower();
     return (scheme == "http" || scheme == "ftp" ||
@@ -376,19 +376,19 @@ RemoteFile::canHandleScheme(QUrl url)
 }
 
 bool
-RemoteFile::isAvailable()
+FileSource::isAvailable()
 {
     waitForStatus();
     bool available = true;
     if (!m_ok) available = false;
     else available = (m_lastStatus / 100 == 2);
-    std::cerr << "RemoteFile::isAvailable: " << (available ? "yes" : "no")
+    std::cerr << "FileSource::isAvailable: " << (available ? "yes" : "no")
               << std::endl;
     return available;
 }
 
 void
-RemoteFile::waitForStatus()
+FileSource::waitForStatus()
 {
     while (m_ok && (!m_done && m_lastStatus == 0)) {
 //        std::cerr << "waitForStatus: processing (last status " << m_lastStatus << ")" << std::endl;
@@ -397,7 +397,7 @@ RemoteFile::waitForStatus()
 }
 
 void
-RemoteFile::waitForData()
+FileSource::waitForData()
 {
     while (m_ok && !m_done) {
         QApplication::processEvents();
@@ -405,49 +405,49 @@ RemoteFile::waitForData()
 }
 
 void
-RemoteFile::setLeaveLocalFile(bool leave)
+FileSource::setLeaveLocalFile(bool leave)
 {
     m_leaveLocalFile = leave;
 }
 
 bool
-RemoteFile::isOK() const
+FileSource::isOK() const
 {
     return m_ok;
 }
 
 bool
-RemoteFile::isDone() const
+FileSource::isDone() const
 {
     return m_done;
 }
 
 bool
-RemoteFile::isRemote() const
+FileSource::isRemote() const
 {
     return m_remote;
 }
 
 QString
-RemoteFile::getLocation() const
+FileSource::getLocation() const
 {
     return m_url.toString();
 }
 
 QString
-RemoteFile::getLocalFilename() const
+FileSource::getLocalFilename() const
 {
     return m_localFilename;
 }
 
 QString
-RemoteFile::getContentType() const
+FileSource::getContentType() const
 {
     return m_contentType;
 }
 
 QString
-RemoteFile::getExtension() const
+FileSource::getExtension() const
 {
     if (m_localFilename != "") {
         return QFileInfo(m_localFilename).suffix().toLower();
@@ -457,44 +457,44 @@ RemoteFile::getExtension() const
 }
 
 QString
-RemoteFile::getErrorString() const
+FileSource::getErrorString() const
 {
     return m_errorString;
 }
 
 void
-RemoteFile::dataReadProgress(int done, int total)
+FileSource::dataReadProgress(int done, int total)
 {
     dataTransferProgress(done, total);
 }
 
 void
-RemoteFile::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
+FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
 {
     m_lastStatus = resp.statusCode();
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
             .arg(resp.statusCode()).arg(resp.reasonPhrase());
-        std::cerr << "RemoteFile::responseHeaderReceived: "
+        std::cerr << "FileSource::responseHeaderReceived: "
                   << m_errorString.toStdString() << std::endl;
     } else {
-        std::cerr << "RemoteFile::responseHeaderReceived: "
+        std::cerr << "FileSource::responseHeaderReceived: "
                   << m_lastStatus << std::endl;
         if (resp.hasContentType()) m_contentType = resp.contentType();
     }        
 }
 
 void
-RemoteFile::ftpCommandFinished(int id, bool error)
+FileSource::ftpCommandFinished(int id, bool error)
 {
-    std::cerr << "RemoteFile::ftpCommandFinished(" << id << ", " << error << ")" << std::endl;
+    std::cerr << "FileSource::ftpCommandFinished(" << id << ", " << error << ")" << std::endl;
 
     if (!m_ftp) return;
 
     QFtp::Command command = m_ftp->currentCommand();
 
     if (!error) {
-        std::cerr << "RemoteFile::ftpCommandFinished: success for command "
+        std::cerr << "FileSource::ftpCommandFinished: success for command "
                   << command << std::endl;
         return;
     }
@@ -513,7 +513,7 @@ RemoteFile::ftpCommandFinished(int id, bool error)
 }
 
 void
-RemoteFile::dataTransferProgress(qint64 done, qint64 total)
+FileSource::dataTransferProgress(qint64 done, qint64 total)
 {
     if (!m_progressDialog) return;
 
@@ -527,7 +527,7 @@ RemoteFile::dataTransferProgress(qint64 done, qint64 total)
 }
 
 void
-RemoteFile::cancelled()
+FileSource::cancelled()
 {
     m_done = true;
     cleanup();
@@ -537,9 +537,9 @@ RemoteFile::cancelled()
 }
 
 void
-RemoteFile::done(bool error)
+FileSource::done(bool error)
 {
-    std::cerr << "RemoteFile::done(" << error << ")" << std::endl;
+    std::cerr << "FileSource::done(" << error << ")" << std::endl;
 
     if (m_done) return;
 
@@ -571,7 +571,7 @@ RemoteFile::done(bool error)
     }
 
     if (error) {
-        std::cerr << "RemoteFile::done: error is " << error << ", deleting cache file" << std::endl;
+        std::cerr << "FileSource::done: error is " << error << ", deleting cache file" << std::endl;
         deleteCacheFile();
     }
 
@@ -581,9 +581,9 @@ RemoteFile::done(bool error)
 }
 
 void
-RemoteFile::deleteCacheFile()
+FileSource::deleteCacheFile()
 {
-    std::cerr << "RemoteFile::deleteCacheFile(\"" << m_localFilename.toStdString() << "\")" << std::endl;
+    std::cerr << "FileSource::deleteCacheFile(\"" << m_localFilename.toStdString() << "\")" << std::endl;
 
     cleanup();
 
@@ -614,9 +614,9 @@ RemoteFile::deleteCacheFile()
     m_fileCreationMutex.lock();
 
     if (!QFile(m_localFilename).remove()) {
-        std::cerr << "RemoteFile::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
     } else {
-        std::cerr << "RemoteFile::deleteCacheFile: Deleted cache file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename.toStdString() << "\"" << std::endl;
         m_localFilename = "";
     }
 
@@ -626,18 +626,18 @@ RemoteFile::deleteCacheFile()
 }
 
 void
-RemoteFile::showProgressDialog()
+FileSource::showProgressDialog()
 {
     if (m_progressDialog) m_progressDialog->show();
 }
 
 bool
-RemoteFile::createCacheFile()
+FileSource::createCacheFile()
 {
     {
         QMutexLocker locker(&m_mapMutex);
 
-        std::cerr << "RemoteFile::createCacheFile: refcount is " << m_refCountMap[m_url] << std::endl;
+        std::cerr << "FileSource::createCacheFile: refcount is " << m_refCountMap[m_url] << std::endl;
 
         if (m_refCountMap[m_url] > 0) {
             m_refCountMap[m_url]++;
@@ -652,7 +652,7 @@ RemoteFile::createCacheFile()
     try {
         dir = TempDirectory::getInstance()->getSubDirectoryPath("download");
     } catch (DirectoryCreationFailed f) {
-        std::cerr << "RemoteFile::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << std::endl;
+        std::cerr << "FileSource::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << std::endl;
         return "";
     }
 
@@ -676,7 +676,7 @@ RemoteFile::createCacheFile()
 
     QString filepath(dir.filePath(filename));
 
-    std::cerr << "RemoteFile::createCacheFile: URL is \"" << m_url.toString().toStdString() << "\", dir is \"" << dir.path().toStdString() << "\", base \"" << base.toStdString() << "\", extension \"" << extension.toStdString() << "\", filebase \"" << filename.toStdString() << "\", filename \"" << filepath.toStdString() << "\"" << std::endl;
+    std::cerr << "FileSource::createCacheFile: URL is \"" << m_url.toString().toStdString() << "\", dir is \"" << dir.path().toStdString() << "\", base \"" << base.toStdString() << "\", extension \"" << extension.toStdString() << "\", filebase \"" << filename.toStdString() << "\", filename \"" << filepath.toStdString() << "\"" << std::endl;
 
     QMutexLocker fcLocker(&m_fileCreationMutex);
 
@@ -685,7 +685,7 @@ RemoteFile::createCacheFile()
     if (QFileInfo(filepath).exists() ||
         !QFile(filepath).open(QFile::WriteOnly)) {
 
-        std::cerr << "RemoteFile::createCacheFile: Failed to create local file \""
+        std::cerr << "FileSource::createCacheFile: Failed to create local file \""
                   << filepath.toStdString() << "\" for URL \""
                   << m_url.toString().toStdString() << "\" (or file already exists): appending suffix instead" << std::endl;
 
@@ -700,7 +700,7 @@ RemoteFile::createCacheFile()
         if (QFileInfo(filepath).exists() ||
             !QFile(filepath).open(QFile::WriteOnly)) {
 
-            std::cerr << "RemoteFile::createCacheFile: ERROR: Failed to create local file \""
+            std::cerr << "FileSource::createCacheFile: ERROR: Failed to create local file \""
                       << filepath.toStdString() << "\" for URL \""
                       << m_url.toString().toStdString() << "\" (or file already exists)" << std::endl;
 
@@ -708,7 +708,7 @@ RemoteFile::createCacheFile()
         }
     }
 
-    std::cerr << "RemoteFile::createCacheFile: url "
+    std::cerr << "FileSource::createCacheFile: url "
               << m_url.toString().toStdString() << " -> local filename "
               << filepath.toStdString() << std::endl;
     
