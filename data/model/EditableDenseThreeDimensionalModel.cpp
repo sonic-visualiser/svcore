@@ -270,12 +270,28 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion)
     }
 }
 
+QString
+EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) const
+{
+    QString s;
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        QStringList list;
+	for (size_t j = 0; j < m_data[i].size(); ++j) {
+            list << QString("%1").arg(m_data[i][j]);
+        }
+        s += list.join(delimiter) + "\n";
+    }
+    return s;
+}
+
 void
 EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
                                           QString indent,
                                           QString extraAttributes) const
 {
     // For historical reasons we read and write "resolution" as "windowSize"
+
+    std::cerr << "EditableDenseThreeDimensionalModel::toXml" << std::endl;
 
     Model::toXml
 	(out, indent,
@@ -307,6 +323,7 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 	    out << m_data[i][j];
 	}
 	out << QString("</row>\n");
+        out.flush();
     }
 
     out << indent + "</dataset>\n";

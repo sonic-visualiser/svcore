@@ -548,6 +548,9 @@ SparseModel<PointType>::toXml(QTextStream &out,
                               QString indent,
                               QString extraAttributes) const
 {
+    std::cerr << "SparseModel::toXml: extraAttributes = \"" 
+              << extraAttributes.toStdString() << std::endl;
+
     Model::toXml
 	(out,
          indent,
