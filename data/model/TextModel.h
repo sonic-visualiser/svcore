@@ -52,7 +52,7 @@ public:
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(height);
-        list << label;
+        if (label != "") list << label;
         return list.join(delimiter);
     }
 

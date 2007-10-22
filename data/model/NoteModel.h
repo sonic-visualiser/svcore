@@ -58,7 +58,7 @@ public:
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(value);
         list << QString("%1").arg(duration);
-        list << label;
+        if (label != "") list << label;
         return list.join(delimiter);
     }
 
@@ -126,6 +126,9 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const
     {
+        std::cerr << "NoteModel::toXml: extraAttributes = \"" 
+                  << extraAttributes.toStdString() << std::endl;
+
         SparseValueModel<Note>::toXml
 	    (out,
              indent,

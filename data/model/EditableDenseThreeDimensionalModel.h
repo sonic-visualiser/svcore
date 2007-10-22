@@ -109,6 +109,8 @@ public:
     virtual void setCompletion(int completion);
     virtual int getCompletion() const { return m_completion; }
 
+    virtual QString toDelimitedDataString(QString delimiter) const;
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const;

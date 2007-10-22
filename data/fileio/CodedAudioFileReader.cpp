@@ -291,6 +291,13 @@ CodedAudioFileReader::finishDecodeCache()
 void
 CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 {
+    for (size_t i = 0; i < sz; ++i) {
+        if (buffer[i] >  1.f) buffer[i] =  1.f;
+    }
+    for (size_t i = 0; i < sz; ++i) {
+        if (buffer[i] < -1.f) buffer[i] = -1.f;
+    }
+
     if (m_resampler) {
         
         float ratio = float(m_sampleRate) / float(m_fileRate);
@@ -303,13 +310,15 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
                  ratio,
                  final);
 
-            for (size_t i = 0; i < out; ++i) {
-                if (m_resampleBuffer[i] >  1.f) m_resampleBuffer[i] =  1.f;
-                if (m_resampleBuffer[i] < -1.f) m_resampleBuffer[i] = -1.f;
-            }
-
             buffer = m_resampleBuffer;
             sz = out;
+        }
+
+        for (size_t i = 0; i < sz; ++i) {
+            if (buffer[i] >  1.f) buffer[i] =  1.f;
+        }
+        for (size_t i = 0; i < sz; ++i) {
+            if (buffer[i] < -1.f) buffer[i] = -1.f;
         }
     }
 
