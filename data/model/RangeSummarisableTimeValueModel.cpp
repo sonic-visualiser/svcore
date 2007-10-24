@@ -15,48 +15,4 @@
 
 #include "RangeSummarisableTimeValueModel.h"
 
-#include "AlignmentModel.h"
-
 #include <iostream>
-
-void
-RangeSummarisableTimeValueModel::setAlignment(AlignmentModel *alignment)
-{
-    delete m_alignment;
-    m_alignment = alignment;
-    connect(m_alignment, SIGNAL(completionChanged()),
-            this, SIGNAL(alignmentCompletionChanged()));
-}
-
-const Model *
-RangeSummarisableTimeValueModel::getAlignmentReference() const
-{
-    if (!m_alignment) return 0;
-    return m_alignment->getReferenceModel();
-}
-
-size_t
-RangeSummarisableTimeValueModel::alignToReference(size_t frame) const
-{
-    if (!m_alignment) return frame;
-    return m_alignment->toReference(frame);
-}
-
-size_t
-RangeSummarisableTimeValueModel::alignFromReference(size_t refFrame) const
-{
-    if (!m_alignment) return refFrame;
-    return m_alignment->fromReference(refFrame);
-}
-
-int
-RangeSummarisableTimeValueModel::getAlignmentCompletion() const
-{
-    std::cerr << "RangeSummarisableTimeValueModel::getAlignmentCompletion" << std::endl;
-    if (!m_alignment) return 100;
-    int completion = 0;
-    (void)m_alignment->isReady(&completion);
-    std::cerr << " -> " << completion << std::endl;
-    return completion;
-}
-
