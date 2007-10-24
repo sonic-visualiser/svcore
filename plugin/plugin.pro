@@ -11,8 +11,8 @@ TARGET = svplugin
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
 
-DEPENDPATH += . .. api plugins api/alsa api/alsa/sound
-INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound
+DEPENDPATH += . .. api plugins api/alsa api/alsa/sound transform
+INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound transform
 OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
@@ -34,7 +34,12 @@ HEADERS += DSSIPluginFactory.h \
            api/alsa/seq.h \
            api/alsa/seq_event.h \
            api/alsa/seq_midi_event.h \
-           api/alsa/sound/asequencer.h
+           api/alsa/sound/asequencer.h \
+           transform/FeatureExtractionPluginTransform.h \
+           transform/PluginTransform.h \
+           transform/RealTimePluginTransform.h \
+           transform/Transform.h \
+           transform/TransformFactory.h
 SOURCES += DSSIPluginFactory.cpp \
            DSSIPluginInstance.cpp \
            FeatureExtractionPluginFactory.cpp \
@@ -45,4 +50,9 @@ SOURCES += DSSIPluginFactory.cpp \
            RealTimePluginFactory.cpp \
            RealTimePluginInstance.cpp \
            api/dssi_alsa_compat.c \
-           plugins/SamplePlayer.cpp
+           plugins/SamplePlayer.cpp \
+           transform/FeatureExtractionPluginTransform.cpp \
+           transform/PluginTransform.cpp \
+           transform/RealTimePluginTransform.cpp \
+           transform/Transform.cpp \
+           transform/TransformFactory.cpp

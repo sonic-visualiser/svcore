@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = fftw3f sndfile mad quicktime id3tag oggz fishsound
+SV_UNIT_PACKAGES = fftw3f sndfile mad quicktime id3tag oggz fishsound liblo
 load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
@@ -8,8 +8,8 @@ QT += network
 
 TARGET = svdata
 
-DEPENDPATH += fft fileio model ..
-INCLUDEPATH += . fft model fileio ..
+DEPENDPATH += fft fileio model osc ..
+INCLUDEPATH += . fft fileio model osc ..
 OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
@@ -61,7 +61,9 @@ HEADERS += fft/FFTapi.h \
            model/SparseValueModel.h \
            model/TextModel.h \
            model/WaveFileModel.h \
-           model/WritableWaveFileModel.h
+           model/WritableWaveFileModel.h \
+           osc/OSCMessage.h \
+           osc/OSCQueue.h 
 SOURCES += fft/FFTapi.cpp \
            fft/FFTDataServer.cpp \
            fft/FFTFileCache.cpp \
@@ -98,4 +100,6 @@ SOURCES += fft/FFTapi.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
            model/RangeSummarisableTimeValueModel.cpp \
            model/WaveFileModel.cpp \
-           model/WritableWaveFileModel.cpp
+           model/WritableWaveFileModel.cpp \
+           osc/OSCMessage.cpp \
+           osc/OSCQueue.cpp 
