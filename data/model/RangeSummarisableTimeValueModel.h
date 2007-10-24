@@ -21,8 +21,6 @@
 #include "DenseTimeValueModel.h"
 #include "base/ZoomConstraint.h"
 
-class AlignmentModel;
-
 /**
  * Base class for models containing dense two-dimensional data (value
  * against time) that may be meaningfully represented in a zoomed view
@@ -35,7 +33,7 @@ class RangeSummarisableTimeValueModel : public DenseTimeValueModel
     Q_OBJECT
 
 public:
-    RangeSummarisableTimeValueModel() : m_alignment(0) { }
+    RangeSummarisableTimeValueModel() { }
 
     struct Range
     {
@@ -73,18 +71,6 @@ public:
      * block size equal to the distance between start and end frames.
      */
     virtual Range getSummary(size_t channel, size_t start, size_t count) const = 0;
-
-    virtual void setAlignment(AlignmentModel *alignment); // I take ownership
-    virtual const Model *getAlignmentReference() const;
-    virtual size_t alignToReference(size_t frame) const;
-    virtual size_t alignFromReference(size_t referenceFrame) const;
-    virtual int getAlignmentCompletion() const;
-
-signals:
-    void alignmentCompletionChanged();
-
-protected:
-    AlignmentModel *m_alignment;
 };
 
 #endif

@@ -14,6 +14,7 @@
 */
 
 #include "Model.h"
+#include "AlignmentModel.h"
 #include "base/PlayParameterRepository.h"
 
 #include <QTextStream>
@@ -26,11 +27,102 @@ Model::~Model()
 {
 //    std::cerr << "Model::~Model(" << this << ")" << std::endl;
 
+    if (!m_aboutToDelete) {
+        std::cerr << "NOTE: Model::~Model(" << this << ", \""
+                  << objectName().toStdString() << "\"): Model deleted "
+                  << "with no aboutToDelete notification" << std::endl;
+    }
+
+    if (m_alignment) {
+        m_alignment->aboutToDelete();
+        delete m_alignment;
+    }
+
     // Subclasses have to handle adding themselves to the repository,
     // if they want to be played.  We can't do it from here because
     // the repository would be unable to tell whether we were playable
     // or not (because dynamic_cast won't work from the base class ctor)
     PlayParameterRepository::getInstance()->removeModel(this);
+}
+
+void
+Model::setSourceModel(Model *model)
+{
+    if (m_sourceModel) {
+        disconnect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
+                   this, SLOT(sourceModelAboutToBeDeleted()));
+    }
+
+    m_sourceModel = model;
+
+    if (m_sourceModel) {
+        connect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
+                this, SLOT(sourceModelAboutToBeDeleted()));
+    }
+}
+
+void
+Model::aboutToDelete()
+{
+    if (m_aboutToDelete) {
+        std::cerr << "WARNING: Model(" << this << ", \""
+                  << objectName().toStdString() << "\")::aboutToDelete: "
+                  << "aboutToDelete called more than once for the same model"
+                  << std::endl;
+    }
+
+    emit aboutToBeDeleted();
+    m_aboutToDelete = true;
+}
+
+void
+Model::sourceModelAboutToBeDeleted()
+{
+    m_sourceModel = 0;
+}
+
+void
+Model::setAlignment(AlignmentModel *alignment)
+{
+    if (m_alignment) {
+        m_alignment->aboutToDelete();
+        delete m_alignment;
+    }
+    m_alignment = alignment;
+    connect(m_alignment, SIGNAL(completionChanged()),
+            this, SIGNAL(alignmentCompletionChanged()));
+}
+
+const Model *
+Model::getAlignmentReference() const
+{
+    if (!m_alignment) return 0;
+    return m_alignment->getReferenceModel();
+}
+
+size_t
+Model::alignToReference(size_t frame) const
+{
+    if (!m_alignment) return frame;
+    return m_alignment->toReference(frame);
+}
+
+size_t
+Model::alignFromReference(size_t refFrame) const
+{
+    if (!m_alignment) return refFrame;
+    return m_alignment->fromReference(refFrame);
+}
+
+int
+Model::getAlignmentCompletion() const
+{
+    std::cerr << "Model::getAlignmentCompletion" << std::endl;
+    if (!m_alignment) return 100;
+    int completion = 0;
+    (void)m_alignment->isReady(&completion);
+    std::cerr << " -> " << completion << std::endl;
+    return completion;
 }
 
 void
