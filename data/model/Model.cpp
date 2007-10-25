@@ -96,7 +96,7 @@ Model::setAlignment(AlignmentModel *alignment)
 const Model *
 Model::getAlignmentReference() const
 {
-    if (!m_alignment) return 0;
+    if (!m_alignment) return this;
     return m_alignment->getReferenceModel();
 }
 
@@ -117,11 +117,11 @@ Model::alignFromReference(size_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-    std::cerr << "Model::getAlignmentCompletion" << std::endl;
+//    std::cerr << "Model::getAlignmentCompletion" << std::endl;
     if (!m_alignment) return 100;
     int completion = 0;
     (void)m_alignment->isReady(&completion);
-    std::cerr << " -> " << completion << std::endl;
+//    std::cerr << " -> " << completion << std::endl;
     return completion;
 }
 
