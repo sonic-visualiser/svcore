@@ -62,6 +62,7 @@ protected:
     Model *m_inputModel; // I own this
     SparseTimeValueModel *m_path; // I own this
     mutable SparseTimeValueModel *m_reversePath; // I own this
+    bool m_pathBegun;
     bool m_pathComplete;
 
     void constructReversePath() const;

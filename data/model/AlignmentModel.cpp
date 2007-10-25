@@ -26,6 +26,7 @@ AlignmentModel::AlignmentModel(Model *reference,
     m_inputModel(inputModel),
     m_path(path),
     m_reversePath(0),
+    m_pathBegun(false),
     m_pathComplete(false)
 {
     connect(m_path, SIGNAL(modelChanged()),
@@ -89,6 +90,10 @@ AlignmentModel::clone() const
 bool
 AlignmentModel::isReady(int *completion) const
 {
+    if (!m_pathBegun) {
+        completion = 0;
+        return false;
+    }
     return m_path->isReady(completion);
 }
 
@@ -140,18 +145,21 @@ AlignmentModel::pathChanged(size_t, size_t)
 void
 AlignmentModel::pathCompletionChanged()
 {
+    m_pathBegun = true;
+
     if (!m_pathComplete) {
         int completion = 0;
         m_path->isReady(&completion);
         std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
                   << completion << std::endl;
-        m_pathComplete = (completion == 100); //!!! a bit of a hack
+        m_pathComplete = (completion == 100);
         if (m_pathComplete) {
             constructReversePath();
             delete m_inputModel;
             m_inputModel = 0;
         }
     }
+
     emit completionChanged();
 }
 
