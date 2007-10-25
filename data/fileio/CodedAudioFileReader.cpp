@@ -291,18 +291,15 @@ CodedAudioFileReader::finishDecodeCache()
 void
 CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 {
-    for (size_t i = 0; i < sz; ++i) {
-        if (buffer[i] >  1.f) buffer[i] =  1.f;
-    }
-    for (size_t i = 0; i < sz; ++i) {
-        if (buffer[i] < -1.f) buffer[i] = -1.f;
-    }
+    float max = 1.0;
+    size_t count = sz * m_channelCount;
 
     if (m_resampler) {
         
         float ratio = float(m_sampleRate) / float(m_fileRate);
 
         if (ratio != 1.f) {
+
             size_t out = m_resampler->resampleInterleaved
                 (buffer,
                  m_resampleBuffer,
@@ -312,14 +309,15 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 
             buffer = m_resampleBuffer;
             sz = out;
+            count = sz * m_channelCount;
         }
+    }
 
-        for (size_t i = 0; i < sz; ++i) {
-            if (buffer[i] >  1.f) buffer[i] =  1.f;
-        }
-        for (size_t i = 0; i < sz; ++i) {
-            if (buffer[i] < -1.f) buffer[i] = -1.f;
-        }
+    for (size_t i = 0; i < count; ++i) {
+        if (buffer[i] >  max) buffer[i] =  max;
+    }
+    for (size_t i = 0; i < count; ++i) {
+        if (buffer[i] < -max) buffer[i] = -max;
     }
 
     m_frameCount += sz;
@@ -332,8 +330,8 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
         break;
 
     case CacheInMemory:
-        for (size_t s = 0; s < sz; ++s) {
-            m_data.push_back(buffer[sz]);
+        for (size_t s = 0; s < count; ++s) {
+            m_data.push_back(buffer[count]);
         }
 	MUNLOCK_SAMPLEBLOCK(m_data);
         break;
