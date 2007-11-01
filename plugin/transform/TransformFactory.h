@@ -118,6 +118,11 @@ public:
                      QString configurationXml = "");
 
     /**
+     * Return true if the given transform is known.
+     */
+    bool haveTransform(TransformId identifier);
+
+    /**
      * Full name of a transform, suitable for putting on a menu.
      */
     QString getTransformName(TransformId identifier);
