@@ -85,6 +85,11 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
             init(showProgress);
         }
     }
+
+    if (!isRemote()) {
+        emit statusAvailable();
+        emit ready();
+    }
 }
 
 FileSource::FileSource(QUrl url, bool showProgress) :
@@ -481,7 +486,8 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
         std::cerr << "FileSource::responseHeaderReceived: "
                   << m_lastStatus << std::endl;
         if (resp.hasContentType()) m_contentType = resp.contentType();
-    }        
+    }
+    emit statusAvailable();
 }
 
 void

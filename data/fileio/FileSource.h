@@ -29,40 +29,163 @@ class QFile;
 class QProgressDialog;
 class QHttpResponseHeader;
 
+/**
+ * FileSource is a class used to refer to the contents of a file that
+ * may be either local or at a remote location such as a HTTP URL.
+ *
+ * When a FileSource object is constructed, the file or URL passed to
+ * its constructor is tested for validity, and if it refers to a
+ * remote HTTP or FTP location it is retrieved asynchronously (the Qt
+ * event loop must be running) and cached locally.  You can then query
+ * a local path for the file and refer to that as a normal filename.
+ *
+ * Use isAvailable() to test whether the file or remote URL exists,
+ * and isOK() to test for internal validity or transmission errors.
+ * Call waitForStatus() to block until the availability and validity
+ * of the URL have been established so that isAvailable may be called,
+ * and waitForData() to block until the entire file has been cached.
+ *
+ * FileSource handles reference counting for cache files.  You can
+ * construct many FileSource objects with the same URL and you will
+ * receive the same cached file for each; it is also reasonable to
+ * pass FileSource objects by value.  FileSource only makes sense for
+ * stateless URLs that result in the same data on each request.
+ *
+ * Cached files share a lifetime with their "owning" FileSource
+ * objects; when the last FileSource referring to a given URL is
+ * deleted or goes out of scope, its cached file (if any) is also
+ * removed.
+ */
 class FileSource : public QObject
 {
     Q_OBJECT
 
 public:
+
+    /**
+     * Construct a FileSource using the given local file path or URL.
+     * The URL may be raw or encoded.  If showProgress is true, a
+     * progress dialog will be shown for any network transfers.
+     */
     FileSource(QString fileOrUrl, bool showProgress = false);
+
+    /**
+     * Construct a FileSource using the given remote URL.  If
+     * showProgress is true, a progress dialog will be shown for any
+     * network transfers.
+     */
     FileSource(QUrl url, bool showProgress = false);
+
     FileSource(const FileSource &);
 
     virtual ~FileSource();
 
-    bool isAvailable();
-
+    /**
+     * Block on a sub-event-loop until the availability of the file or
+     * remote URL is known.
+     */
     void waitForStatus();
+
+    /**
+     * Block on a sub-event-loop until the whole of the data has been
+     * retrieved (if it is remote).
+     */
     void waitForData();
 
-    void setLeaveLocalFile(bool leave);
-
+    /**
+     * Return true if the FileSource object is valid and no error
+     * occurred in looking up the file or remote URL.  Non-existence
+     * of the file or URL is not an error -- call isAvailable() to
+     * test for that.
+     */
     bool isOK() const;
+
+    /**
+     * Return true if the file or remote URL exists.  This may block
+     * on a sub-event-loop (calling waitForStatus) if the status is
+     * not yet available.
+     */
+    bool isAvailable();
+
+    /**
+     * Return true if the entire file has been retrieved and is
+     * available.
+     */
     bool isDone() const;
+
+    /**
+     * Return true if this FileSource is referring to a remote URL.
+     */
     bool isRemote() const;
 
+    /**
+     * Return the location filename or URL as passed to the
+     * constructor.
+     */
     QString getLocation() const;
+
+    /**
+     * Return the name of the local file this FileSource refers to.
+     * This is the filename that should be used when reading normally
+     * from the FileSource.  If the filename passed to the constructor
+     * was a local file, this will return the same filename; otherwise
+     * this will be the name of the temporary cache file owned by the
+     * FileSource.
+     */
     QString getLocalFilename() const;
+
+    /**
+     * Return the MIME content type of this file, if known.
+     */
     QString getContentType() const;
+
+    /**
+     * Return the file extension for this file, if any.
+     */
     QString getExtension() const;
 
+    /**
+     * Return an error message, if isOK() is false.
+     */
     QString getErrorString() const;
 
+    /**
+     * Specify whether any local, cached file should remain on disc
+     * after this FileSource has been destroyed.  The default is false
+     * (cached files share their FileSource owners' lifespans).
+     */
+    void setLeaveLocalFile(bool leave);
+
+    /**
+     * Return true if the given filename or URL refers to a remote
+     * URL.
+     */
     static bool isRemote(QString fileOrUrl);
+
+    /**
+     * Return true if FileSource can handle the retrieval scheme for
+     * the given URL (or if the URL is for a local file).
+     */
     static bool canHandleScheme(QUrl url);
 
 signals:
+    /**
+     * Emitted during URL retrieval, when the retrieval progress
+     * notches up to a new percentage.
+     */
     void progress(int percent);
+
+    /**
+     * Emitted when the file's existence has been tested and/or
+     * response header received.  Calls to isAvailable() after this
+     * has been emitted will not block.
+     */
+    void statusAvailable();
+
+    /**
+     * Emitted when the entire file data has been retrieved and the
+     * local file is complete (if no error has occurred).
+     */
     void ready();
 
 protected slots:
