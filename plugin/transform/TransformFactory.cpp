@@ -429,6 +429,12 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
     }
 }
 
+bool
+TransformFactory::haveTransform(TransformId identifier)
+{
+    return (m_transforms.find(identifier) != m_transforms.end());
+}
+
 QString
 TransformFactory::getTransformName(TransformId identifier)
 {
