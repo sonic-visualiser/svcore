@@ -34,8 +34,8 @@ class FileSource : public QObject
     Q_OBJECT
 
 public:
-    FileSource(QString fileOrUrl, bool showProgress = true);
-    FileSource(QUrl url, bool showProgress = true);
+    FileSource(QString fileOrUrl, bool showProgress = false);
+    FileSource(QUrl url, bool showProgress = false);
     FileSource(const FileSource &);
 
     virtual ~FileSource();
