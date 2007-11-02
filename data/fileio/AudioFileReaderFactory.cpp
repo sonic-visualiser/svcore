@@ -56,9 +56,21 @@ AudioFileReaderFactory::getKnownExtensions()
 AudioFileReader *
 AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
 {
+    return create(source, targetRate, false);
+}
+
+AudioFileReader *
+AudioFileReaderFactory::createThreadingReader(FileSource source, size_t targetRate)
+{
+    return create(source, targetRate, true);
+}
+
+AudioFileReader *
+AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool threading)
+{
     QString err;
 
-    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
+//    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
 
     if (!source.isOK() || !source.isAvailable()) {
         std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source unavailable" << std::endl;
@@ -83,7 +95,9 @@ AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
             delete reader;
             reader = new ResamplingWavFileReader
                 (source,
-                 ResamplingWavFileReader::ResampleThreaded,
+                 threading ?
+                 ResamplingWavFileReader::ResampleThreaded :
+                 ResamplingWavFileReader::ResampleAtOnce,
                  ResamplingWavFileReader::CacheInTemporaryFile,
                  targetRate);
         }
@@ -95,7 +109,9 @@ AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
         if (OggVorbisFileReader::supports(source)) {
             reader = new OggVorbisFileReader
                 (source,
-                 OggVorbisFileReader::DecodeThreaded,
+                 threading ?
+                 OggVorbisFileReader::DecodeThreaded :
+                 OggVorbisFileReader::DecodeAtOnce,
                  OggVorbisFileReader::CacheInTemporaryFile,
                  targetRate);
         }
@@ -108,7 +124,9 @@ AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
         if (MP3FileReader::supports(source)) {
             reader = new MP3FileReader
                 (source,
-                 MP3FileReader::DecodeThreaded,
+                 threading ?
+                 MP3FileReader::DecodeThreaded :
+                 MP3FileReader::DecodeAtOnce,
                  MP3FileReader::CacheInTemporaryFile,
                  targetRate);
         }
@@ -120,7 +138,9 @@ AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
         if (QuickTimeFileReader::supports(source)) {
             reader = new QuickTimeFileReader
                 (source,
-                 QuickTimeFileReader::DecodeThreaded,
+                 threading ?
+                 QuickTimeFileReader::DecodeThreaded : 
+                 QuickTimeFileReader::DecodeAtOnce,
                  QuickTimeFileReader::CacheInTemporaryFile,
                  targetRate);
         }
@@ -129,7 +149,7 @@ AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
 
     if (reader) {
         if (reader->isOK()) {
-            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
+//            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
             return reader;
         }
         std::cerr << "AudioFileReaderFactory: Preferred reader for "

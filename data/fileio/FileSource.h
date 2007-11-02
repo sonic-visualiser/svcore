@@ -237,4 +237,19 @@ protected:
     static int m_count;
 };
 
+class FileSourceProgressPrinter : public QObject
+{
+    Q_OBJECT
+
+public:
+    FileSourceProgressPrinter();
+    virtual ~FileSourceProgressPrinter();
+    
+public slots:
+    void progress(int);
+
+protected:
+    int m_lastProgress;
+};
+
 #endif

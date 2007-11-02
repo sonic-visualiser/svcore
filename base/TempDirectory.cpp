@@ -241,7 +241,7 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
 
             if (GetProcessStatus(pid) == ProcessNotRunning) {
                 std::cerr << "INFO: Found abandoned temporary directory from "
-                          << "an old Sonic Visualiser process\n(pid=" << pid
+                          << "a previous, defunct process\n(pid=" << pid
                           << ", directory=\""
                           << dir.filePath(dir[i]).toStdString()
                           << "\").  Removing it..." << std::endl;

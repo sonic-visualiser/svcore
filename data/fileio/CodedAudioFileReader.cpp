@@ -40,7 +40,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_resampler(0),
     m_resampleBuffer(0)
 {
-    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
+//    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;

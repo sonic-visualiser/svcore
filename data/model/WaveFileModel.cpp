@@ -51,7 +51,8 @@ WaveFileModel::WaveFileModel(FileSource source, size_t targetRate) :
 {
     m_source.waitForData();
     if (m_source.isOK()) {
-        m_reader = AudioFileReaderFactory::createReader(m_source, targetRate);
+        m_reader = AudioFileReaderFactory::createThreadingReader
+            (m_source, targetRate);
         if (m_reader) {
             std::cerr << "WaveFileModel::WaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << std::endl;

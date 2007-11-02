@@ -17,9 +17,12 @@
 #define _AUDIO_FILE_READER_H_
 
 #include <QString>
-#include "model/Model.h" // for SampleBlock
 
 #include "FileSource.h"
+
+#include <vector>
+
+typedef std::vector<float> SampleBlock;
 
 class AudioFileReader : public QObject
 {
@@ -45,12 +48,26 @@ public:
     virtual QString getTitle() const { return ""; }
 
     /** 
+     * Return interleaved samples for count frames from index start.
+     * The resulting sample block will contain count *
+     * getChannelCount() samples (or fewer if end of file is reached).
+     *
      * The subclass implementations of this function must be
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
     virtual void getInterleavedFrames(size_t start, size_t count,
 				      SampleBlock &frames) const = 0;
+
+    /**
+     * Return de-interleaved samples for count frames from index
+     * start.  Implemented in this class (it calls
+     * getInterleavedFrames and de-interleaves).  The resulting vector
+     * will contain getChannelCount() sample blocks of count samples
+     * each (or fewer if end of file is reached).
+     */
+    virtual void getDeInterleavedFrames(size_t start, size_t count,
+                                        std::vector<SampleBlock> &frames) const;
 
     // only subclasses that do not know exactly how long the audio
     // file is until it's been completely decoded should implement this
