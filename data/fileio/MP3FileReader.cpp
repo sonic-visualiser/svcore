@@ -106,10 +106,12 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
     if (decodeMode == DecodeAtOnce) {
 
-	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
-	     QObject::tr("Stop"), 0, 100);
-	m_progress->hide();
+        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
+            m_progress = new QProgressDialog
+                (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
+                 QObject::tr("Stop"), 0, 100);
+            m_progress->hide();
+        }
 
         if (!decode(m_filebuffer, m_fileSize)) {
             m_error = QString("Failed to decode file %1.").arg(m_path);

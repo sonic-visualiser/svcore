@@ -44,7 +44,30 @@ public:
      *
      * Caller owns the returned object and must delete it after use.
      */
-    static AudioFileReader *createReader(FileSource source, size_t targetRate = 0);
+    static AudioFileReader *createReader(FileSource source,
+                                         size_t targetRate = 0);
+
+    /**
+     * Return an audio file reader initialised to the file at the
+     * given path, or NULL if no suitable reader for this path is
+     * available or the file cannot be opened.  If the reader supports
+     * threaded decoding, it will be used and the file decoded in a
+     * background thread.
+     *
+     * If targetRate is non-zero, the file will be resampled to that
+     * rate (transparently).  You can query reader->getNativeRate()
+     * if you want to find out whether the file is being resampled
+     * or not.
+     *
+     * Caller owns the returned object and must delete it after use.
+     */
+    static AudioFileReader *createThreadingReader(FileSource source,
+                                                  size_t targetRate = 0);
+
+protected:
+    static AudioFileReader *create(FileSource source,
+                                   size_t targetRate,
+                                   bool threading);
 };
 
 #endif

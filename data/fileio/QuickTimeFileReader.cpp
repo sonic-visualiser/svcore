@@ -216,10 +216,12 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
 
     if (decodeMode == DecodeAtOnce) {
 
-	m_progress = new QProgressDialog
-	    (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
-	     QObject::tr("Stop"), 0, 100);
-	m_progress->hide();
+        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
+            m_progress = new QProgressDialog
+                (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
+                 QObject::tr("Stop"), 0, 100);
+            m_progress->hide();
+        }
 
         while (1) {
             
