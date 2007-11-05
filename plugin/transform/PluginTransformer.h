@@ -13,19 +13,19 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLUGIN_TRANSFORM_H_
-#define _PLUGIN_TRANSFORM_H_
+#ifndef _PLUGIN_TRANSFORMER_H_
+#define _PLUGIN_TRANSFORMER_H_
 
-#include "Transform.h"
+#include "Transformer.h"
 
 #include "base/Window.h"
 
 #include "vamp-sdk/Plugin.h"
 
-//!!! should this just move back up to Transform? It is after all used
+//!!! should this just move back up to Transformer? It is after all used
 //directly in all sorts of generic places, like Document
 
-class PluginTransform : public Transform
+class PluginTransformer : public Transformer
 {
 public:
     class ExecutionContext {
@@ -54,8 +54,8 @@ public:
     };
 
 protected:
-    PluginTransform(Model *inputModel,
-                    const ExecutionContext &context);
+    PluginTransformer(Model *inputModel,
+                      const ExecutionContext &context);
 
     ExecutionContext m_context;
 };

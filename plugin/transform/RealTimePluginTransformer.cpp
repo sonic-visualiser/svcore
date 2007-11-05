@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "RealTimePluginTransform.h"
+#include "RealTimePluginTransformer.h"
 
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/RealTimePluginInstance.h"
@@ -27,13 +27,13 @@
 
 #include <iostream>
 
-RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
+RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
                                                  QString pluginId,
                                                  const ExecutionContext &context,
                                                  QString configurationXml,
                                                  QString units,
                                                  int output) :
-    PluginTransform(inputModel, context),
+    PluginTransformer(inputModel, context),
     m_pluginId(pluginId),
     m_configurationXml(configurationXml),
     m_units(units),
@@ -42,13 +42,13 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
 {
     if (!m_context.blockSize) m_context.blockSize = 1024;
 
-//    std::cerr << "RealTimePluginTransform::RealTimePluginTransform: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
+//    std::cerr << "RealTimePluginTransformer::RealTimePluginTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
 
     RealTimePluginFactory *factory =
 	RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	std::cerr << "RealTimePluginTransform: No factory available for plugin id \""
+	std::cerr << "RealTimePluginTransformer: No factory available for plugin id \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -62,7 +62,7 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
                                           input->getChannelCount());
 
     if (!m_plugin) {
-	std::cerr << "RealTimePluginTransform: Failed to instantiate plugin \""
+	std::cerr << "RealTimePluginTransformer: Failed to instantiate plugin \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -73,7 +73,7 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
-        std::cerr << "RealTimePluginTransform: Plugin has fewer than desired " << m_outputNo << " control outputs" << std::endl;
+        std::cerr << "RealTimePluginTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << std::endl;
         return;
     }
 
@@ -100,31 +100,31 @@ RealTimePluginTransform::RealTimePluginTransform(Model *inputModel,
     }
 }
 
-RealTimePluginTransform::~RealTimePluginTransform()
+RealTimePluginTransformer::~RealTimePluginTransformer()
 {
     delete m_plugin;
 }
 
 DenseTimeValueModel *
-RealTimePluginTransform::getInput()
+RealTimePluginTransformer::getInput()
 {
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "RealTimePluginTransform::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	std::cerr << "RealTimePluginTransformer::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
     }
     return dtvm;
 }
 
 void
-RealTimePluginTransform::run()
+RealTimePluginTransformer::run()
 {
     DenseTimeValueModel *input = getInput();
     if (!input) return;
 
     while (!input->isReady()) {
         if (dynamic_cast<WaveFileModel *>(input)) break; // no need to wait
-        std::cerr << "RealTimePluginTransform::run: Waiting for input model to be ready..." << std::endl;
+        std::cerr << "RealTimePluginTransformer::run: Waiting for input model to be ready..." << std::endl;
         sleep(1);
     }
 

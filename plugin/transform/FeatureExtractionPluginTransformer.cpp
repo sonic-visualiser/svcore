@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "FeatureExtractionPluginTransform.h"
+#include "FeatureExtractionPluginTransformer.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/PluginXml.h"
@@ -33,23 +33,23 @@
 
 #include <iostream>
 
-FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputModel,
+FeatureExtractionPluginTransformer::FeatureExtractionPluginTransformer(Model *inputModel,
 								   QString pluginId,
                                                                    const ExecutionContext &context,
                                                                    QString configurationXml,
 								   QString outputName) :
-    PluginTransform(inputModel, context),
+    PluginTransformer(inputModel, context),
     m_plugin(0),
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
-//    std::cerr << "FeatureExtractionPluginTransform::FeatureExtractionPluginTransform: plugin " << pluginId.toStdString() << ", outputName " << outputName.toStdString() << std::endl;
+//    std::cerr << "FeatureExtractionPluginTransformer::FeatureExtractionPluginTransformer: plugin " << pluginId.toStdString() << ", outputName " << outputName.toStdString() << std::endl;
 
     FeatureExtractionPluginFactory *factory =
 	FeatureExtractionPluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	std::cerr << "FeatureExtractionPluginTransform: No factory available for plugin id \""
+	std::cerr << "FeatureExtractionPluginTransformer: No factory available for plugin id \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -57,7 +57,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     m_plugin = factory->instantiatePlugin(pluginId, m_input->getSampleRate());
 
     if (!m_plugin) {
-	std::cerr << "FeatureExtractionPluginTransform: Failed to instantiate plugin \""
+	std::cerr << "FeatureExtractionPluginTransformer: Failed to instantiate plugin \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -74,7 +74,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	channelCount = 1;
     }
     if (m_plugin->getMinChannelCount() > channelCount) {
-	std::cerr << "FeatureExtractionPluginTransform:: "
+	std::cerr << "FeatureExtractionPluginTransformer:: "
 		  << "Can't provide enough channels to plugin (plugin min "
 		  << m_plugin->getMinChannelCount() << ", max "
 		  << m_plugin->getMaxChannelCount() << ", input model has "
@@ -89,7 +89,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     if (!m_plugin->initialise(channelCount,
                               m_context.stepSize,
                               m_context.blockSize)) {
-        std::cerr << "FeatureExtractionPluginTransform: Plugin "
+        std::cerr << "FeatureExtractionPluginTransformer: Plugin "
                   << m_plugin->getIdentifier() << " failed to initialise!" << std::endl;
         return;
     }
@@ -97,7 +97,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {
-	std::cerr << "FeatureExtractionPluginTransform: Plugin \""
+	std::cerr << "FeatureExtractionPluginTransformer: Plugin \""
 		  << pluginId.toStdString() << "\" has no outputs" << std::endl;
 	return;
     }
@@ -112,13 +112,13 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     }
 
     if (!m_descriptor) {
-	std::cerr << "FeatureExtractionPluginTransform: Plugin \""
+	std::cerr << "FeatureExtractionPluginTransformer: Plugin \""
 		  << pluginId.toStdString() << "\" has no output named \""
 		  << outputName.toStdString() << "\"" << std::endl;
 	return;
     }
 
-//    std::cerr << "FeatureExtractionPluginTransform: output sample type "
+//    std::cerr << "FeatureExtractionPluginTransformer: output sample type "
 //	      << m_descriptor->sampleType << std::endl;
 
     int binCount = 1;
@@ -129,7 +129,7 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
 	binCount = m_descriptor->binCount;
     }
 
-//    std::cerr << "FeatureExtractionPluginTransform: output bin count "
+//    std::cerr << "FeatureExtractionPluginTransformer: output bin count "
 //	      << binCount << std::endl;
 
     if (binCount > 0 && m_descriptor->hasKnownExtents) {
@@ -218,26 +218,26 @@ FeatureExtractionPluginTransform::FeatureExtractionPluginTransform(Model *inputM
     }
 }
 
-FeatureExtractionPluginTransform::~FeatureExtractionPluginTransform()
+FeatureExtractionPluginTransformer::~FeatureExtractionPluginTransformer()
 {
-    std::cerr << "FeatureExtractionPluginTransform::~FeatureExtractionPluginTransform()" << std::endl;
+    std::cerr << "FeatureExtractionPluginTransformer::~FeatureExtractionPluginTransformer()" << std::endl;
     delete m_plugin;
     delete m_descriptor;
 }
 
 DenseTimeValueModel *
-FeatureExtractionPluginTransform::getInput()
+FeatureExtractionPluginTransformer::getInput()
 {
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "FeatureExtractionPluginTransform::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	std::cerr << "FeatureExtractionPluginTransformer::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
     }
     return dtvm;
 }
 
 void
-FeatureExtractionPluginTransform::run()
+FeatureExtractionPluginTransformer::run()
 {
     DenseTimeValueModel *input = getInput();
     if (!input) return;
@@ -247,12 +247,12 @@ FeatureExtractionPluginTransform::run()
     while (!input->isReady()) {
 /*
         if (dynamic_cast<WaveFileModel *>(input)) {
-            std::cerr << "FeatureExtractionPluginTransform::run: Model is not ready, but it's not a WaveFileModel (it's a " << typeid(input).name() << "), so that's OK" << std::endl;
+            std::cerr << "FeatureExtractionPluginTransformer::run: Model is not ready, but it's not a WaveFileModel (it's a " << typeid(input).name() << "), so that's OK" << std::endl;
             sleep(2);
             break; // no need to wait
         }
 */
-        std::cerr << "FeatureExtractionPluginTransform::run: Waiting for input model to be ready..." << std::endl;
+        std::cerr << "FeatureExtractionPluginTransformer::run: Waiting for input model to be ready..." << std::endl;
         sleep(1);
     }
 
@@ -329,7 +329,7 @@ FeatureExtractionPluginTransform::run()
                 contextStart + contextDuration) break;
         }
 
-//	std::cerr << "FeatureExtractionPluginTransform::run: blockFrame "
+//	std::cerr << "FeatureExtractionPluginTransformer::run: blockFrame "
 //		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
 //                  << m_context.blockSize << std::endl;
 
@@ -389,7 +389,7 @@ FeatureExtractionPluginTransform::run()
 }
 
 void
-FeatureExtractionPluginTransform::getFrames(int channel, int channelCount,
+FeatureExtractionPluginTransformer::getFrames(int channel, int channelCount,
                                             long startFrame, long size,
                                             float *buffer)
 {
@@ -425,12 +425,12 @@ FeatureExtractionPluginTransform::getFrames(int channel, int channelCount,
 }
 
 void
-FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
+FeatureExtractionPluginTransformer::addFeature(size_t blockFrame,
 					     const Vamp::Plugin::Feature &feature)
 {
     size_t inputRate = m_input->getSampleRate();
 
-//    std::cerr << "FeatureExtractionPluginTransform::addFeature("
+//    std::cerr << "FeatureExtractionPluginTransformer::addFeature("
 //	      << blockFrame << ")" << std::endl;
 
     int binCount = 1;
@@ -445,7 +445,7 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 
 	if (!feature.hasTimestamp) {
 	    std::cerr
-		<< "WARNING: FeatureExtractionPluginTransform::addFeature: "
+		<< "WARNING: FeatureExtractionPluginTransformer::addFeature: "
 		<< "Feature has variable sample rate but no timestamp!"
 		<< std::endl;
 	    return;
@@ -513,14 +513,14 @@ FeatureExtractionPluginTransform::addFeature(size_t blockFrame,
 }
 
 void
-FeatureExtractionPluginTransform::setCompletion(int completion)
+FeatureExtractionPluginTransformer::setCompletion(int completion)
 {
     int binCount = 1;
     if (m_descriptor->hasFixedBinCount) {
 	binCount = m_descriptor->binCount;
     }
 
-//    std::cerr << "FeatureExtractionPluginTransform::setCompletion("
+//    std::cerr << "FeatureExtractionPluginTransformer::setCompletion("
 //              << completion << ")" << std::endl;
 
     if (binCount == 0) {

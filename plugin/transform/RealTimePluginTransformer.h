@@ -13,24 +13,24 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _REAL_TIME_PLUGIN_TRANSFORM_H_
-#define _REAL_TIME_PLUGIN_TRANSFORM_H_
+#ifndef _REAL_TIME_PLUGIN_TRANSFORMER_H_
+#define _REAL_TIME_PLUGIN_TRANSFORMER_H_
 
-#include "PluginTransform.h"
+#include "PluginTransformer.h"
 #include "plugin/RealTimePluginInstance.h"
 
 class DenseTimeValueModel;
 
-class RealTimePluginTransform : public PluginTransform
+class RealTimePluginTransformer : public PluginTransformer
 {
 public:
-    RealTimePluginTransform(Model *inputModel,
+    RealTimePluginTransformer(Model *inputModel,
 			    QString plugin,
                             const ExecutionContext &context,
 			    QString configurationXml = "",
                             QString units = "",
 			    int output = -1); // -1 -> audio, 0+ -> data
-    virtual ~RealTimePluginTransform();
+    virtual ~RealTimePluginTransformer();
 
 protected:
     virtual void run();

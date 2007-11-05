@@ -13,19 +13,19 @@
     COPYING included with this distribution for more information.
 */
 
-#include "PluginTransform.h"
+#include "PluginTransformer.h"
 
 #include "vamp-sdk/PluginHostAdapter.h"
 #include "vamp-sdk/hostext/PluginWrapper.h"
 
-PluginTransform::PluginTransform(Model *inputModel,
+PluginTransformer::PluginTransformer(Model *inputModel,
 				 const ExecutionContext &context) :
-    Transform(inputModel),
+    Transformer(inputModel),
     m_context(context)
 {
 }
 
-PluginTransform::ExecutionContext::ExecutionContext(int _c, size_t _bs) :
+PluginTransformer::ExecutionContext::ExecutionContext(int _c, size_t _bs) :
     channel(_c),
     domain(Vamp::Plugin::TimeDomain),
     stepSize(_bs ? _bs : 1024),
@@ -37,7 +37,7 @@ PluginTransform::ExecutionContext::ExecutionContext(int _c, size_t _bs) :
 {
 }
 
-PluginTransform::ExecutionContext::ExecutionContext(int _c, size_t _ss,
+PluginTransformer::ExecutionContext::ExecutionContext(int _c, size_t _ss,
                                                     size_t _bs, WindowType _wt) :
     channel(_c),
     domain(Vamp::Plugin::FrequencyDomain),
@@ -50,7 +50,7 @@ PluginTransform::ExecutionContext::ExecutionContext(int _c, size_t _ss,
 {
 }
 
-PluginTransform::ExecutionContext::ExecutionContext(int _c,
+PluginTransformer::ExecutionContext::ExecutionContext(int _c,
                                                     const Vamp::PluginBase *_plugin) :
     channel(_c),
     domain(Vamp::Plugin::TimeDomain),
@@ -65,7 +65,7 @@ PluginTransform::ExecutionContext::ExecutionContext(int _c,
 }
 
 bool
-PluginTransform::ExecutionContext::operator==(const ExecutionContext &c)
+PluginTransformer::ExecutionContext::operator==(const ExecutionContext &c)
 {
     return (c.channel == channel &&
             c.domain == domain &&
@@ -78,7 +78,7 @@ PluginTransform::ExecutionContext::operator==(const ExecutionContext &c)
 }
 
 void
-PluginTransform::ExecutionContext::makeConsistentWithPlugin(const Vamp::PluginBase *_plugin)
+PluginTransformer::ExecutionContext::makeConsistentWithPlugin(const Vamp::PluginBase *_plugin)
 {
     const Vamp::Plugin *vp = dynamic_cast<const Vamp::Plugin *>(_plugin);
     if (!vp) {

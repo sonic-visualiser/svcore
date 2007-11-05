@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2007 Chris Cannam and QMUL.
    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -15,18 +15,61 @@
 
 #include "Transform.h"
 
-Transform::Transform(Model *m) :
-    m_input(m),
-    m_output(0),
-    m_detached(false),
-    m_abandoned(false)
+#include "plugin/PluginIdentifier.h"
+
+Transform::Transform() :
+    m_stepSize(0),
+    m_blockSize(0),
+    m_windowType(HanningWindow),
+    m_sampleRate(0)
 {
 }
 
 Transform::~Transform()
 {
-    m_abandoned = true;
-    wait();
-    if (!m_detached) delete m_output;
 }
 
+QString
+Transform::createIdentifier(QString type, QString soName, QString label,
+                            QString output)
+{
+    QString pluginId = PluginIdentifier::createIdentifier(type, soName, label);
+    return pluginId + ":" + output;
+}
+
+void
+Transform::parseIdentifier(QString identifier,
+                           QString &type, QString &soName,
+                           QString &label, QString &output)
+{
+    output = identifier.section(':', 3);
+    PluginIdentifier::parseIdentifier(identifier.section(':', 0, 2),
+                                      type, soName, label);
+}
+
+Transform::Type
+Transform::getType() const
+{
+    QString type, soName, label, output;
+    parseIdentifier(m_id, type, soName, label, output);
+    if (type == "vamp") return FeatureExtraction; //!!! lousy
+    else return RealTimeEffect;
+}
+
+QString
+Transform::getPluginIdentifier() const
+{
+    return m_id.section(':', 0, 2);
+}
+
+QString
+Transform::getOutput() const
+{
+    return m_id.section(':', 3);
+}
+
+void
+Transform::toXml(QTextStream &stream, QString indent, QString extraAttributes) const
+{
+    
+}
