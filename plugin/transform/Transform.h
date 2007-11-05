@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2007 Chris Cannam and QMUL.
    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -16,46 +16,93 @@
 #ifndef _TRANSFORM_H_
 #define _TRANSFORM_H_
 
-#include "base/Thread.h"
+#include "base/XmlExportable.h"
+#include "base/Window.h"
 
-#include "data/model/Model.h"
+#include <vamp-sdk/RealTime.h>
+
+#include <QString>
 
 typedef QString TransformId;
 
-/**
- * A Transform turns one data model into another.
- *
- * Typically in this application, a Transform might have a
- * DenseTimeValueModel as its input (e.g. an audio waveform) and a
- * SparseOneDimensionalModel (e.g. detected beats) as its output.
- *
- * The Transform typically runs in the background, as a separate
- * thread populating the output model.  The model is available to the
- * user of the Transform immediately, but may be initially empty until
- * the background thread has populated it.
- */
+namespace Vamp {
+    class PluginBase;
+}
 
-class Transform : public Thread
+class Transform : public XmlExportable
 {
 public:
+    Transform();
     virtual ~Transform();
 
-    // Just a hint to the processing thread that it should give up.
-    // Caller should still wait() and/or delete the transform before
-    // assuming its input and output models are no longer required.
-    void abandon() { m_abandoned = true; }
+    void setIdentifier(TransformId id) { m_id = id; }
+    TransformId getIdentifier() const { return m_id; }
+    
+    void setPlugin(QString pluginIdentifier);
+    void setOutput(QString output);
 
-    Model *getInputModel()  { return m_input; }
-    Model *getOutputModel() { return m_output; }
-    Model *detachOutputModel() { m_detached = true; return m_output; }
+    enum Type { FeatureExtraction, RealTimeEffect };
+
+    Type getType() const;
+    QString getPluginIdentifier() const;
+    QString getOutput() const;
+
+    typedef std::map<QString, float> ParameterMap;
+    
+    ParameterMap getParameters() const { return m_parameters; }
+    void setParameters(const ParameterMap &pm) { m_parameters = pm; }
+
+    typedef std::map<QString, QString> ConfigurationMap;
+
+    ConfigurationMap getConfiguration() const { return m_configuration; }
+    void setConfiguration(const ConfigurationMap &cm) { m_configuration = cm; }
+
+    QString getProgram() const { return m_program; }
+    void setProgram(QString program) { m_program = program; }
+    
+    size_t getStepSize() const { return m_stepSize; }
+    void setStepSize(size_t s) { m_stepSize = s; }
+    
+    size_t getBlockSize() const { return m_blockSize; }
+    void setBlockSize(size_t s) { m_blockSize = s; }
+
+    WindowType getWindowType() const { return m_windowType; }
+    void setWindowType(WindowType type) { m_windowType = type; }
+
+    Vamp::RealTime getStartTime() const { return m_startTime; }
+    void setStartTime(Vamp::RealTime t) { m_startTime = t; }
+
+    Vamp::RealTime getDuration() const { return m_duration; } // 0 -> all
+    void setDuration(Vamp::RealTime d) { m_duration = d; }
+    
+    float getSampleRate() const { return m_sampleRate; } // 0 -> as input
+    void setSampleRate(float rate) { m_sampleRate = rate; }
+
+    void toXml(QTextStream &stream, QString indent = "",
+               QString extraAttributes = "") const;
+
+    static Transform fromXmlString(QString xml);
 
 protected:
-    Transform(Model *m);
+    TransformId m_id; // pluginid:output, that is type:soname:label:output
+    
+    static QString createIdentifier
+    (QString type, QString soName, QString label, QString output);
 
-    Model *m_input; // I don't own this
-    Model *m_output; // I own this, unless...
-    bool m_detached; // ... this is true.
-    bool m_abandoned;
+    static void parseIdentifier
+    (QString identifier,
+     QString &type, QString &soName, QString &label, QString &output);
+
+    ParameterMap m_parameters;
+    ConfigurationMap m_configuration;
+    QString m_program;
+    size_t m_stepSize;
+    size_t m_blockSize;
+    WindowType m_windowType;
+    Vamp::RealTime m_startTime;
+    Vamp::RealTime m_duration;
+    float m_sampleRate;
 };
 
 #endif
+

@@ -35,11 +35,12 @@ HEADERS += DSSIPluginFactory.h \
            api/alsa/seq_event.h \
            api/alsa/seq_midi_event.h \
            api/alsa/sound/asequencer.h \
-           transform/FeatureExtractionPluginTransform.h \
-           transform/PluginTransform.h \
-           transform/RealTimePluginTransform.h \
+           transform/FeatureExtractionPluginTransformer.h \
+           transform/PluginTransformer.h \
+           transform/RealTimePluginTransformer.h \
            transform/Transform.h \
-           transform/TransformFactory.h
+           transform/Transformer.h \
+           transform/TransformerFactory.h
 SOURCES += DSSIPluginFactory.cpp \
            DSSIPluginInstance.cpp \
            FeatureExtractionPluginFactory.cpp \
@@ -51,8 +52,9 @@ SOURCES += DSSIPluginFactory.cpp \
            RealTimePluginInstance.cpp \
            api/dssi_alsa_compat.c \
            plugins/SamplePlayer.cpp \
-           transform/FeatureExtractionPluginTransform.cpp \
-           transform/PluginTransform.cpp \
-           transform/RealTimePluginTransform.cpp \
+           transform/FeatureExtractionPluginTransformer.cpp \
+           transform/PluginTransformer.cpp \
+           transform/RealTimePluginTransformer.cpp \
            transform/Transform.cpp \
-           transform/TransformFactory.cpp
+           transform/Transformer.cpp \
+           transform/TransformerFactory.cpp
