@@ -48,19 +48,19 @@ TransformerFactory::~TransformerFactory()
 {
 }
 
-TransformerFactory::TransformerList
-TransformerFactory::getAllTransformers()
+TransformList
+TransformerFactory::getAllTransforms()
 {
-    if (m_transforms.empty()) populateTransformers();
+    if (m_transforms.empty()) populateTransforms();
 
-    std::set<TransformerDesc> dset;
-    for (TransformerDescriptionMap::const_iterator i = m_transforms.begin();
+    std::set<TransformDescription> dset;
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
 	dset.insert(i->second);
     }
 
-    TransformerList list;
-    for (std::set<TransformerDesc>::const_iterator i = dset.begin();
+    TransformList list;
+    for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 	list.push_back(*i);
     }
@@ -71,10 +71,10 @@ TransformerFactory::getAllTransformers()
 std::vector<QString>
 TransformerFactory::getAllTransformerTypes()
 {
-    if (m_transforms.empty()) populateTransformers();
+    if (m_transforms.empty()) populateTransforms();
 
     std::set<QString> types;
-    for (TransformerDescriptionMap::const_iterator i = m_transforms.begin();
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
         types.insert(i->second.type);
     }
@@ -90,10 +90,10 @@ TransformerFactory::getAllTransformerTypes()
 std::vector<QString>
 TransformerFactory::getTransformerCategories(QString transformType)
 {
-    if (m_transforms.empty()) populateTransformers();
+    if (m_transforms.empty()) populateTransforms();
 
     std::set<QString> categories;
-    for (TransformerDescriptionMap::const_iterator i = m_transforms.begin();
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
          i != m_transforms.end(); ++i) {
         if (i->second.type == transformType) {
             categories.insert(i->second.category);
@@ -117,10 +117,10 @@ TransformerFactory::getTransformerCategories(QString transformType)
 std::vector<QString>
 TransformerFactory::getTransformerMakers(QString transformType)
 {
-    if (m_transforms.empty()) populateTransformers();
+    if (m_transforms.empty()) populateTransforms();
 
     std::set<QString> makers;
-    for (TransformerDescriptionMap::const_iterator i = m_transforms.begin();
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
          i != m_transforms.end(); ++i) {
         if (i->second.type == transformType) {
             makers.insert(i->second.maker);
@@ -142,9 +142,9 @@ TransformerFactory::getTransformerMakers(QString transformType)
 }
 
 void
-TransformerFactory::populateTransformers()
+TransformerFactory::populateTransforms()
 {
-    TransformerDescriptionMap transforms;
+    TransformDescriptionMap transforms;
 
     populateFeatureExtractionPlugins(transforms);
     populateRealTimePlugins(transforms);
@@ -155,10 +155,10 @@ TransformerFactory::populateTransformers()
     std::map<QString, QString> pluginSources;
     std::map<QString, QString> pluginMakers;
 
-    for (TransformerDescriptionMap::iterator i = transforms.begin();
+    for (TransformDescriptionMap::iterator i = transforms.begin();
          i != transforms.end(); ++i) {
 
-        TransformerDesc desc = i->second;
+        TransformDescription desc = i->second;
 
         QString td = desc.name;
         QString tn = td.section(": ", 0, 0);
@@ -178,10 +178,10 @@ TransformerFactory::populateTransformers()
     std::map<QString, int> counts;
     m_transforms.clear();
 
-    for (TransformerDescriptionMap::iterator i = transforms.begin();
+    for (TransformDescriptionMap::iterator i = transforms.begin();
          i != transforms.end(); ++i) {
 
-        TransformerDesc desc = i->second;
+        TransformDescription desc = i->second;
 	QString identifier = desc.identifier;
         QString maker = desc.maker;
 
@@ -205,7 +205,7 @@ TransformerFactory::populateTransformers()
 }
 
 void
-TransformerFactory::populateFeatureExtractionPlugins(TransformerDescriptionMap &transforms)
+TransformerFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &transforms)
 {
     std::vector<QString> plugs =
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
@@ -218,7 +218,7 @@ TransformerFactory::populateFeatureExtractionPlugins(TransformerDescriptionMap &
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    std::cerr << "WARNING: TransformerFactory::populateTransformers: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    std::cerr << "WARNING: TransformerFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
 	    continue;
 	}
 
@@ -226,7 +226,7 @@ TransformerFactory::populateFeatureExtractionPlugins(TransformerDescriptionMap &
 	    factory->instantiatePlugin(pluginId, 48000);
 
 	if (!plugin) {
-	    std::cerr << "WARNING: TransformerFactory::populateTransformers: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    std::cerr << "WARNING: TransformerFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << std::endl;
 	    continue;
 	}
 		
@@ -282,7 +282,7 @@ TransformerFactory::populateFeatureExtractionPlugins(TransformerDescriptionMap &
 //            std::cerr << "Feature extraction plugin transform: " << transformId.toStdString() << std::endl;
 
 	    transforms[transformId] = 
-                TransformerDesc(tr("Analysis"),
+                TransformDescription(tr("Analysis"),
                               category,
                               transformId,
                               userName,
@@ -298,7 +298,7 @@ TransformerFactory::populateFeatureExtractionPlugins(TransformerDescriptionMap &
 }
 
 void
-TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transforms)
+TransformerFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 {
     std::vector<QString> plugs =
 	RealTimePluginFactory::getAllPluginIdentifiers();
@@ -313,7 +313,7 @@ TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transform
             RealTimePluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    std::cerr << "WARNING: TransformerFactory::populateTransformers: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    std::cerr << "WARNING: TransformerFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
 	    continue;
 	}
 
@@ -321,7 +321,7 @@ TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transform
             factory->getPluginDescriptor(pluginId);
 
         if (!descriptor) {
-	    std::cerr << "WARNING: TransformerFactory::populateTransformers: Failed to query plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    std::cerr << "WARNING: TransformerFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << std::endl;
 	    continue;
 	}
 	
@@ -384,7 +384,7 @@ TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transform
                 }
 
                 transforms[transformId] = 
-                    TransformerDesc(tr("Effects Data"),
+                    TransformDescription(tr("Effects Data"),
                                   category,
                                   transformId,
                                   userName,
@@ -415,7 +415,7 @@ TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transform
                 }
 
                 transforms[transformId] =
-                    TransformerDesc(type,
+                    TransformDescription(type,
                                   category,
                                   transformId,
                                   pluginName,
@@ -430,13 +430,13 @@ TransformerFactory::populateRealTimePlugins(TransformerDescriptionMap &transform
 }
 
 bool
-TransformerFactory::haveTransformer(TransformerId identifier)
+TransformerFactory::haveTransformer(TransformId identifier)
 {
     return (m_transforms.find(identifier) != m_transforms.end());
 }
 
 QString
-TransformerFactory::getTransformerName(TransformerId identifier)
+TransformerFactory::getTransformerName(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
 	return m_transforms[identifier].name;
@@ -444,7 +444,7 @@ TransformerFactory::getTransformerName(TransformerId identifier)
 }
 
 QString
-TransformerFactory::getTransformerFriendlyName(TransformerId identifier)
+TransformerFactory::getTransformerFriendlyName(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
 	return m_transforms[identifier].friendlyName;
@@ -452,7 +452,7 @@ TransformerFactory::getTransformerFriendlyName(TransformerId identifier)
 }
 
 QString
-TransformerFactory::getTransformerUnits(TransformerId identifier)
+TransformerFactory::getTransformerUnits(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
 	return m_transforms[identifier].units;
@@ -460,7 +460,7 @@ TransformerFactory::getTransformerUnits(TransformerId identifier)
 }
 
 bool
-TransformerFactory::isTransformerConfigurable(TransformerId identifier)
+TransformerFactory::isTransformerConfigurable(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
 	return m_transforms[identifier].configurable;
@@ -468,7 +468,7 @@ TransformerFactory::isTransformerConfigurable(TransformerId identifier)
 }
 
 bool
-TransformerFactory::getTransformerChannelRange(TransformerId identifier,
+TransformerFactory::getTransformerChannelRange(TransformId identifier,
                                            int &min, int &max)
 {
     QString id = identifier.section(':', 0, 2);
@@ -503,7 +503,7 @@ TransformerFactory::getTransformerChannelRange(TransformerId identifier,
 }
 
 bool
-TransformerFactory::getChannelRange(TransformerId identifier, Vamp::PluginBase *plugin,
+TransformerFactory::getChannelRange(TransformId identifier, Vamp::PluginBase *plugin,
                                   int &minChannels, int &maxChannels)
 {
     Vamp::Plugin *vp = 0;
@@ -518,7 +518,7 @@ TransformerFactory::getChannelRange(TransformerId identifier, Vamp::PluginBase *
 }
 
 Model *
-TransformerFactory::getConfigurationForTransformer(TransformerId identifier,
+TransformerFactory::getConfigurationForTransformer(TransformId identifier,
                                                const std::vector<Model *> &candidateInputModels,
                                                PluginTransformer::ExecutionContext &context,
                                                QString &configurationXml,
@@ -719,7 +719,7 @@ TransformerFactory::getConfigurationForTransformer(TransformerId identifier,
 }
 
 PluginTransformer::ExecutionContext
-TransformerFactory::getDefaultContextForTransformer(TransformerId identifier,
+TransformerFactory::getDefaultContextForTransformer(TransformId identifier,
                                                 Model *inputModel)
 {
     PluginTransformer::ExecutionContext context(-1);
@@ -742,7 +742,7 @@ TransformerFactory::getDefaultContextForTransformer(TransformerId identifier,
 }
 
 Transformer *
-TransformerFactory::createTransformer(TransformerId identifier, Model *inputModel,
+TransformerFactory::createTransformer(TransformId identifier, Model *inputModel,
                                   const PluginTransformer::ExecutionContext &context,
                                   QString configurationXml)
 {
@@ -776,7 +776,7 @@ TransformerFactory::createTransformer(TransformerId identifier, Model *inputMode
 }
 
 Model *
-TransformerFactory::transform(TransformerId identifier, Model *inputModel,
+TransformerFactory::transform(TransformId identifier, Model *inputModel,
                             const PluginTransformer::ExecutionContext &context,
                             QString configurationXml)
 {

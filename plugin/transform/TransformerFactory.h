@@ -16,6 +16,8 @@
 #ifndef _TRANSFORMER_FACTORY_H_
 #define _TRANSFORMER_FACTORY_H_
 
+#include "TransformDescription.h"
+
 #include "Transformer.h"
 #include "PluginTransformer.h"
 
@@ -26,6 +28,10 @@ namespace Vamp { class PluginBase; }
 
 class AudioCallbackPlaySource;
 
+//!!! split into TransformFactory (information about available
+// transforms, create default Transform for each transform ID etc) and
+// TransformerFactory (create Transformers to apply transforms)
+
 class TransformerFactory : public QObject
 {
     Q_OBJECT
@@ -35,43 +41,7 @@ public:
 
     static TransformerFactory *getInstance();
 
-    // The identifier is intended to be computer-referenceable, and
-    // unique within the application.  The name is intended to be
-    // human readable.  In principle it doesn't have to be unique, but
-    // the factory will add suffixes to ensure that it is, all the
-    // same (just to avoid user confusion).  The friendly name is a
-    // shorter version of the name.  The type is also intended to be
-    // user-readable, for use in menus.
-
-    struct TransformerDesc {
-
-        TransformerDesc() { }
-	TransformerDesc(QString _type, QString _category,
-                      TransformerId _identifier, QString _name,
-                      QString _friendlyName, QString _description,
-                      QString _maker, QString _units, bool _configurable) :
-	    type(_type), category(_category),
-            identifier(_identifier), name(_name),
-            friendlyName(_friendlyName), description(_description),
-            maker(_maker), units(_units), configurable(_configurable) { }
-
-        QString type; // e.g. feature extraction plugin
-        QString category; // e.g. time > onsets
-	TransformerId identifier; // e.g. vamp:vamp-aubio:aubioonset
-	QString name; // plugin's name if 1 output, else "name: output"
-        QString friendlyName; // short text for layer name
-        QString description; // sentence describing transform
-        QString maker;
-        QString units;
-        bool configurable;
-
-        bool operator<(const TransformerDesc &od) const {
-            return (name < od.name);
-        };
-    };
-    typedef std::vector<TransformerDesc> TransformerList;
-
-    TransformerList getAllTransformers();
+    TransformList getAllTransforms();
 
     std::vector<QString> getAllTransformerTypes();
 
@@ -85,7 +55,7 @@ public:
      * be cancelled.  Audio callback play source may be used to
      * audition effects plugins, if provided.
      */
-    Model *getConfigurationForTransformer(TransformerId identifier,
+    Model *getConfigurationForTransformer(TransformId identifier,
                                         const std::vector<Model *> &candidateInputModels,
                                         PluginTransformer::ExecutionContext &context,
                                         QString &configurationXml,
@@ -97,7 +67,7 @@ public:
      * Get the default execution context for the given transform
      * and input model (if known).
      */
-    PluginTransformer::ExecutionContext getDefaultContextForTransformer(TransformerId identifier,
+    PluginTransformer::ExecutionContext getDefaultContextForTransformer(TransformId identifier,
                                                                     Model *inputModel = 0);
 
     /**
@@ -113,34 +83,34 @@ public:
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
-    Model *transform(TransformerId identifier, Model *inputModel,
+    Model *transform(TransformId identifier, Model *inputModel,
                      const PluginTransformer::ExecutionContext &context,
                      QString configurationXml = "");
 
     /**
      * Return true if the given transform is known.
      */
-    bool haveTransformer(TransformerId identifier);
+    bool haveTransformer(TransformId identifier);
 
     /**
      * Full name of a transform, suitable for putting on a menu.
      */
-    QString getTransformerName(TransformerId identifier);
+    QString getTransformerName(TransformId identifier);
 
     /**
      * Brief but friendly name of a transform, suitable for use
      * as the name of the output layer.
      */
-    QString getTransformerFriendlyName(TransformerId identifier);
+    QString getTransformerFriendlyName(TransformId identifier);
 
-    QString getTransformerUnits(TransformerId identifier);
+    QString getTransformerUnits(TransformId identifier);
 
     /**
      * Return true if the transform has any configurable parameters,
      * i.e. if getConfigurationForTransformer can ever return a non-trivial
      * (not equivalent to empty) configuration string.
      */
-    bool isTransformerConfigurable(TransformerId identifier);
+    bool isTransformerConfigurable(TransformId identifier);
 
     /**
      * If the transform has a prescribed number or range of channel
@@ -148,7 +118,7 @@ public:
      * minimum and maximum number of channel inputs the transform can
      * accept.  Return false if it doesn't care.
      */
-    bool getTransformerChannelRange(TransformerId identifier,
+    bool getTransformerChannelRange(TransformId identifier,
                                   int &minChannels, int &maxChannels);
 	
 protected slots:
@@ -157,30 +127,30 @@ protected slots:
     void modelAboutToBeDeleted(Model *);
 
 protected:
-    Transformer *createTransformer(TransformerId identifier, Model *inputModel,
+    Transformer *createTransformer(TransformId identifier, Model *inputModel,
                                const PluginTransformer::ExecutionContext &context,
                                QString configurationXml);
 
-    struct TransformerIdent
+    struct TransformIdent
     {
-        TransformerId identifier;
+        TransformId identifier;
         QString configurationXml;
     };
 
-    typedef std::map<TransformerId, QString> TransformerConfigurationMap;
+    typedef std::map<TransformId, QString> TransformerConfigurationMap;
     TransformerConfigurationMap m_lastConfigurations;
 
-    typedef std::map<TransformerId, TransformerDesc> TransformerDescriptionMap;
-    TransformerDescriptionMap m_transforms;
+    typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
+    TransformDescriptionMap m_transforms;
 
     typedef std::set<Transformer *> TransformerSet;
     TransformerSet m_runningTransformers;
 
-    void populateTransformers();
-    void populateFeatureExtractionPlugins(TransformerDescriptionMap &);
-    void populateRealTimePlugins(TransformerDescriptionMap &);
+    void populateTransforms();
+    void populateFeatureExtractionPlugins(TransformDescriptionMap &);
+    void populateRealTimePlugins(TransformDescriptionMap &);
 
-    bool getChannelRange(TransformerId identifier,
+    bool getChannelRange(TransformId identifier,
                          Vamp::PluginBase *plugin, int &min, int &max);
 
     static TransformerFactory *m_instance;
