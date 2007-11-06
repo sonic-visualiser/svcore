@@ -39,6 +39,8 @@ HEADERS += DSSIPluginFactory.h \
            transform/PluginTransformer.h \
            transform/RealTimePluginTransformer.h \
            transform/Transform.h \
+           transform/TransformDescription.h \
+           transform/TransformFactory.h \
            transform/Transformer.h \
            transform/TransformerFactory.h
 SOURCES += DSSIPluginFactory.cpp \
@@ -56,5 +58,6 @@ SOURCES += DSSIPluginFactory.cpp \
            transform/PluginTransformer.cpp \
            transform/RealTimePluginTransformer.cpp \
            transform/Transform.cpp \
+           transform/TransformFactory.cpp \
            transform/Transformer.cpp \
            transform/TransformerFactory.cpp
