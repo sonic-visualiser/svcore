@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TRANSFORM_H_
-#define _TRANSFORM_H_
+#ifndef _TRANSFORMER_H_
+#define _TRANSFORMER_H_
 
 #include "base/Thread.h"
 
