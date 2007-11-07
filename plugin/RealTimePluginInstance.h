@@ -133,7 +133,8 @@ public:
 
     virtual std::string getType() const { return "Real-Time Plugin"; }
 
-    virtual std::map<std::string, std::string> getConfigurePairs() {
+    typedef std::map<std::string, std::string> ConfigurationPairMap;
+    virtual ConfigurationPairMap getConfigurePairs() {
         return m_configurationData;
     }
 
@@ -144,7 +145,7 @@ protected:
     RealTimePluginFactory *m_factory;
     QString m_identifier;
 
-    std::map<std::string, std::string> m_configurationData;
+    ConfigurationPairMap m_configurationData;
 
     friend class PluginFactory;
 };

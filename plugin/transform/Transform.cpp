@@ -17,6 +17,8 @@
 
 #include "plugin/PluginIdentifier.h"
 
+#include "plugin/FeatureExtractionPluginFactory.h"
+
 Transform::Transform() :
     m_stepSize(0),
     m_blockSize(0),
@@ -50,10 +52,13 @@ Transform::parseIdentifier(QString identifier,
 Transform::Type
 Transform::getType() const
 {
-    QString type, soName, label, output;
-    parseIdentifier(m_id, type, soName, label, output);
-    if (type == "vamp") return FeatureExtraction; //!!! lousy
-    else return RealTimeEffect;
+    if (FeatureExtractionPluginFactory::instanceFor(getPluginIdentifier())) {
+        return FeatureExtraction;
+    } else {
+        // We don't have an unknown/invalid return value, so always
+        // return this
+        return RealTimeEffect;
+    }
 }
 
 QString

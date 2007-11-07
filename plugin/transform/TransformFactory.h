@@ -72,7 +72,29 @@ public:
      */
     bool getTransformChannelRange(TransformId identifier,
                                   int &minChannels, int &maxChannels);
-	
+
+    /**
+     * Set the plugin parameters, program and configuration strings on
+     * the given Transform object from the given plugin instance.
+     * Note that no check is made whether the plugin is actually the
+     * "correct" one for the transform.
+     */
+    void setParametersFromPlugin(Transform &transform, Vamp::PluginBase *plugin);
+
+    /**
+     * If the given Transform object has no processing step and block
+     * sizes set, set them to appropriate defaults for the given
+     * plugin.
+     */
+    void makeContextConsistentWithPlugin(Transform &transform, Vamp::PluginBase *plugin); 
+
+    /**
+     * A single transform ID can lead to many possible Transforms,
+     * with different parameters and execution context settings.
+     * Return the default one for the given transform.
+     */
+    Transform getDefaultTransformFor(TransformId identifier, size_t rate = 0);
+
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
     TransformDescriptionMap m_transforms;

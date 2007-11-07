@@ -17,9 +17,12 @@
 
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/RealTimePluginFactory.h"
+#include "plugin/RealTimePluginInstance.h"
 #include "plugin/PluginXml.h"
 
+#include "vamp-sdk/Plugin.h"
 #include "vamp-sdk/PluginHostAdapter.h"
+#include "vamp-sdk/hostext/PluginWrapper.h"
 
 #include <iostream>
 #include <set>
@@ -274,14 +277,14 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 
 	    transforms[transformId] = 
                 TransformDescription(tr("Analysis"),
-                              category,
-                              transformId,
-                              userName,
-                              friendlyName,
-                              description,
-                              maker,
-                              units,
-                              configurable);
+                                     category,
+                                     transformId,
+                                     userName,
+                                     friendlyName,
+                                     description,
+                                     maker,
+                                     units,
+                                     configurable);
 	}
 
         delete plugin;
@@ -376,14 +379,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
                 transforms[transformId] = 
                     TransformDescription(tr("Effects Data"),
-                                  category,
-                                  transformId,
-                                  userName,
-                                  userName,
-                                  description,
-                                  maker,
-                                  units,
-                                  configurable);
+                                         category,
+                                         transformId,
+                                         userName,
+                                         userName,
+                                         description,
+                                         maker,
+                                         units,
+                                         configurable);
             }
         }
 
@@ -407,14 +410,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
                 transforms[transformId] =
                     TransformDescription(type,
-                                  category,
-                                  transformId,
-                                  pluginName,
-                                  pluginName,
-                                  description,
-                                  maker,
-                                  "",
-                                  configurable);
+                                         category,
+                                         transformId,
+                                         pluginName,
+                                         pluginName,
+                                         description,
+                                         maker,
+                                         "",
+                                         configurable);
             }
         }
     }
@@ -492,3 +495,139 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
     return false;
 }
+
+void
+TransformFactory::setParametersFromPlugin(Transform &transform,
+                                          Vamp::PluginBase *plugin)
+{
+    Transform::ParameterMap pmap;
+
+    Vamp::PluginBase::ParameterList parameters =
+        plugin->getParameterDescriptors();
+
+    for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
+         i != parameters.end(); ++i) {
+        pmap[i->identifier.c_str()] = plugin->getParameter(i->identifier);
+    }
+
+    transform.setParameters(pmap);
+
+    if (plugin->getPrograms().empty()) {
+        transform.setProgram("");
+    } else {
+        transform.setProgram(plugin->getCurrentProgram().c_str());
+    }
+
+    RealTimePluginInstance *rtpi =
+        dynamic_cast<RealTimePluginInstance *>(plugin);
+
+    Transform::ConfigurationMap cmap;
+
+    if (rtpi) {
+
+        RealTimePluginInstance::ConfigurationPairMap configurePairs =
+            rtpi->getConfigurePairs();
+
+        for (RealTimePluginInstance::ConfigurationPairMap::const_iterator i
+                 = configurePairs.begin(); i != configurePairs.end(); ++i) {
+            cmap[i->first.c_str()] = i->second.c_str();
+        }
+    }
+
+    transform.setConfiguration(cmap);
+}
+
+void
+TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
+                                                  Vamp::PluginBase *plugin)
+{
+    const Vamp::Plugin *vp = dynamic_cast<const Vamp::Plugin *>(plugin);
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << std::endl;
+        vp = dynamic_cast<const Vamp::PluginHostAdapter *>(plugin); //!!! why?
+}
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << std::endl;
+        vp = dynamic_cast<const Vamp::HostExt::PluginWrapper *>(plugin); //!!! no, I mean really why?
+    }
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << std::endl;
+    }
+
+    if (!vp) {
+        // time domain input for real-time effects plugin
+        if (!transform.getBlockSize()) {
+            if (!transform.getStepSize()) transform.setStepSize(1024);
+            transform.setBlockSize(transform.getStepSize());
+        } else {
+            transform.setStepSize(transform.getBlockSize());
+        }
+    } else {
+        Vamp::Plugin::InputDomain domain = vp->getInputDomain();
+        if (!transform.getStepSize()) {
+            transform.setStepSize(vp->getPreferredStepSize());
+        }
+        if (!transform.getBlockSize()) {
+            transform.setBlockSize(vp->getPreferredBlockSize());
+        }
+        if (!transform.getBlockSize()) {
+            transform.setBlockSize(1024);
+        }
+        if (!transform.getStepSize()) {
+            if (domain == Vamp::Plugin::FrequencyDomain) {
+//                std::cerr << "frequency domain, step = " << blockSize/2 << std::endl;
+                transform.setStepSize(transform.getBlockSize()/2);
+            } else {
+//                std::cerr << "time domain, step = " << blockSize/2 << std::endl;
+                transform.setStepSize(transform.getBlockSize());
+            }
+        }
+    }
+}
+
+Transform
+TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
+{
+    Transform t;
+    t.setIdentifier(id);
+    
+    if (rate == 0) {
+        rate = 44100;
+    } else {
+        t.setSampleRate(rate);
+    }
+
+    QString pluginId = t.getPluginIdentifier();
+
+    if (t.getType() == Transform::FeatureExtraction) {
+
+        FeatureExtractionPluginFactory *factory = 
+            FeatureExtractionPluginFactory::instanceFor(pluginId);
+
+        Vamp::Plugin *plugin = factory->instantiatePlugin
+            (pluginId, rate);
+
+        if (plugin) {
+            setParametersFromPlugin(t, plugin);
+            makeContextConsistentWithPlugin(t, plugin);
+            delete plugin;
+        }
+
+    } else {
+
+        RealTimePluginFactory *factory = 
+            RealTimePluginFactory::instanceFor(pluginId);
+            
+        RealTimePluginInstance *plugin = factory->instantiatePlugin
+            (pluginId, 0, 0, rate, 1024, 1);
+        
+        if (plugin) {
+            setParametersFromPlugin(t, plugin);
+            makeContextConsistentWithPlugin(t, plugin);
+            delete plugin;
+        }
+    }
+
+    return t;
+}
+
