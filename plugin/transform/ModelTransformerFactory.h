@@ -30,10 +30,6 @@ namespace Vamp { class PluginBase; }
 
 class AudioCallbackPlaySource;
 
-//!!! split into TransformFactory (information about available
-// transforms, create default Transform for each transform ID etc) and
-// TransformerFactory (create Transformers to apply transforms)
-
 class ModelTransformerFactory : public QObject
 {
     Q_OBJECT
@@ -43,13 +39,6 @@ public:
 
     static ModelTransformerFactory *getInstance();
 
-    TransformList getAllTransforms();
-
-    std::vector<QString> getAllTransformerTypes();
-
-    std::vector<QString> getTransformerCategories(QString transformType);
-    std::vector<QString> getTransformerMakers(QString transformType);
-
     /**
      * Get a configuration XML string for the given transform (by
      * asking the user, most likely).  Returns the selected input
@@ -58,19 +47,19 @@ public:
      * audition effects plugins, if provided.
      */
     Model *getConfigurationForTransformer(TransformId identifier,
-                                        const std::vector<Model *> &candidateInputModels,
-                                        PluginTransformer::ExecutionContext &context,
-                                        QString &configurationXml,
-                                        AudioCallbackPlaySource *source = 0,
-                                        size_t startFrame = 0,
-                                        size_t duration = 0);
+                                          const std::vector<Model *> &candidateInputModels,
+                                          PluginTransformer::ExecutionContext &context,
+                                          QString &configurationXml,
+                                          AudioCallbackPlaySource *source = 0,
+                                          size_t startFrame = 0,
+                                          size_t duration = 0);
 
     /**
      * Get the default execution context for the given transform
      * and input model (if known).
      */
     PluginTransformer::ExecutionContext getDefaultContextForTransformer(TransformId identifier,
-                                                                    Model *inputModel = 0);
+                                                                        Model *inputModel = 0);
 
     /**
      * Return the output model resulting from applying the named
@@ -89,40 +78,6 @@ public:
                      const PluginTransformer::ExecutionContext &context,
                      QString configurationXml = "");
 
-    /**
-     * Return true if the given transform is known.
-     */
-    bool haveTransformer(TransformId identifier);
-
-    /**
-     * Full name of a transform, suitable for putting on a menu.
-     */
-    QString getTransformerName(TransformId identifier);
-
-    /**
-     * Brief but friendly name of a transform, suitable for use
-     * as the name of the output layer.
-     */
-    QString getTransformerFriendlyName(TransformId identifier);
-
-    QString getTransformerUnits(TransformId identifier);
-
-    /**
-     * Return true if the transform has any configurable parameters,
-     * i.e. if getConfigurationForTransformer can ever return a non-trivial
-     * (not equivalent to empty) configuration string.
-     */
-    bool isTransformerConfigurable(TransformId identifier);
-
-    /**
-     * If the transform has a prescribed number or range of channel
-     * inputs, return true and set minChannels and maxChannels to the
-     * minimum and maximum number of channel inputs the transform can
-     * accept.  Return false if it doesn't care.
-     */
-    bool getTransformerChannelRange(TransformId identifier,
-                                  int &minChannels, int &maxChannels);
-	
 protected slots:
     void transformerFinished();
 
@@ -136,15 +91,8 @@ protected:
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
     TransformerConfigurationMap m_lastConfigurations;
 
-    typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
-    TransformDescriptionMap m_transforms;
-
     typedef std::set<ModelTransformer *> TransformerSet;
     TransformerSet m_runningTransformers;
-
-    void populateTransforms();
-    void populateFeatureExtractionPlugins(TransformDescriptionMap &);
-    void populateRealTimePlugins(TransformDescriptionMap &);
 
     bool getChannelRange(TransformId identifier,
                          Vamp::PluginBase *plugin, int &min, int &max);
