@@ -16,7 +16,7 @@
 #ifndef _PLUGIN_TRANSFORMER_H_
 #define _PLUGIN_TRANSFORMER_H_
 
-#include "Transformer.h"
+#include "ModelTransformer.h"
 
 #include "base/Window.h"
 
@@ -25,7 +25,7 @@
 //!!! should this just move back up to Transformer? It is after all used
 //directly in all sorts of generic places, like Document
 
-class PluginTransformer : public Transformer
+class PluginTransformer : public ModelTransformer
 {
 public:
     class ExecutionContext {

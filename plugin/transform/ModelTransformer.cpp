@@ -13,9 +13,9 @@
     COPYING included with this distribution for more information.
 */
 
-#include "Transformer.h"
+#include "ModelTransformer.h"
 
-Transformer::Transformer(Model *m) :
+ModelTransformer::ModelTransformer(Model *m) :
     m_input(m),
     m_output(0),
     m_detached(false),
@@ -23,7 +23,7 @@ Transformer::Transformer(Model *m) :
 {
 }
 
-Transformer::~Transformer()
+ModelTransformer::~ModelTransformer()
 {
     m_abandoned = true;
     wait();
