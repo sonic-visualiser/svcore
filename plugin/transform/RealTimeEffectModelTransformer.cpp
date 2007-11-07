@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "RealTimePluginTransformer.h"
+#include "RealTimeEffectModelTransformer.h"
 
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/RealTimePluginInstance.h"
@@ -27,12 +27,12 @@
 
 #include <iostream>
 
-RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
-                                                 QString pluginId,
-                                                 const ExecutionContext &context,
-                                                 QString configurationXml,
-                                                 QString units,
-                                                 int output) :
+RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Model *inputModel,
+                                                               QString pluginId,
+                                                               const ExecutionContext &context,
+                                                               QString configurationXml,
+                                                               QString units,
+                                                               int output) :
     PluginTransformer(inputModel, context),
     m_pluginId(pluginId),
     m_configurationXml(configurationXml),
@@ -42,13 +42,13 @@ RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
 {
     if (!m_context.blockSize) m_context.blockSize = 1024;
 
-//    std::cerr << "RealTimePluginTransformer::RealTimePluginTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
+//    std::cerr << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
 
     RealTimePluginFactory *factory =
 	RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	std::cerr << "RealTimePluginTransformer: No factory available for plugin id \""
+	std::cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -62,7 +62,7 @@ RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
                                           input->getChannelCount());
 
     if (!m_plugin) {
-	std::cerr << "RealTimePluginTransformer: Failed to instantiate plugin \""
+	std::cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
 		  << pluginId.toStdString() << "\"" << std::endl;
 	return;
     }
@@ -73,7 +73,7 @@ RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
-        std::cerr << "RealTimePluginTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << std::endl;
+        std::cerr << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << std::endl;
         return;
     }
 
@@ -100,31 +100,31 @@ RealTimePluginTransformer::RealTimePluginTransformer(Model *inputModel,
     }
 }
 
-RealTimePluginTransformer::~RealTimePluginTransformer()
+RealTimeEffectModelTransformer::~RealTimeEffectModelTransformer()
 {
     delete m_plugin;
 }
 
 DenseTimeValueModel *
-RealTimePluginTransformer::getInput()
+RealTimeEffectModelTransformer::getInput()
 {
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "RealTimePluginTransformer::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	std::cerr << "RealTimeEffectModelTransformer::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
     }
     return dtvm;
 }
 
 void
-RealTimePluginTransformer::run()
+RealTimeEffectModelTransformer::run()
 {
     DenseTimeValueModel *input = getInput();
     if (!input) return;
 
     while (!input->isReady()) {
         if (dynamic_cast<WaveFileModel *>(input)) break; // no need to wait
-        std::cerr << "RealTimePluginTransformer::run: Waiting for input model to be ready..." << std::endl;
+        std::cerr << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << std::endl;
         sleep(1);
     }
 

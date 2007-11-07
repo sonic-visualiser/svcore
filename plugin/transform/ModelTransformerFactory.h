@@ -13,12 +13,14 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TRANSFORMER_FACTORY_H_
-#define _TRANSFORMER_FACTORY_H_
+#ifndef _MODEL_TRANSFORMER_FACTORY_H_
+#define _MODEL_TRANSFORMER_FACTORY_H_
 
+#include "Transform.h"
 #include "TransformDescription.h"
 
-#include "Transformer.h"
+#include "ModelTransformer.h"
+
 #include "PluginTransformer.h"
 
 #include <map>
@@ -32,14 +34,14 @@ class AudioCallbackPlaySource;
 // transforms, create default Transform for each transform ID etc) and
 // TransformerFactory (create Transformers to apply transforms)
 
-class TransformerFactory : public QObject
+class ModelTransformerFactory : public QObject
 {
     Q_OBJECT
 
 public:
-    virtual ~TransformerFactory();
+    virtual ~ModelTransformerFactory();
 
-    static TransformerFactory *getInstance();
+    static ModelTransformerFactory *getInstance();
 
     TransformList getAllTransforms();
 
@@ -122,20 +124,14 @@ public:
                                   int &minChannels, int &maxChannels);
 	
 protected slots:
-    void transformFinished();
+    void transformerFinished();
 
     void modelAboutToBeDeleted(Model *);
 
 protected:
-    Transformer *createTransformer(TransformId identifier, Model *inputModel,
-                               const PluginTransformer::ExecutionContext &context,
-                               QString configurationXml);
-
-    struct TransformIdent
-    {
-        TransformId identifier;
-        QString configurationXml;
-    };
+    ModelTransformer *createTransformer(TransformId identifier, Model *inputModel,
+                                        const PluginTransformer::ExecutionContext &context,
+                                        QString configurationXml);
 
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
     TransformerConfigurationMap m_lastConfigurations;
@@ -143,7 +139,7 @@ protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
     TransformDescriptionMap m_transforms;
 
-    typedef std::set<Transformer *> TransformerSet;
+    typedef std::set<ModelTransformer *> TransformerSet;
     TransformerSet m_runningTransformers;
 
     void populateTransforms();
@@ -153,7 +149,7 @@ protected:
     bool getChannelRange(TransformId identifier,
                          Vamp::PluginBase *plugin, int &min, int &max);
 
-    static TransformerFactory *m_instance;
+    static ModelTransformerFactory *m_instance;
 };
 
 

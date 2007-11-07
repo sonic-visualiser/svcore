@@ -20,25 +20,23 @@
 
 #include "data/model/Model.h"
 
-typedef QString TransformerId;
-
 /**
- * A Transformer turns one data model into another.
+ * A ModelTransformer turns one data model into another.
  *
- * Typically in this application, a Transformer might have a
+ * Typically in this application, a ModelTransformer might have a
  * DenseTimeValueModel as its input (e.g. an audio waveform) and a
  * SparseOneDimensionalModel (e.g. detected beats) as its output.
  *
- * The Transformer typically runs in the background, as a separate
- * thread populating the output model.  The model is available to the
- * user of the Transformer immediately, but may be initially empty until
- * the background thread has populated it.
+ * The ModelTransformer typically runs in the background, as a
+ * separate thread populating the output model.  The model is
+ * available to the user of the ModelTransformer immediately, but may
+ * be initially empty until the background thread has populated it.
  */
 
-class Transformer : public Thread
+class ModelTransformer : public Thread
 {
 public:
-    virtual ~Transformer();
+    virtual ~ModelTransformer();
 
     // Just a hint to the processing thread that it should give up.
     // Caller should still wait() and/or delete the transform before
@@ -50,7 +48,7 @@ public:
     Model *detachOutputModel() { m_detached = true; return m_output; }
 
 protected:
-    Transformer(Model *m);
+    ModelTransformer(Model *m);
 
     Model *m_input; // I don't own this
     Model *m_output; // I own this, unless...

@@ -21,16 +21,16 @@
 
 class DenseTimeValueModel;
 
-class RealTimePluginTransformer : public PluginTransformer
+class RealTimeEffectModelTransformer : public PluginTransformer
 {
 public:
-    RealTimePluginTransformer(Model *inputModel,
+    RealTimeEffectModelTransformer(Model *inputModel,
 			    QString plugin,
                             const ExecutionContext &context,
 			    QString configurationXml = "",
                             QString units = "",
 			    int output = -1); // -1 -> audio, 0+ -> data
-    virtual ~RealTimePluginTransformer();
+    virtual ~RealTimeEffectModelTransformer();
 
 protected:
     virtual void run();

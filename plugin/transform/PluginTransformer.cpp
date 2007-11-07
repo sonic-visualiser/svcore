@@ -20,7 +20,7 @@
 
 PluginTransformer::PluginTransformer(Model *inputModel,
 				 const ExecutionContext &context) :
-    Transformer(inputModel),
+    ModelTransformer(inputModel),
     m_context(context)
 {
 }

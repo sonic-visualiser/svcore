@@ -20,17 +20,17 @@
 
 class DenseTimeValueModel;
 
-class FeatureExtractionPluginTransformer : public PluginTransformer
+class FeatureExtractionModelTransformer : public PluginTransformer
 {
     Q_OBJECT
 
 public:
-    FeatureExtractionPluginTransformer(Model *inputModel,
+    FeatureExtractionModelTransformer(Model *inputModel,
                                        QString plugin,
                                        const ExecutionContext &context,
                                        QString configurationXml = "",
                                        QString outputName = "");
-    virtual ~FeatureExtractionPluginTransformer();
+    virtual ~FeatureExtractionModelTransformer();
 
 protected:
     virtual void run();
@@ -52,7 +52,7 @@ protected:
     template <typename ModelClass> ModelClass *getOutput() {
 	ModelClass *mc = dynamic_cast<ModelClass *>(m_output);
 	if (!mc) {
-	    std::cerr << "FeatureExtractionPluginTransformer::getOutput: Output model not conformable" << std::endl;
+	    std::cerr << "FeatureExtractionModelTransformer::getOutput: Output model not conformable" << std::endl;
 	}
 	return mc;
     }
