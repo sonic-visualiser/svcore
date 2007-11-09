@@ -46,6 +46,7 @@ public:
     virtual QString getError() const { return m_error; }
 
     virtual QString getTitle() const { return m_title; }
+    virtual QString getMaker() const { return m_maker; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
@@ -63,6 +64,7 @@ protected:
     QString m_path;
     QString m_error;
     QString m_title;
+    QString m_maker;
 
     OGGZ *m_oggz;
     FishSound *m_fishSound;

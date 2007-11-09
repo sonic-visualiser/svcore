@@ -56,6 +56,8 @@ Model::setSourceModel(Model *model)
     m_sourceModel = model;
 
     if (m_sourceModel) {
+        connect(m_sourceModel, SIGNAL(alignmentCompletionChanged()),
+                this, SIGNAL(alignmentCompletionChanged()));
         connect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
                 this, SLOT(sourceModelAboutToBeDeleted()));
     }
@@ -96,33 +98,62 @@ Model::setAlignment(AlignmentModel *alignment)
 const Model *
 Model::getAlignmentReference() const
 {
-    if (!m_alignment) return this;
+    if (!m_alignment) {
+        if (m_sourceModel) return m_sourceModel->getAlignmentReference();
+        return this;
+    }
     return m_alignment->getReferenceModel();
 }
 
 size_t
 Model::alignToReference(size_t frame) const
 {
-    if (!m_alignment) return frame;
-    return m_alignment->toReference(frame);
+    if (!m_alignment) {
+        if (m_sourceModel) return m_sourceModel->alignToReference(frame);
+        else return frame;
+    }
+    size_t refFrame = m_alignment->toReference(frame);
+    //!!! this should be totally wrong, but because alignToReference and
+    // alignFromReference are the wrong way around, it's right... *sigh*
+    if (refFrame > getEndFrame()) refFrame = getEndFrame();
+    return refFrame;
 }
 
 size_t
 Model::alignFromReference(size_t refFrame) const
 {
-    if (!m_alignment) return refFrame;
-    return m_alignment->fromReference(refFrame);
+    if (!m_alignment) {
+        if (m_sourceModel) return m_sourceModel->alignFromReference(refFrame);
+        else return refFrame;
+    }
+    size_t frame = m_alignment->fromReference(refFrame);
+    return frame;
 }
 
 int
 Model::getAlignmentCompletion() const
 {
 //    std::cerr << "Model::getAlignmentCompletion" << std::endl;
-    if (!m_alignment) return 100;
+    if (!m_alignment) {
+        if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
+        else return 100;
+    }
     int completion = 0;
     (void)m_alignment->isReady(&completion);
 //    std::cerr << " -> " << completion << std::endl;
     return completion;
+}
+
+QString
+Model::getTitle() const
+{
+    if (m_sourceModel) return m_sourceModel->getTitle();
+}
+
+QString
+Model::getMaker() const
+{
+    if (m_sourceModel) return m_sourceModel->getMaker();
 }
 
 void

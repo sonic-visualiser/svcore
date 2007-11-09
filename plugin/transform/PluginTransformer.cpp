@@ -33,7 +33,8 @@ PluginTransformer::ExecutionContext::ExecutionContext(int _c, size_t _bs) :
     windowType(HanningWindow),
     startFrame(0),
     duration(0),
-    sampleRate(0)
+    sampleRate(0),
+    updates(true)
 {
 }
 
@@ -46,7 +47,8 @@ PluginTransformer::ExecutionContext::ExecutionContext(int _c, size_t _ss,
     windowType(_wt),
     startFrame(0),
     duration(0),
-    sampleRate(0)
+    sampleRate(0),
+    updates(true)
 {
 }
 

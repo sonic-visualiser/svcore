@@ -26,7 +26,7 @@
 #include <QFileInfo>
 #include <QProgressDialog>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <QTML.h>
 #include <Movies.h>
 #else

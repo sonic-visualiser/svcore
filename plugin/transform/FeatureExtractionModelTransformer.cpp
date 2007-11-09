@@ -216,6 +216,8 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Model *inpu
         
         m_output = model;
     }
+
+    if (m_output) m_output->setSourceModel(m_input);
 }
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
@@ -527,27 +529,27 @@ FeatureExtractionModelTransformer::setCompletion(int completion)
 
 	SparseOneDimensionalModel *model = getOutput<SparseOneDimensionalModel>();
 	if (!model) return;
-	model->setCompletion(completion);
+	model->setCompletion(completion, m_context.updates);
 
     } else if (binCount == 1) {
 
 	SparseTimeValueModel *model = getOutput<SparseTimeValueModel>();
 	if (!model) return;
-	model->setCompletion(completion);
+	model->setCompletion(completion, m_context.updates);
 
     } else if (m_descriptor->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	NoteModel *model = getOutput<NoteModel>();
 	if (!model) return;
-	model->setCompletion(completion);
+	model->setCompletion(completion, m_context.updates);
 
     } else {
 
 	EditableDenseThreeDimensionalModel *model =
             getOutput<EditableDenseThreeDimensionalModel>();
 	if (!model) return;
-	model->setCompletion(completion);
+	model->setCompletion(completion, m_context.updates);
     }
 }
 

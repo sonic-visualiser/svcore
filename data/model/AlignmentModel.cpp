@@ -150,8 +150,8 @@ AlignmentModel::pathCompletionChanged()
     if (!m_pathComplete) {
         int completion = 0;
         m_path->isReady(&completion);
-        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
-                  << completion << std::endl;
+//        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
+//                  << completion << std::endl;
         m_pathComplete = (completion == 100);
         if (m_pathComplete) {
             constructReversePath();

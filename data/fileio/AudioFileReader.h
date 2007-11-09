@@ -47,6 +47,13 @@ public:
      */
     virtual QString getTitle() const { return ""; }
 
+    /**
+     * Return the "maker" of the work in the audio file, if known.
+     * This could represent almost anything (band, composer,
+     * conductor, artist etc).
+     */
+    virtual QString getMaker() const { return ""; }
+
     /** 
      * Return interleaved samples for count frames from index start.
      * The resulting sample block will contain count *

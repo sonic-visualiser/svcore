@@ -426,6 +426,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 bool
 TransformFactory::haveTransform(TransformId identifier)
 {
+    if (m_transforms.empty()) populateTransforms();
     return (m_transforms.find(identifier) != m_transforms.end());
 }
 

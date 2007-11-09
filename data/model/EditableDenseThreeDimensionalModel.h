@@ -106,7 +106,7 @@ public:
     virtual void setBinName(size_t n, QString);
     virtual void setBinNames(std::vector<QString> names);
 
-    virtual void setCompletion(int completion);
+    virtual void setCompletion(int completion, bool update = true);
     virtual int getCompletion() const { return m_completion; }
 
     virtual QString toDelimitedDataString(QString delimiter) const;

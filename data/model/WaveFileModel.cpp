@@ -158,6 +158,22 @@ WaveFileModel::getNativeRate() const
     return rate;
 }
 
+QString
+WaveFileModel::getTitle() const
+{
+    QString title;
+    if (m_reader) title = m_reader->getTitle();
+    if (title == "") title = objectName();
+    return title;
+}
+
+QString
+WaveFileModel::getMaker() const
+{
+    if (m_reader) return m_reader->getMaker();
+    return "";
+}
+    
 size_t
 WaveFileModel::getData(int channel, size_t start, size_t count,
                        float *buffer) const

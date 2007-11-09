@@ -48,6 +48,9 @@ public:
     size_t getSampleRate() const;
     size_t getNativeRate() const;
 
+    QString getTitle() const;
+    QString getMaker() const;
+
     virtual Model *clone() const;
 
     float getValueMinimum() const { return -1.0f; }

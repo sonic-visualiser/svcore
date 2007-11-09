@@ -67,6 +67,16 @@ public:
     virtual size_t getNativeRate() const { return getSampleRate(); }
 
     /**
+     * Return the "work title" of the model, if known.
+     */
+    virtual QString getTitle() const;
+
+    /**
+     * Return the "artist" or "maker" of the model, if known.
+     */
+    virtual QString getMaker() const;
+
+    /**
      * Return a copy of this model.
      *
      * If the model is not editable, this may be effectively a shallow
