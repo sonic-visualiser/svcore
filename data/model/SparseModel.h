@@ -127,7 +127,7 @@ public:
         return ready;
     }
 
-    virtual void setCompletion(int completion);
+    virtual void setCompletion(int completion, bool update = true);
     virtual int getCompletion() const { return m_completion; }
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
@@ -511,7 +511,7 @@ SparseModel<PointType>::deletePoint(const PointType &point)
 
 template <typename PointType>
 void
-SparseModel<PointType>::setCompletion(int completion)
+SparseModel<PointType>::setCompletion(int completion, bool update)
 {
 //    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
 
@@ -529,7 +529,8 @@ SparseModel<PointType>::setCompletion(int completion)
 
 	} else if (!m_notifyOnAdd) {
 
-	    if (m_sinceLastNotifyMin >= 0 &&
+	    if (update &&
+                m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
 		emit modelChanged(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;

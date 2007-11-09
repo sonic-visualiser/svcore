@@ -173,10 +173,19 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
 
     if (!reader->m_commentsRead) {
-        const FishSoundComment *comment = fish_sound_comment_first_byname
-            (fs, "TITLE");
-        if (comment && comment->value) {
-            reader->m_title = QString::fromUtf8(comment->value);
+        {
+            const FishSoundComment *comment = fish_sound_comment_first_byname
+                (fs, "TITLE");
+            if (comment && comment->value) {
+                reader->m_title = QString::fromUtf8(comment->value);
+            }
+        }
+        {
+            const FishSoundComment *comment = fish_sound_comment_first_byname
+                (fs, "ARTIST");
+            if (comment && comment->value) {
+                reader->m_maker = QString::fromUtf8(comment->value);
+            }
         }
         reader->m_commentsRead = true;
     }

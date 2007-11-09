@@ -61,6 +61,7 @@ protected:
     QString m_path;
     QString m_error;
     QString m_title;
+    QString m_maker;
     size_t m_fileSize;
     double m_bitrateNum;
     size_t m_bitrateDenom;
@@ -101,6 +102,7 @@ protected:
     DecodeThread *m_decodeThread;
 
     void loadTags();
+    QString loadTag(void *vtag, const char *name);
 };
 
 #endif

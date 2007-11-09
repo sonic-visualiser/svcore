@@ -168,48 +168,12 @@ MP3FileReader::loadTags()
         return;
     }
 
-    id3_frame *frame = id3_tag_findframe(tag, "TIT2", 0); // work title
-    if (!frame) {
-#ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No work title in ID3 tag" << std::endl;
-#endif
-        id3_file_close(file);
-        return;
-    }
-        
-    if (frame->nfields < 2) {
-        std::cerr << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for work title in ID3 tag" << std::endl;
-        id3_file_close(file);
-        return;
-    }
+    m_title = loadTag(tag, "TIT2"); // work title
+    if (m_title == "") m_title = loadTag(tag, "TIT1");
 
-    unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
-    if (nstrings == 0) {
-#ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No data for work title in ID3 tag" << std::endl;
-#endif
-        id3_file_close(file);
-        return;
-    }
+    m_maker = loadTag(tag, "TPE1"); // "lead artist"
+    if (m_maker == "") m_maker = loadTag(tag, "TPE2");
 
-    id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
-    if (!ustr) {
-#ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: Invalid or absent data for work title in ID3 tag" << std::endl;
-#endif
-        id3_file_close(file);
-        return;
-    }
-        
-    id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
-    if (!u8str) {
-        std::cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << std::endl;
-        id3_file_close(file);
-        return;
-    }
-        
-    m_title = QString::fromUtf8((const char *)u8str);
-    free(u8str);
     id3_file_close(file);
 
 #else
@@ -218,7 +182,56 @@ MP3FileReader::loadTags()
               << std::endl;
 #endif
 #endif
+}
 
+QString
+MP3FileReader::loadTag(void *vtag, const char *name)
+{
+#ifdef HAVE_ID3TAG
+    id3_tag *tag = (id3_tag *)vtag;
+
+    id3_frame *frame = id3_tag_findframe(tag, name, 0);
+    if (!frame) {
+#ifdef DEBUG_ID3TAG
+        std::cerr << "MP3FileReader::loadTags: No \"" << name << "\" in ID3 tag" << std::endl;
+#endif
+        return "";
+    }
+        
+    if (frame->nfields < 2) {
+        std::cerr << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << std::endl;
+        return "";
+    }
+
+    unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
+    if (nstrings == 0) {
+#ifdef DEBUG_ID3TAG
+        std::cerr << "MP3FileReader::loadTags: No data for \"" << name << "\" in ID3 tag" << std::endl;
+#endif
+        return "";
+    }
+
+    id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
+    if (!ustr) {
+#ifdef DEBUG_ID3TAG
+        std::cerr << "MP3FileReader::loadTags: Invalid or absent data for \"" << name << "\" in ID3 tag" << std::endl;
+#endif
+        return "";
+    }
+        
+    id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
+    if (!u8str) {
+        std::cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << std::endl;
+        return "";
+    }
+        
+    QString rv = QString::fromUtf8((const char *)u8str);
+    free(u8str);
+    return rv;
+
+#else
+    return "";
+#endif
 }
 
 void

@@ -244,7 +244,7 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 }
 
 void
-EditableDenseThreeDimensionalModel::setCompletion(int completion)
+EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 {
     if (m_completion != completion) {
 	m_completion = completion;
@@ -256,7 +256,8 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion)
 
 	} else if (!m_notifyOnAdd) {
 
-	    if (m_sinceLastNotifyMin >= 0 &&
+	    if (update &&
+                m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
 		emit modelChanged(m_sinceLastNotifyMin,
 				  m_sinceLastNotifyMax + m_resolution);
