@@ -283,7 +283,8 @@ FeatureExtractionModelTransformer::run()
                                    m_context.blockSize,
                                    m_context.stepSize,
                                    m_context.blockSize,
-                                   false);
+                                   false,
+                                   StorageAdviser::PrecisionCritical);
             if (!model->isOK()) {
                 QMessageBox::critical
                     (0, tr("FFT cache failed"),

@@ -227,6 +227,13 @@ MP3FileReader::loadTag(void *vtag, const char *name)
         
     QString rv = QString::fromUtf8((const char *)u8str);
     free(u8str);
+
+#ifdef DEBUG_ID3TAG
+	std::cerr << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
+	<< rv.toStdString() << "\"" << std::endl;
+#endif
+
+
     return rv;
 
 #else

@@ -51,7 +51,7 @@ StorageAdviser::recommend(Criteria criteria,
         memoryFree = 0;
     }
 
-    std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << std::endl;
+    std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << ", min " << minimumSize << ", max " << maximumSize << std::endl;
 
     //!!! We have a potentially serious problem here if multiple
     //recommendations are made in advance of any of the resulting

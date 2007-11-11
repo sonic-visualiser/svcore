@@ -25,6 +25,8 @@ FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
     m_phase(0),
     m_fmagnitude(0),
     m_fphase(0),
+    m_freal(0),
+    m_fimag(0),
     m_factor(0),
     m_storageType(storageType)
 {
@@ -41,12 +43,16 @@ FFTMemoryCache::~FFTMemoryCache()
 	if (m_phase && m_phase[i]) free(m_phase[i]);
 	if (m_fmagnitude && m_fmagnitude[i]) free(m_fmagnitude[i]);
 	if (m_fphase && m_fphase[i]) free(m_fphase[i]);
+        if (m_freal && m_freal[i]) free(m_freal[i]);
+        if (m_fimag && m_fimag[i]) free(m_fimag[i]);
     }
 
     if (m_magnitude) free(m_magnitude);
     if (m_phase) free(m_phase);
     if (m_fmagnitude) free(m_fmagnitude);
     if (m_fphase) free(m_fphase);
+    if (m_freal) free(m_freal);
+    if (m_fimag) free(m_fimag);
     if (m_factor) free(m_factor);
 }
 
@@ -60,9 +66,12 @@ FFTMemoryCache::resize(size_t width, size_t height)
     if (m_storageType == Compact) {
         resize(m_magnitude, width, height);
         resize(m_phase, width, height);
-    } else {
+    } else if (m_storageType == Polar) {
         resize(m_fmagnitude, width, height);
         resize(m_fphase, width, height);
+    } else {
+        resize(m_freal, width, height);
+        resize(m_fimag, width, height);
     }
 
     m_colset.resize(width);
@@ -147,8 +156,38 @@ FFTMemoryCache::reset()
             m_factor[x] = 1.0;
         }
         break;
+
+    case Rectangular:
+        for (size_t x = 0; x < m_width; ++x) {
+            for (size_t y = 0; y < m_height; ++y) {
+                m_freal[x][y] = 0;
+                m_fimag[x][y] = 0;
+            }
+            m_factor[x] = 1.0;
+        }
+        break;        
     }
 }	    
+
+void
+FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
+{
+    setNormalizationFactor(x, factor);
+
+    if (m_storageType == Rectangular) {
+        for (size_t y = 0; y < m_height; ++y) {
+            m_freal[x][y] = mags[y] * cosf(phases[y]);
+            m_fimag[x][y] = mags[y] * sinf(phases[y]);
+        }
+    } else {
+        for (size_t y = 0; y < m_height; ++y) {
+            setMagnitudeAt(x, y, mags[y]);
+            setPhaseAt(x, y, phases[y]);
+        }
+    }
+
+    m_colset.set(x);
+}
 
 void
 FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
@@ -156,6 +195,15 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     float max = 0.0;
 
     switch (m_storageType) {
+
+    case Rectangular:
+        for (size_t y = 0; y < m_height; ++y) {
+            m_freal[x][y] = reals[y];
+            m_fimag[x][y] = imags[y];
+            float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
+            if (mag > max) max = mag;
+        }
+        break;
 
     case Compact:
     case Polar:
@@ -170,7 +218,12 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
         break;
     };
 
-    setColumnAt(x, reals, imags, max);
+    if (m_storageType == Rectangular) {
+        m_factor[x] = max;
+        m_colset.set(x);
+    } else {
+        setColumnAt(x, reals, imags, max);
+    }
 }
 
 size_t
@@ -184,6 +237,7 @@ FFTMemoryCache::getCacheSize(size_t width, size_t height, StorageType type)
         sz = (height * 2 + 1) * width * sizeof(uint16_t);
 
     case Polar:
+    case Rectangular:
         sz = (height * 2 + 1) * width * sizeof(float);
     }
 
