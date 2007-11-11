@@ -18,6 +18,7 @@
 
 #include "base/Window.h"
 #include "base/Thread.h"
+#include "base/StorageAdviser.h"
 
 #include "FFTapi.h"
 
@@ -42,6 +43,8 @@ public:
                                       size_t windowIncrement,
                                       size_t fftSize,
                                       bool polar,
+                                      StorageAdviser::Criteria criteria =
+                                          StorageAdviser::NoCriteria,
                                       size_t fillFromColumn = 0);
 
     static FFTDataServer *getFuzzyInstance(const DenseTimeValueModel *model,
@@ -51,6 +54,8 @@ public:
                                            size_t windowIncrement,
                                            size_t fftSize,
                                            bool polar,
+                                           StorageAdviser::Criteria criteria =
+                                               StorageAdviser::NoCriteria,
                                            size_t fillFromColumn = 0);
 
     static void claimInstance(FFTDataServer *);
@@ -104,6 +109,7 @@ private:
                   size_t windowIncrement,
                   size_t fftSize,
                   bool polar,
+                  StorageAdviser::Criteria criteria,
                   size_t fillFromColumn = 0);
 
     virtual ~FFTDataServer();

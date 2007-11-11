@@ -52,6 +52,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
                            size_t windowIncrement,
                            size_t fftSize,
                            bool polar,
+                           StorageAdviser::Criteria criteria,
                            size_t fillFromColumn)
 {
     QString n = generateFileBasename(model,
@@ -91,6 +92,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
                                    windowIncrement,
                                    fftSize,
                                    polar,
+                                   criteria,
                                    fillFromColumn);
     } catch (InsufficientDiscSpace) {
         delete server;
@@ -112,6 +114,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                                 size_t windowIncrement,
                                 size_t fftSize,
                                 bool polar,
+                                StorageAdviser::Criteria criteria,
                                 size_t fillFromColumn)
 {
     // Fuzzy matching:
@@ -217,6 +220,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                        windowIncrement,
                        fftSize,
                        polar,
+                       criteria,
                        fillFromColumn);
 }
 
@@ -479,6 +483,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 			     size_t windowIncrement,
 			     size_t fftSize,
                              bool polar,
+                             StorageAdviser::Criteria criteria,
                              size_t fillFromColumn) :
     m_fileBaseName(fileBaseName),
     m_model(model),
@@ -526,26 +531,32 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_cacheWidth = 2;
     while (bits) { m_cacheWidth <<= 1; --bits; }
 
-    //!!! Need to pass in what this server is intended for
-    // (e.g. playback processing, spectrogram, feature extraction),
-    // or pass in something akin to the storage adviser criteria.
-    // That probably goes alongside the polar argument.
-    // For now we'll assume "spectrogram" criteria for polar ffts,
-    // and "feature extraction" criteria for rectangular ones.
+    if (criteria == StorageAdviser::NoCriteria) {
 
-    StorageAdviser::Criteria criteria;
-    if (m_polar) {
-        criteria = StorageAdviser::Criteria
-            (StorageAdviser::SpeedCritical |
-             StorageAdviser::LongRetentionLikely);
-    } else {
-        criteria = StorageAdviser::Criteria
-            (StorageAdviser::PrecisionCritical);
+        // assume "spectrogram" criteria for polar ffts, and "feature
+        // extraction" criteria for rectangular ones.
+
+        if (m_polar) {
+            criteria = StorageAdviser::Criteria
+                (StorageAdviser::SpeedCritical |
+                 StorageAdviser::LongRetentionLikely);
+        } else {
+            criteria = StorageAdviser::Criteria
+                (StorageAdviser::PrecisionCritical);
+        }
     }
 
     int cells = m_width * m_height;
     int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
     int maximumSize = (cells / 1024) * sizeof(float); // kb
+
+    // We don't have a compact rectangular representation, and compact
+    // of course is never precision-critical
+    bool canCompact = true;
+    if ((criteria & StorageAdviser::PrecisionCritical) || !m_polar) {
+        canCompact = false;
+        minimumSize = maximumSize; // don't use compact
+    }
     
     StorageAdviser::Recommendation recommendation;
 
@@ -574,24 +585,15 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 
     m_memoryCache = false;
 
-    if (recommendation & StorageAdviser::UseMemory) {
-        
-        // can't use disc, must use memory
-
+    if ((recommendation & StorageAdviser::UseMemory) ||
+        (recommendation & StorageAdviser::PreferMemory)) {
         m_memoryCache = true;
-
-    } else if (recommendation & StorageAdviser::PreferMemory) {
-
-        // if memory is recommended, we use it if we're using polar
-        // coordinates; but we don't have a native rectangular memory
-        // cache, so we might as well use disc if we want rectangular
-        // coordinates rather than have all the bother of converting
-        // every time
-
-        if (m_polar) m_memoryCache = true;
     }
 
-    m_compactCache = (recommendation & StorageAdviser::ConserveSpace);
+    m_compactCache = canCompact &&
+        (recommendation & StorageAdviser::ConserveSpace);
+
+    std::cerr << "FFTDataServer: memory cache = " << m_memoryCache << ", compact cache = " << m_compactCache << std::endl;
     
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "Width " << m_width << ", cache width " << m_cacheWidth << " (size " << m_cacheWidth * columnSize << ")" << std::endl;
@@ -616,9 +618,9 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
         fftf_malloc((fftSize+2) * sizeof(float));
 
     m_fftPlan = fftf_plan_dft_r2c_1d(m_fftSize,
-                                      m_fftInput,
-                                      m_fftOutput,
-                                      FFTW_MEASURE);
+                                     m_fftInput,
+                                     m_fftOutput,
+                                     FFTW_MEASURE);
 
     if (!m_fftPlan) {
         std::cerr << "ERROR: fftf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << std::endl;
@@ -788,7 +790,9 @@ FFTDataServer::getCacheAux(size_t c)
 
             cache = new FFTMemoryCache
                 (m_compactCache ? FFTMemoryCache::Compact :
-                                  FFTMemoryCache::Polar);
+//                                  FFTMemoryCache::Polar);
+                 m_polar ? FFTMemoryCache::Polar :
+                           FFTMemoryCache::Rectangular);
 
         } else if (m_compactCache) {
 

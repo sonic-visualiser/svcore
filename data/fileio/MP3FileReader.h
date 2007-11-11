@@ -44,6 +44,7 @@ public:
     virtual QString getError() const { return m_error; }
 
     virtual QString getTitle() const { return m_title; }
+    virtual QString getMaker() const { return m_maker; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);

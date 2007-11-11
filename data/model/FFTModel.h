@@ -60,6 +60,7 @@ public:
              size_t windowIncrement,
              size_t fftSize,
              bool polar,
+             StorageAdviser::Criteria criteria = StorageAdviser::NoCriteria,
              size_t fillFromColumn = 0);
     ~FFTModel();
 
@@ -174,7 +175,7 @@ private:
 
     FFTDataServer *getServer(const DenseTimeValueModel *,
                              int, WindowType, size_t, size_t, size_t,
-                             bool, size_t);
+                             bool, StorageAdviser::Criteria, size_t);
 
     size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
                                  size_t bin, float &percentile) const;

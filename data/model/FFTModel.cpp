@@ -29,6 +29,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                    size_t windowIncrement,
                    size_t fftSize,
                    bool polar,
+                   StorageAdviser::Criteria criteria,
                    size_t fillFromColumn) :
     //!!! ZoomConstraint!
     m_server(0),
@@ -44,6 +45,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                          windowIncrement,
                          fftSize,
                          polar,
+                         criteria,
                          fillFromColumn);
 
     if (!m_server) return; // caller should check isOK()
@@ -88,6 +90,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                     size_t windowIncrement,
                     size_t fftSize,
                     bool polar,
+                    StorageAdviser::Criteria criteria,
                     size_t fillFromColumn)
 {
     // Obviously, an FFT model of channel C (where C != -1) of an
@@ -119,6 +122,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                              windowIncrement,
                              fftSize,
                              polar,
+                             criteria,
                              fillFromColumn);
         }
     }
@@ -132,6 +136,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                                            windowIncrement,
                                            fftSize,
                                            polar,
+                                           criteria,
                                            fillFromColumn);
 }
 
