@@ -109,6 +109,8 @@ public:
 
     static size_t getCacheSize(size_t width, size_t height, StorageType type);
 
+    virtual Type getType() { return MemoryCache; }
+
 private:
     size_t m_width;
     size_t m_height;
