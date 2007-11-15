@@ -77,6 +77,7 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
         waitForStatus();
 
         if (!isAvailable()) {
+
             // The URL was created on the assumption that the string
             // was human-readable.  Let's try again, this time
             // assuming it was already encoded.
@@ -85,7 +86,19 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
                       << "\" as human-readable URL; "
                       << "trying again treating it as encoded URL"
                       << std::endl;
+
+            // even though our cache file doesn't exist (because the
+            // resource was 404), we still need to ensure we're no
+            // longer associating a filename with this url in the
+            // refcount map -- or createCacheFile will think we've
+            // already done all the work and no request will be sent
+            deleteCacheFile();
+
             m_url.setEncodedUrl(fileOrUrl.toAscii());
+
+            m_ok = false;
+            m_done = false;
+            m_lastStatus = 0;
             init(showProgress);
         }
     }
