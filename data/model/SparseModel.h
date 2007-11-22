@@ -462,7 +462,7 @@ SparseModel<PointType>::addPoint(const PointType &point)
 	QMutexLocker locker(&m_mutex);
 	m_points.insert(point);
         m_pointCount++;
-        if (point.label != "") m_hasTextLabels = true;
+        if (point.getLabel() != "") m_hasTextLabels = true;
     }
 
     // Even though this model is nominally sparse, there may still be
