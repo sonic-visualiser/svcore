@@ -125,21 +125,26 @@ size_t
 AlignmentModel::toReference(size_t frame) const
 {
 //    std::cerr << "AlignmentModel::toReference(" << frame << ")" << std::endl;
-    if (!m_reversePath) constructReversePath();
-    return align(m_reversePath, frame);
+    if (!m_path) constructPath();
+    return align(m_path, frame);
 }
 
 size_t
 AlignmentModel::fromReference(size_t frame) const
 {
 //    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
-    if (!m_path) constructPath();
-    return align(m_path, frame);
+    if (!m_reversePath) constructReversePath();
+    return align(m_reversePath, frame);
 }
 
 void
 AlignmentModel::pathChanged()
 {
+    if (m_pathComplete) {
+        std::cerr << "AlignmentModel: deleting raw path model" << std::endl;
+        delete m_rawPath;
+        m_rawPath = 0;
+    }
 }
 
 void
@@ -153,6 +158,7 @@ AlignmentModel::pathChanged(size_t, size_t)
 void
 AlignmentModel::pathCompletionChanged()
 {
+    if (!m_rawPath) return;
     m_pathBegun = true;
 
     if (!m_pathComplete) {
@@ -169,9 +175,6 @@ AlignmentModel::pathCompletionChanged()
 
             constructPath();
             constructReversePath();
-
-            delete m_rawPath;
-            m_rawPath = 0;
 
             delete m_inputModel;
             m_inputModel = 0;
@@ -208,7 +211,7 @@ AlignmentModel::constructPath() const
         m_path->addPoint(PathPoint(frame, rframe));
     }
 
-    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+//    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
 }
 
 void
@@ -238,12 +241,14 @@ AlignmentModel::constructReversePath() const
         m_reversePath->addPoint(PathPoint(rframe, frame));
     }
 
-    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+//    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
 }
 
 size_t
 AlignmentModel::align(PathModel *path, size_t frame) const
 {
+    if (!path) return frame;
+
     // The path consists of a series of points, each with frame equal
     // to the frame on the source model and mapframe equal to the
     // frame on the target model.  Both should be monotonically
@@ -283,7 +288,7 @@ AlignmentModel::align(PathModel *path, size_t frame) const
         resultFrame += lrintf((followingMapFrame - foundMapFrame) * interp);
     }
 
-    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+//    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
 
     return resultFrame;
 }
