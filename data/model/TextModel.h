@@ -38,6 +38,8 @@ public:
     long frame;
     float height;
     QString label;
+
+    QString getLabel() const { return label; }
     
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const

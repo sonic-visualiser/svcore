@@ -24,26 +24,29 @@ AlignmentModel::AlignmentModel(Model *reference,
     m_reference(reference),
     m_aligned(aligned),
     m_inputModel(inputModel),
-    m_path(path),
+    m_rawPath(path),
+    m_path(0),
     m_reversePath(0),
     m_pathBegun(false),
     m_pathComplete(false)
 {
-    connect(m_path, SIGNAL(modelChanged()),
+    connect(m_rawPath, SIGNAL(modelChanged()),
             this, SLOT(pathChanged()));
 
-    connect(m_path, SIGNAL(modelChanged(size_t, size_t)),
+    connect(m_rawPath, SIGNAL(modelChanged(size_t, size_t)),
             this, SLOT(pathChanged(size_t, size_t)));
 
-    connect(m_path, SIGNAL(completionChanged()),
+    connect(m_rawPath, SIGNAL(completionChanged()),
             this, SLOT(pathCompletionChanged()));
 
+    constructPath();
     constructReversePath();
 }
 
 AlignmentModel::~AlignmentModel()
 {
     delete m_inputModel;
+    delete m_rawPath;
     delete m_path;
     delete m_reversePath;
 }
@@ -51,13 +54,13 @@ AlignmentModel::~AlignmentModel()
 bool
 AlignmentModel::isOK() const
 {
-    return m_path->isOK();
+    if (m_rawPath) return m_rawPath->isOK();
+    else return true;
 }
 
 size_t
 AlignmentModel::getStartFrame() const
 {
-    //!!! do we care about distinct rates?
     size_t a = m_reference->getStartFrame();
     size_t b = m_aligned->getStartFrame();
     return std::min(a, b);
@@ -66,7 +69,6 @@ AlignmentModel::getStartFrame() const
 size_t
 AlignmentModel::getEndFrame() const
 {
-    //!!! do we care about distinct rates?
     size_t a = m_reference->getEndFrame();
     size_t b = m_aligned->getEndFrame();
     return std::max(a, b);
@@ -84,23 +86,27 @@ AlignmentModel::clone() const
     return new AlignmentModel
         (m_reference, m_aligned,
          m_inputModel ? m_inputModel->clone() : 0,
-         m_path ? static_cast<SparseTimeValueModel *>(m_path->clone()) : 0);
+         m_rawPath ? static_cast<SparseTimeValueModel *>(m_rawPath->clone()) : 0);
 }
 
 bool
 AlignmentModel::isReady(int *completion) const
 {
     if (!m_pathBegun) {
-        completion = 0;
+        if (completion) *completion = 0;
         return false;
     }
-    return m_path->isReady(completion);
+    if (m_pathComplete || !m_rawPath) {
+        if (completion) *completion = 100;
+        return true;
+    }
+    return m_rawPath->isReady(completion);
 }
 
 const ZoomConstraint *
 AlignmentModel::getZoomConstraint() const
 {
-    return m_path->getZoomConstraint();
+    return 0;
 }
 
 const Model *
@@ -127,6 +133,7 @@ size_t
 AlignmentModel::fromReference(size_t frame) const
 {
 //    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
+    if (!m_path) constructPath();
     return align(m_path, frame);
 }
 
@@ -139,6 +146,7 @@ void
 AlignmentModel::pathChanged(size_t, size_t)
 {
     if (!m_pathComplete) return;
+    constructPath();
     constructReversePath();
 }    
 
@@ -148,13 +156,23 @@ AlignmentModel::pathCompletionChanged()
     m_pathBegun = true;
 
     if (!m_pathComplete) {
+
         int completion = 0;
-        m_path->isReady(&completion);
+        m_rawPath->isReady(&completion);
+
 //        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
 //                  << completion << std::endl;
+
         m_pathComplete = (completion == 100);
+
         if (m_pathComplete) {
+
+            constructPath();
             constructReversePath();
+
+            delete m_rawPath;
+            m_rawPath = 0;
+
             delete m_inputModel;
             m_inputModel = 0;
         }
@@ -164,78 +182,108 @@ AlignmentModel::pathCompletionChanged()
 }
 
 void
-AlignmentModel::constructReversePath() const
+AlignmentModel::constructPath() const
 {
-    if (!m_reversePath) {
-        m_reversePath = new SparseTimeValueModel
-            (m_path->getSampleRate(), m_path->getResolution(), false);
+    if (!m_path) {
+        if (!m_rawPath) {
+            std::cerr << "ERROR: AlignmentModel::constructPath: "
+                      << "No raw path available" << std::endl;
+            return;
+        }
+        m_path = new PathModel
+            (m_rawPath->getSampleRate(), m_rawPath->getResolution(), false);
+    } else {
+        if (!m_rawPath) return;
     }
         
-    m_reversePath->clear();
+    m_path->clear();
 
-    SparseTimeValueModel::PointList points = m_path->getPoints();
+    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
         
     for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
          i != points.end(); ++i) {
         long frame = i->frame;
         float value = i->value;
         long rframe = lrintf(value * m_aligned->getSampleRate());
-        float rvalue = (float)frame / (float)m_reference->getSampleRate();
-        m_reversePath->addPoint
-            (SparseTimeValueModel::Point(rframe, rvalue, ""));
+        m_path->addPoint(PathPoint(frame, rframe));
     }
 
-    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(SparseTimeValueModel::Point))) << " bytes" << std::endl;
+    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+}
+
+void
+AlignmentModel::constructReversePath() const
+{
+    if (!m_reversePath) {
+        if (!m_rawPath) {
+            std::cerr << "ERROR: AlignmentModel::constructReversePath: "
+                      << "No raw path available" << std::endl;
+            return;
+        }
+        m_reversePath = new PathModel
+            (m_rawPath->getSampleRate(), m_rawPath->getResolution(), false);
+    } else {
+        if (!m_rawPath) return;
+    }
+        
+    m_reversePath->clear();
+
+    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
+        
+    for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
+         i != points.end(); ++i) {
+        long frame = i->frame;
+        float value = i->value;
+        long rframe = lrintf(value * m_aligned->getSampleRate());
+        m_reversePath->addPoint(PathPoint(rframe, frame));
+    }
+
+    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
 }
 
 size_t
-AlignmentModel::align(SparseTimeValueModel *path, size_t frame) const
+AlignmentModel::align(PathModel *path, size_t frame) const
 {
-    // The path consists of a series of points, each with x (time)
-    // equal to the time on the source model and y (value) equal to
-    // the time on the target model.  Times and values are both
-    // monotonically increasing.
+    // The path consists of a series of points, each with frame equal
+    // to the frame on the source model and mapframe equal to the
+    // frame on the target model.  Both should be monotonically
+    // increasing.
 
-    const SparseTimeValueModel::PointList &points = path->getPoints();
+    const PathModel::PointList &points = path->getPoints();
 
     if (points.empty()) {
 //        std::cerr << "AlignmentModel::align: No points" << std::endl;
         return frame;
     }        
 
-    SparseTimeValueModel::Point point(frame);
-    SparseTimeValueModel::PointList::const_iterator i = points.lower_bound(point);
+    PathModel::Point point(frame);
+    PathModel::PointList::const_iterator i = points.lower_bound(point);
     if (i == points.end()) --i;
-    while (i != points.begin() && i->frame > frame) --i;
+    while (i != points.begin() && i->frame > long(frame)) --i;
 
     long foundFrame = i->frame;
-    float foundTime = i->value;
+    long foundMapFrame = i->mapframe;
 
     long followingFrame = foundFrame;
-    float followingTime = foundTime;
+    long followingMapFrame = foundMapFrame;
 
     if (++i != points.end()) {
         followingFrame = i->frame;
-        followingTime = i->value;
+        followingMapFrame = i->mapframe;
     }
 
-    float resultTime = foundTime;
+    if (foundMapFrame < 0) return 0;
 
-    if (followingFrame != foundFrame && frame > foundFrame) {
+    size_t resultFrame = foundMapFrame;
 
-//        std::cerr << "AlignmentModel::align: foundFrame = " << foundFrame << ", frame = " << frame << ", followingFrame = " << followingFrame << std::endl;
-
-        float interp = float(frame - foundFrame) / float(followingFrame - foundFrame);
-//        std::cerr << "AlignmentModel::align: interp = " << interp << ", result " << resultTime << " -> ";
-
-        resultTime += (followingTime - foundTime) * interp;
-
-//        std::cerr << resultTime << std::endl;
+    if (followingFrame != foundFrame && long(frame) > foundFrame) {
+        float interp =
+            float(frame - foundFrame) /
+            float(followingFrame - foundFrame);
+        resultFrame += lrintf((followingMapFrame - foundMapFrame) * interp);
     }
 
-    size_t resultFrame = lrintf(resultTime * getSampleRate());
-
-//    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
 
     return resultFrame;
 }
