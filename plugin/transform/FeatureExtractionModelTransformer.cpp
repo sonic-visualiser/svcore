@@ -495,12 +495,15 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
         
         float velocity = 100;
         if (feature.values.size() > 2) velocity = feature.values[2];
+        if (velocity < 0) velocity = 127;
+        if (velocity > 127) velocity = 127;
 
         NoteModel *model = getOutput<NoteModel>();
         if (!model) return;
 
         model->addPoint(NoteModel::Point(frame, pitch,
                                          lrintf(duration),
+                                         velocity / 127.f,
                                          feature.label.c_str()));
 	
     } else {

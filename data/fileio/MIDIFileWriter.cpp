@@ -369,8 +369,10 @@ MIDIFileWriter::convert()
         double quarters = (seconds * m_tempo) / 60.0;
         unsigned long midiTime = lrint(quarters * m_timingDivision);
 
-        // We don't support velocity in note models yet
         int velocity = 100;
+        if (i->level > 0.f && i->level <= 1.f) {
+            velocity = lrintf(i->level * 127.f);
+        }
 
         // Get the sounding time for the matching NOTE_OFF
         seconds = double(frame + duration) / double(m_model->getSampleRate());

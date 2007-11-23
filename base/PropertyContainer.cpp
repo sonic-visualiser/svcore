@@ -29,16 +29,16 @@ PropertyContainer::getProperties() const
     return PropertyList();
 }
 
-//QString
-//PropertyContainer::getPropertyLabel(const PropertyName &) const
-//{
-//    return "";
-//}
-
 PropertyContainer::PropertyType
 PropertyContainer::getPropertyType(const PropertyName &) const
 {
     return InvalidProperty;
+}
+
+QString
+PropertyContainer::getPropertyIconName(const PropertyName &) const
+{
+    return QString();
 }
 
 QString
