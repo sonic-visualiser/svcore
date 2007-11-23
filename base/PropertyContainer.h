@@ -62,6 +62,11 @@ public:
     virtual PropertyType getPropertyType(const PropertyName &) const;
 
     /**
+     * Return an icon for the property, if any.
+     */
+    virtual QString getPropertyIconName(const PropertyName &) const;
+
+    /**
      * If this property has something in common with other properties
      * on this container, return a name that can be used to group them
      * (in order to save screen space, for example).  e.g. "Window

@@ -113,9 +113,8 @@ Model::alignToReference(size_t frame) const
         else return frame;
     }
     size_t refFrame = m_alignment->toReference(frame);
-    //!!! this should be totally wrong, but because alignToReference and
-    // alignFromReference are the wrong way around, it's right... *sigh*
-    if (refFrame > getEndFrame()) refFrame = getEndFrame();
+    const Model *m = m_alignment->getReferenceModel();
+    if (m && refFrame > m->getEndFrame()) refFrame = m->getEndFrame();
     return refFrame;
 }
 
@@ -127,6 +126,7 @@ Model::alignFromReference(size_t refFrame) const
         else return refFrame;
     }
     size_t frame = m_alignment->fromReference(refFrame);
+    if (frame > getEndFrame()) frame = getEndFrame();
     return frame;
 }
 
