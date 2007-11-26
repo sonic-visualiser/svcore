@@ -201,6 +201,10 @@ FileSource::init(bool showProgress)
 {
     if (!isRemote()) {
         m_localFilename = m_url.toLocalFile();
+        if (m_localFilename == "") {
+            // QUrl may have mishandled the scheme (e.g. in a DOS path)
+            m_localFilename = m_url.toString();
+        }
         m_ok = true;
         if (!QFileInfo(m_localFilename).exists()) {
             m_lastStatus = 404;
@@ -403,16 +407,19 @@ FileSource::cleanup()
 bool
 FileSource::isRemote(QString fileOrUrl)
 {
+    // Note that a "scheme" with length 1 is probably a DOS drive letter
     QString scheme = QUrl(fileOrUrl).scheme().toLower();
-    return (scheme == "http" || scheme == "ftp");
+    if (scheme == "" || scheme == "file" || scheme.length() == 1) return false;
+    return true;
 }
 
 bool
 FileSource::canHandleScheme(QUrl url)
 {
+    // Note that a "scheme" with length 1 is probably a DOS drive letter
     QString scheme = url.scheme().toLower();
     return (scheme == "http" || scheme == "ftp" ||
-            scheme == "file" || scheme == "");
+            scheme == "file" || scheme == "" || scheme.length() == 1);
 }
 
 bool
