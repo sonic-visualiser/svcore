@@ -76,9 +76,7 @@ LogRangeMapper::LogRangeMapper(int minpos, int maxpos,
 int
 LogRangeMapper::getPositionForValue(float value) const
 {
-    float mapped = m_ratio * log10(value);
-    int position = lrintf(((mapped - m_minlog) / (m_maxlog - m_minlog))
-                          * (m_maxpos - m_minpos));
+    int position = (log10(value) - m_minlog) * m_ratio + m_minpos;
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
 //    std::cerr << "LogRangeMapper::getPositionForValue: " << value << " -> "
