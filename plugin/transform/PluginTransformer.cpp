@@ -95,8 +95,11 @@ PluginTransformer::ExecutionContext::makeConsistentWithPlugin(const Vamp::Plugin
 //        std::cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << std::endl;
     }
 
+//    std::cerr << "makeConsistentWithPlugin: stepSize = " << stepSize << ", blockSize = " << blockSize << std::endl;
+
     if (!vp) {
         domain = Vamp::Plugin::TimeDomain;
+//        std::cerr << "time domain RT plugin" << std::endl;
         if (!stepSize) {
             if (!blockSize) blockSize = 1024;
             stepSize = blockSize;
@@ -105,6 +108,7 @@ PluginTransformer::ExecutionContext::makeConsistentWithPlugin(const Vamp::Plugin
         }
     } else {
         domain = vp->getInputDomain();
+//        std::cerr << "feature extraction plugin" << std::endl;
         if (!stepSize) stepSize = vp->getPreferredStepSize();
         if (!blockSize) blockSize = vp->getPreferredBlockSize();
         if (!blockSize) blockSize = 1024;

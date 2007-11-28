@@ -26,10 +26,10 @@ class FeatureExtractionModelTransformer : public PluginTransformer
 
 public:
     FeatureExtractionModelTransformer(Model *inputModel,
-                                       QString plugin,
-                                       ExecutionContext context,
-                                       QString configurationXml = "",
-                                       QString outputName = "");
+                                      QString plugin,
+                                      const ExecutionContext &context,
+                                      QString configurationXml = "",
+                                      QString outputName = "");
     virtual ~FeatureExtractionModelTransformer();
 
 protected:
