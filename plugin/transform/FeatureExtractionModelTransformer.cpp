@@ -35,7 +35,7 @@
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Model *inputModel,
 								   QString pluginId,
-                                                                   ExecutionContext context,
+                                                                   const ExecutionContext &context,
                                                                    QString configurationXml,
 								   QString outputName) :
     PluginTransformer(inputModel, context),
@@ -62,7 +62,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Model *inpu
 	return;
     }
 
-    context.makeConsistentWithPlugin(m_plugin);
+    m_context.makeConsistentWithPlugin(m_plugin);
 
     if (configurationXml != "") {
         PluginXml(m_plugin).setParametersFromXml(configurationXml);
