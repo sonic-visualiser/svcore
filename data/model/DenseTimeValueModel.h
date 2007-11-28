@@ -70,6 +70,8 @@ public:
      */
     virtual size_t getData(int channel, size_t start, size_t count,
                            double *buffer) const = 0;
+
+    QString getTypeName() const { return tr("Dense Time-Value"); }
 };
 
 #endif

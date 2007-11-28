@@ -86,6 +86,8 @@ public:
 	}
 	return -1;
     }
+
+    QString getTypeName() const { return tr("Sparse 1-D"); }
 };
 
 #endif

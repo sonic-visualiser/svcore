@@ -51,6 +51,9 @@ public:
     using SparseModel<PointType>::m_points;
     using SparseModel<PointType>::modelChanged;
     using SparseModel<PointType>::getPoints;
+    using SparseModel<PointType>::tr;
+
+    QString getTypeName() const { return tr("Sparse Value"); }
 
     virtual float getValueMinimum() const { return m_valueMinimum; }
     virtual float getValueMaximum() const { return m_valueMaximum; }

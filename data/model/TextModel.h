@@ -95,6 +95,8 @@ public:
 	     QString("%1 subtype=\"text\"")
 	     .arg(extraAttributes));
     }
+
+    QString getTypeName() const { return tr("Text"); }
 };
 
 

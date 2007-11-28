@@ -40,6 +40,7 @@ public:
     virtual ~ResamplingWavFileReader();
 
     virtual QString getError() const { return m_error; }
+    virtual QString getLocation() const { return m_source.getLocation(); }
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);

@@ -50,6 +50,7 @@ public:
 
     QString getTitle() const;
     QString getMaker() const;
+    QString getLocation() const;
 
     virtual Model *clone() const;
 
@@ -72,6 +73,8 @@ public:
                               size_t &blockSize) const;
 
     virtual Range getSummary(size_t channel, size_t start, size_t count) const;
+
+    QString getTypeName() const { return tr("Wave File"); }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",

@@ -43,6 +43,7 @@ public:
 
     virtual QString getError() const { return m_error; }
 
+    virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getTitle() const { return m_title; }
     virtual QString getMaker() const { return m_maker; }
     

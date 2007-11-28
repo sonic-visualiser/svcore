@@ -48,6 +48,7 @@ public:
      */
     Model *getConfigurationForTransformer(TransformId identifier,
                                           const std::vector<Model *> &candidateInputModels,
+                                          Model *defaultInputModel,
                                           PluginTransformer::ExecutionContext &context,
                                           QString &configurationXml,
                                           AudioCallbackPlaySource *source = 0,
