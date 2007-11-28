@@ -29,6 +29,7 @@ public:
     WavFileReader(FileSource source, bool fileUpdating = false);
     virtual ~WavFileReader();
 
+    virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getError() const { return m_error; }
 
     /** 

@@ -127,6 +127,8 @@ public:
      */
     virtual PointList getPoints(long frame) const;
 
+    QString getTypeName() const { return tr("Note"); }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const

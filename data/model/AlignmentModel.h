@@ -44,6 +44,8 @@ public:
     virtual bool isReady(int *completion = 0) const;
     virtual const ZoomConstraint *getZoomConstraint() const;
 
+    QString getTypeName() const { return tr("Alignment"); }
+
     const Model *getReferenceModel() const;
     const Model *getAlignedModel() const;
 

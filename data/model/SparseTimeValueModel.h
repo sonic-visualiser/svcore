@@ -95,6 +95,8 @@ public:
     {
 	PlayParameterRepository::getInstance()->addModel(this);
     }
+
+    QString getTypeName() const { return tr("Sparse Time-Value"); }
 };
 
 

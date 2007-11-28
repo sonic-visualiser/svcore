@@ -73,6 +73,8 @@ public:
 
     virtual Range getSummary(size_t channel, size_t start, size_t count) const;
 
+    QString getTypeName() const { return tr("Writable Wave File"); }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const;

@@ -89,6 +89,8 @@ public:
 	SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
+    QString getTypeName() const { return tr("Image"); }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const

@@ -42,6 +42,8 @@ public:
     bool isOK() const;
     bool isReady(int *) const;
 
+    QString getTypeName() const { return tr("Aggregate Wave"); }
+
     size_t getComponentCount() const;
     ModelChannelSpec getComponent(size_t c) const;
 

@@ -148,12 +148,21 @@ QString
 Model::getTitle() const
 {
     if (m_sourceModel) return m_sourceModel->getTitle();
+    else return "";
 }
 
 QString
 Model::getMaker() const
 {
     if (m_sourceModel) return m_sourceModel->getMaker();
+    else return "";
+}
+
+QString
+Model::getLocation() const
+{
+    if (m_sourceModel) return m_sourceModel->getLocation();
+    else return "";
 }
 
 void

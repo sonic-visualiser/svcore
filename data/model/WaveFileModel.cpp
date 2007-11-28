@@ -173,6 +173,13 @@ WaveFileModel::getMaker() const
     if (m_reader) return m_reader->getMaker();
     return "";
 }
+
+QString
+WaveFileModel::getLocation() const
+{
+    if (m_reader) return m_reader->getLocation();
+    return "";
+}
     
 size_t
 WaveFileModel::getData(int channel, size_t start, size_t count,

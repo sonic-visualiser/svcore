@@ -39,6 +39,12 @@ public:
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
     size_t getNativeRate() const { return m_sampleRate; } // if resampled
+
+    /**
+     * Return the location of the audio data in the reader (as passed
+     * in to the FileSource constructor, for example).
+     */
+    virtual QString getLocation() const { return ""; }
     
     /**
      * Return the title of the work in the audio file, if known.  This

@@ -68,20 +68,22 @@ ModelTransformerFactory::getChannelRange(TransformId identifier, Vamp::PluginBas
 
 Model *
 ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
-                                               const std::vector<Model *> &candidateInputModels,
-                                               PluginTransformer::ExecutionContext &context,
-                                               QString &configurationXml,
-                                               AudioCallbackPlaySource *source,
-                                               size_t startFrame,
-                                               size_t duration)
+                                                        const std::vector<Model *> &candidateInputModels,
+                                                        Model *defaultInputModel,
+                                                        PluginTransformer::ExecutionContext &context,
+                                                        QString &configurationXml,
+                                                        AudioCallbackPlaySource *source,
+                                                        size_t startFrame,
+                                                        size_t duration)
 {
     if (candidateInputModels.empty()) return 0;
 
     //!!! This will need revision -- we'll have to have a callback
     //from the dialog for when the candidate input model is changed,
     //as we'll need to reinitialise the channel settings in the dialog
-    Model *inputModel = candidateInputModels[0]; //!!! for now
+    Model *inputModel = candidateInputModels[0];
     QStringList candidateModelNames;
+    QString defaultModelName;
     std::map<QString, Model *> modelMap;
     for (size_t i = 0; i < candidateInputModels.size(); ++i) {
         QString modelName = candidateInputModels[i]->objectName();
@@ -92,6 +94,9 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         }
         modelMap[modelName] = candidateInputModels[i];
         candidateModelNames.push_back(modelName);
+        if (candidateInputModels[i] == defaultInputModel) {
+            defaultModelName = modelName;
+        }
     }
 
     QString id = identifier.section(':', 0, 2);
@@ -205,7 +210,8 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
 
         if (candidateModelNames.size() > 1 && !generator) {
-            dialog->setCandidateInputModels(candidateModelNames);
+            dialog->setCandidateInputModels(candidateModelNames,
+                                            defaultModelName);
         }
 
         if (startFrame != 0 || duration != 0) {

@@ -132,6 +132,8 @@ public:
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
 
+    QString getTypeName() const { return tr("Sparse"); }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const;

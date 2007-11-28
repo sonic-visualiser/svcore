@@ -79,9 +79,9 @@ extern void svSystemSpecificInitialisation()
 
 #ifdef Q_WS_WIN32
     redirectStderr();
-    QFont fn = qApp->font();
-    fn.setFamily("Tahoma");
-    qApp->setFont(fn);
+//    QFont fn = qApp->font();
+//    fn.setFamily("Tahoma");
+//    qApp->setFont(fn);
 #else
 #ifdef Q_WS_X11
 //    QFont fn = qApp->font();

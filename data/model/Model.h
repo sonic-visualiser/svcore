@@ -77,6 +77,18 @@ public:
     virtual QString getMaker() const;
 
     /**
+     * Return the location of the data in this model (e.g. source
+     * URL).  This should not normally be returned for editable models
+     * that have been edited.
+     */
+    virtual QString getLocation() const;
+
+    /**
+     * Return the type of the model.  For display purposes only.
+     */
+    virtual QString getTypeName() const = 0;
+
+    /**
      * Return a copy of this model.
      *
      * If the model is not editable, this may be effectively a shallow

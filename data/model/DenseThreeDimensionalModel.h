@@ -98,6 +98,8 @@ public:
         return getValueAt(x, y) > threshold;
     }
 
+    QString getTypeName() const { return tr("Dense 3-D"); }
+
     virtual int getCompletion() const = 0;
 
 protected:
