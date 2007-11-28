@@ -27,7 +27,7 @@ class FeatureExtractionModelTransformer : public PluginTransformer
 public:
     FeatureExtractionModelTransformer(Model *inputModel,
                                        QString plugin,
-                                       const ExecutionContext &context,
+                                       ExecutionContext context,
                                        QString configurationXml = "",
                                        QString outputName = "");
     virtual ~FeatureExtractionModelTransformer();
