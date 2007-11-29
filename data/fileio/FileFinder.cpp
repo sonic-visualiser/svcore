@@ -378,14 +378,14 @@ FileFinder::registerLastOpenedFilePath(FileType type, QString path)
 QString
 FileFinder::find(FileType type, QString location, QString lastKnownLocation)
 {
-    if (QFileInfo(location).exists()) return location;
-
-    if (FileSource::isRemote(location)) {
+    if (FileSource::canHandleScheme(location)) {
         if (FileSource(location).isAvailable()) {
             std::cerr << "FileFinder::find: ok, it's available... returning" << std::endl;
             return location;
         }
     }
+
+    if (QFileInfo(location).exists()) return location;
 
     QString foundAt = "";
 
@@ -415,6 +415,9 @@ FileFinder::findRelative(QString location, QString relativeTo)
         fileName = QUrl(location).path().section('/', -1, -1,
                                                  QString::SectionSkipEmpty);
     } else {
+        if (QUrl(location).scheme() == "file") {
+            location = QUrl(location).toLocalFile();
+        }
         fileName = QFileInfo(location).fileName();
     }
 
@@ -423,6 +426,9 @@ FileFinder::findRelative(QString location, QString relativeTo)
         if (!FileSource(resolved).isAvailable()) resolved = "";
         std::cerr << "resolved: " << resolved.toStdString() << std::endl;
     } else {
+        if (QUrl(relativeTo).scheme() == "file") {
+            relativeTo = QUrl(relativeTo).toLocalFile();
+        }
         resolved = QFileInfo(relativeTo).dir().filePath(fileName);
         if (!QFileInfo(resolved).exists() ||
             !QFileInfo(resolved).isFile() ||
