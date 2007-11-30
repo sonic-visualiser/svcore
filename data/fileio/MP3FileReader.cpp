@@ -206,7 +206,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
     if (nstrings == 0) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No data for \"" << name << "\" in ID3 tag" << std::endl;
+        std::cerr << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << std::endl;
 #endif
         return "";
     }
@@ -291,7 +291,22 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
     DecoderData *data = (DecoderData *)dp;
 
     if (!data->length) return MAD_FLOW_STOP;
-    mad_stream_buffer(stream, data->start, data->length);
+
+    unsigned char const *start = data->start;
+    unsigned long length = data->length;
+
+#ifdef HAVE_ID3TAG
+    if (length > ID3_TAG_QUERYSIZE) {
+        int taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
+        if (taglen > 0) {
+//            std::cerr << "ID3 tag length to skip: " << taglen << std::endl;
+            start += taglen;
+            length -= taglen;
+        }
+    }
+#endif
+
+    mad_stream_buffer(stream, start, length);
     data->length = 0;
 
     return MAD_FLOW_CONTINUE;
