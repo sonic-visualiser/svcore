@@ -18,10 +18,10 @@
 
 #include "TransformDescription.h"
 
+#include <vamp-sdk/Plugin.h>
+
 #include <map>
 #include <set>
-
-namespace Vamp { class PluginBase; }
 
 class TransformFactory : public QObject
 {
@@ -32,10 +32,10 @@ public:
 
     static TransformFactory *getInstance();
 
-    TransformList getAllTransforms();
+    TransformList getAllTransformDescriptions();
+    TransformDescription getTransformDescription(TransformId id);
 
     std::vector<QString> getAllTransformTypes();
-
     std::vector<QString> getTransformCategories(QString transformType);
     std::vector<QString> getTransformMakers(QString transformType);
 
@@ -43,6 +43,13 @@ public:
      * Return true if the given transform is known.
      */
     bool haveTransform(TransformId identifier);
+
+    /**
+     * A single transform ID can lead to many possible Transforms,
+     * with different parameters and execution context settings.
+     * Return the default one for the given transform.
+     */
+    Transform getDefaultTransformFor(TransformId identifier, size_t rate = 0);
 
     /**
      * Full name of a transform, suitable for putting on a menu.
@@ -56,6 +63,8 @@ public:
     QString getTransformFriendlyName(TransformId identifier);
 
     QString getTransformUnits(TransformId identifier);
+
+    Vamp::Plugin::InputDomain getTransformInputDomain(TransformId identifier);
 
     /**
      * Return true if the transform has any configurable parameters,
@@ -82,6 +91,12 @@ public:
     void setParametersFromPlugin(Transform &transform, Vamp::PluginBase *plugin);
 
     /**
+     * Set the parameters, program and configuration strings on the
+     * given plugin from the given Transform object.
+     */
+    void setPluginParameters(const Transform &transform, Vamp::PluginBase *plugin);
+    
+    /**
      * If the given Transform object has no processing step and block
      * sizes set, set them to appropriate defaults for the given
      * plugin.
@@ -89,11 +104,27 @@ public:
     void makeContextConsistentWithPlugin(Transform &transform, Vamp::PluginBase *plugin); 
 
     /**
-     * A single transform ID can lead to many possible Transforms,
-     * with different parameters and execution context settings.
-     * Return the default one for the given transform.
+     * Retrieve a <plugin ... /> XML fragment that describes the
+     * plugin parameters, program and configuration data for the given
+     * transform.
+     *
+     * This function is provided for backward compatibility only.  Use
+     * Transform::toXml where compatibility with PluginXml
+     * descriptions of transforms is not required.
      */
-    Transform getDefaultTransformFor(TransformId identifier, size_t rate = 0);
+    QString getPluginConfigurationXml(const Transform &transform);
+
+    /**
+     * Set the plugin parameters, program and configuration strings on
+     * the given Transform object from the given <plugin ... /> XML
+     * fragment.
+     *
+     * This function is provided for backward compatibility only.  Use
+     * Transform(QString) where compatibility with PluginXml
+     * descriptions of transforms is not required.
+     */
+    void setParametersFromPluginConfigurationXml(Transform &transform,
+                                                 QString xml);
 
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
@@ -102,6 +133,9 @@ protected:
     void populateTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
+
+    Vamp::PluginBase *instantiatePluginFor(TransformId id, size_t rate);
+    Vamp::Plugin *downcastVampPlugin(Vamp::PluginBase *);
 
     static TransformFactory *m_instance;
 };

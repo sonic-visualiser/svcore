@@ -15,8 +15,9 @@
 
 #include "ModelTransformer.h"
 
-ModelTransformer::ModelTransformer(Model *m) :
-    m_input(m),
+ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
+    m_transform(transform),
+    m_input(input),
     m_output(0),
     m_detached(false),
     m_abandoned(false)
