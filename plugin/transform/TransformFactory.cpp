@@ -28,6 +28,7 @@
 #include <set>
 
 #include <QRegExp>
+#include <QTextStream>
 
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
@@ -43,7 +44,7 @@ TransformFactory::~TransformFactory()
 }
 
 TransformList
-TransformFactory::getAllTransforms()
+TransformFactory::getAllTransformDescriptions()
 {
     if (m_transforms.empty()) populateTransforms();
 
@@ -60,6 +61,18 @@ TransformFactory::getAllTransforms()
     }
 
     return list;
+}
+
+TransformDescription
+TransformFactory::getTransformDescription(TransformId id)
+{
+    if (m_transforms.empty()) populateTransforms();
+
+    if (m_transforms.find(id) == m_transforms.end()) {
+        return TransformDescription();
+    }
+
+    return m_transforms[id];
 }
 
 std::vector<QString>
@@ -217,7 +230,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	}
 
 	Vamp::Plugin *plugin = 
-	    factory->instantiatePlugin(pluginId, 48000);
+	    factory->instantiatePlugin(pluginId, 44100);
 
 	if (!plugin) {
 	    std::cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << std::endl;
@@ -423,6 +436,71 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
     }
 }
 
+
+Transform
+TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
+{
+    Transform t;
+    t.setIdentifier(id);
+    if (rate != 0) t.setSampleRate(rate);
+
+    Vamp::PluginBase *plugin = instantiatePluginFor(id, rate);
+
+    if (plugin) {
+        setParametersFromPlugin(t, plugin);
+        makeContextConsistentWithPlugin(t, plugin);
+        delete plugin;
+    }
+
+    return t;
+}
+
+Vamp::PluginBase *
+TransformFactory::instantiatePluginFor(TransformId identifier, size_t rate)
+{
+    Transform t;
+    t.setIdentifier(identifier);
+    if (rate == 0) rate = 44100;
+    QString pluginId = t.getPluginIdentifier();
+
+    Vamp::PluginBase *plugin = 0;
+
+    if (t.getType() == Transform::FeatureExtraction) {
+
+        FeatureExtractionPluginFactory *factory = 
+            FeatureExtractionPluginFactory::instanceFor(pluginId);
+
+        plugin = factory->instantiatePlugin(pluginId, rate);
+
+    } else {
+
+        RealTimePluginFactory *factory = 
+            RealTimePluginFactory::instanceFor(pluginId);
+            
+        plugin = factory->instantiatePlugin(pluginId, 0, 0, rate, 1024, 1);
+    }
+
+    return plugin;
+}
+
+Vamp::Plugin *
+TransformFactory::downcastVampPlugin(Vamp::PluginBase *plugin)
+{
+    Vamp::Plugin *vp = dynamic_cast<Vamp::Plugin *>(plugin);
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << std::endl;
+        vp = dynamic_cast<Vamp::PluginHostAdapter *>(plugin); //!!! why?
+}
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << std::endl;
+        vp = dynamic_cast<Vamp::HostExt::PluginWrapper *>(plugin); //!!! no, I mean really why?
+    }
+    if (!vp) {
+//        std::cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << std::endl;
+    }
+    return vp;
+}
+
 bool
 TransformFactory::haveTransform(TransformId identifier)
 {
@@ -454,6 +532,28 @@ TransformFactory::getTransformUnits(TransformId identifier)
     } else return "";
 }
 
+Vamp::Plugin::InputDomain
+TransformFactory::getTransformInputDomain(TransformId identifier)
+{
+    Transform transform;
+    transform.setIdentifier(identifier);
+
+    if (transform.getType() != Transform::FeatureExtraction) {
+        return Vamp::Plugin::TimeDomain;
+    }
+
+    Vamp::Plugin *plugin =
+        downcastVampPlugin(instantiatePluginFor(identifier, 0));
+
+    if (plugin) {
+        Vamp::Plugin::InputDomain d = plugin->getInputDomain();
+        delete plugin;
+        return d;
+    }
+
+    return Vamp::Plugin::TimeDomain;
+}
+
 bool
 TransformFactory::isTransformConfigurable(TransformId identifier)
 {
@@ -472,7 +572,7 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
         Vamp::Plugin *plugin = 
             FeatureExtractionPluginFactory::instanceFor(id)->
-            instantiatePlugin(id, 48000);
+            instantiatePlugin(id, 44100);
         if (!plugin) return false;
 
         min = plugin->getMinChannelCount();
@@ -482,6 +582,8 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
         return true;
 
     } else if (RealTimePluginFactory::instanceFor(id)) {
+
+        // don't need to instantiate
 
         const RealTimePluginDescriptor *descriptor = 
             RealTimePluginFactory::instanceFor(id)->
@@ -502,6 +604,10 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
                                           Vamp::PluginBase *plugin)
 {
     Transform::ParameterMap pmap;
+
+    //!!! record plugin & API version
+
+    //!!! check that this is the right plugin!
 
     Vamp::PluginBase::ParameterList parameters =
         plugin->getParameterDescriptors();
@@ -539,21 +645,48 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
 }
 
 void
+TransformFactory::setPluginParameters(const Transform &transform,
+                                      Vamp::PluginBase *plugin)
+{
+    //!!! check plugin & API version (see e.g. PluginXml::setParameters)
+
+    //!!! check that this is the right plugin!
+
+    RealTimePluginInstance *rtpi =
+        dynamic_cast<RealTimePluginInstance *>(plugin);
+
+    if (rtpi) {
+        const Transform::ConfigurationMap &cmap = transform.getConfiguration();
+        for (Transform::ConfigurationMap::const_iterator i = cmap.begin();
+             i != cmap.end(); ++i) {
+            rtpi->configure(i->first.toStdString(), i->second.toStdString());
+        }
+    }
+
+    if (transform.getProgram() != "") {
+        plugin->selectProgram(transform.getProgram().toStdString());
+    }
+
+    const Transform::ParameterMap &pmap = transform.getParameters();
+
+    Vamp::PluginBase::ParameterList parameters =
+        plugin->getParameterDescriptors();
+
+    for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
+         i != parameters.end(); ++i) {
+        QString key = i->identifier.c_str();
+        Transform::ParameterMap::const_iterator pmi = pmap.find(key);
+        if (pmi != pmap.end()) {
+            plugin->setParameter(i->identifier, pmi->second);
+        }
+    }
+}
+
+void
 TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
                                                   Vamp::PluginBase *plugin)
 {
-    const Vamp::Plugin *vp = dynamic_cast<const Vamp::Plugin *>(plugin);
-    if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << std::endl;
-        vp = dynamic_cast<const Vamp::PluginHostAdapter *>(plugin); //!!! why?
-}
-    if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << std::endl;
-        vp = dynamic_cast<const Vamp::HostExt::PluginWrapper *>(plugin); //!!! no, I mean really why?
-    }
-    if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << std::endl;
-    }
+    const Vamp::Plugin *vp = downcastVampPlugin(plugin);
 
     if (!vp) {
         // time domain input for real-time effects plugin
@@ -586,49 +719,40 @@ TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
     }
 }
 
-Transform
-TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
+QString
+TransformFactory::getPluginConfigurationXml(const Transform &t)
 {
-    Transform t;
-    t.setIdentifier(id);
-    
-    if (rate == 0) {
-        rate = 44100;
-    } else {
-        t.setSampleRate(rate);
+    QString xml;
+
+    Vamp::PluginBase *plugin = instantiatePluginFor(t.getIdentifier(), 0);
+    if (!plugin) {
+        std::cerr << "TransformFactory::getPluginConfigurationXml: "
+                  << "Unable to instantiate plugin for transform \""
+                  << t.getIdentifier().toStdString() << "\"" << std::endl;
+        return xml;
     }
 
-    QString pluginId = t.getPluginIdentifier();
+    QTextStream out(&xml);
+    PluginXml(plugin).toXml(out);
+    delete plugin;
 
-    if (t.getType() == Transform::FeatureExtraction) {
+    return xml;
+}
 
-        FeatureExtractionPluginFactory *factory = 
-            FeatureExtractionPluginFactory::instanceFor(pluginId);
-
-        Vamp::Plugin *plugin = factory->instantiatePlugin
-            (pluginId, rate);
-
-        if (plugin) {
-            setParametersFromPlugin(t, plugin);
-            makeContextConsistentWithPlugin(t, plugin);
-            delete plugin;
-        }
-
-    } else {
-
-        RealTimePluginFactory *factory = 
-            RealTimePluginFactory::instanceFor(pluginId);
-            
-        RealTimePluginInstance *plugin = factory->instantiatePlugin
-            (pluginId, 0, 0, rate, 1024, 1);
-        
-        if (plugin) {
-            setParametersFromPlugin(t, plugin);
-            makeContextConsistentWithPlugin(t, plugin);
-            delete plugin;
-        }
+void
+TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
+                                                          QString xml)
+{
+    Vamp::PluginBase *plugin = instantiatePluginFor(t.getIdentifier(), 0);
+    if (!plugin) {
+        std::cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
+                  << "Unable to instantiate plugin for transform \""
+                  << t.getIdentifier().toStdString() << "\"" << std::endl;
+        return;
     }
 
-    return t;
+    PluginXml(plugin).setParametersFromXml(xml);
+    setParametersFromPlugin(t, plugin);
+    delete plugin;
 }
 

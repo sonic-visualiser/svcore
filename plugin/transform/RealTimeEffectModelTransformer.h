@@ -16,34 +16,27 @@
 #ifndef _REAL_TIME_PLUGIN_TRANSFORMER_H_
 #define _REAL_TIME_PLUGIN_TRANSFORMER_H_
 
-#include "PluginTransformer.h"
+#include "ModelTransformer.h"
 #include "plugin/RealTimePluginInstance.h"
 
 class DenseTimeValueModel;
 
-class RealTimeEffectModelTransformer : public PluginTransformer
+class RealTimeEffectModelTransformer : public ModelTransformer
 {
 public:
-    RealTimeEffectModelTransformer(Model *inputModel,
-			    QString plugin,
-                            const ExecutionContext &context,
-			    QString configurationXml = "",
-                            QString units = "",
-			    int output = -1); // -1 -> audio, 0+ -> data
+    RealTimeEffectModelTransformer(Input input,
+                                   const Transform &transform);
     virtual ~RealTimeEffectModelTransformer();
 
 protected:
     virtual void run();
 
-    QString m_pluginId;
-    QString m_configurationXml;
     QString m_units;
-
     RealTimePluginInstance *m_plugin;
     int m_outputNo;
 
     // just casts
-    DenseTimeValueModel *getInput();
+    DenseTimeValueModel *getConformingInput();
 };
 
 #endif

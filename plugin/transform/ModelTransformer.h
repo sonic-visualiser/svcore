@@ -20,6 +20,8 @@
 
 #include "data/model/Model.h"
 
+#include "Transform.h"
+
 /**
  * A ModelTransformer turns one data model into another.
  *
@@ -38,19 +40,38 @@ class ModelTransformer : public Thread
 public:
     virtual ~ModelTransformer();
 
+    class Input {
+    public:
+        Input(Model *m) : m_model(m), m_channel(-1) { }
+        Input(Model *m, int c) : m_model(m), m_channel(c) { }
+
+        Model *getModel() const { return m_model; }
+        void setModel(Model *m) { m_model = m; }
+
+        int getChannel() const { return m_channel; }
+        void setChannel(int c) { m_channel = c; }
+
+    protected:
+        Model *m_model;
+        int m_channel;
+    };
+
     // Just a hint to the processing thread that it should give up.
     // Caller should still wait() and/or delete the transform before
     // assuming its input and output models are no longer required.
     void abandon() { m_abandoned = true; }
 
-    Model *getInputModel()  { return m_input; }
+    Model *getInputModel()  { return m_input.getModel(); }
+    int getInputChannel() { return m_input.getChannel(); }
+
     Model *getOutputModel() { return m_output; }
     Model *detachOutputModel() { m_detached = true; return m_output; }
 
 protected:
-    ModelTransformer(Model *m);
+    ModelTransformer(Input input, const Transform &transform);
 
-    Model *m_input; // I don't own this
+    Transform m_transform;
+    Input m_input; // I don't own the model in this
     Model *m_output; // I own this, unless...
     bool m_detached; // ... this is true.
     bool m_abandoned;
