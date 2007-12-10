@@ -98,6 +98,9 @@ public:
      * the transform was a feature-extraction type -- call
      * downcastVampPlugin if you only want Vamp::Plugins).  Returns
      * NULL if no suitable plugin was available.
+     *
+     * The returned plugin is owned by the caller, and should be
+     * deleted (using "delete") when no longer needed.
      */
     Vamp::PluginBase *instantiatePluginFor(const Transform &transform);
 
