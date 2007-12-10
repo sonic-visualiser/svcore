@@ -176,6 +176,25 @@ Transform::getOutput() const
     return m_id.section(':', 3);
 }
 
+void
+Transform::setPluginIdentifier(QString pluginIdentifier)
+{
+    m_id = pluginIdentifier + ':' + getOutput();
+}
+
+void
+Transform::setOutput(QString output)
+{
+    m_id = getPluginIdentifier() + ':' + output;
+}
+
+TransformId
+Transform::getIdentifierForPluginOutput(QString pluginIdentifier,
+                                        QString output)
+{
+    return pluginIdentifier + ':' + output;
+}
+
 const Transform::ParameterMap &
 Transform::getParameters() const
 {

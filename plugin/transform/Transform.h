@@ -59,15 +59,21 @@ public:
 
     void setIdentifier(TransformId id);
     TransformId getIdentifier() const;
-    
-    void setPlugin(QString pluginIdentifier);
-    void setOutput(QString output);
 
     enum Type { FeatureExtraction, RealTimeEffect };
 
     Type getType() const;
     QString getPluginIdentifier() const;
     QString getOutput() const;
+    
+    void setPluginIdentifier(QString pluginIdentifier);
+    void setOutput(QString output);
+
+    // Turn a plugin ID and output name into a transform ID.  Note
+    // that our pluginIdentifier is the same thing as the Vamp SDK's
+    // PluginLoader::PluginKey.
+    static TransformId getIdentifierForPluginOutput(QString pluginIdentifier,
+                                                    QString output = "");
 
     typedef std::map<QString, float> ParameterMap;
     
