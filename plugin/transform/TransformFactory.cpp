@@ -444,7 +444,7 @@ TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
     t.setIdentifier(id);
     if (rate != 0) t.setSampleRate(rate);
 
-    Vamp::PluginBase *plugin = instantiatePluginFor(id, rate);
+    Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
     if (plugin) {
         setParametersFromPlugin(t, plugin);
@@ -456,7 +456,18 @@ TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
 }
 
 Vamp::PluginBase *
-TransformFactory::instantiatePluginFor(TransformId identifier, size_t rate)
+TransformFactory::instantiatePluginFor(const Transform &transform)
+{
+    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
+        (transform.getIdentifier(), transform.getSampleRate());
+    if (plugin) {
+        setPluginParameters(transform, plugin);
+    }
+    return plugin;
+}
+
+Vamp::PluginBase *
+TransformFactory::instantiateDefaultPluginFor(TransformId identifier, size_t rate)
 {
     Transform t;
     t.setIdentifier(identifier);
@@ -543,7 +554,7 @@ TransformFactory::getTransformInputDomain(TransformId identifier)
     }
 
     Vamp::Plugin *plugin =
-        downcastVampPlugin(instantiatePluginFor(identifier, 0));
+        downcastVampPlugin(instantiateDefaultPluginFor(identifier, 0));
 
     if (plugin) {
         Vamp::Plugin::InputDomain d = plugin->getInputDomain();
@@ -724,13 +735,16 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
 {
     QString xml;
 
-    Vamp::PluginBase *plugin = instantiatePluginFor(t.getIdentifier(), 0);
+    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
+        (t.getIdentifier(), 0);
     if (!plugin) {
         std::cerr << "TransformFactory::getPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
                   << t.getIdentifier().toStdString() << "\"" << std::endl;
         return xml;
     }
+
+    setPluginParameters(t, plugin);
 
     QTextStream out(&xml);
     PluginXml(plugin).toXml(out);
@@ -743,7 +757,8 @@ void
 TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
                                                           QString xml)
 {
-    Vamp::PluginBase *plugin = instantiatePluginFor(t.getIdentifier(), 0);
+    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
+        (t.getIdentifier(), 0);
     if (!plugin) {
         std::cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""

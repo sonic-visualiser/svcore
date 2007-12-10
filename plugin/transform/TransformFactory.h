@@ -83,6 +83,32 @@ public:
                                   int &minChannels, int &maxChannels);
 
     /**
+     * Load an appropriate plugin for the given transform and set the
+     * parameters, program and configuration strings on that plugin
+     * from the Transform object.
+     *
+     * Note that this requires that the transform has a meaningful
+     * sample rate set, as that is used as the rate for the plugin.  A
+     * Transform can legitimately have rate set at zero (= "use the
+     * rate of the input source"), so the caller will need to test for
+     * this case.
+     *
+     * Returns the plugin thus loaded.  This will be a
+     * Vamp::PluginBase, but not necessarily a Vamp::Plugin (only if
+     * the transform was a feature-extraction type -- call
+     * downcastVampPlugin if you only want Vamp::Plugins).  Returns
+     * NULL if no suitable plugin was available.
+     */
+    Vamp::PluginBase *instantiatePluginFor(const Transform &transform);
+
+    /**
+     * Convert a Vamp::PluginBase to a Vamp::Plugin, if it is one.
+     * Return NULL otherwise.  This ill-fitting convenience function
+     * is really just a dynamic_cast wrapper.
+     */
+    Vamp::Plugin *downcastVampPlugin(Vamp::PluginBase *);
+
+    /**
      * Set the plugin parameters, program and configuration strings on
      * the given Transform object from the given plugin instance.
      * Note that no check is made whether the plugin is actually the
@@ -134,8 +160,7 @@ protected:
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
 
-    Vamp::PluginBase *instantiatePluginFor(TransformId id, size_t rate);
-    Vamp::Plugin *downcastVampPlugin(Vamp::PluginBase *);
+    Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, size_t rate);
 
     static TransformFactory *m_instance;
 };
