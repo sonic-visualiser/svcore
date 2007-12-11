@@ -54,6 +54,8 @@ public:
     };
     PropertyBoxLayout getPropertyBoxLayout() const { return m_propertyBoxLayout; }
 
+    int getViewFontSize() const { return m_viewFontSize; }
+
     bool getOmitTempsFromRecentFiles() const { return m_omitRecentTemps; }
 
     QString getTemporaryDirectoryRoot() const { return m_tempDirRoot; }
@@ -79,6 +81,7 @@ public slots:
     void setTemporaryDirectoryRoot(QString tempDirRoot);
     void setResampleOnLoad(bool);
     void setBackgroundMode(BackgroundMode mode);
+    void setViewFontSize(int size);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -94,6 +97,7 @@ private:
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
     bool m_resampleOnLoad;
+    int m_viewFontSize;
     BackgroundMode m_backgroundMode;
 };
 
