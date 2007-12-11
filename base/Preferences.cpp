@@ -23,6 +23,8 @@
 #include <QFileInfo>
 #include <QMutex>
 #include <QSettings>
+#include <QApplication>
+#include <QFont>
 
 Preferences *
 Preferences::m_instance = 0;
@@ -42,7 +44,9 @@ Preferences::Preferences() :
     m_resampleQuality(1),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
-    m_resampleOnLoad(false)
+    m_resampleOnLoad(false),
+    m_viewFontSize(10),
+    m_backgroundMode(BackgroundFromTheme)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -57,6 +61,8 @@ Preferences::Preferences() :
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
+    m_viewFontSize = settings.value
+        ("view-font-size", QApplication::font().pointSize() * 0.9).toInt();
     settings.endGroup();
 
     settings.beginGroup("TempDirectory");
@@ -81,6 +87,7 @@ Preferences::getProperties() const
     props.push_back("Resample On Load");
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
+    props.push_back("View Font Size");
     return props;
 }
 
@@ -113,6 +120,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Background Mode") {
         return tr("Background colour preference");
+    }
+    if (name == "View Font Size") {
+        return tr("Font size for text overlays");
     }
     return name;
 }
@@ -147,6 +157,9 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Background Mode") {
         return ValueProperty;
+    }
+    if (name == "View Font Size") {
+        return RangeProperty;
     }
     return InvalidProperty;
 }
@@ -195,6 +208,13 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         if (deflt) *deflt = 0;
         return int(m_backgroundMode);
     }        
+
+    if (name == "View Font Size") {
+        if (min) *min = 3;
+        if (max) *max = 48;
+        if (deflt) *deflt = int(QApplication::font().pointSize() * 0.9);
+        return int(m_viewFontSize);
+    }
 
     return 0;
 }
@@ -274,6 +294,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setOmitTempsFromRecentFiles(value ? true : false);
     } else if (name == "Background Mode") {
         setBackgroundMode(BackgroundMode(value));
+    } else if (name == "View Font Size") {
+        setViewFontSize(value);
     }
 }
 
@@ -403,4 +425,18 @@ Preferences::setBackgroundMode(BackgroundMode mode)
     }
 }
 
+void
+Preferences::setViewFontSize(int size)
+{
+    if (m_viewFontSize != size) {
+
+        m_viewFontSize = size;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("view-font-size", size);
+        settings.endGroup();
+        emit propertyChanged("View Font Size");
+    }
+}
 
