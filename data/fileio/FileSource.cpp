@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -200,17 +200,37 @@ void
 FileSource::init(bool showProgress)
 {
     if (!isRemote()) {
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: Not a remote URL" << std::endl;
+#endif
+        bool literal = false;
         m_localFilename = m_url.toLocalFile();
         if (m_localFilename == "") {
             // QUrl may have mishandled the scheme (e.g. in a DOS path)
             m_localFilename = m_url.toString();
+            literal = true;
         }
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: URL translates to local filename \""
+                  << m_localFilename.toStdString() << "\"" << std::endl;
+#endif
         m_ok = true;
+        m_lastStatus = 200;
+
         if (!QFileInfo(m_localFilename).exists()) {
-            m_lastStatus = 404;
-        } else {
-            m_lastStatus = 200;
+            if (literal) {
+                m_lastStatus = 404;
+            } else {
+                // Again, QUrl may have been mistreating us --
+                // e.g. dropping a part that looks like query data
+                m_localFilename = m_url.toString();
+                literal = true;
+                if (!QFileInfo(m_localFilename).exists()) {
+                    m_lastStatus = 404;
+                }
+            }
         }
+
         m_done = true;
         return;
     }
