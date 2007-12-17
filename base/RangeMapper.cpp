@@ -60,17 +60,42 @@ LinearRangeMapper::getValueForPosition(int position) const
 }
 
 LogRangeMapper::LogRangeMapper(int minpos, int maxpos,
-                               float ratio, float minlog,
+                               float minval, float maxval,
                                QString unit) :
     m_minpos(minpos),
     m_maxpos(maxpos),
-    m_ratio(ratio),
-    m_minlog(minlog),
     m_unit(unit)
 {
+    convertMinMax(minpos, maxpos, minval, maxval, m_minlog, m_ratio);
+
+    std::cerr << "LogRangeMapper: minpos " << minpos << ", maxpos "
+              << maxpos << ", minval " << minval << ", maxval "
+              << maxval << ", minlog " << m_minlog << ", ratio " << m_ratio
+              << ", unit " << unit.toStdString() << std::endl;
+
     assert(m_maxpos != m_minpos);
 
     m_maxlog = (m_maxpos - m_minpos) / m_ratio + m_minlog;
+}
+
+void
+LogRangeMapper::convertMinMax(int minpos, int maxpos,
+                              float minval, float maxval,
+                              float &minlog, float &ratio)
+{
+    static float thresh = powf(10, -10);
+    if (minval < thresh) minval = thresh;
+    minlog = log10f(minval);
+    ratio = (maxpos - minpos) / (log10f(maxval) - minlog);
+}
+
+void
+LogRangeMapper::convertRatioMinLog(float ratio, float minlog,
+                                   int minpos, int maxpos,
+                                   float &minval, float &maxval)
+{
+    minval = powf(10, minlog);
+    maxval = powf(10, (maxpos - minpos) / ratio + minlog);
 }
 
 int
@@ -79,8 +104,8 @@ LogRangeMapper::getPositionForValue(float value) const
     int position = (log10(value) - m_minlog) * m_ratio + m_minpos;
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
-//    std::cerr << "LogRangeMapper::getPositionForValue: " << value << " -> "
-//              << position << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << std::endl;
+    std::cerr << "LogRangeMapper::getPositionForValue: " << value << " -> "
+              << position << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << std::endl;
     return position;
 }
 
@@ -88,8 +113,8 @@ float
 LogRangeMapper::getValueForPosition(int position) const
 {
     float value = powf(10, (position - m_minpos) / m_ratio + m_minlog);
-//    std::cerr << "LogRangeMapper::getValueForPosition: " << position << " -> "
-//              << value << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << std::endl;
+    std::cerr << "LogRangeMapper::getValueForPosition: " << position << " -> "
+              << value << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << std::endl;
     return value;
 }
 
