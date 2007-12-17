@@ -54,8 +54,16 @@ class LogRangeMapper : public RangeMapper
 {
 public:
     LogRangeMapper(int minpos, int maxpos,
-                   float ratio, float minlog,
+                   float minval, float maxval,
                    QString m_unit = "");
+
+    static void convertRatioMinLog(float ratio, float minlog,
+                                   int minpos, int maxpos,
+                                   float &minval, float &maxval);
+
+    static void convertMinMax(int minpos, int maxpos,
+                              float minval, float maxval,
+                              float &ratio, float &minlog);
 
     virtual int getPositionForValue(float value) const;
     virtual float getValueForPosition(int position) const;

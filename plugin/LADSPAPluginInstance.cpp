@@ -515,6 +515,19 @@ LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
     }
 }
 
+int
+LADSPAPluginInstance::getParameterDisplayHint(unsigned int parameter) const
+{
+    if (parameter >= m_controlPortsIn.size()) return 0.0;
+
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    if (f) {
+	return f->getPortDisplayHint(m_descriptor, m_controlPortsIn[parameter].first);
+    } else {
+	return PortHint::NoHint;
+    }
+}
+
 void
 LADSPAPluginInstance::run(const Vamp::RealTime &)
 {
