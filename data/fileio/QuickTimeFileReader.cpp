@@ -236,6 +236,8 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
                 break;
             }
 
+            //!!! progress?
+
 //    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
 
             // QuickTime buffers are interleaved unless specified otherwise

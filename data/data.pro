@@ -38,6 +38,7 @@ HEADERS += fft/FFTapi.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
            fileio/PlaylistFileReader.h \
+           fileio/ProgressPrinter.h \
            fileio/QuickTimeFileReader.h \
            fileio/ResamplingWavFileReader.h \
            fileio/WavFileReader.h \
@@ -85,6 +86,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
            fileio/PlaylistFileReader.cpp \
+           fileio/ProgressPrinter.cpp \
            fileio/QuickTimeFileReader.cpp \
            fileio/ResamplingWavFileReader.cpp \
            fileio/WavFileReader.cpp \

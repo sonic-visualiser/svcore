@@ -17,6 +17,8 @@
 #ifdef HAVE_MAD
 
 #include "MP3FileReader.h"
+#include "ProgressPrinter.h"
+
 #include "system/System.h"
 
 #include <sys/types.h>
@@ -111,6 +113,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                 (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
                  QObject::tr("Stop"), 0, 100);
             m_progress->hide();
+        } else {
+            ProgressPrinter *pp = new ProgressPrinter(tr("Decoding..."), this);
+            connect(this, SIGNAL(progress(int)), pp, SLOT(progress(int)));
         }
 
         if (!decode(m_filebuffer, m_fileSize)) {
@@ -343,7 +348,7 @@ MP3FileReader::accept(struct mad_header const *header,
         initialiseDecodeCache();
 
         if (m_cacheMode == CacheInTemporaryFile) {
-            m_completion = 1;
+//            m_completion = 1;
             std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
             startSerialised("MP3FileReader::Decode");
         }
@@ -354,18 +359,21 @@ MP3FileReader::accept(struct mad_header const *header,
         double duration = double(m_fileSize * 8) / bitrate;
         double elapsed = double(m_frameCount) / m_sampleRate;
         double percent = ((elapsed * 100.0) / duration);
-        int progress = int(percent);
-        if (progress < 1) progress = 1;
-        if (progress > 99) progress = 99;
-        m_completion = progress;
-        if (m_progress) {
-            if (progress > m_progress->value()) {
-                m_progress->setValue(progress);
-                m_progress->show();
-                m_progress->raise();
-                qApp->processEvents();
-                if (m_progress->wasCanceled()) {
-                    m_cancelled = true;
+        int p = int(percent);
+        if (p < 1) p = 1;
+        if (p > 99) p = 99;
+        if (m_completion != p || (m_progress && !m_progress->isVisible())) {
+            m_completion = p;
+            emit progress(m_completion);
+            if (m_progress) {
+                if (m_completion > m_progress->value()) {
+                    m_progress->setValue(m_completion);
+                    m_progress->show();
+                    m_progress->raise();
+                    qApp->processEvents();
+                    if (m_progress->wasCanceled()) {
+                        m_cancelled = true;
+                    }
                 }
             }
         }
