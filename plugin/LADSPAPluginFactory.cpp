@@ -151,7 +151,6 @@ LADSPAPluginFactory::getPortMinimum(const LADSPA_Descriptor *descriptor, int por
 		
     if (LADSPA_IS_HINT_BOUNDED_BELOW(d)) {
 	float lb = descriptor->PortRangeHints[port].LowerBound;
-        std::cerr << "LADSPAPluginFactory::getPortMinimum: bounded below at " << lb << std::endl;
 	minimum = lb;
     } else if (LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
 	float ub = descriptor->PortRangeHints[port].UpperBound;
@@ -225,7 +224,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
         else logmax = log10f(maximum);
     }
 
-    std::cerr << "LADSPAPluginFactory::getPortDefault: hint = " << d << std::endl;
+//    std::cerr << "LADSPAPluginFactory::getPortDefault: hint = " << d << std::endl;
 
     if (!LADSPA_IS_HINT_HAS_DEFAULT(d)) {
 	
