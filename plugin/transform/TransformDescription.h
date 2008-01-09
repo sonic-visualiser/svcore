@@ -66,7 +66,9 @@ struct TransformDescription
     bool configurable;
     
     bool operator<(const TransformDescription &od) const {
-        return (name < od.name);
+        return
+            (name <  od.name) ||
+            (name == od.name && identifier < od.identifier);
     };
 };
 

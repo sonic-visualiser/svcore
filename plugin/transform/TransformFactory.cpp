@@ -51,12 +51,14 @@ TransformFactory::getAllTransformDescriptions()
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
+//        std::cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << std::endl;
 	dset.insert(i->second);
     }
 
     TransformList list;
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
+//        std::cerr << "inserting transform into list: id = " << i->identifier.toStdString() << std::endl;
 	list.push_back(*i);
     }
 
@@ -286,7 +288,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
             bool configurable = (!plugin->getPrograms().empty() ||
                                  !plugin->getParameterDescriptors().empty());
 
-//            std::cerr << "Feature extraction plugin transform: " << transformId.toStdString() << std::endl;
+//            std::cerr << "Feature extraction plugin transform: " << transformId.toStdString() << " friendly name: " << friendlyName.toStdString() << std::endl;
 
 	    transforms[transformId] = 
                 TransformDescription(tr("Analysis"),
