@@ -77,6 +77,7 @@ StorageAdviser::recommend(Criteria criteria,
     else if (minmb > (memoryFree / 3)) memoryStatus = Marginal;
     else if (memoryTotal == -1 ||
              minmb > (memoryTotal / 10)) memoryStatus = Marginal;
+    else if (memoryFree < memoryTotal / 4) memoryStatus = Marginal;
     else memoryStatus = Sufficient;
 
     if (discFree == -1) discStatus = Unknown;

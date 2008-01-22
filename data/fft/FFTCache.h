@@ -49,6 +49,9 @@ public:
 
     virtual void suspend() { }
 
+    enum Type { MemoryCache, FileCache };
+    virtual Type getType() = 0;
+
 protected:
     FFTCache() { }
 };

@@ -135,19 +135,11 @@ private:
     size_t m_cacheWidth;
     size_t m_cacheWidthPower;
     size_t m_cacheWidthMask;
-    bool m_memoryCache;
-    bool m_compactCache;
-
-    typedef std::vector<FFTCache *> CacheVector;
-    CacheVector m_caches;
-    
-    typedef std::deque<int> IntQueue;
-    IntQueue m_dormantCaches;
 
     int m_lastUsedCache;
     FFTCache *getCache(size_t x, size_t &col) {
-        col   = x % m_cacheWidth;
-        int c = x / m_cacheWidth;
+        col   = x & m_cacheWidthMask;
+        int c = x >> m_cacheWidthPower;
         // The only use of m_lastUsedCache without a lock is to
         // establish whether a cache has been created at all (they're
         // created on demand, but not destroyed until the server is).
@@ -155,10 +147,20 @@ private:
         else return getCacheAux(c);
     }
     bool haveCache(size_t x) {
-        int c = x / m_cacheWidth;
+        int c = x >> m_cacheWidthPower;
         if (c == m_lastUsedCache) return true;
         else return (m_caches[c] != 0);
     }
+
+    typedef std::vector<FFTCache *> CacheVector;
+    CacheVector m_caches;
+    
+    typedef std::deque<int> IntQueue;
+    IntQueue m_dormantCaches;
+
+    StorageAdviser::Criteria m_criteria;
+
+    void getStorageAdvice(size_t w, size_t h, bool &memory, bool &compact);
         
     FFTCache *getCacheAux(size_t c);
     QMutex m_writeMutex;
