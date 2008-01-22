@@ -58,6 +58,8 @@ public:
 
     static size_t getCacheSize(size_t width, size_t height, StorageType type);
 
+    virtual Type getType() { return FileCache; }
+
 protected:
     char *m_writebuf;
     mutable char *m_readbuf;

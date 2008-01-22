@@ -59,7 +59,7 @@ FFTMemoryCache::~FFTMemoryCache()
 void
 FFTMemoryCache::resize(size_t width, size_t height)
 {
-//    std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
+    std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
     
     if (m_width == width && m_height == height) return;
 
