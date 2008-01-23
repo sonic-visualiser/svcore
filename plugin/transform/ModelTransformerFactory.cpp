@@ -358,7 +358,8 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
 
 Model *
 ModelTransformerFactory::transform(const Transform &transform,
-                                   const ModelTransformer::Input &input)
+                                   const ModelTransformer::Input &input,
+                                   QString &message)
 {
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
@@ -387,6 +388,8 @@ ModelTransformerFactory::transform(const Transform &transform,
     } else {
         t->wait();
     }
+
+    message = t->getMessage();
 
     return model;
 }

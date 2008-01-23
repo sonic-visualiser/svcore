@@ -50,21 +50,19 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	FeatureExtractionPluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	std::cerr << "FeatureExtractionModelTransformer: No factory available for plugin id \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+        m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
 	return;
     }
 
     DenseTimeValueModel *input = getConformingInput();
     if (!input) {
-        std::cerr << "FeatureExtractionModelTransformer: Input model not conformable" << std::endl;
+        m_message = tr("Input model for feature extraction plugin \"%1\" is of wrong type (internal error?)").arg(pluginId);
         return;
     }
 
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
-	std::cerr << "FeatureExtractionModelTransformer: Failed to instantiate plugin \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+        m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
 	return;
     }
 
@@ -79,11 +77,11 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	channelCount = 1;
     }
     if (m_plugin->getMinChannelCount() > channelCount) {
-	std::cerr << "FeatureExtractionModelTransformer:: "
-		  << "Can't provide enough channels to plugin (plugin min "
-		  << m_plugin->getMinChannelCount() << ", max "
-		  << m_plugin->getMaxChannelCount() << ", input model has "
-		  << input->getChannelCount() << ")" << std::endl;
+        m_message = tr("Cannot provide enough channels to feature extraction plugin \"%1\" (plugin min is %2, max %3; input model has %4)")
+            .arg(pluginId)
+            .arg(m_plugin->getMinChannelCount())
+            .arg(m_plugin->getMaxChannelCount())
+            .arg(input->getChannelCount());
 	return;
     }
 
@@ -94,16 +92,46 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     if (!m_plugin->initialise(channelCount,
                               m_transform.getStepSize(),
                               m_transform.getBlockSize())) {
-        std::cerr << "FeatureExtractionModelTransformer: Plugin "
-                  << pluginId.toStdString() << " failed to initialise!" << std::endl;
-        return;
+
+        size_t pstep = m_transform.getStepSize();
+        size_t pblock = m_transform.getBlockSize();
+
+        m_transform.setStepSize(0);
+        m_transform.setBlockSize(0);
+        TransformFactory::getInstance()->makeContextConsistentWithPlugin
+            (m_transform, m_plugin);
+
+        if (m_transform.getStepSize() != pstep ||
+            m_transform.getBlockSize() != pblock) {
+            
+            if (!m_plugin->initialise(channelCount,
+                                      m_transform.getStepSize(),
+                                      m_transform.getBlockSize())) {
+
+                m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
+                return;
+
+            } else {
+
+                m_message = tr("Feature extraction plugin \"%1\" rejected the given step and block sizes (%2 and %3); using plugin defaults (%4 and %5) instead")
+                    .arg(pluginId)
+                    .arg(pstep)
+                    .arg(pblock)
+                    .arg(m_transform.getStepSize())
+                    .arg(m_transform.getBlockSize());
+            }
+
+        } else {
+
+            m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
+            return;
+        }
     }
 
     Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {
-	std::cerr << "FeatureExtractionModelTransformer: Plugin \""
-		  << pluginId.toStdString() << "\" has no outputs" << std::endl;
+        m_message = tr("Plugin \"%1\" has no outputs").arg(pluginId);
 	return;
     }
     
@@ -118,9 +146,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     }
 
     if (!m_descriptor) {
-	std::cerr << "FeatureExtractionModelTransformer: Plugin \""
-		  << pluginId.toStdString() << "\" has no output named \""
-		  << m_transform.getOutput().toStdString() << "\"" << std::endl;
+        m_message = tr("Plugin \"%1\" has no output named \"%2\"")
+            .arg(pluginId)
+            .arg(m_transform.getOutput());
 	return;
     }
 

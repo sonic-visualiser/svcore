@@ -54,14 +54,6 @@ public:
                                  size_t duration = 0);
     
     /**
-     * Get the default execution context for the given transform
-     * and input model (if known).
-     */
-/*!!!
-    PluginTransformer::ExecutionContext getDefaultContextForTransformer(TransformId identifier,
-                                                                        Model *inputModel = 0);
-*/
-    /**
      * Return the output model resulting from applying the named
      * transform to the given input model.  The transform may still be
      * working in the background when the model is returned; check the
@@ -69,13 +61,15 @@ public:
      *
      * If the transform is unknown or the input model is not an
      * appropriate type for the given transform, or if some other
-     * problem occurs, return 0.
+     * problem occurs, return 0.  Set message if there is any error or
+     * warning to report.
      * 
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
     Model *transform(const Transform &transform,
-                     const ModelTransformer::Input &input);
+                     const ModelTransformer::Input &input,
+                     QString &message);
 
 protected slots:
     void transformerFinished();

@@ -18,6 +18,8 @@
 
 #include "ModelTransformer.h"
 
+#include <QString>
+
 #include <vamp-sdk/Plugin.h>
 
 #include <iostream>
