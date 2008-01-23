@@ -56,16 +56,46 @@ public:
         int m_channel;
     };
 
-    // Just a hint to the processing thread that it should give up.
-    // Caller should still wait() and/or delete the transform before
-    // assuming its input and output models are no longer required.
+    /**
+     * Hint to the processing thread that it should give up, for
+     * example because the process is going to exit or we want to get
+     * rid of the input model.  Caller should still wait() and/or
+     * delete the transform before assuming its input and output
+     * models are no longer required.
+     */
     void abandon() { m_abandoned = true; }
 
+    /**
+     * Return the input model for the transform.
+     */
     Model *getInputModel()  { return m_input.getModel(); }
+
+    /**
+     * Return the input channel spec for the transform.
+     */
     int getInputChannel() { return m_input.getChannel(); }
 
+    /**
+     * Return the output model created by the transform.  Returns a
+     * null model if the transform could not be initialised; an error
+     * message may be available via getMessage() in this situation.
+     */
     Model *getOutputModel() { return m_output; }
+
+    /**
+     * Return the output model, also detaching it from the transformer
+     * so that it will not be deleted when the transformer is.  The
+     * caller takes ownership of the model.
+     */
     Model *detachOutputModel() { m_detached = true; return m_output; }
+
+    /**
+     * Return a warning or error message.  If getOutputModel returned
+     * a null pointer, this should contain a fatal error message for
+     * the transformer; otherwise it may contain a warning to show to
+     * the user about e.g. suboptimal block size or whatever.  
+     */
+    QString getMessage() const { return m_message; }
 
 protected:
     ModelTransformer(Input input, const Transform &transform);
@@ -75,6 +105,7 @@ protected:
     Model *m_output; // I own this, unless...
     bool m_detached; // ... this is true.
     bool m_abandoned;
+    QString m_message;
 };
 
 #endif
