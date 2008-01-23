@@ -167,6 +167,9 @@ public:
 
     QString getTypeName() const { return tr("FFT"); }
 
+public slots:
+    void sourceModelAboutToBeDeleted();
+
 private:
     FFTModel(const FFTModel &); // not implemented
     FFTModel &operator=(const FFTModel &); // not implemented
