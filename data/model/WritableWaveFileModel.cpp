@@ -185,10 +185,17 @@ WritableWaveFileModel::getData(int channel, size_t start, size_t count,
                                double *buffer) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
-//    std::cerr << "WritableWaveFileModel::getValues(" << channel << ", "
-//              << start << ", " << end << "): calling model" << std::endl;
     return m_model->getData(channel, start, count, buffer);
 }
+
+size_t
+WritableWaveFileModel::getData(size_t fromchannel, size_t tochannel,
+                               size_t start, size_t count,
+                               float **buffers) const
+{
+    if (!m_model || m_model->getChannelCount() == 0) return 0;
+    return m_model->getData(fromchannel, tochannel, start, count, buffers);
+}    
 
 void
 WritableWaveFileModel::getSummaries(size_t channel, size_t start, size_t count,

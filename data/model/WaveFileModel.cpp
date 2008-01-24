@@ -189,7 +189,7 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     // This is used for e.g. audio playback.
     // Could be much more efficient (although compiler optimisation will help)
 
-    if (start > m_startFrame) {
+    if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
         for (size_t i = 0; i < count; ++i) buffer[i] = 0.f;
@@ -211,12 +211,14 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
 //              << start << ", " << end << "): calling reader" << std::endl;
 #endif
 
-    SampleBlock frames;
+    int channels = getChannelCount();
+
+    SampleBlock frames(count * channels);
     m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
-    int ch0 = channel, ch1 = channel, channels = getChannelCount();
+    int ch0 = channel, ch1 = channel;
     if (channel == -1) {
 	ch0 = 0;
 	ch1 = channels - 1;
@@ -262,12 +264,14 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
         return 0;
     }
 
-    SampleBlock frames;
+    int channels = getChannelCount();
+
+    SampleBlock frames(count * channels);
     m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
-    int ch0 = channel, ch1 = channel, channels = getChannelCount();
+    int ch0 = channel, ch1 = channel;
     if (channel == -1) {
 	ch0 = 0;
 	ch1 = channels - 1;
@@ -287,6 +291,89 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
 	}
 
 	++i;
+    }
+
+    return i;
+}
+
+size_t
+WaveFileModel::getData(size_t fromchannel, size_t tochannel,
+                       size_t start, size_t count,
+                       float **buffer) const
+{
+    size_t channels = getChannelCount();
+
+    if (fromchannel > tochannel) {
+        std::cerr << "ERROR: WaveFileModel::getData: fromchannel ("
+                  << fromchannel << ") > tochannel (" << tochannel << ")"
+                  << std::endl;
+        return 0;
+    }
+
+    if (tochannel >= channels) {
+        std::cerr << "ERROR: WaveFileModel::getData: tochannel ("
+                  << tochannel << ") >= channel count (" << channels << ")"
+                  << std::endl;
+        return 0;
+    }
+
+    if (fromchannel == tochannel) {
+        return getData(fromchannel, start, count, buffer[0]);
+    }
+
+    size_t reqchannels = (tochannel - fromchannel) + 1;
+
+    // Always read these directly from the file. 
+    // This is used for e.g. audio playback.
+    // Could be much more efficient (although compiler optimisation will help)
+
+    if (start >= m_startFrame) {
+        start -= m_startFrame;
+    } else {
+        for (size_t c = 0; c < reqchannels; ++c) {
+            for (size_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
+        }
+        if (count <= m_startFrame - start) {
+            return 0;
+        } else {
+            count -= (m_startFrame - start);
+            start = 0;
+        }
+    }
+
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        for (size_t c = 0; c < reqchannels; ++c) {
+            for (size_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
+        }
+        return 0;
+    }
+
+    SampleBlock frames(count * channels);
+    m_reader->getInterleavedFrames(start, count, frames);
+
+    size_t i = 0;
+
+    int ch0 = fromchannel, ch1 = tochannel;
+    
+    size_t index = 0, available = frames.size();
+
+    while (i < count) {
+
+        if (index >= available) break;
+
+        size_t destc = 0;
+
+        for (size_t c = 0; c < channels; ++c) {
+            
+            if (c >= fromchannel && c <= tochannel) {
+                buffer[destc][i] = frames[index];
+                ++destc;
+            }
+
+            ++index;
+        }
+
+        ++i;
     }
 
     return i;

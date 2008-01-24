@@ -385,17 +385,16 @@ FeatureExtractionModelTransformer::run()
 
 	// channelCount is either m_input.getModel()->channelCount or 1
 
-        for (size_t ch = 0; ch < channelCount; ++ch) {
-            if (frequencyDomain) {
+        if (frequencyDomain) {
+            for (size_t ch = 0; ch < channelCount; ++ch) {
                 int column = (blockFrame - startFrame) / stepSize;
                 for (size_t i = 0; i <= blockSize/2; ++i) {
                     fftModels[ch]->getValuesAt
                         (column, i, buffers[ch][i*2], buffers[ch][i*2+1]);
                 }
-            } else {
-                getFrames(ch, channelCount, 
-                          blockFrame, blockSize, buffers[ch]);
-            }                
+            }
+        } else {
+            getFrames(channelCount, blockFrame, blockSize, buffers);
         }
 
 	Vamp::Plugin::FeatureSet features = m_plugin->process
@@ -435,15 +434,17 @@ FeatureExtractionModelTransformer::run()
 }
 
 void
-FeatureExtractionModelTransformer::getFrames(int channel, int channelCount,
-                                            long startFrame, long size,
-                                            float *buffer)
+FeatureExtractionModelTransformer::getFrames(int channelCount,
+                                             long startFrame, long size,
+                                             float **buffers)
 {
     long offset = 0;
 
     if (startFrame < 0) {
-        for (int i = 0; i < size && startFrame + i < 0; ++i) {
-            buffer[i] = 0.0f;
+        for (int c = 0; c < channelCount; ++c) {
+            for (int i = 0; i < size && startFrame + i < 0; ++i) {
+                buffers[c][i] = 0.0f;
+            }
         }
         offset = -startFrame;
         size -= offset;
@@ -453,23 +454,42 @@ FeatureExtractionModelTransformer::getFrames(int channel, int channelCount,
 
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
+    
+    long got = 0;
 
-    long got = input->getData
-        ((channelCount == 1 ? m_input.getChannel() : channel),
-         startFrame, size, buffer + offset);
+    if (channelCount == 1) {
 
-    while (got < size) {
-        buffer[offset + got] = 0.0;
-        ++got;
+        got = input->getData(m_input.getChannel(), startFrame, size,
+                             buffers[0] + offset);
+
+        if (m_input.getChannel() == -1 && input->getChannelCount() > 1) {
+            // use mean instead of sum, as plugin input
+            float cc = float(input->getChannelCount());
+            for (long i = 0; i < size; ++i) {
+                buffers[0][i + offset] /= cc;
+            }
+        }
+
+    } else {
+
+        float **writebuf = buffers;
+        if (offset > 0) {
+            writebuf = new float *[channelCount];
+            for (int i = 0; i < channelCount; ++i) {
+                writebuf[i] = buffers[i] + offset;
+            }
+        }
+
+        got = input->getData(0, channelCount-1, startFrame, size, writebuf);
+
+        if (writebuf != buffers) delete[] writebuf;
     }
 
-    if (m_input.getChannel() == -1 && channelCount == 1 &&
-        input->getChannelCount() > 1) {
-        // use mean instead of sum, as plugin input
-        int cc = input->getChannelCount();
-        for (long i = 0; i < size; ++i) {
-            buffer[i] /= cc;
+    while (got < size) {
+        for (int c = 0; c < channelCount; ++c) {
+            buffers[c][got + offset] = 0.0;
         }
+        ++got;
     }
 }
 

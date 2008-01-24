@@ -47,8 +47,8 @@ protected:
 
     void setCompletion(int);
 
-    void getFrames(int channel, int channelCount,
-                   long startFrame, long size, float *buffer);
+    void getFrames(int channelCount, long startFrame, long size,
+                   float **buffer);
 
     // just casts
     DenseTimeValueModel *getConformingInput();
