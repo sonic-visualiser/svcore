@@ -195,14 +195,14 @@ RealTimeEffectModelTransformer::run()
                 }
             }
 	} else {
-	    for (size_t ch = 0; ch < channelCount; ++ch) {
-                if (inbufs && inbufs[ch]) {
-                    got = input->getData
-                        (ch, blockFrame, blockSize, inbufs[ch]);
-                    while (got < blockSize) {
-                        inbufs[ch][got++] = 0.0;
-                    }
+            got = input->getData(0, channelCount - 1,
+                                 blockFrame, blockSize,
+                                 inbufs);
+            while (got < blockSize) {
+                for (size_t ch = 0; ch < channelCount; ++ch) {
+                    inbufs[ch][got] = 0.0;
                 }
+                ++got;
 	    }
             for (size_t ch = channelCount; ch < m_plugin->getAudioInputCount(); ++ch) {
                 for (long i = 0; i < blockSize; ++i) {
