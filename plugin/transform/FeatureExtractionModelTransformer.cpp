@@ -128,6 +128,21 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
         }
     }
 
+    if (m_transform.getPluginVersion() != "") {
+        QString pv = QString("%1").arg(m_plugin->getPluginVersion());
+        if (pv != m_transform.getPluginVersion()) {
+            QString vm = tr("Transform was configured for version %1 of plugin \"%2\", but the plugin being used is version %3")
+                .arg(m_transform.getPluginVersion())
+                .arg(pluginId)
+                .arg(pv);
+            if (m_message != "") {
+                m_message = QString("%1; %2").arg(vm).arg(m_message);
+            } else {
+                m_message = vm;
+            }
+        }
+    }
+
     Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
 
     if (outputs.empty()) {

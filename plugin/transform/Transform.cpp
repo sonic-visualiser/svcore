@@ -236,6 +236,18 @@ Transform::setConfigurationValue(QString name, QString value)
 }
 
 QString
+Transform::getPluginVersion() const
+{
+    return m_pluginVersion;
+}
+
+void
+Transform::setPluginVersion(QString version)
+{
+    m_pluginVersion = version;
+}
+
+QString
 Transform::getProgram() const
 {
     return m_program;
@@ -328,16 +340,20 @@ Transform::toXml(QTextStream &out, QString indent, QString extraAttributes) cons
     bool haveContent = true;
     if (m_parameters.empty() && m_configuration.empty()) haveContent = false;
 
-    out << QString("<transform id=\"%1\" program=\"%2\" stepSize=\"%3\" blockSize=\"%4\" windowType=\"%5\" startTime=\"%6\" duration=\"%7\" sampleRate=\"%8\" %9")
+    out << QString("<transform id=\"%1\" pluginVersion=\"%2\" program=\"%3\" stepSize=\"%4\" blockSize=\"%5\" windowType=\"%6\" startTime=\"%7\" duration=\"%8\" sampleRate=\"%9\"")
         .arg(encodeEntities(m_id))
+        .arg(encodeEntities(m_pluginVersion))
         .arg(encodeEntities(m_program))
         .arg(m_stepSize)
         .arg(m_blockSize)
         .arg(encodeEntities(Window<float>::getNameForType(m_windowType).c_str()))
         .arg(encodeEntities(m_startTime.toString().c_str()))
         .arg(encodeEntities(m_duration.toString().c_str()))
-        .arg(m_sampleRate)
-        .arg(extraAttributes);
+        .arg(m_sampleRate);
+
+    if (extraAttributes != "") {
+        out << " " << extraAttributes;
+    }
 
     if (haveContent) {
 
@@ -372,6 +388,10 @@ Transform::setFromXmlAttributes(const QXmlAttributes &attrs)
 {
     if (attrs.value("id") != "") {
         setIdentifier(attrs.value("id"));
+    }
+
+    if (attrs.value("pluginVersion") != "") {
+        setPluginVersion(attrs.value("pluginVersion"));
     }
 
     if (attrs.value("program") != "") {
