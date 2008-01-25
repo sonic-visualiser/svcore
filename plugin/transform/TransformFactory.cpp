@@ -449,6 +449,7 @@ TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
     if (plugin) {
+        t.setPluginVersion(QString("%1").arg(plugin->getPluginVersion()));
         setParametersFromPlugin(t, plugin);
         makeContextConsistentWithPlugin(t, plugin);
         delete plugin;

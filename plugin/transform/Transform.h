@@ -87,6 +87,9 @@ public:
     void setConfiguration(const ConfigurationMap &cm);
     void setConfigurationValue(QString name, QString value);
 
+    QString getPluginVersion() const;
+    void setPluginVersion(QString version);
+
     QString getProgram() const;
     void setProgram(QString program);
     
@@ -116,6 +119,13 @@ public:
      * This does not set the parameters or configuration, which are
      * exported to separate XML elements rather than attributes of the
      * transform element.
+     * 
+     * Note that this only sets those attributes which are actually
+     * present in the argument.  Any attributes not defined in the
+     * attribute will remain unchanged in the Transform.  If your aim
+     * is to create a transform exactly matching the given attributes,
+     * ensure you start from an empty transform rather than one that
+     * has already been configured.
      */
     void setFromXmlAttributes(const QXmlAttributes &);
 
@@ -131,6 +141,7 @@ protected:
 
     ParameterMap m_parameters;
     ConfigurationMap m_configuration;
+    QString m_pluginVersion;
     QString m_program;
     size_t m_stepSize;
     size_t m_blockSize;
