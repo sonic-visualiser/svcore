@@ -62,7 +62,8 @@ Preferences::Preferences() :
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     m_viewFontSize = settings.value
-        ("view-font-size", QApplication::font().pointSize() * 0.9).toInt();
+        ("view-font-size", int(QApplication::font().pointSize() * 0.9))
+        .toInt();
     settings.endGroup();
 
     settings.beginGroup("TempDirectory");
