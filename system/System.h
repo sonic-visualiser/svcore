@@ -25,6 +25,7 @@
 #define MLOCK(a,b)   1
 #define MUNLOCK(a,b) 1
 #define MUNLOCK_SAMPLEBLOCK(a) 1
+#define MUNLOCKALL() 1
 
 #define DLOPEN(a,b)  LoadLibrary((a).toStdWString().c_str())
 #define DLSYM(a,b)   GetProcAddress((HINSTANCE)(a),(b))
@@ -82,6 +83,8 @@ void gettimeofday(struct timeval *p, void *tz);
 #define DEFAULT_LADSPA_PATH "$HOME/Library/Audio/Plug-Ins/LADSPA:/Library/Audio/Plug-Ins/LADSPA"
 #define DEFAULT_DSSI_PATH   "$HOME/Library/Audio/Plug-Ins/DSSI:/Library/Audio/Plug-Ins/DSSI"
 
+#define MUNLOCKALL() 1
+
 #else 
 
 #define PLUGIN_GLOB  "*.so"
@@ -89,6 +92,8 @@ void gettimeofday(struct timeval *p, void *tz);
 
 #define DEFAULT_LADSPA_PATH "$HOME/ladspa:$HOME/.ladspa:/usr/local/lib/ladspa:/usr/lib/ladspa"
 #define DEFAULT_DSSI_PATH "$HOME/dssi:$HOME/.dssi:/usr/local/lib/dssi:/usr/lib/dssi"
+
+#define MUNLOCKALL() ::munlockall()
 
 #endif /* __APPLE__ */
 
