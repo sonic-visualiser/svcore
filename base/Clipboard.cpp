@@ -24,7 +24,7 @@ Clipboard::Point::Point(long frame, QString label) :
     m_label(label),
     m_haveLevel(false),
     m_level(0.f),
-    m_referenceFramesDiffer(false),
+    m_haveReferenceFrame(false),
     m_referenceFrame(frame)
 {
 }
@@ -39,7 +39,7 @@ Clipboard::Point::Point(long frame, float value, QString label) :
     m_label(label),
     m_haveLevel(false),
     m_level(0.f),
-    m_referenceFramesDiffer(false),
+    m_haveReferenceFrame(false),
     m_referenceFrame(frame)
 {
 }
@@ -55,7 +55,7 @@ Clipboard::Point::Point(long frame, float value, size_t duration, QString label)
     m_label(label),
     m_haveLevel(false),
     m_level(0.f),
-    m_referenceFramesDiffer(false),
+    m_haveReferenceFrame(false),
     m_referenceFrame(frame)
 {
 }
@@ -71,7 +71,7 @@ Clipboard::Point::Point(long frame, float value, size_t duration, float level, Q
     m_label(label),
     m_haveLevel(true),
     m_level(level),
-    m_referenceFramesDiffer(false),
+    m_haveReferenceFrame(false),
     m_referenceFrame(frame)
 {
 }
@@ -87,7 +87,7 @@ Clipboard::Point::Point(const Point &point) :
     m_label(point.m_label),
     m_haveLevel(point.m_haveLevel),
     m_level(point.m_level),
-    m_referenceFramesDiffer(point.m_referenceFramesDiffer),
+    m_haveReferenceFrame(point.m_haveReferenceFrame),
     m_referenceFrame(point.m_referenceFrame)
 {
 }
@@ -106,7 +106,7 @@ Clipboard::Point::operator=(const Point &point)
     m_label = point.m_label;
     m_haveLevel = point.m_haveLevel;
     m_level = point.m_level;
-    m_referenceFramesDiffer = point.m_referenceFramesDiffer;
+    m_haveReferenceFrame = point.m_haveReferenceFrame;
     m_referenceFrame = point.m_referenceFrame;
     return *this;
 }
@@ -172,9 +172,15 @@ Clipboard::Point::getLevel() const
 }
 
 bool
-Clipboard::Point::referenceFramesDiffer() const
+Clipboard::Point::haveReferenceFrame() const
 {
-    return m_referenceFramesDiffer;
+    return m_haveReferenceFrame;
+}
+
+bool
+Clipboard::Point::referenceFrameDiffers() const
+{
+    return m_haveReferenceFrame && (m_referenceFrame != m_frame);
 }
 
 long
@@ -186,7 +192,7 @@ Clipboard::Point::getReferenceFrame() const
 void
 Clipboard::Point::setReferenceFrame(long f) 
 {
-    if (f != m_frame) m_referenceFramesDiffer = true;
+    m_haveReferenceFrame = true;
     m_referenceFrame = f;
 }
 
@@ -224,11 +230,21 @@ Clipboard::addPoint(const Point &point)
 }
 
 bool
+Clipboard::haveReferenceFrames() const
+{
+    for (PointList::const_iterator i = m_points.begin();
+         i != m_points.end(); ++i) {
+        if (i->haveReferenceFrame()) return true;
+    } 
+    return false;
+}
+
+bool
 Clipboard::referenceFramesDiffer() const
 {
     for (PointList::const_iterator i = m_points.begin();
          i != m_points.end(); ++i) {
-        if (i->referenceFramesDiffer()) return true;
+        if (i->referenceFrameDiffers()) return true;
     } 
     return false;
 }

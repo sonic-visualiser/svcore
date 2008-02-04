@@ -47,7 +47,9 @@ public:
         bool haveLevel() const;
         float getLevel() const;
 
-        bool referenceFramesDiffer() const;
+        bool haveReferenceFrame() const;
+        bool referenceFrameDiffers() const; // from point frame
+
         long getReferenceFrame() const;
         void setReferenceFrame(long);
 
@@ -62,7 +64,7 @@ public:
         QString m_label;
         bool m_haveLevel;
         float m_level;
-        bool m_referenceFramesDiffer;
+        bool m_haveReferenceFrame;
         long m_referenceFrame;
     };
 
@@ -77,6 +79,7 @@ public:
     void setPoints(const PointList &points);
     void addPoint(const Point &point);
 
+    bool haveReferenceFrames() const;
     bool referenceFramesDiffer() const;
 
 protected:
