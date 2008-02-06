@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+//#define DEBUG_FFT_MEMORY_CACHE 1
+
 FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
     m_width(0),
     m_height(0),
@@ -30,13 +32,17 @@ FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
     m_factor(0),
     m_storageType(storageType)
 {
+#ifdef DEBUG_FFT_MEMORY_CACHE
     std::cerr << "FFTMemoryCache[" << this << "]::FFTMemoryCache (type "
               << m_storageType << ")" << std::endl;
+#endif
 }
 
 FFTMemoryCache::~FFTMemoryCache()
 {
-//    std::cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << std::endl;
+#ifdef DEBUG_FFT_MEMORY_CACHE
+    std::cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << std::endl;
+#endif
 
     for (size_t i = 0; i < m_width; ++i) {
 	if (m_magnitude && m_magnitude[i]) free(m_magnitude[i]);
@@ -59,7 +65,9 @@ FFTMemoryCache::~FFTMemoryCache()
 void
 FFTMemoryCache::resize(size_t width, size_t height)
 {
+#ifdef DEBUG_FFT_MEMORY_CACHE
     std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
+#endif
     
     if (m_width == width && m_height == height) return;
 
@@ -81,7 +89,9 @@ FFTMemoryCache::resize(size_t width, size_t height)
     m_width = width;
     m_height = height;
 
-//    std::cerr << "done, width = " << m_width << " height = " << m_height << std::endl;
+#ifdef DEBUG_FFT_MEMORY_CACHE
+    std::cerr << "done, width = " << m_width << " height = " << m_height << std::endl;
+#endif
 }
 
 void
