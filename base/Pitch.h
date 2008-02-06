@@ -51,6 +51,25 @@ public:
 				    float concertA = 0.0);
 
     /**
+     * Return the nearest MIDI pitch range to the given frequency
+     * range, that is, the difference in MIDI pitch values between the
+     * higher and lower frequencies.
+     *
+     * If centsOffsetReturn is non-NULL, return in *centsOffsetReturn
+     * the number of cents (1/100ths of a semitone) difference between
+     * the given frequency difference and the returned MIDI pitch
+     * range.  The cents offset will be in the range [-50,50).
+     * 
+     * If concertA is non-zero, use that as the reference frequency
+     * for the A at MIDI pitch 69; otherwise use the tuning frequency
+     * specified in the application preferences (default 440Hz).
+     */
+    static int getPitchForFrequencyDifference(float frequencyA,
+                                              float frequencyB,
+                                              float *centsOffsetReturn = 0,
+                                              float concertA = 0.0);
+
+    /**
      * Return a string describing the given MIDI pitch, with optional
      * cents offset.  This consists of the note name, octave number
      * (with MIDI pitch 0 having octave number -2), and optional
@@ -80,6 +99,12 @@ public:
     static QString getPitchLabelForFrequency(float frequency,
 					     float concertA = 0.0,
 					     bool useFlats = false);
+
+    /**
+     * Return a string describing the given pitch range in octaves,
+     * semitones and cents.  This is in the form e.g. "1'2+4c".
+     */
+    static QString getLabelForPitchRange(int semis, float cents = 0);
 
     /**
      * Return true if the given frequency falls within the range of

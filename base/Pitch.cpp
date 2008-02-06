@@ -52,6 +52,37 @@ Pitch::getPitchForFrequency(float frequency,
     return midiPitch;
 }
 
+int
+Pitch::getPitchForFrequencyDifference(float frequencyA,
+                                      float frequencyB,
+                                      float *centsOffsetReturn,
+                                      float concertA)
+{
+    if (concertA <= 0.0) {
+        concertA = Preferences::getInstance()->getTuningFrequency();
+    }
+
+    if (frequencyA > frequencyB) {
+        std::swap(frequencyA, frequencyB);
+    }
+
+    float pA = 12.0 * (log(frequencyA / (concertA / 2.0)) / log(2.0)) + 57.0;
+    float pB = 12.0 * (log(frequencyB / (concertA / 2.0)) / log(2.0)) + 57.0;
+
+    float p = pB - pA;
+
+    int midiPitch = int(p + 0.00001);
+    float centsOffset = (p - midiPitch) * 100.0;
+
+    if (centsOffset >= 50.0) {
+	midiPitch = midiPitch + 1;
+	centsOffset = -(100.0 - centsOffset);
+    }
+    
+    if (centsOffsetReturn) *centsOffsetReturn = centsOffset;
+    return midiPitch;
+}
+
 static QString notes[] = {
     "C%1",  "C#%1", "D%1",  "D#%1",
     "E%1",  "F%1",  "F#%1", "G%1",
@@ -99,6 +130,34 @@ Pitch::getPitchLabelForFrequency(float frequency,
     float centsOffset = 0.0;
     int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
     return getPitchLabel(midiPitch, centsOffset, useFlats);
+}
+
+QString
+Pitch::getLabelForPitchRange(int semis, float cents)
+{
+    int ic = lrintf(cents);
+
+    if (ic == 0) {
+        if (semis >= 12) {
+            return QString("%1'%2").arg(semis/12).arg(semis - 12*(semis/12));
+        } else {
+            return QString("%1").arg(semis);
+        }
+    } else {
+        if (ic > 0) {
+            if (semis >= 12) {
+                return QString("%1'%2+%3c").arg(semis/12).arg(semis - 12*(semis/12)).arg(ic);
+            } else {
+                return QString("%1+%3c").arg(semis).arg(ic);
+            }
+        } else {
+            if (semis >= 12) {
+                return QString("%1'%2%3c").arg(semis/12).arg(semis - 12*(semis/12)).arg(ic);
+            } else {
+                return QString("%1%3c").arg(semis).arg(ic);
+            }
+        }
+    }
 }
 
 bool
