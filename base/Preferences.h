@@ -69,6 +69,8 @@ public:
     };
     BackgroundMode getBackgroundMode() const { return m_backgroundMode; }
 
+    bool getShowSplash() const { return m_showSplash; }
+
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
@@ -82,6 +84,7 @@ public slots:
     void setResampleOnLoad(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setViewFontSize(int size);
+    void setShowSplash(bool);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -99,6 +102,7 @@ private:
     bool m_resampleOnLoad;
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
+    bool m_showSplash;
 };
 
 #endif
