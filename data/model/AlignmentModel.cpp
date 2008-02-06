@@ -30,14 +30,17 @@ AlignmentModel::AlignmentModel(Model *reference,
     m_pathBegun(false),
     m_pathComplete(false)
 {
-    connect(m_rawPath, SIGNAL(modelChanged()),
-            this, SLOT(pathChanged()));
+    if (m_rawPath) {
 
-    connect(m_rawPath, SIGNAL(modelChanged(size_t, size_t)),
-            this, SLOT(pathChanged(size_t, size_t)));
+        connect(m_rawPath, SIGNAL(modelChanged()),
+                this, SLOT(pathChanged()));
 
-    connect(m_rawPath, SIGNAL(completionChanged()),
-            this, SLOT(pathCompletionChanged()));
+        connect(m_rawPath, SIGNAL(modelChanged(size_t, size_t)),
+                this, SLOT(pathChanged(size_t, size_t)));
+        
+        connect(m_rawPath, SIGNAL(completionChanged()),
+                this, SLOT(pathCompletionChanged()));
+    }
 
     constructPath();
     constructReversePath();
@@ -125,7 +128,10 @@ size_t
 AlignmentModel::toReference(size_t frame) const
 {
 //    std::cerr << "AlignmentModel::toReference(" << frame << ")" << std::endl;
-    if (!m_path) constructPath();
+    if (!m_path) {
+        if (!m_rawPath) return frame;
+        constructPath();
+    }
     return align(m_path, frame);
 }
 
@@ -133,7 +139,10 @@ size_t
 AlignmentModel::fromReference(size_t frame) const
 {
 //    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
-    if (!m_reversePath) constructReversePath();
+    if (!m_reversePath) {
+        if (!m_rawPath) return frame;
+        constructReversePath();
+    }
     return align(m_reversePath, frame);
 }
 

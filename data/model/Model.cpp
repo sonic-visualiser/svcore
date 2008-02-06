@@ -102,7 +102,7 @@ Model::getAlignmentReference() const
 {
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return this;
+        return 0;
     }
     return m_alignment->getReferenceModel();
 }
