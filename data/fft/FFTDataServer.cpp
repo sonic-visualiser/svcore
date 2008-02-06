@@ -727,9 +727,9 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
     compactCache = canCompact &&
         (recommendation & StorageAdviser::ConserveSpace);
 
+#ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer: memory cache = " << memoryCache << ", compact cache = " << compactCache << std::endl;
     
-#ifdef DEBUG_FFT_SERVER
     std::cerr << "Width " << w << " of " << m_width << ", height " << h << ", size " << w * h << std::endl;
 #endif
 }

@@ -22,6 +22,8 @@
 
 #include <iostream>
 
+//#define DEBUG_STORAGE_ADVISER 1
+
 long StorageAdviser::m_discPlanned = 0;
 long StorageAdviser::m_memoryPlanned = 0;
 
@@ -30,9 +32,11 @@ StorageAdviser::recommend(Criteria criteria,
 			  int minimumSize,
 			  int maximumSize)
 {
+#ifdef DEBUG_STORAGE_ADVISER
     std::cerr << "StorageAdviser::recommend: Criteria " << criteria 
               << ", minimumSize " << minimumSize
               << ", maximumSize " << maximumSize << std::endl;
+#endif
 
     QString path = TempDirectory::getInstance()->getPath();
     int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
@@ -51,7 +55,9 @@ StorageAdviser::recommend(Criteria criteria,
         memoryFree = 0;
     }
 
+#ifdef DEBUG_STORAGE_ADVISER
     std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << ", min " << minimumSize << ", max " << maximumSize << std::endl;
+#endif
 
     //!!! We have a potentially serious problem here if multiple
     //recommendations are made in advance of any of the resulting
@@ -86,8 +92,10 @@ StorageAdviser::recommend(Criteria criteria,
     else if (minmb > (discFree / 10)) discStatus = Marginal;
     else discStatus = Sufficient;
 
+#ifdef DEBUG_STORAGE_ADVISER
     std::cerr << "Memory status: " << memoryStatus << ", disc status "
               << discStatus << std::endl;
+#endif
 
     int recommendation = NoRecommendation;
 
