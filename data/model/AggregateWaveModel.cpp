@@ -190,6 +190,13 @@ AggregateWaveModel::getData(size_t fromchannel, size_t tochannel,
     
     return min;
 }
+
+size_t
+AggregateWaveModel::getSummaryBlockSize(size_t desired) const
+{
+    //!!! complete
+    return desired;
+}
         
 void
 AggregateWaveModel::getSummaries(size_t channel, size_t start, size_t count,

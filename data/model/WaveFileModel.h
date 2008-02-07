@@ -72,6 +72,8 @@ public:
                            size_t start, size_t count,
                            float **buffers) const;
 
+    virtual size_t getSummaryBlockSize(size_t desired) const;
+
     virtual void getSummaries(size_t channel, size_t start, size_t count,
                               RangeBlock &ranges,
                               size_t &blockSize) const;
@@ -128,6 +130,11 @@ protected:
     size_t m_lastFillExtent;
     bool m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
+
+    mutable SampleBlock m_directRead;
+    mutable size_t m_lastDirectReadStart;
+    mutable size_t m_lastDirectReadCount;
+    mutable QMutex m_directReadMutex;
 };    
 
 #endif

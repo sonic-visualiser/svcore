@@ -379,12 +379,29 @@ WaveFileModel::getData(size_t fromchannel, size_t tochannel,
     return i;
 }
 
+size_t
+WaveFileModel::getSummaryBlockSize(size_t desired) const
+{
+    int cacheType = 0;
+    int power = m_zoomConstraint.getMinCachePower();
+    size_t roundedBlockSize = m_zoomConstraint.getNearestBlockSize
+        (desired, cacheType, power, ZoomConstraint::RoundDown);
+    if (cacheType != 0 && cacheType != 1) {
+        // We will be reading directly from file, so can satisfy any
+        // blocksize requirement
+        return desired;
+    } else {
+        return roundedBlockSize;
+    }
+}    
+
 void
 WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
                             RangeBlock &ranges, size_t &blockSize) const
 {
     ranges.clear();
     if (!isOK()) return;
+    ranges.reserve((count / blockSize) + 1);
 
     if (start > m_startFrame) start -= m_startFrame;
     else if (count <= m_startFrame - start) return;
@@ -395,8 +412,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 
     int cacheType = 0;
     int power = m_zoomConstraint.getMinCachePower();
-    blockSize = m_zoomConstraint.getNearestBlockSize
-        (blockSize, cacheType, power, ZoomConstraint::RoundUp);
+    size_t roundedBlockSize = m_zoomConstraint.getNearestBlockSize
+        (blockSize, cacheType, power, ZoomConstraint::RoundDown);
 
     size_t channels = getChannelCount();
 
@@ -410,17 +427,26 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	// matter by putting a single cache in getInterleavedFrames
 	// for short queries.
 
-	SampleBlock frames;
-	m_reader->getInterleavedFrames(start, count, frames);
+        m_directReadMutex.lock();
+
+        if (m_lastDirectReadStart != start ||
+            m_lastDirectReadCount != count ||
+            m_directRead.empty()) {
+
+            m_reader->getInterleavedFrames(start, count, m_directRead);
+            m_lastDirectReadStart = start;
+            m_lastDirectReadCount = count;
+        }
+
 	float max = 0.0, min = 0.0, total = 0.0;
 	size_t i = 0, got = 0;
 
 	while (i < count) {
 
 	    size_t index = i * channels + channel;
-	    if (index >= frames.size()) break;
+	    if (index >= m_directRead.size()) break;
             
-	    float sample = frames[index];
+	    float sample = m_directRead[index];
             if (sample > max || got == 0) max = sample;
 	    if (sample < min || got == 0) min = sample;
             total += fabsf(sample);
@@ -435,6 +461,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	    }
 	}
 
+        m_directReadMutex.unlock();
+
 	if (got > 0) {
             ranges.push_back(Range(min, max, total / got));
 	}
@@ -446,6 +474,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	QMutexLocker locker(&m_mutex);
     
 	const RangeBlock &cache = m_cache[cacheType];
+
+        blockSize = roundedBlockSize;
 
 	size_t cacheBlock, div;
         
