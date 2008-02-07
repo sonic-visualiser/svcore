@@ -197,6 +197,13 @@ WritableWaveFileModel::getData(size_t fromchannel, size_t tochannel,
     return m_model->getData(fromchannel, tochannel, start, count, buffers);
 }    
 
+size_t
+WritableWaveFileModel::getSummaryBlockSize(size_t desired) const
+{
+    if (!m_model) return desired;
+    return m_model->getSummaryBlockSize(desired);
+}
+
 void
 WritableWaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
                                     RangeBlock &ranges,

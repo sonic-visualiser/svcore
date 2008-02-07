@@ -111,6 +111,7 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 {
     if (count == 0) return;
     results.clear();
+    results.reserve(count * m_fileInfo.channels);
 
     QMutexLocker locker(&m_mutex);
 

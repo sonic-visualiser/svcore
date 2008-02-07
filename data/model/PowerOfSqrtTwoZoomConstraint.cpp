@@ -75,7 +75,13 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 	}
 
 //	std::cerr << "Testing base " << base << std::endl;
-	if (base >= blockSize) {
+
+        if (base == blockSize) {
+            result = base;
+            break;
+        }
+
+	if (base > blockSize) {
 	    if (dir == RoundNearest) {
 		if (base - blockSize < blockSize - prevBase) {
 		    dir = RoundUp;
