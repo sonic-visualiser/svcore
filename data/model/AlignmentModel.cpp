@@ -17,6 +17,8 @@
 
 #include "SparseTimeValueModel.h"
 
+//#define DEBUG_ALIGNMENT_MODEL 1
+
 AlignmentModel::AlignmentModel(Model *reference,
                                Model *aligned,
                                Model *inputModel,
@@ -127,7 +129,9 @@ AlignmentModel::getAlignedModel() const
 size_t
 AlignmentModel::toReference(size_t frame) const
 {
-//    std::cerr << "AlignmentModel::toReference(" << frame << ")" << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::toReference(" << frame << ")" << std::endl;
+#endif
     if (!m_path) {
         if (!m_rawPath) return frame;
         constructPath();
@@ -138,7 +142,9 @@ AlignmentModel::toReference(size_t frame) const
 size_t
 AlignmentModel::fromReference(size_t frame) const
 {
-//    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
+#endif
     if (!m_reversePath) {
         if (!m_rawPath) return frame;
         constructReversePath();
@@ -175,8 +181,10 @@ AlignmentModel::pathCompletionChanged()
         int completion = 0;
         m_rawPath->isReady(&completion);
 
-//        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
-//                  << completion << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
+                  << completion << std::endl;
+#endif
 
         m_pathComplete = (completion == 100);
 
@@ -220,7 +228,9 @@ AlignmentModel::constructPath() const
         m_path->addPoint(PathPoint(frame, rframe));
     }
 
-//    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+#endif
 }
 
 void
@@ -250,7 +260,9 @@ AlignmentModel::constructReversePath() const
         m_reversePath->addPoint(PathPoint(rframe, frame));
     }
 
-//    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+#endif
 }
 
 size_t
@@ -266,13 +278,22 @@ AlignmentModel::align(PathModel *path, size_t frame) const
     const PathModel::PointList &points = path->getPoints();
 
     if (points.empty()) {
-//        std::cerr << "AlignmentModel::align: No points" << std::endl;
+        std::cerr << "AlignmentModel::align: No points" << std::endl;
         return frame;
     }        
 
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::align: frame " << frame << " requested" << std::endl;
+#endif
+
     PathModel::Point point(frame);
     PathModel::PointList::const_iterator i = points.lower_bound(point);
-    if (i == points.end()) --i;
+    if (i == points.end()) {
+#ifdef DEBUG_ALIGNMENT_MODEL
+        std::cerr << "Note: i == points.end()" << std::endl;
+#endif
+        --i;
+    }
     while (i != points.begin() && i->frame > long(frame)) --i;
 
     long foundFrame = i->frame;
@@ -282,9 +303,16 @@ AlignmentModel::align(PathModel *path, size_t frame) const
     long followingMapFrame = foundMapFrame;
 
     if (++i != points.end()) {
+#ifdef DEBUG_ALIGNMENT_MODEL
+        std::cerr << "another point available" << std::endl;
+#endif
         followingFrame = i->frame;
         followingMapFrame = i->mapframe;
-    }
+    } else {
+#ifdef DEBUG_ALIGNMENT_MODEL
+        std::cerr << "no other point available" << std::endl;
+#endif
+    }        
 
     if (foundMapFrame < 0) return 0;
 
@@ -297,7 +325,9 @@ AlignmentModel::align(PathModel *path, size_t frame) const
         resultFrame += lrintf((followingMapFrame - foundMapFrame) * interp);
     }
 
-//    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+#endif
 
     return resultFrame;
 }
