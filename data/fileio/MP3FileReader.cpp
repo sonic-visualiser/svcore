@@ -135,7 +135,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
 
-        while (m_channelCount == 0 && !m_done) {
+        while ((m_channelCount == 0 || m_fileRate == 0) && !m_done) {
             usleep(10);
         }
     }
@@ -358,7 +358,8 @@ MP3FileReader::accept(struct mad_header const *header,
         double bitrate = m_bitrateNum / m_bitrateDenom;
         double duration = double(m_fileSize * 8) / bitrate;
         double elapsed = double(m_frameCount) / m_sampleRate;
-        double percent = ((elapsed * 100.0) / duration);
+        double percent = 100;
+        if (duration > 0.0) percent = ((elapsed * 100.0) / duration);
         int p = int(percent);
         if (p < 1) p = 1;
         if (p > 99) p = 99;
