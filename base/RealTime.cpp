@@ -272,6 +272,22 @@ RealTime::operator/(int d) const
     return RealTime(secdiv, int(nsecdiv + 0.5));
 }
 
+RealTime
+RealTime::operator*(double m) const
+{
+    double t = (double(nsec) / ONE_BILLION) * m;
+    t += sec * m;
+    return fromSeconds(t);
+}
+
+RealTime
+RealTime::operator/(double d) const
+{
+    double t = (double(nsec) / ONE_BILLION) / d;
+    t += sec / d;
+    return fromSeconds(t);
+}
+
 double 
 RealTime::operator/(const RealTime &r) const
 {

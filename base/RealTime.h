@@ -95,6 +95,9 @@ struct RealTime
     RealTime operator*(int m) const;
     RealTime operator/(int d) const;
 
+    RealTime operator*(double m) const;
+    RealTime operator/(double d) const;
+
     /**
      * Return the ratio of two times.
      */
