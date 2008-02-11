@@ -278,7 +278,9 @@ AlignmentModel::align(PathModel *path, size_t frame) const
     const PathModel::PointList &points = path->getPoints();
 
     if (points.empty()) {
+#ifdef DEBUG_ALIGNMENT_MODEL
         std::cerr << "AlignmentModel::align: No points" << std::endl;
+#endif
         return frame;
     }        
 
