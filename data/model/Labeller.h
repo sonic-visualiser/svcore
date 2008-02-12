@@ -72,8 +72,8 @@ public:
     Labeller(const Labeller &l) :
         QObject(),
         m_type(l.m_type),
-        m_counter(1),
-        m_counter2(1),
+        m_counter(l.m_counter),
+        m_counter2(l.m_counter2),
         m_cycle(l.m_cycle),
         m_dp(l.m_dp),
         m_rate(l.m_rate) { }
