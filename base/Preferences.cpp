@@ -246,7 +246,7 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case RectangularWindow: return tr("Rectangular");
         case BartlettWindow: return tr("Triangular");
         case HammingWindow: return tr("Hamming");
-        case HanningWindow: return tr("Hanning");
+        case HanningWindow: return tr("Hann");
         case BlackmanWindow: return tr("Blackman");
         case GaussianWindow: return tr("Gaussian");
         case ParzenWindow: return tr("Parzen");
