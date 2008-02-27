@@ -972,10 +972,12 @@ DSSIPluginInstance::handleController(snd_seq_event_t *ev)
 }
 
 void
-DSSIPluginInstance::run(const Vamp::RealTime &blockTime)
+DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 {
     static snd_seq_event_t localEventBuffer[EVENT_BUFFER_SIZE];
     int evCount = 0;
+
+    if (count == 0) count = m_blockSize;
 
     bool needLock = false;
     if (m_descriptor->select_program) needLock = true;
@@ -998,7 +1000,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime)
 	m_eventBuffer.skip(m_eventBuffer.getReadSpace());
 	m_haveLastEventSendTime = false;
 	if (m_descriptor->LADSPA_Plugin->run) {
-	    m_descriptor->LADSPA_Plugin->run(m_instanceHandle, m_blockSize);
+	    m_descriptor->LADSPA_Plugin->run(m_instanceHandle, count);
 	} else {
 	    for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
 		memset(m_outputBuffers[ch], 0, m_blockSize * sizeof(sample_t));
@@ -1039,7 +1041,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime)
 	std::cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << std::endl;
 #endif
 
-	if (frameOffset >= int(m_blockSize)) break;
+	if (frameOffset >= int(count)) break;
 	if (frameOffset < 0) {
 	    frameOffset = 0;
 	    if (ev->type == SND_SEQ_EVENT_NOTEON) {
@@ -1085,11 +1087,11 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime)
 	      << std::endl;
 #endif
 
-    m_descriptor->run_synth(m_instanceHandle, m_blockSize,
+    m_descriptor->run_synth(m_instanceHandle, count,
 			    localEventBuffer, evCount);
 
 #ifdef DEBUG_DSSI_PROCESS
-//    for (int i = 0; i < m_blockSize; ++i) {
+//    for (int i = 0; i < count; ++i) {
 //	std::cout << m_outputBuffers[0][i] << " ";
 //	if (i % 8 == 0) std::cout << std::endl;
 //    }

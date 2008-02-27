@@ -54,7 +54,7 @@ public:
     virtual int getPluginVersion() const;
     virtual std::string getCopyright() const;
 
-    virtual void run(const Vamp::RealTime &);
+    virtual void run(const Vamp::RealTime &, size_t count = 0);
 
     virtual unsigned int getParameterCount() const;
     virtual void setParameterValue(unsigned int parameter, float value);

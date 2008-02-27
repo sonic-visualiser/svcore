@@ -529,14 +529,16 @@ LADSPAPluginInstance::getParameterDisplayHint(unsigned int parameter) const
 }
 
 void
-LADSPAPluginInstance::run(const Vamp::RealTime &)
+LADSPAPluginInstance::run(const Vamp::RealTime &, size_t count)
 {
     if (!m_descriptor || !m_descriptor->run) return;
+
+    if (count == 0) count = m_blockSize;
 
     for (std::vector<LADSPA_Handle>::iterator hi = m_instanceHandles.begin();
 	 hi != m_instanceHandles.end(); ++hi) {
 
-        m_descriptor->run(*hi, m_blockSize);
+        m_descriptor->run(*hi, count);
     }
 
     m_run = true;

@@ -86,9 +86,11 @@ public:
     /**
      * Run for one block, starting at the given time.  The start time
      * may be of interest to synths etc that may have queued events
-     * waiting.  Other plugins can ignore it.
+     * waiting.  Other plugins can ignore it.  The count, if zero,
+     * defaults to our fixed buffer size.
      */
-    virtual void run(const Vamp::RealTime &blockStartTime) = 0;
+    virtual void run(const Vamp::RealTime &blockStartTime,
+                     size_t count = 0) = 0;
     
     virtual size_t getBufferSize() const = 0;
 
