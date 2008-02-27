@@ -30,7 +30,9 @@ public:
     
     long frame;
     QString label;
-    
+
+    QString getLabel() const { return label; }
+
     void toXml(QTextStream &stream,
                QString indent = "",
                QString extraAttributes = "") const
@@ -84,6 +86,8 @@ public:
 	}
 	return -1;
     }
+
+    QString getTypeName() const { return tr("Sparse 1-D"); }
 };
 
 #endif

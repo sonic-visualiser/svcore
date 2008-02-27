@@ -38,6 +38,8 @@ public:
     long frame;
     float value;
     QString label;
+
+    QString getLabel() const { return label; }
     
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const
@@ -93,6 +95,8 @@ public:
     {
 	PlayParameterRepository::getInstance()->addModel(this);
     }
+
+    QString getTypeName() const { return tr("Sparse Time-Value"); }
 };
 
 

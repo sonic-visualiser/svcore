@@ -70,6 +70,17 @@ public:
      */
     virtual size_t getData(int channel, size_t start, size_t count,
                            double *buffer) const = 0;
+
+    /**
+     * Get the specified set of samples from given contiguous range
+     * of channels of the model in single-precision floating-point
+     * format.  Return the number of sample frames actually retrieved.
+     */
+    virtual size_t getData(size_t fromchannel, size_t tochannel,
+                           size_t start, size_t count,
+                           float **buffers) const = 0;
+
+    QString getTypeName() const { return tr("Dense Time-Value"); }
 };
 
 #endif

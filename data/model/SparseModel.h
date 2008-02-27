@@ -132,6 +132,8 @@ public:
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
 
+    QString getTypeName() const { return tr("Sparse"); }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const;
@@ -462,7 +464,7 @@ SparseModel<PointType>::addPoint(const PointType &point)
 	QMutexLocker locker(&m_mutex);
 	m_points.insert(point);
         m_pointCount++;
-        if (point.label != "") m_hasTextLabels = true;
+        if (point.getLabel() != "") m_hasTextLabels = true;
     }
 
     // Even though this model is nominally sparse, there may still be

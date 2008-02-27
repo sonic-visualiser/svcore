@@ -1021,8 +1021,10 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 		    QString noteLabel = tr("%1 - vel %2")
 			.arg(pitchLabel).arg(int((*i)->getVelocity()));
 
+                    float level = float((*i)->getVelocity()) / 128.f;
+
 		    Note note(startFrame, (*i)->getPitch(),
-			      endFrame - startFrame, noteLabel);
+			      endFrame - startFrame, level, noteLabel);
 
 //		    std::cerr << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << std::endl;
 

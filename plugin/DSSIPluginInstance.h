@@ -60,6 +60,7 @@ public:
     virtual void setParameterValue(unsigned int parameter, float value);
     virtual float getParameterValue(unsigned int parameter) const;
     virtual float getParameterDefault(unsigned int parameter) const;
+    virtual int getParameterDisplayHint(unsigned int parameter) const;
 
     virtual ParameterList getParameterDescriptors() const;
     virtual float getParameter(std::string) const;

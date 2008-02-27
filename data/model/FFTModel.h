@@ -165,6 +165,11 @@ public:
     virtual void suspendWrites() { m_server->suspendWrites(); }
     virtual void resume() { m_server->resume(); }
 
+    QString getTypeName() const { return tr("FFT"); }
+
+public slots:
+    void sourceModelAboutToBeDeleted();
+
 private:
     FFTModel(const FFTModel &); // not implemented
     FFTModel &operator=(const FFTModel &); // not implemented

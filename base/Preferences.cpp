@@ -23,6 +23,8 @@
 #include <QFileInfo>
 #include <QMutex>
 #include <QSettings>
+#include <QApplication>
+#include <QFont>
 
 Preferences *
 Preferences::m_instance = 0;
@@ -42,7 +44,10 @@ Preferences::Preferences() :
     m_resampleQuality(1),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
-    m_resampleOnLoad(false)
+    m_resampleOnLoad(false),
+    m_viewFontSize(10),
+    m_backgroundMode(BackgroundFromTheme),
+    m_showSplash(true)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -57,6 +62,10 @@ Preferences::Preferences() :
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
+    m_viewFontSize = settings.value
+        ("view-font-size", int(QApplication::font().pointSize() * 0.9))
+        .toInt();
+    m_showSplash = settings.value("show-splash", true).toBool();
     settings.endGroup();
 
     settings.beginGroup("TempDirectory");
@@ -81,6 +90,8 @@ Preferences::getProperties() const
     props.push_back("Resample On Load");
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
+    props.push_back("View Font Size");
+    props.push_back("Show Splash Screen");
     return props;
 }
 
@@ -88,7 +99,7 @@ QString
 Preferences::getPropertyLabel(const PropertyName &name) const
 {
     if (name == "Spectrogram Smoothing") {
-        return tr("Spectrogram y-axis smoothing:");
+        return tr("Spectrogram y-axis interpolation:");
     }
     if (name == "Tuning Frequency") {
         return tr("Frequency of concert A");
@@ -113,6 +124,12 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Background Mode") {
         return tr("Background colour preference");
+    }
+    if (name == "View Font Size") {
+        return tr("Font size for text overlays");
+    }
+    if (name == "Show Splash Screen") {
+        return tr("Show splash screen on startup");
     }
     return name;
 }
@@ -147,6 +164,12 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Background Mode") {
         return ValueProperty;
+    }
+    if (name == "View Font Size") {
+        return RangeProperty;
+    }
+    if (name == "Show Splash Screen") {
+        return ToggleProperty;
     }
     return InvalidProperty;
 }
@@ -196,6 +219,17 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return int(m_backgroundMode);
     }        
 
+    if (name == "View Font Size") {
+        if (min) *min = 3;
+        if (max) *max = 48;
+        if (deflt) *deflt = int(QApplication::font().pointSize() * 0.9);
+        return int(m_viewFontSize);
+    }
+
+    if (name == "Show Splash Screen") {
+        if (deflt) *deflt = 1;
+    }
+
     return 0;
 }
 
@@ -212,7 +246,7 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case RectangularWindow: return tr("Rectangular");
         case BartlettWindow: return tr("Triangular");
         case HammingWindow: return tr("Hamming");
-        case HanningWindow: return tr("Hanning");
+        case HanningWindow: return tr("Hann");
         case BlackmanWindow: return tr("Blackman");
         case GaussianWindow: return tr("Gaussian");
         case ParzenWindow: return tr("Parzen");
@@ -230,8 +264,8 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
     if (name == "Spectrogram Smoothing") {
         switch (value) {
         case NoSpectrogramSmoothing: return tr("None - blocky but accurate");
-        case SpectrogramInterpolated: return tr("Interpolate - fast but fuzzy");
-        case SpectrogramZeroPadded: return tr("Zero pad FFT - slow but clear");
+        case SpectrogramInterpolated: return tr("Linear - fast but fuzzy");
+        case SpectrogramZeroPadded: return tr("4 x Oversampled - slow but clear");
         }
     }
     if (name == "Background Mode") {
@@ -274,6 +308,10 @@ Preferences::setProperty(const PropertyName &name, int value)
         setOmitTempsFromRecentFiles(value ? true : false);
     } else if (name == "Background Mode") {
         setBackgroundMode(BackgroundMode(value));
+    } else if (name == "View Font Size") {
+        setViewFontSize(value);
+    } else if (name == "Show Splash Screen") {
+        setShowSplash(value ? true : false);
     }
 }
 
@@ -403,4 +441,33 @@ Preferences::setBackgroundMode(BackgroundMode mode)
     }
 }
 
+void
+Preferences::setViewFontSize(int size)
+{
+    if (m_viewFontSize != size) {
 
+        m_viewFontSize = size;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("view-font-size", size);
+        settings.endGroup();
+        emit propertyChanged("View Font Size");
+    }
+}
+
+void
+Preferences::setShowSplash(bool show) 
+{
+    if (m_showSplash != show) {
+
+        m_showSplash = show;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("show-splash", show);
+        settings.endGroup();
+        emit propertyChanged("Show Splash Screen");
+    }
+}
+        

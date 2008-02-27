@@ -68,10 +68,18 @@ public:
     virtual size_t getData(int channel, size_t start, size_t count,
                            double *buffer) const;
 
+    virtual size_t getData(size_t fromchannel, size_t tochannel,
+                           size_t start, size_t count,
+                           float **buffer) const;
+
+    virtual size_t getSummaryBlockSize(size_t desired) const;
+
     virtual void getSummaries(size_t channel, size_t start, size_t count,
                               RangeBlock &ranges, size_t &blockSize) const;
 
     virtual Range getSummary(size_t channel, size_t start, size_t count) const;
+
+    QString getTypeName() const { return tr("Writable Wave File"); }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",

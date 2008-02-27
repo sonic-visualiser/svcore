@@ -453,7 +453,8 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
 #endif
 
             if (i->second.second > 0) {
-                std::cerr << "ERROR: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                return;
             }
             for (ServerQueue::iterator j = m_releasedServers.begin();
                  j != m_releasedServers.end(); ++j) {
@@ -726,9 +727,9 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
     compactCache = canCompact &&
         (recommendation & StorageAdviser::ConserveSpace);
 
+#ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer: memory cache = " << memoryCache << ", compact cache = " << compactCache << std::endl;
     
-#ifdef DEBUG_FFT_SERVER
     std::cerr << "Width " << w << " of " << m_width << ", height " << h << ", size " << w * h << std::endl;
 #endif
 }

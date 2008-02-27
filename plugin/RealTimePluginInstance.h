@@ -112,6 +112,7 @@ public:
     virtual void setParameterValue(unsigned int parameter, float value) = 0;
     virtual float getParameterValue(unsigned int parameter) const = 0;
     virtual float getParameterDefault(unsigned int parameter) const = 0;
+    virtual int getParameterDisplayHint(unsigned int parameter) const = 0;
 
     virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 

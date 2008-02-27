@@ -32,24 +32,27 @@
 struct Note
 {
 public:
-    Note(long _frame) : frame(_frame), value(0.0f), duration(0) { }
-    Note(long _frame, float _value, size_t _duration, QString _label) :
-	frame(_frame), value(_value), duration(_duration), label(_label) { }
+    Note(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
+    Note(long _frame, float _value, size_t _duration, float _level, QString _label) :
+	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
 
     int getDimensions() const { return 3; }
 
     long frame;
     float value;
     size_t duration;
+    float level;
     QString label;
 
+    QString getLabel() const { return label; }
+    
     void toXml(QTextStream &stream,
                QString indent = "",
                QString extraAttributes = "") const
     {
 	stream <<
-            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(label).arg(extraAttributes);
+            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
+	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level).arg(label).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
@@ -57,7 +60,8 @@ public:
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(value);
-        list << QString("%1").arg(duration);
+        list << RealTime::frame2RealTime(duration, sampleRate).toString().c_str();
+        list << QString("%1").arg(level);
         if (label != "") list << label;
         return list.join(delimiter);
     }
@@ -68,6 +72,7 @@ public:
 	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
 	    if (p1.value != p2.value) return p1.value < p2.value;
 	    if (p1.duration != p2.duration) return p1.duration < p2.duration;
+            if (p1.level != p2.level) return p1.level < p2.level;
 	    return p1.label < p2.label;
 	}
     };
@@ -121,6 +126,8 @@ public:
      * data structures still to be done!).
      */
     virtual PointList getPoints(long frame) const;
+
+    QString getTypeName() const { return tr("Note"); }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",

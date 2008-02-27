@@ -95,30 +95,48 @@ struct RealTime
     RealTime operator*(int m) const;
     RealTime operator/(int d) const;
 
-    // Find the fractional difference between times
-    //
+    RealTime operator*(double m) const;
+    RealTime operator/(double d) const;
+
+    /**
+     * Return the ratio of two times.
+     */
     double operator/(const RealTime &r) const;
 
-    // Return a human-readable debug-type string to full precision
-    // (probably not a format to show to a user directly).  If align
-    // is true, prepend " " to the start of positive values so that
-    // they line up with negative ones (which start with "-").
-    // 
+    /**
+     * Return a human-readable debug-type string to full precision
+     * (probably not a format to show to a user directly).  If align
+     * is true, prepend " " to the start of positive values so that
+     * they line up with negative ones (which start with "-").
+     */ 
     std::string toString(bool align = false) const;
 
-    // Return a user-readable string to the nearest millisecond
-    // in a form like HH:MM:SS.mmm
-    //
+    /**
+     * Convert a string as obtained from toString back to a RealTime
+     * object.
+     */
+    static RealTime fromString(std::string);
+
+    /**
+     * Return a user-readable string to the nearest millisecond, in a
+     * form like HH:MM:SS.mmm
+     */
     std::string toText(bool fixedDp = false) const;
 
-    // Return a user-readable string to the nearest second in a form
-    // like "6s" (for less than a minute) or "2:21" (for more).
-    //
+    /**
+     * Return a user-readable string to the nearest second, in a form
+     * like "6s" (for less than a minute) or "2:21" (for more).
+     */
     std::string toSecText() const;
 
-    // Convenience functions for handling sample frames
-    //
+    /**
+     * Convert a RealTime into a sample frame at the given sample rate.
+     */
     static long realTime2Frame(const RealTime &r, unsigned int sampleRate);
+
+    /**
+     * Convert a sample frame at the given sample rate into a RealTime.
+     */
     static RealTime frame2RealTime(long frame, unsigned int sampleRate);
 
     static const RealTime zeroTime;

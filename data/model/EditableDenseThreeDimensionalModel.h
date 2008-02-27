@@ -109,6 +109,8 @@ public:
     virtual void setCompletion(int completion, bool update = true);
     virtual int getCompletion() const { return m_completion; }
 
+    QString getTypeName() const { return tr("Editable Dense 3-D"); }
+
     virtual QString toDelimitedDataString(QString delimiter) const;
 
     virtual void toXml(QTextStream &out,

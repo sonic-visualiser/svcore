@@ -51,7 +51,8 @@ ModelTransformerFactory::~ModelTransformerFactory()
 }
 
 bool
-ModelTransformerFactory::getChannelRange(TransformId identifier, Vamp::PluginBase *plugin,
+ModelTransformerFactory::getChannelRange(TransformId identifier,
+                                         Vamp::PluginBase *plugin,
                                          int &minChannels, int &maxChannels)
 {
     Vamp::Plugin *vp = 0;
@@ -66,22 +67,24 @@ ModelTransformerFactory::getChannelRange(TransformId identifier, Vamp::PluginBas
     }
 }
 
-Model *
-ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
-                                               const std::vector<Model *> &candidateInputModels,
-                                               PluginTransformer::ExecutionContext &context,
-                                               QString &configurationXml,
-                                               AudioCallbackPlaySource *source,
-                                               size_t startFrame,
-                                               size_t duration)
+ModelTransformer::Input
+ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
+                                                      const std::vector<Model *> &candidateInputModels,
+                                                      Model *defaultInputModel,
+                                                      AudioCallbackPlaySource *source,
+                                                      size_t startFrame,
+                                                      size_t duration)
 {
-    if (candidateInputModels.empty()) return 0;
+    ModelTransformer::Input input(0);
+
+    if (candidateInputModels.empty()) return input;
 
     //!!! This will need revision -- we'll have to have a callback
     //from the dialog for when the candidate input model is changed,
     //as we'll need to reinitialise the channel settings in the dialog
-    Model *inputModel = candidateInputModels[0]; //!!! for now
+    Model *inputModel = candidateInputModels[0];
     QStringList candidateModelNames;
+    QString defaultModelName;
     std::map<QString, Model *> modelMap;
     for (size_t i = 0; i < candidateInputModels.size(); ++i) {
         QString modelName = candidateInputModels[i]->objectName();
@@ -92,17 +95,20 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         }
         modelMap[modelName] = candidateInputModels[i];
         candidateModelNames.push_back(modelName);
+        if (candidateInputModels[i] == defaultInputModel) {
+            defaultModelName = modelName;
+        }
     }
 
-    QString id = identifier.section(':', 0, 2);
-    QString output = identifier.section(':', 3);
+    QString id = transform.getPluginIdentifier();
+    QString output = transform.getOutput();
     QString outputLabel = "";
     QString outputDescription = "";
     
     bool ok = false;
-    configurationXml = m_lastConfigurations[identifier];
+    QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-//    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
 
     Vamp::PluginBase *plugin = 0;
 
@@ -112,7 +118,7 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
-        std::cerr << "getConfigurationForTransformer: instantiating Vamp plugin" << std::endl;
+        std::cerr << "getConfigurationForTransform: instantiating Vamp plugin" << std::endl;
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
@@ -179,11 +185,18 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
 
     if (plugin) {
 
-        context = PluginTransformer::ExecutionContext(context.channel, plugin);
+        // Ensure block size etc are valid
+        TransformFactory::getInstance()->
+            makeContextConsistentWithPlugin(transform, plugin);
 
-        if (configurationXml != "") {
-            PluginXml(plugin).setParametersFromXml(configurationXml);
-        }
+        // Prepare the plugin with any existing parameters already
+        // found in the transform
+        TransformFactory::getInstance()->
+            setPluginParameters(transform, plugin);
+        
+        // For this interactive usage, we want to override those with
+        // whatever the user chose last time around
+        PluginXml(plugin).setParametersFromXml(configurationXml);
 
         int sourceChannels = 1;
         if (dynamic_cast<DenseTimeValueModel *>(inputModel)) {
@@ -192,7 +205,8 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         }
 
         int minChannels = 1, maxChannels = sourceChannels;
-        getChannelRange(identifier, plugin, minChannels, maxChannels);
+        getChannelRange(transform.getIdentifier(), plugin,
+                        minChannels, maxChannels);
 
         int targetChannels = sourceChannels;
         if (!effect) {
@@ -200,12 +214,13 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
             if (sourceChannels > maxChannels) targetChannels = maxChannels;
         }
 
-        int defaultChannel = context.channel;
+        int defaultChannel = -1; //!!! no longer saved! [was context.channel]
 
         PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
 
         if (candidateModelNames.size() > 1 && !generator) {
-            dialog->setCandidateInputModels(candidateModelNames);
+            dialog->setCandidateInputModels(candidateModelNames,
+                                            defaultModelName);
         }
 
         if (startFrame != 0 || duration != 0) {
@@ -236,22 +251,42 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         } else {
             std::cerr << "Selected input empty: \"" << selectedInput.toStdString() << "\"" << std::endl;
         }
-
-        configurationXml = PluginXml(plugin).toXmlString();
-        context.channel = dialog->getChannel();
         
+        // Write parameters back to transform object
+        TransformFactory::getInstance()->
+            setParametersFromPlugin(transform, plugin);
+
+        input.setChannel(dialog->getChannel());
+        
+        //!!! The dialog ought to be taking & returning transform
+        //objects and input objects and stuff rather than passing
+        //around all this misc stuff, but that's for tomorrow
+        //(whenever that may be)
+
         if (startFrame != 0 || duration != 0) {
             if (dialog->getSelectionOnly()) {
-                context.startFrame = startFrame;
-                context.duration = duration;
+                transform.setStartTime(RealTime::frame2RealTime
+                                       (startFrame, inputModel->getSampleRate()));
+                transform.setDuration(RealTime::frame2RealTime
+                                      (duration, inputModel->getSampleRate()));
             }
         }
 
-        dialog->getProcessingParameters(context.stepSize,
-                                        context.blockSize,
-                                        context.windowType);
+        size_t stepSize = 0, blockSize = 0;
+        WindowType windowType = HanningWindow;
 
-        context.makeConsistentWithPlugin(plugin);
+        dialog->getProcessingParameters(stepSize,
+                                        blockSize,
+                                        windowType);
+
+        transform.setStepSize(stepSize);
+        transform.setBlockSize(blockSize);
+        transform.setWindowType(windowType);
+
+        TransformFactory::getInstance()->
+            makeContextConsistentWithPlugin(transform, plugin);
+
+        configurationXml = PluginXml(plugin).toXmlString();
 
         delete dialog;
 
@@ -262,11 +297,14 @@ ModelTransformerFactory::getConfigurationForTransformer(TransformId identifier,
         }
     }
 
-    if (ok) m_lastConfigurations[identifier] = configurationXml;
+    if (ok) {
+        m_lastConfigurations[transform.getIdentifier()] = configurationXml;
+        input.setModel(inputModel);
+    }
 
-    return ok ? inputModel : 0;
+    return input;
 }
-
+/*!!!
 PluginTransformer::ExecutionContext
 ModelTransformerFactory::getDefaultContextForTransformer(TransformId identifier,
                                                 Model *inputModel)
@@ -289,43 +327,41 @@ ModelTransformerFactory::getDefaultContextForTransformer(TransformId identifier,
 
     return context;
 }
-
+*/
 ModelTransformer *
-ModelTransformerFactory::createTransformer(TransformId identifier, Model *inputModel,
-                                  const PluginTransformer::ExecutionContext &context,
-                                  QString configurationXml)
+ModelTransformerFactory::createTransformer(const Transform &transform,
+                                           const ModelTransformer::Input &input)
 {
     ModelTransformer *transformer = 0;
 
-    QString id = identifier.section(':', 0, 2);
-    QString output = identifier.section(':', 3);
+    QString id = transform.getPluginIdentifier();
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
-        transformer = new FeatureExtractionModelTransformer
-            (inputModel, id, context, configurationXml, output);
+
+        transformer =
+            new FeatureExtractionModelTransformer(input, transform);
+
     } else if (RealTimePluginFactory::instanceFor(id)) {
-        transformer = new RealTimeEffectModelTransformer
-            (inputModel, id, context, configurationXml,
-             TransformFactory::getInstance()->getTransformUnits(identifier),
-             output == "A" ? -1 : output.toInt());
+
+        transformer =
+            new RealTimeEffectModelTransformer(input, transform);
+
     } else {
         std::cerr << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << identifier.toStdString() << "\"" << std::endl;
+                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
         return transformer;
     }
 
-    if (transformer) transformer->setObjectName(identifier);
+    if (transformer) transformer->setObjectName(transform.getIdentifier());
     return transformer;
 }
 
 Model *
-ModelTransformerFactory::transform(TransformId identifier, Model *inputModel,
-                            const PluginTransformer::ExecutionContext &context,
-                            QString configurationXml)
+ModelTransformerFactory::transform(const Transform &transform,
+                                   const ModelTransformer::Input &input,
+                                   QString &message)
 {
-    ModelTransformer *t = createTransformer(identifier, inputModel, context,
-                                            configurationXml);
-
+    ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
 
     connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
@@ -336,10 +372,10 @@ ModelTransformerFactory::transform(TransformId identifier, Model *inputModel,
     Model *model = t->detachOutputModel();
 
     if (model) {
-        QString imn = inputModel->objectName();
+        QString imn = input.getModel()->objectName();
         QString trn =
             TransformFactory::getInstance()->getTransformFriendlyName
-            (identifier);
+            (transform.getIdentifier());
         if (imn != "") {
             if (trn != "") {
                 model->setObjectName(tr("%1: %2").arg(imn).arg(trn));
@@ -352,6 +388,8 @@ ModelTransformerFactory::transform(TransformId identifier, Model *inputModel,
     } else {
         t->wait();
     }
+
+    message = t->getMessage();
 
     return model;
 }

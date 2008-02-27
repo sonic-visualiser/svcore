@@ -17,6 +17,8 @@
 #ifdef HAVE_MAD
 
 #include "MP3FileReader.h"
+#include "ProgressPrinter.h"
+
 #include "system/System.h"
 
 #include <sys/types.h>
@@ -111,6 +113,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                 (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
                  QObject::tr("Stop"), 0, 100);
             m_progress->hide();
+        } else {
+            ProgressPrinter *pp = new ProgressPrinter(tr("Decoding..."), this);
+            connect(this, SIGNAL(progress(int)), pp, SLOT(progress(int)));
         }
 
         if (!decode(m_filebuffer, m_fileSize)) {
@@ -130,7 +135,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
 
-        while (m_channelCount == 0 && !m_done) {
+        while ((m_channelCount == 0 || m_fileRate == 0) && !m_done) {
             usleep(10);
         }
     }
@@ -206,7 +211,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
     if (nstrings == 0) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No data for \"" << name << "\" in ID3 tag" << std::endl;
+        std::cerr << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << std::endl;
 #endif
         return "";
     }
@@ -291,7 +296,22 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
     DecoderData *data = (DecoderData *)dp;
 
     if (!data->length) return MAD_FLOW_STOP;
-    mad_stream_buffer(stream, data->start, data->length);
+
+    unsigned char const *start = data->start;
+    unsigned long length = data->length;
+
+#ifdef HAVE_ID3TAG
+    if (length > ID3_TAG_QUERYSIZE) {
+        int taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
+        if (taglen > 0) {
+//            std::cerr << "ID3 tag length to skip: " << taglen << std::endl;
+            start += taglen;
+            length -= taglen;
+        }
+    }
+#endif
+
+    mad_stream_buffer(stream, start, length);
     data->length = 0;
 
     return MAD_FLOW_CONTINUE;
@@ -328,7 +348,7 @@ MP3FileReader::accept(struct mad_header const *header,
         initialiseDecodeCache();
 
         if (m_cacheMode == CacheInTemporaryFile) {
-            m_completion = 1;
+//            m_completion = 1;
             std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
             startSerialised("MP3FileReader::Decode");
         }
@@ -338,19 +358,23 @@ MP3FileReader::accept(struct mad_header const *header,
         double bitrate = m_bitrateNum / m_bitrateDenom;
         double duration = double(m_fileSize * 8) / bitrate;
         double elapsed = double(m_frameCount) / m_sampleRate;
-        double percent = ((elapsed * 100.0) / duration);
-        int progress = int(percent);
-        if (progress < 1) progress = 1;
-        if (progress > 99) progress = 99;
-        m_completion = progress;
-        if (m_progress) {
-            if (progress > m_progress->value()) {
-                m_progress->setValue(progress);
-                m_progress->show();
-                m_progress->raise();
-                qApp->processEvents();
-                if (m_progress->wasCanceled()) {
-                    m_cancelled = true;
+        double percent = 100;
+        if (duration > 0.0) percent = ((elapsed * 100.0) / duration);
+        int p = int(percent);
+        if (p < 1) p = 1;
+        if (p > 99) p = 99;
+        if (m_completion != p || (m_progress && !m_progress->isVisible())) {
+            m_completion = p;
+            emit progress(m_completion);
+            if (m_progress) {
+                if (m_completion > m_progress->value()) {
+                    m_progress->setValue(m_completion);
+                    m_progress->show();
+                    m_progress->raise();
+                    qApp->processEvents();
+                    if (m_progress->wasCanceled()) {
+                        m_cancelled = true;
+                    }
                 }
             }
         }

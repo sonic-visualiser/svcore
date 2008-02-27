@@ -28,6 +28,7 @@ public:
         Point(long frame, QString label);
         Point(long frame, float value, QString label);
         Point(long frame, float value, size_t duration, QString label);
+        Point(long frame, float value, size_t duration, float level, QString label);
         Point(const Point &point);
         Point &operator=(const Point &point);
 
@@ -43,6 +44,15 @@ public:
         bool haveLabel() const;
         QString getLabel() const;
 
+        bool haveLevel() const;
+        float getLevel() const;
+
+        bool haveReferenceFrame() const;
+        bool referenceFrameDiffers() const; // from point frame
+
+        long getReferenceFrame() const;
+        void setReferenceFrame(long);
+
     private:
         bool m_haveFrame;
         long m_frame;
@@ -52,6 +62,10 @@ public:
         size_t m_duration;
         bool m_haveLabel;
         QString m_label;
+        bool m_haveLevel;
+        float m_level;
+        bool m_haveReferenceFrame;
+        long m_referenceFrame;
     };
 
     Clipboard();
@@ -64,6 +78,9 @@ public:
     const PointList &getPoints() const;
     void setPoints(const PointList &points);
     void addPoint(const Point &point);
+
+    bool haveReferenceFrames() const;
+    bool referenceFramesDiffer() const;
 
 protected:
     PointList m_points;

@@ -28,6 +28,7 @@ class QHttp;
 class QFile;
 class QProgressDialog;
 class QHttpResponseHeader;
+class ProgressPrinter;
 
 /**
  * FileSource is a class used to refer to the contents of a file that
@@ -62,19 +63,36 @@ class FileSource : public QObject
 
 public:
 
-    /**
-     * Construct a FileSource using the given local file path or URL.
-     * The URL may be raw or encoded.  If showProgress is true, a
-     * progress dialog will be shown for any network transfers.
-     */
-    FileSource(QString fileOrUrl, bool showProgress = false);
+    enum ShowProgressType {
+        ProgressNone,
+        ProgressDialog,
+        ProgressToConsole
+    };
 
     /**
-     * Construct a FileSource using the given remote URL.  If
-     * showProgress is true, a progress dialog will be shown for any
-     * network transfers.
+     * Construct a FileSource using the given local file path or URL.
+     * The URL may be raw or encoded.
+     *
+     * If progressType is ProgressDialog, a progress dialog will be
+     * shown for any network transfers; if it is ProgressToConsole, a
+     * progress indication will be sent to the console.
+     * Note that the progress() signal will also be emitted regularly
+     * during retrieval, even if progressType is ProgressNone.
      */
-    FileSource(QUrl url, bool showProgress = false);
+    FileSource(QString fileOrUrl,
+               ShowProgressType progressType = ProgressNone);
+
+    /**
+     * Construct a FileSource using the given remote URL.
+     *
+     * If progressType is ProgressDialog, a progress dialog will be
+     * shown for any network transfers; if it is ProgressToConsole, a
+     * progress indication will be sent to the console.
+     * Note that the progress() signal also will be emitted regularly
+     * during retrieval, even if progressType is ProgressNone.
+     */
+    FileSource(QUrl url,
+               ShowProgressType progressType = ProgressNone);
 
     FileSource(const FileSource &);
 
@@ -212,6 +230,8 @@ protected:
     bool m_remote;
     bool m_done;
     bool m_leaveLocalFile;
+    ShowProgressType m_progressType;
+    ProgressPrinter *m_progressPrinter;
     QProgressDialog *m_progressDialog;
     QTimer m_progressShowTimer;
 
@@ -222,7 +242,7 @@ protected:
     static QMutex m_mapMutex;
     bool m_refCounted;
 
-    void init(bool showProgress);
+    void init();
     void initHttp();
     void initFtp();
 
@@ -235,21 +255,6 @@ protected:
 
     static QMutex m_fileCreationMutex;
     static int m_count;
-};
-
-class FileSourceProgressPrinter : public QObject
-{
-    Q_OBJECT
-
-public:
-    FileSourceProgressPrinter();
-    virtual ~FileSourceProgressPrinter();
-    
-public slots:
-    void progress(int);
-
-protected:
-    int m_lastProgress;
 };
 
 #endif

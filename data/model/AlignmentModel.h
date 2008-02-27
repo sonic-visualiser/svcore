@@ -17,6 +17,11 @@
 #define _ALIGNMENT_MODEL_H_
 
 #include "Model.h"
+#include "SparseModel.h"
+#include "base/RealTime.h"
+
+#include <QString>
+#include <QStringList>
 
 class SparseTimeValueModel;
 
@@ -39,6 +44,8 @@ public:
     virtual bool isReady(int *completion = 0) const;
     virtual const ZoomConstraint *getZoomConstraint() const;
 
+    QString getTypeName() const { return tr("Alignment"); }
+
     const Model *getReferenceModel() const;
     const Model *getAlignedModel() const;
 
@@ -60,14 +67,65 @@ protected:
     Model *m_aligned; // I don't own this
 
     Model *m_inputModel; // I own this
-    SparseTimeValueModel *m_path; // I own this
-    mutable SparseTimeValueModel *m_reversePath; // I own this
+
+    struct PathPoint
+    {
+        PathPoint(long _frame) : frame(_frame), mapframe(_frame) { }
+        PathPoint(long _frame, long _mapframe) :
+            frame(_frame), mapframe(_mapframe) { }
+
+        int getDimensions() const { return 2; }
+
+        long frame;
+        long mapframe;
+
+        QString getLabel() const { return ""; }
+
+        void toXml(QTextStream &stream, QString indent = "",
+                   QString extraAttributes = "") const {
+            stream << QString("%1<point frame=\"%2\" mapframe=\"%3\" %4/>\n")
+                .arg(indent).arg(frame).arg(mapframe).arg(extraAttributes);
+        }
+        
+        QString toDelimitedDataString(QString delimiter,
+                                      size_t sampleRate) const {
+            QStringList list;
+            list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
+            list << QString("%1").arg(mapframe);
+            return list.join(delimiter);
+        }
+
+        struct Comparator {
+            bool operator()(const PathPoint &p1, const PathPoint &p2) const {
+                if (p1.frame != p2.frame) return p1.frame < p2.frame;
+                return p1.mapframe < p2.mapframe;
+            }
+        };
+    
+        struct OrderComparator {
+            bool operator()(const PathPoint &p1, const PathPoint &p2) const {
+                return p1.frame < p2.frame;
+            }
+        };
+    };
+
+    class PathModel : public SparseModel<PathPoint>
+    {
+    public:
+        PathModel(size_t sampleRate, size_t resolution, bool notify = true) :
+            SparseModel<PathPoint>(sampleRate, resolution, notify) { }
+    };
+
+    SparseTimeValueModel *m_rawPath; // I own this
+    mutable PathModel *m_path; // I own this
+    mutable PathModel *m_reversePath; // I own this
     bool m_pathBegun;
     bool m_pathComplete;
 
+    void constructPath() const;
     void constructReversePath() const;
 
-    size_t align(SparseTimeValueModel *path, size_t frame) const;
+    size_t align(PathModel *path, size_t frame) const;
 };
 
 #endif

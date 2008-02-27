@@ -44,6 +44,7 @@ public:
     virtual ~QuickTimeFileReader();
 
     virtual QString getError() const { return m_error; }
+    virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getTitle() const { return m_title; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);

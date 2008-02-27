@@ -16,20 +16,23 @@
 #ifndef _FEATURE_EXTRACTION_PLUGIN_TRANSFORMER_H_
 #define _FEATURE_EXTRACTION_PLUGIN_TRANSFORMER_H_
 
-#include "PluginTransformer.h"
+#include "ModelTransformer.h"
+
+#include <QString>
+
+#include <vamp-sdk/Plugin.h>
+
+#include <iostream>
 
 class DenseTimeValueModel;
 
-class FeatureExtractionModelTransformer : public PluginTransformer
+class FeatureExtractionModelTransformer : public ModelTransformer
 {
     Q_OBJECT
 
 public:
-    FeatureExtractionModelTransformer(Model *inputModel,
-                                       QString plugin,
-                                       const ExecutionContext &context,
-                                       QString configurationXml = "",
-                                       QString outputName = "");
+    FeatureExtractionModelTransformer(Input input,
+                                      const Transform &transform);
     virtual ~FeatureExtractionModelTransformer();
 
 protected:
@@ -44,12 +47,12 @@ protected:
 
     void setCompletion(int);
 
-    void getFrames(int channel, int channelCount,
-                   long startFrame, long size, float *buffer);
+    void getFrames(int channelCount, long startFrame, long size,
+                   float **buffer);
 
     // just casts
-    DenseTimeValueModel *getInput();
-    template <typename ModelClass> ModelClass *getOutput() {
+    DenseTimeValueModel *getConformingInput();
+    template <typename ModelClass> ModelClass *getConformingOutput() {
 	ModelClass *mc = dynamic_cast<ModelClass *>(m_output);
 	if (!mc) {
 	    std::cerr << "FeatureExtractionModelTransformer::getOutput: Output model not conformable" << std::endl;

@@ -18,12 +18,13 @@
 
 #include "base/XmlExportable.h"
 #include "base/Window.h"
-
-#include <vamp-sdk/RealTime.h>
+#include "base/RealTime.h"
 
 #include <QString>
 
 typedef QString TransformId;
+
+class QXmlAttributes;
 
 namespace Vamp {
     class PluginBase;
@@ -32,56 +33,101 @@ namespace Vamp {
 class Transform : public XmlExportable
 {
 public:
+    /**
+     * Construct a new Transform with default data and no identifier.
+     * The Transform object will be meaningless until some data and an
+     * identifier have been set on it.
+     *
+     * To construct a Transform for use with a particular transform
+     * identifier, use TransformFactory::getDefaultTransformFor.
+     */
     Transform();
+
+    /**
+     * Construct a Transform by parsing the given XML data string.
+     * This is the inverse of toXml.
+     */
+    Transform(QString xml);
+
     virtual ~Transform();
 
-    void setIdentifier(TransformId id) { m_id = id; }
-    TransformId getIdentifier() const { return m_id; }
-    
-    void setPlugin(QString pluginIdentifier);
-    void setOutput(QString output);
+    /**
+     * Compare two Transforms.  They only compare equal if every data
+     * element matches.
+     */
+    bool operator==(const Transform &);
+
+    void setIdentifier(TransformId id);
+    TransformId getIdentifier() const;
 
     enum Type { FeatureExtraction, RealTimeEffect };
 
     Type getType() const;
     QString getPluginIdentifier() const;
     QString getOutput() const;
+    
+    void setPluginIdentifier(QString pluginIdentifier);
+    void setOutput(QString output);
+
+    // Turn a plugin ID and output name into a transform ID.  Note
+    // that our pluginIdentifier is the same thing as the Vamp SDK's
+    // PluginLoader::PluginKey.
+    static TransformId getIdentifierForPluginOutput(QString pluginIdentifier,
+                                                    QString output = "");
 
     typedef std::map<QString, float> ParameterMap;
     
-    ParameterMap getParameters() const { return m_parameters; }
-    void setParameters(const ParameterMap &pm) { m_parameters = pm; }
+    const ParameterMap &getParameters() const;
+    void setParameters(const ParameterMap &pm);
+    void setParameter(QString name, float value);
 
     typedef std::map<QString, QString> ConfigurationMap;
 
-    ConfigurationMap getConfiguration() const { return m_configuration; }
-    void setConfiguration(const ConfigurationMap &cm) { m_configuration = cm; }
+    const ConfigurationMap &getConfiguration() const;
+    void setConfiguration(const ConfigurationMap &cm);
+    void setConfigurationValue(QString name, QString value);
 
-    QString getProgram() const { return m_program; }
-    void setProgram(QString program) { m_program = program; }
+    QString getPluginVersion() const;
+    void setPluginVersion(QString version);
+
+    QString getProgram() const;
+    void setProgram(QString program);
     
-    size_t getStepSize() const { return m_stepSize; }
-    void setStepSize(size_t s) { m_stepSize = s; }
+    size_t getStepSize() const;
+    void setStepSize(size_t s);
     
-    size_t getBlockSize() const { return m_blockSize; }
-    void setBlockSize(size_t s) { m_blockSize = s; }
-
-    WindowType getWindowType() const { return m_windowType; }
-    void setWindowType(WindowType type) { m_windowType = type; }
-
-    Vamp::RealTime getStartTime() const { return m_startTime; }
-    void setStartTime(Vamp::RealTime t) { m_startTime = t; }
-
-    Vamp::RealTime getDuration() const { return m_duration; } // 0 -> all
-    void setDuration(Vamp::RealTime d) { m_duration = d; }
+    size_t getBlockSize() const;
+    void setBlockSize(size_t s);
     
-    float getSampleRate() const { return m_sampleRate; } // 0 -> as input
-    void setSampleRate(float rate) { m_sampleRate = rate; }
+    WindowType getWindowType() const;
+    void setWindowType(WindowType type);
+    
+    RealTime getStartTime() const;
+    void setStartTime(RealTime t);
+    
+    RealTime getDuration() const; // 0 -> all
+    void setDuration(RealTime d);
+    
+    float getSampleRate() const; // 0 -> as input
+    void setSampleRate(float rate);
 
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const;
 
-    static Transform fromXmlString(QString xml);
+    /**
+     * Set the main transform data from the given XML attributes.
+     * This does not set the parameters or configuration, which are
+     * exported to separate XML elements rather than attributes of the
+     * transform element.
+     * 
+     * Note that this only sets those attributes which are actually
+     * present in the argument.  Any attributes not defined in the
+     * attribute will remain unchanged in the Transform.  If your aim
+     * is to create a transform exactly matching the given attributes,
+     * ensure you start from an empty transform rather than one that
+     * has already been configured.
+     */
+    void setFromXmlAttributes(const QXmlAttributes &);
 
 protected:
     TransformId m_id; // pluginid:output, that is type:soname:label:output
@@ -95,12 +141,13 @@ protected:
 
     ParameterMap m_parameters;
     ConfigurationMap m_configuration;
+    QString m_pluginVersion;
     QString m_program;
     size_t m_stepSize;
     size_t m_blockSize;
     WindowType m_windowType;
-    Vamp::RealTime m_startTime;
-    Vamp::RealTime m_duration;
+    RealTime m_startTime;
+    RealTime m_duration;
     float m_sampleRate;
 };
 

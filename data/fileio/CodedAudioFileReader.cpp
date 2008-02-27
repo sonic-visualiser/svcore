@@ -294,7 +294,7 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
     float max = 1.0;
     size_t count = sz * m_channelCount;
 
-    if (m_resampler) {
+    if (m_resampler && m_fileRate != 0) {
         
         float ratio = float(m_sampleRate) / float(m_fileRate);
 

@@ -38,6 +38,8 @@ public:
     long frame;
     QString image;
     QString label;
+
+    QString getLabel() const { return label; }
     
     void toXml(QTextStream &stream,
                QString indent = "",
@@ -86,6 +88,8 @@ public:
     ImageModel(size_t sampleRate, size_t resolution, bool notifyOnAdd = true) :
 	SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
     { }
+
+    QString getTypeName() const { return tr("Image"); }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",

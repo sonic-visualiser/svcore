@@ -173,6 +173,13 @@ WaveFileModel::getMaker() const
     if (m_reader) return m_reader->getMaker();
     return "";
 }
+
+QString
+WaveFileModel::getLocation() const
+{
+    if (m_reader) return m_reader->getLocation();
+    return "";
+}
     
 size_t
 WaveFileModel::getData(int channel, size_t start, size_t count,
@@ -182,7 +189,7 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     // This is used for e.g. audio playback.
     // Could be much more efficient (although compiler optimisation will help)
 
-    if (start > m_startFrame) {
+    if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
         for (size_t i = 0; i < count; ++i) buffer[i] = 0.f;
@@ -204,12 +211,14 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
 //              << start << ", " << end << "): calling reader" << std::endl;
 #endif
 
-    SampleBlock frames;
+    int channels = getChannelCount();
+
+    SampleBlock frames(count * channels);
     m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
-    int ch0 = channel, ch1 = channel, channels = getChannelCount();
+    int ch0 = channel, ch1 = channel;
     if (channel == -1) {
 	ch0 = 0;
 	ch1 = channels - 1;
@@ -255,12 +264,14 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
         return 0;
     }
 
-    SampleBlock frames;
+    int channels = getChannelCount();
+
+    SampleBlock frames(count * channels);
     m_reader->getInterleavedFrames(start, count, frames);
 
     size_t i = 0;
 
-    int ch0 = channel, ch1 = channel, channels = getChannelCount();
+    int ch0 = channel, ch1 = channel;
     if (channel == -1) {
 	ch0 = 0;
 	ch1 = channels - 1;
@@ -285,12 +296,112 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     return i;
 }
 
+size_t
+WaveFileModel::getData(size_t fromchannel, size_t tochannel,
+                       size_t start, size_t count,
+                       float **buffer) const
+{
+    size_t channels = getChannelCount();
+
+    if (fromchannel > tochannel) {
+        std::cerr << "ERROR: WaveFileModel::getData: fromchannel ("
+                  << fromchannel << ") > tochannel (" << tochannel << ")"
+                  << std::endl;
+        return 0;
+    }
+
+    if (tochannel >= channels) {
+        std::cerr << "ERROR: WaveFileModel::getData: tochannel ("
+                  << tochannel << ") >= channel count (" << channels << ")"
+                  << std::endl;
+        return 0;
+    }
+
+    if (fromchannel == tochannel) {
+        return getData(fromchannel, start, count, buffer[0]);
+    }
+
+    size_t reqchannels = (tochannel - fromchannel) + 1;
+
+    // Always read these directly from the file. 
+    // This is used for e.g. audio playback.
+    // Could be much more efficient (although compiler optimisation will help)
+
+    if (start >= m_startFrame) {
+        start -= m_startFrame;
+    } else {
+        for (size_t c = 0; c < reqchannels; ++c) {
+            for (size_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
+        }
+        if (count <= m_startFrame - start) {
+            return 0;
+        } else {
+            count -= (m_startFrame - start);
+            start = 0;
+        }
+    }
+
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        for (size_t c = 0; c < reqchannels; ++c) {
+            for (size_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
+        }
+        return 0;
+    }
+
+    SampleBlock frames(count * channels);
+    m_reader->getInterleavedFrames(start, count, frames);
+
+    size_t i = 0;
+
+    int ch0 = fromchannel, ch1 = tochannel;
+    
+    size_t index = 0, available = frames.size();
+
+    while (i < count) {
+
+        if (index >= available) break;
+
+        size_t destc = 0;
+
+        for (size_t c = 0; c < channels; ++c) {
+            
+            if (c >= fromchannel && c <= tochannel) {
+                buffer[destc][i] = frames[index];
+                ++destc;
+            }
+
+            ++index;
+        }
+
+        ++i;
+    }
+
+    return i;
+}
+
+size_t
+WaveFileModel::getSummaryBlockSize(size_t desired) const
+{
+    int cacheType = 0;
+    int power = m_zoomConstraint.getMinCachePower();
+    size_t roundedBlockSize = m_zoomConstraint.getNearestBlockSize
+        (desired, cacheType, power, ZoomConstraint::RoundDown);
+    if (cacheType != 0 && cacheType != 1) {
+        // We will be reading directly from file, so can satisfy any
+        // blocksize requirement
+        return desired;
+    } else {
+        return roundedBlockSize;
+    }
+}    
+
 void
 WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
                             RangeBlock &ranges, size_t &blockSize) const
 {
     ranges.clear();
     if (!isOK()) return;
+    ranges.reserve((count / blockSize) + 1);
 
     if (start > m_startFrame) start -= m_startFrame;
     else if (count <= m_startFrame - start) return;
@@ -301,8 +412,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 
     int cacheType = 0;
     int power = m_zoomConstraint.getMinCachePower();
-    blockSize = m_zoomConstraint.getNearestBlockSize
-        (blockSize, cacheType, power, ZoomConstraint::RoundUp);
+    size_t roundedBlockSize = m_zoomConstraint.getNearestBlockSize
+        (blockSize, cacheType, power, ZoomConstraint::RoundDown);
 
     size_t channels = getChannelCount();
 
@@ -316,17 +427,26 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	// matter by putting a single cache in getInterleavedFrames
 	// for short queries.
 
-	SampleBlock frames;
-	m_reader->getInterleavedFrames(start, count, frames);
+        m_directReadMutex.lock();
+
+        if (m_lastDirectReadStart != start ||
+            m_lastDirectReadCount != count ||
+            m_directRead.empty()) {
+
+            m_reader->getInterleavedFrames(start, count, m_directRead);
+            m_lastDirectReadStart = start;
+            m_lastDirectReadCount = count;
+        }
+
 	float max = 0.0, min = 0.0, total = 0.0;
 	size_t i = 0, got = 0;
 
 	while (i < count) {
 
 	    size_t index = i * channels + channel;
-	    if (index >= frames.size()) break;
+	    if (index >= m_directRead.size()) break;
             
-	    float sample = frames[index];
+	    float sample = m_directRead[index];
             if (sample > max || got == 0) max = sample;
 	    if (sample < min || got == 0) min = sample;
             total += fabsf(sample);
@@ -341,6 +461,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	    }
 	}
 
+        m_directReadMutex.unlock();
+
 	if (got > 0) {
             ranges.push_back(Range(min, max, total / got));
 	}
@@ -352,6 +474,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	QMutexLocker locker(&m_mutex);
     
 	const RangeBlock &cache = m_cache[cacheType];
+
+        blockSize = roundedBlockSize;
 
 	size_t cacheBlock, div;
         

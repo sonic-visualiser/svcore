@@ -175,6 +175,28 @@ AggregateWaveModel::getData(int channel, size_t start, size_t count,
     if (mixing) delete[] readbuf;
     return sz;
 }
+
+size_t
+AggregateWaveModel::getData(size_t fromchannel, size_t tochannel,
+                            size_t start, size_t count,
+                            float **buffer) const
+{
+    size_t min = count;
+
+    for (size_t c = fromchannel; c <= tochannel; ++c) {
+        size_t here = getData(c, start, count, buffer[c - fromchannel]);
+        if (here < min) min = here;
+    }
+    
+    return min;
+}
+
+size_t
+AggregateWaveModel::getSummaryBlockSize(size_t desired) const
+{
+    //!!! complete
+    return desired;
+}
         
 void
 AggregateWaveModel::getSummaries(size_t channel, size_t start, size_t count,

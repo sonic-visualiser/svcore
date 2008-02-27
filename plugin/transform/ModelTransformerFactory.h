@@ -21,8 +21,6 @@
 
 #include "ModelTransformer.h"
 
-#include "PluginTransformer.h"
-
 #include <map>
 #include <set>
 
@@ -40,27 +38,21 @@ public:
     static ModelTransformerFactory *getInstance();
 
     /**
-     * Get a configuration XML string for the given transform (by
-     * asking the user, most likely).  Returns the selected input
-     * model if the transform is acceptable, 0 if the operation should
-     * be cancelled.  Audio callback play source may be used to
-     * audition effects plugins, if provided.
+     * Fill out the configuration for the given transform (by asking
+     * the user, most likely).  Returns the selected input model and
+     * channel if the transform is acceptable, or an input with a null
+     * model if the operation should be cancelled.  Audio callback
+     * play source may be used to audition effects plugins, if
+     * provided.
      */
-    Model *getConfigurationForTransformer(TransformId identifier,
-                                          const std::vector<Model *> &candidateInputModels,
-                                          PluginTransformer::ExecutionContext &context,
-                                          QString &configurationXml,
-                                          AudioCallbackPlaySource *source = 0,
-                                          size_t startFrame = 0,
-                                          size_t duration = 0);
-
-    /**
-     * Get the default execution context for the given transform
-     * and input model (if known).
-     */
-    PluginTransformer::ExecutionContext getDefaultContextForTransformer(TransformId identifier,
-                                                                        Model *inputModel = 0);
-
+    ModelTransformer::Input
+    getConfigurationForTransform(Transform &transform,
+                                 const std::vector<Model *> &candidateInputModels,
+                                 Model *defaultInputModel,
+                                 AudioCallbackPlaySource *source = 0,
+                                 size_t startFrame = 0,
+                                 size_t duration = 0);
+    
     /**
      * Return the output model resulting from applying the named
      * transform to the given input model.  The transform may still be
@@ -69,14 +61,15 @@ public:
      *
      * If the transform is unknown or the input model is not an
      * appropriate type for the given transform, or if some other
-     * problem occurs, return 0.
+     * problem occurs, return 0.  Set message if there is any error or
+     * warning to report.
      * 
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
-    Model *transform(TransformId identifier, Model *inputModel,
-                     const PluginTransformer::ExecutionContext &context,
-                     QString configurationXml = "");
+    Model *transform(const Transform &transform,
+                     const ModelTransformer::Input &input,
+                     QString &message);
 
 protected slots:
     void transformerFinished();
@@ -84,9 +77,8 @@ protected slots:
     void modelAboutToBeDeleted(Model *);
 
 protected:
-    ModelTransformer *createTransformer(TransformId identifier, Model *inputModel,
-                                        const PluginTransformer::ExecutionContext &context,
-                                        QString configurationXml);
+    ModelTransformer *createTransformer(const Transform &transform,
+                                        const ModelTransformer::Input &input);
 
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
     TransformerConfigurationMap m_lastConfigurations;

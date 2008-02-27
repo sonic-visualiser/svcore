@@ -25,7 +25,7 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-//    std::cerr << "Model::~Model(" << this << ")" << std::endl;
+    std::cerr << "Model::~Model(" << this << ")" << std::endl;
 
     if (!m_aboutToDelete) {
         std::cerr << "NOTE: Model::~Model(" << this << ", \""
@@ -66,6 +66,8 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
+    std::cerr << "Model(" << this << ")::aboutToDelete()" << std::endl;
+
     if (m_aboutToDelete) {
         std::cerr << "WARNING: Model(" << this << ", \""
                   << objectName().toStdString() << "\")::aboutToDelete: "
@@ -100,7 +102,7 @@ Model::getAlignmentReference() const
 {
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return this;
+        return 0;
     }
     return m_alignment->getReferenceModel();
 }
@@ -113,9 +115,8 @@ Model::alignToReference(size_t frame) const
         else return frame;
     }
     size_t refFrame = m_alignment->toReference(frame);
-    //!!! this should be totally wrong, but because alignToReference and
-    // alignFromReference are the wrong way around, it's right... *sigh*
-    if (refFrame > getEndFrame()) refFrame = getEndFrame();
+    const Model *m = m_alignment->getReferenceModel();
+    if (m && refFrame > m->getEndFrame()) refFrame = m->getEndFrame();
     return refFrame;
 }
 
@@ -127,6 +128,7 @@ Model::alignFromReference(size_t refFrame) const
         else return refFrame;
     }
     size_t frame = m_alignment->fromReference(refFrame);
+    if (frame > getEndFrame()) frame = getEndFrame();
     return frame;
 }
 
@@ -148,12 +150,21 @@ QString
 Model::getTitle() const
 {
     if (m_sourceModel) return m_sourceModel->getTitle();
+    else return "";
 }
 
 QString
 Model::getMaker() const
 {
     if (m_sourceModel) return m_sourceModel->getMaker();
+    else return "";
+}
+
+QString
+Model::getLocation() const
+{
+    if (m_sourceModel) return m_sourceModel->getLocation();
+    else return "";
 }
 
 void

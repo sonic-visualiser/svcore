@@ -27,6 +27,8 @@ class Resampler;
 
 class CodedAudioFileReader : public AudioFileReader
 {
+    Q_OBJECT
+
 public:
     virtual ~CodedAudioFileReader();
 
@@ -39,6 +41,9 @@ public:
 				      SampleBlock &frames) const;
 
     virtual size_t getNativeRate() const { return m_fileRate; }
+
+signals:
+    void progress(int);
 
 protected:
     CodedAudioFileReader(CacheMode cacheMode, size_t targetRate);
