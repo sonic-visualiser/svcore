@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 #include <map>
 
 enum WindowType {
@@ -60,6 +61,12 @@ public:
 
     WindowType getType() const { return m_type; }
     size_t getSize() const { return m_size; }
+
+    // The names used by these functions are un-translated, for use in
+    // e.g. XML I/O.  Use Preferences::getPropertyValueLabel if you
+    // want translated names for use in the user interface.
+    static std::string getNameForType(WindowType type);
+    static WindowType getTypeForName(std::string name);
 
 protected:
     WindowType m_type;
@@ -157,6 +164,48 @@ void Window<T>::cosinewin(T *mult, T a0, T a1, T a2, T a3)
                     + a2 * cos((4 * M_PI * i) / n)
                     - a3 * cos((6 * M_PI * i) / n));
     }
+}
+
+template <typename T>
+std::string
+Window<T>::getNameForType(WindowType type)
+{
+    switch (type) {
+    case RectangularWindow:    return "rectangular";
+    case BartlettWindow:       return "bartlett";
+    case HammingWindow:        return "hamming";
+    case HanningWindow:        return "hanning";
+    case BlackmanWindow:       return "blackman";
+    case GaussianWindow:       return "gaussian";
+    case ParzenWindow:         return "parzen";
+    case NuttallWindow:        return "nuttall";
+    case BlackmanHarrisWindow: return "blackman-harris";
+    }
+
+    std::cerr << "WARNING: Window::getNameForType: unknown type "
+              << type << std::endl;
+
+    return "unknown";
+}
+
+template <typename T>
+WindowType
+Window<T>::getTypeForName(std::string name)
+{
+    if (name == "rectangular")     return RectangularWindow;
+    if (name == "bartlett")        return BartlettWindow;
+    if (name == "hamming")         return HammingWindow;
+    if (name == "hanning")         return HanningWindow;
+    if (name == "blackman")        return BlackmanWindow;
+    if (name == "gaussian")        return GaussianWindow;
+    if (name == "parzen")          return ParzenWindow;
+    if (name == "nuttall")         return NuttallWindow;
+    if (name == "blackman-harris") return BlackmanHarrisWindow;
+
+    std::cerr << "WARNING: Window::getTypeForName: unknown name \""
+              << name << "\", defaulting to \"hanning\"" << std::endl;
+
+    return HanningWindow;
 }
 
 #endif

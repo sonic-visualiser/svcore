@@ -216,6 +216,10 @@ void
 CommandHistory::addToCompound(Command *command, bool execute)
 {
 //    std::cerr << "CommandHistory::addToCompound: " << command->getName().toLocal8Bit().data() << std::endl;
+    if (!m_currentCompound) {
+	std::cerr << "CommandHistory::addToCompound: ERROR: no compound operation in progress!" << std::endl;
+        return;
+    }
 
     if (execute) command->execute();
     m_currentCompound->addCommand(command);
@@ -227,6 +231,7 @@ CommandHistory::startCompoundOperation(QString name, bool execute)
     if (m_currentCompound) {
 	std::cerr << "CommandHistory::startCompoundOperation: ERROR: compound operation already in progress!" << std::endl;
 	std::cerr << "(name is " << m_currentCompound->getName().toLocal8Bit().data() << ")" << std::endl;
+        return;
     }
  
     closeBundle();
@@ -240,6 +245,7 @@ CommandHistory::endCompoundOperation()
 {
     if (!m_currentCompound) {
 	std::cerr << "CommandHistory::endCompoundOperation: ERROR: no compound operation in progress!" << std::endl;
+        return;
     }
 
     MacroCommand *toAdd = m_currentCompound;

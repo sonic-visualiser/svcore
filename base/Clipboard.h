@@ -48,6 +48,8 @@ public:
         float getLevel() const;
 
         bool haveReferenceFrame() const;
+        bool referenceFrameDiffers() const; // from point frame
+
         long getReferenceFrame() const;
         void setReferenceFrame(long);
 
@@ -78,6 +80,7 @@ public:
     void addPoint(const Point &point);
 
     bool haveReferenceFrames() const;
+    bool referenceFramesDiffer() const;
 
 protected:
     PointList m_points;

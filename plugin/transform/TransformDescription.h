@@ -37,6 +37,10 @@
  * The friendly name is a shorter version of the name.
  *
  * The type is also intended to be user-readable, for use in menus.
+ *
+ * To obtain these objects, use
+ * TransformFactory::getAllTransformDescriptions and
+ * TransformFactory::getTransformDescription.
  */
 
 struct TransformDescription
@@ -62,7 +66,9 @@ struct TransformDescription
     bool configurable;
     
     bool operator<(const TransformDescription &od) const {
-        return (name < od.name);
+        return
+            (name <  od.name) ||
+            (name == od.name && identifier < od.identifier);
     };
 };
 

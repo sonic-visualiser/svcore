@@ -122,6 +122,51 @@ RealTime::toString(bool align) const
     return s.substr(0, s.length() - 1);
 }
 
+RealTime
+RealTime::fromString(std::string s)
+{
+    bool negative = false;
+    bool faulty = false;
+    bool section = 0;
+    std::string ssec, snsec;
+
+    for (size_t i = 0; i < s.length(); ++i) {
+
+        char c = s[i];
+        if (isspace(c)) continue;
+
+        if (section == 0) {
+
+            if (c == '-') negative = true;
+            else if (isdigit(c)) { section = 1; ssec += c; }
+            else if (c == '.') section = 2;
+            else break;
+
+        } else if (section == 1) {
+
+            if (c == '.') section = 2;
+            else if (isdigit(c)) ssec += c;
+            else break;
+
+        } else if (section == 2) {
+
+            if (isdigit(c)) snsec += c;
+            else break;
+        }
+    }
+
+    while (snsec.length() < 8) snsec += '0';
+
+    int sec = atoi(ssec.c_str());
+    int nsec = atoi(snsec.c_str());
+    if (negative) sec = -sec;
+
+    std::cerr << "RealTime::fromString: string " << s << " -> "
+              << sec << " sec, " << nsec << " nsec" << std::endl;
+
+    return RealTime(sec, nsec);
+}
+
 std::string
 RealTime::toText(bool fixedDp) const
 {
@@ -225,6 +270,22 @@ RealTime::operator/(int d) const
     double nsecdiv = (double(nsec) + ONE_BILLION * double(secrem)) / d;
     
     return RealTime(secdiv, int(nsecdiv + 0.5));
+}
+
+RealTime
+RealTime::operator*(double m) const
+{
+    double t = (double(nsec) / ONE_BILLION) * m;
+    t += sec * m;
+    return fromSeconds(t);
+}
+
+RealTime
+RealTime::operator/(double d) const
+{
+    double t = (double(nsec) / ONE_BILLION) / d;
+    t += sec / d;
+    return fromSeconds(t);
 }
 
 double 

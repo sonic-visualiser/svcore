@@ -95,6 +95,7 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
     if (factory) {
 	std::vector<QString> tmp = factory->getPluginIdentifiers();
 	for (size_t i = 0; i < tmp.size(); ++i) {
+//            std::cerr << "identifier: " << tmp[i].toStdString() << std::endl;
 	    rv.push_back(tmp[i]);
 	}
     }

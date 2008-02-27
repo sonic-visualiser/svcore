@@ -82,6 +82,19 @@ FFTModel::~FFTModel()
     if (m_server) FFTDataServer::releaseInstance(m_server);
 }
 
+void
+FFTModel::sourceModelAboutToBeDeleted()
+{
+    if (m_sourceModel) {
+        std::cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_sourceModel << ")" << std::endl;
+        if (m_server) {
+            FFTDataServer::releaseInstance(m_server);
+            m_server = 0;
+        }
+        FFTDataServer::modelAboutToBeDeleted(m_sourceModel);
+    }
+}
+
 FFTDataServer *
 FFTModel::getServer(const DenseTimeValueModel *model,
                     int channel,

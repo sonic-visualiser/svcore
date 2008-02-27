@@ -17,6 +17,8 @@
 #ifdef HAVE_FISHSOUND
 
 #include "OggVorbisFileReader.h"
+#include "ProgressPrinter.h"
+
 #include "base/Profiler.h"
 #include "system/System.h"
 
@@ -75,6 +77,9 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                 (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
                  QObject::tr("Stop"), 0, 100);
             m_progress->hide();
+        } else {
+            ProgressPrinter *pp = new ProgressPrinter(tr("Decoding..."), this);
+            connect(this, SIGNAL(progress(int)), pp, SLOT(progress(int)));
         }
 
         while (oggz_read(m_oggz, 1024) > 0);
@@ -145,14 +150,15 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
 
     // The number of bytes read by this function is smaller than
     // the file size because of the packet headers
-    int progress = lrint(double(reader->m_bytesRead) * 114 /
-                         double(reader->m_fileSize));
-    if (progress > 99) progress = 99;
-    reader->m_completion = progress;
-    
+    int p = lrint(double(reader->m_bytesRead) * 114 /
+                  double(reader->m_fileSize));
+    if (p > 99) p = 99;
+    reader->m_completion = p;
+    reader->progress(p);
+
     if (reader->m_fileSize > 0 && reader->m_progress) {
-	if (progress > reader->m_progress->value()) {
-	    reader->m_progress->setValue(progress);
+	if (p > reader->m_progress->value()) {
+	    reader->m_progress->setValue(p);
 	    reader->m_progress->show();
 	    reader->m_progress->raise();
 	    qApp->processEvents();

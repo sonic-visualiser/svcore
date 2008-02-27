@@ -36,8 +36,10 @@ public:
         ValueFromTwoLevelCounter,
         ValueFromFrameNumber,
         ValueFromRealTime,
-        ValueFromRealTimeDifference,
-        ValueFromTempo,
+        ValueFromDurationFromPrevious,
+        ValueFromDurationToNext,
+        ValueFromTempoFromPrevious,
+        ValueFromTempoToNext,
         ValueFromExistingNeighbour,
         ValueFromLabel
     };
@@ -59,7 +61,7 @@ public:
     // 4. re-label a set of points that have already been added to a
     // model
 
-    Labeller(ValueType type) :
+    Labeller(ValueType type = ValueNone) :
         m_type(type),
         m_counter(1),
         m_counter2(1),
@@ -70,8 +72,8 @@ public:
     Labeller(const Labeller &l) :
         QObject(),
         m_type(l.m_type),
-        m_counter(1),
-        m_counter2(1),
+        m_counter(l.m_counter),
+        m_counter2(l.m_counter2),
         m_cycle(l.m_cycle),
         m_dp(l.m_dp),
         m_rate(l.m_rate) { }
@@ -81,16 +83,30 @@ public:
     typedef std::map<ValueType, QString> TypeNameMap;
     TypeNameMap getTypeNames() const {
         TypeNameMap m;
-        m[ValueNone] = tr("No numbering");
-        m[ValueFromSimpleCounter] = tr("Simple counter");
-        m[ValueFromCyclicalCounter] = tr("Cyclical counter");
-        m[ValueFromTwoLevelCounter] = tr("Cyclical two-level counter (bar/beat)");
-        m[ValueFromFrameNumber] = tr("Audio sample frame number");
-        m[ValueFromRealTime] = tr("Time in seconds");
-        m[ValueFromRealTimeDifference] = tr("Duration to the following item");
-        m[ValueFromTempo] = tr("Tempo (bpm) based on duration to following item");
-        m[ValueFromExistingNeighbour] = tr("Same as the nearest previous item");
-        m[ValueFromLabel] = tr("Value extracted from the item's label (where possible)");
+        m[ValueNone]
+            = tr("No numbering");
+        m[ValueFromSimpleCounter]
+            = tr("Simple counter");
+        m[ValueFromCyclicalCounter]
+            = tr("Cyclical counter");
+        m[ValueFromTwoLevelCounter]
+            = tr("Cyclical two-level counter (bar/beat)");
+        m[ValueFromFrameNumber]
+            = tr("Audio sample frame number");
+        m[ValueFromRealTime]
+            = tr("Time in seconds");
+        m[ValueFromDurationToNext]
+            = tr("Duration to the following item");
+        m[ValueFromTempoToNext]
+            = tr("Tempo (bpm) based on duration to following item");
+        m[ValueFromDurationFromPrevious]
+            = tr("Duration since the previous item");
+        m[ValueFromTempoFromPrevious]
+            = tr("Tempo (bpm) based on duration since previous item");
+        m[ValueFromExistingNeighbour]
+            = tr("Same as the nearest previous item");
+        m[ValueFromLabel]
+            = tr("Value extracted from the item's label (where possible)");
         return m;
     }
 
@@ -212,9 +228,16 @@ public:
         }
     }
 
+    bool requiresPrevPoint() const {
+        return (m_type == ValueFromDurationFromPrevious ||
+                m_type == ValueFromDurationToNext ||
+                m_type == ValueFromTempoFromPrevious ||
+                m_type == ValueFromDurationToNext);
+    }
+
     bool actingOnPrevPoint() const {
-        return (m_type == ValueFromRealTimeDifference ||
-                m_type == ValueFromTempo);
+        return (m_type == ValueFromDurationToNext ||
+                m_type == ValueFromTempoToNext);
     }
 
 protected:
@@ -252,15 +275,18 @@ protected:
             }
             break;
 
-        case ValueFromRealTimeDifference:
-        case ValueFromTempo:
+        case ValueFromDurationToNext:
+        case ValueFromTempoToNext:
+        case ValueFromDurationFromPrevious:
+        case ValueFromTempoFromPrevious:
             if (m_rate == 0.f) {
                 std::cerr << "ERROR: Labeller::getValueFor: Real-time conversion required, but no sample rate set" << std::endl;
             } else if (!prevPoint) {
                 std::cerr << "ERROR: Labeller::getValueFor: Time difference required, but only one point provided" << std::endl;
             } else {
                 size_t f0 = prevPoint->frame, f1 = newPoint.frame;
-                if (m_type == ValueFromRealTimeDifference) {
+                if (m_type == ValueFromDurationToNext ||
+                    m_type == ValueFromDurationFromPrevious) {
                     value = float(f1 - f0) / m_rate;
                 } else {
                     if (f1 > f0) {

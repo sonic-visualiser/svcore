@@ -25,22 +25,23 @@
 #include "data/model/WritableWaveFileModel.h"
 #include "data/model/WaveFileModel.h"
 
+#include "TransformFactory.h"
+
 #include <iostream>
 
-RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Model *inputModel,
-                                                               QString pluginId,
-                                                               const ExecutionContext &context,
-                                                               QString configurationXml,
-                                                               QString units,
-                                                               int output) :
-    PluginTransformer(inputModel, context),
-    m_pluginId(pluginId),
-    m_configurationXml(configurationXml),
-    m_units(units),
-    m_plugin(0),
-    m_outputNo(output)
+RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
+                                                               const Transform &transform) :
+    ModelTransformer(in, transform),
+    m_plugin(0)
 {
-    if (!m_context.blockSize) m_context.blockSize = 1024;
+    m_units = TransformFactory::getInstance()->getTransformUnits
+        (transform.getIdentifier());
+    m_outputNo =
+        (transform.getOutput() == "A") ? -1 : transform.getOutput().toInt();
+
+    QString pluginId = transform.getPluginIdentifier();
+
+    if (!m_transform.getBlockSize()) m_transform.setBlockSize(1024);
 
 //    std::cerr << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
 
@@ -53,12 +54,12 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Model *inputModel
 	return;
     }
 
-    DenseTimeValueModel *input = getInput();
+    DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
     m_plugin = factory->instantiatePlugin(pluginId, 0, 0,
-                                          m_input->getSampleRate(),
-                                          m_context.blockSize,
+                                          input->getSampleRate(),
+                                          m_transform.getBlockSize(),
                                           input->getChannelCount());
 
     if (!m_plugin) {
@@ -67,9 +68,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Model *inputModel
 	return;
     }
 
-    if (configurationXml != "") {
-        PluginXml(m_plugin).setParametersFromXml(configurationXml);
-    }
+    TransformFactory::getInstance()->setPluginParameters(m_transform, m_plugin);
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
@@ -92,9 +91,9 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Model *inputModel
     } else {
 	
         SparseTimeValueModel *model = new SparseTimeValueModel
-            (input->getSampleRate(), m_context.blockSize, 0.0, 0.0, false);
+            (input->getSampleRate(), m_transform.getBlockSize(), 0.0, 0.0, false);
 
-        if (units != "") model->setScaleUnits(units);
+        if (m_units != "") model->setScaleUnits(m_units);
 
         m_output = model;
     }
@@ -106,12 +105,12 @@ RealTimeEffectModelTransformer::~RealTimeEffectModelTransformer()
 }
 
 DenseTimeValueModel *
-RealTimeEffectModelTransformer::getInput()
+RealTimeEffectModelTransformer::getConformingInput()
 {
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "RealTimeEffectModelTransformer::getInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	std::cerr << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
     }
     return dtvm;
 }
@@ -119,7 +118,7 @@ RealTimeEffectModelTransformer::getInput()
 void
 RealTimeEffectModelTransformer::run()
 {
-    DenseTimeValueModel *input = getInput();
+    DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
     while (!input->isReady()) {
@@ -136,17 +135,23 @@ RealTimeEffectModelTransformer::run()
 
     size_t sampleRate = input->getSampleRate();
     size_t channelCount = input->getChannelCount();
-    if (!wwfm && m_context.channel != -1) channelCount = 1;
+    if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
     long blockSize = m_plugin->getBufferSize();
 
     float **inbufs = m_plugin->getAudioInputBuffers();
 
-    long startFrame = m_input->getStartFrame();
-    long   endFrame = m_input->getEndFrame();
+    long startFrame = m_input.getModel()->getStartFrame();
+    long   endFrame = m_input.getModel()->getEndFrame();
     
-    long contextStart = m_context.startFrame;
-    long contextDuration = m_context.duration;
+    RealTime contextStartRT = m_transform.getStartTime();
+    RealTime contextDurationRT = m_transform.getDuration();
+
+    long contextStart =
+        RealTime::realTime2Frame(contextStartRT, sampleRate);
+
+    long contextDuration =
+        RealTime::realTime2Frame(contextDurationRT, sampleRate);
 
     if (contextStart == 0 || contextStart < startFrame) {
         contextStart = startFrame;
@@ -179,7 +184,7 @@ RealTimeEffectModelTransformer::run()
 	if (channelCount == 1) {
             if (inbufs && inbufs[0]) {
                 got = input->getData
-                    (m_context.channel, blockFrame, blockSize, inbufs[0]);
+                    (m_input.getChannel(), blockFrame, blockSize, inbufs[0]);
                 while (got < blockSize) {
                     inbufs[0][got++] = 0.0;
                 }          
@@ -190,14 +195,14 @@ RealTimeEffectModelTransformer::run()
                 }
             }
 	} else {
-	    for (size_t ch = 0; ch < channelCount; ++ch) {
-                if (inbufs && inbufs[ch]) {
-                    got = input->getData
-                        (ch, blockFrame, blockSize, inbufs[ch]);
-                    while (got < blockSize) {
-                        inbufs[ch][got++] = 0.0;
-                    }
+            got = input->getData(0, channelCount - 1,
+                                 blockFrame, blockSize,
+                                 inbufs);
+            while (got < blockSize) {
+                for (size_t ch = 0; ch < channelCount; ++ch) {
+                    inbufs[ch][got] = 0.0;
                 }
+                ++got;
 	    }
             for (size_t ch = channelCount; ch < m_plugin->getAudioInputCount(); ++ch) {
                 for (long i = 0; i < blockSize; ++i) {

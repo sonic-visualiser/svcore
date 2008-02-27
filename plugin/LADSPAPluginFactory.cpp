@@ -161,6 +161,10 @@ LADSPAPluginFactory::getPortMinimum(const LADSPA_Descriptor *descriptor, int por
 	minimum *= m_sampleRate;
     }
 
+    if (LADSPA_IS_HINT_LOGARITHMIC(d)) {
+        if (minimum == 0.f) minimum = 1.f;
+    }
+
     return minimum;
 }
 
@@ -211,6 +215,17 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
 
     bool logarithmic = LADSPA_IS_HINT_LOGARITHMIC(d);
     
+    float logmin = 0, logmax = 0;
+    if (logarithmic) {
+        float thresh = powf(10, -10);
+        if (minimum < thresh) logmin = -10;
+        else logmin = log10f(minimum);
+        if (maximum < thresh) logmax = -10;
+        else logmax = log10f(maximum);
+    }
+
+//    std::cerr << "LADSPAPluginFactory::getPortDefault: hint = " << d << std::endl;
+
     if (!LADSPA_IS_HINT_HAS_DEFAULT(d)) {
 	
 	deft = minimum;
@@ -222,8 +237,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     } else if (LADSPA_IS_HINT_DEFAULT_LOW(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, log10(minimum) * 0.75 +
-			    log10(maximum) * 0.25);
+	    deft = powf(10, logmin * 0.75 + logmax * 0.25);
 	} else {
 	    deft = minimum * 0.75 + maximum * 0.25;
 	}
@@ -231,8 +245,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     } else if (LADSPA_IS_HINT_DEFAULT_MIDDLE(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, log10(minimum) * 0.5 +
-		   	    log10(maximum) * 0.5);
+	    deft = powf(10, logmin * 0.5 + logmax * 0.5);
 	} else {
 	    deft = minimum * 0.5 + maximum * 0.5;
 	}
@@ -240,8 +253,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     } else if (LADSPA_IS_HINT_DEFAULT_HIGH(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, log10(minimum) * 0.25 +
-			    log10(maximum) * 0.75);
+	    deft = powf(10, logmin * 0.25 + logmax * 0.75);
 	} else {
 	    deft = minimum * 0.25 + maximum * 0.75;
 	}
@@ -271,10 +283,14 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
 	
 	deft = minimum;
     }
+
+//!!! No -- the min and max have already been multiplied by the rate,
+//so it would happen twice if we did it here -- and e.g. DEFAULT_440
+//doesn't want to be multiplied by the rate either
     
-    if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
-	deft *= m_sampleRate;
-    }
+//    if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
+//	deft *= m_sampleRate;
+//    }
 
     return deft;
 }

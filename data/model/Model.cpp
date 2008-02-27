@@ -25,7 +25,7 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-//    std::cerr << "Model::~Model(" << this << ")" << std::endl;
+    std::cerr << "Model::~Model(" << this << ")" << std::endl;
 
     if (!m_aboutToDelete) {
         std::cerr << "NOTE: Model::~Model(" << this << ", \""
@@ -66,6 +66,8 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
+    std::cerr << "Model(" << this << ")::aboutToDelete()" << std::endl;
+
     if (m_aboutToDelete) {
         std::cerr << "WARNING: Model(" << this << ", \""
                   << objectName().toStdString() << "\")::aboutToDelete: "
@@ -100,7 +102,7 @@ Model::getAlignmentReference() const
 {
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return this;
+        return 0;
     }
     return m_alignment->getReferenceModel();
 }

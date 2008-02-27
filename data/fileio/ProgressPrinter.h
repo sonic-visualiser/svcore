@@ -4,8 +4,8 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
-   
+    This file copyright 2007 QMUL.
+    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
@@ -13,21 +13,26 @@
     COPYING included with this distribution for more information.
 */
 
-#include "ModelTransformer.h"
+#ifndef _PROGRESS_PRINTER_H_
+#define _PROGRESS_PRINTER_H_
 
-ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
-    m_transform(transform),
-    m_input(input),
-    m_output(0),
-    m_detached(false),
-    m_abandoned(false)
+#include <QObject>
+#include <QString>
+
+class ProgressPrinter : public QObject
 {
-}
+    Q_OBJECT
 
-ModelTransformer::~ModelTransformer()
-{
-    m_abandoned = true;
-    wait();
-    if (!m_detached) delete m_output;
-}
+public:
+    ProgressPrinter(QString prefix = "", QObject *parent = 0);
+    virtual ~ProgressPrinter();
+    
+public slots:
+    void progress(int);
 
+protected:
+    QString m_prefix;
+    int m_lastProgress;
+};
+
+#endif

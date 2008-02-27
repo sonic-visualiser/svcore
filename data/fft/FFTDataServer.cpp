@@ -453,7 +453,8 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
 #endif
 
             if (i->second.second > 0) {
-                std::cerr << "ERROR: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                return;
             }
             for (ServerQueue::iterator j = m_releasedServers.begin();
                  j != m_releasedServers.end(); ++j) {
@@ -496,9 +497,10 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_width(0),
     m_height(0),
     m_cacheWidth(0),
-    m_memoryCache(false),
-    m_compactCache(false),
+    m_cacheWidthPower(0),
+    m_cacheWidthMask(0),
     m_lastUsedCache(-1),
+    m_criteria(criteria),
     m_fftInput(0),
     m_exiting(false),
     m_suspended(true), //!!! or false?
@@ -526,83 +528,37 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     if (m_width * columnSize < maxCacheSize * 2) m_cacheWidth = m_width;
     else m_cacheWidth = maxCacheSize / columnSize;
     
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer(" << this << "): cache width nominal "
+              << m_cacheWidth << ", actual ";
+#endif
+    
     int bits = 0;
-    while (m_cacheWidth) { m_cacheWidth >>= 1; ++bits; }
+    while (m_cacheWidth > 1) { m_cacheWidth >>= 1; ++bits; }
+    m_cacheWidthPower = bits + 1;
     m_cacheWidth = 2;
     while (bits) { m_cacheWidth <<= 1; --bits; }
+    m_cacheWidthMask = m_cacheWidth - 1;
 
-    if (criteria == StorageAdviser::NoCriteria) {
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << m_cacheWidth << " (power " << m_cacheWidthPower << ", mask "
+              << m_cacheWidthMask << ")" << std::endl;
+#endif
+
+    if (m_criteria == StorageAdviser::NoCriteria) {
 
         // assume "spectrogram" criteria for polar ffts, and "feature
         // extraction" criteria for rectangular ones.
 
         if (m_polar) {
-            criteria = StorageAdviser::Criteria
+            m_criteria = StorageAdviser::Criteria
                 (StorageAdviser::SpeedCritical |
                  StorageAdviser::LongRetentionLikely);
         } else {
-            criteria = StorageAdviser::Criteria
+            m_criteria = StorageAdviser::Criteria
                 (StorageAdviser::PrecisionCritical);
         }
     }
-
-    int cells = m_width * m_height;
-    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
-    int maximumSize = (cells / 1024) * sizeof(float); // kb
-
-    // We don't have a compact rectangular representation, and compact
-    // of course is never precision-critical
-    bool canCompact = true;
-    if ((criteria & StorageAdviser::PrecisionCritical) || !m_polar) {
-        canCompact = false;
-        minimumSize = maximumSize; // don't use compact
-    }
-    
-    StorageAdviser::Recommendation recommendation;
-
-    try {
-
-        recommendation =
-            StorageAdviser::recommend(criteria, minimumSize, maximumSize);
-
-    } catch (InsufficientDiscSpace s) {
-
-        // Delete any unused servers we may have been leaving around
-        // in case we wanted them again
-
-        purgeLimbo(0);
-
-        // This time we don't catch InsufficientDiscSpace -- we
-        // haven't allocated anything yet and can safely let the
-        // exception out to indicate to the caller that we can't
-        // handle it.
-
-        recommendation =
-            StorageAdviser::recommend(criteria, minimumSize, maximumSize);
-    }
-
-    std::cerr << "Recommendation was: " << recommendation << std::endl;
-
-    m_memoryCache = false;
-
-    if ((recommendation & StorageAdviser::UseMemory) ||
-        (recommendation & StorageAdviser::PreferMemory)) {
-        m_memoryCache = true;
-    }
-
-    m_compactCache = canCompact &&
-        (recommendation & StorageAdviser::ConserveSpace);
-
-    std::cerr << "FFTDataServer: memory cache = " << m_memoryCache << ", compact cache = " << m_compactCache << std::endl;
-    
-#ifdef DEBUG_FFT_SERVER
-    std::cerr << "Width " << m_width << ", cache width " << m_cacheWidth << " (size " << m_cacheWidth * columnSize << ")" << std::endl;
-#endif
-
-    StorageAdviser::notifyPlannedAllocation
-        (m_memoryCache ? StorageAdviser::MemoryAllocation :
-                         StorageAdviser::DiscAllocation,
-         m_compactCache ? minimumSize : maximumSize);
 
     for (size_t i = 0; i <= m_width / m_cacheWidth; ++i) {
         m_caches.push_back(0);
@@ -648,14 +604,9 @@ FFTDataServer::~FFTDataServer()
                        "FFTDataServer::m_writeMutex[~FFTDataServer]");
 
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
+
         if (*i) {
             delete *i;
-        } else {
-            StorageAdviser::notifyDoneAllocation
-                (m_memoryCache ? StorageAdviser::MemoryAllocation :
-                                 StorageAdviser::DiscAllocation,
-                 m_cacheWidth * m_height *
-                 (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
         }
     }
 
@@ -724,6 +675,65 @@ FFTDataServer::resume()
     }
 }
 
+void
+FFTDataServer::getStorageAdvice(size_t w, size_t h,
+                                bool &memoryCache, bool &compactCache)
+{
+    int cells = w * h;
+    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
+    int maximumSize = (cells / 1024) * sizeof(float); // kb
+
+    // We don't have a compact rectangular representation, and compact
+    // of course is never precision-critical
+
+    bool canCompact = true;
+    if ((m_criteria & StorageAdviser::PrecisionCritical) || !m_polar) {
+        canCompact = false;
+        minimumSize = maximumSize; // don't use compact
+    }
+    
+    StorageAdviser::Recommendation recommendation;
+
+    try {
+
+        recommendation =
+            StorageAdviser::recommend(m_criteria, minimumSize, maximumSize);
+
+    } catch (InsufficientDiscSpace s) {
+
+        // Delete any unused servers we may have been leaving around
+        // in case we wanted them again
+
+        purgeLimbo(0);
+
+        // This time we don't catch InsufficientDiscSpace -- we
+        // haven't allocated anything yet and can safely let the
+        // exception out to indicate to the caller that we can't
+        // handle it.
+
+        recommendation =
+            StorageAdviser::recommend(m_criteria, minimumSize, maximumSize);
+    }
+
+    std::cerr << "Recommendation was: " << recommendation << std::endl;
+
+    memoryCache = false;
+
+    if ((recommendation & StorageAdviser::UseMemory) ||
+        (recommendation & StorageAdviser::PreferMemory)) {
+        memoryCache = true;
+    }
+
+    compactCache = canCompact &&
+        (recommendation & StorageAdviser::ConserveSpace);
+
+#ifdef DEBUG_FFT_SERVER
+    std::cerr << "FFTDataServer: memory cache = " << memoryCache << ", compact cache = " << compactCache << std::endl;
+    
+    std::cerr << "Width " << w << " of " << m_width << ", height " << h << ", size " << w * h << std::endl;
+#endif
+}
+
 FFTCache *
 FFTDataServer::getCacheAux(size_t c)
 {
@@ -784,30 +794,28 @@ FFTDataServer::getCacheAux(size_t c)
         width = m_width - c * m_cacheWidth;
     }
 
+    bool memoryCache = false;
+    bool compactCache = false;
+
+    getStorageAdvice(width, m_height, memoryCache, compactCache);
+
     try {
 
-        if (m_memoryCache) {
+        if (memoryCache) {
 
             cache = new FFTMemoryCache
-                (m_compactCache ? FFTMemoryCache::Compact :
-//                                  FFTMemoryCache::Polar);
-                 m_polar ? FFTMemoryCache::Polar :
-                           FFTMemoryCache::Rectangular);
-
-        } else if (m_compactCache) {
-
-            cache = new FFTFileCache
-                (name,
-                 MatrixFile::ReadWrite,
-                 FFTFileCache::Compact);
+                (compactCache ? FFTMemoryCache::Compact :
+                      m_polar ? FFTMemoryCache::Polar :
+                                FFTMemoryCache::Rectangular);
 
         } else {
 
             cache = new FFTFileCache
                 (name,
                  MatrixFile::ReadWrite,
-                 m_polar ? FFTFileCache::Polar :
-                           FFTFileCache::Rectangular);
+                 compactCache ? FFTFileCache::Compact :
+                      m_polar ? FFTFileCache::Polar :
+                                FFTFileCache::Rectangular);
         }
 
         cache->resize(width, m_height);
@@ -818,7 +826,7 @@ FFTDataServer::getCacheAux(size_t c)
         delete cache;
         cache = 0;
 
-        if (m_memoryCache) {
+        if (memoryCache) {
             
             std::cerr << "WARNING: Memory allocation failed when resizing"
                       << " FFT memory cache no. " << c << " to " << width 
@@ -827,7 +835,10 @@ FFTDataServer::getCacheAux(size_t c)
 
             try {
 
-                cache = new FFTFileCache(name, MatrixFile::ReadWrite,
+                purgeLimbo(0);
+
+                cache = new FFTFileCache(name,
+                                         MatrixFile::ReadWrite,
                                          FFTFileCache::Compact);
 
                 cache->resize(width, m_height);
@@ -854,12 +865,6 @@ FFTDataServer::getCacheAux(size_t c)
              ("Failed to create or resize an FFT model slice.\n"
               "There may be insufficient memory or disc space to continue."));
     }
-
-    StorageAdviser::notifyDoneAllocation
-        (m_memoryCache ? StorageAdviser::MemoryAllocation :
-         StorageAdviser::DiscAllocation,
-         width * m_height *
-         (m_compactCache ? sizeof(uint16_t) : sizeof(float)) / 1024 + 1);
 
     m_caches[c] = cache;
     m_lastUsedCache = c;

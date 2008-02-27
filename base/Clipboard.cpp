@@ -177,6 +177,12 @@ Clipboard::Point::haveReferenceFrame() const
     return m_haveReferenceFrame;
 }
 
+bool
+Clipboard::Point::referenceFrameDiffers() const
+{
+    return m_haveReferenceFrame && (m_referenceFrame != m_frame);
+}
+
 long
 Clipboard::Point::getReferenceFrame() const
 {
@@ -186,7 +192,7 @@ Clipboard::Point::getReferenceFrame() const
 void
 Clipboard::Point::setReferenceFrame(long f) 
 {
-    if (f != m_frame) m_haveReferenceFrame = true;
+    m_haveReferenceFrame = true;
     m_referenceFrame = f;
 }
 
@@ -229,6 +235,16 @@ Clipboard::haveReferenceFrames() const
     for (PointList::const_iterator i = m_points.begin();
          i != m_points.end(); ++i) {
         if (i->haveReferenceFrame()) return true;
+    } 
+    return false;
+}
+
+bool
+Clipboard::referenceFramesDiffer() const
+{
+    for (PointList::const_iterator i = m_points.begin();
+         i != m_points.end(); ++i) {
+        if (i->referenceFrameDiffers()) return true;
     } 
     return false;
 }

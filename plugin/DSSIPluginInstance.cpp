@@ -831,6 +831,20 @@ DSSIPluginInstance::getParameterDefault(unsigned int parameter) const
     }
 }
 
+int
+DSSIPluginInstance::getParameterDisplayHint(unsigned int parameter) const
+{
+    if (parameter >= m_controlPortsIn.size()) return 0.0;
+
+    LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    if (f) {
+	return f->getPortDisplayHint(m_descriptor->LADSPA_Plugin,
+                                     m_controlPortsIn[parameter].first);
+    } else {
+	return PortHint::NoHint;
+    }
+}
+
 std::string
 DSSIPluginInstance::configure(std::string key,
 			      std::string value)

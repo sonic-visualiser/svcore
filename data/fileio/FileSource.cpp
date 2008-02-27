@@ -14,6 +14,8 @@
 */
 
 #include "FileSource.h"
+#include "ProgressPrinter.h"
+
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 
@@ -27,7 +29,7 @@
 
 #include <iostream>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -44,7 +46,7 @@ FileSource::m_remoteLocalMap;
 QMutex
 FileSource::m_mapMutex;
 
-FileSource::FileSource(QString fileOrUrl, bool showProgress) :
+FileSource::FileSource(QString fileOrUrl, ShowProgressType progressType) :
     m_url(fileOrUrl),
     m_ftp(0),
     m_http(0),
@@ -54,6 +56,8 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
     m_remote(isRemote(fileOrUrl)),
     m_done(false),
     m_leaveLocalFile(false),
+    m_progressType(progressType),
+    m_progressPrinter(0),
     m_progressDialog(0),
     m_progressShowTimer(this),
     m_refCounted(false)
@@ -68,7 +72,7 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
         return;
     }
 
-    init(showProgress);
+    init();
 
     if (isRemote() &&
         (fileOrUrl.contains('%') ||
@@ -99,7 +103,7 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
             m_ok = false;
             m_done = false;
             m_lastStatus = 0;
-            init(showProgress);
+            init();
         }
     }
 
@@ -109,7 +113,7 @@ FileSource::FileSource(QString fileOrUrl, bool showProgress) :
     }
 }
 
-FileSource::FileSource(QUrl url, bool showProgress) :
+FileSource::FileSource(QUrl url, ShowProgressType progressType) :
     m_url(url),
     m_ftp(0),
     m_http(0),
@@ -119,6 +123,8 @@ FileSource::FileSource(QUrl url, bool showProgress) :
     m_remote(isRemote(url.toString())),
     m_done(false),
     m_leaveLocalFile(false),
+    m_progressType(progressType),
+    m_progressPrinter(0),
     m_progressDialog(0),
     m_progressShowTimer(this),
     m_refCounted(false)
@@ -133,7 +139,7 @@ FileSource::FileSource(QUrl url, bool showProgress) :
         return;
     }
 
-    init(showProgress);
+    init();
 }
 
 FileSource::FileSource(const FileSource &rf) :
@@ -147,6 +153,8 @@ FileSource::FileSource(const FileSource &rf) :
     m_remote(rf.m_remote),
     m_done(false),
     m_leaveLocalFile(false),
+    m_progressType(rf.m_progressType),
+    m_progressPrinter(0),
     m_progressDialog(0),
     m_progressShowTimer(0),
     m_refCounted(false)
@@ -197,20 +205,40 @@ FileSource::~FileSource()
 }
 
 void
-FileSource::init(bool showProgress)
+FileSource::init()
 {
     if (!isRemote()) {
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: Not a remote URL" << std::endl;
+#endif
+        bool literal = false;
         m_localFilename = m_url.toLocalFile();
         if (m_localFilename == "") {
             // QUrl may have mishandled the scheme (e.g. in a DOS path)
             m_localFilename = m_url.toString();
+            literal = true;
         }
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: URL translates to local filename \""
+                  << m_localFilename.toStdString() << "\"" << std::endl;
+#endif
         m_ok = true;
+        m_lastStatus = 200;
+
         if (!QFileInfo(m_localFilename).exists()) {
-            m_lastStatus = 404;
-        } else {
-            m_lastStatus = 200;
+            if (literal) {
+                m_lastStatus = 404;
+            } else {
+                // Again, QUrl may have been mistreating us --
+                // e.g. dropping a part that looks like query data
+                m_localFilename = m_url.toString();
+                literal = true;
+                if (!QFileInfo(m_localFilename).exists()) {
+                    m_lastStatus = 404;
+                }
+            }
         }
+
         m_done = true;
         return;
     }
@@ -242,6 +270,7 @@ FileSource::init(bool showProgress)
 
     if (scheme == "http") {
         initHttp();
+        std::cerr << "FileSource: initHttp succeeded" << std::endl;
     } else if (scheme == "ftp") {
         initFtp();
     } else {
@@ -275,14 +304,28 @@ FileSource::init(bool showProgress)
         m_refCountMap[m_url]++;
         m_refCounted = true;
 
-        if (showProgress) {
-            m_progressDialog = new QProgressDialog(tr("Downloading %1...").arg(m_url.toString()), tr("Cancel"), 0, 100);
+        switch (m_progressType) {
+
+        case ProgressNone: break;
+
+        case ProgressDialog:
+            m_progressDialog = new QProgressDialog
+                (tr("Downloading %1...").arg(m_url.toString()),
+                 tr("Cancel"), 0, 100);
             m_progressDialog->hide();
             connect(&m_progressShowTimer, SIGNAL(timeout()),
                     this, SLOT(showProgressDialog()));
-            connect(m_progressDialog, SIGNAL(canceled()), this, SLOT(cancelled()));
+            connect(m_progressDialog, SIGNAL(canceled()),
+                    this, SLOT(cancelled()));
             m_progressShowTimer.setSingleShot(true);
             m_progressShowTimer.start(2000);
+            break;
+
+        case ProgressToConsole:
+            m_progressPrinter = new ProgressPrinter(tr("Downloading..."));
+            connect(this, SIGNAL(progress(int)),
+                    m_progressPrinter, SLOT(progress(int)));
+            break;
         }
     }
 }
@@ -400,6 +443,8 @@ FileSource::cleanup()
     }
     delete m_progressDialog;
     m_progressDialog = 0;
+    delete m_progressPrinter;
+    m_progressPrinter = 0;
     delete m_localFile; // does not actually delete the file
     m_localFile = 0;
 }
@@ -449,6 +494,7 @@ void
 FileSource::waitForData()
 {
     while (m_ok && !m_done) {
+//        std::cerr << "FileSource::waitForData: calling QApplication::processEvents" << std::endl;
         QApplication::processEvents();
     }
 }
@@ -800,26 +846,5 @@ FileSource::createCacheFile()
     m_localFilename = filepath;
 
     return false;
-}
-
-FileSourceProgressPrinter::FileSourceProgressPrinter() :
-    m_lastProgress(0)
-{
-}
-
-FileSourceProgressPrinter::~FileSourceProgressPrinter()
-{
-    if (m_lastProgress > 0 && m_lastProgress != 100) {
-        std::cerr << "\r\n";
-    }
-}
-
-void
-FileSourceProgressPrinter::progress(int progress)
-{
-    if (progress == m_lastProgress) return;
-    if (progress == 100) std::cerr << "\r\n";
-    else std::cerr << "\r" << progress << "%";
-    m_lastProgress = progress;
 }
 

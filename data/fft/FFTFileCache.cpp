@@ -23,6 +23,7 @@
 
 #include <QMutexLocker>
 
+
 // The underlying matrix has height (m_height * 2 + 1).  In each
 // column we store magnitude at [0], [2] etc and phase at [1], [3]
 // etc, and then store the normalization factor (maximum magnitude) at

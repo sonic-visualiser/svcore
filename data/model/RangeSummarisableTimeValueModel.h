@@ -72,6 +72,8 @@ public:
      */
     virtual Range getSummary(size_t channel, size_t start, size_t count) const = 0;
 
+    virtual size_t getSummaryBlockSize(size_t desired) const = 0;
+
     QString getTypeName() const { return tr("Range-Summarisable Time-Value"); }
 };
 
