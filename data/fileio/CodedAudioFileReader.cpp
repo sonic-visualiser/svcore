@@ -98,6 +98,7 @@ CodedAudioFileReader::initialiseDecodeCache()
     }
     if (m_sampleRate == 0) {
         m_sampleRate = m_fileRate;
+        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << std::endl;
     }
     if (m_fileRate != m_sampleRate) {
         std::cerr << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << std::endl;
