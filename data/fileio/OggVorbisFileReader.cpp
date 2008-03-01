@@ -97,7 +97,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     } else {
 
         while (oggz_read(m_oggz, 1024) > 0 &&
-               m_channelCount == 0);
+               (m_channelCount == 0 || m_fileRate == 0 || m_sampleRate == 0));
 
         if (m_channelCount > 0) {
             m_decodeThread = new DecodeThread(this);

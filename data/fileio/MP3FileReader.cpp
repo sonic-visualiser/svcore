@@ -135,9 +135,12 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
 
-        while ((m_channelCount == 0 || m_fileRate == 0) && !m_done) {
+        while ((m_channelCount == 0 || m_fileRate == 0 || m_sampleRate == 0)
+               && !m_done) {
             usleep(10);
         }
+        
+        std::cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << std::endl;
     }
 }
 
