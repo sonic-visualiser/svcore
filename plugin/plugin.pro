@@ -5,14 +5,15 @@ load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 QT += xml
+QT -= gui
 
 TARGET = svplugin
 
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
 
-DEPENDPATH += . .. api plugins api/alsa api/alsa/sound transform
-INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound transform
+DEPENDPATH += . .. api plugins api/alsa api/alsa/sound 
+INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound 
 OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
@@ -34,14 +35,7 @@ HEADERS += DSSIPluginFactory.h \
            api/alsa/seq.h \
            api/alsa/seq_event.h \
            api/alsa/seq_midi_event.h \
-           api/alsa/sound/asequencer.h \
-           transform/FeatureExtractionModelTransformer.h \
-           transform/RealTimeEffectModelTransformer.h \
-           transform/Transform.h \
-           transform/TransformDescription.h \
-           transform/TransformFactory.h \
-           transform/ModelTransformer.h \
-           transform/ModelTransformerFactory.h
+           api/alsa/sound/asequencer.h
 SOURCES += DSSIPluginFactory.cpp \
            DSSIPluginInstance.cpp \
            FeatureExtractionPluginFactory.cpp \
@@ -52,10 +46,5 @@ SOURCES += DSSIPluginFactory.cpp \
            RealTimePluginFactory.cpp \
            RealTimePluginInstance.cpp \
            api/dssi_alsa_compat.c \
-           plugins/SamplePlayer.cpp \
-           transform/FeatureExtractionModelTransformer.cpp \
-           transform/RealTimeEffectModelTransformer.cpp \
-           transform/Transform.cpp \
-           transform/TransformFactory.cpp \
-           transform/ModelTransformer.cpp \
-           transform/ModelTransformerFactory.cpp
+           plugins/SamplePlayer.cpp
+
