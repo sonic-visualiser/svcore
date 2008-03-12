@@ -118,10 +118,11 @@ public slots:
     virtual void setProperty(const PropertyName &, int value);
 
     /**
-     * Set a property using a command, supporting undo and redo.
-     * The default implementation should work for most subclasses.
+     * Obtain a command that sets the given property, which can be
+     * added to the command history for undo/redo.  Returns NULL
+     * if the property is already set to the given value.
      */
-    virtual void setPropertyWithCommand(const PropertyName &, int value);
+    virtual Command *getSetPropertyCommand(const PropertyName &, int value);
 
     /**
      * Set a property using a fuzzy match.  Compare nameString with
@@ -141,9 +142,9 @@ public slots:
     virtual void setProperty(QString nameString, QString valueString);
 
     /**
-     * As above, but using a command.
+     * As above, but returning a command.
      */
-    virtual void setPropertyWithCommand(QString nameString, QString valueString);
+    virtual Command *getSetPropertyCommand(QString nameString, QString valueString);
 
 protected:
 

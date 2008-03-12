@@ -17,7 +17,6 @@
 #define _XML_EXPORTABLE_H_
 
 #include <QString>
-#include <QColor>
 
 class QTextStream;
 
@@ -43,7 +42,7 @@ public:
 
     static QString encodeEntities(QString);
 
-    static QString encodeColour(QColor); 
+    static QString encodeColour(int r, int g, int b); 
 
     static int getObjectExportId(const void *); // thread-safe
 };

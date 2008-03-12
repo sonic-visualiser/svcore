@@ -17,6 +17,8 @@
 
 #include <QTextStream>
 
+#include <QStringList>
+
 #include <iostream>
 
 #include <cmath>

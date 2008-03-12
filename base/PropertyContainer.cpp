@@ -14,12 +14,8 @@
 */
 
 #include "PropertyContainer.h"
-#include "CommandHistory.h"
 #include "RangeMapper.h"
 #include "UnitDatabase.h"
-#include "ColourDatabase.h"
-
-#include <QColor>
 
 #include <iostream>
 
@@ -60,13 +56,6 @@ PropertyContainer::getPropertyRangeAndValue(const PropertyName &,
 QString
 PropertyContainer::getPropertyValueLabel(const PropertyName &name, int value) const
 {
-    if (getPropertyType(name) == ColourProperty) {
-        ColourDatabase *db = ColourDatabase::getInstance();
-        if (value >= 0 && size_t(value) < db->getColourCount()) {
-            return db->getColourName(value);
-        }
-    }
-
     return QString();
 }
 
@@ -82,14 +71,12 @@ PropertyContainer::setProperty(const PropertyName &name, int)
     std::cerr << "WARNING: PropertyContainer[" << getPropertyContainerName().toStdString() << "]::setProperty(" << name.toStdString() << "): no implementation in subclass!" << std::endl;
 }
 
-void
-PropertyContainer::setPropertyWithCommand(const PropertyName &name, int value)
+Command *
+PropertyContainer::getSetPropertyCommand(const PropertyName &name, int value)
 {
     int currentValue = getPropertyRangeAndValue(name, 0, 0, 0);
-    if (value == currentValue) return;
-
-    CommandHistory::getInstance()->addCommand
-	(new SetPropertyCommand(this, name, value), true, true); // bundled
+    if (value == currentValue) return 0;
+    return new SetPropertyCommand(this, name, value);
 }
  
 void
@@ -107,19 +94,19 @@ PropertyContainer::setProperty(QString nameString, QString valueString)
     setProperty(name, value);
 }
  
-void
-PropertyContainer::setPropertyWithCommand(QString nameString, QString valueString)
+Command *
+PropertyContainer::getSetPropertyCommand(QString nameString, QString valueString)
 {
     PropertyName name;
     int value;
     if (!convertPropertyStrings(nameString, valueString, name, value)) {
-        std::cerr << "WARNING: PropertyContainer::setPropertyWithCommand(\""
+        std::cerr << "WARNING: PropertyContainer::getSetPropertyCommand(\""
                   << nameString.toStdString() << "\", \""
                   << valueString.toStdString()
                   << "\"): Name and value conversion failed" << std::endl;
-        return;
+        return 0;
     }
-    setPropertyWithCommand(name, value);
+    return getSetPropertyCommand(name, value);
 }
 
 bool
@@ -184,6 +171,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
         break;
 
     case ValueProperty:
+    case ColourProperty:
     {
         int min, max;
         getPropertyRangeAndValue(name, &min, &max, 0);
@@ -196,12 +184,6 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
         }
         break;
     }
-
-    case ColourProperty:
-        value = ColourDatabase::getInstance()->getColourIndex(valueString);
-        if (value >= 0) success = true;
-        else value = 0;
-        break;
         
     case UnitsProperty:
         value = UnitDatabase::getInstance()->getUnitId(valueString, false);

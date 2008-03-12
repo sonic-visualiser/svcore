@@ -20,6 +20,8 @@
 
 #include <vamp-sdk/Plugin.h>
 
+#include <QObject>
+
 #include <map>
 #include <set>
 

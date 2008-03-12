@@ -18,7 +18,6 @@
 
 #include "Model.h"
 #include "base/Command.h"
-#include "base/CommandHistory.h"
 
 #include <iostream>
 
@@ -215,10 +214,11 @@ public:
 	virtual void addCommand(Command *command) { addCommand(command, true); }
 
 	/**
-	 * If any points have been added or deleted, add this command
-	 * to the command history.  Otherwise delete the command.
+	 * If any points have been added or deleted, return this
+	 * command (so the caller can add it to the command history).
+	 * Otherwise delete the command.
 	 */
-	virtual void finish();
+	virtual Command *finish();
 
     protected:
 	virtual void addCommand(Command *command, bool executeFirst);
@@ -600,11 +600,11 @@ SparseModel<PointType>::EditCommand::deletePoint(const PointType &point)
 }
 
 template <typename PointType>
-void
+Command *
 SparseModel<PointType>::EditCommand::finish()
 {
     if (!m_commands.empty()) {
-	CommandHistory::getInstance()->addCommand(this, false);
+        return this;
     } else {
         delete this;
     }

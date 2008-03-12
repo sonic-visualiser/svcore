@@ -21,6 +21,7 @@
 
 #include "data/model/Model.h"
 #include "base/Window.h"
+#include "base/Exceptions.h"
 #include "data/model/SparseOneDimensionalModel.h"
 #include "data/model/SparseTimeValueModel.h"
 #include "data/model/EditableDenseThreeDimensionalModel.h"
@@ -30,8 +31,6 @@
 #include "data/model/WaveFileModel.h"
 
 #include "TransformFactory.h"
-
-#include <QMessageBox>
 
 #include <iostream>
 
@@ -338,13 +337,10 @@ FeatureExtractionModelTransformer::run()
                                    false,
                                    StorageAdviser::PrecisionCritical);
             if (!model->isOK()) {
-                QMessageBox::critical
-                    (0, tr("FFT cache failed"),
-                     tr("Failed to create the FFT model for this transform.\n"
-                        "There may be insufficient memory or disc space to continue."));
                 delete model;
                 setCompletion(100);
-                return;
+                //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
+                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer");
             }
             model->resume();
             fftModels.push_back(model);

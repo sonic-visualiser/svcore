@@ -23,8 +23,6 @@
 #include <QFileInfo>
 #include <QMutex>
 #include <QSettings>
-#include <QApplication>
-#include <QFont>
 
 Preferences *
 Preferences::m_instance = 0;
@@ -62,9 +60,7 @@ Preferences::Preferences() :
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
-    m_viewFontSize = settings.value
-        ("view-font-size", int(QApplication::font().pointSize() * 0.9))
-        .toInt();
+    m_viewFontSize = settings.value("view-font-size", 10).toInt();
     m_showSplash = settings.value("show-splash", true).toBool();
     settings.endGroup();
 
@@ -222,7 +218,7 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
     if (name == "View Font Size") {
         if (min) *min = 3;
         if (max) *max = 48;
-        if (deflt) *deflt = int(QApplication::font().pointSize() * 0.9);
+        if (deflt) *deflt = 10;
         return int(m_viewFontSize);
     }
 
