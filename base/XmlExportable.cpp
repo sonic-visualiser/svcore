@@ -51,18 +51,18 @@ XmlExportable::encodeEntities(QString s)
 }
 
 QString
-XmlExportable::encodeColour(QColor c)
+XmlExportable::encodeColour(int ri, int gi, int bi)
 {
     QString r, g, b;
 
-    r.setNum(c.red(), 16);
-    if (c.red() < 16) r = "0" + r;
+    r.setNum(ri, 16);
+    if (ri < 16) r = "0" + r;
 
-    g.setNum(c.green(), 16);
-    if (c.green() < 16) g = "0" + g;
+    g.setNum(gi, 16);
+    if (gi < 16) g = "0" + g;
 
-    b.setNum(c.blue(), 16);
-    if (c.blue() < 16) b = "0" + b;
+    b.setNum(bi, 16);
+    if (bi < 16) b = "0" + b;
 
     return "#" + r + g + b;
 }

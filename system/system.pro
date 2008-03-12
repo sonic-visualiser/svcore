@@ -5,6 +5,8 @@ load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 
+QT -= gui
+
 TARGET = svsystem
 
 DEPENDPATH += .

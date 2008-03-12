@@ -93,4 +93,15 @@ protected:
     size_t m_available;
 };
 
+class AllocationFailed : virtual public std::exception
+{
+public:
+    AllocationFailed(QString purpose) throw();
+    virtual ~AllocationFailed() throw() { }
+    virtual const char *what() const throw();
+
+protected:
+    QString m_purpose;
+};
+
 #endif

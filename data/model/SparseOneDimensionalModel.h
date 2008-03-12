@@ -20,6 +20,8 @@
 #include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
+#include <QStringList>
+
 struct OneDimensionalPoint
 {
 public:

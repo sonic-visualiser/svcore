@@ -27,9 +27,6 @@
 #include "base/Profiler.h"
 #include "base/Thread.h" // for debug mutex locker
 
-#include <QMessageBox>
-#include <QApplication>
-
 //#define DEBUG_FFT_SERVER 1
 //#define DEBUG_FFT_SERVER_FILL 1
 
@@ -851,19 +848,14 @@ FFTDataServer::getCacheAux(size_t c)
             }
         }
 
-        if (cache) {
+        if (!cache) {
             std::cerr << "ERROR: Memory allocation failed when resizing"
                       << " FFT file cache no. " << c << " to " << width
                       << "x" << m_height << " (of total width " << m_width
                       << "): abandoning this cache" << std::endl;
-        }
 
-        //!!! Shouldn't be using QtGui here.  Need a better way to report this.
-        QMessageBox::critical
-            (0, QApplication::tr("FFT cache resize failed"),
-             QApplication::tr
-             ("Failed to create or resize an FFT model slice.\n"
-              "There may be insufficient memory or disc space to continue."));
+            throw AllocationFailed("Failed to create or resize an FFT model slice");
+        }
     }
 
     m_caches[c] = cache;

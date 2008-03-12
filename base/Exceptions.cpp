@@ -107,3 +107,18 @@ InsufficientDiscSpace::what() const throw()
         .arg(m_directory).arg(m_required).arg(m_available).toLocal8Bit().data();
 }
 
+AllocationFailed::AllocationFailed(QString purpose) throw() :
+    m_purpose(purpose)
+{
+    std::cerr << "ERROR: Allocation failed: " << purpose.toStdString()
+              << std::endl;
+}
+
+const char *
+AllocationFailed::what() const throw()
+{
+    return QString("Allocation failed: %1")
+        .arg(m_purpose).toLocal8Bit().data();
+}
+
+

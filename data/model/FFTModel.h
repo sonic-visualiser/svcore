@@ -24,8 +24,10 @@
 
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
- * derived from a DenseTimeValueModel available as a generic data grid.
- * The FFT data is acquired using FFTDataServer.
+ * derived from a DenseTimeValueModel available as a generic data
+ * grid.  The FFT data is acquired using FFTDataServer.  Note that any
+ * of the accessor functions may throw AllocationFailed if a cache
+ * resize fails.
  */
 
 class FFTModel : public DenseThreeDimensionalModel
