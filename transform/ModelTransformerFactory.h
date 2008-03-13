@@ -26,7 +26,7 @@
 
 namespace Vamp { class PluginBase; }
 
-class AudioCallbackPlaySource;
+class AudioPlaySource;
 
 class ModelTransformerFactory : public QObject
 {
@@ -41,15 +41,14 @@ public:
      * Fill out the configuration for the given transform (by asking
      * the user, most likely).  Returns the selected input model and
      * channel if the transform is acceptable, or an input with a null
-     * model if the operation should be cancelled.  Audio callback
-     * play source may be used to audition effects plugins, if
-     * provided.
+     * model if the operation should be cancelled.  Audio play source
+     * may be used to audition effects plugins, if provided.
      */
     ModelTransformer::Input
     getConfigurationForTransform(Transform &transform,
                                  const std::vector<Model *> &candidateInputModels,
                                  Model *defaultInputModel,
-                                 AudioCallbackPlaySource *source = 0,
+                                 AudioPlaySource *source = 0,
                                  size_t startFrame = 0,
                                  size_t duration = 0);
     

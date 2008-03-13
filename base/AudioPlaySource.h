@@ -16,6 +16,10 @@
 #ifndef _AUDIO_PLAY_SOURCE_H_
 #define _AUDIO_PLAY_SOURCE_H_
 
+struct Auditionable {
+    virtual ~Auditionable() { }
+};
+
 /**
  * Simple interface for audio playback.  This should be all that the
  * ViewManager needs to know about to synchronise with playback by
@@ -69,7 +73,29 @@ public:
      * source and target sample rates differ, resampling will occur.
      */
     virtual size_t getTargetSampleRate() const = 0;
-     
+
+    /**
+     * Get the block size of the target audio device.  This may be an
+     * estimate or upper bound, if the target has a variable block
+     * size; the source should behave itself even if this value turns
+     * out to be inaccurate.
+     */
+    virtual size_t getTargetBlockSize() const = 0;
+
+    /**
+     * Get the number of channels of audio that will be provided
+     * to the play target.  This may be more than the source channel
+     * count: for example, a mono source will provide 2 channels
+     * after pan.
+     */
+    virtual size_t getTargetChannelCount() const = 0;
+
+    /**
+     * Set a plugin or other subclass of Auditionable as an
+     * auditioning effect.
+     */
+    virtual void setAuditioningEffect(Auditionable *) = 0;
+
 };
 
 #endif
