@@ -607,6 +607,7 @@ SparseModel<PointType>::EditCommand::finish()
         return this;
     } else {
         delete this;
+        return 0;
     }
 }
 

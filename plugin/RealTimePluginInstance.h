@@ -30,6 +30,8 @@
 #include <string>
 #include <map>
 
+#include "base/AudioPlaySource.h"
+
 class RealTimePluginFactory;
 	
 /**
@@ -72,7 +74,7 @@ namespace PortHint { // ORable
     static const int SampleRate = 8;
 }
 
-class RealTimePluginInstance : public Vamp::PluginBase
+class RealTimePluginInstance : public Vamp::PluginBase, public Auditionable
 {
 public:
     typedef float sample_t;

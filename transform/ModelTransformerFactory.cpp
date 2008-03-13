@@ -20,6 +20,8 @@
 
 #include "TransformFactory.h"
 
+#include "base/AudioPlaySource.h"
+
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/PluginXml.h"
@@ -29,8 +31,6 @@
 #include "data/model/DenseTimeValueModel.h"
 
 #include "vamp-sdk/PluginHostAdapter.h"
-
-#include "audioio/AudioCallbackPlaySource.h" //!!! shouldn't include here
 
 #include <iostream>
 #include <set>
@@ -71,7 +71,7 @@ ModelTransformer::Input
 ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       const std::vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
-                                                      AudioCallbackPlaySource *source,
+                                                      AudioPlaySource *source,
                                                       size_t startFrame,
                                                       size_t duration)
 {
@@ -179,7 +179,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         plugin = rtp;
 
         if (effect && source && rtp) {
-            source->setAuditioningPlugin(rtp);
+            source->setAuditioningEffect(rtp);
         }
     }
 
@@ -291,7 +291,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         delete dialog;
 
         if (effect && source) {
-            source->setAuditioningPlugin(0); // will delete our plugin
+            source->setAuditioningEffect(0); // will delete our plugin
         } else {
             delete plugin;
         }
