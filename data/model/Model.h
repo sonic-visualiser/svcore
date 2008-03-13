@@ -20,6 +20,7 @@
 #include <QObject>
 
 #include "base/XmlExportable.h"
+#include "base/Playable.h"
 
 typedef std::vector<float> SampleBlock;
 
@@ -32,7 +33,8 @@ class AlignmentModel;
  */
 
 class Model : public QObject,
-	      public XmlExportable
+	      public XmlExportable,
+              public Playable
 {
     Q_OBJECT
 

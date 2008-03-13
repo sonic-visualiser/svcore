@@ -78,6 +78,8 @@ public:
     size_t     getSampleRate()  const { return m_sampleRate;  }
     size_t     getWindowSize()  const { return m_windowSize;  }
 
+    QString::SplitBehavior getSplitBehaviour() const { return m_behaviour; }
+
 protected slots:
     void modelTypeChanged(int type);
     void timingTypeChanged(int type);
@@ -91,6 +93,8 @@ protected:
     QString    m_separator;
     size_t     m_sampleRate;
     size_t     m_windowSize;
+
+    QString::SplitBehavior m_behaviour;
     
     QList<QStringList> m_example;
     int m_maxExampleCols;

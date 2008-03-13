@@ -21,6 +21,7 @@ HEADERS += AudioLevel.h \
            Exceptions.h \
            LogRange.h \
            Pitch.h \
+           Playable.h \
            PlayParameterRepository.h \
            PlayParameters.h \
            Preferences.h \

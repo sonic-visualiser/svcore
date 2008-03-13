@@ -22,11 +22,40 @@
 void
 PlayParameters::copyFrom(const PlayParameters *pp)
 {
-    m_playMuted = pp->isPlayMuted();
-    m_playPan = pp->getPlayPan();
-    m_playGain = pp->getPlayGain();
-    m_playPluginId = pp->getPlayPluginId();
-    m_playPluginConfiguration = pp->getPlayPluginConfiguration();
+    bool changed = false;
+
+    if (m_playMuted != pp->isPlayMuted()) {
+        m_playMuted = pp->isPlayMuted();
+        emit playMutedChanged(m_playMuted);
+        emit playAudibleChanged(!m_playMuted);
+        changed = true;
+    }
+
+    if (m_playPan != pp->getPlayPan()) {
+        m_playPan = pp->getPlayPan();
+        emit playPanChanged(m_playPan);
+        changed = true;
+    }
+
+    if (m_playGain != pp->getPlayGain()) {
+        m_playGain = pp->getPlayGain();
+        emit playGainChanged(m_playGain);
+        changed = true;
+    }
+
+    if (m_playPluginId != pp->getPlayPluginId()) {
+        m_playPluginId = pp->getPlayPluginId();
+        emit playPluginIdChanged(m_playPluginId);
+        changed = true;
+    }
+    
+    if (m_playPluginConfiguration != pp->getPlayPluginConfiguration()) {
+        m_playPluginConfiguration = pp->getPlayPluginConfiguration();
+        emit playPluginConfigurationChanged(m_playPluginConfiguration);
+        changed = true;
+    }
+
+    if (changed) emit playParametersChanged();
 }
 
 void
@@ -53,10 +82,12 @@ void
 PlayParameters::setPlayMuted(bool muted)
 {
 //    std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
-    m_playMuted = muted;
-    emit playMutedChanged(muted);
-    emit playAudibleChanged(!muted);
-    emit playParametersChanged();
+    if (m_playMuted != muted) {
+        m_playMuted = muted;
+        emit playMutedChanged(muted);
+        emit playAudibleChanged(!muted);
+        emit playParametersChanged();
+    }
 }
 
 void

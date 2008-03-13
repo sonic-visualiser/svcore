@@ -28,6 +28,7 @@ public:
     PlayParameters() : m_playMuted(false), m_playPan(0.0), m_playGain(1.0) { }
 
     virtual bool isPlayMuted() const { return m_playMuted; }
+    virtual bool isPlayAudible() const { return !m_playMuted; }
     virtual float getPlayPan() const { return m_playPan; } // -1.0 -> 1.0
     virtual float getPlayGain() const { return m_playGain; }
 

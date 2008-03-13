@@ -16,12 +16,15 @@
 #ifndef _PLAY_PARAMETER_REPOSITORY_H_
 #define _PLAY_PARAMETER_REPOSITORY_H_
 
-class PlayParameters;
-class Model;
+#include "PlayParameters.h"
+#include "Command.h"
+
+class Playable;
 
 #include <map>
 
 #include <QObject>
+#include <QString>
 
 class PlayParameterRepository : public QObject
 {
@@ -32,18 +35,38 @@ public:
 
     virtual ~PlayParameterRepository();
 
-    void addModel(const Model *model);
-    void removeModel(const Model *model);
-    void copyParameters(const Model *from, const Model *to);
+    void addPlayable(const Playable *playable);
+    void removePlayable(const Playable *playable);
+    void copyParameters(const Playable *from, const Playable *to);
 
-    PlayParameters *getPlayParameters(const Model *model);
+    PlayParameters *getPlayParameters(const Playable *playable);
 
     void clear();
 
+    class EditCommand : public Command
+    {
+    public:
+        EditCommand(PlayParameters *params);
+        void setPlayMuted(bool);
+        void setPlayAudible(bool);
+        void setPlayPan(float);
+        void setPlayGain(float);
+        void setPlayPluginId(QString);
+        void setPlayPluginConfiguration(QString);
+        void execute();
+        void unexecute();
+        QString getName() const;
+
+    protected:
+        PlayParameters *m_params;
+        PlayParameters m_from;
+        PlayParameters m_to;
+    };
+
 signals:
     void playParametersChanged(PlayParameters *);
-    void playPluginIdChanged(const Model *, QString);
-    void playPluginConfigurationChanged(const Model *, QString);
+    void playPluginIdChanged(const Playable *, QString);
+    void playPluginConfigurationChanged(const Playable *, QString);
 
 protected slots:
     void playParametersChanged();
@@ -51,8 +74,8 @@ protected slots:
     void playPluginConfigurationChanged(QString);
 
 protected:
-    typedef std::map<const Model *, PlayParameters *> ModelParameterMap;
-    ModelParameterMap m_playParameters;
+    typedef std::map<const Playable *, PlayParameters *> PlayableParameterMap;
+    PlayableParameterMap m_playParameters;
 
     static PlayParameterRepository *m_instance;
 };

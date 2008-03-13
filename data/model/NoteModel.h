@@ -17,8 +17,8 @@
 #define _NOTE_MODEL_H_
 
 #include "SparseValueModel.h"
-#include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
+#include "base/PlayParameterRepository.h"
 
 /**
  * Note type for use in a SparseModel or SparseValueModel.  All we
@@ -95,7 +95,7 @@ public:
 			       notifyOnAdd),
 	m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addModel(this);
+	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     NoteModel(size_t sampleRate, size_t resolution,
@@ -106,7 +106,12 @@ public:
 			       notifyOnAdd),
 	m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addModel(this);
+	PlayParameterRepository::getInstance()->addPlayable(this);
+    }
+
+    virtual ~NoteModel()
+    {
+        PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
     float getValueQuantization() const { return m_valueQuantization; }
@@ -128,6 +133,18 @@ public:
     virtual PointList getPoints(long frame) const;
 
     QString getTypeName() const { return tr("Note"); }
+
+    virtual bool canPlay() const { return true; }
+
+    virtual QString getDefaultPlayPluginId() const
+    {
+        return "dssi:_builtin:sample_player";
+    }
+
+    virtual QString getDefaultPlayPluginConfiguration() const
+    {
+        return "<plugin program=\"piano\"/>";
+    }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
