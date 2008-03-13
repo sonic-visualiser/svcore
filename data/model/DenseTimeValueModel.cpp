@@ -18,6 +18,11 @@
 
 DenseTimeValueModel::DenseTimeValueModel()
 {
-    PlayParameterRepository::getInstance()->addModel(this);
+    PlayParameterRepository::getInstance()->addPlayable(this);
+}
+
+DenseTimeValueModel::~DenseTimeValueModel()
+{
+    PlayParameterRepository::getInstance()->removePlayable(this);
 }
 	

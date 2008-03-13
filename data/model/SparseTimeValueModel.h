@@ -83,7 +83,7 @@ public:
 	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
 					 notifyOnAdd)
     {
-	PlayParameterRepository::getInstance()->addModel(this);
+        // not yet playable
     }
 
     SparseTimeValueModel(size_t sampleRate, size_t resolution,
@@ -93,7 +93,7 @@ public:
 					 valueMinimum, valueMaximum,
 					 notifyOnAdd)
     {
-	PlayParameterRepository::getInstance()->addModel(this);
+        // not yet playable
     }
 
     QString getTypeName() const { return tr("Sparse Time-Value"); }

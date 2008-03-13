@@ -15,7 +15,6 @@
 
 #include "Model.h"
 #include "AlignmentModel.h"
-#include "base/PlayParameterRepository.h"
 
 #include <QTextStream>
 
@@ -37,12 +36,6 @@ Model::~Model()
         m_alignment->aboutToDelete();
         delete m_alignment;
     }
-
-    // Subclasses have to handle adding themselves to the repository,
-    // if they want to be played.  We can't do it from here because
-    // the repository would be unable to tell whether we were playable
-    // or not (because dynamic_cast won't work from the base class ctor)
-    PlayParameterRepository::getInstance()->removeModel(this);
 }
 
 void

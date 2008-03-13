@@ -32,6 +32,8 @@ class DenseTimeValueModel : public Model
 public:
     DenseTimeValueModel();
 
+    virtual ~DenseTimeValueModel();
+
     /**
      * Return the minimum possible value found in this model type.
      * (That is, the minimum that would be valid, not the minimum
@@ -79,6 +81,10 @@ public:
     virtual size_t getData(size_t fromchannel, size_t tochannel,
                            size_t start, size_t count,
                            float **buffers) const = 0;
+
+    virtual bool canPlay() const { return true; }
+    virtual QString getDefaultPlayPluginId() const { return ""; }
+    virtual QString getDefaultPlayPluginConfiguration() const { return ""; }
 
     QString getTypeName() const { return tr("Dense Time-Value"); }
 };

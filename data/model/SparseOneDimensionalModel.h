@@ -75,7 +75,24 @@ public:
 			      bool notifyOnAdd = true) :
 	SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
     {
-	PlayParameterRepository::getInstance()->addModel(this);
+	PlayParameterRepository::getInstance()->addPlayable(this);
+    }
+
+    virtual ~SparseOneDimensionalModel()
+    {
+        PlayParameterRepository::getInstance()->removePlayable(this);
+    }
+
+    virtual bool canPlay() const { return true; }
+
+    virtual QString getDefaultPlayPluginId() const
+    {
+        return "dssi:_builtin:sample_player";
+    }
+
+    virtual QString getDefaultPlayPluginConfiguration() const
+    {
+        return "<plugin program=\"tap\"/>";
     }
 
     int getIndexOf(const Point &point) {

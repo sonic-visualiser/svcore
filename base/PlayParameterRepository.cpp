@@ -15,11 +15,7 @@
 
 #include "PlayParameterRepository.h"
 #include "PlayParameters.h"
-
-//!!! shouldn't be including this here -- restructure needed
-
-//!!! should the AudioGenerator actually implement all this stuff itself?  do we even want this class?
-#include "audioio/AudioGenerator.h"
+#include "Playable.h"
 
 #include <iostream>
 
@@ -37,73 +33,71 @@ PlayParameterRepository::~PlayParameterRepository()
 }
 
 void
-PlayParameterRepository::addModel(const Model *model)
+PlayParameterRepository::addPlayable(const Playable *playable)
 {
-//    std::cerr << "PlayParameterRepository:addModel " << model <<  std::endl;
+//    std::cerr << "PlayParameterRepository:addPlayable " << playable <<  std::endl;
 
-    if (!getPlayParameters(model)) {
+    if (!getPlayParameters(playable)) {
 
-	// Give all models the same type of play parameters for the
-	// moment, provided they can be played at all
+	// Give all playables the same type of play parameters for the
+	// moment
 
-	if (AudioGenerator::canPlay(model)) {
+//	    std::cerr << "PlayParameterRepository: Adding play parameters for " << playable << std::endl;
 
-//	    std::cerr << "PlayParameterRepository: Adding play parameters for " << model << std::endl;
+        PlayParameters *params = new PlayParameters;
+        m_playParameters[playable] = params;
 
-            PlayParameters *params = new PlayParameters;
-	    m_playParameters[model] = params;
+        params->setPlayPluginId
+            (playable->getDefaultPlayPluginId());
+        
+        params->setPlayPluginConfiguration
+            (playable->getDefaultPlayPluginConfiguration());
+        
+        connect(params, SIGNAL(playParametersChanged()),
+                this, SLOT(playParametersChanged()));
+        
+        connect(params, SIGNAL(playPluginIdChanged(QString)),
+                this, SLOT(playPluginIdChanged(QString)));
 
-            params->setPlayPluginId
-                (AudioGenerator::getDefaultPlayPluginId(model));
+        connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
+                this, SLOT(playPluginConfigurationChanged(QString)));
+        
+//            std::cerr << "Connected play parameters " << params << " for playable "
+//                      << playable << " to this " << this << std::endl;
 
-            params->setPlayPluginConfiguration
-                (AudioGenerator::getDefaultPlayPluginConfiguration(model));
-
-	    connect(params, SIGNAL(playParametersChanged()),
-		    this, SLOT(playParametersChanged()));
-
-	    connect(params, SIGNAL(playPluginIdChanged(QString)),
-		    this, SLOT(playPluginIdChanged(QString)));
-
-	    connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
-		    this, SLOT(playPluginConfigurationChanged(QString)));
-
-//            std::cerr << "Connected play parameters " << params << " for model "
-//                      << model << " to this " << this << std::endl;
-
-	} else {
-
-//	    std::cerr << "PlayParameterRepository: Model " << model << " not playable" <<  std::endl;
-	}	    
     }
 }    
 
 void
-PlayParameterRepository::removeModel(const Model *model)
+PlayParameterRepository::removePlayable(const Playable *playable)
 {
-    delete m_playParameters[model];
-    m_playParameters.erase(model);
+    if (m_playParameters.find(playable) == m_playParameters.end()) {
+        std::cerr << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playable << std::endl;
+        return;
+    }
+    delete m_playParameters[playable];
+    m_playParameters.erase(playable);
 }
 
 void
-PlayParameterRepository::copyParameters(const Model *from, const Model *to)
+PlayParameterRepository::copyParameters(const Playable *from, const Playable *to)
 {
     if (!getPlayParameters(from)) {
-        std::cerr << "ERROR: PlayParameterRepository::copyParameters: source model unknown" << std::endl;
+        std::cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << std::endl;
         return;
     }
     if (!getPlayParameters(to)) {
-        std::cerr << "WARNING: PlayParameterRepository::copyParameters: target model unknown, adding it now" << std::endl;
-        addModel(to);
+        std::cerr << "WARNING: PlayParameterRepository::copyParameters: target playable unknown, adding it now" << std::endl;
+        addPlayable(to);
     }
     getPlayParameters(to)->copyFrom(getPlayParameters(from));
 }
 
 PlayParameters *
-PlayParameterRepository::getPlayParameters(const Model *model) 
+PlayParameterRepository::getPlayParameters(const Playable *playable) 
 {
-    if (m_playParameters.find(model) == m_playParameters.end()) return 0;
-    return m_playParameters.find(model)->second;
+    if (m_playParameters.find(playable) == m_playParameters.end()) return 0;
+    return m_playParameters.find(playable)->second;
 }
 
 void
@@ -117,7 +111,7 @@ void
 PlayParameterRepository::playPluginIdChanged(QString id)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-    for (ModelParameterMap::iterator i = m_playParameters.begin();
+    for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
             emit playPluginIdChanged(i->first, id);
@@ -131,7 +125,7 @@ PlayParameterRepository::playPluginConfigurationChanged(QString config)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
 //    std::cerr << "PlayParameterRepository::playPluginConfigurationChanged" << std::endl;
-    for (ModelParameterMap::iterator i = m_playParameters.begin();
+    for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
             emit playPluginConfigurationChanged(i->first, config);
@@ -148,5 +142,97 @@ PlayParameterRepository::clear()
 	delete m_playParameters.begin()->second;
 	m_playParameters.erase(m_playParameters.begin());
     }
+}
+
+PlayParameterRepository::EditCommand::EditCommand(PlayParameters *params) :
+    m_params(params)
+{
+    m_from.copyFrom(m_params);
+    m_to.copyFrom(m_params);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayMuted(bool muted)
+{
+    m_to.setPlayMuted(muted);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayAudible(bool audible)
+{
+    m_to.setPlayAudible(audible);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayPan(float pan)
+{
+    m_to.setPlayPan(pan);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayGain(float gain)
+{
+    m_to.setPlayGain(gain);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayPluginId(QString id)
+{
+    m_to.setPlayPluginId(id);
+}
+
+void
+PlayParameterRepository::EditCommand::setPlayPluginConfiguration(QString conf)
+{
+    m_to.setPlayPluginConfiguration(conf);
+}
+
+void
+PlayParameterRepository::EditCommand::execute()
+{
+    m_params->copyFrom(&m_to);
+}
+
+void
+PlayParameterRepository::EditCommand::unexecute()
+{
+    m_params->copyFrom(&m_from);
+}
+    
+QString
+PlayParameterRepository::EditCommand::getName() const
+{
+    QString name;
+    QString multiname = tr("Adjust Playback Parameters");
+
+    int changed = 0;
+
+    if (m_to.isPlayAudible() != m_from.isPlayAudible()) {
+        name = tr("Change Playback Mute State");
+        if (++changed > 1) return multiname;
+    }
+
+    if (m_to.getPlayGain() != m_from.getPlayGain()) {
+        name = tr("Change Playback Gain");
+        if (++changed > 1) return multiname;
+    }
+
+    if (m_to.getPlayPan() != m_from.getPlayPan()) {
+        name = tr("Change Playback Pan");
+        if (++changed > 1) return multiname;
+    }
+
+    if (m_to.getPlayPluginId() != m_from.getPlayPluginId()) {
+        name = tr("Change Playback Plugin");
+        if (++changed > 1) return multiname;
+    }
+
+    if (m_to.getPlayPluginConfiguration() != m_from.getPlayPluginConfiguration()) {
+        name = tr("Configure Playback Plugin");
+        if (++changed > 1) return multiname;
+    }
+
+    if (name == "") return multiname;
+    return name;
 }
 
