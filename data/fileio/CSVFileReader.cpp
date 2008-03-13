@@ -99,6 +99,7 @@ CSVFileReader::load() const
     CSVFormatDialog::TimingType timingType = dialog->getTimingType();
     CSVFormatDialog::TimeUnits   timeUnits = dialog->getTimeUnits();
     QString separator = dialog->getSeparator();
+    QString::SplitBehavior behaviour = dialog->getSplitBehaviour();
     size_t sampleRate = dialog->getSampleRate();
     size_t windowSize = dialog->getWindowSize();
 
@@ -148,7 +149,7 @@ CSVFileReader::load() const
 
             if (line.startsWith("#")) continue;
 
-            QStringList list = line.split(separator, QString::KeepEmptyParts);
+            QStringList list = line.split(separator, behaviour);
 
             if (!model) {
 
@@ -174,7 +175,7 @@ CSVFileReader::load() const
             }
 
             QStringList tidyList;
-            QRegExp nonNumericRx("[^0-9.,+-]");
+            QRegExp nonNumericRx("[^0-9eE.,+-]");
 
             for (int i = 0; i < list.size(); ++i) {
 	    
@@ -257,18 +258,20 @@ CSVFileReader::load() const
                     if (!ok) {
                         if (warnings < warnLimit) {
                             std::cerr << "WARNING: CSVFileReader::load: "
-                                      << "Non-numeric value in data line " << lineno
+                                      << "Non-numeric value \""
+                                      << list[i].toStdString()
+                                      << "\" in data line " << lineno
                                       << ":" << std::endl;
                             std::cerr << line.toStdString() << std::endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
-                            std::cerr << "WARNING: Too many warnings" << std::endl;
+//                            std::cerr << "WARNING: Too many warnings" << std::endl;
                         }
                     }
                 }
 	
-                std::cerr << "Setting bin values for count " << lineno << ", frame "
-                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
+//                std::cerr << "Setting bin values for count " << lineno << ", frame "
+//                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
 
                 model3->setColumn(frameNo / model3->getResolution(), values);
             }
@@ -296,7 +299,8 @@ CSVFormatDialog::CSVFormatDialog(QWidget *parent, QFile *file,
     m_modelType(OneDimensionalModel),
     m_timingType(ExplicitTiming),
     m_timeUnits(TimeAudioFrames),
-    m_separator("")
+    m_separator(""),
+    m_behaviour(QString::KeepEmptyParts)
 {
     setModal(true);
     setWindowTitle(tr("Select Data Format"));
@@ -543,6 +547,8 @@ CSVFormatDialog::guessFormat(QFile *file)
 
             if (line.startsWith("#")) continue;
 
+            m_behaviour = QString::KeepEmptyParts;
+
             if (m_separator == "") {
                 //!!! to do: ask the user
                 if (line.split(",").size() >= 2) m_separator = ",";
@@ -550,10 +556,13 @@ CSVFormatDialog::guessFormat(QFile *file)
                 else if (line.split("|").size() >= 2) m_separator = "|";
                 else if (line.split("/").size() >= 2) m_separator = "/";
                 else if (line.split(":").size() >= 2) m_separator = ":";
-                else m_separator = " ";
+                else {
+                    m_separator = " ";
+                    m_behaviour = QString::SkipEmptyParts;
+                }
             }
 
-            QStringList list = line.split(m_separator);
+            QStringList list = line.split(m_separator, m_behaviour);
             QStringList tidyList;
 
             for (int i = 0; i < list.size(); ++i) {
