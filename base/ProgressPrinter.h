@@ -27,6 +27,7 @@ public:
     virtual ~ProgressPrinter();
     
 public slots:
+    virtual void setMessage(QString);
     virtual void setProgress(int);
 
 protected:
