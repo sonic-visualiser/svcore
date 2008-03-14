@@ -35,12 +35,34 @@ class MIDIEvent;
 
 typedef unsigned char MIDIByte;
 
+class MIDIFileImportPreferenceAcquirer // welcome to our grand marble foyer
+{
+public:
+    enum TrackPreference {
+        ImportNothing,
+        ImportSingleTrack,
+        MergeAllTracks,
+        MergeAllNonPercussionTracks
+    };
+
+    virtual ~MIDIFileImportPreferenceAcquirer() { }
+
+    virtual TrackPreference getTrackImportPreference
+    (QStringList trackNames, bool haveSomePercussion,
+     QString &singleTrack) const = 0;
+
+    virtual void showError(QString error) = 0;
+};
+
+
 class MIDIFileReader : public DataFileReader
 {
     Q_OBJECT
 
 public:
-    MIDIFileReader(QString path, size_t mainModelSampleRate);
+    MIDIFileReader(QString path,
+                   MIDIFileImportPreferenceAcquirer *pref,
+                   size_t mainModelSampleRate);
     virtual ~MIDIFileReader();
 
     virtual bool isOK() const;
@@ -104,6 +126,8 @@ protected:
     size_t                 m_fileSize;
     QString                m_error;
     size_t                 m_mainModelSampleRate;
+
+    MIDIFileImportPreferenceAcquirer *m_acquirer;
 };
 
 

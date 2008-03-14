@@ -5,6 +5,7 @@ load(../sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 QT += network
+QT -= gui
 
 TARGET = svdata
 
@@ -25,9 +26,9 @@ HEADERS += fft/FFTapi.h \
            fileio/CodedAudioFileReader.h \
            fileio/CSVFileReader.h \
            fileio/CSVFileWriter.h \
+           fileio/CSVFormat.h \
            fileio/DataFileReader.h \
            fileio/DataFileReaderFactory.h \
-           fileio/FileFinder.h \
            fileio/FileReadThread.h \
            fileio/FileSource.h \
            fileio/MatchFileReader.h \
@@ -38,7 +39,6 @@ HEADERS += fft/FFTapi.h \
            fileio/MP3FileReader.h \
            fileio/OggVorbisFileReader.h \
            fileio/PlaylistFileReader.h \
-           fileio/ProgressPrinter.h \
            fileio/QuickTimeFileReader.h \
            fileio/ResamplingWavFileReader.h \
            fileio/WavFileReader.h \
@@ -75,8 +75,8 @@ SOURCES += fft/FFTapi.cpp \
            fileio/CodedAudioFileReader.cpp \
            fileio/CSVFileReader.cpp \
            fileio/CSVFileWriter.cpp \
+           fileio/CSVFormat.cpp \
            fileio/DataFileReaderFactory.cpp \
-           fileio/FileFinder.cpp \
            fileio/FileReadThread.cpp \
            fileio/FileSource.cpp \
            fileio/MatchFileReader.cpp \
@@ -86,7 +86,6 @@ SOURCES += fft/FFTapi.cpp \
            fileio/MP3FileReader.cpp \
            fileio/OggVorbisFileReader.cpp \
            fileio/PlaylistFileReader.cpp \
-           fileio/ProgressPrinter.cpp \
            fileio/QuickTimeFileReader.cpp \
            fileio/ResamplingWavFileReader.cpp \
            fileio/WavFileReader.cpp \

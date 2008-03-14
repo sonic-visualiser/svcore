@@ -17,9 +17,9 @@
 
 #include <iostream>
 
-ProgressPrinter::ProgressPrinter(QString prefix, QObject *parent) :
-    QObject(parent),
-    m_prefix(prefix),
+ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
+    ProgressReporter(parent),
+    m_prefix(message),
     m_lastProgress(0)
 {
 }
@@ -29,11 +29,11 @@ ProgressPrinter::~ProgressPrinter()
     if (m_lastProgress > 0 && m_lastProgress != 100) {
         std::cerr << "\r\n";
     }
-    std::cerr << "(progress printer dtor)" << std::endl;
+//    std::cerr << "(progress printer dtor)" << std::endl;
 }
 
 void
-ProgressPrinter::progress(int progress)
+ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;
     if (progress == 100) std::cerr << "\r\n";

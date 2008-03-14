@@ -20,7 +20,6 @@
 
 #include "system/System.h"
 
-#include <QMessageBox>
 #include <QFileInfo>
 #include <QTextStream>
 

@@ -27,18 +27,12 @@
 #include <QRegExp>
 #include <QStringList>
 #include <QTextStream>
-#include <QFrame>
-#include <QGridLayout>
-#include <QPushButton>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QTableWidget>
-#include <QComboBox>
-#include <QLabel>
 
 #include <iostream>
 
-CSVFileReader::CSVFileReader(QString path, size_t mainModelSampleRate) :
+CSVFileReader::CSVFileReader(QString path, CSVFormat format,
+                             size_t mainModelSampleRate) :
+    m_format(format),
     m_file(0),
     m_mainModelSampleRate(mainModelSampleRate)
 {
@@ -86,7 +80,7 @@ Model *
 CSVFileReader::load() const
 {
     if (!m_file) return 0;
-
+/*!!!
     CSVFormatDialog *dialog = new CSVFormatDialog
 	(0, m_file, m_mainModelSampleRate);
 
@@ -94,20 +88,19 @@ CSVFileReader::load() const
 	delete dialog;
         throw DataFileReaderFactory::ImportCancelled;
     }
+*/
 
-    CSVFormatDialog::ModelType   modelType = dialog->getModelType();
-    CSVFormatDialog::TimingType timingType = dialog->getTimingType();
-    CSVFormatDialog::TimeUnits   timeUnits = dialog->getTimeUnits();
-    QString separator = dialog->getSeparator();
-    QString::SplitBehavior behaviour = dialog->getSplitBehaviour();
-    size_t sampleRate = dialog->getSampleRate();
-    size_t windowSize = dialog->getWindowSize();
+    CSVFormat::ModelType   modelType = m_format.getModelType();
+    CSVFormat::TimingType timingType = m_format.getTimingType();
+    CSVFormat::TimeUnits   timeUnits = m_format.getTimeUnits();
+    QString separator = m_format.getSeparator();
+    QString::SplitBehavior behaviour = m_format.getSplitBehaviour();
+    size_t sampleRate = m_format.getSampleRate();
+    size_t windowSize = m_format.getWindowSize();
 
-    delete dialog;
-
-    if (timingType == CSVFormatDialog::ExplicitTiming) {
+    if (timingType == CSVFormat::ExplicitTiming) {
 	windowSize = 1;
-	if (timeUnits == CSVFormatDialog::TimeSeconds) {
+	if (timeUnits == CSVFormat::TimeSeconds) {
 	    sampleRate = m_mainModelSampleRate;
 	}
     }
@@ -155,17 +148,17 @@ CSVFileReader::load() const
 
                 switch (modelType) {
 
-                case CSVFormatDialog::OneDimensionalModel:
+                case CSVFormat::OneDimensionalModel:
                     model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
                     model = model1;
                     break;
 		
-                case CSVFormatDialog::TwoDimensionalModel:
+                case CSVFormat::TwoDimensionalModel:
                     model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
                     model = model2;
                     break;
 		
-                case CSVFormatDialog::ThreeDimensionalModel:
+                case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel(sampleRate,
                                                                     windowSize,
                                                                     list.size());
@@ -187,13 +180,13 @@ CSVFileReader::load() const
                     s = s.mid(1, s.length() - 2);
                 }
 
-                if (i == 0 && timingType == CSVFormatDialog::ExplicitTiming) {
+                if (i == 0 && timingType == CSVFormat::ExplicitTiming) {
 
                     bool ok = false;
                     QString numeric = s;
                     numeric.remove(nonNumericRx);
 
-                    if (timeUnits == CSVFormatDialog::TimeSeconds) {
+                    if (timeUnits == CSVFormat::TimeSeconds) {
 
                         double time = numeric.toDouble(&ok);
                         frameNo = int(time * sampleRate + 0.00001);
@@ -202,7 +195,7 @@ CSVFileReader::load() const
 
                         frameNo = numeric.toInt(&ok);
 
-                        if (timeUnits == CSVFormatDialog::TimeWindows) {
+                        if (timeUnits == CSVFormat::TimeWindows) {
                             frameNo *= windowSize;
                         }
                     }
@@ -224,7 +217,7 @@ CSVFileReader::load() const
                 }
             }
 
-            if (modelType == CSVFormatDialog::OneDimensionalModel) {
+            if (modelType == CSVFormat::OneDimensionalModel) {
 	    
                 SparseOneDimensionalModel::Point point
                     (frameNo,
@@ -233,7 +226,7 @@ CSVFileReader::load() const
 
                 model1->addPoint(point);
 
-            } else if (modelType == CSVFormatDialog::TwoDimensionalModel) {
+            } else if (modelType == CSVFormat::TwoDimensionalModel) {
 
                 SparseTimeValueModel::Point point
                     (frameNo,
@@ -242,7 +235,7 @@ CSVFileReader::load() const
 
                 model2->addPoint(point);
 
-            } else if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
+            } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 
                 DenseThreeDimensionalModel::Column values;
 
@@ -277,14 +270,14 @@ CSVFileReader::load() const
             }
 
             ++lineno;
-            if (timingType == CSVFormatDialog::ImplicitTiming ||
+            if (timingType == CSVFormat::ImplicitTiming ||
                 list.size() == 0) {
                 frameNo += windowSize;
             }
         }
     }
 
-    if (modelType == CSVFormatDialog::ThreeDimensionalModel) {
+    if (modelType == CSVFormat::ThreeDimensionalModel) {
 	model3->setMinimumLevel(min);
 	model3->setMaximumLevel(max);
     }
@@ -292,390 +285,3 @@ CSVFileReader::load() const
     return model;
 }
 
-
-CSVFormatDialog::CSVFormatDialog(QWidget *parent, QFile *file,
-				 size_t defaultSampleRate) :
-    QDialog(parent),
-    m_modelType(OneDimensionalModel),
-    m_timingType(ExplicitTiming),
-    m_timeUnits(TimeAudioFrames),
-    m_separator(""),
-    m_behaviour(QString::KeepEmptyParts)
-{
-    setModal(true);
-    setWindowTitle(tr("Select Data Format"));
-
-    (void)guessFormat(file);
-
-    QGridLayout *layout = new QGridLayout;
-
-    layout->addWidget(new QLabel(tr("<b>Select Data Format</b><p>Please select the correct data format for this file.")),
-		      0, 0, 1, 4);
-
-    layout->addWidget(new QLabel(tr("Each row specifies:")), 1, 0);
-
-    m_modelTypeCombo = new QComboBox;
-    m_modelTypeCombo->addItem(tr("A point in time"));
-    m_modelTypeCombo->addItem(tr("A value at a time"));
-    m_modelTypeCombo->addItem(tr("A set of values"));
-    layout->addWidget(m_modelTypeCombo, 1, 1, 1, 2);
-    connect(m_modelTypeCombo, SIGNAL(activated(int)),
-	    this, SLOT(modelTypeChanged(int)));
-    m_modelTypeCombo->setCurrentIndex(int(m_modelType));
-
-    layout->addWidget(new QLabel(tr("The first column contains:")), 2, 0);
-    
-    m_timingTypeCombo = new QComboBox;
-    m_timingTypeCombo->addItem(tr("Time, in seconds"));
-    m_timingTypeCombo->addItem(tr("Time, in audio sample frames"));
-    m_timingTypeCombo->addItem(tr("Data (rows are consecutive in time)"));
-    layout->addWidget(m_timingTypeCombo, 2, 1, 1, 2);
-    connect(m_timingTypeCombo, SIGNAL(activated(int)),
-	    this, SLOT(timingTypeChanged(int)));
-    m_timingTypeCombo->setCurrentIndex(m_timingType == ExplicitTiming ?
-                                       m_timeUnits == TimeSeconds ? 0 : 1 : 2);
-
-    m_sampleRateLabel = new QLabel(tr("Audio sample rate (Hz):"));
-    layout->addWidget(m_sampleRateLabel, 3, 0);
-    
-    size_t sampleRates[] = {
-	8000, 11025, 12000, 22050, 24000, 32000,
-	44100, 48000, 88200, 96000, 176400, 192000
-    };
-
-    m_sampleRateCombo = new QComboBox;
-    m_sampleRate = defaultSampleRate;
-    for (size_t i = 0; i < sizeof(sampleRates) / sizeof(sampleRates[0]); ++i) {
-	m_sampleRateCombo->addItem(QString("%1").arg(sampleRates[i]));
-	if (sampleRates[i] == m_sampleRate) m_sampleRateCombo->setCurrentIndex(i);
-    }
-    m_sampleRateCombo->setEditable(true);
-
-    layout->addWidget(m_sampleRateCombo, 3, 1);
-    connect(m_sampleRateCombo, SIGNAL(activated(QString)),
-	    this, SLOT(sampleRateChanged(QString)));
-    connect(m_sampleRateCombo, SIGNAL(editTextChanged(QString)),
-	    this, SLOT(sampleRateChanged(QString)));
-
-    m_windowSizeLabel = new QLabel(tr("Frame increment between rows:"));
-    layout->addWidget(m_windowSizeLabel, 4, 0);
-
-    m_windowSizeCombo = new QComboBox;
-    m_windowSize = 1024;
-    for (int i = 0; i <= 16; ++i) {
-	int value = 1 << i;
-	m_windowSizeCombo->addItem(QString("%1").arg(value));
-	if (value == int(m_windowSize)) m_windowSizeCombo->setCurrentIndex(i);
-    }
-    m_windowSizeCombo->setEditable(true);
-
-    layout->addWidget(m_windowSizeCombo, 4, 1);
-    connect(m_windowSizeCombo, SIGNAL(activated(QString)),
-	    this, SLOT(windowSizeChanged(QString)));
-    connect(m_windowSizeCombo, SIGNAL(editTextChanged(QString)),
-	    this, SLOT(windowSizeChanged(QString)));
-
-    layout->addWidget(new QLabel(tr("\nExample data from file:")), 5, 0, 1, 4);
-
-    m_exampleWidget = new QTableWidget
-	(std::min(10, m_example.size()), m_maxExampleCols);
-
-    layout->addWidget(m_exampleWidget, 6, 0, 1, 4);
-    layout->setColumnStretch(3, 10);
-    layout->setRowStretch(4, 10);
-
-    QPushButton *ok = new QPushButton(tr("OK"));
-    connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
-    ok->setDefault(true);
-
-    QPushButton *cancel = new QPushButton(tr("Cancel"));
-    connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
-
-    QHBoxLayout *buttonLayout = new QHBoxLayout;
-    buttonLayout->addStretch(1);
-    buttonLayout->addWidget(ok);
-    buttonLayout->addWidget(cancel);
-
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addLayout(layout);
-    mainLayout->addLayout(buttonLayout);
-
-    setLayout(mainLayout);
-    
-    timingTypeChanged(m_timingTypeCombo->currentIndex());
-}
-
-CSVFormatDialog::~CSVFormatDialog()
-{
-}
-
-void
-CSVFormatDialog::populateExample()
-{
-    m_exampleWidget->setColumnCount
-	(m_timingType == ExplicitTiming ?
-	 m_maxExampleCols - 1 : m_maxExampleCols);
-
-    m_exampleWidget->setHorizontalHeaderLabels(QStringList());
-
-    for (int i = 0; i < m_example.size(); ++i) {
-	for (int j = 0; j < m_example[i].size(); ++j) {
-
-	    QTableWidgetItem *item = new QTableWidgetItem(m_example[i][j]);
-
-	    if (j == 0) {
-		if (m_timingType == ExplicitTiming) {
-		    m_exampleWidget->setVerticalHeaderItem(i, item);
-		    continue;
-		} else {
-		    QTableWidgetItem *header =
-			new QTableWidgetItem(QString("%1").arg(i));
-		    header->setFlags(Qt::ItemIsEnabled);
-		    m_exampleWidget->setVerticalHeaderItem(i, header);
-		}
-	    }
-	    int index = j;
-	    if (m_timingType == ExplicitTiming) --index;
-	    item->setFlags(Qt::ItemIsEnabled);
-	    m_exampleWidget->setItem(i, index, item);
-	}
-    }
-}
-
-void
-CSVFormatDialog::modelTypeChanged(int type)
-{
-    m_modelType = (ModelType)type;
-
-    if (m_modelType == ThreeDimensionalModel) {
-        // We can't load 3d models with explicit timing, because the 3d
-        // model is dense so we need a fixed sample increment
-        m_timingTypeCombo->setCurrentIndex(2);
-        timingTypeChanged(2);
-    }
-}
-
-void
-CSVFormatDialog::timingTypeChanged(int type)
-{
-    switch (type) {
-
-    case 0:
-	m_timingType = ExplicitTiming;
-	m_timeUnits = TimeSeconds;
-	m_sampleRateCombo->setEnabled(false);
-	m_sampleRateLabel->setEnabled(false);
-	m_windowSizeCombo->setEnabled(false);
-	m_windowSizeLabel->setEnabled(false);
-        if (m_modelType == ThreeDimensionalModel) {
-            m_modelTypeCombo->setCurrentIndex(1);
-            modelTypeChanged(1);
-        }
-	break;
-
-    case 1:
-	m_timingType = ExplicitTiming;
-	m_timeUnits = TimeAudioFrames;
-	m_sampleRateCombo->setEnabled(true);
-	m_sampleRateLabel->setEnabled(true);
-	m_windowSizeCombo->setEnabled(false);
-	m_windowSizeLabel->setEnabled(false);
-        if (m_modelType == ThreeDimensionalModel) {
-            m_modelTypeCombo->setCurrentIndex(1);
-            modelTypeChanged(1);
-        }
-	break;
-
-    case 2:
-	m_timingType = ImplicitTiming;
-	m_timeUnits = TimeWindows;
-	m_sampleRateCombo->setEnabled(true);
-	m_sampleRateLabel->setEnabled(true);
-	m_windowSizeCombo->setEnabled(true);
-	m_windowSizeLabel->setEnabled(true);
-	break;
-    }
-
-    populateExample();
-}
-
-void
-CSVFormatDialog::sampleRateChanged(QString rateString)
-{
-    bool ok = false;
-    int sampleRate = rateString.toInt(&ok);
-    if (ok) m_sampleRate = sampleRate;
-}
-
-void
-CSVFormatDialog::windowSizeChanged(QString sizeString)
-{
-    bool ok = false;
-    int size = sizeString.toInt(&ok);
-    if (ok) m_windowSize = size;
-}
-
-bool
-CSVFormatDialog::guessFormat(QFile *file)
-{
-    QTextStream in(file);
-    in.seek(0);
-
-    unsigned int lineno = 0;
-
-    bool nonIncreasingPrimaries = false;
-    bool nonNumericPrimaries = false;
-    bool floatPrimaries = false;
-    bool variableItemCount = false;
-    int itemCount = 1;
-    int earliestNonNumericItem = -1;
-
-    float prevPrimary = 0.0;
-
-    m_maxExampleCols = 0;
-
-    while (!in.atEnd()) {
-
-        // See comment about line endings in load() above
-
-        QString chunk = in.readLine();
-        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
-
-        for (size_t li = 0; li < lines.size(); ++li) {
-
-            QString line = lines[li];
-
-            if (line.startsWith("#")) continue;
-
-            m_behaviour = QString::KeepEmptyParts;
-
-            if (m_separator == "") {
-                //!!! to do: ask the user
-                if (line.split(",").size() >= 2) m_separator = ",";
-                else if (line.split("\t").size() >= 2) m_separator = "\t";
-                else if (line.split("|").size() >= 2) m_separator = "|";
-                else if (line.split("/").size() >= 2) m_separator = "/";
-                else if (line.split(":").size() >= 2) m_separator = ":";
-                else {
-                    m_separator = " ";
-                    m_behaviour = QString::SkipEmptyParts;
-                }
-            }
-
-            QStringList list = line.split(m_separator, m_behaviour);
-            QStringList tidyList;
-
-            for (int i = 0; i < list.size(); ++i) {
-	    
-                QString s(list[i]);
-                bool numeric = false;
-
-                if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
-                    s = s.mid(1, s.length() - 2);
-                } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
-                    s = s.mid(1, s.length() - 2);
-                } else {
-                    (void)s.toFloat(&numeric);
-                }
-
-                tidyList.push_back(s);
-
-                if (lineno == 0 || (list.size() < itemCount)) {
-                    itemCount = list.size();
-                } else {
-                    if (itemCount != list.size()) {
-                        variableItemCount = true;
-                    }
-                }
-	    
-                if (i == 0) { // primary
-
-                    if (numeric) {
-
-                        float primary = s.toFloat();
-
-                        if (lineno > 0 && primary <= prevPrimary) {
-                            nonIncreasingPrimaries = true;
-                        }
-
-                        if (s.contains(".") || s.contains(",")) {
-                            floatPrimaries = true;
-                        }
-
-                        prevPrimary = primary;
-
-                    } else {
-                        nonNumericPrimaries = true;
-                    }
-                } else { // secondary
-
-                    if (!numeric) {
-                        if (earliestNonNumericItem < 0 ||
-                            i < earliestNonNumericItem) {
-                            earliestNonNumericItem = i;
-                        }
-                    }
-                }
-            }
-
-            if (lineno < 10) {
-                m_example.push_back(tidyList);
-                if (lineno == 0 || tidyList.size() > m_maxExampleCols) {
-                    m_maxExampleCols = tidyList.size();
-                }
-            }
-
-            ++lineno;
-
-            if (lineno == 50) break;
-        }
-    }
-
-    if (nonNumericPrimaries || nonIncreasingPrimaries) {
-	
-	// Primaries are probably not a series of times
-
-	m_timingType = ImplicitTiming;
-	m_timeUnits = TimeWindows;
-	
-	if (nonNumericPrimaries) {
-	    m_modelType = OneDimensionalModel;
-	} else if (itemCount == 1 || variableItemCount ||
-		   (earliestNonNumericItem != -1)) {
-	    m_modelType = TwoDimensionalModel;
-	} else {
-	    m_modelType = ThreeDimensionalModel;
-	}
-
-    } else {
-
-	// Increasing numeric primaries -- likely to be time
-
-	m_timingType = ExplicitTiming;
-
-	if (floatPrimaries) {
-	    m_timeUnits = TimeSeconds;
-	} else {
-	    m_timeUnits = TimeAudioFrames;
-	}
-
-	if (itemCount == 1) {
-	    m_modelType = OneDimensionalModel;
-	} else if (variableItemCount || (earliestNonNumericItem != -1)) {
-	    if (earliestNonNumericItem != -1 && earliestNonNumericItem < 2) {
-		m_modelType = OneDimensionalModel;
-	    } else {
-		m_modelType = TwoDimensionalModel;
-	    }
-	} else {
-	    m_modelType = ThreeDimensionalModel;
-	}
-    }
-
-    std::cerr << "Estimated model type: " << m_modelType << std::endl;
-    std::cerr << "Estimated timing type: " << m_timingType << std::endl;
-    std::cerr << "Estimated units: " << m_timeUnits << std::endl;
-
-    in.seek(0);
-    return true;
-}

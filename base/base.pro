@@ -26,6 +26,8 @@ HEADERS += AudioLevel.h \
            PlayParameters.h \
            Preferences.h \
            Profiler.h \
+           ProgressPrinter.h \
+           ProgressReporter.h \
            PropertyContainer.h \
            RangeMapper.h \
            RealTime.h \
@@ -54,6 +56,8 @@ SOURCES += AudioLevel.cpp \
            PlayParameters.cpp \
            Preferences.cpp \
            Profiler.cpp \
+           ProgressPrinter.cpp \
+           ProgressReporter.cpp \
            PropertyContainer.cpp \
            RangeMapper.cpp \
            RealTime.cpp \

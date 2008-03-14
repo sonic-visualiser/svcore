@@ -27,20 +27,23 @@
 
 #include <set>
 
-class QProgressDialog;
+class ProgressReporter;
 
 class QuickTimeFileReader : public CodedAudioFileReader
 {
+    Q_OBJECT
+
 public:
     enum DecodeMode {
-        DecodeAtOnce, // decode the file on construction, with progress dialog
+        DecodeAtOnce, // decode the file on construction, with progress
         DecodeThreaded // decode in a background thread after construction
     };
 
     QuickTimeFileReader(FileSource source,
                         DecodeMode decodeMode,
                         CacheMode cacheMode,
-                        size_t targetRate = 0);
+                        size_t targetRate = 0,
+                        ProgressReporter *reporter = 0);
     virtual ~QuickTimeFileReader();
 
     virtual QString getError() const { return m_error; }
@@ -58,6 +61,9 @@ public:
         return m_decodeThread && m_decodeThread->isRunning();
     }
 
+public slots:
+    void cancelled();
+
 protected:
     FileSource m_source;
     QString m_path;
@@ -67,7 +73,7 @@ protected:
     class D;
     D *m_d;
 
-    QProgressDialog *m_progress;
+    ProgressReporter *m_reporter;
     bool m_cancelled;
     int m_completion;
 

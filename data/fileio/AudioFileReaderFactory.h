@@ -21,6 +21,7 @@
 #include "FileSource.h"
 
 class AudioFileReader;
+class ProgressReporter;
 
 class AudioFileReaderFactory
 {
@@ -42,10 +43,15 @@ public:
      * if you want to find out whether the file is being resampled
      * or not.
      *
+     * If a ProgressReporter is provided, it will be updated with
+     * progress status.  Caller retains ownership of the reporter
+     * object.
+     *
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createReader(FileSource source,
-                                         size_t targetRate = 0);
+                                         size_t targetRate = 0,
+                                         ProgressReporter *reporter = 0);
 
     /**
      * Return an audio file reader initialised to the file at the
@@ -59,15 +65,24 @@ public:
      * if you want to find out whether the file is being resampled
      * or not.
      *
+     * If a ProgressReporter is provided, it will be updated with
+     * progress status.  This will only be meaningful if threading
+     * mode is not used because the file reader in use does not
+     * support it; otherwise progress as reported will jump straight
+     * to 100% before threading mode takes over.  Caller retains
+     * ownership of the reporter object.
+     *
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createThreadingReader(FileSource source,
-                                                  size_t targetRate = 0);
+                                                  size_t targetRate = 0,
+                                                  ProgressReporter *reporter = 0);
 
 protected:
     static AudioFileReader *create(FileSource source,
                                    size_t targetRate,
-                                   bool threading);
+                                   bool threading,
+                                   ProgressReporter *reporter);
 };
 
 #endif

@@ -54,19 +54,22 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(FileSource source, size_t targetRate)
+AudioFileReaderFactory::createReader(FileSource source, size_t targetRate,
+                                     ProgressReporter *reporter)
 {
-    return create(source, targetRate, false);
+    return create(source, targetRate, false, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createThreadingReader(FileSource source, size_t targetRate)
+AudioFileReaderFactory::createThreadingReader(FileSource source, size_t targetRate,
+                                              ProgressReporter *reporter)
 {
-    return create(source, targetRate, true);
+    return create(source, targetRate, true, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool threading)
+AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool threading,
+                               ProgressReporter *reporter)
 {
     QString err;
 
@@ -99,7 +102,8 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  ResamplingWavFileReader::ResampleThreaded :
                  ResamplingWavFileReader::ResampleAtOnce,
                  ResamplingWavFileReader::CacheInTemporaryFile,
-                 targetRate);
+                 targetRate,
+                 reporter);
         }
     }
     
@@ -113,7 +117,8 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  OggVorbisFileReader::DecodeThreaded :
                  OggVorbisFileReader::DecodeAtOnce,
                  OggVorbisFileReader::CacheInTemporaryFile,
-                 targetRate);
+                 targetRate,
+                 reporter);
         }
     }
 #endif
@@ -128,7 +133,8 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  MP3FileReader::DecodeThreaded :
                  MP3FileReader::DecodeAtOnce,
                  MP3FileReader::CacheInTemporaryFile,
-                 targetRate);
+                 targetRate,
+                 reporter);
         }
     }
 #endif
@@ -142,7 +148,8 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  QuickTimeFileReader::DecodeThreaded : 
                  QuickTimeFileReader::DecodeAtOnce,
                  QuickTimeFileReader::CacheInTemporaryFile,
-                 targetRate);
+                 targetRate,
+                 reporter);
         }
     }
 #endif
