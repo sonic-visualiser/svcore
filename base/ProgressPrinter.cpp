@@ -33,6 +33,12 @@ ProgressPrinter::~ProgressPrinter()
 }
 
 void
+ProgressPrinter::setMessage(QString message)
+{
+    m_prefix = message;
+}
+
+void
 ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;
