@@ -36,8 +36,6 @@
 #include "model/NoteModel.h"
 
 #include <QString>
-#include <QMessageBox>
-#include <QInputDialog>
 
 #include <sstream>
 
@@ -58,6 +56,7 @@ using namespace MIDIConstants;
 
 
 MIDIFileReader::MIDIFileReader(QString path,
+                               MIDIFileImportPreferenceAcquirer *acquirer,
 			       size_t mainModelSampleRate) :
     m_timingDivision(0),
     m_format(MIDI_FILE_BAD_FORMAT),
@@ -67,7 +66,8 @@ MIDIFileReader::MIDIFileReader(QString path,
     m_path(path),
     m_midiFile(0),
     m_fileSize(0),
-    m_mainModelSampleRate(mainModelSampleRate)
+    m_mainModelSampleRate(mainModelSampleRate),
+    m_acquirer(acquirer)
 {
     if (parseFile()) {
 	m_error = "";
@@ -813,9 +813,10 @@ MIDIFileReader::load() const
     if (!isOK()) return 0;
 
     if (m_loadableTracks.empty()) {
-	QMessageBox::critical(0, tr("No notes in MIDI file"),
-			      tr("MIDI file \"%1\" has no notes in any track")
-			      .arg(m_path));
+        if (m_acquirer) {
+            m_acquirer->showError
+                (tr("MIDI file \"%1\" has no notes in any track").arg(m_path));
+        }
 	return 0;
     }
 
@@ -827,19 +828,7 @@ MIDIFileReader::load() const
 
     } else {
 
-	QStringList available;
-	QString allTracks = tr("Merge all tracks");
-	QString allNonPercussion = tr("Merge all non-percussion tracks");
-
-	int nonTrackItems = 1;
-
-	available << allTracks;
-
-	if (!m_percussionTracks.empty() &&
-	    (m_percussionTracks.size() < m_loadableTracks.size())) {
-	    available << allNonPercussion;
-	    ++nonTrackItems;
-	}
+        QStringList displayNames;
 
 	for (set<unsigned int>::iterator i = m_loadableTracks.begin();
 	     i != m_loadableTracks.end(); ++i) {
@@ -859,37 +848,49 @@ MIDIFileReader::load() const
 	    } else {
 		label = tr("Track %1 (untitled)%3").arg(trackNo).arg(perc);
 	    }
-	    available << label;
+
+            displayNames << label;
 	}
 
-	bool ok = false;
-	QString selected = QInputDialog::getItem
-	    (0, tr("Select track or tracks to import"),
-	     tr("<b>Select track to import</b><p>You can only import this file as a single annotation layer, but the file contains more than one track, or notes on more than one channel.<p>Please select the track or merged tracks you wish to import:"),
-	     available, 0, false, &ok);
+        QString singleTrack;
 
-	if (!ok || selected.isEmpty()) return 0;
-	
-	if (selected == allTracks || selected == allNonPercussion) {
+        bool haveSomePercussion = 
+            (!m_percussionTracks.empty() &&
+             (m_percussionTracks.size() < m_loadableTracks.size()));
 
-	    for (set<unsigned int>::iterator i = m_loadableTracks.begin();
-		 i != m_loadableTracks.end(); ++i) {
-		
-		if (selected == allTracks ||
+        MIDIFileImportPreferenceAcquirer::TrackPreference pref;
+
+        if (m_acquirer) {
+            pref = m_acquirer->getTrackImportPreference(displayNames,
+                                                        haveSomePercussion,
+                                                        singleTrack);
+        } else {
+            pref = MIDIFileImportPreferenceAcquirer::MergeAllTracks;
+        }
+
+        if (pref == MIDIFileImportPreferenceAcquirer::ImportNothing) return 0;
+
+        if (pref == MIDIFileImportPreferenceAcquirer::MergeAllTracks ||
+            pref == MIDIFileImportPreferenceAcquirer::MergeAllNonPercussionTracks) {
+            
+            for (set<unsigned int>::iterator i = m_loadableTracks.begin();
+                 i != m_loadableTracks.end(); ++i) {
+                
+		if (pref == MIDIFileImportPreferenceAcquirer::MergeAllTracks ||
 		    m_percussionTracks.find(*i) == m_percussionTracks.end()) {
-
+                    
 		    tracksToLoad.insert(*i);
 		}
 	    }
 
 	} else {
 	    
-	    int j = nonTrackItems;
+	    int j = 0;
 
 	    for (set<unsigned int>::iterator i = m_loadableTracks.begin();
 		 i != m_loadableTracks.end(); ++i) {
 		
-		if (selected == available[j]) {
+		if (singleTrack == displayNames[j]) {
 		    tracksToLoad.insert(*i);
 		    break;
 		}

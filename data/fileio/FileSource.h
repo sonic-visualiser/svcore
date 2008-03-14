@@ -26,9 +26,8 @@
 class QFtp;
 class QHttp;
 class QFile;
-class QProgressDialog;
 class QHttpResponseHeader;
-class ProgressPrinter;
+class ProgressReporter;
 
 /**
  * FileSource is a class used to refer to the contents of a file that
@@ -62,37 +61,26 @@ class FileSource : public QObject
     Q_OBJECT
 
 public:
-
-    enum ShowProgressType {
-        ProgressNone,
-        ProgressDialog,
-        ProgressToConsole
-    };
-
     /**
      * Construct a FileSource using the given local file path or URL.
      * The URL may be raw or encoded.
      *
-     * If progressType is ProgressDialog, a progress dialog will be
-     * shown for any network transfers; if it is ProgressToConsole, a
-     * progress indication will be sent to the console.
-     * Note that the progress() signal will also be emitted regularly
-     * during retrieval, even if progressType is ProgressNone.
+     * If a ProgressReporter is provided, it will be updated with
+     * progress status.  Note that the progress() signal will also be
+     * emitted regularly during retrieval, even if no reporter is
+     * supplied here.  Caller retains ownership of the reporter object.
      */
-    FileSource(QString fileOrUrl,
-               ShowProgressType progressType = ProgressNone);
+    FileSource(QString fileOrUrl, ProgressReporter *reporter = 0);
 
     /**
      * Construct a FileSource using the given remote URL.
      *
-     * If progressType is ProgressDialog, a progress dialog will be
-     * shown for any network transfers; if it is ProgressToConsole, a
-     * progress indication will be sent to the console.
-     * Note that the progress() signal also will be emitted regularly
-     * during retrieval, even if progressType is ProgressNone.
+     * If a ProgressReporter is provided, it will be updated with
+     * progress status.  Note that the progress() signal will also be
+     * emitted regularly during retrieval, even if no reporter is
+     * supplied here.  Caller retains ownership of the reporter object.
      */
-    FileSource(QUrl url,
-               ShowProgressType progressType = ProgressNone);
+    FileSource(QUrl url, ProgressReporter *reporter = 0);
 
     FileSource(const FileSource &);
 
@@ -212,7 +200,6 @@ protected slots:
     void ftpCommandFinished(int, bool);
     void dataTransferProgress(qint64 done, qint64 total);
     void done(bool error);
-    void showProgressDialog();
     void cancelled();
 
 protected:
@@ -230,10 +217,7 @@ protected:
     bool m_remote;
     bool m_done;
     bool m_leaveLocalFile;
-    ShowProgressType m_progressType;
-    ProgressPrinter *m_progressPrinter;
-    QProgressDialog *m_progressDialog;
-    QTimer m_progressShowTimer;
+    ProgressReporter *m_reporter;
 
     typedef std::map<QUrl, int> RemoteRefCountMap;
     typedef std::map<QUrl, QString> RemoteLocalMap;

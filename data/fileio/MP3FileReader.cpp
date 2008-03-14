@@ -17,7 +17,7 @@
 #ifdef HAVE_MAD
 
 #include "MP3FileReader.h"
-#include "ProgressPrinter.h"
+#include "base/ProgressReporter.h"
 
 #include "system/System.h"
 
@@ -32,12 +32,11 @@
 #endif
 #define DEBUG_ID3TAG 1
 
-#include <QApplication>
 #include <QFileInfo>
-#include <QProgressDialog>
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
-                             CacheMode mode, size_t targetRate) :
+                             CacheMode mode, size_t targetRate,
+                             ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
     m_path(source.getLocalFilename()),
@@ -51,7 +50,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_cancelled = false;
     m_completion = 0;
     m_done = false;
-    m_progress = 0;
+    m_reporter = reporter;
 
     struct stat stat;
     if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
@@ -108,14 +107,10 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
     if (decodeMode == DecodeAtOnce) {
 
-        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
-            m_progress = new QProgressDialog
-                (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
-                 QObject::tr("Stop"), 0, 100);
-            m_progress->hide();
-        } else {
-            ProgressPrinter *pp = new ProgressPrinter(tr("Decoding..."), this);
-            connect(this, SIGNAL(progress(int)), pp, SLOT(progress(int)));
+        if (m_reporter) {
+            connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
+            m_reporter->setMessage
+                (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
         if (!decode(m_filebuffer, m_fileSize)) {
@@ -127,10 +122,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
 
-	delete m_progress;
-	m_progress = 0;
-
     } else {
+
+        if (m_reporter) m_reporter->setProgress(100);
 
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
@@ -151,6 +145,12 @@ MP3FileReader::~MP3FileReader()
         m_decodeThread->wait();
         delete m_decodeThread;
     }
+}
+
+void
+MP3FileReader::cancelled()
+{
+    m_cancelled = true;
 }
 
 void
@@ -366,20 +366,9 @@ MP3FileReader::accept(struct mad_header const *header,
         int p = int(percent);
         if (p < 1) p = 1;
         if (p > 99) p = 99;
-        if (m_completion != p || (m_progress && !m_progress->isVisible())) {
+        if (m_completion != p && m_reporter) {
             m_completion = p;
-            emit progress(m_completion);
-            if (m_progress) {
-                if (m_completion > m_progress->value()) {
-                    m_progress->setValue(m_completion);
-                    m_progress->show();
-                    m_progress->raise();
-                    qApp->processEvents();
-                    if (m_progress->wasCanceled()) {
-                        m_cancelled = true;
-                    }
-                }
-            }
+            m_reporter->setProgress(m_completion);
         }
     }
 

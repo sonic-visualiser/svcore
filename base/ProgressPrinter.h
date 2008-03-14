@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2007 QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,35 +13,25 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FILE_READER_H_
-#define _CSV_FILE_READER_H_
+#ifndef _PROGRESS_PRINTER_H_
+#define _PROGRESS_PRINTER_H_
 
-#include "DataFileReader.h"
+#include "ProgressReporter.h"
 
-#include "CSVFormat.h"
-
-#include <QList>
-#include <QStringList>
-
-class QFile;
-
-class CSVFileReader : public DataFileReader
+class ProgressPrinter : public ProgressReporter
 {
+    Q_OBJECT
+    
 public:
-    CSVFileReader(QString path, CSVFormat format, size_t mainModelSampleRate);
-    virtual ~CSVFileReader();
-
-    virtual bool isOK() const;
-    virtual QString getError() const;
-    virtual Model *load() const;
+    ProgressPrinter(QString message, QObject *parent = 0);
+    virtual ~ProgressPrinter();
+    
+public slots:
+    virtual void setProgress(int);
 
 protected:
-    CSVFormat m_format;
-    QFile *m_file;
-    QString m_error;
-    size_t m_mainModelSampleRate;
+    QString m_prefix;
+    int m_lastProgress;
 };
 
-
 #endif
-

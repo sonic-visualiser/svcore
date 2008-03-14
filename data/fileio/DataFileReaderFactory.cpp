@@ -28,29 +28,96 @@ DataFileReaderFactory::getKnownExtensions()
 }
 
 DataFileReader *
-DataFileReaderFactory::createReader(QString path, size_t mainModelSampleRate)
+DataFileReaderFactory::createReader(QString path,
+                                    bool csv,
+                                    MIDIFileImportPreferenceAcquirer *acquirer,
+                                    CSVFormat format,
+                                    size_t mainModelSampleRate)
 {
     QString err;
 
     DataFileReader *reader = 0;
 
-    reader = new MIDIFileReader(path, mainModelSampleRate);
-    if (reader->isOK()) return reader;
-    if (reader->getError() != "") err = reader->getError();
-    delete reader;
+    if (!csv) {
+        reader = new MIDIFileReader(path, acquirer, mainModelSampleRate);
+        if (reader->isOK()) return reader;
+        if (reader->getError() != "") err = reader->getError();
+        delete reader;
+    }
 
-    reader = new CSVFileReader(path, mainModelSampleRate);
-    if (reader->isOK()) return reader;
-    if (reader->getError() != "") err = reader->getError();
-    delete reader;
+    if (csv) {
+        reader = new CSVFileReader(path, format, mainModelSampleRate);
+        if (reader->isOK()) return reader;
+        if (reader->getError() != "") err = reader->getError();
+        delete reader;
+    }
+
+    return 0;
+}
+
+DataFileReader *
+DataFileReaderFactory::createReader(QString path,
+                                    MIDIFileImportPreferenceAcquirer *acquirer,
+                                    size_t mainModelSampleRate)
+{
+    DataFileReader *reader = createReader
+        (path, false, acquirer, CSVFormat(), mainModelSampleRate);
+    if (reader) return reader;
+
+    reader = createReader
+        (path, true, acquirer, CSVFormat(path), mainModelSampleRate);
+    if (reader) return reader;
 
     return 0;
 }
 
 Model *
-DataFileReaderFactory::load(QString path, size_t mainModelSampleRate)
+DataFileReaderFactory::load(QString path,
+                            MIDIFileImportPreferenceAcquirer *acquirer,
+                            size_t mainModelSampleRate)
 {
-    DataFileReader *reader = createReader(path, mainModelSampleRate);
+    DataFileReader *reader = createReader(path,
+                                          acquirer,
+                                          mainModelSampleRate);
+    if (!reader) return NULL;
+
+    try {
+        Model *model = reader->load();
+        delete reader;
+        return model;
+    } catch (Exception) {
+        delete reader;
+        throw;
+    }
+}
+
+Model *
+DataFileReaderFactory::loadNonCSV(QString path,
+                                  MIDIFileImportPreferenceAcquirer *acquirer,
+                                  size_t mainModelSampleRate)
+{
+    DataFileReader *reader = createReader(path, false,
+                                          acquirer,
+                                          CSVFormat(),
+                                          mainModelSampleRate);
+    if (!reader) return NULL;
+
+    try {
+        Model *model = reader->load();
+        delete reader;
+        return model;
+    } catch (Exception) {
+        delete reader;
+        throw;
+    }
+}
+
+Model *
+DataFileReaderFactory::loadCSV(QString path, CSVFormat format,
+                               size_t mainModelSampleRate)
+{
+    DataFileReader *reader = createReader(path, true, 0, format,
+                                          mainModelSampleRate);
     if (!reader) return NULL;
 
     try {

@@ -18,6 +18,9 @@
 
 #include <QString>
 
+#include "CSVFormat.h"
+#include "MIDIFileReader.h"
+
 class DataFileReader;
 class Model;
 
@@ -37,16 +40,50 @@ public:
      * Return a data file reader initialised to the file at the
      * given path, or NULL if no suitable reader for this path is
      * available or the file cannot be opened.
+     *
      * Caller owns the returned object and must delete it after use.
+     * 
+     * Note that this function is non-interactive -- the user is not
+     * asked for file format preferences.
      */
     static DataFileReader *createReader(QString path,
+                                        MIDIFileImportPreferenceAcquirer *,
 					size_t mainModelSampleRate);
 
     /**
      * Read the given path, if a suitable reader is available.
      * Return NULL if no reader succeeded in reading this file.
+     * 
+     * Note that this function is non-interactive -- the user is not
+     * asked for file format preferences.  If the CSV file reader is
+     * used, it is with default format.
      */
-    static Model *load(QString path, size_t mainModelSampleRate);
+    static Model *load(QString path,
+                       MIDIFileImportPreferenceAcquirer *acquirer,
+                       size_t mainModelSampleRate);
+
+    /**
+     * Read the given path, if a suitable reader is available.
+     * Return NULL if no reader succeeded in reading this file.
+     * Do not attempt the general CSV reader.
+     */
+    static Model *loadNonCSV(QString path,
+                             MIDIFileImportPreferenceAcquirer *acquirer,
+                             size_t mainModelSampleRate);
+
+    /**
+     * Read the given path using the CSV reader with the given format.
+     * Return NULL if it failed in reading this file.
+     */
+    static Model *loadCSV(QString path,
+                          CSVFormat format,
+                          size_t mainModelSampleRate);
+
+protected:
+    static DataFileReader *createReader(QString path, bool csv,
+                                        MIDIFileImportPreferenceAcquirer *,
+                                        CSVFormat format,
+					size_t mainModelSampleRate);
 };
 
 #endif

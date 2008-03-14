@@ -14,17 +14,16 @@
 */
 
 #include "FileSource.h"
-#include "ProgressPrinter.h"
 
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
+#include "base/ProgressReporter.h"
 
 #include <QHttp>
 #include <QFtp>
 #include <QFileInfo>
 #include <QDir>
-#include <QApplication>
-#include <QProgressDialog>
+#include <QCoreApplication>
 #include <QHttpResponseHeader>
 
 #include <iostream>
@@ -46,7 +45,7 @@ FileSource::m_remoteLocalMap;
 QMutex
 FileSource::m_mapMutex;
 
-FileSource::FileSource(QString fileOrUrl, ShowProgressType progressType) :
+FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
     m_url(fileOrUrl),
     m_ftp(0),
     m_http(0),
@@ -56,10 +55,7 @@ FileSource::FileSource(QString fileOrUrl, ShowProgressType progressType) :
     m_remote(isRemote(fileOrUrl)),
     m_done(false),
     m_leaveLocalFile(false),
-    m_progressType(progressType),
-    m_progressPrinter(0),
-    m_progressDialog(0),
-    m_progressShowTimer(this),
+    m_reporter(reporter),
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
@@ -113,7 +109,7 @@ FileSource::FileSource(QString fileOrUrl, ShowProgressType progressType) :
     }
 }
 
-FileSource::FileSource(QUrl url, ShowProgressType progressType) :
+FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_url(url),
     m_ftp(0),
     m_http(0),
@@ -123,10 +119,7 @@ FileSource::FileSource(QUrl url, ShowProgressType progressType) :
     m_remote(isRemote(url.toString())),
     m_done(false),
     m_leaveLocalFile(false),
-    m_progressType(progressType),
-    m_progressPrinter(0),
-    m_progressDialog(0),
-    m_progressShowTimer(this),
+    m_reporter(reporter),
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
@@ -153,10 +146,7 @@ FileSource::FileSource(const FileSource &rf) :
     m_remote(rf.m_remote),
     m_done(false),
     m_leaveLocalFile(false),
-    m_progressType(rf.m_progressType),
-    m_progressPrinter(0),
-    m_progressDialog(0),
-    m_progressShowTimer(0),
+    m_reporter(rf.m_reporter),
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
@@ -304,28 +294,12 @@ FileSource::init()
         m_refCountMap[m_url]++;
         m_refCounted = true;
 
-        switch (m_progressType) {
-
-        case ProgressNone: break;
-
-        case ProgressDialog:
-            m_progressDialog = new QProgressDialog
-                (tr("Downloading %1...").arg(m_url.toString()),
-                 tr("Cancel"), 0, 100);
-            m_progressDialog->hide();
-            connect(&m_progressShowTimer, SIGNAL(timeout()),
-                    this, SLOT(showProgressDialog()));
-            connect(m_progressDialog, SIGNAL(canceled()),
-                    this, SLOT(cancelled()));
-            m_progressShowTimer.setSingleShot(true);
-            m_progressShowTimer.start(2000);
-            break;
-
-        case ProgressToConsole:
-            m_progressPrinter = new ProgressPrinter(tr("Downloading..."));
+        if (m_reporter) {
+            m_reporter->setMessage
+                (tr("Downloading %1...").arg(m_url.toString()));
+            connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
             connect(this, SIGNAL(progress(int)),
-                    m_progressPrinter, SLOT(progress(int)));
-            break;
+                    m_reporter, SLOT(setProgress(int)));
         }
     }
 }
@@ -441,10 +415,6 @@ FileSource::cleanup()
         f->abort();
         f->deleteLater();
     }
-    delete m_progressDialog;
-    m_progressDialog = 0;
-    delete m_progressPrinter;
-    m_progressPrinter = 0;
     delete m_localFile; // does not actually delete the file
     m_localFile = 0;
 }
@@ -486,7 +456,7 @@ FileSource::waitForStatus()
 {
     while (m_ok && (!m_done && m_lastStatus == 0)) {
 //        std::cerr << "waitForStatus: processing (last status " << m_lastStatus << ")" << std::endl;
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
     }
 }
 
@@ -495,7 +465,7 @@ FileSource::waitForData()
 {
     while (m_ok && !m_done) {
 //        std::cerr << "FileSource::waitForData: calling QApplication::processEvents" << std::endl;
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
     }
 }
 
@@ -621,13 +591,6 @@ FileSource::dataTransferProgress(qint64 done, qint64 total)
 {
     int percent = int((double(done) / double(total)) * 100.0 - 0.1);
     emit progress(percent);
-
-    if (!m_progressDialog) return;
-
-    if (percent > 0) {
-        m_progressDialog->setValue(percent);
-        m_progressDialog->show();
-    }
 }
 
 void
@@ -741,12 +704,6 @@ FileSource::deleteCacheFile()
     m_fileCreationMutex.unlock();
 
     m_done = true;
-}
-
-void
-FileSource::showProgressDialog()
-{
-    if (m_progressDialog) m_progressDialog->show();
 }
 
 bool

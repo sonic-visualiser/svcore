@@ -17,8 +17,8 @@
 #ifdef HAVE_FISHSOUND
 
 #include "OggVorbisFileReader.h"
-#include "ProgressPrinter.h"
 
+#include "base/ProgressReporter.h"
 #include "base/Profiler.h"
 #include "system/System.h"
 
@@ -28,20 +28,19 @@
 #include <fcntl.h>
 #include <cmath>
 
-#include <QApplication>
 #include <QFileInfo>
-#include <QProgressDialog>
 
 static int instances = 0;
 
 OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         size_t targetRate) :
+                                         size_t targetRate,
+                                         ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
     m_path(source.getLocalFilename()),
-    m_progress(0),
+    m_reporter(reporter),
     m_fileSize(0),
     m_bytesRead(0),
     m_commentsRead(false),
@@ -72,14 +71,10 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
     if (decodeMode == DecodeAtOnce) {
 
-        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
-            m_progress = new QProgressDialog
-                (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
-                 QObject::tr("Stop"), 0, 100);
-            m_progress->hide();
-        } else {
-            ProgressPrinter *pp = new ProgressPrinter(tr("Decoding..."), this);
-            connect(this, SIGNAL(progress(int)), pp, SLOT(progress(int)));
+        if (m_reporter) {
+            connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
+            m_reporter->setMessage
+                (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
         while (oggz_read(m_oggz, 1024) > 0);
@@ -91,10 +86,9 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
 
-        delete m_progress;
-        m_progress = 0;
-
     } else {
+
+        if (m_reporter) m_reporter->setProgress(100);
 
         while (oggz_read(m_oggz, 1024) > 0 &&
                (m_channelCount == 0 || m_fileRate == 0 || m_sampleRate == 0));
@@ -114,6 +108,12 @@ OggVorbisFileReader::~OggVorbisFileReader()
         m_decodeThread->wait();
         delete m_decodeThread;
     }
+}
+
+void
+OggVorbisFileReader::cancelled()
+{
+    m_cancelled = true; 
 }
 
 void
@@ -156,16 +156,8 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
     reader->m_completion = p;
     reader->progress(p);
 
-    if (reader->m_fileSize > 0 && reader->m_progress) {
-	if (p > reader->m_progress->value()) {
-	    reader->m_progress->setValue(p);
-	    reader->m_progress->show();
-	    reader->m_progress->raise();
-	    qApp->processEvents();
-	    if (reader->m_progress->wasCanceled()) {
-		reader->m_cancelled = true;
-	    }
-	}
+    if (reader->m_fileSize > 0 && reader->m_reporter) {
+        reader->m_reporter->setProgress(p);
     }
 
     if (reader->m_cancelled) return 1;

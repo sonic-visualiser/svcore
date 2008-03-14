@@ -23,10 +23,11 @@
 #include <set>
 
 class WavFileReader;
-class QProgressDialog;
+class ProgressReporter;
 
 class ResamplingWavFileReader : public CodedAudioFileReader
 {
+    Q_OBJECT
 public:
     enum ResampleMode {
         ResampleAtOnce, // resample the file on construction, with progress dialog
@@ -36,7 +37,8 @@ public:
     ResamplingWavFileReader(FileSource source,
                             ResampleMode resampleMode,
                             CacheMode cacheMode,
-                            size_t targetRate = 0);
+                            size_t targetRate = 0,
+                            ProgressReporter *reporter = 0);
     virtual ~ResamplingWavFileReader();
 
     virtual QString getError() const { return m_error; }
@@ -52,6 +54,9 @@ public:
         return m_decodeThread && m_decodeThread->isRunning();
     }
 
+public slots:
+    void cancelled();
+
 protected:
     FileSource m_source;
     QString m_path;
@@ -61,7 +66,7 @@ protected:
     int m_completion;
 
     WavFileReader *m_original;
-    QProgressDialog *m_progress;
+    ProgressReporter *m_reporter;
 
     void addBlock(const SampleBlock &frames);
     

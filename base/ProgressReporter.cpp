@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2007 QMUL.
+    This file copyright 2007-2008 QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,26 +13,14 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PROGRESS_PRINTER_H_
-#define _PROGRESS_PRINTER_H_
+#include "ProgressReporter.h"
 
-#include <QObject>
-#include <QString>
-
-class ProgressPrinter : public QObject
+ProgressReporter::ProgressReporter(QObject *parent) :
+	QObject(parent)
 {
-    Q_OBJECT
+}
 
-public:
-    ProgressPrinter(QString prefix = "", QObject *parent = 0);
-    virtual ~ProgressPrinter();
-    
-public slots:
-    void progress(int);
+ProgressReporter::~ProgressReporter()
+{
+}
 
-protected:
-    QString m_prefix;
-    int m_lastProgress;
-};
-
-#endif

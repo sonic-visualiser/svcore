@@ -20,11 +20,10 @@
 
 #include "QuickTimeFileReader.h"
 #include "base/Profiler.h"
+#include "base/ProgressReporter.h"
 #include "system/System.h"
 
-#include <QApplication>
 #include <QFileInfo>
-#include <QProgressDialog>
 
 #ifdef _WIN32
 #include <QTML.h>
@@ -51,12 +50,13 @@ public:
 QuickTimeFileReader::QuickTimeFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         size_t targetRate) :
+                                         size_t targetRate,
+                                         ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_d(new D),
-    m_progress(0),
+    m_reporter(reporter),
     m_cancelled(false),
     m_completion(0),
     m_decodeThread(0)
@@ -216,11 +216,10 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
 
     if (decodeMode == DecodeAtOnce) {
 
-        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
-            m_progress = new QProgressDialog
-                (QObject::tr("Decoding %1...").arg(QFileInfo(m_path).fileName()),
-                 QObject::tr("Stop"), 0, 100);
-            m_progress->hide();
+        if (m_reporter) {
+            connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
+            m_reporter->setMessage
+                (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
         while (1) {
@@ -255,10 +254,9 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
 
         m_completion = 100;
 
-        delete m_progress;
-        m_progress = 0;
-
     } else {
+        if (m_reporter) m_reporter->setProgress(100);
+
         if (m_channelCount > 0) {
             m_decodeThread = new DecodeThread(this);
             m_decodeThread->start();
@@ -283,6 +281,12 @@ QuickTimeFileReader::~QuickTimeFileReader()
 
     delete[] m_d->data;
     delete m_d;
+}
+
+void
+QuickTimeFileReader::cancelled()
+{
+    m_cancelled = true;
 }
 
 void

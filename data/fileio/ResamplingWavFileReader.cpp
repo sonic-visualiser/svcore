@@ -17,15 +17,15 @@
 
 #include "WavFileReader.h"
 #include "base/Profiler.h"
+#include "base/ProgressReporter.h"
 
-#include <QProgressDialog>
 #include <QFileInfo>
-#include <QApplication>
 
 ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
 						 ResampleMode resampleMode,
 						 CacheMode mode,
-						 size_t targetRate) :
+						 size_t targetRate,
+                                                 ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
     m_path(source.getLocalFilename()),
@@ -33,7 +33,7 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
     m_processed(0),
     m_completion(0),
     m_original(0),
-    m_progress(0),
+    m_reporter(reporter),
     m_decodeThread(0)
 {
     m_channelCount = 0;
@@ -57,11 +57,10 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
 
     if (resampleMode == ResampleAtOnce) {
 
-        if (dynamic_cast<QApplication *>(QCoreApplication::instance())) {
-            m_progress = new QProgressDialog
-                (QObject::tr("Resampling %1...").arg(QFileInfo(m_path).fileName()),
-                 QObject::tr("Stop"), 0, 100);
-            m_progress->hide();
+        if (m_reporter) {
+            connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
+            m_reporter->setMessage
+                (tr("Resampling %1...").arg(QFileInfo(m_path).fileName()));
         }
 
         size_t blockSize = 16384;
@@ -85,10 +84,9 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
         delete m_original;
         m_original = 0;
 
-        delete m_progress;
-        m_progress = 0;
-
     } else {
+
+        if (m_reporter) m_reporter->setProgress(100);
 
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
@@ -104,6 +102,12 @@ ResamplingWavFileReader::~ResamplingWavFileReader()
     }
     
     delete m_original;
+}
+
+void
+ResamplingWavFileReader::cancelled()
+{
+    m_cancelled = true;
 }
 
 void
@@ -151,16 +155,8 @@ ResamplingWavFileReader::addBlock(const SampleBlock &frames)
     if (progress > 99) progress = 99;
     m_completion = progress;
     
-    if (m_progress) {
-	if (progress > m_progress->value()) {
-	    m_progress->setValue(progress);
-	    m_progress->show();
-	    m_progress->raise();
-	    qApp->processEvents();
-	    if (m_progress->wasCanceled()) {
-		m_cancelled = true;
-	    }
-	}
+    if (m_reporter) {
+        m_reporter->setProgress(progress);
     }
 }
 
