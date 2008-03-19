@@ -33,6 +33,8 @@ class ViewManagerBase : public QObject
     Q_OBJECT
 
 public:
+    virtual ~ViewManagerBase();
+
     virtual void setAudioPlaySource(AudioPlaySource *source) = 0;
 
     virtual size_t alignPlaybackFrameToReference(size_t) const = 0;

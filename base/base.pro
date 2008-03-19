@@ -69,4 +69,5 @@ SOURCES += AudioLevel.cpp \
            TempDirectory.cpp \
            Thread.cpp \
            UnitDatabase.cpp \
+           ViewManagerBase.cpp \
            XmlExportable.cpp
