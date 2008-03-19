@@ -340,7 +340,7 @@ Transform::toXml(QTextStream &out, QString indent, QString extraAttributes) cons
     bool haveContent = true;
     if (m_parameters.empty() && m_configuration.empty()) haveContent = false;
 
-    out << QString("<transform id=\"%1\" pluginVersion=\"%2\" program=\"%3\" stepSize=\"%4\" blockSize=\"%5\" windowType=\"%6\" startTime=\"%7\" duration=\"%8\" sampleRate=\"%9\"")
+    out << QString("<transform\n    id=\"%1\"\n    pluginVersion=\"%2\"\n    program=\"%3\"\n    stepSize=\"%4\"\n    blockSize=\"%5\"\n    windowType=\"%6\"\n    startTime=\"%7\"\n    duration=\"%8\"\n    sampleRate=\"%9\"")
         .arg(encodeEntities(m_id))
         .arg(encodeEntities(m_pluginVersion))
         .arg(encodeEntities(m_program))
