@@ -85,6 +85,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
         m_oggz = 0;
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
+        endSerialised();
 
     } else {
 

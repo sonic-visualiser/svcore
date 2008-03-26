@@ -80,6 +80,7 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
         }
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
+        endSerialised();
 
         delete m_original;
         m_original = 0;
