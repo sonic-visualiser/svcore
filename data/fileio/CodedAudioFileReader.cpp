@@ -79,7 +79,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-//    std::cerr << "CodedAudioFileReader::endSerialised" << std::endl;
+    std::cerr << "CodedAudioFileReader::endSerialised" << std::endl;
 
     delete m_serialiser;
     m_serialiser = 0;
@@ -107,7 +107,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                                     m_cacheWriteBufferSize);
         float ratio = float(m_sampleRate) / float(m_fileRate);
         m_resampleBuffer = new float
-            [lrintf(ceilf(m_cacheWriteBufferSize * m_channelCount * ratio))];
+            [lrintf(ceilf(m_cacheWriteBufferSize * m_channelCount * ratio + 1))];
     }
 
     m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];

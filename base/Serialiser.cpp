@@ -31,12 +31,17 @@ Serialiser::Serialiser(QString id) :
     }
 
     m_mutexMap[m_id]->lock();
+
     m_mapMutex.unlock();
 }
 
 Serialiser::~Serialiser()
 {
+    m_mapMutex.lock();
+    
     m_mutexMap[m_id]->unlock();
+
+    m_mapMutex.unlock();
 }
 
 

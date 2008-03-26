@@ -246,6 +246,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
         }
         
         finishDecodeCache();
+        endSerialised();
 
         m_d->err = MovieAudioExtractionEnd(m_d->extractionSessionRef);
         if (m_d->err) {

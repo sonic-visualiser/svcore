@@ -121,6 +121,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         m_filebuffer = 0;
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
+        endSerialised();
 
     } else {
 
