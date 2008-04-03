@@ -107,7 +107,7 @@ Transform::~Transform()
 }
 
 bool
-Transform::operator==(const Transform &t)
+Transform::operator==(const Transform &t) const
 {
     return 
         m_id == t.m_id &&
@@ -120,6 +120,42 @@ Transform::operator==(const Transform &t)
         m_startTime == t.m_startTime &&
         m_duration == t.m_duration &&
         m_sampleRate == t.m_sampleRate;
+}
+
+bool
+Transform::operator<(const Transform &t) const
+{
+    if (m_id != t.m_id) {
+        return m_id < t.m_id;
+    }
+    if (m_parameters != t.m_parameters) {
+        return mapLessThan<QString, float>(m_parameters, t.m_parameters);
+    }
+    if (m_configuration != t.m_configuration) {
+        return mapLessThan<QString, QString>(m_configuration, t.m_configuration);
+    }
+    if (m_program != t.m_program) {
+        return m_program < t.m_program;
+    }
+    if (m_stepSize != t.m_stepSize) {
+        return m_stepSize < t.m_stepSize;
+    }
+    if (m_blockSize != t.m_blockSize) {
+        return m_blockSize < t.m_blockSize;
+    }
+    if (m_windowType != t.m_windowType) {
+        return m_windowType < t.m_windowType;
+    }
+    if (m_startTime != t.m_startTime) {
+        return m_startTime < t.m_startTime;
+    }
+    if (m_duration != t.m_duration) {
+        return m_duration < t.m_duration;
+    }
+    if (m_sampleRate != t.m_sampleRate) {
+        return m_sampleRate < t.m_sampleRate;
+    }
+    return false;
 }
 
 void

@@ -22,6 +22,8 @@
 
 #include <QString>
 
+#include <map>
+
 typedef QString TransformId;
 
 class QXmlAttributes;
@@ -55,7 +57,13 @@ public:
      * Compare two Transforms.  They only compare equal if every data
      * element matches.
      */
-    bool operator==(const Transform &);
+    bool operator==(const Transform &) const;
+    
+    /**
+     * Order two Transforms, so that they can be used as keys in
+     * containers.
+     */
+    bool operator<(const Transform &) const;
 
     void setIdentifier(TransformId id);
     TransformId getIdentifier() const;
@@ -138,6 +146,21 @@ protected:
     static void parseIdentifier
     (QString identifier,
      QString &type, QString &soName, QString &label, QString &output);
+
+    template <typename A, typename B>
+    bool mapLessThan(const std::map<A, B> &a, const std::map<A, B> &b) const {
+        // Return true if a is "less than" b.  Ordering doesn't have
+        // to be meaningful, just consistent.
+        typename std::map<A, B>::const_iterator i;
+        typename std::map<A, B>::const_iterator j;
+        for (i = a.begin(), j = b.begin(); i != a.end(); ++i) {
+            if (j == b.end()) return false; // a is longer than b
+            if (i->first != j->first) return i->first < j->first;
+            if (i->second != j->second) return i->second < j->second;
+        }
+        if (j != b.end()) return true; // a is shorter than b
+        return false; // equal
+    }
 
     ParameterMap m_parameters;
     ConfigurationMap m_configuration;
