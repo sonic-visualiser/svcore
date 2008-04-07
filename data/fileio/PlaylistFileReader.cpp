@@ -19,15 +19,52 @@
 #include <QTextStream>
 #include <QStringList>
 
-PlaylistFileReader::PlaylistFileReader(QString path)
+PlaylistFileReader::PlaylistFileReader(QString path) :
+    m_source(path),
+    m_file(0)
 {
-    m_file = new QFile(path);
+    if (!m_source.isAvailable()) {
+        m_error = QFile::tr("File or URL \"%1\" could not be retrieved")
+            .arg(path);
+        return;
+    }
+    init();
+}
+
+PlaylistFileReader::PlaylistFileReader(FileSource source) :
+    m_source(source),
+    m_file(0)
+{
+    if (!m_source.isAvailable()) {
+        m_error = QFile::tr("File or URL \"%1\" could not be retrieved")
+            .arg(source.getLocation());
+        return;
+    }
+    init();
+}
+
+PlaylistFileReader::~PlaylistFileReader()
+{
+    if (m_file) m_file->close();
+    delete m_file;
+}
+
+void
+PlaylistFileReader::init()
+{
+    if (!m_source.isAvailable()) return;
+
+    m_source.waitForData();
+
+    m_file = new QFile(m_source.getLocalFilename());
     bool good = false;
 
     if (!m_file->exists()) {
-	m_error = QFile::tr("File \"%1\" does not exist").arg(path);
+	m_error = QFile::tr("File \"%1\" does not exist")
+            .arg(m_source.getLocation());
     } else if (!m_file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-	m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
+	m_error = QFile::tr("Failed to open file \"%1\"")
+            .arg(m_source.getLocation());
     } else {
 	good = true;
     }
@@ -36,12 +73,6 @@ PlaylistFileReader::PlaylistFileReader(QString path)
 	delete m_file;
 	m_file = 0;
     }
-}
-
-PlaylistFileReader::~PlaylistFileReader()
-{
-    if (m_file) m_file->close();
-    delete m_file;
 }
 
 bool
