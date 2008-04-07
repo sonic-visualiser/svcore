@@ -16,6 +16,8 @@
 #ifndef _PLAYLIST_FILE_READER_H_
 #define _PLAYLIST_FILE_READER_H_
 
+#include "FileSource.h"
+
 #include <QString>
 
 #include <vector>
@@ -29,6 +31,7 @@ public:
     typedef std::vector<QString> Playlist;
 
     PlaylistFileReader(QString path);
+    PlaylistFileReader(FileSource source);
     virtual ~PlaylistFileReader();
 
     virtual bool isOK() const;
@@ -38,6 +41,9 @@ public:
     static void getSupportedExtensions(std::set<QString> &extensions);
 
 protected:
+    void init();
+
+    FileSource m_source;
     QFile *m_file;
     QString m_error;
 };
