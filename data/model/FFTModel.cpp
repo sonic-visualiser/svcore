@@ -20,6 +20,8 @@
 #include "base/Profiler.h"
 #include "base/Pitch.h"
 
+#include <algorithm>
+
 #include <cassert>
 
 FFTModel::FFTModel(const DenseTimeValueModel *model,
