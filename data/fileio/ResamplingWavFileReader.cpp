@@ -82,6 +82,8 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
         if (isDecodeCacheInitialised()) finishDecodeCache();
         endSerialised();
 
+        if (m_reporter) m_reporter->setProgress(100);
+
         delete m_original;
         m_original = 0;
 
@@ -150,7 +152,9 @@ ResamplingWavFileReader::addBlock(const SampleBlock &frames)
 
     m_processed += frames.size();
 
-    int progress = lrint((float(m_processed) * 100) /
+    float ratio = float(m_sampleRate) / float(m_fileRate);
+
+    int progress = lrint((float(m_processed) * ratio * 100) /
                          float(m_original->getFrameCount()));
 
     if (progress > 99) progress = 99;

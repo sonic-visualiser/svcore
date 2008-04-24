@@ -246,8 +246,8 @@ Transform::setParameters(const ParameterMap &pm)
 void
 Transform::setParameter(QString name, float value)
 {
-    std::cerr << "Transform::setParameter(" << name.toStdString()
-              << ") -> " << value << std::endl;
+//    std::cerr << "Transform::setParameter(" << name.toStdString()
+//              << ") -> " << value << std::endl;
     m_parameters[name] = value;
 }
 
