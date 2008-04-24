@@ -79,7 +79,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-    std::cerr << "CodedAudioFileReader::endSerialised" << std::endl;
+//    std::cerr << "CodedAudioFileReader::endSerialised" << std::endl;
 
     delete m_serialiser;
     m_serialiser = 0;
