@@ -42,17 +42,28 @@ AlignmentModel::AlignmentModel(Model *reference,
         
         connect(m_rawPath, SIGNAL(completionChanged()),
                 this, SLOT(pathCompletionChanged()));
+
+        constructPath();
+        constructReversePath();
     }
 
-    constructPath();
-    constructReversePath();
+    if (m_rawPath && m_rawPath->isReady()) {
+        pathCompletionChanged();
+    }
 }
 
 AlignmentModel::~AlignmentModel()
 {
+    if (m_inputModel) m_inputModel->aboutToDelete();
     delete m_inputModel;
+
+    if (m_rawPath) m_rawPath->aboutToDelete();
     delete m_rawPath;
+
+    if (m_path) m_path->aboutToDelete();
     delete m_path;
+
+    if (m_reversePath) m_reversePath->aboutToDelete();
     delete m_reversePath;
 }
 
@@ -157,6 +168,7 @@ AlignmentModel::pathChanged()
 {
     if (m_pathComplete) {
         std::cerr << "AlignmentModel: deleting raw path model" << std::endl;
+        if (m_rawPath) m_rawPath->aboutToDelete();
         delete m_rawPath;
         m_rawPath = 0;
     }
@@ -192,7 +204,8 @@ AlignmentModel::pathCompletionChanged()
 
             constructPath();
             constructReversePath();
-
+            
+            if (m_inputModel) m_inputModel->aboutToDelete();
             delete m_inputModel;
             m_inputModel = 0;
         }
@@ -237,6 +250,7 @@ void
 AlignmentModel::constructReversePath() const
 {
     if (!m_reversePath) {
+/*!!!
         if (!m_rawPath) {
             std::cerr << "ERROR: AlignmentModel::constructReversePath: "
                       << "No raw path available" << std::endl;
@@ -244,12 +258,23 @@ AlignmentModel::constructReversePath() const
         }
         m_reversePath = new PathModel
             (m_rawPath->getSampleRate(), m_rawPath->getResolution(), false);
+*/
+        if (!m_path) {
+            std::cerr << "ERROR: AlignmentModel::constructReversePath: "
+                      << "No forward path available" << std::endl;
+            return;
+        }
+        m_reversePath = new PathModel
+            (m_path->getSampleRate(), m_path->getResolution(), false);
     } else {
+/*!!!
         if (!m_rawPath) return;
+*/
+        if (!m_path) return;
     }
         
     m_reversePath->clear();
-
+/*!!!
     SparseTimeValueModel::PointList points = m_rawPath->getPoints();
         
     for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
@@ -257,6 +282,16 @@ AlignmentModel::constructReversePath() const
         long frame = i->frame;
         float value = i->value;
         long rframe = lrintf(value * m_aligned->getSampleRate());
+        m_reversePath->addPoint(PathPoint(rframe, frame));
+    }
+*/
+
+    PathModel::PointList points = m_path->getPoints();
+        
+    for (PathModel::PointList::const_iterator i = points.begin();
+         i != points.end(); ++i) {
+        long frame = i->frame;
+        long rframe = i->mapframe;
         m_reversePath->addPoint(PathPoint(rframe, frame));
     }
 
@@ -333,4 +368,34 @@ AlignmentModel::align(PathModel *path, size_t frame) const
 
     return resultFrame;
 }
+
+void
+AlignmentModel::setPath(PathModel *path)
+{
+    if (m_path) m_path->aboutToDelete();
+    delete m_path;
+    m_path = path;
+    constructReversePath();
+}
     
+void
+AlignmentModel::toXml(QTextStream &stream,
+                      QString indent,
+                      QString extraAttributes) const
+{
+    if (!m_path) {
+        std::cerr << "AlignmentModel::toXml: no path" << std::endl;
+        return;
+    }
+
+    m_path->toXml(stream, indent, "");
+
+    Model::toXml(stream, indent,
+                 QString("type=\"alignment\" reference=\"%1\" aligned=\"%2\" path=\"%3\" %4")
+                 .arg(getObjectExportId(m_reference))
+                 .arg(getObjectExportId(m_aligned))
+                 .arg(getObjectExportId(m_path))
+                 .arg(extraAttributes));
+}
+
+

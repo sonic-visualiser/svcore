@@ -133,6 +133,8 @@ public:
 
     QString getTypeName() const { return tr("Sparse"); }
 
+    virtual QString getXmlOutputType() const { return "sparse"; }
+
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const;
@@ -554,10 +556,13 @@ SparseModel<PointType>::toXml(QTextStream &out,
     std::cerr << "SparseModel::toXml: extraAttributes = \"" 
               << extraAttributes.toStdString() << std::endl;
 
+    QString type = getXmlOutputType();
+
     Model::toXml
 	(out,
          indent,
-	 QString("type=\"sparse\" dimensions=\"%1\" resolution=\"%2\" notifyOnAdd=\"%3\" dataset=\"%4\" %5")
+	 QString("type=\"%1\" dimensions=\"%2\" resolution=\"%3\" notifyOnAdd=\"%4\" dataset=\"%5\" %6")
+         .arg(type)
 	 .arg(PointType(0).getDimensions())
 	 .arg(m_resolution)
 	 .arg(m_notifyOnAdd ? "true" : "false")
