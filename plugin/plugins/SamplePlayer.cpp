@@ -21,6 +21,7 @@
 
 #include <dssi.h>
 #include <cmath>
+#include <cstdlib>
 
 #include <QMutexLocker>
 #include <QDir>

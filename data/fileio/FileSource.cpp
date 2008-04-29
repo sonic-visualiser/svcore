@@ -27,6 +27,7 @@
 #include <QHttpResponseHeader>
 
 #include <iostream>
+#include <cstdlib>
 
 //#define DEBUG_FILE_SOURCE 1
 

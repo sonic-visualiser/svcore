@@ -22,6 +22,8 @@
 #include <map>
 #include <cstdlib>
 
+#include <cstdlib>
+
 enum WindowType {
     RectangularWindow,
     BartlettWindow,

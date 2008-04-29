@@ -20,6 +20,8 @@
 
 #include <iostream>
 
+#include <cstdlib>
+
 #if (__GNUC__ < 3)
 #include <strstream>
 #define stringstream strstream

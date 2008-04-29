@@ -25,6 +25,8 @@
 #include "PluginIdentifier.h"
 #include "LADSPAPluginFactory.h"
 
+#include <cstdlib>
+
 //#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
 
