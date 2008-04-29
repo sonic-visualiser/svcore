@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include <cstdlib>
+
 #ifdef HAVE_ID3TAG
 #include <id3tag.h>
 #endif
@@ -421,9 +423,9 @@ MP3FileReader::error(void *dp,
 {
     DecoderData *data = (DecoderData *)dp;
 
-    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %u\n",
+    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
 	    stream->error, mad_stream_errorstr(stream),
-	    stream->this_frame - data->start);
+	    (unsigned long)(stream->this_frame - data->start));
 
     return MAD_FLOW_CONTINUE;
 }

@@ -26,6 +26,8 @@
 #include "DSSIPluginInstance.h"
 #include "PluginIdentifier.h"
 
+#include <cstdlib>
+
 //!!!
 #include "plugin/plugins/SamplePlayer.h"
 

@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <cassert>
 
+#include <cstdlib>
+
 #include <QFileInfo>
 #include <QDir>
 

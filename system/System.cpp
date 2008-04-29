@@ -30,6 +30,9 @@
 #include <sys/sysctl.h>
 #endif
 
+#include <limits.h>
+#include <cstdlib>
+
 #include <iostream>
 
 #ifdef __APPLE__
