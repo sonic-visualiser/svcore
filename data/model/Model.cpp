@@ -90,6 +90,12 @@ Model::setAlignment(AlignmentModel *alignment)
             this, SIGNAL(alignmentCompletionChanged()));
 }
 
+const AlignmentModel *
+Model::getAlignment() const
+{
+    return m_alignment;
+}
+
 const Model *
 Model::getAlignmentReference() const
 {

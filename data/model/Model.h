@@ -160,6 +160,17 @@ public:
     virtual void setAlignment(AlignmentModel *alignment);
 
     /**
+     * Retrieve the alignment model for this model.  This is not a
+     * generally useful function, as the alignment you really want may
+     * be performed by the source model instead.  You should normally
+     * use getAlignmentReference, alignToReference and
+     * alignFromReference instead of this.  The main intended
+     * application for this function is in streaming out alignments to
+     * the session file.
+     */
+    virtual const AlignmentModel *getAlignment() const;
+
+    /**
      * Return the reference model for the current alignment timeline,
      * if any.
      */

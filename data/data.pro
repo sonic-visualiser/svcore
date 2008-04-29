@@ -53,6 +53,7 @@ HEADERS += fft/FFTapi.h \
            model/Labeller.h \
            model/Model.h \
            model/NoteModel.h \
+           model/PathModel.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
            model/PowerOfTwoZoomConstraint.h \
            model/RangeSummarisableTimeValueModel.h \
