@@ -82,7 +82,7 @@ CSVFormat::CSVFormat(QString filename) :
                 }
             }
 
-            std::cerr << "separator = \"" << m_separator.toStdString() << "\"" << std::endl;
+//            std::cerr << "separator = \"" << m_separator.toStdString() << "\"" << std::endl;
 
             QStringList list = line.split(m_separator, m_behaviour);
             QStringList tidyList;
@@ -98,7 +98,7 @@ CSVFormat::CSVFormat(QString filename) :
                     s = s.mid(1, s.length() - 2);
                 } else {
                     float f = s.toFloat(&numeric);
-                    std::cerr << "converted \"" << s.toStdString() << "\" to float, got " << f << " and success = " << numeric << std::endl;
+//                    std::cerr << "converted \"" << s.toStdString() << "\" to float, got " << f << " and success = " << numeric << std::endl;
                 }
 
                 tidyList.push_back(s);

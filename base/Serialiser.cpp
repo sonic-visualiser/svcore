@@ -15,6 +15,8 @@
 
 #include "Serialiser.h"
 
+#include <iostream>
+
 QMutex
 Serialiser::m_mapMutex;
 
@@ -30,9 +32,18 @@ Serialiser::Serialiser(QString id) :
         m_mutexMap[m_id] = new QMutex;
     }
 
-    m_mutexMap[m_id]->lock();
+    // The id mutexes are never deleted, so once we have a reference
+    // to the one we need, we can hold on to it while we release the
+    // map mutex.  We need to release the map mutex, otherwise if the
+    // id mutex is currently held, it will never be released (because
+    // the destructor needs to hold the map mutex to release the id
+    // mutex).
+
+    QMutex *idMutex = m_mutexMap[m_id];
 
     m_mapMutex.unlock();
+
+    idMutex->lock();
 }
 
 Serialiser::~Serialiser()

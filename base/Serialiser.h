@@ -27,6 +27,8 @@ public:
     Serialiser(QString id);
     ~Serialiser();
 
+    QString getId() const { return m_id; }
+
 protected:
     QString m_id;
     static QMutex m_mapMutex;
