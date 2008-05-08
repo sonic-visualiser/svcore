@@ -361,6 +361,8 @@ ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message)
 {
+    std::cerr << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << std::endl;
+
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
 

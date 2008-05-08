@@ -278,6 +278,8 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 DenseTimeValueModel *
 FeatureExtractionModelTransformer::getConformingInput()
 {
+//    std::cerr << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << std::endl;
+
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {

@@ -98,12 +98,14 @@ public:
     ~Profiler();
 
     void update() const;
+    void end(); // same action as dtor
 
 protected:
     const char* m_c;
     clock_t m_startCPU;
     RealTime m_startTime;
     bool m_showOnDestruct;
+    bool m_ended;
 };
 
 #else
@@ -111,10 +113,11 @@ protected:
 class Profiler
 {
 public:
-    Profiler(const char *, bool) { }
+    Profiler(const char *, bool = false) { }
     ~Profiler() { }
-    
-    void update() { }
+
+    void update() const { }
+    void end() { }
 };
 
 #endif

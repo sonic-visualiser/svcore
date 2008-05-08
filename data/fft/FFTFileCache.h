@@ -24,12 +24,6 @@
 class FFTFileCache : public FFTCache
 {
 public:
-    enum StorageType {
-        Compact, // 16 bits normalized polar
-        Rectangular, // floating point real+imag
-        Polar, // floating point mag+phase
-    };
-
     FFTFileCache(QString fileBase, MatrixFile::Mode mode,
                  StorageType storageType);
     virtual ~FFTFileCache();
@@ -58,6 +52,7 @@ public:
 
     static size_t getCacheSize(size_t width, size_t height, StorageType type);
 
+    virtual StorageType getStorageType() { return m_storageType; }
     virtual Type getType() { return FileCache; }
 
 protected:

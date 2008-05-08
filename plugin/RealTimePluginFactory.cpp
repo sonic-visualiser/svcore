@@ -26,6 +26,7 @@
 #include "DSSIPluginFactory.h"
 
 #include "system/System.h"
+#include "base/Profiler.h"
 
 #include <iostream>
 
@@ -73,6 +74,8 @@ RealTimePluginFactory::instanceFor(QString identifier)
 std::vector<QString>
 RealTimePluginFactory::getAllPluginIdentifiers()
 {
+    Profiler profiler("RealTimePluginFactory::getAllPluginIdentifiers");
+
     RealTimePluginFactory *factory;
     std::vector<QString> rv;
     
@@ -108,6 +111,8 @@ RealTimePluginFactory::getAllPluginIdentifiers()
 void
 RealTimePluginFactory::enumerateAllPlugins(std::vector<QString> &list)
 {
+    Profiler profiler("RealTimePluginFactory::enumerateAllPlugins");
+
     RealTimePluginFactory *factory;
 
     // Query DSSI plugins before LADSPA ones.

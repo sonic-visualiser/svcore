@@ -16,6 +16,7 @@
 #include "FileReadThread.h"
 
 #include "base/Profiler.h"
+#include "base/Thread.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -31,7 +32,7 @@ FileReadThread::FileReadThread() :
 void
 FileReadThread::run()
 {
-    m_mutex.lock();
+    MutexLocker locker(&m_mutex, "FileReadThread::run::m_mutex");
 
     while (!m_exiting) {
         if (m_queue.empty()) {
@@ -43,7 +44,6 @@ FileReadThread::run()
     }
 
     notifyCancelled();
-    m_mutex.unlock();
 
 #ifdef DEBUG_FILE_READ_THREAD
     std::cerr << "FileReadThread::run() exiting" << std::endl;
@@ -57,15 +57,17 @@ FileReadThread::finish()
     std::cerr << "FileReadThread::finish()" << std::endl;
 #endif
 
-    m_mutex.lock();
-    while (!m_queue.empty()) {
-        m_cancelledRequests[m_queue.begin()->first] = m_queue.begin()->second;
-        m_newlyCancelled.insert(m_queue.begin()->first);
-        m_queue.erase(m_queue.begin());
-    }
+    {
+        MutexLocker locker(&m_mutex, "FileReadThread::finish::m_mutex");
 
-    m_exiting = true;
-    m_mutex.unlock();
+        while (!m_queue.empty()) {
+            m_cancelledRequests[m_queue.begin()->first] = m_queue.begin()->second;
+            m_newlyCancelled.insert(m_queue.begin()->first);
+            m_queue.erase(m_queue.begin());
+        }
+        
+        m_exiting = true;
+    }
 
     m_condition.wakeAll();
 
@@ -77,12 +79,15 @@ FileReadThread::finish()
 int
 FileReadThread::request(const Request &request)
 {
-    m_mutex.lock();
-    
-    int token = m_nextToken++;
-    m_queue[token] = request;
+    int token;
 
-    m_mutex.unlock();
+    {
+        MutexLocker locker(&m_mutex, "FileReadThread::request::m_mutex");
+    
+        token = m_nextToken++;
+        m_queue[token] = request;
+    }
+
     m_condition.wakeAll();
 
     return token;
@@ -91,20 +96,20 @@ FileReadThread::request(const Request &request)
 void
 FileReadThread::cancel(int token)
 {
-    m_mutex.lock();
+    {
+        MutexLocker locker(&m_mutex, "FileReadThread::cancel::m_mutex");
 
-    if (m_queue.find(token) != m_queue.end()) {
-        m_cancelledRequests[token] = m_queue[token];
-        m_queue.erase(token);
-        m_newlyCancelled.insert(token);
-    } else if (m_readyRequests.find(token) != m_readyRequests.end()) {
-        m_cancelledRequests[token] = m_readyRequests[token];
-        m_readyRequests.erase(token);
-    } else {
-        std::cerr << "WARNING: FileReadThread::cancel: token " << token << " not found" << std::endl;
+        if (m_queue.find(token) != m_queue.end()) {
+            m_cancelledRequests[token] = m_queue[token];
+            m_queue.erase(token);
+            m_newlyCancelled.insert(token);
+        } else if (m_readyRequests.find(token) != m_readyRequests.end()) {
+            m_cancelledRequests[token] = m_readyRequests[token];
+            m_readyRequests.erase(token);
+        } else {
+            std::cerr << "WARNING: FileReadThread::cancel: token " << token << " not found" << std::endl;
+        }
     }
-
-    m_mutex.unlock();
 
 #ifdef DEBUG_FILE_READ_THREAD
     std::cerr << "FileReadThread::cancel(" << token << ") waking condition" << std::endl;
@@ -116,31 +121,29 @@ FileReadThread::cancel(int token)
 bool
 FileReadThread::isReady(int token)
 {
-    m_mutex.lock();
+    MutexLocker locker(&m_mutex, "FileReadThread::isReady::m_mutex");
 
     bool ready = m_readyRequests.find(token) != m_readyRequests.end();
 
-    m_mutex.unlock();
     return ready;
 }
 
 bool
 FileReadThread::isCancelled(int token)
 {
-    m_mutex.lock();
+    MutexLocker locker(&m_mutex, "FileReadThread::isCancelled::m_mutex");
 
     bool cancelled = 
         m_cancelledRequests.find(token) != m_cancelledRequests.end() &&
         m_newlyCancelled.find(token) == m_newlyCancelled.end();
 
-    m_mutex.unlock();
     return cancelled;
 }
 
 bool
 FileReadThread::getRequest(int token, Request &request)
 {
-    m_mutex.lock();
+    MutexLocker locker(&m_mutex, "FileReadThread::getRequest::m_mutex");
 
     bool found = false;
 
@@ -155,15 +158,13 @@ FileReadThread::getRequest(int token, Request &request)
         found = true;
     }
 
-    m_mutex.unlock();
-    
     return found;
 }
 
 void
 FileReadThread::done(int token)
 {
-    m_mutex.lock();
+    MutexLocker locker(&m_mutex, "FileReadThread::done::m_mutex");
 
     bool found = false;
 
@@ -178,8 +179,6 @@ FileReadThread::done(int token)
         std::cerr << "WARNING: FileReadThread::done(" << token << "): request is still in queue (wait or cancel it)" << std::endl;
     }
 
-    m_mutex.unlock();
-
     if (!found) {
         std::cerr << "WARNING: FileReadThread::done(" << token << "): request not found" << std::endl;
     }
@@ -190,9 +189,7 @@ FileReadThread::process()
 {
     // entered with m_mutex locked and m_queue non-empty
 
-#ifdef DEBUG_FILE_READ_THREAD
-    Profiler profiler("FileReadThread::process()", true);
-#endif
+    Profiler profiler("FileReadThread::process", true);
 
     int token = m_queue.begin()->first;
     Request request = m_queue.begin()->second;
@@ -207,37 +204,37 @@ FileReadThread::process()
     bool seekFailed = false;
     ssize_t r = 0;
 
-    if (request.mutex) request.mutex->lock();
+    { 
+        MutexLocker rlocker(request.mutex, "FileReadThread::process::request.mutex");
 
-    if (::lseek(request.fd, request.start, SEEK_SET) == (off_t)-1) {
-        seekFailed = true;
-    } else {
+        if (::lseek(request.fd, request.start, SEEK_SET) == (off_t)-1) {
+            seekFailed = true;
+        } else {
         
-        // if request.size is large, we want to avoid making a single
-        // system call to read it all as it may block too much
-
-        static const size_t blockSize = 256 * 1024;
-        
-        size_t size = request.size;
-        char *destination = request.data;
-
-        while (size > 0) {
-            size_t readSize = size;
-            if (readSize > blockSize) readSize = blockSize;
-            ssize_t br = ::read(request.fd, destination, readSize);
-            if (br < 0) { 
-                r = br;
-                break;
-            } else {
-                r += br;
-                if (br < ssize_t(readSize)) break;
+            // if request.size is large, we want to avoid making a single
+            // system call to read it all as it may block too much
+            
+            static const size_t blockSize = 256 * 1024;
+            
+            size_t size = request.size;
+            char *destination = request.data;
+            
+            while (size > 0) {
+                size_t readSize = size;
+                if (readSize > blockSize) readSize = blockSize;
+                ssize_t br = ::read(request.fd, destination, readSize);
+                if (br < 0) { 
+                    r = br;
+                    break;
+                } else {
+                    r += br;
+                    if (br < ssize_t(readSize)) break;
+                }
+                destination += readSize;
+                size -= readSize;
             }
-            destination += readSize;
-            size -= readSize;
         }
     }
-
-    if (request.mutex) request.mutex->unlock();
 
     if (seekFailed) {
         ::perror("Seek failed");

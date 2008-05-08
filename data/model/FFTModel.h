@@ -85,6 +85,16 @@ public:
         return m_server->isColumnReady(x << m_xshift);
     }
 
+    float getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+        return m_server->getMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
+    }
+    float getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+        return m_server->getNormalizedMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
+    }
+    float getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+        return m_server->getPhasesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
+    }
+
     size_t getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
@@ -186,6 +196,13 @@ private:
 
     size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
                                  size_t bin, float &percentile) const;
+
+    size_t getYRatio() {
+        size_t ys = m_yshift;
+        size_t r = 1;
+        while (ys) { --ys; r <<= 1; }
+        return r;
+    }
 };
 
 #endif

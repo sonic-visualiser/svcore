@@ -32,6 +32,7 @@
 
 #include "system/System.h"
 #include "base/Preferences.h"
+#include "base/Profiler.h"
 
 //#define DEBUG_LADSPA_PLUGIN_FACTORY 1
 
@@ -71,6 +72,8 @@ LADSPAPluginFactory::getPluginIdentifiers() const
 void
 LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 {
+    Profiler profiler("LADSPAPluginFactory::enumeratePlugins");
+
     for (std::vector<QString>::iterator i = m_identifiers.begin();
 	 i != m_identifiers.end(); ++i) {
 
@@ -332,6 +335,8 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 				       unsigned int blockSize,
 				       unsigned int channels)
 {
+    Profiler profiler("LADSPAPluginFactory::instantiatePlugin");
+
     const LADSPA_Descriptor *descriptor = getLADSPADescriptor(identifier);
 
     if (descriptor) {
@@ -358,6 +363,8 @@ void
 LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
 				   QString identifier)
 {
+    Profiler profiler("LADSPAPluginFactory::releasePlugin");
+
     if (m_instances.find(instance) == m_instances.end()) {
 	std::cerr << "WARNING: LADSPAPluginFactory::releasePlugin: Not one of mine!"
 		  << std::endl;
@@ -622,6 +629,8 @@ LADSPAPluginFactory::getLRDFPath(QString &baseUri)
 void
 LADSPAPluginFactory::discoverPlugins()
 {
+    Profiler profiler("LADSPAPluginFactory::discoverPlugins");
+
     std::vector<QString> pathList = getPluginPath();
 
 //    std::cerr << "LADSPAPluginFactory::discoverPlugins - "

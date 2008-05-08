@@ -20,6 +20,8 @@
 
 #include "OSCQueue.h"
 
+#include "base/Profiler.h"
+
 #include <iostream>
 
 #define OSC_MESSAGE_QUEUE_SIZE 1023
@@ -91,6 +93,8 @@ OSCQueue::OSCQueue() :
 #endif
     m_buffer(OSC_MESSAGE_QUEUE_SIZE)
 {
+    Profiler profiler("OSCQueue::OSCQueue");
+
 #ifdef HAVE_LIBLO
     m_thread = lo_server_thread_new(NULL, oscError);
 

@@ -62,7 +62,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
 
     FFTDataServer *server = 0;
     
-    MutexLocker locker(&m_serverMapMutex, "FFTDataServer::m_serverMapMutex[getInstance]");
+    MutexLocker locker(&m_serverMapMutex, "FFTDataServer::getInstance::m_serverMapMutex");
 
     if ((server = findServer(n))) {
         return server;
@@ -139,7 +139,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
     // or 1536, the model doesn't support this).
 
     {
-        MutexLocker locker(&m_serverMapMutex, "FFTDataServer::m_serverMapMutex[getFuzzyInstance]");
+        MutexLocker locker(&m_serverMapMutex, "FFTDataServer::getFuzzyInstance::m_serverMapMutex");
 
         ServerMap::iterator best = m_servers.end();
         int bestdist = -1;
@@ -258,7 +258,7 @@ void
 FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
 {
     MutexLocker locker(needLock ? &m_serverMapMutex : 0,
-                       "FFTDataServer::m_serverMapMutex[claimInstance]");
+                       "FFTDataServer::claimInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::claimInstance(" << server << ")" << std::endl;
@@ -303,7 +303,7 @@ void
 FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 {    
     MutexLocker locker(needLock ? &m_serverMapMutex : 0,
-                       "FFTDataServer::m_serverMapMutex[releaseInstance]");
+                       "FFTDataServer::releaseInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::releaseInstance(" << server << ")" << std::endl;
@@ -431,7 +431,7 @@ void
 FFTDataServer::modelAboutToBeDeleted(Model *model)
 {
     MutexLocker locker(&m_serverMapMutex,
-                       "FFTDataServer::m_serverMapMutex[modelAboutToBeDeleted]");
+                       "FFTDataServer::modelAboutToBeDeleted::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
     std::cerr << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
@@ -598,7 +598,7 @@ FFTDataServer::~FFTDataServer()
     }
 
     MutexLocker locker(&m_writeMutex,
-                       "FFTDataServer::m_writeMutex[~FFTDataServer]");
+                       "FFTDataServer::~FFTDataServer::m_writeMutex");
 
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
 
@@ -634,7 +634,7 @@ FFTDataServer::suspend()
     Profiler profiler("FFTDataServer::suspend", false);
 
     MutexLocker locker(&m_writeMutex,
-                       "FFTDataServer::m_writeMutex[suspend]");
+                       "FFTDataServer::suspend::m_writeMutex");
     m_suspended = true;
     for (CacheVector::iterator i = m_caches.begin(); i != m_caches.end(); ++i) {
         if (*i) (*i)->suspend();
@@ -740,7 +740,7 @@ FFTDataServer::getCacheAux(size_t c)
 #endif
 
     MutexLocker locker(&m_writeMutex,
-                       "FFTDataServer::m_writeMutex[getCacheAux]");
+                       "FFTDataServer::getCacheAux::m_writeMutex");
 
     if (m_lastUsedCache == -1) {
         m_fillThread->start();
@@ -875,13 +875,49 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
     if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getMagnitudeAt: filling");
 #ifdef DEBUG_FFT_SERVER
         std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
                   << x << ")" << std::endl;
 #endif
-        fillColumn(x);
+        // hold mutex so that write thread doesn't mess with class
+        // member data in fillColumn
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getMagnitudeAt: m_writeMutex");
+        fillColumn(x, true);
     }
     return cache->getMagnitudeAt(col, y);
+}
+
+bool
+FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+{
+    Profiler profiler("FFTDataServer::getMagnitudesAt", false);
+
+    if (x >= m_width) return false;
+
+    if (minbin >= m_height) minbin = m_height - 1;
+    if (count == 0) count = (m_height - minbin) / step;
+    else if (minbin + count * step > m_height) {
+        count = (m_height - minbin) / step;
+    }
+
+    size_t col;
+    FFTCache *cache = getCache(x, col);
+    if (!cache) return false;
+
+    if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getMagnitudesAt: filling");
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getMagnitudesAt: m_writeMutex");
+        fillColumn(x, true);
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        values[i] = cache->getMagnitudeAt(col, i * step + minbin);
+    }
+
+    return true;
 }
 
 float
@@ -896,9 +932,45 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
     if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
-        fillColumn(x);
+        Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt: filling");
+        // hold mutex so that write thread doesn't mess with class
+        // member data in fillColumn
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getNormalizedMagnitudeAt: m_writeMutex");
+        fillColumn(x, true);
     }
     return cache->getNormalizedMagnitudeAt(col, y);
+}
+
+bool
+FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+{
+    Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt", false);
+
+    if (x >= m_width) return false;
+
+    if (minbin >= m_height) minbin = m_height - 1;
+    if (count == 0) count = (m_height - minbin) / step;
+    else if (minbin + count * step > m_height) {
+        count = (m_height - minbin) / step;
+    }
+
+    size_t col;
+    FFTCache *cache = getCache(x, col);
+    if (!cache) return false;
+
+    if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt: filling");
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getNormalizedMagnitudesAt: m_writeMutex");
+        fillColumn(x, true);
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        values[i] = cache->getNormalizedMagnitudeAt(col, i * step + minbin);
+    }
+
+    return true;
 }
 
 float
@@ -913,7 +985,12 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
     if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
-        fillColumn(x);
+        Profiler profiler("FFTDataServer::getMaximumMagnitudeAt: filling");
+        // hold mutex so that write thread doesn't mess with class
+        // member data in fillColumn
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getMaximumMagnitudeAt: m_writeMutex");
+        fillColumn(x, true);
     }
     return cache->getMaximumMagnitudeAt(col);
 }
@@ -930,9 +1007,45 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
     if (!cache) return 0;
 
     if (!cache->haveSetColumnAt(col)) {
-        fillColumn(x);
+        Profiler profiler("FFTDataServer::getPhaseAt: filling");
+        // hold mutex so that write thread doesn't mess with class
+        // member data in fillColumn
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getPhaseAt: m_writeMutex");
+        fillColumn(x, true);
     }
     return cache->getPhaseAt(col, y);
+}
+
+bool
+FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+{
+    Profiler profiler("FFTDataServer::getPhasesAt", false);
+
+    if (x >= m_width) return false;
+
+    if (minbin >= m_height) minbin = m_height - 1;
+    if (count == 0) count = (m_height - minbin) / step;
+    else if (minbin + count * step > m_height) {
+        count = (m_height - minbin) / step;
+    }
+
+    size_t col;
+    FFTCache *cache = getCache(x, col);
+    if (!cache) return false;
+
+    if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getPhasesAt: filling");
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getPhasesAt: m_writeMutex");
+        fillColumn(x, true);
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        values[i] = cache->getPhaseAt(col, i * step + minbin);
+    }
+
+    return true;
 }
 
 void
@@ -956,10 +1069,15 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
     }
 
     if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getValuesAt: filling");
 #ifdef DEBUG_FFT_SERVER
         std::cerr << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << std::endl;
 #endif
-        fillColumn(x);
+        // hold mutex so that write thread doesn't mess with class
+        // member data in fillColumn
+        MutexLocker locker(&m_writeMutex,
+                           "FFTDataServer::getValuesAt: m_writeMutex");
+        fillColumn(x, true);
     }        
 
     cache->getValuesAt(col, y, real, imaginary);
@@ -991,7 +1109,7 @@ FFTDataServer::isColumnReady(size_t x)
 }    
 
 void
-FFTDataServer::fillColumn(size_t x)
+FFTDataServer::fillColumn(size_t x, bool lockHeld)
 {
     Profiler profiler("FFTDataServer::fillColumn", false);
 
@@ -1022,28 +1140,37 @@ FFTDataServer::fillColumn(size_t x)
     FFTCache *cache = getCache(x, col);
     if (!cache) return;
 
-    MutexLocker locker(&m_writeMutex,
-                       "FFTDataServer::m_writeMutex[fillColumn]");
+    {
+        MutexLocker locker(lockHeld ? 0 : &m_writeMutex,
+                           "FFTDataServer::fillColumn::m_writeMutex [1]");
 
-    if (cache->haveSetColumnAt(col)) return;
+        if (cache->haveSetColumnAt(col)) return;
+    }
+
+    int winsize = m_windowSize;
+    int fftsize = m_fftSize;
+    int hs = fftsize/2;
+
+    int pfx = 0;
+    int off = (fftsize - winsize) / 2;
 
     int startFrame = m_windowIncrement * x;
     int endFrame = startFrame + m_windowSize;
 
-    startFrame -= int(m_windowSize) / 2;
-    endFrame   -= int(m_windowSize) / 2;
-    size_t pfx = 0;
+    startFrame -= winsize / 2;
+    endFrame   -= winsize / 2;
 
-    size_t off = (m_fftSize - m_windowSize) / 2;
-
-    for (size_t i = 0; i < off; ++i) {
+    for (int i = 0; i < off; ++i) {
         m_fftInput[i] = 0.0;
-        m_fftInput[m_fftSize - i - 1] = 0.0;
+    }
+
+    for (int i = 0; i < off; ++i) {
+        m_fftInput[fftsize - i - 1] = 0.0;
     }
 
     if (startFrame < 0) {
-	pfx = size_t(-startFrame);
-	for (size_t i = 0; i < pfx; ++i) {
+	pfx = -startFrame;
+	for (int i = 0; i < pfx; ++i) {
 	    m_fftInput[off + i] = 0.0;
 	}
     }
@@ -1057,13 +1184,13 @@ FFTDataServer::fillColumn(size_t x)
               << " from channel " << m_channel << std::endl;
 #endif
 
-    size_t count = 0;
+    int count = 0;
     if (endFrame > startFrame + pfx) count = endFrame - (startFrame + pfx);
 
-    size_t got = m_model->getData(m_channel, startFrame + pfx,
-                                  count, m_fftInput + off + pfx);
+    int got = m_model->getData(m_channel, startFrame + pfx,
+                               count, m_fftInput + off + pfx);
 
-    while (got + pfx < m_windowSize) {
+    while (got + pfx < winsize) {
 	m_fftInput[off + got + pfx] = 0.0;
 	++got;
     }
@@ -1071,7 +1198,7 @@ FFTDataServer::fillColumn(size_t x)
     if (m_channel == -1) {
 	int channels = m_model->getChannelCount();
 	if (channels > 1) {
-	    for (size_t i = 0; i < m_windowSize; ++i) {
+	    for (int i = 0; i < winsize; ++i) {
 		m_fftInput[off + i] /= channels;
 	    }
 	}
@@ -1079,25 +1206,60 @@ FFTDataServer::fillColumn(size_t x)
 
     m_windower.cut(m_fftInput + off);
 
-    for (size_t i = 0; i < m_fftSize/2; ++i) {
+    for (int i = 0; i < hs; ++i) {
 	fftsample temp = m_fftInput[i];
-	m_fftInput[i] = m_fftInput[i + m_fftSize/2];
-	m_fftInput[i + m_fftSize/2] = temp;
+	m_fftInput[i] = m_fftInput[i + hs];
+	m_fftInput[i + hs] = temp;
     }
 
     fftf_execute(m_fftPlan);
 
-    fftsample factor = 0.0;
+    // If our cache uses polar storage, it's more friendly for us to
+    // do the conversion before taking the write mutex
 
-    for (size_t i = 0; i <= m_fftSize/2; ++i) {
+    float factor = 0.f;
 
-        m_workbuffer[i] = m_fftOutput[i][0];
-        m_workbuffer[i + m_fftSize/2 + 1] = m_fftOutput[i][1];
+    if (cache->getStorageType() == FFTCache::Compact ||
+        cache->getStorageType() == FFTCache::Polar) {
+
+        for (int i = 0; i <= hs; ++i) {
+            fftsample real = m_fftOutput[i][0];
+            fftsample imag = m_fftOutput[i][1];
+            float mag = sqrtf(real * real + imag * imag);
+            m_workbuffer[i] = mag;
+            m_workbuffer[i + hs + 1] = atan2f(imag, real);
+            if (mag > factor) factor = mag;
+        }
+
+    } else {
+
+        for (int i = 0; i <= hs; ++i) {
+            m_workbuffer[i] = m_fftOutput[i][0];
+            m_workbuffer[i + hs + 1] = m_fftOutput[i][1];
+        }
     }
 
-    cache->setColumnAt(col,
-                       m_workbuffer,
-                       m_workbuffer + m_fftSize/2+1);
+    Profiler subprof("FFTDataServer::fillColumn: set to cache");
+
+    {
+        MutexLocker locker(lockHeld ? 0 : &m_writeMutex,
+                           "FFTDataServer::fillColumn: m_writeMutex [2]");
+
+        if (cache->getStorageType() == FFTCache::Compact ||
+            cache->getStorageType() == FFTCache::Polar) {
+            
+            cache->setColumnAt(col,
+                               m_workbuffer,
+                               m_workbuffer + hs + 1,
+                               factor);
+
+        } else {
+
+            cache->setColumnAt(col,
+                               m_workbuffer,
+                               m_workbuffer + hs + 1);
+        }
+    }
 
     if (m_suspended) {
 //        std::cerr << "FFTDataServer::fillColumn(" << x << "): calling resume" << std::endl;
@@ -1174,7 +1336,8 @@ FFTDataServer::FillThread::run()
 
         for (size_t f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
 	    
-            m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+            m_server.fillColumn(int((f - start) / m_server.m_windowIncrement),
+                                false);
 
             if (m_server.m_exiting) return;
 
@@ -1184,7 +1347,7 @@ FFTDataServer::FillThread::run()
 #endif
                 {
                     MutexLocker locker(&m_server.m_writeMutex,
-                                       "FFTDataServer::m_writeMutex[run/1]");
+                                       "FFTDataServer::run::m_writeMutex [1]");
                     m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
                 }
 #ifdef DEBUG_FFT_SERVER
@@ -1214,7 +1377,8 @@ FFTDataServer::FillThread::run()
 
     for (size_t f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
 
-        m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+        m_server.fillColumn(int((f - start) / m_server.m_windowIncrement),
+                            false);
 
         if (m_server.m_exiting) return;
 
@@ -1224,7 +1388,7 @@ FFTDataServer::FillThread::run()
 #endif
             {
                 MutexLocker locker(&m_server.m_writeMutex,
-                                   "FFTDataServer::m_writeMutex[run/2]");
+                                   "FFTDataServer::run::m_writeMutex [2]");
                 m_server.m_condition.wait(&m_server.m_writeMutex, 10000);
             }
             if (m_server.m_exiting) return;

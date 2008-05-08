@@ -161,7 +161,7 @@ void Profiles::dump() const
     for (TimeRMap::const_iterator i = worstmap.end(); i != worstmap.begin(); ) {
         --i;
         fprintf(stderr, "%-40s  %s ms\n", i->second,
-                (i->first * 1000).toString().c_str(), i->second);
+                (i->first * 1000).toString().c_str());
     }
 
     fprintf(stderr, "\nBy number of calls:\n");
@@ -175,9 +175,10 @@ void Profiles::dump() const
 
 #ifndef NO_TIMING    
 
-Profiler::Profiler(const char* c, bool showOnDestruct)
-    : m_c(c),
-      m_showOnDestruct(showOnDestruct)
+Profiler::Profiler(const char* c, bool showOnDestruct) :
+    m_c(c),
+    m_showOnDestruct(showOnDestruct),
+    m_ended(false)
 {
     m_startCPU = clock();
 
@@ -202,6 +203,12 @@ Profiler::update() const
 
 Profiler::~Profiler()
 {
+    if (!m_ended) end();
+}
+
+void
+Profiler::end()
+{
     clock_t elapsedCPU = clock() - m_startCPU;
 
     struct timeval tv;
@@ -214,6 +221,8 @@ Profiler::~Profiler()
         cerr << "Profiler : id = " << m_c
              << " - elapsed = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
 	     << "ms CPU, " << elapsedTime << " real" << endl;
+
+    m_ended = true;
 }
  
 #endif

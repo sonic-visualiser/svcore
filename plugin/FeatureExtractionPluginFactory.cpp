@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+#include "base/Profiler.h"
+
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
 class PluginDeletionNotifyAdapter : public Vamp::HostExt::PluginWrapper {
@@ -108,6 +110,8 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
 std::vector<QString>
 FeatureExtractionPluginFactory::getPluginIdentifiers()
 {
+    Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
+
     std::vector<QString> rv;
     std::vector<QString> path = getPluginPath();
     
@@ -296,6 +300,8 @@ Vamp::Plugin *
 FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 						  float inputSampleRate)
 {
+    Profiler profiler("FeatureExtractionPluginFactory::instantiatePlugin");
+
     Vamp::Plugin *rv = 0;
     Vamp::PluginHostAdapter *plugin = 0;
 
