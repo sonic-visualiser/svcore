@@ -18,6 +18,7 @@
 #include "system/System.h"
 #include "base/Profiler.h"
 #include "base/Exceptions.h"
+#include "base/Thread.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -149,16 +150,19 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
 
     m_fileName = fileName;
 
-    m_columnBitsetWriteMutex.lock();
+    {
+        MutexLocker locker
+            (&m_columnBitsetWriteMutex,
+             "MatrixFile::MatrixFile::m_columnBitsetWriteMutex");
 
-    if (m_columnBitsets.find(m_fileName) == m_columnBitsets.end()) {
-        m_columnBitsets[m_fileName] = new ResizeableBitset;
+        if (m_columnBitsets.find(m_fileName) == m_columnBitsets.end()) {
+            m_columnBitsets[m_fileName] = new ResizeableBitset;
+        }
+        m_columnBitset = m_columnBitsets[m_fileName];
     }
-    m_columnBitset = m_columnBitsets[m_fileName];
 
-    m_columnBitsetWriteMutex.unlock();
-
-    QMutexLocker locker(&m_refcountMutex);
+    MutexLocker locker(&m_refcountMutex,
+                       "MatrixFile::MatrixFile::m_refcountMutex");
     ++m_refcount[fileName];
 
 //    std::cerr << "MatrixFile(" << this << "): fd " << m_fd << ", file " << fileName.toStdString() << ", ref " << m_refcount[fileName] << std::endl;
@@ -193,7 +197,8 @@ MatrixFile::~MatrixFile()
 
     if (m_fileName != "") {
 
-        QMutexLocker locker(&m_refcountMutex);
+        MutexLocker locker(&m_refcountMutex,
+                           "MatrixFile::~MatrixFile::m_refcountMutex");
 
         if (--m_refcount[m_fileName] == 0) {
 
@@ -204,7 +209,9 @@ MatrixFile::~MatrixFile()
 //                std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
             }
 
-            QMutexLocker locker2(&m_columnBitsetWriteMutex);
+            MutexLocker locker2
+                (&m_columnBitsetWriteMutex,
+                 "MatrixFile::~MatrixFile::m_columnBitsetWriteMutex");
             m_columnBitsets.erase(m_fileName);
             delete m_columnBitset;
         }
@@ -227,7 +234,7 @@ MatrixFile::resize(size_t w, size_t h)
 
     assert(m_mode == ReadWrite);
 
-    QMutexLocker locker(&m_fdMutex);
+    MutexLocker locker(&m_fdMutex, "MatrixFile::resize::m_fdMutex");
     
     totalStorage -= (m_headerSize + (m_width * m_height * m_cellSize));
     totalMemory -= (2 * m_defaultCacheWidth * m_height * m_cellSize);
@@ -272,7 +279,8 @@ MatrixFile::resize(size_t w, size_t h)
     }
 
     if (m_columnBitset) {
-        QMutexLocker locker(&m_columnBitsetWriteMutex);
+        MutexLocker locker(&m_columnBitsetWriteMutex,
+                           "MatrixFile::resize::m_columnBitsetWriteMutex");
         m_columnBitset->resize(w);
     }
 
@@ -319,7 +327,8 @@ MatrixFile::reset()
     }
     
     if (m_columnBitset) {
-        QMutexLocker locker(&m_columnBitsetWriteMutex);
+        MutexLocker locker(&m_columnBitsetWriteMutex,
+                           "MatrixFile::reset::m_columnBitsetWriteMutex");
         m_columnBitset->resize(m_width);
     }
 }
@@ -327,13 +336,13 @@ MatrixFile::reset()
 void
 MatrixFile::getColumnAt(size_t x, void *data)
 {
-//    Profiler profiler("MatrixFile::getColumnAt");
+    Profiler profiler("MatrixFile::getColumnAt");
 
 //    assert(haveSetColumnAt(x));
 
     if (getFromCache(x, 0, m_height, data)) return;
 
-//    Profiler profiler2("MatrixFile::getColumnAt (uncached)");
+    Profiler profiler2("MatrixFile::getColumnAt (uncached)");
 
     ssize_t r = 0;
 
@@ -351,13 +360,13 @@ MatrixFile::getColumnAt(size_t x, void *data)
     std::cerr << std::endl;
 #endif
 
-    m_fdMutex.lock();
+    {
+        MutexLocker locker(&m_fdMutex, "MatrixFile::getColumnAt::m_fdMutex");
 
-    if (seekTo(x, 0)) {
-        r = ::read(m_fd, data, m_height * m_cellSize);
+        if (seekTo(x, 0)) {
+            r = ::read(m_fd, data, m_height * m_cellSize);
+        }
     }
-
-    m_fdMutex.unlock();
     
     if (r < 0) {
         ::perror("MatrixFile::getColumnAt: read failed");
@@ -373,21 +382,28 @@ MatrixFile::getColumnAt(size_t x, void *data)
 bool
 MatrixFile::getFromCache(size_t x, size_t ystart, size_t ycount, void *data)
 {
-    m_cacheMutex.lock();
+    bool fail = false;
+    bool primeLeft = false;
 
-    if (!m_cache.data || x < m_cache.x || x >= m_cache.x + m_cache.width) {
-        bool left = (m_cache.data && x < m_cache.x);
-        m_cacheMutex.unlock();
-        primeCache(x, left); // this doesn't take effect until a later callback
+    {
+        MutexLocker locker(&m_cacheMutex,
+                           "MatrixFile::getFromCache::m_cacheMutex");
+
+        if (!m_cache.data || x < m_cache.x || x >= m_cache.x + m_cache.width) {
+            fail = true;
+            primeLeft = (m_cache.data && x < m_cache.x);
+        } else {
+            memcpy(data,
+                   m_cache.data + m_cellSize * ((x - m_cache.x) * m_height + ystart),
+                   ycount * m_cellSize);
+        }            
+    }
+
+    if (fail) {
+        primeCache(x, primeLeft); // this doesn't take effect until a later callback
         m_prevX = x;
         return false;
     }
-
-    memcpy(data,
-           m_cache.data + m_cellSize * ((x - m_cache.x) * m_height + ystart),
-           ycount * m_cellSize);
-
-    m_cacheMutex.unlock();
 
     if (m_cache.x > 0 && x < m_prevX && x < m_cache.x + m_cache.width/4) {
         primeCache(x, true);
@@ -414,16 +430,16 @@ MatrixFile::setColumnAt(size_t x, const void *data)
 
     ssize_t w = 0;
     bool seekFailed = false;
+    
+    {
+        MutexLocker locker(&m_fdMutex, "MatrixFile::setColumnAt::m_fdMutex");
 
-    m_fdMutex.lock();
-
-    if (seekTo(x, 0)) {
-        w = ::write(m_fd, data, m_height * m_cellSize);
-    } else {
-        seekFailed = true;
+        if (seekTo(x, 0)) {
+            w = ::write(m_fd, data, m_height * m_cellSize);
+        } else {
+            seekFailed = true;
+        }
     }
-
-    m_fdMutex.unlock();
 
     if (!seekFailed && w != ssize_t(m_height * m_cellSize)) {
         ::perror("WARNING: MatrixFile::setColumnAt: write failed");
@@ -431,7 +447,9 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     } else if (seekFailed) {
         throw FileOperationFailed(m_fileName, "seek");
     } else {
-        QMutexLocker locker(&m_columnBitsetWriteMutex);
+        MutexLocker locker
+            (&m_columnBitsetWriteMutex,
+             "MatrixFile::setColumnAt::m_columnBitsetWriteMutex");
         m_columnBitset->set(x);
     }
 }
@@ -439,8 +457,8 @@ MatrixFile::setColumnAt(size_t x, const void *data)
 void
 MatrixFile::suspend()
 {
-    QMutexLocker locker(&m_fdMutex);
-    QMutexLocker locker2(&m_cacheMutex);
+    MutexLocker locker(&m_fdMutex, "MatrixFile::suspend::m_fdMutex");
+    MutexLocker locker2(&m_cacheMutex, "MatrixFile::suspend::m_cacheMutex");
 
     if (m_fd < 0) return; // already suspended
 
@@ -539,7 +557,7 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
         if (rw < 10 || rx + rw <= x) return;
     }
 
-    QMutexLocker locker(&m_cacheMutex);
+    MutexLocker locker(&m_cacheMutex, "MatrixFile::primeCache::m_cacheMutex");
 
     FileReadThread::Request request;
 
@@ -601,9 +619,8 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
     }
 
     if (m_fd < 0) {
-        m_fdMutex.lock();
+        MutexLocker locker(&m_fdMutex, "MatrixFile::primeCache::m_fdMutex");
         if (m_fd < 0) resume();
-        m_fdMutex.unlock();
     }
 
     request.fd = m_fd;

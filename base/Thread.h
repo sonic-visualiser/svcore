@@ -19,6 +19,8 @@
 #include <QThread>
 #include <QMutexLocker>
 
+#include "Profiler.h"
+
 class Thread : public QThread
 {
 Q_OBJECT
@@ -38,7 +40,6 @@ private:
     Type m_type;
 };
 
-
 class MutexLocker
 {
 public:
@@ -55,6 +56,7 @@ private:
         const char *m_name;
     };
 
+    Profiler m_profiler;
     Printer m_printer;
     QMutexLocker m_locker;
 };

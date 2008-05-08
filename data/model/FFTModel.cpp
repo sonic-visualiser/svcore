@@ -167,9 +167,15 @@ FFTModel::getColumn(size_t x, Column &result) const
     Profiler profiler("FFTModel::getColumn", false);
 
     result.clear();
-    size_t height(getHeight());
-    for (size_t y = 0; y < height; ++y) {
-        result.push_back(const_cast<FFTModel *>(this)->getMagnitudeAt(x, y));
+    size_t h = getHeight();
+
+    float magnitudes[h];
+    if (m_server->getMagnitudesAt(x << m_xshift, magnitudes)) {
+        for (size_t y = 0; y < h; ++y) {
+            result.push_back(magnitudes[h]);
+        }
+    } else {
+        for (size_t i = 0; i < h; ++i) result.push_back(0.f);
     }
 }
 

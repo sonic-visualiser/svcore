@@ -18,10 +18,9 @@
 #include "fileio/MatrixFile.h"
 
 #include "base/Profiler.h"
+#include "base/Thread.h"
 
 #include <iostream>
-
-#include <QMutexLocker>
 
 
 // The underlying matrix has height (m_height * 2 + 1).  In each
@@ -69,7 +68,7 @@ FFTFileCache::getHeight() const
 void
 FFTFileCache::resize(size_t width, size_t height)
 {
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex, "FFTFileCache::resize::m_writeMutex");
 
     m_mfc->resize(width, height * 2 + m_factorSize);
     if (m_readbuf) {
@@ -163,7 +162,7 @@ FFTFileCache::getPhaseAt(size_t x, size_t y) const
     {
         float real, imag;
         getValuesAt(x, y, real, imag);
-        value = princargf(atan2f(imag, real));
+        value = atan2f(imag, real);
         break;
     }
 
@@ -203,7 +202,7 @@ FFTFileCache::haveSetColumnAt(size_t x) const
 void
 FFTFileCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 {
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex, "FFTFileCache::setColumnAt::m_writeMutex");
 
     size_t h = getHeight();
 
@@ -243,7 +242,7 @@ FFTFileCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 void
 FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
 {
-    QMutexLocker locker(&m_writeMutex);
+    MutexLocker locker(&m_writeMutex, "FFTFileCache::setColumnAt::m_writeMutex");
 
     size_t h = getHeight();
 
@@ -258,7 +257,7 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
         }
         for (size_t y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
-            float phase = princargf(atan2f(imag[y], real[y]));
+            float phase = atan2f(imag[y], real[y]);
             ((uint16_t *)m_writebuf)[y * 2] = uint16_t((mag / factor) * 65535.0);
             ((uint16_t *)m_writebuf)[y * 2 + 1] = uint16_t(int16_t((phase * 32767) / M_PI));
         }
@@ -278,7 +277,7 @@ FFTFileCache::setColumnAt(size_t x, float *real, float *imag)
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             if (mag > factor) factor = mag;
             ((float *)m_writebuf)[y * 2] = mag;
-            float phase = princargf(atan2f(imag[y], real[y]));
+            float phase = atan2f(imag[y], real[y]);
             ((float *)m_writebuf)[y * 2 + 1] = phase;
         }
         break;

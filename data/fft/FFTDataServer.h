@@ -81,6 +81,10 @@ public:
     void       getValuesAt(size_t x, size_t y, float &real, float &imaginary);
     bool       isColumnReady(size_t x);
 
+    bool       getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
+    bool       getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
+    bool       getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
+
     void       suspend();
     void       suspendWrites();
     void       resume(); // also happens automatically if new data needed
@@ -194,7 +198,7 @@ private:
     FillThread *m_fillThread;
 
     void deleteProcessingData();
-    void fillColumn(size_t x);
+    void fillColumn(size_t x, bool lockHeld);
 
     QString generateFileBasename() const;
     static QString generateFileBasename(const DenseTimeValueModel *model,

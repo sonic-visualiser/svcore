@@ -65,6 +65,8 @@ FFTMemoryCache::~FFTMemoryCache()
 void
 FFTMemoryCache::resize(size_t width, size_t height)
 {
+    Profiler profiler("FFTMemoryCache::resize");
+
 #ifdef DEBUG_FFT_MEMORY_CACHE
     std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
 #endif
@@ -182,9 +184,12 @@ FFTMemoryCache::reset()
 void
 FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 {
+    Profiler profiler("FFTMemoryCache::setColumnAt: from polar");
+
     setNormalizationFactor(x, factor);
 
     if (m_storageType == Rectangular) {
+        Profiler subprof("FFTMemoryCache::setColumnAt: polar to cart");
         for (size_t y = 0; y < m_height; ++y) {
             m_freal[x][y] = mags[y] * cosf(phases[y]);
             m_fimag[x][y] = mags[y] * sinf(phases[y]);
@@ -202,6 +207,8 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 void
 FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
 {
+    Profiler profiler("FFTMemoryCache::setColumnAt: from cart");
+
     float max = 0.0;
 
     switch (m_storageType) {
@@ -217,15 +224,17 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
 
     case Compact:
     case Polar:
+    {
+        Profiler subprof("FFTMemoryCache::setColumnAt: cart to polar");
         for (size_t y = 0; y < m_height; ++y) {
             float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
             float phase = atan2f(imags[y], reals[y]);
-            phase = princargf(phase);
             reals[y] = mag;
             imags[y] = phase;
             if (mag > max) max = mag;
         }
         break;
+    }
     };
 
     if (m_storageType == Rectangular) {

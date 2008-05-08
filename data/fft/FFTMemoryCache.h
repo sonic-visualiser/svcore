@@ -19,6 +19,7 @@
 #include "FFTCache.h"
 
 #include "base/ResizeableBitset.h"
+#include "base/Profiler.h"
 
 /**
  * In-memory FFT cache.  For this we want to cache magnitude with
@@ -42,12 +43,6 @@
 class FFTMemoryCache : public FFTCache
 {
 public:
-    enum StorageType {
-        Compact, // 16 bits normalized polar
-        Rectangular, // floating point real+imag
-        Polar // floating point mag+phase
-    };
-
     FFTMemoryCache(StorageType storageType); // of size zero, call resize() before using
     virtual ~FFTMemoryCache();
 	
@@ -59,6 +54,7 @@ public:
     
     virtual float getMagnitudeAt(size_t x, size_t y) const {
         if (m_storageType == Rectangular) {
+            Profiler profiler("FFTMemoryCache::getMagnitudeAt: cart to polar");
             return sqrt(m_freal[x][y] * m_freal[x][y] +
                         m_fimag[x][y] * m_fimag[x][y]);
         } else {
@@ -78,6 +74,7 @@ public:
     
     virtual float getPhaseAt(size_t x, size_t y) const {
         if (m_storageType == Rectangular) {
+            Profiler profiler("FFTMemoryCache::getValuesAt: cart to polar");
             return atan2f(m_fimag[x][y], m_freal[x][y]);
         } else if (m_storageType == Polar) {
             return m_fphase[x][y];
@@ -92,6 +89,7 @@ public:
             real = m_freal[x][y];
             imag = m_fimag[x][y];
         } else {
+            Profiler profiler("FFTMemoryCache::getValuesAt: polar to cart");
             float mag = getMagnitudeAt(x, y);
             float phase = getPhaseAt(x, y);
             real = mag * cosf(phase);
@@ -109,6 +107,7 @@ public:
 
     static size_t getCacheSize(size_t width, size_t height, StorageType type);
 
+    virtual StorageType getStorageType() { return m_storageType; }
     virtual Type getType() { return MemoryCache; }
 
 private:

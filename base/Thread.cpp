@@ -58,12 +58,14 @@ Thread::start()
 }
 
 MutexLocker::MutexLocker(QMutex *mutex, const char *name) :
+    m_profiler(name, false),
     m_printer(name),
     m_locker(mutex)
 {
 #ifdef DEBUG_MUTEX_LOCKER
     std::cerr << "... locked mutex " << mutex << std::endl;
 #endif
+    m_profiler.end();
 }
 
 MutexLocker::~MutexLocker()

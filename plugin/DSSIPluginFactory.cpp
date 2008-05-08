@@ -28,6 +28,8 @@
 
 #include <cstdlib>
 
+#include "base/Profiler.h"
+
 //!!!
 #include "plugin/plugins/SamplePlayer.h"
 
@@ -56,6 +58,8 @@ DSSIPluginFactory::~DSSIPluginFactory()
 void
 DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
 {
+    Profiler profiler("DSSIPluginFactory::enumeratePlugins");
+
     for (std::vector<QString>::iterator i = m_identifiers.begin();
 	 i != m_identifiers.end(); ++i) {
 
@@ -113,6 +117,8 @@ DSSIPluginFactory::instantiatePlugin(QString identifier,
 				     unsigned int blockSize,
 				     unsigned int channels)
 {
+    Profiler profiler("DSSIPluginFactory::instantiatePlugin");
+
     const DSSI_Descriptor *descriptor = getDSSIDescriptor(identifier);
 
     if (descriptor) {
@@ -277,6 +283,8 @@ DSSIPluginFactory::getLRDFPath(QString &baseUri)
 void
 DSSIPluginFactory::discoverPlugins(QString soname)
 {
+    Profiler profiler("DSSIPluginFactory::discoverPlugins");
+
     // Note that soname is expected to be a full path at this point,
     // of a file that is known to exist
 

@@ -49,6 +49,13 @@ public:
 
     virtual void suspend() { }
 
+    enum StorageType {
+        Compact, // 16 bits normalized polar
+        Rectangular, // floating point real+imag
+        Polar // floating point mag+phase
+    };
+    virtual StorageType getStorageType() = 0;
+
     enum Type { MemoryCache, FileCache };
     virtual Type getType() = 0;
 
