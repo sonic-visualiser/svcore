@@ -17,7 +17,7 @@
 
 #include "SparseTimeValueModel.h"
 
-#define DEBUG_ALIGNMENT_MODEL 1
+//#define DEBUG_ALIGNMENT_MODEL 1
 
 AlignmentModel::AlignmentModel(Model *reference,
                                Model *aligned,
