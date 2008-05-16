@@ -35,18 +35,65 @@ class RangeSummarisableTimeValueModel : public DenseTimeValueModel
 public:
     RangeSummarisableTimeValueModel() { }
 
-    struct Range
+#define RANGE_USE_SHORT 1
+#ifdef RANGE_USE_SHORT
+    class Range
     {
-        float min;
-        float max;
-        float absmean;
+    public:
         Range() : 
-            min(0.f), max(0.f), absmean(0.f) { }
+            m_min(0), m_max(0), m_absmean(0) { }
         Range(const Range &r) : 
-            min(r.min), max(r.max), absmean(r.absmean) { }
-        Range(float min_, float max_, float absmean_) :
-            min(min_), max(max_), absmean(absmean_) { }
+            m_min(r.m_min), m_max(r.m_max), m_absmean(r.m_absmean) { }
+        Range(float min, float max, float absmean)
+        { setMin(min); setMax(max); setAbsmean(absmean); }
+        
+        float min() const { return i2f(m_min); }
+        float max() const { return i2f(m_max); }
+        float absmean() const { return i2f(m_absmean); }
+
+        void setMin(float min) { m_min = f2i(min); }
+        void setMax(float max) { m_max = f2i(max); }
+        void setAbsmean(float absmean) { m_absmean = f2i(absmean); }
+
+    private:
+        static inline int16_t f2i(float f) {
+            if (f > 1.f) f = 1.f;
+            if (f < -1.f) f = -1.f;
+            return int16_t(f * 32767.f);
+        }
+        static inline float i2f(int16_t i) {
+            return float(i) / 32767.f;
+        }
+
+        int16_t m_min;
+        int16_t m_max;
+        int16_t m_absmean;
     };
+#else
+    class Range
+    {
+    public:
+        Range() : 
+            m_min(0.f), m_max(0.f), m_absmean(0.f) { }
+        Range(const Range &r) : 
+            m_min(r.m_min), m_max(r.m_max), m_absmean(r.m_absmean) { }
+        Range(float min, float max, float absmean) :
+            m_min(min), m_max(max), m_absmean(absmean) { }
+
+        float min() const { return m_min; }
+        float max() const { return m_max; }
+        float absmean() const { return m_absmean; }
+
+        void setMin(float min) { m_min = min; }
+        void setMax(float max) { m_max = max; }
+        void setAbsmean(float absmean) { m_absmean = absmean; }
+
+    private:
+        float m_min;
+        float m_max;
+        float m_absmean;
+    };
+#endif
 
     typedef std::vector<Range> RangeBlock;
 

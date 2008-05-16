@@ -502,9 +502,9 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	    if (index >= cache.size()) break;
             
             const Range &range = cache[index];
-            if (range.max > max || got == 0) max = range.max;
-            if (range.min < min || got == 0) min = range.min;
-            total += range.absmean;
+            if (range.max() > max || got == 0) max = range.max();
+            if (range.min() < min || got == 0) min = range.min();
+            total += range.absmean();
             
 	    ++i;
             ++got;
@@ -555,25 +555,25 @@ WaveFileModel::getSummary(size_t channel, size_t start, size_t count) const
         RangeBlock ranges;
         getSummaries(channel, blockStart, blockEnd - blockStart, ranges, blockSize);
         for (size_t i = 0; i < ranges.size(); ++i) {
-            if (first || ranges[i].min < range.min) range.min = ranges[i].min;
-            if (first || ranges[i].max > range.max) range.max = ranges[i].max;
-            if (first || ranges[i].absmean < range.absmean) range.absmean = ranges[i].absmean;
+            if (first || ranges[i].min() < range.min()) range.setMin(ranges[i].min());
+            if (first || ranges[i].max() > range.max()) range.setMax(ranges[i].max());
+            if (first || ranges[i].absmean() < range.absmean()) range.setAbsmean(ranges[i].absmean());
             first = false;
         }
     }
 
     if (blockStart > start) {
         Range startRange = getSummary(channel, start, blockStart - start);
-        range.min = std::min(range.min, startRange.min);
-        range.max = std::max(range.max, startRange.max);
-        range.absmean = std::min(range.absmean, startRange.absmean);
+        range.setMin(std::min(range.min(), startRange.min()));
+        range.setMax(std::max(range.max(), startRange.max()));
+        range.setAbsmean(std::min(range.absmean(), startRange.absmean()));
     }
 
     if (blockEnd < start + count) {
         Range endRange = getSummary(channel, blockEnd, start + count - blockEnd);
-        range.min = std::min(range.min, endRange.min);
-        range.max = std::max(range.max, endRange.max);
-        range.absmean = std::min(range.absmean, endRange.absmean);
+        range.setMin(std::min(range.min(), endRange.min()));
+        range.setMax(std::max(range.max(), endRange.max()));
+        range.setAbsmean(std::min(range.absmean(), endRange.absmean()));
     }
 
     return range;
@@ -663,6 +663,7 @@ WaveFileModel::RangeCacheFillThread::run()
     }
 
     Range *range = new Range[2 * channels];
+    float *means = new float[2 * channels];
     size_t count[2];
     count[0] = count[1] = 0;
 
@@ -698,13 +699,14 @@ WaveFileModel::RangeCacheFillThread::run()
                         
                         size_t rangeIndex = ch * 2 + ct;
                         
-                        if (sample > range[rangeIndex].max || count[ct] == 0) {
-                            range[rangeIndex].max = sample;
+                        if (sample > range[rangeIndex].max() || count[ct] == 0) {
+                            range[rangeIndex].setMax(sample);
                         }
-                        if (sample < range[rangeIndex].min || count[ct] == 0) {
-                            range[rangeIndex].min = sample;
+                        if (sample < range[rangeIndex].min() || count[ct] == 0) {
+                            range[rangeIndex].setMin(sample);
                         }
-                        range[rangeIndex].absmean += fabsf(sample);
+
+                        means[rangeIndex] += fabsf(sample);
                     }
                 }
                 
@@ -713,10 +715,11 @@ WaveFileModel::RangeCacheFillThread::run()
                 for (size_t ct = 0; ct < 2; ++ct) {
 
                     if (++count[ct] == cacheBlockSize[ct]) {
-
+                        
                         for (size_t ch = 0; ch < size_t(channels); ++ch) {
                             size_t rangeIndex = ch * 2 + ct;
-                            range[rangeIndex].absmean /= count[ct];
+                            means[rangeIndex] /= count[ct];
+                            range[rangeIndex].setAbsmean(means[rangeIndex]);
                             m_model.m_cache[ct].push_back(range[rangeIndex]);
                             range[rangeIndex] = Range();
                         }
@@ -753,7 +756,8 @@ WaveFileModel::RangeCacheFillThread::run()
 
                 for (size_t ch = 0; ch < size_t(channels); ++ch) {
                     size_t rangeIndex = ch * 2 + ct;
-                    range[rangeIndex].absmean /= count[ct];
+                    means[rangeIndex] /= count[ct];
+                    range[rangeIndex].setAbsmean(means[rangeIndex]);
                     m_model.m_cache[ct].push_back(range[rangeIndex]);
                     range[rangeIndex] = Range();
                 }
@@ -766,6 +770,7 @@ WaveFileModel::RangeCacheFillThread::run()
         }
     }
     
+    delete[] means;
     delete[] range;
 
     m_fillExtent = m_frameCount;
