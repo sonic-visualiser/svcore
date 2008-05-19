@@ -28,6 +28,9 @@ long StorageAdviser::m_discPlanned = 0;
 long StorageAdviser::m_memoryPlanned = 0;
 
 StorageAdviser::Recommendation
+StorageAdviser::m_baseRecommendation = StorageAdviser::NoRecommendation;
+
+StorageAdviser::Recommendation
 StorageAdviser::recommend(Criteria criteria,
 			  int minimumSize,
 			  int maximumSize)
@@ -37,6 +40,10 @@ StorageAdviser::recommend(Criteria criteria,
               << ", minimumSize " << minimumSize
               << ", maximumSize " << maximumSize << std::endl;
 #endif
+
+    if (m_baseRecommendation != NoRecommendation) {
+        return m_baseRecommendation; // for now
+    }
 
     QString path = TempDirectory::getInstance()->getPath();
     int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
@@ -192,5 +199,11 @@ StorageAdviser::notifyDoneAllocation(AllocationArea area, int size)
     }
 //    std::cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
 //              << m_discPlanned << std::endl;
+}
+
+void
+StorageAdviser::setFixedRecommendation(Recommendation recommendation)
+{
+    m_baseRecommendation = recommendation;
 }
 

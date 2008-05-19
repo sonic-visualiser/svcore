@@ -78,9 +78,17 @@ public:
      */
     static void notifyDoneAllocation(AllocationArea area, int size);
 
+    /**
+     * Force all subsequent recommendations to use the (perhaps
+     * partial) specification given here.  If NoRecommendation given
+     * here, this will reset to the default free behaviour.
+     */
+    static void setFixedRecommendation(Recommendation recommendation);
+
 private:
     static long m_discPlanned;
     static long m_memoryPlanned;
+    static Recommendation m_baseRecommendation;
 };
 
 #endif

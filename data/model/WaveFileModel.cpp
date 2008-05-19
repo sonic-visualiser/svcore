@@ -632,6 +632,7 @@ WaveFileModel::cacheFilled()
         emit modelChanged(m_lastFillExtent, getEndFrame());
     }
     emit modelChanged();
+    emit ready();
 #ifdef DEBUG_WAVE_FILE_MODEL
     cerr << "WaveFileModel::cacheFilled" << endl;
 #endif
@@ -646,7 +647,7 @@ WaveFileModel::RangeCacheFillThread::run()
                                         sqrt(2) + 0.01));
     
     size_t frame = 0;
-    size_t readBlockSize = 16384;
+    int readBlockSize = 16384;
     SampleBlock block;
 
     if (!m_model.isOK()) return;
@@ -666,6 +667,9 @@ WaveFileModel::RangeCacheFillThread::run()
     float *means = new float[2 * channels];
     size_t count[2];
     count[0] = count[1] = 0;
+    for (int i = 0; i < 2 * channels; ++i) {
+        means[i] = 0.f;
+    }
 
     bool first = true;
 
@@ -686,18 +690,18 @@ WaveFileModel::RangeCacheFillThread::run()
 
 //            std::cerr << "block is " << block.size() << std::endl;
 
-            for (size_t i = 0; i < readBlockSize; ++i) {
+            for (int i = 0; i < readBlockSize; ++i) {
 		
                 if (channels * i + channels > block.size()) break;
 
-                for (size_t ch = 0; ch < size_t(channels); ++ch) {
+                for (int ch = 0; ch < channels; ++ch) {
 
-                    size_t index = channels * i + ch;
+                    int index = channels * i + ch;
                     float sample = block[index];
                     
-                    for (size_t ct = 0; ct < 2; ++ct) { // cache type
+                    for (int ct = 0; ct < 2; ++ct) { // cache type
                         
-                        size_t rangeIndex = ch * 2 + ct;
+                        int rangeIndex = ch * 2 + ct;
                         
                         if (sample > range[rangeIndex].max() || count[ct] == 0) {
                             range[rangeIndex].setMax(sample);
@@ -722,6 +726,7 @@ WaveFileModel::RangeCacheFillThread::run()
                             range[rangeIndex].setAbsmean(means[rangeIndex]);
                             m_model.m_cache[ct].push_back(range[rangeIndex]);
                             range[rangeIndex] = Range();
+                            means[rangeIndex] = 0.f;
                         }
 
                         count[ct] = 0;
@@ -760,6 +765,7 @@ WaveFileModel::RangeCacheFillThread::run()
                     range[rangeIndex].setAbsmean(means[rangeIndex]);
                     m_model.m_cache[ct].push_back(range[rangeIndex]);
                     range[rangeIndex] = Range();
+                    means[rangeIndex] = 0.f;
                 }
 
                 count[ct] = 0;

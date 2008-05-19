@@ -666,6 +666,8 @@ FFTDataServer::resume()
             delete m_fillThread;
             m_fillThread = 0;
             deleteProcessingData();
+        } else if (!m_fillThread->isRunning()) {
+            m_fillThread->start();
         } else {
             m_condition.wakeAll();
         }
@@ -1130,6 +1132,7 @@ FFTDataServer::fillColumn(size_t x, bool lockHeld)
         std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
                   << "x > width (" << x << " > " << m_width << ")"
                   << std::endl;
+//        abort(); //!!!
         return;
     }
 
@@ -1315,10 +1318,17 @@ FFTDataServer::generateFileBasename(const DenseTimeValueModel *model,
 void
 FFTDataServer::FillThread::run()
 {
+#ifdef DEBUG_FFT_SERVER_FILL
+    std::cerr << "FFTDataServer::FillThread::run()" << std::endl;
+#endif
+    
     m_extent = 0;
     m_completion = 0;
     
     while (!m_server.m_model->isReady() && !m_server.m_exiting) {
+#ifdef DEBUG_FFT_SERVER_FILL
+        std::cerr << "FFTDataServer::FillThread::run(): waiting for model " << m_server.m_model << " to be ready" << std::endl;
+#endif
         sleep(1);
     }
     if (m_server.m_exiting) return;
