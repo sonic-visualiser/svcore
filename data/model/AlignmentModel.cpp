@@ -108,7 +108,7 @@ AlignmentModel::clone() const
 bool
 AlignmentModel::isReady(int *completion) const
 {
-    if (!m_pathBegun) {
+    if (!m_pathBegun && m_rawPath) {
         if (completion) *completion = 0;
         return false;
     }

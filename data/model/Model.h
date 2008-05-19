@@ -227,6 +227,12 @@ signals:
     void completionChanged();
 
     /**
+     * Emitted when internal processing is complete (i.e. when
+     * isReady() would return true, with completion at 100).
+     */
+    void ready();
+
+    /**
      * Emitted when the completion percentage changes for the
      * calculation of this model's alignment model.
      */
