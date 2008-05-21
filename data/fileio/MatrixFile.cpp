@@ -591,13 +591,13 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
 
                 if (m_cache.data) {
                     if (m_spareData) {
-                        std::cerr << this << ": Freeing spare data" << std::endl;
+//                        std::cerr << this << ": Freeing spare data" << std::endl;
                         free(m_spareData);
                     }
-                    std::cerr << this << ": Moving old cache data to spare" << std::endl;
+//                    std::cerr << this << ": Moving old cache data to spare" << std::endl;
                     m_spareData = m_cache.data;
                 }
-                std::cerr << this << ": Moving request data to cache" << std::endl;
+//                std::cerr << this << ": Moving request data to cache" << std::endl;
                 m_cache.data = request.data;
 
                 m_readThread->done(m_requestToken);
@@ -621,10 +621,10 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
 #endif
 
         if (m_spareData) {
-            std::cerr << this << ": Freeing spare data" << std::endl;
+//            std::cerr << this << ": Freeing spare data" << std::endl;
             free(m_spareData);
         }
-        std::cerr << this << ": Moving request data to spare" << std::endl;
+//        std::cerr << this << ": Moving request data to spare" << std::endl;
         m_spareData = request.data;
         m_readThread->done(m_requestToken);
 
@@ -641,7 +641,7 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
     request.start = m_headerSize + rx * m_height * m_cellSize;
     request.size = rw * m_height * m_cellSize;
 
-    std::cerr << this << ": Moving spare data to request, and resizing to " << rw * m_height * m_cellSize << std::endl;
+//    std::cerr << this << ": Moving spare data to request, and resizing to " << rw * m_height * m_cellSize << std::endl;
 
     request.data = (char *)realloc(m_spareData, rw * m_height * m_cellSize);
     MUNLOCK(request.data, rw * m_height * m_cellSize);
