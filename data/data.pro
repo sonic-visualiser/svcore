@@ -52,6 +52,7 @@ HEADERS += fft/FFTapi.h \
            model/ImageModel.h \
            model/Labeller.h \
            model/Model.h \
+           model/ModelDataTableModel.h \
            model/NoteModel.h \
            model/PathModel.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
@@ -97,6 +98,7 @@ SOURCES += fft/FFTapi.cpp \
            model/EditableDenseThreeDimensionalModel.cpp \
            model/FFTModel.cpp \
            model/Model.cpp \
+           model/ModelDataTableModel.cpp \
            model/NoteModel.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
