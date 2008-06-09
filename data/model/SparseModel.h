@@ -218,9 +218,9 @@ public:
 	/**
 	 * If any points have been added or deleted, return this
 	 * command (so the caller can add it to the command history).
-	 * Otherwise delete the command.
+	 * Otherwise delete the command and return NULL.
 	 */
-	virtual Command *finish();
+	virtual EditCommand *finish();
 
     protected:
 	virtual void addCommand(Command *command, bool executeFirst);
@@ -605,7 +605,7 @@ SparseModel<PointType>::EditCommand::deletePoint(const PointType &point)
 }
 
 template <typename PointType>
-Command *
+typename SparseModel<PointType>::EditCommand *
 SparseModel<PointType>::EditCommand::finish()
 {
     if (!m_commands.empty()) {

@@ -20,6 +20,8 @@
 
 #include "Model.h"
 
+class Command;
+
 class ModelDataTableModel : public QAbstractItemModel
 {
     Q_OBJECT
@@ -45,7 +47,13 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
+    QModelIndex getModelIndexForFrame(size_t frame) const;
+
     static bool canHandleModelType(Model *);
+
+signals:
+    void frameSelected(size_t);
+    void executeCommand(Command *);
 
 protected slots:
     void modelChanged();
@@ -61,7 +69,10 @@ protected:
 
     void rebuildRowVector();
     template <typename PointType> void rebuildRowVectorSparse();
-    template <typename PointType> QVariant dataSparse(int row, int col) const;
+    template <typename PointType> QVariant dataSparse(int row, int col,
+                                                      bool withUnit) const;
+    template <typename PointType> bool setDataSparse(int row, int col,
+                                                     QVariant value);
 };
 
 #endif
