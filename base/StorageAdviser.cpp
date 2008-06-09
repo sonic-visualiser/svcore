@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-//#define DEBUG_STORAGE_ADVISER 1
+#define DEBUG_STORAGE_ADVISER 1
 
 long StorageAdviser::m_discPlanned = 0;
 long StorageAdviser::m_memoryPlanned = 0;
@@ -85,12 +85,12 @@ StorageAdviser::recommend(Criteria criteria,
     int maxmb = maximumSize / 1024 + 1;
 
     if (memoryFree == -1) memoryStatus = Unknown;
+    else if (memoryFree < memoryTotal / 3) memoryStatus = Insufficient;
     else if (minmb > (memoryFree * 3) / 4) memoryStatus = Insufficient;
     else if (maxmb > (memoryFree * 3) / 4) memoryStatus = Marginal;
     else if (minmb > (memoryFree / 3)) memoryStatus = Marginal;
     else if (memoryTotal == -1 ||
              minmb > (memoryTotal / 10)) memoryStatus = Marginal;
-    else if (memoryFree < memoryTotal / 4) memoryStatus = Marginal;
     else memoryStatus = Sufficient;
 
     if (discFree == -1) discStatus = Unknown;
