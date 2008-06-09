@@ -164,7 +164,9 @@ RealTimeEffectModelTransformer::run()
         contextDuration = endFrame - contextStart;
     }
 
-    wwfm->setStartFrame(contextStart);
+    if (wwfm) {
+        wwfm->setStartFrame(contextStart);
+    }
 
     long blockFrame = contextStart;
 
