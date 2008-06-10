@@ -19,6 +19,8 @@
 #include "SparseOneDimensionalModel.h"
 #include "SparseModel.h"
 
+#include <algorithm>
+
 ModelDataTableModel::ModelDataTableModel(Model *m) :
     m_model(m)
 {
@@ -99,7 +101,7 @@ ModelDataTableModel::dataSparse(int row, int col, bool withUnit) const
 
         case 1:
             std::cerr << "Returning frame " << frame << std::endl;
-            return QVariant(frame); //!!! RealTime
+            return QVariant(int(frame));
 
         case 2:
             if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
@@ -168,7 +170,7 @@ ModelDataTableModel::setDataSparse(int row, int col, QVariant value)
         PointListType;
     typedef typename ModelType::EditCommand EditCommandType;
 
-    ModelType *sm = dynamic_cast<const ModelType *>(m_model);
+    ModelType *sm = dynamic_cast<ModelType *>(m_model);
     const PointListType &points = sm->getPoints(frame);
 
     // it is possible to have more than one point at the same frame
