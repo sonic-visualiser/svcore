@@ -122,7 +122,6 @@ RealTimeEffectModelTransformer::run()
     if (!input) return;
 
     while (!input->isReady()) {
-        if (dynamic_cast<WaveFileModel *>(input)) break; // no need to wait
         std::cerr << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << std::endl;
         sleep(1);
     }

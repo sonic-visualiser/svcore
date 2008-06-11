@@ -297,13 +297,6 @@ FeatureExtractionModelTransformer::run()
     if (!m_output) return;
 
     while (!input->isReady()) {
-/*
-        if (dynamic_cast<WaveFileModel *>(input)) {
-            std::cerr << "FeatureExtractionModelTransformer::run: Model is not ready, but it's not a WaveFileModel (it's a " << typeid(input).name() << "), so that's OK" << std::endl;
-            sleep(2);
-            break; // no need to wait
-        }
-*/
         std::cerr << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << std::endl;
         sleep(1);
     }
