@@ -48,6 +48,7 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
     QModelIndex getModelIndexForFrame(size_t frame) const;
+    size_t getFrameForModelIndex(const QModelIndex &) const;
 
     static bool canHandleModelType(Model *);
 
