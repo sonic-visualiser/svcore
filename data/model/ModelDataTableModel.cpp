@@ -296,6 +296,16 @@ ModelDataTableModel::getModelIndexForFrame(size_t frame) const
     return createIndex(dist, 0, 0);
 }
 
+size_t 
+ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
+{
+    int row = index.row();
+    if (m_rows.empty()) return 0;
+    if (row < 0) row == 0;
+    if (row > m_rows.size()-1) row = m_rows.size()-1;
+    return m_rows[row];
+}
+
 void
 ModelDataTableModel::modelChanged()
 {
