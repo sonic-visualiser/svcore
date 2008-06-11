@@ -22,7 +22,9 @@
 #include <iostream>
 
 ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
-    m_model(m)
+    m_model(m),
+    m_sortColumn(0),
+    m_sortOrdering(Qt::AscendingOrder)
 {
     Model *baseModel = dynamic_cast<Model *>(m);
 
@@ -46,9 +48,12 @@ bool
 ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if (!index.isValid()) return false;
-    Command *command = m_model->setData(getUnsorted(index.row()),
-                                        index.column(), value, role);
+    std::cerr << "ModelDataTableModel::setData(" << index.row() << ", " << index.column() << ", " << value.toString().toStdString() << ", " << role << ")" << std::endl;
+    Command *command = m_model->getSetDataCommand(getUnsorted(index.row()),
+                                                  index.column(),
+                                                  value, role);
     if (command) {
+        std::cerr << "emitting executeCommand" << std::endl;
         emit executeCommand(command);
         return true;
     } else {
@@ -177,6 +182,6 @@ ModelDataTableModel::getUnsorted(int row)
 void
 ModelDataTableModel::resort()
 {
-    //...
+    
 }
 

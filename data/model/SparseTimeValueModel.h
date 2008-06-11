@@ -138,11 +138,16 @@ public:
         }
     }
 
-    virtual Command *setData(int row, int column, QVariant value, int role) 
+    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role) const
     {
+        std::cerr << "SparseTimeValueModel::setData: row = " << row << ", column = " << column << ", role = " << role << std::endl;
+
         if (role != Qt::EditRole) return false;
         PointListIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return false;
+        if (i == m_points.end()) {
+            std::cerr << "Failed to find point iterator for row " << row << std::endl;
+            return false;
+        }
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
 
         Point point(*i);
