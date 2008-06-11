@@ -95,7 +95,8 @@ public:
         return "<plugin program=\"tap\"/>";
     }
 
-    int getIndexOf(const Point &point) {
+    int getIndexOf(const Point &point)
+    {
 	// slow
 	int i = 0;
 	Point::Comparator comparator;
@@ -107,6 +108,47 @@ public:
     }
 
     QString getTypeName() const { return tr("Sparse 1-D"); }
+
+    /**
+     * TabularModel methods.  
+     */
+    
+    virtual int getColumnCount() const
+    {
+        return 3;
+    }
+
+    virtual QString getHeading(int column) const
+    {
+        switch (column) {
+        case 0: return tr("Time");
+        case 1: return tr("Frame");
+        case 2: return tr("Label");
+        default: return tr("Unknown");
+        }
+    }
+
+    virtual QVariant getData(int row, int column, int role) const
+    {
+        if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return QVariant();
+
+        switch (column) {
+        case 0: {
+            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
+            return QVariant(rt.toText().c_str());
+        }
+        case 1: return QVariant(int(i->frame));
+        case 2: return QVariant(i->label);
+        default: return QVariant();
+        }
+    }
+
+    virtual bool isColumnTimeValue(int column) const
+    {
+        return (column < 2); 
+    }
 };
 
 #endif

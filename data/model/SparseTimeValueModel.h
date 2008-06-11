@@ -97,6 +97,74 @@ public:
     }
 
     QString getTypeName() const { return tr("Sparse Time-Value"); }
+
+    /**
+     * TabularModel methods.  
+     */
+    
+    virtual int getColumnCount() const
+    {
+        return 4;
+    }
+
+    virtual QString getHeading(int column) const
+    {
+        switch (column) {
+        case 0: return tr("Time");
+        case 1: return tr("Frame");
+        case 2: return tr("Value");
+        case 3: return tr("Label");
+        default: return tr("Unknown");
+        }
+    }
+
+    virtual QVariant getData(int row, int column, int role) const
+    {
+        if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return QVariant();
+
+        switch (column) {
+        case 0: {
+            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
+            return rt.toText().c_str();
+        }
+        case 1: return int(i->frame);
+        case 2:
+            if (role == Qt::EditRole) return i->value;
+            else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
+        case 3: return i->label;
+        default: return QVariant();
+        }
+    }
+
+    virtual Command *setData(int row, int column, QVariant value, int role) 
+    {
+        if (role != Qt::EditRole) return false;
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return false;
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+
+        Point point(*i);
+        command->deletePoint(point);
+
+        switch (column) {
+        case 0: break; 
+        case 1: break;
+        case 2: point.value = value.toDouble();
+            std::cerr << "setting value of point at " << point.frame << " to " << point.value << std::endl;
+            break;
+        case 3: point.label = value.toString(); break;
+        }
+
+        command->addPoint(point);
+        return command->finish();
+    }
+
+    virtual bool isColumnTimeValue(int column) const
+    {
+        return (column < 2); 
+    }
 };
 
 

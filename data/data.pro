@@ -62,6 +62,7 @@ HEADERS += fft/FFTapi.h \
            model/SparseOneDimensionalModel.h \
            model/SparseTimeValueModel.h \
            model/SparseValueModel.h \
+           model/TabularModel.h \
            model/TextModel.h \
            model/WaveFileModel.h \
            model/WritableWaveFileModel.h \

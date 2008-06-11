@@ -15,19 +15,20 @@
 
 #include "ModelDataTableModel.h"
 
-#include "SparseTimeValueModel.h"
-#include "SparseOneDimensionalModel.h"
-#include "SparseModel.h"
+#include "TabularModel.h"
+#include "Model.h"
 
 #include <algorithm>
+#include <iostream>
 
-ModelDataTableModel::ModelDataTableModel(Model *m) :
+ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     m_model(m)
 {
-    connect(m, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-    connect(m, SIGNAL(modelChanged(size_t, size_t)),
+    Model *baseModel = dynamic_cast<Model *>(m);
+
+    connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
+    connect(baseModel, SIGNAL(modelChanged(size_t, size_t)),
             this, SLOT(modelChanged(size_t, size_t)));
-    rebuildRowVector();
 }
 
 ModelDataTableModel::~ModelDataTableModel()
@@ -37,191 +38,22 @@ ModelDataTableModel::~ModelDataTableModel()
 QVariant
 ModelDataTableModel::data(const QModelIndex &index, int role) const
 {
-    if (role != Qt::DisplayRole && role != Qt::EditRole) {
-        return QVariant();
-    }
-
-    bool withUnit = (role == Qt::DisplayRole);
-
     if (!index.isValid()) return QVariant();
-
-    int row = index.row(), col = index.column();
-
-    if (row < 0 || row >= m_rows.size()) return QVariant();
-
-    if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
-        return dataSparse<SparseOneDimensionalModel::Point>(row, col, withUnit);
-    } else if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-        return dataSparse<SparseTimeValueModel::Point>(row, col, withUnit);
-    }
-
-    return QVariant();
-}
-
-template <typename PointType>
-QVariant
-ModelDataTableModel::dataSparse(int row, int col, bool withUnit) const
-{
-    size_t frame = m_rows[row];
-    
-    // This is just garbage.  This would be a reasonable enough way to
-    // handle this in a dynamically typed language but it's hopeless
-    // in C++.  The design is simply wrong.  We need virtual helper
-    // methods in the model itself.
-
-    typedef SparseModel<PointType> ModelType;
-    typedef std::multiset<PointType, typename PointType::OrderComparator> 
-        PointListType;
-
-    const ModelType *sm = dynamic_cast<const ModelType *>(m_model);
-    const PointListType &points = sm->getPoints(frame);
-
-    // it is possible to have more than one point at the same frame
-
-    int indexAtFrame = 0;
-    int ri = row;
-    while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
-
-    for (typename PointListType::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-
-        const PointType *point = &(*i);
-        if (point->frame < frame) continue;
-        if (point->frame > frame) return QVariant();
-        if (indexAtFrame > 0) { --indexAtFrame; continue; }
-
-        switch (col) {
-
-        case 0:
-        {
-            RealTime rt = RealTime::frame2RealTime(frame, m_model->getSampleRate());
-            std::cerr << "Returning time " << rt << std::endl;
-            return QVariant(rt.toText().c_str());
-        }
-
-        case 1:
-            std::cerr << "Returning frame " << frame << std::endl;
-            return QVariant(int(frame));
-
-        case 2:
-            if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
-                const SparseOneDimensionalModel::Point *cp = 
-                    reinterpret_cast<const SparseOneDimensionalModel::Point *>(point);
-                std::cerr << "Returning label \"" << cp->label.toStdString() << "\"" << std::endl;
-                return QVariant(cp->label);
-            } else if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-                const SparseTimeValueModel::Point *cp = 
-                    reinterpret_cast<const SparseTimeValueModel::Point *>(point);
-                std::cerr << "Returning value " << cp->value << std::endl;
-                if (withUnit) {
-                    return QVariant(QString("%1 %2").arg(cp->value)
-                                    .arg(dynamic_cast<const SparseTimeValueModel *>(m_model)->getScaleUnits()));
-                } else {
-                    return cp->value;
-                }
-            } else return QVariant();
-
-        case 3: 
-            if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
-                return QVariant();
-            } else if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-                return reinterpret_cast<const SparseTimeValueModel::Point *>(point)->label;
-            } else return QVariant();
-        }
-    }
-
-    return QVariant();
+    return m_model->getData(getUnsorted(index.row()), index.column(), role);
 }
 
 bool
 ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole) {
-        std::cerr << "setData: ignoring role " << role << std::endl;
+    if (!index.isValid()) return false;
+    Command *command = m_model->setData(getUnsorted(index.row()),
+                                        index.column(), value, role);
+    if (command) {
+        emit executeCommand(command);
+        return true;
+    } else {
         return false;
     }
-
-    //!!! see comment about disgustuality of this whole process, in
-    //dataSparse above
-
-    if (!index.isValid()) return false;
-
-    int row = index.row(), col = index.column();
-
-    if (row < 0 || row >= m_rows.size()) return false;
-
-    if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
-        return setDataSparse<SparseOneDimensionalModel::Point>(row, col, value);
-    } else if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-        return setDataSparse<SparseTimeValueModel::Point>(row, col, value);
-    }
-
-    return false;
-}
-
-template <typename PointType>
-bool
-ModelDataTableModel::setDataSparse(int row, int col, QVariant value)
-{
-    size_t frame = m_rows[row];
-    
-    typedef SparseModel<PointType> ModelType;
-    typedef std::multiset<PointType, typename PointType::OrderComparator> 
-        PointListType;
-    typedef typename ModelType::EditCommand EditCommandType;
-
-    ModelType *sm = dynamic_cast<ModelType *>(m_model);
-    const PointListType &points = sm->getPoints(frame);
-
-    // it is possible to have more than one point at the same frame
-
-    int indexAtFrame = 0;
-    int ri = row;
-    while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
-
-    for (typename PointListType::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-
-        const PointType *point = &(*i);
-        if (point->frame < frame) continue;
-        if (point->frame > frame) return false;
-        if (indexAtFrame > 0) { --indexAtFrame; continue; }
-
-        switch (col) {
-
-        case 0:
-        {
-/*
-            RealTime rt = RealTime::frame2RealTime(frame, m_model->getSampleRate());
-            std::cerr << "Returning time " << rt << std::endl;
-            return QVariant(rt.toText().c_str());
-*/
-        }
-
-        case 1:
-        {
-            EditCommandType *command = 
-                new EditCommandType(sm, tr("Edit point time"));
-            PointType newPoint(*point);
-            newPoint.frame = value.toInt(); //!!! check validity
-            command->deletePoint(*point);
-            command->addPoint(newPoint);
-            command = command->finish();
-            if (command) emit executeCommand(command);
-            return true;
-        }
-//            std::cerr << "Returning frame " << frame << std::endl;
-//            return QVariant(frame); //!!! RealTime
-
-        case 2:
-            break;
-
-        case 3: 
-            break;
-        }
-    }
-
-    return false;
 }
 
 Qt::ItemFlags
@@ -236,19 +68,7 @@ QVariant
 ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        if (section == 0) return QVariant(tr("Time"));
-        if (section == 1) return QVariant(tr("Frame"));
-        else if (section == 2) {
-            if (dynamic_cast<const SparseOneDimensionalModel *>(m_model)) {
-                return QVariant(tr("Label"));
-            } else if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-                return QVariant(tr("Value"));
-            }
-        } else if (section == 3) {
-            if (dynamic_cast<const SparseTimeValueModel *>(m_model)) {
-                return QVariant(tr("Label"));
-            }
-        }
+        return m_model->getHeading(section);
     }
     return QVariant();
 }
@@ -269,98 +89,94 @@ int
 ModelDataTableModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) return 0;
-    return m_rows.size();
+    return m_model->getRowCount();
 }
 
 int
 ModelDataTableModel::columnCount(const QModelIndex &parent) const
 {
     if (parent.isValid()) return 0;
-    if (!canHandleModelType(m_model)) return 0;
-
-    if (dynamic_cast<SparseOneDimensionalModel *>(m_model)) {
-        return 3;
-    } else if (dynamic_cast<SparseTimeValueModel *>(m_model)) {
-        return 4;
-    }
-
-    return 2;
+    return m_model->getColumnCount();
 }
 
 QModelIndex 
 ModelDataTableModel::getModelIndexForFrame(size_t frame) const
 {
-    std::vector<size_t>::const_iterator i =
-        std::lower_bound(m_rows.begin(), m_rows.end(), frame);
-    size_t dist = std::distance(m_rows.begin(), i);
-    return createIndex(dist, 0, 0);
+    int row = m_model->getRowForFrame(frame);
+    return createIndex(getSorted(row), 0, 0);
 }
 
 size_t 
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
-    int row = index.row();
-    if (m_rows.empty()) return 0;
-    if (row < 0) row == 0;
-    if (row > m_rows.size()-1) row = m_rows.size()-1;
-    return m_rows[row];
+    return m_model->getFrameForRow(getUnsorted(index.row()));
+}
+
+void
+ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
+{
+    std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
+              << ")" << std::endl;
+    m_sortColumn = column;
+    m_sortOrdering = sortOrder;
+    m_sort.clear();
+    emit layoutChanged();
 }
 
 void
 ModelDataTableModel::modelChanged()
 {
-    rebuildRowVector();
+    m_sort.clear();
     emit layoutChanged();
 }
 
 void 
 ModelDataTableModel::modelChanged(size_t f0, size_t f1)
 {
-    std::cerr << "ModelDataTableModel::modelChanged(" << f0 << "," << f1 << ")" << std::endl;
-    //!!! highly inefficient
-    rebuildRowVector();
+    //!!! inefficient
+    m_sort.clear();
     emit layoutChanged();
 }
 
-void
-ModelDataTableModel::rebuildRowVector()
+int
+ModelDataTableModel::getSorted(int row)
 {
-    if (!canHandleModelType(m_model)) return;
-
-    m_rows.clear();
-
-    if (dynamic_cast<SparseOneDimensionalModel *>(m_model)) {
-        rebuildRowVectorSparse<SparseOneDimensionalModel::Point>();
-    } else if (dynamic_cast<SparseTimeValueModel *>(m_model)) {
-        rebuildRowVectorSparse<SparseTimeValueModel::Point>();
+    if (m_model->isColumnTimeValue(m_sortColumn)) {
+        if (m_sortOrdering == Qt::AscendingOrder) {
+            return row;
+        } else {
+            return rowCount() - row - 1;
+        }
     }
-}
 
-template <typename PointType>
-void
-ModelDataTableModel::rebuildRowVectorSparse()
-{
-    // gah
-
-    typedef SparseModel<PointType> ModelType;
-    typedef std::multiset<PointType, typename PointType::OrderComparator> 
-        PointListType;
-
-    ModelType *sm = dynamic_cast<ModelType *>(m_model);
-    const PointListType &points = sm->getPoints();
-
-    for (typename PointListType::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-        m_rows.push_back(i->frame);
+    if (m_sort.empty()) {
+        resort();
     }
+    if (row < 0 || row >= m_sort.size()) return 0;
+    return m_sort[row];
 }
 
-bool
-ModelDataTableModel::canHandleModelType(Model *m)
+int
+ModelDataTableModel::getUnsorted(int row)
 {
-    if (dynamic_cast<SparseOneDimensionalModel *>(m)) return true;
-    if (dynamic_cast<SparseTimeValueModel *>(m)) return true;
-    return false;
+    if (m_model->isColumnTimeValue(m_sortColumn)) {
+        if (m_sortOrdering == Qt::AscendingOrder) {
+            return row;
+        } else {
+            return rowCount() - row - 1;
+        }
+    }
+//!!! need the reverse of this
+    if (m_sort.empty()) {
+        resort();
+    }
+    if (row < 0 || row >= m_sort.size()) return 0;
+    return m_sort[row];
 }
 
+void
+ModelDataTableModel::resort()
+{
+    //...
+}
 
