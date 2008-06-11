@@ -46,8 +46,7 @@ public:
     virtual bool isColumnTimeValue(int col) const = 0;
 
     virtual bool isEditable() const { return false; }
-    virtual Command *setData(int row, int column, const QVariant &, int role)
-    { return 0; }
+    virtual Command *getSetDataCommand(int row, int column, const QVariant &, int role) const { return 0; }
 };
 
 #endif
