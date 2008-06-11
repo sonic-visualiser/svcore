@@ -18,8 +18,9 @@
 
 #include <QAbstractItemModel>
 
-#include "Model.h"
+#include <vector>
 
+class TabularModel;
 class Command;
 
 class ModelDataTableModel : public QAbstractItemModel
@@ -27,7 +28,7 @@ class ModelDataTableModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    ModelDataTableModel(Model *m);
+    ModelDataTableModel(TabularModel *m);
     virtual ~ModelDataTableModel();
 
     QVariant data(const QModelIndex &index, int role) const;
@@ -50,7 +51,7 @@ public:
     QModelIndex getModelIndexForFrame(size_t frame) const;
     size_t getFrameForModelIndex(const QModelIndex &) const;
 
-    static bool canHandleModelType(Model *);
+    void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 
 signals:
     void frameSelected(size_t);
@@ -61,19 +62,14 @@ protected slots:
     void modelChanged(size_t, size_t);
 
 protected:
-    // We need to have some sort of map between row and time in sample
-    // frames.  I guess this will do for now.
-
-    std::vector<size_t> m_rows; // contains sample frame
-
-    Model *m_model;
-
-    void rebuildRowVector();
-    template <typename PointType> void rebuildRowVectorSparse();
-    template <typename PointType> QVariant dataSparse(int row, int col,
-                                                      bool withUnit) const;
-    template <typename PointType> bool setDataSparse(int row, int col,
-                                                     QVariant value);
+    TabularModel *m_model;
+    int m_sortColumn;
+    Qt::SortOrder m_sortOrdering;
+    typedef std::vector<int> RowList;
+    RowList m_sort;
+    int getSorted(int row);
+    int getUnsorted(int row);
+    void resort();
 };
 
 #endif

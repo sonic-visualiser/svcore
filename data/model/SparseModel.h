@@ -17,14 +17,17 @@
 #define _SPARSE_MODEL_H_
 
 #include "Model.h"
+#include "TabularModel.h"
 #include "base/Command.h"
 
 #include <iostream>
 
 #include <set>
+#include <vector>
+#include <algorithm>
+
 #include <QMutex>
 #include <QTextStream>
-
 
 /**
  * Model containing sparse data (points with some properties).  The
@@ -32,7 +35,8 @@
  */
 
 template <typename PointType>
-class SparseModel : public Model
+class SparseModel : public Model,
+                    public TabularModel
 {
 public:
     SparseModel(size_t sampleRate, size_t resolution,
@@ -258,8 +262,38 @@ public:
 	PointType m_newPoint;
     };
 
-    
+    /**
+     * TabularModel methods.  
+     */
 
+    virtual int getRowCount() const
+    {
+        return m_points.size();
+    }
+
+    virtual long getFrameForRow(int row) const
+    {
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return 0;
+        return i->frame;
+    }
+
+    virtual int getRowForFrame(long frame) const
+    {
+        if (m_rows.empty()) rebuildRowVector();
+        std::vector<long>::iterator i =
+            std::lower_bound(m_rows.begin(), m_rows.end(), frame);
+        return std::distance(m_rows.begin(), i);
+    }
+
+    //!!! just for now
+    virtual int getColumnCount() const { return 1; }
+    virtual QString getHeading(int column) const { return tr("Unknown"); }
+    virtual QVariant getData(int row, int column, int role) const {
+        return QVariant();
+    }
+    virtual bool isColumnTimeValue(int column) const { return true; }
+    
 protected:
     size_t m_sampleRate;
     size_t m_resolution;
@@ -272,6 +306,47 @@ protected:
     size_t m_pointCount;
     mutable QMutex m_mutex;
     int m_completion;
+
+    void getPointIterators(long frame,
+                           PointListIterator &startItr,
+                           PointListIterator &endItr) const;
+
+    // This is only used if the model is called on to act in
+    // TabularModel mode
+    mutable std::vector<long> m_rows; // map from row number to frame
+    void rebuildRowVector() const
+    {
+        m_rows.clear();
+        for (PointListIterator i = m_points.begin(); i != m_points.end(); ++i) {
+            m_rows.push_back(i->frame);
+        }
+    }
+
+    PointListIterator getPointListIteratorForRow(int row) const
+    {
+        if (m_rows.empty()) rebuildRowVector();
+        if (row < 0 || row + 1 > m_rows.size()) return m_points.end();
+
+        size_t frame = m_rows[row];
+        int indexAtFrame = 0;
+        int ri = row;
+        while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
+        int initialIndexAtFrame = indexAtFrame;
+
+        PointListIterator i0, i1;
+        getPointIterators(frame, i0, i1);
+        PointListIterator i = i0;
+
+        for (i = i0; i != i1; ++i) {
+            if (indexAtFrame > 0) { --indexAtFrame; continue; }
+            return i;
+        }
+
+        if (indexAtFrame > 0) {
+            std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
+        }
+        return i;
+    }
 };
 
 
@@ -370,17 +445,8 @@ template <typename PointType>
 typename SparseModel<PointType>::PointList
 SparseModel<PointType>::getPoints(long frame) const
 {
-    QMutexLocker locker(&m_mutex);
-
-    if (m_resolution == 0) return PointList();
-
-    long start = (frame / m_resolution) * m_resolution;
-    long end = start + m_resolution;
-
-    PointType startPoint(start), endPoint(end);
-    
-    PointListIterator startItr = m_points.lower_bound(startPoint);
-    PointListIterator   endItr = m_points.upper_bound(endPoint);
+    PointListIterator startItr, endItr;
+    getPointIterators(frame, startItr, endItr);
 
     PointList rv;
 
@@ -389,6 +455,29 @@ SparseModel<PointType>::getPoints(long frame) const
     }
 
     return rv;
+}
+
+template <typename PointType>
+void
+SparseModel<PointType>::getPointIterators(long frame,
+                                          PointListIterator &startItr,
+                                          PointListIterator &endItr) const
+{
+    QMutexLocker locker(&m_mutex);
+
+    if (m_resolution == 0) {
+        startItr = m_points.end();
+        endItr = m_points.end();
+        return;
+    }
+
+    long start = (frame / m_resolution) * m_resolution;
+    long end = start + m_resolution;
+
+    PointType startPoint(start), endPoint(end);
+    
+    startItr = m_points.lower_bound(startPoint);
+      endItr = m_points.upper_bound(endPoint);
 }
 
 template <typename PointType>
@@ -443,6 +532,7 @@ SparseModel<PointType>::setResolution(size_t resolution)
 	QMutexLocker locker(&m_mutex);
 	m_resolution = resolution;
     }
+    m_rows.clear();
     emit modelChanged();
 }
 
@@ -455,6 +545,7 @@ SparseModel<PointType>::clear()
 	m_points.clear();
         m_pointCount = 0;
     }
+    m_rows.clear();
     emit modelChanged();
 }
 
@@ -476,6 +567,7 @@ SparseModel<PointType>::addPoint(const PointType &point)
     // alternative is to notify on setCompletion).
 
     if (m_notifyOnAdd) {
+        m_rows.clear(); //!!! inefficient
 	emit modelChanged(point.frame, point.frame + m_resolution);
     } else {
 	if (m_sinceLastNotifyMin == -1 ||
@@ -510,6 +602,7 @@ SparseModel<PointType>::deletePoint(const PointType &point)
     }
 //    std::cout << "SparseOneDimensionalModel: emit modelChanged("
 //	      << point.frame << ")" << std::endl;
+    m_rows.clear(); //!!! inefficient
     emit modelChanged(point.frame, point.frame + m_resolution);
 }
 
@@ -529,6 +622,7 @@ SparseModel<PointType>::setCompletion(int completion, bool update)
             }
 
 	    m_notifyOnAdd = true; // henceforth
+            m_rows.clear(); //!!! inefficient
 	    emit modelChanged();
 
 	} else if (!m_notifyOnAdd) {
@@ -536,6 +630,7 @@ SparseModel<PointType>::setCompletion(int completion, bool update)
 	    if (update &&
                 m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
+                m_rows.clear(); //!!! inefficient
 		emit modelChanged(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
 	    } else {
