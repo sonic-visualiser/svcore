@@ -88,6 +88,8 @@ public:
 
 class NoteModel : public SparseValueModel<Note>
 {
+    Q_OBJECT
+    
 public:
     NoteModel(size_t sampleRate, size_t resolution,
 	      bool notifyOnAdd = true) :

@@ -20,6 +20,8 @@
 #include "base/XmlExportable.h"
 #include "base/RealTime.h"
 
+#include <QStringList>
+
 /**
  * Text point type for use in a SparseModel.  This represents a piece
  * of text at a given time and y-value in the [0,1) range (indicative
@@ -80,6 +82,8 @@ public:
 
 class TextModel : public SparseModel<TextPoint>
 {
+    Q_OBJECT
+    
 public:
     TextModel(size_t sampleRate, size_t resolution, bool notifyOnAdd = true) :
 	SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)

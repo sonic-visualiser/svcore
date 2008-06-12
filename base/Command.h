@@ -16,6 +16,7 @@
 #ifndef _COMMAND_H_
 #define _COMMAND_H_
 
+#include <QObject>
 #include <QString>
 #include <vector>
 
@@ -48,6 +49,22 @@ public:
 protected:
     QString m_name;
     std::vector<Command *> m_commands;
+};
+
+/**
+ * BundleCommand is a MacroCommand whose name includes a note of how
+ * many commands it contains.  It is a QObject with Q_OBJECT macro so
+ * that it can do plural-sensitive translations.
+ */
+class BundleCommand : public QObject, public MacroCommand
+{
+    Q_OBJECT
+
+public:
+    BundleCommand(QString name);
+    virtual ~BundleCommand();
+
+    virtual QString getName() const;
 };
 
 #endif
