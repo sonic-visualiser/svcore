@@ -41,6 +41,7 @@ ModelDataTableModel::~ModelDataTableModel()
 QVariant
 ModelDataTableModel::data(const QModelIndex &index, int role) const
 {
+    if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
     if (!index.isValid()) return QVariant();
     return m_model->getData(getUnsorted(index.row()), index.column(), role);
 }
@@ -236,8 +237,7 @@ ModelDataTableModel::resortNumeric()
     int rows = m_model->getRowCount();
 
     for (int i = 0; i < rows; ++i) {
-        QVariant value =
-            m_model->getData(i, m_sortColumn, TabularModel::SortRole);
+        QVariant value = m_model->getData(i, m_sortColumn, TabularModel::SortRole);
         rowMap.insert(MapType::value_type(value.toDouble(), i));
     }
 

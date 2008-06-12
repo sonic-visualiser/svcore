@@ -101,6 +101,76 @@ public:
     }
 
     QString getTypeName() const { return tr("Text"); }
+
+    /**
+     * TabularModel methods.  
+     */
+    
+    virtual int getColumnCount() const
+    {
+        return 4;
+    }
+
+    virtual QString getHeading(int column) const
+    {
+        switch (column) {
+        case 0: return tr("Time");
+        case 1: return tr("Frame");
+        case 2: return tr("Height");
+        case 3: return tr("Label");
+        default: return tr("Unknown");
+        }
+    }
+
+    virtual QVariant getData(int row, int column, int role) const
+    {
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return QVariant();
+
+        switch (column) {
+        case 0: {
+            if (role == SortRole) return int(i->frame);
+            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
+            return rt.toText().c_str();
+        }
+        case 1: return int(i->frame);
+        case 2: return i->height;
+        case 3: return i->label;
+        default: return QVariant();
+        }
+    }
+
+    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    {
+        if (role != Qt::EditRole) return false;
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return false;
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+
+        Point point(*i);
+        command->deletePoint(point);
+
+        switch (column) {
+        case 0: case 1: point.frame = value.toInt(); break; 
+        case 2: point.height = value.toDouble(); break;
+        case 3: point.label = value.toString(); break;
+        }
+
+        command->addPoint(point);
+        return command->finish();
+    }
+
+    virtual bool isColumnTimeValue(int column) const
+    {
+        return (column < 2); 
+    }
+
+    virtual SortType getSortType(int column) const
+    {
+        if (column == 3) return SortAlphabetical;
+        return SortNumeric;
+    }
+
 };
 
 

@@ -132,9 +132,6 @@ public:
 
     virtual QVariant getData(int row, int column, int role) const
     {
-        if (role != Qt::EditRole &&
-            role != Qt::DisplayRole &&
-            role != SortRole) return QVariant();
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
@@ -148,6 +145,25 @@ public:
         case 2: return i->label;
         default: return QVariant();
         }
+    }
+
+    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    {
+        if (role != Qt::EditRole) return false;
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return false;
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+
+        Point point(*i);
+        command->deletePoint(point);
+
+        switch (column) {
+        case 0: case 1: point.frame = value.toInt(); break; 
+        case 2: point.label = value.toString(); break;
+        }
+
+        command->addPoint(point);
+        return command->finish();
     }
 
     virtual bool isColumnTimeValue(int column) const

@@ -162,6 +162,83 @@ public:
 	     .arg(extraAttributes).arg(m_valueQuantization));
     }
 
+    /**
+     * TabularModel methods.  
+     */
+    
+    virtual int getColumnCount() const
+    {
+        return 6;
+    }
+
+    virtual QString getHeading(int column) const
+    {
+        switch (column) {
+        case 0: return tr("Time");
+        case 1: return tr("Frame");
+        case 2: return tr("Pitch");
+        case 3: return tr("Duration");
+        case 4: return tr("Level");
+        case 5: return tr("Label");
+        default: return tr("Unknown");
+        }
+    }
+
+    virtual QVariant getData(int row, int column, int role) const
+    {
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return QVariant();
+
+        switch (column) {
+        case 0: {
+            if (role == SortRole) return int(i->frame);
+            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
+            return rt.toText().c_str();
+        }
+        case 1: return int(i->frame);
+        case 2:
+            if (role == Qt::EditRole || role == SortRole) return i->value;
+            else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
+        case 3: return int(i->duration);
+        case 4: return i->level;
+        case 5: return i->label;
+        default: return QVariant();
+        }
+    }
+
+    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    {
+        if (role != Qt::EditRole) return false;
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return false;
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+
+        Point point(*i);
+        command->deletePoint(point);
+
+        switch (column) {
+        case 0: case 1: point.frame = value.toInt(); break; 
+        case 2: point.value = value.toDouble(); break;
+        case 3: point.duration = value.toInt(); break;
+        case 4: point.level = value.toDouble(); break;
+        case 5: point.label = value.toString(); break;
+        }
+
+        command->addPoint(point);
+        return command->finish();
+    }
+
+    virtual bool isColumnTimeValue(int column) const
+    {
+        return (column < 2); 
+    }
+
+    virtual SortType getSortType(int column) const
+    {
+        if (column == 5) return SortAlphabetical;
+        return SortNumeric;
+    }
+
 protected:
     float m_valueQuantization;
 };
