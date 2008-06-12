@@ -67,9 +67,12 @@ protected:
     Qt::SortOrder m_sortOrdering;
     typedef std::vector<int> RowList;
     RowList m_sort;
+    RowList m_rsort;
     int getSorted(int row);
     int getUnsorted(int row);
     void resort();
+    void resortNumeric();
+    void resortAlphabetical();
 };
 
 #endif

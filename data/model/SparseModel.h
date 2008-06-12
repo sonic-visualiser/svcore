@@ -293,6 +293,7 @@ public:
         return QVariant();
     }
     virtual bool isColumnTimeValue(int column) const { return true; }
+    virtual SortType getSortType(int column) const { return SortNumeric; }
     
 protected:
     size_t m_sampleRate;
