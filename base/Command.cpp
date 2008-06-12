@@ -14,6 +14,7 @@
 */
 
 #include "Command.h"
+#include <QCoreApplication>
 
 MacroCommand::MacroCommand(QString name) :
     m_name(name)
@@ -79,5 +80,21 @@ void
 MacroCommand::setName(QString name)
 {
     m_name = name;
+}
+
+BundleCommand::BundleCommand(QString name) :
+    MacroCommand(name)
+{
+}
+
+BundleCommand::~BundleCommand()
+{
+}
+
+QString
+BundleCommand::getName() const
+{
+    if (m_commands.size() == 1) return m_name;
+    return tr("%1 (%n change(s))", "", m_commands.size()).arg(m_name);
 }
 

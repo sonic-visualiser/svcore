@@ -70,6 +70,8 @@ public:
 
 class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>
 {
+    Q_OBJECT
+    
 public:
     SparseOneDimensionalModel(size_t sampleRate, size_t resolution,
 			      bool notifyOnAdd = true) :

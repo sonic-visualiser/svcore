@@ -28,6 +28,8 @@
 
 class Labeller : public QObject
 {
+    Q_OBJECT
+
 public:
     enum ValueType {
         ValueNone,

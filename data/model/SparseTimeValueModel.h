@@ -77,6 +77,8 @@ public:
 
 class SparseTimeValueModel : public SparseValueModel<TimeValuePoint>
 {
+    Q_OBJECT
+    
 public:
     SparseTimeValueModel(size_t sampleRate, size_t resolution,
 			 bool notifyOnAdd = true) :
@@ -143,8 +145,6 @@ public:
 
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role) const
     {
-        std::cerr << "SparseTimeValueModel::setData: row = " << row << ", column = " << column << ", role = " << role << std::endl;
-
         if (role != Qt::EditRole) return false;
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) {
@@ -159,9 +159,7 @@ public:
         switch (column) {
         case 0: break; 
         case 1: break;
-        case 2: point.value = value.toDouble();
-            std::cerr << "setting value of point at " << point.frame << " to " << point.value << std::endl;
-            break;
+        case 2: point.value = value.toDouble(); break;
         case 3: point.label = value.toString(); break;
         }
 

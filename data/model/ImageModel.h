@@ -20,6 +20,8 @@
 #include "base/XmlExportable.h"
 #include "base/RealTime.h"
 
+#include <QStringList>
+
 /**
  * Image point type for use in a SparseModel.  This represents an
  * image, identified by filename, at a given time.  The filename can
@@ -84,6 +86,8 @@ public:
 
 class ImageModel : public SparseModel<ImagePoint>
 {
+    Q_OBJECT
+
 public:
     ImageModel(size_t sampleRate, size_t resolution, bool notifyOnAdd = true) :
 	SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
