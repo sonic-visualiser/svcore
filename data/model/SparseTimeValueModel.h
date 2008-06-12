@@ -120,18 +120,21 @@ public:
 
     virtual QVariant getData(int row, int column, int role) const
     {
-        if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
+        if (role != Qt::EditRole && 
+            role != Qt::DisplayRole &&
+            role != SortRole) return QVariant();
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {
         case 0: {
+            if (role == SortRole) return int(i->frame);
             RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
             return rt.toText().c_str();
         }
         case 1: return int(i->frame);
         case 2:
-            if (role == Qt::EditRole) return i->value;
+            if (role == Qt::EditRole || role == SortRole) return i->value;
             else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
         case 3: return i->label;
         default: return QVariant();
@@ -169,6 +172,12 @@ public:
     virtual bool isColumnTimeValue(int column) const
     {
         return (column < 2); 
+    }
+
+    virtual SortType getSortType(int column) const
+    {
+        if (column == 3) return SortAlphabetical;
+        return SortNumeric;
     }
 };
 

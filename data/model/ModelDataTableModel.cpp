@@ -18,6 +18,7 @@
 #include "TabularModel.h"
 #include "Model.h"
 
+#include <map>
 #include <algorithm>
 #include <iostream>
 
@@ -122,9 +123,11 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
     std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
               << ")" << std::endl;
+    if (m_sortColumn != column) {
+        m_sort.clear();
+    }
     m_sortColumn = column;
     m_sortOrdering = sortOrder;
-    m_sort.clear();
     emit layoutChanged();
 }
 
@@ -157,8 +160,15 @@ ModelDataTableModel::getSorted(int row)
     if (m_sort.empty()) {
         resort();
     }
-    if (row < 0 || row >= m_sort.size()) return 0;
-    return m_sort[row];
+    int result = 0;
+    if (row >= 0 && row < m_sort.size()) {
+        result = m_sort[row];
+    }
+    if (m_sortOrdering == Qt::DescendingOrder) {
+        result = rowCount() - result - 1;
+    }
+
+    return result;
 }
 
 int
@@ -171,17 +181,91 @@ ModelDataTableModel::getUnsorted(int row)
             return rowCount() - row - 1;
         }
     }
-//!!! need the reverse of this
+
     if (m_sort.empty()) {
         resort();
     }
-    if (row < 0 || row >= m_sort.size()) return 0;
-    return m_sort[row];
+
+    int result = 0;
+    if (row >= 0 && row < m_sort.size()) {
+        if (m_sortOrdering == Qt::AscendingOrder) {
+            result = m_rsort[row];
+        } else {
+            result = m_rsort[rowCount() - row - 1];
+        }
+    }
+
+    return result;
 }
 
 void
 ModelDataTableModel::resort()
 {
-    
+    bool numeric = (m_model->getSortType(m_sortColumn) ==
+                    TabularModel::SortNumeric);
+
+    m_sort.clear();
+    m_rsort.clear();
+
+    if (numeric) resortNumeric();
+    else resortAlphabetical();
+
+    std::map<int, int> tmp;
+
+    // rsort maps from sorted row number to original row number
+
+    for (int i = 0; i < m_rsort.size(); ++i) {
+        tmp[m_rsort[i]] = i;
+    }
+
+    // tmp now maps from original row number to sorted row number
+
+    for (std::map<int, int>::const_iterator i = tmp.begin(); i != tmp.end(); ++i) {
+        m_sort.push_back(i->second);
+    }
+
+    // and sort now maps from original row number to sorted row number
+}
+
+void
+ModelDataTableModel::resortNumeric()
+{
+    typedef std::multimap<double, int> MapType;
+
+    MapType rowMap;
+    int rows = m_model->getRowCount();
+
+    for (int i = 0; i < rows; ++i) {
+        QVariant value =
+            m_model->getData(i, m_sortColumn, TabularModel::SortRole);
+        rowMap.insert(MapType::value_type(value.toDouble(), i));
+    }
+
+    for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
+        m_rsort.push_back(i->second);
+    }
+
+    // rsort now maps from sorted row number to original row number
+}
+
+void
+ModelDataTableModel::resortAlphabetical()
+{
+    typedef std::multimap<QString, int> MapType;
+
+    MapType rowMap;
+    int rows = m_model->getRowCount();
+
+    for (int i = 0; i < rows; ++i) {
+        QVariant value =
+            m_model->getData(i, m_sortColumn, TabularModel::SortRole);
+        rowMap.insert(MapType::value_type(value.toString(), i));
+    }
+
+    for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
+        m_rsort.push_back(i->second);
+    }
+
+    // rsort now maps from sorted row number to original row number
 }
 
