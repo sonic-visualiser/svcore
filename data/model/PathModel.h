@@ -80,6 +80,14 @@ public:
              QString("%1 subtype=\"path\"")
              .arg(extraAttributes));
     }
+
+    /**
+     * TabularModel is inherited via SparseModel, but we don't need it here.
+     */
+    virtual QString getHeading(int) const { return ""; }
+    virtual bool isColumnTimeValue(int) const { return false; }
+    virtual SortType getSortType(int) const { return SortNumeric; }
+
 };
 
 
