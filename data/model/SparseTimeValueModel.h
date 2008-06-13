@@ -122,16 +122,15 @@ public:
 
     virtual QVariant getData(int row, int column, int role) const
     {
+        if (column < 2) {
+            return SparseValueModel<TimeValuePoint>::getData
+                (row, column, role);
+        }
+
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {
-        case 0: {
-            if (role == SortRole) return int(i->frame);
-            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
-            return rt.toText().c_str();
-        }
-        case 1: return int(i->frame);
         case 2:
             if (role == Qt::EditRole || role == SortRole) return i->value;
             else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
@@ -142,6 +141,11 @@ public:
 
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
     {
+        if (column < 2) {
+            return SparseValueModel<TimeValuePoint>::getSetDataCommand
+                (row, column, value, role);
+        }
+
         if (role != Qt::EditRole) return false;
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return false;
@@ -151,7 +155,6 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 0: case 1: point.frame = value.toInt(); break; 
         case 2: point.value = value.toDouble(); break;
         case 3: point.label = value.toString(); break;
         }

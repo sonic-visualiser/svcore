@@ -74,9 +74,12 @@ ModelDataTableModel::flags(const QModelIndex &index) const
 QVariant
 ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
+        return section + 1;
+    }
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return m_model->getHeading(section);
-    }
+    } 
     return QVariant();
 }
 

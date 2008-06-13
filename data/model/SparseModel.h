@@ -19,12 +19,15 @@
 #include "Model.h"
 #include "TabularModel.h"
 #include "base/Command.h"
+#include "base/RealTime.h"
 
 #include <iostream>
 
 #include <set>
 #include <vector>
 #include <algorithm>
+
+#include <cmath>
 
 #include <QMutex>
 #include <QTextStream>
@@ -286,15 +289,44 @@ public:
         return std::distance(m_rows.begin(), i);
     }
 
-    //!!! just for now
     virtual int getColumnCount() const { return 1; }
-    virtual QString getHeading(int column) const { return tr("Unknown"); }
-    virtual QVariant getData(int row, int column, int role) const {
+    virtual QVariant getData(int row, int column, int role) const
+    {
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return QVariant();
+
+        switch (column) {
+        case 0: {
+            if (role == SortRole) return int(i->frame);
+            RealTime rt = RealTime::frame2RealTime(i->frame, getSampleRate());
+            if (role == Qt::EditRole) return rt.toString().c_str();
+            else return rt.toText().c_str();
+        }
+        case 1: return int(i->frame);
+        }
+
         return QVariant();
     }
-    virtual bool isColumnTimeValue(int column) const { return true; }
-    virtual SortType getSortType(int column) const { return SortNumeric; }
-    
+    virtual Command *getSetDataCommand(int row, int column,
+                                       const QVariant &value, int role)
+    {
+        if (role != Qt::EditRole) return false;
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return false;
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+
+        Point point(*i);
+        command->deletePoint(point);
+
+        switch (column) {
+        case 0: point.frame = lrint(value.toDouble() * getSampleRate()); break;
+        case 1: point.frame = value.toInt(); break; 
+        }
+
+        command->addPoint(point);
+        return command->finish();
+    }
+
 protected:
     size_t m_sampleRate;
     size_t m_resolution;
@@ -326,7 +358,7 @@ protected:
     PointListIterator getPointListIteratorForRow(int row) const
     {
         if (m_rows.empty()) rebuildRowVector();
-        if (row < 0 || row + 1 > m_rows.size()) return m_points.end();
+        if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
 
         size_t frame = m_rows[row];
         int indexAtFrame = 0;
@@ -395,11 +427,14 @@ template <typename PointType>
 Model *
 SparseModel<PointType>::clone() const
 {
+    return 0; //!!! is this ever used?
+/*
     SparseModel<PointType> *model =
 	new SparseModel<PointType>(m_sampleRate, m_resolution, m_notifyOnAdd);
     model->m_points = m_points;
     model->m_pointCount = m_pointCount;
     return model;
+*/
 }
 
 template <typename PointType>
