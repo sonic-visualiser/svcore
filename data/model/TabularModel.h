@@ -51,6 +51,8 @@ public:
 
     virtual bool isEditable() const { return false; }
     virtual Command *getSetDataCommand(int /* row */, int /* column */, const QVariant &, int /* role */) { return 0; }
+    virtual Command *getInsertRowCommand(int /* beforeRow */) { return 0; }
+    virtual Command *getRemoveRowCommand(int /* row */) { return 0; }
 };
 
 #endif
