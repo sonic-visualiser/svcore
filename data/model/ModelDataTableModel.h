@@ -66,13 +66,13 @@ protected:
     int m_sortColumn;
     Qt::SortOrder m_sortOrdering;
     typedef std::vector<int> RowList;
-    RowList m_sort;
-    RowList m_rsort;
-    int getSorted(int row);
-    int getUnsorted(int row);
-    void resort();
-    void resortNumeric();
-    void resortAlphabetical();
+    mutable RowList m_sort;
+    mutable RowList m_rsort;
+    int getSorted(int row) const;
+    int getUnsorted(int row) const;
+    void resort() const;
+    void resortNumeric() const;
+    void resortAlphabetical() const;
 };
 
 #endif
