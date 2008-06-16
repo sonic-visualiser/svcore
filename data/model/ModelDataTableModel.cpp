@@ -151,7 +151,7 @@ ModelDataTableModel::modelChanged(size_t f0, size_t f1)
 }
 
 int
-ModelDataTableModel::getSorted(int row)
+ModelDataTableModel::getSorted(int row) const
 {
     if (m_model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
@@ -176,7 +176,7 @@ ModelDataTableModel::getSorted(int row)
 }
 
 int
-ModelDataTableModel::getUnsorted(int row)
+ModelDataTableModel::getUnsorted(int row) const
 {
     if (m_model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
@@ -203,7 +203,7 @@ ModelDataTableModel::getUnsorted(int row)
 }
 
 void
-ModelDataTableModel::resort()
+ModelDataTableModel::resort() const
 {
     bool numeric = (m_model->getSortType(m_sortColumn) ==
                     TabularModel::SortNumeric);
@@ -232,7 +232,7 @@ ModelDataTableModel::resort()
 }
 
 void
-ModelDataTableModel::resortNumeric()
+ModelDataTableModel::resortNumeric() const
 {
     typedef std::multimap<double, int> MapType;
 
@@ -252,7 +252,7 @@ ModelDataTableModel::resortNumeric()
 }
 
 void
-ModelDataTableModel::resortAlphabetical()
+ModelDataTableModel::resortAlphabetical() const
 {
     typedef std::multimap<QString, int> MapType;
 
