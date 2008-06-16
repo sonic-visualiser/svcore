@@ -35,6 +35,9 @@ public:
 
     bool setData(const QModelIndex &index, const QVariant &value, int role);
 
+    bool insertRow(int row, const QModelIndex &parent = QModelIndex());
+    bool removeRow(int row, const QModelIndex &parent = QModelIndex());
+
     Qt::ItemFlags flags(const QModelIndex &index) const;
 
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -55,7 +58,7 @@ public:
 
 signals:
     void frameSelected(size_t);
-    void executeCommand(Command *);
+    void addCommand(Command *);
 
 protected slots:
     void modelChanged();

@@ -307,6 +307,7 @@ public:
 
         return QVariant();
     }
+
     virtual Command *getSetDataCommand(int row, int column,
                                        const QVariant &value, int role)
     {
@@ -327,6 +328,26 @@ public:
         return command->finish();
     }
 
+    virtual Command *getInsertRowCommand(int row)
+    {
+        EditCommand *command = new EditCommand(this, tr("Insert Data Point"));
+        Point point(0);
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end() && i != m_points.begin()) --i;
+        if (i != m_points.end()) point = *i;
+        command->addPoint(point);
+        return command->finish();
+    }
+            
+    virtual Command *getRemoveRowCommand(int row)
+    {
+        EditCommand *command = new EditCommand(this, tr("Delete Data Point"));
+        PointListIterator i = getPointListIteratorForRow(row);
+        if (i == m_points.end()) return 0;
+        command->deletePoint(*i);
+        return command->finish();
+    }
+            
 protected:
     size_t m_sampleRate;
     size_t m_resolution;

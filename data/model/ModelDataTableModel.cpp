@@ -50,17 +50,51 @@ bool
 ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if (!index.isValid()) return false;
-    std::cerr << "ModelDataTableModel::setData(" << index.row() << ", " << index.column() << ", " << value.toString().toStdString() << ", " << role << ")" << std::endl;
     Command *command = m_model->getSetDataCommand(getUnsorted(index.row()),
                                                   index.column(),
                                                   value, role);
     if (command) {
-        std::cerr << "emitting executeCommand" << std::endl;
-        emit executeCommand(command);
+        emit addCommand(command);
         return true;
     } else {
         return false;
     }
+}
+
+bool
+ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
+{
+    if (parent.isValid()) return false;
+
+    emit beginInsertRows(parent, row, row);
+
+    Command *command = m_model->getInsertRowCommand(getUnsorted(row));
+
+    if (command) {
+        emit addCommand(command);
+    }
+
+    emit endInsertRows();
+
+    return (command ? true : false);
+}
+
+bool
+ModelDataTableModel::removeRow(int row, const QModelIndex &parent)
+{
+    if (parent.isValid()) return false;
+
+    emit beginRemoveRows(parent, row, row);
+
+    Command *command = m_model->getRemoveRowCommand(getUnsorted(row));
+
+    if (command) {
+        emit addCommand(command);
+    }
+
+    emit endRemoveRows();
+
+    return (command ? true : false);
 }
 
 Qt::ItemFlags

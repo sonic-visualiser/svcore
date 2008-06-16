@@ -169,6 +169,7 @@ public:
         return command->finish();
     }
 
+
     virtual bool isColumnTimeValue(int column) const
     {
         return (column < 2); 
