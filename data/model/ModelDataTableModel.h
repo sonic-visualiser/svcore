@@ -54,11 +54,17 @@ public:
     QModelIndex getModelIndexForFrame(size_t frame) const;
     size_t getFrameForModelIndex(const QModelIndex &) const;
 
+    QModelIndex getModelIndexForRow(int row) const;
+
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
+
+    void setCurrentRow(int row);
+    int getCurrentRow();
 
 signals:
     void frameSelected(size_t);
     void addCommand(Command *);
+    void currentChanged(const QModelIndex &);
 
 protected slots:
     void modelChanged();
@@ -68,6 +74,7 @@ protected:
     TabularModel *m_model;
     int m_sortColumn;
     Qt::SortOrder m_sortOrdering;
+    int m_currentRow;
     typedef std::vector<int> RowList;
     mutable RowList m_sort;
     mutable RowList m_rsort;
@@ -76,6 +83,7 @@ protected:
     void resort() const;
     void resortNumeric() const;
     void resortAlphabetical() const;
+    void clearSort();
 };
 
 #endif

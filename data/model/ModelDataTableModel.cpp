@@ -25,7 +25,8 @@
 ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     m_model(m),
     m_sortColumn(0),
-    m_sortOrdering(Qt::AscendingOrder)
+    m_sortOrdering(Qt::AscendingOrder),
+    m_currentRow(0)
 {
     Model *baseModel = dynamic_cast<Model *>(m);
 
@@ -156,23 +157,35 @@ ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
     return m_model->getFrameForRow(getUnsorted(index.row()));
 }
 
+QModelIndex
+ModelDataTableModel::getModelIndexForRow(int row) const
+{
+    return createIndex(row, 0, 0);
+}
+
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
     std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
               << ")" << std::endl;
+    int prevCurrent = getCurrentRow();
     if (m_sortColumn != column) {
-        m_sort.clear();
+        clearSort();
     }
     m_sortColumn = column;
     m_sortOrdering = sortOrder;
+    int current = getCurrentRow();
+    if (current != prevCurrent) {
+         std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
+         emit currentChanged(createIndex(current, 0, 0));
+    }
     emit layoutChanged();
 }
 
 void
 ModelDataTableModel::modelChanged()
 {
-    m_sort.clear();
+    clearSort();
     emit layoutChanged();
 }
 
@@ -180,7 +193,7 @@ void
 ModelDataTableModel::modelChanged(size_t f0, size_t f1)
 {
     //!!! inefficient
-    m_sort.clear();
+    clearSort();
     emit layoutChanged();
 }
 
@@ -306,3 +319,28 @@ ModelDataTableModel::resortAlphabetical() const
     // rsort now maps from sorted row number to original row number
 }
 
+int
+ModelDataTableModel::getCurrentRow()
+{
+    return getSorted(m_currentRow);
+}
+
+void
+ModelDataTableModel::setCurrentRow(int row)
+{
+    m_currentRow = getUnsorted(row);
+}
+
+void
+ModelDataTableModel::clearSort()
+{
+//    int prevCurrent = getCurrentRow();
+    m_sort.clear();
+//    int current = getCurrentRow(); //!!! no --  not until the sort criteria have changed
+//    if (current != prevCurrent) {
+//        std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
+//        emit currentRowChanged(createIndex(current, 0, 0));
+//    }
+}
+
+    
