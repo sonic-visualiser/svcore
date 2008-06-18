@@ -157,12 +157,6 @@ ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
     return m_model->getFrameForRow(getUnsorted(index.row()));
 }
 
-QModelIndex
-ModelDataTableModel::getModelIndexForRow(int row) const
-{
-    return createIndex(row, 0, 0);
-}
-
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {

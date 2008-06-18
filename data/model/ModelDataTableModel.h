@@ -54,8 +54,6 @@ public:
     QModelIndex getModelIndexForFrame(size_t frame) const;
     size_t getFrameForModelIndex(const QModelIndex &) const;
 
-    QModelIndex getModelIndexForRow(int row) const;
-
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 
     void setCurrentRow(int row);
