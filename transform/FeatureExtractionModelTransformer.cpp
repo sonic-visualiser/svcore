@@ -150,6 +150,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     }
     
     for (size_t i = 0; i < outputs.size(); ++i) {
+//        std::cerr << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput().toStdString() << "\"" << std::endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
 	    m_outputFeatureNo = i;

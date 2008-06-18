@@ -188,6 +188,10 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     // This is used for e.g. audio playback.
     // Could be much more efficient (although compiler optimisation will help)
 
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cout << "WaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << std::endl;
+#endif
+
     if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
@@ -246,6 +250,10 @@ size_t
 WaveFileModel::getData(int channel, size_t start, size_t count,
                        double *buffer) const
 {
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cout << "WaveFileModel::getData(double)[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << std::endl;
+#endif
+
     if (start > m_startFrame) {
         start -= m_startFrame;
     } else {
@@ -300,6 +308,10 @@ WaveFileModel::getData(size_t fromchannel, size_t tochannel,
                        size_t start, size_t count,
                        float **buffer) const
 {
+#ifdef DEBUG_WAVE_FILE_MODEL
+    std::cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << std::endl;
+#endif
+
     size_t channels = getChannelCount();
 
     if (fromchannel > tochannel) {
