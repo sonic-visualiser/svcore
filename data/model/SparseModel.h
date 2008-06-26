@@ -286,7 +286,11 @@ public:
         if (m_rows.empty()) rebuildRowVector();
         std::vector<long>::iterator i =
             std::lower_bound(m_rows.begin(), m_rows.end(), frame);
-        return std::distance(m_rows.begin(), i);
+        int row = std::distance(m_rows.begin(), i);
+        if (i != m_rows.begin() && (i == m_rows.end() || *i != frame)) {
+            --row;
+        }
+        return row;
     }
 
     virtual int getColumnCount() const { return 1; }
