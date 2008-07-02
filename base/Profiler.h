@@ -33,7 +33,7 @@
 
 //#define NO_TIMING 1
 
-#define WANT_TIMING 1
+//#define WANT_TIMING 1
 
 #ifdef NDEBUG
 #ifndef WANT_TIMING
