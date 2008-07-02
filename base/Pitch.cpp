@@ -135,6 +135,19 @@ Pitch::getPitchLabelForFrequency(float frequency,
 QString
 Pitch::getLabelForPitchRange(int semis, float cents)
 {
+    if (semis > 0) {
+        while (cents < 0.f) {
+            --semis;
+            cents += 100.f;
+        }
+    }
+    if (semis < 0) {
+        while (cents > 0.f) {
+            ++semis;
+            cents -= 100.f;
+        }
+    }
+
     int ic = lrintf(cents);
 
     if (ic == 0) {
