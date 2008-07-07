@@ -133,7 +133,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             std::cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname.toStdString() << std::endl;
 #endif
 
-            void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_GLOBAL);
+            void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
             if (!libraryHandle) {
                 std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname.toStdString() << ": " << DLERROR() << std::endl;
@@ -331,7 +331,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 
     soname = found;
 
-    void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_GLOBAL);
+    void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
     if (!libraryHandle) {
         std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname.toStdString() << ": " << DLERROR() << std::endl;
