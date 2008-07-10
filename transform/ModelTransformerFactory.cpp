@@ -402,7 +402,7 @@ ModelTransformerFactory::transformerFinished()
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
-    std::cerr << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << std::endl;
+//    std::cerr << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << std::endl;
 
     if (!transformer) {
 	std::cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << std::endl;

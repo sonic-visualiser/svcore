@@ -258,7 +258,7 @@ GetDiscSpaceMBAvailable(const char *path)
     if (!statvfs(path, &buf)) {
         // do the multiplies and divides in this order to reduce the
         // likelihood of arithmetic overflow
-        std::cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << std::endl;
+//        std::cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << std::endl;
         uint64_t available = ((buf.f_bavail / 1024) * buf.f_bsize) / 1024;
         if (available > INT_MAX) available = INT_MAX;
         return int(available);

@@ -714,7 +714,7 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
             StorageAdviser::recommend(m_criteria, minimumSize, maximumSize);
     }
 
-    std::cerr << "Recommendation was: " << recommendation << std::endl;
+//    std::cerr << "Recommendation was: " << recommendation << std::endl;
 
     memoryCache = false;
 

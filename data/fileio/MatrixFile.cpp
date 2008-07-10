@@ -516,7 +516,9 @@ MatrixFile::resume()
         throw FailedToOpenFile(m_fileName);
     }
 
+#ifdef DEBUG_MATRIX_FILE
     std::cerr << "MatrixFile(" << this << ":" << m_fileName.toStdString() << ")::resume(): fd is " << m_fd << std::endl;
+#endif
 }
 
 static int alloc = 0;
