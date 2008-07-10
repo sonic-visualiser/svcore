@@ -271,7 +271,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-    std::cerr << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << std::endl;
+//    std::cerr << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << std::endl;
     delete m_plugin;
     delete m_descriptor;
 }
