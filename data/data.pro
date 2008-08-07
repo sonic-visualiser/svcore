@@ -50,6 +50,7 @@ HEADERS += fft/FFTapi.h \
            model/EditableDenseThreeDimensionalModel.h \
            model/FFTModel.h \
            model/ImageModel.h \
+           model/IntervalModel.h \
            model/Labeller.h \
            model/Model.h \
            model/ModelDataTableModel.h \
@@ -100,7 +101,6 @@ SOURCES += fft/FFTapi.cpp \
            model/FFTModel.cpp \
            model/Model.cpp \
            model/ModelDataTableModel.cpp \
-           model/NoteModel.cpp \
            model/PowerOfSqrtTwoZoomConstraint.cpp \
            model/PowerOfTwoZoomConstraint.cpp \
            model/RangeSummarisableTimeValueModel.cpp \

@@ -160,8 +160,8 @@ ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
-    std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
-              << ")" << std::endl;
+//    std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
+//              << ")" << std::endl;
     int prevCurrent = getCurrentRow();
     if (m_sortColumn != column) {
         clearSort();
@@ -170,7 +170,7 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
     m_sortOrdering = sortOrder;
     int current = getCurrentRow();
     if (current != prevCurrent) {
-         std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
+//         std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
          emit currentChanged(createIndex(current, 0, 0));
     }
     emit layoutChanged();
