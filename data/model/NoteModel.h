@@ -16,7 +16,7 @@
 #ifndef _NOTE_MODEL_H_
 #define _NOTE_MODEL_H_
 
-#include "SparseValueModel.h"
+#include "IntervalModel.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
 
@@ -86,15 +86,14 @@ public:
 };
 
 
-class NoteModel : public SparseValueModel<Note>
+class NoteModel : public IntervalModel<Note>
 {
     Q_OBJECT
     
 public:
     NoteModel(size_t sampleRate, size_t resolution,
 	      bool notifyOnAdd = true) :
-	SparseValueModel<Note>(sampleRate, resolution,
-			       notifyOnAdd),
+	IntervalModel<Note>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
     {
 	PlayParameterRepository::getInstance()->addPlayable(this);
@@ -103,9 +102,9 @@ public:
     NoteModel(size_t sampleRate, size_t resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
-	SparseValueModel<Note>(sampleRate, resolution,
-			       valueMinimum, valueMaximum,
-			       notifyOnAdd),
+	IntervalModel<Note>(sampleRate, resolution,
+                            valueMinimum, valueMaximum,
+                            notifyOnAdd),
 	m_valueQuantization(0)
     {
 	PlayParameterRepository::getInstance()->addPlayable(this);
@@ -118,21 +117,6 @@ public:
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
-
-    /**
-     * Notes have a duration, so this returns all points that span any
-     * of the given range (as well as the usual additional few before
-     * and after).  Consequently this can be very slow (optimised data
-     * structures still to be done!).
-     */
-    virtual PointList getPoints(long start, long end) const;
-
-    /**
-     * Notes have a duration, so this returns all points that span the
-     * given frame.  Consequently this can be very slow (optimised
-     * data structures still to be done!).
-     */
-    virtual PointList getPoints(long frame) const;
 
     QString getTypeName() const { return tr("Note"); }
 
@@ -155,7 +139,7 @@ public:
         std::cerr << "NoteModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
 
-        SparseValueModel<Note>::toXml
+        IntervalModel<Note>::toXml
 	    (out,
              indent,
 	     QString("%1 valueQuantization=\"%2\"")
@@ -186,19 +170,14 @@ public:
 
     virtual QVariant getData(int row, int column, int role) const
     {
-        if (column < 2) {
-            return SparseValueModel<Note>::getData
-                (row, column, role);
+        if (column < 4) {
+            return IntervalModel<Note>::getData(row, column, role);
         }
 
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {
-        case 2:
-            if (role == Qt::EditRole || role == SortRole) return i->value;
-            else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
-        case 3: return int(i->duration);
         case 4: return i->level;
         case 5: return i->label;
         default: return QVariant();
@@ -207,8 +186,8 @@ public:
 
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
     {
-        if (column < 2) {
-            return SparseValueModel<Note>::getSetDataCommand
+        if (column < 4) {
+            return IntervalModel<Note>::getSetDataCommand
                 (row, column, value, role);
         }
 
@@ -221,20 +200,12 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 0: case 1: point.frame = value.toInt(); break; 
-        case 2: point.value = value.toDouble(); break;
-        case 3: point.duration = value.toInt(); break;
         case 4: point.level = value.toDouble(); break;
         case 5: point.label = value.toString(); break;
         }
 
         command->addPoint(point);
         return command->finish();
-    }
-
-    virtual bool isColumnTimeValue(int column) const
-    {
-        return (column < 2); 
     }
 
     virtual SortType getSortType(int column) const
