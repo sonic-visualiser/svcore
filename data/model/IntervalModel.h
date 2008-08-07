@@ -84,19 +84,19 @@ public:
 
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
     {
+        typedef IntervalModel<PointType> I;
+
         if (column < 2) {
             return SparseValueModel<PointType>::getSetDataCommand
                 (row, column, value, role);
         }
 
         if (role != Qt::EditRole) return false;
-        // gah.  This is such garbage.  Thank you, C++!  I love you too
-        typename SparseModel<PointType>::PointList::const_iterator i
-            = SparseModel<PointType>::getPointListIteratorForRow(row);
-        if (i == SparseModel<PointType>::m_points.end()) return false;
-        typename IntervalModel<PointType>::EditCommand *command
-            = new typename IntervalModel<PointType>::EditCommand
-            (this, IntervalModel<PointType>::tr("Edit Data"));
+        typename I::PointList::const_iterator i
+            = I::getPointListIteratorForRow(row);
+        if (i == I::m_points.end()) return false;
+        typename I::EditCommand *command = new typename I::EditCommand
+            (this, I::tr("Edit Data"));
 
         PointType point(*i);
         command->deletePoint(point);
