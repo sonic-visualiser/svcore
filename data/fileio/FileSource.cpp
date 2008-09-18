@@ -209,6 +209,8 @@ FileSource::init()
             m_localFilename = m_url.toString();
             literal = true;
         }
+        m_localFilename = QFileInfo(m_localFilename).absoluteFilePath();
+
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::init: URL translates to local filename \""
                   << m_localFilename.toStdString() << "\"" << std::endl;

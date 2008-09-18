@@ -20,7 +20,8 @@
 ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
     ProgressReporter(parent),
     m_prefix(message),
-    m_lastProgress(0)
+    m_lastProgress(0),
+    m_definite(true)
 {
 }
 
@@ -30,6 +31,18 @@ ProgressPrinter::~ProgressPrinter()
         std::cerr << "\r\n";
     }
 //    std::cerr << "(progress printer dtor)" << std::endl;
+}
+
+bool
+ProgressPrinter::isDefinite() const
+{
+    return m_definite;
+}
+
+void
+ProgressPrinter::setDefinite(bool definite)
+{
+    m_definite = definite;
 }
 
 void
@@ -46,8 +59,12 @@ ProgressPrinter::setProgress(int progress)
     else {
         std::cerr << "\r"
                   << m_prefix.toStdString() 
-                  << (m_prefix == "" ? "" : " ")
-                  << progress << "%";
+                  << (m_prefix == "" ? "" : " ");
+        if (m_definite) {
+            std::cerr << progress << "%";
+        } else {
+            std::cerr << "|/-\\"[progress % 4];
+        }
     }
     m_lastProgress = progress;
 }

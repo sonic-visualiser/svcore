@@ -49,6 +49,9 @@ struct RealTime
     static RealTime fromSeconds(double sec);
     static RealTime fromMilliseconds(int msec);
     static RealTime fromTimeval(const struct timeval &);
+    static RealTime fromXsdDuration(std::string xsdd);
+
+    double toDouble() const;
 
     RealTime &operator=(const RealTime &r) {
 	sec = r.sec; nsec = r.nsec; return *this;

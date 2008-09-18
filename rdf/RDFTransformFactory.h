@@ -4,8 +4,8 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2007 QMUL.
-    
+    This file copyright 2008 QMUL.
+   
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
@@ -13,32 +13,36 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PROGRESS_PRINTER_H_
-#define _PROGRESS_PRINTER_H_
+#ifndef _RDF_TRANSFORM_FACTORY_H_
+#define _RDF_TRANSFORM_FACTORY_H_
 
-#include "ProgressReporter.h"
+#include <QObject>
+#include <QString>
 
-class ProgressPrinter : public ProgressReporter
+#include <vector>
+
+#include "transform/Transform.h"
+
+class RDFTransformFactoryImpl;
+class ProgressReporter;
+
+class RDFTransformFactory : public QObject
 {
     Q_OBJECT
-    
+
 public:
-    ProgressPrinter(QString message, QObject *parent = 0);
-    virtual ~ProgressPrinter();
-    
-    virtual bool isDefinite() const;
-    virtual void setDefinite(bool definite);
+    static QString getKnownExtensions();
 
-    virtual bool wasCancelled() const { return false; } // no mechanism
+    RDFTransformFactory(QString url);
+    virtual ~RDFTransformFactory();
 
-public slots:
-    virtual void setMessage(QString);
-    virtual void setProgress(int);
+    bool isOK();
+    QString getErrorString() const;
+
+    std::vector<Transform> getTransforms(ProgressReporter *reporter);
 
 protected:
-    QString m_prefix;
-    int m_lastProgress;
-    bool m_definite;
+    RDFTransformFactoryImpl *m_d;
 };
 
 #endif

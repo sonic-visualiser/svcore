@@ -178,6 +178,8 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 
     bool allChange = false;
 
+    if (values.size() > m_yBinCount) m_yBinCount = values.size();
+
     for (size_t i = 0; i < values.size(); ++i) {
         float value = values[i];
         if (std::isnan(value) || std::isinf(value)) {
