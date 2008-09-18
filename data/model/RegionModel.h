@@ -13,39 +13,38 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _NOTE_MODEL_H_
-#define _NOTE_MODEL_H_
+#ifndef _REGION_MODEL_H_
+#define _REGION_MODEL_H_
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"
-#include "base/PlayParameterRepository.h"
 
 /**
- * NoteModel -- a concrete IntervalModel for notes.
+ * RegionModel -- a concrete IntervalModel for intervals associated
+ * with a value, which we call regions for no very compelling reason.
  */
 
 /**
- * Note type for use in a sparse model.  All we mean by a "note" is
- * something that has an onset time, a single value, a duration, and a
- * level.  Like other points, it can also have a label.  With this
- * point type, the model can be thought of as representing a simple
- * MIDI-type piano roll, except that the y coordinates (values) do not
- * have to be discrete integers.
+ * Region "point" type.  A region is something that has an onset time,
+ * a single value, and a duration.  Like other points, it can also
+ * have a label.
+ *
+ * This is called RegionRec instead of Region to avoid name collisions
+ * with the X11 Region struct.  Bah.
  */
 
-struct Note
+struct RegionRec
 {
 public:
-    Note(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
-    Note(long _frame, float _value, size_t _duration, float _level, QString _label) :
-	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
+    RegionRec(long _frame) : frame(_frame), value(0.0f), duration(0) { }
+    RegionRec(long _frame, float _value, size_t _duration, QString _label) :
+	frame(_frame), value(_value), duration(_duration), label(_label) { }
 
     int getDimensions() const { return 3; }
 
     long frame;
     float value;
     size_t duration;
-    float level;
     QString label;
 
     QString getLabel() const { return label; }
@@ -55,8 +54,8 @@ public:
                QString extraAttributes = "") const
     {
 	stream <<
-            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level).arg(label).arg(extraAttributes);
+            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
+	    .arg(indent).arg(frame).arg(value).arg(duration).arg(label).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
@@ -65,85 +64,68 @@ public:
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(value);
         list << RealTime::frame2RealTime(duration, sampleRate).toString().c_str();
-        list << QString("%1").arg(level);
         if (label != "") list << label;
         return list.join(delimiter);
     }
 
     struct Comparator {
-	bool operator()(const Note &p1,
-			const Note &p2) const {
+	bool operator()(const RegionRec &p1,
+			const RegionRec &p2) const {
 	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
 	    if (p1.value != p2.value) return p1.value < p2.value;
 	    if (p1.duration != p2.duration) return p1.duration < p2.duration;
-            if (p1.level != p2.level) return p1.level < p2.level;
 	    return p1.label < p2.label;
 	}
     };
     
     struct OrderComparator {
-	bool operator()(const Note &p1,
-			const Note &p2) const {
+	bool operator()(const RegionRec &p1,
+			const RegionRec &p2) const {
 	    return p1.frame < p2.frame;
 	}
     };
 };
 
 
-class NoteModel : public IntervalModel<Note>
+class RegionModel : public IntervalModel<RegionRec>
 {
     Q_OBJECT
     
 public:
-    NoteModel(size_t sampleRate, size_t resolution,
-	      bool notifyOnAdd = true) :
-	IntervalModel<Note>(sampleRate, resolution, notifyOnAdd),
+    RegionModel(size_t sampleRate, size_t resolution,
+                bool notifyOnAdd = true) :
+	IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    NoteModel(size_t sampleRate, size_t resolution,
+    RegionModel(size_t sampleRate, size_t resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
-	IntervalModel<Note>(sampleRate, resolution,
+	IntervalModel<RegionRec>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
 	m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    virtual ~NoteModel()
+    virtual ~RegionModel()
     {
-        PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
 
-    QString getTypeName() const { return tr("Note"); }
-
-    virtual bool canPlay() const { return true; }
-
-    virtual QString getDefaultPlayPluginId() const
-    {
-        return "dssi:_builtin:sample_player";
-    }
-
-    virtual QString getDefaultPlayPluginConfiguration() const
-    {
-        return "<plugin program=\"piano\"/>";
-    }
+    QString getTypeName() const { return tr("Region"); }
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const
     {
-        std::cerr << "NoteModel::toXml: extraAttributes = \"" 
+        std::cerr << "RegionModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
 
-        IntervalModel<Note>::toXml
+        IntervalModel<RegionRec>::toXml
 	    (out,
              indent,
 	     QString("%1 valueQuantization=\"%2\"")
@@ -164,10 +146,9 @@ public:
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
-        case 2: return tr("Pitch");
+        case 2: return tr("Value");
         case 3: return tr("Duration");
-        case 4: return tr("Level");
-        case 5: return tr("Label");
+        case 4: return tr("Label");
         default: return tr("Unknown");
         }
     }
@@ -175,15 +156,14 @@ public:
     virtual QVariant getData(int row, int column, int role) const
     {
         if (column < 4) {
-            return IntervalModel<Note>::getData(row, column, role);
+            return IntervalModel<RegionRec>::getData(row, column, role);
         }
 
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {
-        case 4: return i->level;
-        case 5: return i->label;
+        case 4: return i->label;
         default: return QVariant();
         }
     }
@@ -191,7 +171,7 @@ public:
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
     {
         if (column < 4) {
-            return IntervalModel<Note>::getSetDataCommand
+            return IntervalModel<RegionRec>::getSetDataCommand
                 (row, column, value, role);
         }
 
@@ -204,8 +184,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 4: point.level = value.toDouble(); break;
-        case 5: point.label = value.toString(); break;
+        case 4: point.label = value.toString(); break;
         }
 
         command->addPoint(point);
