@@ -18,6 +18,10 @@
 #include <QFile>
 #include <QTextStream>
 #include <QStringList>
+#include <QFileInfo>
+#include <QDir>
+
+#include <iostream>
 
 PlaylistFileReader::PlaylistFileReader(QString path) :
     m_source(path),
@@ -56,7 +60,9 @@ PlaylistFileReader::init()
 
     m_source.waitForData();
 
-    m_file = new QFile(m_source.getLocalFilename());
+    QString filename = m_source.getLocalFilename();
+
+    m_file = new QFile(filename);
     bool good = false;
 
     if (!m_file->exists()) {
@@ -67,6 +73,12 @@ PlaylistFileReader::init()
             .arg(m_source.getLocation());
     } else {
 	good = true;
+    }
+
+    if (good) {
+        if (!m_source.isRemote()) {
+            m_basedir = QFileInfo(filename).dir().canonicalPath();
+        }
     }
 
     if (!good) {
@@ -105,11 +117,30 @@ PlaylistFileReader::load() const
         QString chunk = in.readLine();
         QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
         
-        for (size_t li = 0; li < lines.size(); ++li) {
+        for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
 
             if (line.startsWith("#")) continue;
+
+            // line is expected to be a URL or a file path.  If it
+            // appears to be a local relative file path, then we
+            // should check whether it can be resolved relative to the
+            // location of the playlist file and, if so, do so.
+
+            if (!FileSource::isRemote(line)) {
+                if (QFileInfo(line).isRelative() && m_basedir != "") {
+                    QString testpath = QDir(m_basedir).filePath(line);
+                    if (QFileInfo(testpath).exists() &&
+                        QFileInfo(testpath).isFile()) {
+                        std::cerr << "Path \"" << line.toStdString()
+                                  << "\" is relative, resolving to \""
+                                  << testpath.toStdString() << "\""
+                                  << std::endl;
+                        line = testpath;
+                    }
+                }
+            }
 
             playlist.push_back(line);
         }

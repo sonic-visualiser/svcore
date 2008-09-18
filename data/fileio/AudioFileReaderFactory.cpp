@@ -104,6 +104,10 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  ResamplingWavFileReader::CacheInTemporaryFile,
                  targetRate,
                  reporter);
+            if (!reader->isOK()) {
+                delete reader;
+                reader = 0;
+            }
         }
     }
     
@@ -119,6 +123,10 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  OggVorbisFileReader::CacheInTemporaryFile,
                  targetRate,
                  reporter);
+            if (!reader->isOK()) {
+                delete reader;
+                reader = 0;
+            }
         }
     }
 #endif
@@ -135,6 +143,10 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  MP3FileReader::CacheInTemporaryFile,
                  targetRate,
                  reporter);
+            if (!reader->isOK()) {
+                delete reader;
+                reader = 0;
+            }
         }
     }
 #endif
@@ -150,6 +162,99 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
                  QuickTimeFileReader::CacheInTemporaryFile,
                  targetRate,
                  reporter);
+            if (!reader->isOK()) {
+                delete reader;
+                reader = 0;
+            }
+        }
+    }
+#endif
+
+    // If none of the readers claimed to support this file extension,
+    // perhaps the extension is missing or misleading.  Try again,
+    // ignoring it.  We have to be confident that the reader won't
+    // open just any old text file or whatever and pretend it's
+    // succeeded
+
+    if (!reader) {
+
+        reader = new WavFileReader(source);
+
+        if (targetRate != 0 &&
+            reader->isOK() &&
+            reader->getSampleRate() != targetRate) {
+
+            std::cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << std::endl;
+
+            delete reader;
+            reader = new ResamplingWavFileReader
+                (source,
+                 threading ?
+                 ResamplingWavFileReader::ResampleThreaded :
+                 ResamplingWavFileReader::ResampleAtOnce,
+                 ResamplingWavFileReader::CacheInTemporaryFile,
+                 targetRate,
+                 reporter);
+        }
+
+        if (!reader->isOK()) {
+            delete reader;
+            reader = 0;
+        }
+    }
+    
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
+    if (!reader) {
+        reader = new OggVorbisFileReader
+            (source,
+             threading ?
+             OggVorbisFileReader::DecodeThreaded :
+             OggVorbisFileReader::DecodeAtOnce,
+             OggVorbisFileReader::CacheInTemporaryFile,
+             targetRate,
+             reporter);
+
+        if (!reader->isOK()) {
+            delete reader;
+            reader = 0;
+        }
+    }
+#endif
+#endif
+
+#ifdef HAVE_MAD
+    if (!reader) {
+        reader = new MP3FileReader
+            (source,
+             threading ?
+             MP3FileReader::DecodeThreaded :
+             MP3FileReader::DecodeAtOnce,
+             MP3FileReader::CacheInTemporaryFile,
+             targetRate,
+             reporter);
+
+        if (!reader->isOK()) {
+            delete reader;
+            reader = 0;
+        }
+    }
+#endif
+
+#ifdef HAVE_QUICKTIME
+    if (!reader) {
+        reader = new QuickTimeFileReader
+            (source,
+             threading ?
+             QuickTimeFileReader::DecodeThreaded : 
+             QuickTimeFileReader::DecodeAtOnce,
+             QuickTimeFileReader::CacheInTemporaryFile,
+             targetRate,
+             reporter);
+
+        if (!reader->isOK()) {
+            delete reader;
+            reader = 0;
         }
     }
 #endif

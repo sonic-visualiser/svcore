@@ -181,7 +181,12 @@ PluginRDFIndexer::indexURL(QString urlString)
              // that we can check and report helpfully if one or both
              // is absent instead of just getting no results
 
-             "   OPTIONAL { ?plugin vamp:identifier ?plugin_id } . "
+             //!!! No -- because of rasqal's inability to correctly
+             // handle more than one OPTIONAL graph in a query, let's
+             // make identifier compulsory after all
+             //"   OPTIONAL { ?plugin vamp:identifier ?plugin_id } . "
+
+             "   ?plugin vamp:identifier ?plugin_id . "
 
              "   OPTIONAL { "
              "     ?library a vamp:PluginLibrary ; "

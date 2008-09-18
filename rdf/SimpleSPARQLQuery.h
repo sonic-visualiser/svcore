@@ -48,6 +48,10 @@ public:
     bool isOK() const;
     QString getErrorString() const;
 
+    // Do a query and return the value for the given binding, from the
+    // first result that has a value for it
+    static Value singleResultQuery(QString query, QString binding);
+
 protected:
     class Impl;
     Impl *m_impl;
