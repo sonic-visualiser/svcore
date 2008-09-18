@@ -59,6 +59,7 @@ HEADERS += fft/FFTapi.h \
            model/PowerOfSqrtTwoZoomConstraint.h \
            model/PowerOfTwoZoomConstraint.h \
            model/RangeSummarisableTimeValueModel.h \
+           model/RegionModel.h \
            model/SparseModel.h \
            model/SparseOneDimensionalModel.h \
            model/SparseTimeValueModel.h \

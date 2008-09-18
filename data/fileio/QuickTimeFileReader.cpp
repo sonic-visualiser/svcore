@@ -203,6 +203,7 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
 
     if (m_d->err) {
         m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
+        m_channelCount = 0;
         return;
     }
     m_d->buffer.mNumberBuffers = 1;

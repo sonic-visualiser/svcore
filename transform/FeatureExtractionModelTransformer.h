@@ -51,7 +51,13 @@ protected:
                    float **buffer);
 
     // just casts
+
     DenseTimeValueModel *getConformingInput();
+
+    template <typename ModelClass> bool isOutput() {
+        return dynamic_cast<ModelClass *>(m_output) != 0;
+    }
+
     template <typename ModelClass> ModelClass *getConformingOutput() {
 	ModelClass *mc = dynamic_cast<ModelClass *>(m_output);
 	if (!mc) {

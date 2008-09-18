@@ -27,6 +27,7 @@
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 #include "data/model/DenseTimeValueModel.h"
 #include "data/model/NoteModel.h"
+#include "data/model/RegionModel.h"
 #include "data/model/FFTModel.h"
 #include "data/model/WaveFileModel.h"
 
@@ -154,8 +155,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
 	    m_outputFeatureNo = i;
-	    m_descriptor = new Vamp::Plugin::OutputDescriptor
-		(outputs[i]);
+	    m_descriptor = new Vamp::Plugin::OutputDescriptor(outputs[i]);
 	    break;
 	}
     }
@@ -207,12 +207,92 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	break;
     }
 
-    if (binCount == 0) {
+    bool preDurationPlugin = (m_plugin->getVampApiVersion() < 2);
+
+    if (binCount == 0 &&
+        (preDurationPlugin || !m_descriptor->hasDuration)) {
 
 	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
 						 false);
 
-    } else if (binCount == 1) {
+    } else if ((preDurationPlugin && binCount > 1 &&
+                (m_descriptor->sampleType ==
+                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) ||
+               (!preDurationPlugin && m_descriptor->hasDuration)) {
+
+        // For plugins using the old v1 API without explicit duration,
+        // we treat anything that has multiple bins (i.e. that has the
+        // potential to have value and duration) and a variable sample
+        // rate as a note model, taking its values as pitch, duration
+        // and velocity (if present) respectively.  This is the same
+        // behaviour as always applied by SV to these plugins in the
+        // past.
+
+        // For plugins with the newer API, we treat anything with
+        // duration as either a note model with pitch and velocity, or
+        // a region model.
+
+        // How do we know whether it's an interval or note model?
+        // What's the essential difference?  Is a note model any
+        // interval model using a Hz or "MIDI pitch" scale?  There
+        // isn't really a reliable test for "MIDI pitch"...  Does a
+        // note model always have velocity?  This is a good question
+        // to be addressed by accompanying RDF, but for the moment we
+        // will do the following...
+
+        bool isNoteModel = false;
+        
+        // Regions have only value (and duration -- we can't extract a
+        // region model from an old-style plugin that doesn't support
+        // duration)
+        if (binCount > 1) isNoteModel = true;
+
+        // Regions do not have units of Hz (a sweeping assumption!)
+        if (m_descriptor->unit == "Hz") isNoteModel = true;
+
+        // If we had a "sparse 3D model", we would have the additional
+        // problem of determining whether to use that here (if bin
+        // count > 1).  But we don't.
+
+        if (isNoteModel) {
+
+            NoteModel *model;
+            if (haveExtents) {
+                model = new NoteModel
+                    (modelRate, modelResolution, minValue, maxValue, false);
+            } else {
+                model = new NoteModel
+                    (modelRate, modelResolution, false);
+            }
+            model->setScaleUnits(m_descriptor->unit.c_str());
+            m_output = model;
+
+        } else {
+
+            RegionModel *model;
+            if (haveExtents) {
+                model = new RegionModel
+                    (modelRate, modelResolution, minValue, maxValue, false);
+            } else {
+                model = new RegionModel
+                    (modelRate, modelResolution, false);
+            }
+            model->setScaleUnits(m_descriptor->unit.c_str());
+            m_output = model;
+        }
+
+    } else if (binCount == 1 ||
+               (m_descriptor->sampleType == 
+                Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
+
+        // Anything that is not a 1D, note, or interval model and that
+        // has only one value per result must be a sparse time value
+        // model.
+
+        // Anything that is not a 1D, note, or interval model and that
+        // has a variable sample rate is also treated as a sparse time
+        // value model regardless of its bin count, because we lack a
+        // sparse 3D model.
 
         SparseTimeValueModel *model;
         if (haveExtents) {
@@ -226,30 +306,11 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 
         m_output = model;
 
-    } else if (m_descriptor->sampleType ==
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
-
-        // We don't have a sparse 3D model, so interpret this as a
-        // note model.  There's nothing to define which values to use
-        // as which parameters of the note -- for the moment let's
-        // treat the first as pitch, second as duration in frames,
-        // third (if present) as velocity. (Our note model doesn't
-        // yet store velocity.)
-        //!!! todo: ask the user!
-	
-        NoteModel *model;
-        if (haveExtents) {
-            model = new NoteModel
-                (modelRate, modelResolution, minValue, maxValue, false);
-        } else {
-            model = new NoteModel
-                (modelRate, modelResolution, false);
-        }            
-        model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
-
-        m_output = model;
-
     } else {
+
+        // Anything that is not a 1D, note, or interval model and that
+        // has a fixed sample rate and more than one value per result
+        // must be a dense 3D model.
 
         EditableDenseThreeDimensionalModel *model =
             new EditableDenseThreeDimensionalModel
@@ -541,15 +602,21 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	}
     }
 	
-    if (binCount == 0) {
+    // Rather than repeat the complicated tests from the constructor
+    // to determine what sort of model we must be adding the features
+    // to, we instead test what sort of model the constructor decided
+    // to create.
 
-	SparseOneDimensionalModel *model =
+    if (isOutput<SparseOneDimensionalModel>()) {
+
+        SparseOneDimensionalModel *model =
             getConformingOutput<SparseOneDimensionalModel>();
 	if (!model) return;
 
-	model->addPoint(SparseOneDimensionalModel::Point(frame, feature.label.c_str()));
+        model->addPoint(SparseOneDimensionalModel::Point
+                       (frame, feature.label.c_str()));
 	
-    } else if (binCount == 1) {
+    } else if (isOutput<SparseTimeValueModel>()) {
 
 	float value = 0.0;
 	if (feature.values.size() > 0) value = feature.values[0];
@@ -558,32 +625,52 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             getConformingOutput<SparseTimeValueModel>();
 	if (!model) return;
 
-	model->addPoint(SparseTimeValueModel::Point(frame, value, feature.label.c_str()));
-//        std::cerr << "SparseTimeValueModel::addPoint(" << frame << ", " << value << "), " << feature.label.c_str() << std::endl;
+	model->addPoint(SparseTimeValueModel::Point
+                        (frame, value, feature.label.c_str()));
 
-    } else if (m_descriptor->sampleType == 
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+    } else if (isOutput<NoteModel>() || isOutput<RegionModel>()) {
 
-        float pitch = 0.0;
-        if (feature.values.size() > 0) pitch = feature.values[0];
+        int index = 0;
+
+        float value = 0.0;
+        if (feature.values.size() > index) {
+            value = feature.values[index++];
+        }
 
         float duration = 1;
-        if (feature.values.size() > 1) duration = feature.values[1];
+        if (feature.hasDuration) {
+            duration = Vamp::RealTime::realTime2Frame(feature.duration, inputRate);
+        } else {
+            if (feature.values.size() > index) {
+                duration = feature.values[index++];
+            }
+        }
         
-        float velocity = 100;
-        if (feature.values.size() > 2) velocity = feature.values[2];
-        if (velocity < 0) velocity = 127;
-        if (velocity > 127) velocity = 127;
+        if (isOutput<NoteModel>()) {
 
-        NoteModel *model = getConformingOutput<NoteModel>();
-        if (!model) return;
+            float velocity = 100;
+            if (feature.values.size() > index) {
+                velocity = feature.values[index++];
+            }
+            if (velocity < 0) velocity = 127;
+            if (velocity > 127) velocity = 127;
 
-        model->addPoint(NoteModel::Point(frame, pitch,
-                                         lrintf(duration),
-                                         velocity / 127.f,
-                                         feature.label.c_str()));
+            NoteModel *model = getConformingOutput<NoteModel>();
+            if (!model) return;
+            model->addPoint(NoteModel::Point(frame, value, // value is pitch
+                                             lrintf(duration),
+                                             velocity / 127.f,
+                                             feature.label.c_str()));
+        } else {
+            RegionModel *model = getConformingOutput<RegionModel>();
+            if (model) {
+                model->addPoint(RegionModel::Point(frame, value,
+                                                   lrintf(duration),
+                                                   feature.label.c_str()));
+            } else return;
+        }
 	
-    } else {
+    } else if (isOutput<EditableDenseThreeDimensionalModel>()) {
 	
 	DenseThreeDimensionalModel::Column values = feature.values;
 	
@@ -592,6 +679,9 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	if (!model) return;
 
 	model->setColumn(frame / model->getResolution(), values);
+
+    } else {
+        std::cerr << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << std::endl;
     }
 }
 
@@ -606,29 +696,33 @@ FeatureExtractionModelTransformer::setCompletion(int completion)
 //    std::cerr << "FeatureExtractionModelTransformer::setCompletion("
 //              << completion << ")" << std::endl;
 
-    if (binCount == 0) {
+    if (isOutput<SparseOneDimensionalModel>()) {
 
 	SparseOneDimensionalModel *model =
             getConformingOutput<SparseOneDimensionalModel>();
 	if (!model) return;
-	model->setCompletion(completion, true); //!!!m_context.updates);
+	model->setCompletion(completion, true);
 
-    } else if (binCount == 1) {
+    } else if (isOutput<SparseTimeValueModel>()) {
 
 	SparseTimeValueModel *model =
             getConformingOutput<SparseTimeValueModel>();
 	if (!model) return;
-	model->setCompletion(completion, true); //!!!m_context.updates);
+	model->setCompletion(completion, true);
 
-    } else if (m_descriptor->sampleType ==
-	       Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+    } else if (isOutput<NoteModel>()) {
 
-	NoteModel *model =
-            getConformingOutput<NoteModel>();
+	NoteModel *model = getConformingOutput<NoteModel>();
 	if (!model) return;
-	model->setCompletion(completion, true); //!!!m_context.updates);
+	model->setCompletion(completion, true);
 
-    } else {
+    } else if (isOutput<RegionModel>()) {
+
+	RegionModel *model = getConformingOutput<RegionModel>();
+	if (!model) return;
+	model->setCompletion(completion, true);
+
+    } else if (isOutput<EditableDenseThreeDimensionalModel>()) {
 
 	EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>();
