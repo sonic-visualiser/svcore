@@ -484,14 +484,18 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier, size_t rat
         FeatureExtractionPluginFactory *factory = 
             FeatureExtractionPluginFactory::instanceFor(pluginId);
 
-        plugin = factory->instantiatePlugin(pluginId, rate);
+        if (factory) {
+            plugin = factory->instantiatePlugin(pluginId, rate);
+        }
 
     } else {
 
         RealTimePluginFactory *factory = 
             RealTimePluginFactory::instanceFor(pluginId);
-            
-        plugin = factory->instantiatePlugin(pluginId, 0, 0, rate, 1024, 1);
+
+        if (factory) {
+            plugin = factory->instantiatePlugin(pluginId, 0, 0, rate, 1024, 1);
+        }
     }
 
     return plugin;

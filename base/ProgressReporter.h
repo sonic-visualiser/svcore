@@ -14,6 +14,7 @@
 */
 
 #ifndef _PROGRESS_REPORTER_H_
+#define _PROGRESS_REPORTER_H_
 
 #include <QObject>
 #include <QString>
@@ -25,6 +26,11 @@ class ProgressReporter : public QObject
 public:
     ProgressReporter(QObject *parent = 0);
     virtual ~ProgressReporter();
+
+    virtual bool isDefinite() const = 0;
+    virtual void setDefinite(bool definite) = 0; // default should be definite
+
+    virtual bool wasCancelled() const = 0;
 
 signals:
     void cancelled();

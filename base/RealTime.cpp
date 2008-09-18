@@ -79,6 +79,94 @@ RealTime::fromTimeval(const struct timeval &tv)
     return RealTime(tv.tv_sec, tv.tv_usec * 1000);
 }
 
+RealTime
+RealTime::fromXsdDuration(std::string xsdd)
+{
+    RealTime t;
+
+    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    double second = 0.0;
+
+    int i = 0;
+
+    const char *s = xsdd.c_str();
+    int len = xsdd.length();
+
+    bool negative = false, afterT = false;
+
+    int valstart = 0;
+
+    while (i < len) {
+
+        if (s[i] == '-') {
+            if (i == 0) negative = true;
+            ++i;
+            continue;
+        }
+
+        double value = 0.0;
+        char *eptr = 0;
+
+        if (isdigit(s[i]) || s[i] == '.') {
+            valstart = i;
+            value = strtod(&s[i], &eptr);
+            i = eptr - s;
+        }
+
+        if (i == len) break;
+
+        switch (s[i]) {
+        case 'Y': year = int(value + 0.1); break;
+        case 'D': day  = int(value + 0.1); break;
+        case 'H': hour = int(value + 0.1); break;
+        case 'M':
+            if (afterT) minute = int(value + 0.1);
+            else month = int(value + 0.1);
+            break;
+        case 'S':
+            second = value;
+            break;
+        case 'T': afterT = true; break;
+        };
+
+        ++i;
+    }
+
+    if (year > 0) {
+        std::cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero year.\nWith no origin and a limited data size, I will treat a year as exactly 31556952\nseconds and you should expect overflow and/or poor results." << std::endl;
+        t = t + RealTime(year * 31556952, 0);
+    }
+
+    if (month > 0) {
+        std::cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero month.\nWith no origin and a limited data size, I will treat a month as exactly 2629746\nseconds and you should expect overflow and/or poor results." << std::endl;
+        t = t + RealTime(month * 2629746, 0);
+    }
+
+    if (day > 0) {
+        t = t + RealTime(day * 86400, 0);
+    }
+
+    if (hour > 0) {
+        t = t + RealTime(hour * 3600, 0);
+    }
+
+    if (minute > 0) {
+        t = t + RealTime(minute * 60, 0);
+    }
+
+    t = t + fromSeconds(second);
+
+    return t;
+}
+
+double
+RealTime::toDouble() const
+{
+    double d = sec;
+    d += double(nsec) / double(ONE_BILLION);
+    return d;
+}
+
 std::ostream &operator<<(std::ostream &out, const RealTime &rt)
 {
     if (rt < RealTime::zeroTime) {
@@ -128,7 +216,6 @@ RealTime
 RealTime::fromString(std::string s)
 {
     bool negative = false;
-    bool faulty = false;
     bool section = 0;
     std::string ssec, snsec;
 
