@@ -54,6 +54,13 @@ protected:
     typedef std::map<QString, TimeValueMap> TypeTimeValueMap;
     typedef std::map<QString, TypeTimeValueMap> SourceTypeTimeValueMap;
 
+    void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
+    void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
+
+    void getDenseFeatureProperties(QString featureUri,
+                                   int &sampleRate, int &windowLength,
+                                   int &hopSize, int &width, int &height);
+
     void extractStructure(const TimeValueMap &map, bool &sparse,
                           int &minValueCount, int &maxValueCount);
 
@@ -124,6 +131,229 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
     std::vector<Model *> models;
 
+    getDataModelsDense(models, reporter);
+
+    QString error;
+    if (!isOK()) error = m_errorString;
+    m_errorString = "";
+
+    getDataModelsSparse(models, reporter);
+
+    if (isOK()) m_errorString = error;
+
+    return models;
+}
+
+void
+RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
+                                    ProgressReporter *reporter)
+{
+    SimpleSPARQLQuery query = SimpleSPARQLQuery
+        (QString
+         (
+             " PREFIX mo: <http://purl.org/ontology/mo/>"
+             " PREFIX af: <http://purl.org/ontology/af/>"
+             
+             " SELECT ?feature ?signal_source ?feature_signal_type ?value "
+             " FROM <%1> "
+             
+             " WHERE { "
+             
+             "   ?signal a mo:Signal ; "
+             "           mo:available_as ?signal_source ; "
+             "           af:signal_feature ?feature . "
+             
+             "   ?feature a ?feature_signal_type ; "
+             "            af:value ?value . "
+    
+             " } "
+             )
+         .arg(m_uristring));
+
+    SimpleSPARQLQuery::ResultList results = query.execute();
+
+    if (!query.isOK()) {
+        m_errorString = query.getErrorString();
+        return;
+    }
+
+    if (query.wasCancelled()) {
+        m_errorString = "Query cancelled";
+        return;
+    }        
+
+    for (int i = 0; i < results.size(); ++i) {
+
+        QString feature = results[i]["feature"].value;
+        QString source = results[i]["signal_source"].value;
+        QString type = results[i]["feature_signal_type"].value;
+        QString value = results[i]["value"].value;
+
+        int sampleRate = 0;
+        int windowLength = 0;
+        int hopSize = 0;
+        int width = 0;
+        int height = 0;
+        getDenseFeatureProperties
+            (feature, sampleRate, windowLength, hopSize, width, height);
+
+        if (sampleRate != 0 && sampleRate != m_sampleRate) {
+            cerr << "WARNING: Sample rate in dense feature description does not match our underlying rate -- using rate from feature description" << endl;
+        }
+        if (sampleRate == 0) sampleRate = m_sampleRate;
+
+        if (hopSize == 0) {
+            cerr << "WARNING: Dense feature description does not specify a hop size -- assuming 1" << endl;
+            hopSize = 1;
+        }
+
+        if (height == 0) {
+            cerr << "WARNING: Dense feature description does not specify feature signal dimensions -- assuming one-dimensional (height = 1)" << endl;
+            height = 1;
+        }
+
+        QStringList values = value.split(' ', QString::SkipEmptyParts);
+
+        if (values.empty()) {
+            cerr << "WARNING: Dense feature description does not specify any values!" << endl;
+            continue;
+        }
+
+        if (height == 1) {
+
+            SparseTimeValueModel *m = new SparseTimeValueModel
+                (sampleRate, hopSize, false);
+
+            for (int j = 0; j < values.size(); ++j) {
+                float f = values[j].toFloat();
+                SparseTimeValueModel::Point point(j * hopSize, f, "");
+                m->addPoint(point);
+            }
+        
+            models.push_back(m);
+
+        } else {
+
+            EditableDenseThreeDimensionalModel *m =
+                new EditableDenseThreeDimensionalModel(sampleRate, hopSize,
+                                                       height, false);
+            
+            EditableDenseThreeDimensionalModel::Column column;
+
+            int x = 0;
+
+            for (int j = 0; j < values.size(); ++j) {
+                if (j % height == 0 && !column.empty()) {
+                    m->setColumn(x++, column);
+                    column.clear();
+                }
+                column.push_back(values[j].toFloat());
+            }
+
+            if (!column.empty()) {
+                m->setColumn(x++, column);
+            }
+
+            models.push_back(m);
+        }
+    }
+}
+
+void
+RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
+                                           int &sampleRate, int &windowLength,
+                                           int &hopSize, int &width, int &height)
+{
+    QString dimensionsQuery 
+        (
+            " PREFIX mo: <http://purl.org/ontology/mo/>"
+            " PREFIX af: <http://purl.org/ontology/af/>"
+            
+            " SELECT ?dimensions "
+            " FROM <%1> "
+
+            " WHERE { "
+
+            "   <%2> af:dimensions ?dimensions . "
+            
+            " } "
+            );
+
+    SimpleSPARQLQuery::Value dimensionsValue =
+        SimpleSPARQLQuery::singleResultQuery(dimensionsQuery
+                                             .arg(m_uristring).arg(featureUri),
+                                             "dimensions");
+
+    cerr << "Dimensions = \"" << dimensionsValue.value.toStdString() << "\""
+         << endl;
+
+    if (dimensionsValue.value != "") {
+        QStringList dl = dimensionsValue.value.split(" ");
+        if (dl.empty()) dl.push_back(dimensionsValue.value);
+        if (dl.size() > 0) height = dl[0].toInt();
+        if (dl.size() > 1) width = dl[1].toInt();
+    }
+
+    QString queryTemplate
+        (
+            " PREFIX mo: <http://purl.org/ontology/mo/>"
+            " PREFIX af: <http://purl.org/ontology/af/>"
+            " PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>"
+
+            " SELECT ?%3 "
+            " FROM <%1> "
+            
+            " WHERE { "
+            
+            "   <%2> mo:time ?time . "
+            
+            "   ?time a tl:Interval ; "
+            "         tl:onTimeLine ?timeline . "
+
+            "   ?map tl:rangeTimeLine ?timeline . "
+
+            "   ?map tl:%3 ?%3 . "
+            
+            " } "
+            );
+
+    // Another laborious workaround for rasqal's failure to handle
+    // multiple optionals properly
+
+    SimpleSPARQLQuery::Value srValue = 
+        SimpleSPARQLQuery::singleResultQuery(queryTemplate
+                                             .arg(m_uristring).arg(featureUri)
+                                             .arg("sampleRate"),
+                                             "sampleRate");
+    if (srValue.value != "") {
+        sampleRate = srValue.value.toInt();
+    }
+
+    SimpleSPARQLQuery::Value hopValue = 
+        SimpleSPARQLQuery::singleResultQuery(queryTemplate
+                                             .arg(m_uristring).arg(featureUri)
+                                             .arg("hopSize"),
+                                             "hopSize");
+    if (srValue.value != "") {
+        hopSize = hopValue.value.toInt();
+    }
+
+    SimpleSPARQLQuery::Value winValue = 
+        SimpleSPARQLQuery::singleResultQuery(queryTemplate
+                                             .arg(m_uristring).arg(featureUri)
+                                             .arg("windowLength"),
+                                             "windowLength");
+    if (winValue.value != "") {
+        windowLength = winValue.value.toInt();
+    }
+
+    cerr << "sr = " << sampleRate << ", hop = " << hopSize << ", win = " << windowLength << endl;
+}
+
+void
+RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
+                                     ProgressReporter *reporter)
+{
     // Our query is intended to retrieve every thing that has a time,
     // and every feature type and value associated with a thing that
     // has a time.
@@ -163,20 +393,23 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
         " PREFIX mo: <http://purl.org/ontology/mo/>"
         " PREFIX af: <http://purl.org/ontology/af/>"
 
-        " SELECT ?signalSource ?time ?eventType ?value"
+        " SELECT ?signal_source ?time ?event_type ?value"
         " FROM <%1>"
 
         " WHERE {"
-        "   ?signal mo:available_as ?signalSource ."
+
+        "   ?signal mo:available_as ?signal_source ."
+        "   ?signal a mo:Signal ."
+
         "   ?signal mo:time ?interval ."
         "   ?interval time:onTimeLine ?tl ."
         "   ?t time:onTimeLine ?tl ."
         "   ?t time:at ?time ."
-        "   ?timedThing event:time ?t ."
-        "   ?timedThing a ?eventType ."
+        "   ?timed_thing event:time ?t ."
+        "   ?timed_thing a ?event_type ."
+
         "   OPTIONAL {"
-        "     ?timedThing af:hasFeature ?feature ."
-        "     ?feature af:value ?value"
+        "     ?timed_thing af:feature ?value"
         "   }"
         " }"
 
@@ -191,17 +424,17 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     if (!query.isOK()) {
         m_errorString = query.getErrorString();
-        return models;
+        return;
     }
 
     if (query.wasCancelled()) {
         m_errorString = "Query cancelled";
-        return models;
+        return;
     }        
 
     for (int i = 0; i < results.size(); ++i) {
 
-        QString source = results[i]["signalSource"].value;
+        QString source = results[i]["signal_source"].value;
 
         QString timestring = results[i]["time"].value;
         RealTime time;
@@ -209,12 +442,13 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
         cerr << "time = " << time.toString() << " (from xsd:duration \""
              << timestring.toStdString() << "\")" << endl;
 
-        QString type = results[i]["eventType"].value;
+        QString type = results[i]["event_type"].value;
 
         QString valuestring = results[i]["value"].value;
         float value = 0.f;
         bool haveValue = false;
         if (valuestring != "") {
+            //!!! no -- runner actually writes a "CSV literal"
             value = valuestring.toFloat(&haveValue);
             cerr << "value = " << value << endl;
         }
@@ -322,9 +556,6 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
             }
         }
     }
-
-
-    return models;
 }
 
 void

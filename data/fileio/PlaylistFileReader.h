@@ -45,6 +45,7 @@ protected:
 
     FileSource m_source;
     QFile *m_file;
+    QString m_basedir;
     QString m_error;
 };
 

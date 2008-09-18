@@ -16,12 +16,30 @@
 #include "SimpleSPARQLQuery.h"
 #include "base/ProgressReporter.h"
 
+#ifdef USE_NEW_RASQAL_API
+#include <rasqal/rasqal.h>
+#else
 #include <rasqal.h>
+#endif
 
 #include <iostream>
 
 using std::cerr;
 using std::endl;
+
+#ifdef USE_NEW_RASQAL_API
+class WrasqalWorldWrapper // wrong but wromantic, etc
+{
+public:
+    WrasqalWorldWrapper() : m_world(rasqal_new_world()) { }
+    ~WrasqalWorldWrapper() { rasqal_free_world(m_world); }
+
+    rasqal_world *getWorld() const { return m_world; }
+
+private:
+    rasqal_world *m_world;
+};
+#endif
 
 class SimpleSPARQLQuery::Impl
 {
@@ -40,13 +58,25 @@ public:
 protected:
     static void errorHandler(void *, raptor_locator *, const char *);
 
+#ifdef USE_NEW_RASQAL_API
+    static WrasqalWorldWrapper m_www;
+#else
     static bool m_initialised;
+#endif
     
     QString m_query;
     QString m_errorString;
     ProgressReporter *m_reporter;
     bool m_cancelled;
 };
+
+#ifdef USE_NEW_RASQAL_API
+WrasqalWorldWrapper
+SimpleSPARQLQuery::Impl::m_www;
+#else
+bool
+SimpleSPARQLQuery::Impl::m_initialised = false;
+#endif
 
 SimpleSPARQLQuery::SimpleSPARQLQuery(QString query) :
     m_impl(new Impl(query)) { }
@@ -86,23 +116,15 @@ SimpleSPARQLQuery::getErrorString() const
     return m_impl->getErrorString();
 }
 
-bool
-SimpleSPARQLQuery::Impl::m_initialised = false;
-
 SimpleSPARQLQuery::Impl::Impl(QString query) :
     m_query(query),
     m_reporter(0),
     m_cancelled(false)
 {
-    //!!! fortunately this global stuff goes away in future rasqal versions
-    if (!m_initialised) {
-        rasqal_init();
-    }
 }
 
 SimpleSPARQLQuery::Impl::~Impl()
 {
-//!!!    rasqal_finish();
 }
 
 bool
@@ -138,7 +160,15 @@ SimpleSPARQLQuery::Impl::execute()
 {
     ResultList list;
 
+#ifdef USE_NEW_RASQAL_API
+    rasqal_query *query = rasqal_new_query(m_www.getWorld(), "sparql", NULL);
+#else
+    if (!m_initialised) {
+        m_initialised = true;
+        rasqal_init();
+    }
     rasqal_query *query = rasqal_new_query("sparql", NULL);
+#endif
     if (!query) {
         m_errorString = "Failed to construct query";
         cerr << "SimpleSPARQLQuery: ERROR: " << m_errorString.toStdString() << endl;
@@ -232,4 +262,28 @@ SimpleSPARQLQuery::Impl::execute()
 
     return list;
 }
-    
+
+SimpleSPARQLQuery::Value
+SimpleSPARQLQuery::singleResultQuery(QString query, QString binding)
+{
+    SimpleSPARQLQuery q(query);
+    ResultList results = q.execute();
+    if (!q.isOK()) {
+        cerr << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
+             << q.getErrorString().toStdString() << endl;
+        return Value();
+    }
+    if (results.empty()) {
+        return Value();
+    }
+    for (int i = 0; i < results.size(); ++i) {
+        if (results[i].find(binding) != results[i].end() &&
+            results[i][binding].type != NoValue) {
+            return results[i][binding];
+        }
+    }
+    return Value();
+}
+
+
+

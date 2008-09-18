@@ -28,14 +28,6 @@ public:
     PluginRDFDescription(QString pluginId);
     ~PluginRDFDescription();
 
-    enum OutputType
-    {
-        OutputTypeUnknown,
-        OutputFeatures,
-        OutputEvents,
-        OutputFeaturesAndEvents
-    };
-
     enum OutputDisposition
     {
         OutputDispositionUnknown,
@@ -45,23 +37,22 @@ public:
     };
 
     bool haveDescription() const;
-    OutputType getOutputType(QString outputId) const;
     OutputDisposition getOutputDisposition(QString outputId) const;
-    QString getOutputFeatureTypeURI(QString outputId) const;
     QString getOutputEventTypeURI(QString outputId) const;
+    QString getOutputFeatureAttributeURI(QString outputId) const;
+    QString getOutputSignalTypeURI(QString outputId) const;
     QString getOutputUnit(QString outputId) const;
 
 protected:    
-    typedef std::map<QString, OutputType> OutputTypeMap;
     typedef std::map<QString, OutputDisposition> OutputDispositionMap;
     typedef std::map<QString, QString> OutputStringMap;
 
     QString m_pluginId;
     bool m_haveDescription;
-    OutputTypeMap m_outputTypes;
     OutputDispositionMap m_outputDispositions;
-    OutputStringMap m_outputFeatureTypeURIMap;
     OutputStringMap m_outputEventTypeURIMap;
+    OutputStringMap m_outputFeatureAttributeURIMap;
+    OutputStringMap m_outputSignalTypeURIMap;
     OutputStringMap m_outputUnitMap;
     bool indexURL(QString url);
 };

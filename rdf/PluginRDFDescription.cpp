@@ -53,15 +53,6 @@ PluginRDFDescription::haveDescription() const
     return m_haveDescription;
 }
 
-PluginRDFDescription::OutputType
-PluginRDFDescription::getOutputType(QString outputId) const
-{
-    if (m_outputTypes.find(outputId) == m_outputTypes.end()) {
-        return OutputTypeUnknown;
-    }
-    return m_outputTypes.find(outputId)->second;
-}
-
 PluginRDFDescription::OutputDisposition
 PluginRDFDescription::getOutputDisposition(QString outputId) const
 {
@@ -72,16 +63,6 @@ PluginRDFDescription::getOutputDisposition(QString outputId) const
 }
 
 QString
-PluginRDFDescription::getOutputFeatureTypeURI(QString outputId) const
-{
-    if (m_outputFeatureTypeURIMap.find(outputId) ==
-        m_outputFeatureTypeURIMap.end()) {
-        return "";
-    }
-    return m_outputFeatureTypeURIMap.find(outputId)->second;
-}
-
-QString
 PluginRDFDescription::getOutputEventTypeURI(QString outputId) const
 {
     if (m_outputEventTypeURIMap.find(outputId) ==
@@ -89,6 +70,26 @@ PluginRDFDescription::getOutputEventTypeURI(QString outputId) const
         return "";
     }
     return m_outputEventTypeURIMap.find(outputId)->second;
+}
+
+QString
+PluginRDFDescription::getOutputFeatureAttributeURI(QString outputId) const
+{
+    if (m_outputFeatureAttributeURIMap.find(outputId) ==
+        m_outputFeatureAttributeURIMap.end()) {
+        return "";
+    }
+    return m_outputFeatureAttributeURIMap.find(outputId)->second;
+}
+
+QString
+PluginRDFDescription::getOutputSignalTypeURI(QString outputId) const
+{
+    if (m_outputSignalTypeURIMap.find(outputId) ==
+        m_outputSignalTypeURIMap.end()) {
+        return "";
+    }
+    return m_outputSignalTypeURIMap.find(outputId)->second;
 }
 
 QString
@@ -111,25 +112,17 @@ PluginRDFDescription::indexURL(QString url)
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
-             " SELECT ?output_id ?output_type ?feature_type ?event_type ?unit "
+             " SELECT ?output ?output_id ?output_type ?unit "
              " FROM <%1> "
 
              " WHERE { "
 
              "   ?plugin a vamp:Plugin ; "
              "           vamp:identifier \"%2\" ; "
-             "           vamp:output_descriptor ?output . "
+             "           vamp:output ?output . "
 
              "   ?output vamp:identifier ?output_id ; "
              "           a ?output_type . "
-
-             "   OPTIONAL { "
-             "     ?output vamp:computes_feature_type ?feature_type "
-             "   } . "
-
-             "   OPTIONAL { "
-             "     ?output vamp:computes_event_type ?event_type "
-             "   } . "
 
              "   OPTIONAL { "
              "     ?output vamp:unit ?unit "
@@ -152,7 +145,8 @@ PluginRDFDescription::indexURL(QString url)
     if (results.empty()) {
         cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: Document at <"
              << url.toStdString()
-             << "> does not appear to describe any plugin outputs" << endl;
+             << "> does not appear to describe any outputs for plugin with id \""
+             << label.toStdString() << "\"" << endl;
         return false;
     }
 
@@ -162,12 +156,8 @@ PluginRDFDescription::indexURL(QString url)
 
     for (int i = 0; i < results.size(); ++i) {
 
+        QString outputUri = results[i]["output"].value;
         QString outputId = results[i]["output_id"].value;
-
-        if (m_outputTypes.find(outputId) == m_outputTypes.end()) {
-            m_outputTypes[outputId] = OutputTypeUnknown;
-        }
-
         QString outputType = results[i]["output_type"].value;
 
         if (outputType.contains("DenseOutput")) {
@@ -177,34 +167,6 @@ PluginRDFDescription::indexURL(QString url)
         } else if (outputType.contains("TrackLevelOutput")) {
             m_outputDispositions[outputId] = OutputTrackLevel;
         }
-
-        if (results[i]["feature_type"].type == SimpleSPARQLQuery::URIValue) {
-
-            QString featureType = results[i]["feature_type"].value;
-
-            if (featureType != "") {
-                if (m_outputTypes[outputId] == OutputEvents) {
-                    m_outputTypes[outputId] = OutputFeaturesAndEvents;
-                } else {
-                    m_outputTypes[outputId] = OutputFeatures;
-                }
-                m_outputFeatureTypeURIMap[outputId] = featureType;
-            }
-        }
-
-        if (results[i]["event_type"].type == SimpleSPARQLQuery::URIValue) {
-
-            QString eventType = results[i]["event_type"].value;
-
-            if (eventType != "") {
-                if (m_outputTypes[outputId] == OutputFeatures) {
-                    m_outputTypes[outputId] = OutputFeaturesAndEvents;
-                } else {
-                    m_outputTypes[outputId] = OutputEvents;
-                }
-                m_outputEventTypeURIMap[outputId] = eventType;
-            }
-        }
             
         if (results[i]["unit"].type == SimpleSPARQLQuery::LiteralValue) {
 
@@ -213,6 +175,35 @@ PluginRDFDescription::indexURL(QString url)
             if (unit != "") {
                 m_outputUnitMap[outputId] = unit;
             }
+        }
+
+        QString queryTemplate = 
+            QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                    " SELECT ?%3 FROM <%1> "
+                    " WHERE { <%2> vamp:computes_%3 ?%3 } ")
+            .arg(url).arg(outputUri);
+
+        SimpleSPARQLQuery::Value v;
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (queryTemplate.arg("event_type"), "event_type");
+
+        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+            m_outputEventTypeURIMap[outputId] = v.value;
+        }
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (queryTemplate.arg("feature_attribute"), "feature_attribute");
+
+        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+            m_outputFeatureAttributeURIMap[outputId] = v.value;
+        }
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (queryTemplate.arg("signal_type"), "signal_type");
+
+        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+            m_outputSignalTypeURIMap[outputId] = v.value;
         }
     }
 
