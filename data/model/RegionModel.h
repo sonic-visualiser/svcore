@@ -95,7 +95,8 @@ public:
     RegionModel(size_t sampleRate, size_t resolution,
                 bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
-	m_valueQuantization(0)
+	m_valueQuantization(0),
+        m_haveDistinctValues(false)
     {
     }
 
@@ -105,7 +106,8 @@ public:
 	IntervalModel<RegionRec>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
-	m_valueQuantization(0)
+	m_valueQuantization(0),
+        m_haveDistinctValues(false)
     {
     }
 
@@ -115,6 +117,8 @@ public:
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
+
+    bool haveDistinctValues() const { return m_haveDistinctValues; }
 
     QString getTypeName() const { return tr("Region"); }
 
@@ -197,8 +201,15 @@ public:
         return SortNumeric;
     }
 
+    virtual void addPoint(const Point &point)
+    {
+        if (point.value != 0.f) m_haveDistinctValues = true;
+        IntervalModel<RegionRec>::addPoint(point);
+    }
+    
 protected:
     float m_valueQuantization;
+    bool m_haveDistinctValues;
 };
 
 #endif
