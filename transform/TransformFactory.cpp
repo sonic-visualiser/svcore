@@ -30,6 +30,9 @@
 #include <QRegExp>
 #include <QTextStream>
 
+using std::cerr;
+using std::endl;
+
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
 
@@ -51,14 +54,14 @@ TransformFactory::getAllTransformDescriptions()
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
-//        std::cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << std::endl;
+//        cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << endl;
 	dset.insert(i->second);
     }
 
     TransformList list;
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
-//        std::cerr << "inserting transform into list: id = " << i->identifier.toStdString() << std::endl;
+//        cerr << "inserting transform into list: id = " << i->identifier.toStdString() << endl;
 	list.push_back(*i);
     }
 
@@ -227,7 +230,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    std::cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
 	    continue;
 	}
 
@@ -235,7 +238,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    factory->instantiatePlugin(pluginId, 44100);
 
 	if (!plugin) {
-	    std::cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << endl;
 	    continue;
 	}
 		
@@ -257,21 +260,23 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
             QString maker = plugin->getMaker().c_str();
             if (maker == "") maker = tr("<unknown maker>");
 
-            if (description == "") {
+            QString longDescription = description;
+
+            if (longDescription == "") {
                 if (outputs.size() == 1) {
-                    description = tr("Extract features using \"%1\" plugin (from %2)")
+                    longDescription = tr("Extract features using \"%1\" plugin (from %2)")
                         .arg(pluginName).arg(maker);
                 } else {
-                    description = tr("Extract features using \"%1\" output of \"%2\" plugin (from %3)")
+                    longDescription = tr("Extract features using \"%1\" output of \"%2\" plugin (from %3)")
                         .arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
                 }
             } else {
                 if (outputs.size() == 1) {
-                    description = tr("%1 using \"%2\" plugin (from %3)")
-                        .arg(description).arg(pluginName).arg(maker);
+                    longDescription = tr("%1 using \"%2\" plugin (from %3)")
+                        .arg(longDescription).arg(pluginName).arg(maker);
                 } else {
-                    description = tr("%1 using \"%2\" output of \"%3\" plugin (from %4)")
-                        .arg(description).arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
+                    longDescription = tr("%1 using \"%2\" output of \"%3\" plugin (from %4)")
+                        .arg(longDescription).arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
                 }
             }                    
 
@@ -288,7 +293,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
             bool configurable = (!plugin->getPrograms().empty() ||
                                  !plugin->getParameterDescriptors().empty());
 
-//            std::cerr << "Feature extraction plugin transform: " << transformId.toStdString() << " friendly name: " << friendlyName.toStdString() << std::endl;
+//            cerr << "Feature extraction plugin transform: " << transformId.toStdString() << " friendly name: " << friendlyName.toStdString() << endl;
 
 	    transforms[transformId] = 
                 TransformDescription(tr("Analysis"),
@@ -297,6 +302,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                      userName,
                                      friendlyName,
                                      description,
+                                     longDescription,
                                      maker,
                                      units,
                                      configurable);
@@ -322,7 +328,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             RealTimePluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    std::cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << std::endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
 	    continue;
 	}
 
@@ -330,14 +336,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             factory->getPluginDescriptor(pluginId);
 
         if (!descriptor) {
-	    std::cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << std::endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << endl;
 	    continue;
 	}
 	
 //!!!        if (descriptor->controlOutputPortCount == 0 ||
 //            descriptor->audioInputPortCount == 0) continue;
 
-//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << std::endl;
+//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
 	
 	QString pluginName = descriptor->name.c_str();
         QString category = factory->getPluginCategory(pluginId);
@@ -398,6 +404,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                                          transformId,
                                          userName,
                                          userName,
+                                         "",
                                          description,
                                          maker,
                                          units,
@@ -429,6 +436,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                                          transformId,
                                          pluginName,
                                          pluginName,
+                                         "",
                                          description,
                                          maker,
                                          "",
@@ -506,15 +514,15 @@ TransformFactory::downcastVampPlugin(Vamp::PluginBase *plugin)
 {
     Vamp::Plugin *vp = dynamic_cast<Vamp::Plugin *>(plugin);
     if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << std::endl;
+//        cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << endl;
         vp = dynamic_cast<Vamp::PluginHostAdapter *>(plugin); //!!! why?
 }
     if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << std::endl;
+//        cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << endl;
         vp = dynamic_cast<Vamp::HostExt::PluginWrapper *>(plugin); //!!! no, I mean really why?
     }
     if (!vp) {
-//        std::cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << std::endl;
+//        cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << endl;
     }
     return vp;
 }
@@ -727,10 +735,10 @@ TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
         }
         if (!transform.getStepSize()) {
             if (domain == Vamp::Plugin::FrequencyDomain) {
-//                std::cerr << "frequency domain, step = " << blockSize/2 << std::endl;
+//                cerr << "frequency domain, step = " << blockSize/2 << endl;
                 transform.setStepSize(transform.getBlockSize()/2);
             } else {
-//                std::cerr << "time domain, step = " << blockSize/2 << std::endl;
+//                cerr << "time domain, step = " << blockSize/2 << endl;
                 transform.setStepSize(transform.getBlockSize());
             }
         }
@@ -745,9 +753,9 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        std::cerr << "TransformFactory::getPluginConfigurationXml: "
+        cerr << "TransformFactory::getPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier().toStdString() << "\"" << std::endl;
+                  << t.getIdentifier().toStdString() << "\"" << endl;
         return xml;
     }
 
@@ -767,14 +775,147 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        std::cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
+        cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier().toStdString() << "\"" << std::endl;
+                  << t.getIdentifier().toStdString() << "\"" << endl;
         return;
     }
 
     PluginXml(plugin).setParametersFromXml(xml);
     setParametersFromPlugin(t, plugin);
     delete plugin;
+}
+/*
+TransformFactory::SearchResults
+TransformFactory::search(QStringList keywords)
+{
+    SearchResults results;
+    SearchResults partial;
+    for (int i = 0; i < keywords.size(); ++i) {
+        partial = search(keywords[i]);
+        for (SearchResults::const_iterator j = partial.begin();
+             j != partial.end(); ++j) {
+            if (results.find(j->first) == results.end()) {
+                results[j->first] = j->second;
+            } else {
+                results[j->first].score += j->second.score;
+                results[j->first].fragments << j->second.fragments;
+            }
+        }
+    }
+    return results;
+}
+*/
+
+TransformFactory::SearchResults
+TransformFactory::search(QString keyword)
+{
+    QStringList keywords;
+    keywords << keyword;
+    return search(keywords);
+}
+
+TransformFactory::SearchResults
+TransformFactory::search(QStringList keywords)
+{
+    if (m_transforms.empty()) populateTransforms();
+
+    SearchResults results;
+
+    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
+         i != m_transforms.end(); ++i) {
+
+        Match match;
+
+        match.transform = i->first;
+        
+        searchTest(match, keywords, i->second.type, tr("Plugin type"), 10);
+        searchTest(match, keywords, i->second.category, tr("Category"), 20);
+        searchTest(match, keywords, i->second.identifier, tr("System Identifier"), 5);
+        searchTest(match, keywords, i->second.name, tr("Name"), 30);
+        searchTest(match, keywords, i->second.description, tr("Description"), 20);
+        searchTest(match, keywords, i->second.maker, tr("Maker"), 10);
+        searchTest(match, keywords, i->second.units, tr("Units"), 10);
+
+        if (match.score > 0) results[i->first] = match;
+    }
+
+    return results;
+}
+
+void
+TransformFactory::searchTest(Match &match, QStringList keywords, QString text,
+                             QString textType, int score)
+{
+/*
+    if (text.toLower() == keyword.toLower()) {
+        match.score += score * 1.5;
+        match.fragments << tr("%1: <b>%2</b>").arg(textType).arg(text);
+        return;
+    }
+*/
+    int len = text.length();
+    int prevEnd = 0;
+    QString fragment;
+
+    while (1) {
+
+        bool first = (prevEnd == 0);
+        
+        int idx = -1;
+        QString keyword;
+
+        for (int ki = 0; ki < keywords.size(); ++ki) {
+            int midx = text.indexOf(keywords[ki], prevEnd, Qt::CaseInsensitive);
+            if (midx >= 0 && midx < len) {
+                if (midx < idx || idx == -1) {
+                    idx = midx;
+                    keyword = keywords[ki];
+                }
+            }
+        }
+
+        if (idx < 0 || idx >= len) break;
+
+        int klen = keyword.length();
+
+        if (first) {
+            match.score += score;
+        } else {
+            match.score += score / 4;
+        }
+
+        int start = idx;
+        int end = start + klen;
+
+        if (start == 0) match.score += 1;
+        if (end == len) match.score += 1;
+
+        if (start > prevEnd + 14) {
+//            cerr << "start = " << start << ", prevEnd = " <<prevEnd << ", length = " << len << ", text = " << text.toStdString() << endl;
+            QString s = text.right((len - start) + 10);
+//            cerr << "s = " << s.toStdString() << endl;
+            s = s.left(10) + "<b>" + s.left(klen + 10).right(klen) + "</b>";
+//            cerr << "s = " << s.toStdString() << endl;
+            fragment += tr("...%1").arg(s);
+//            cerr << "fragment = " << fragment.toStdString() << endl;
+        } else {
+            QString s = text.right(len - prevEnd);
+            s = s.left(start - prevEnd) + "<b>" + s.left(end - prevEnd).right(klen) + "</b>";
+            fragment += s;
+        }
+
+        prevEnd = end;
+    }
+
+    if (prevEnd > 0 && prevEnd < len) {
+        int n = len - prevEnd;
+        fragment += text.right(n).left(n < 8 ? n : 8);
+    }
+
+    if (fragment != "") {
+        fragment = tr("%1: %2").arg(textType).arg(fragment);
+        match.fragments << fragment;
+    }
 }
 

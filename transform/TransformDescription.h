@@ -49,10 +49,12 @@ struct TransformDescription
     TransformDescription(QString _type, QString _category,
                          TransformId _identifier, QString _name,
                          QString _friendlyName, QString _description,
+                         QString _longDescription,
                          QString _maker, QString _units, bool _configurable) :
         type(_type), category(_category),
         identifier(_identifier), name(_name),
         friendlyName(_friendlyName), description(_description),
+        longDescription(_longDescription),
         maker(_maker), units(_units), configurable(_configurable) { }
 
     QString type; // e.g. feature extraction plugin
@@ -61,6 +63,7 @@ struct TransformDescription
     QString name; // plugin's name if 1 output, else "name: output"
     QString friendlyName; // short text for layer name
     QString description; // sentence describing transform
+    QString longDescription; // description "using" plugin name "by" maker
     QString maker;
     QString units;
     bool configurable;

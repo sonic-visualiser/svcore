@@ -21,6 +21,7 @@
 #include <vamp-sdk/Plugin.h>
 
 #include <QObject>
+#include <QStringList>
 
 #include <map>
 #include <set>
@@ -41,6 +42,38 @@ public:
     std::vector<QString> getTransformCategories(QString transformType);
     std::vector<QString> getTransformMakers(QString transformType);
 
+    struct Match
+    {
+        TransformId transform;
+        int score;
+        QStringList fragments;
+
+        Match() : score(0) { }
+        Match(const Match &m) : transform(m.transform),
+                                score(m.score), fragments(m.fragments) { }
+
+        bool operator<(const Match &m) {
+            if (score != m.score) {
+                return score < m.score;
+            } else if (transform != m.transform) {
+                return transform < m.transform;
+            } else if (fragments.size() != m.fragments.size()) {
+                return fragments.size() < m.fragments.size();
+            } else {
+                for (int i = 0; i < fragments.size(); ++i) {
+                    if (fragments[i] != m.fragments[i]) {
+                        return fragments[i] < m.fragments[i];
+                    }
+                }
+            }
+            return false;
+        }
+    };
+
+    typedef std::map<TransformId, Match> SearchResults;
+    SearchResults search(QString keyword);
+    SearchResults search(QStringList keywords);
+    
     /**
      * Return true if the given transform is known.
      */
@@ -164,6 +197,9 @@ protected:
     void populateTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
+
+    void searchTest(Match &match, QStringList keywords, QString text,
+                    QString textType, int score);
 
     Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, size_t rate);
 
