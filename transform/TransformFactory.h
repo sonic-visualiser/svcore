@@ -46,28 +46,14 @@ public:
     {
         TransformId transform;
         int score;
-        QStringList fragments;
+        typedef std::map<QString, QString> FragmentMap;
+        FragmentMap fragments;
 
         Match() : score(0) { }
-        Match(const Match &m) : transform(m.transform),
-                                score(m.score), fragments(m.fragments) { }
+        Match(const Match &m) :
+            transform(m.transform), score(m.score), fragments(m.fragments) { }
 
-        bool operator<(const Match &m) {
-            if (score != m.score) {
-                return score < m.score;
-            } else if (transform != m.transform) {
-                return transform < m.transform;
-            } else if (fragments.size() != m.fragments.size()) {
-                return fragments.size() < m.fragments.size();
-            } else {
-                for (int i = 0; i < fragments.size(); ++i) {
-                    if (fragments[i] != m.fragments[i]) {
-                        return fragments[i] < m.fragments[i];
-                    }
-                }
-            }
-            return false;
-        }
+        bool operator<(const Match &m) const;
     };
 
     typedef std::map<TransformId, Match> SearchResults;
