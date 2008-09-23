@@ -914,8 +914,31 @@ TransformFactory::searchTest(Match &match, QStringList keywords, QString text,
     }
 
     if (fragment != "") {
-        fragment = tr("%1: %2").arg(textType).arg(fragment);
-        match.fragments << fragment;
+        match.fragments[textType] = fragment;
     }
+}
+
+bool
+TransformFactory::Match::operator<(const Match &m) const
+{
+    if (score != m.score) {
+        return score < m.score;
+    }
+    if (transform != m.transform) {
+        return transform < m.transform;
+    }
+    if (fragments.size() != m.fragments.size()) {
+        return fragments.size() < m.fragments.size();
+    }
+
+    for (FragmentMap::const_iterator
+             i = fragments.begin(),
+             j = m.fragments.begin();
+         i != fragments.end(); ++i, ++j) {
+        if (i->first != j->first) return i->first < j->first;
+        if (i->second != j->second) return i->second < j->second;
+    }
+
+    return false;
 }
 
