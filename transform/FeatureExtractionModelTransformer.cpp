@@ -212,6 +212,8 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     if (binCount == 0 &&
         (preDurationPlugin || !m_descriptor->hasDuration)) {
 
+        // Anything with no value and no duration is an instant
+
 	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
 						 false);
 
