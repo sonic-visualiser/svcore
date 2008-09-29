@@ -822,6 +822,11 @@ TransformFactory::search(QStringList keywords)
 {
     if (m_transforms.empty()) populateTransforms();
 
+    if (keywords.size() > 1) {
+        // Additional score for all keywords in a row
+        keywords.push_back(keywords.join(" "));
+    }
+
     SearchResults results;
 
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
