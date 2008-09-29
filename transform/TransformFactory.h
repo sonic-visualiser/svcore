@@ -53,7 +53,7 @@ public:
         Match(const Match &m) :
             transform(m.transform), score(m.score), fragments(m.fragments) { }
 
-        bool operator<(const Match &m) const;
+        bool operator<(const Match &m) const; // sort by score first
     };
 
     typedef std::map<TransformId, Match> SearchResults;
