@@ -24,6 +24,8 @@
 #include "vamp-sdk/PluginHostAdapter.h"
 #include "vamp-sdk/hostext/PluginWrapper.h"
 
+#include "base/XmlExportable.h"
+
 #include <iostream>
 #include <set>
 
@@ -892,16 +894,16 @@ TransformFactory::searchTest(Match &match, QStringList keywords, QString text,
         if (end == len) match.score += 1;
 
         if (start > prevEnd + 14) {
-//            cerr << "start = " << start << ", prevEnd = " <<prevEnd << ", length = " << len << ", text = " << text.toStdString() << endl;
             QString s = text.right((len - start) + 10);
-//            cerr << "s = " << s.toStdString() << endl;
-            s = s.left(10) + "<b>" + s.left(klen + 10).right(klen) + "</b>";
-//            cerr << "s = " << s.toStdString() << endl;
+            s = XmlExportable::encodeEntities(s.left(10)) + "<b>" +
+                XmlExportable::encodeEntities(s.left(klen + 10).right(klen))
+                + "</b>";
             fragment += tr("...%1").arg(s);
-//            cerr << "fragment = " << fragment.toStdString() << endl;
         } else {
             QString s = text.right(len - prevEnd);
-            s = s.left(start - prevEnd) + "<b>" + s.left(end - prevEnd).right(klen) + "</b>";
+            s = XmlExportable::encodeEntities(s.left(start - prevEnd)) + "<b>" +
+                XmlExportable::encodeEntities(s.left(end - prevEnd).right(klen))
+                + "</b>";
             fragment += s;
         }
 
@@ -910,7 +912,8 @@ TransformFactory::searchTest(Match &match, QStringList keywords, QString text,
 
     if (prevEnd > 0 && prevEnd < len) {
         int n = len - prevEnd;
-        fragment += text.right(n).left(n < 8 ? n : 8);
+        fragment +=
+            XmlExportable::encodeEntities(text.right(n).left(n < 8 ? n : 8));
     }
 
     if (fragment != "") {
