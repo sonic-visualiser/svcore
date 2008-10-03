@@ -436,8 +436,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
         QString source = results[i]["signal_source"].value;
 
-        QString timestring = results[i]["time"].value;
         RealTime time;
+        QString timestring = results[i]["time"].value;
         time = RealTime::fromXsdDuration(timestring.toStdString());
         cerr << "time = " << time.toString() << " (from xsd:duration \""
              << timestring.toStdString() << "\")" << endl;
