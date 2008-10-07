@@ -121,6 +121,7 @@ SimpleSPARQLQuery::Impl::Impl(QString query) :
     m_reporter(0),
     m_cancelled(false)
 {
+    std::cerr << "SimpleSPARQLQuery::Impl: Query is: \"" << query.toStdString() << "\"" << std::endl;
 }
 
 SimpleSPARQLQuery::Impl::~Impl()
@@ -232,6 +233,8 @@ SimpleSPARQLQuery::Impl::execute()
             else if (literal->type == RASQAL_LITERAL_BLANK) type = BlankValue;
 
             QString text = (const char *)rasqal_literal_as_string(literal);
+
+            std::cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << std::endl;
 
             resultmap[key] = Value(type, text);
         }
