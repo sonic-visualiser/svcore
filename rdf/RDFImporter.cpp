@@ -29,6 +29,8 @@
 #include "data/model/SparseOneDimensionalModel.h"
 #include "data/model/SparseTimeValueModel.h"
 #include "data/model/EditableDenseThreeDimensionalModel.h"
+#include "data/model/NoteModel.h"
+#include "data/model/RegionModel.h"
 
 using std::cerr;
 using std::endl;
@@ -49,11 +51,6 @@ protected:
     QString m_errorString;
     int m_sampleRate;
 
-    typedef std::vector<float> ValueList;
-    typedef std::map<RealTime, ValueList> TimeValueMap;
-    typedef std::map<QString, TimeValueMap> TypeTimeValueMap;
-    typedef std::map<QString, TypeTimeValueMap> SourceTypeTimeValueMap;
-
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
 
@@ -61,12 +58,23 @@ protected:
                                    int &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
 
-    void extractStructure(const TimeValueMap &map, bool &sparse,
+
+    void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
+
+/*
+
+    typedef std::vector<std::pair<RealTime, float> > DurationValueList;
+    typedef std::map<RealTime, DurationValueList> TimeDurationValueMap;
+    typedef std::map<QString, TimeDurationValueMap> TypeTimeDurationValueMap;
+    typedef std::map<QString, TypeTimeDurationValueMap> SourceTypeTimeDurationValueMap;
+
+    void extractStructure(const TimeDurationValueMap &map, bool &sparse,
                           int &minValueCount, int &maxValueCount);
 
-    void fillModel(SparseOneDimensionalModel *, const TimeValueMap &);
-    void fillModel(SparseTimeValueModel *, const TimeValueMap &);
-    void fillModel(EditableDenseThreeDimensionalModel *, const TimeValueMap &);
+    void fillModel(SparseOneDimensionalModel *, const TimeDurationValueMap &);
+    void fillModel(SparseTimeValueModel *, const TimeDurationValueMap &);
+    void fillModel(EditableDenseThreeDimensionalModel *, const TimeDurationValueMap &);
+*/
 };
 
 
@@ -384,16 +392,19 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     // If the source signal or feature type is unavailable, the empty
     // string will do.
 
-    SourceTypeTimeValueMap m;
+//    SourceTypeTimeDurationValueMap m;
 
-    QString queryString = QString(
-
+    QString prefixes = QString(
         " PREFIX event: <http://purl.org/NET/c4dm/event.owl#>"
-        " PREFIX time: <http://purl.org/NET/c4dm/timeline.owl#>"
+        " PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>"
         " PREFIX mo: <http://purl.org/ontology/mo/>"
         " PREFIX af: <http://purl.org/ontology/af/>"
+        " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+        );
 
-        " SELECT ?signal_source ?time ?event_type ?value"
+    QString queryString = prefixes + QString(
+
+        " SELECT ?signal_source ?timed_thing ?event_type ?value"
         " FROM <%1>"
 
         " WHERE {"
@@ -402,16 +413,45 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         "   ?signal a mo:Signal ."
 
         "   ?signal mo:time ?interval ."
-        "   ?interval time:onTimeLine ?tl ."
-        "   ?t time:onTimeLine ?tl ."
-        "   ?t time:at ?time ."
-        "   ?timed_thing event:time ?t ."
+        "   ?interval tl:onTimeLine ?tl ."
+        "   ?time tl:onTimeLine ?tl ."
+        "   ?timed_thing event:time ?time ."
         "   ?timed_thing a ?event_type ."
 
         "   OPTIONAL {"
         "     ?timed_thing af:feature ?value"
         "   }"
         " }"
+
+        ).arg(m_uristring);
+
+    QString timeQueryString = prefixes + QString(
+        
+        " SELECT ?time FROM <%1> "
+        " WHERE { "        
+        "   <%2> event:time ?t . "
+        "   ?t tl:at ?time . "
+        " } "
+
+        ).arg(m_uristring);
+
+    QString rangeQueryString = prefixes + QString(
+        
+        " SELECT ?time ?duration FROM <%1> "
+        " WHERE { "
+        "   <%2> event:time ?t . "
+        "   ?t tl:beginsAt ?time . "
+        "   ?t tl:duration ?duration . "
+        " } "
+
+        ).arg(m_uristring);
+
+    QString labelQueryString = prefixes + QString(
+        
+        " SELECT ?label FROM <%1> "
+        " WHERE { "
+        "   <%2> rdfs:label ?label . "
+        " } "
 
         ).arg(m_uristring);
 
@@ -432,40 +472,176 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         return;
     }        
 
+
+
+    /*
+
+      This function is now only used for sparse data (for dense data
+      we would be in getDataModelsDense instead).
+
+      For sparse data, the determining factors in deciding what model
+      to use are: Do the features have values? and Do the features
+      have duration?
+
+      We can run through the results and check off whether we find
+      values and duration for each of the source+type keys, and then
+      run through the source+type keys pushing each of the results
+      into a suitable model.
+
+      Unfortunately, at this point we do not yet have any actual
+      timing data (time/duration) -- just the time URI.
+
+      What we _could_ do is to create one of each type of model at the
+      start, for each of the source+type keys, and then push each
+      feature into the relevant model depending on what we find out
+      about it.  Then return only non-empty models.
+
+      
+    */
+
+    // Map from signal source to event type to dimensionality to
+    // presence of duration to model ptr.  Whee!
+    std::map<QString, std::map<QString, std::map<int, std::map<bool, Model *> > > >
+        modelMap;
+
     for (int i = 0; i < results.size(); ++i) {
 
         QString source = results[i]["signal_source"].value;
-
-        RealTime time;
-        QString timestring = results[i]["time"].value;
-        time = RealTime::fromXsdDuration(timestring.toStdString());
-        cerr << "time = " << time.toString() << " (from xsd:duration \""
-             << timestring.toStdString() << "\")" << endl;
-
         QString type = results[i]["event_type"].value;
+        QString thinguri = results[i]["timed_thing"].value;
+        
+        RealTime time;
+        RealTime duration;
+
+        bool haveTime = false;
+        bool haveDuration = false;
+
+        QString label = SimpleSPARQLQuery::singleResultQuery
+            (labelQueryString.arg(thinguri), "label").value;
+
+        QString timestring = SimpleSPARQLQuery::singleResultQuery
+            (timeQueryString.arg(thinguri), "time").value;
+
+        if (timestring != "") {
+
+            time = RealTime::fromXsdDuration(timestring.toStdString());
+            haveTime = true;
+
+        } else {
+
+            SimpleSPARQLQuery rangeQuery(rangeQueryString.arg(thinguri));
+            SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
+            if (!rangeResults.empty()) {
+//                std::cerr << rangeResults.size() << " range results" << std::endl;
+                time = RealTime::fromXsdDuration
+                    (rangeResults[0]["time"].value.toStdString());
+                duration = RealTime::fromXsdDuration
+                    (rangeResults[0]["duration"].value.toStdString());
+//                std::cerr << "duration string " << rangeResults[0]["duration"].value.toStdString() << std::endl;
+                haveTime = true;
+                haveDuration = true;
+            }
+        }
 
         QString valuestring = results[i]["value"].value;
-        float value = 0.f;
-        bool haveValue = false;
+        std::vector<float> values;
+
         if (valuestring != "") {
-            //!!! no -- runner actually writes a "CSV literal"
-            value = valuestring.toFloat(&haveValue);
-            cerr << "value = " << value << endl;
+            QStringList vsl = valuestring.split(" ", QString::SkipEmptyParts);
+            for (int j = 0; j < vsl.size(); ++j) {
+                bool success = false;
+                float v = vsl[j].toFloat(&success);
+                if (success) values.push_back(v);
+            }
         }
 
-        if (haveValue) {
-            m[source][type][time].push_back(value);
-        } else if (m[source][type].find(time) == m[source][type].end()) {
-            m[source][type][time] = ValueList();
+        int dimensions = 1;
+        if (values.size() == 1) dimensions = 2;
+        else if (values.size() > 1) dimensions = 3;
+
+        Model *model = 0;
+
+        if (modelMap[source][type][dimensions].find(haveDuration) ==
+            modelMap[source][type][dimensions].end()) {
+
+/*
+            std::cerr << "Creating new model: source = " << source.toStdString()
+                      << ", type = " << type.toStdString() << ", dimensions = "
+                      << dimensions << ", haveDuration = " << haveDuration
+                      << ", time = " << time << ", duration = " << duration
+                      << std::endl;
+*/
+            
+            if (!haveDuration) {
+
+                if (dimensions == 1) {
+
+//                    std::cerr << "SparseOneDimensionalModel" << std::endl;
+                    model = new SparseOneDimensionalModel(m_sampleRate, 1, false);
+
+                } else if (dimensions == 2) {
+
+//                    std::cerr << "SparseTimeValueModel" << std::endl;
+                    model = new SparseTimeValueModel(m_sampleRate, 1, false);
+
+                } else {
+
+                    // We don't have a three-dimensional sparse model,
+                    // so use a note model.  We do have some logic (in
+                    // extractStructure below) for guessing whether
+                    // this should after all have been a dense model,
+                    // but it's hard to apply it because we don't have
+                    // all the necessary timing data yet... hmm
+
+//                    std::cerr << "NoteModel" << std::endl;
+                    model = new NoteModel(m_sampleRate, 1, false);
+                }
+
+            } else { // haveDuration
+
+                if (dimensions == 1 || dimensions == 2) {
+
+                    // If our units are frequency or midi pitch, we
+                    // should be using a note model... hm
+                    
+//                    std::cerr << "RegionModel" << std::endl;
+                    model = new RegionModel(m_sampleRate, 1, false);
+
+                } else {
+
+                    // We don't have a three-dimensional sparse model,
+                    // so use a note model.  We do have some logic (in
+                    // extractStructure below) for guessing whether
+                    // this should after all have been a dense model,
+                    // but it's hard to apply it because we don't have
+                    // all the necessary timing data yet... hmm
+
+//                    std::cerr << "NoteModel" << std::endl;
+                    model = new NoteModel(m_sampleRate, 1, false);
+                }
+            }
+
+            modelMap[source][type][dimensions][haveDuration] = model;
+            models.push_back(model);
+        }
+
+        model = modelMap[source][type][dimensions][haveDuration];
+
+        if (model) {
+            long ftime = RealTime::realTime2Frame(time, m_sampleRate);
+            long fduration = RealTime::realTime2Frame(duration, m_sampleRate);
+            fillModel(model, ftime, fduration, haveDuration, values, label);
         }
     }
+    
 
-    for (SourceTypeTimeValueMap::const_iterator mi = m.begin();
+/*
+    for (SourceTypeTimeDurationValueMap::const_iterator mi = m.begin();
          mi != m.end(); ++mi) {
         
         QString source = mi->first;
 
-        for (TypeTimeValueMap::const_iterator ttvi = mi->second.begin();
+        for (TypeTimeDurationValueMap::const_iterator ttvi = mi->second.begin();
              ttvi != mi->second.end(); ++ttvi) {
             
             QString type = ttvi->first;
@@ -556,10 +732,12 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
             }
         }
     }
+*/
 }
 
+/*
 void
-RDFImporterImpl::extractStructure(const TimeValueMap &tvm,
+RDFImporterImpl::extractStructure(const TimeDurationValueMap &tvm,
                                   bool &sparse,
                                   int &minValueCount,
                                   int &maxValueCount)
@@ -570,7 +748,7 @@ RDFImporterImpl::extractStructure(const TimeValueMap &tvm,
     float timeStep = 0.f;
     bool haveTimeStep = false;
     
-    for (TimeValueMap::const_iterator tvi = tvm.begin(); tvi != tvm.end(); ++tvi) {
+    for (TimeDurationValueMap::const_iterator tvi = tvm.begin(); tvi != tvm.end(); ++tvi) {
         
         RealTime time = tvi->first;
         int valueCount = tvi->second.size();
@@ -607,14 +785,99 @@ RDFImporterImpl::extractStructure(const TimeValueMap &tvm,
         }
     }
 }
+*/
 
 void
+RDFImporterImpl::fillModel(Model *model,
+                           long ftime,
+                           long fduration,
+                           bool haveDuration,
+                           std::vector<float> &values,
+                           QString label)
+{
+    SparseOneDimensionalModel *sodm =
+        dynamic_cast<SparseOneDimensionalModel *>(model);
+    if (sodm) {
+        SparseOneDimensionalModel::Point point(ftime, label);
+        sodm->addPoint(point);
+        return;
+    }
+
+    SparseTimeValueModel *stvm =
+        dynamic_cast<SparseTimeValueModel *>(model);
+    if (stvm) {
+        SparseTimeValueModel::Point point
+            (ftime, values.empty() ? 0.f : values[0], label);
+        stvm->addPoint(point);
+        return;
+    }
+
+    NoteModel *nm =
+        dynamic_cast<NoteModel *>(model);
+    if (nm) {
+        if (haveDuration) {
+            float value = 0.f, level = 1.f;
+            if (!values.empty()) {
+                value = values[0];
+                if (values.size() > 1) {
+                    level = values[1];
+                }
+            }
+            NoteModel::Point point(ftime, value, fduration, level, label);
+            nm->addPoint(point);
+        } else {
+            float value = 0.f, duration = 1.f, level = 1.f;
+            if (!values.empty()) {
+                value = values[0];
+                if (values.size() > 1) {
+                    duration = values[1];
+                    if (values.size() > 2) {
+                        level = values[2];
+                    }
+                }
+            }
+            NoteModel::Point point(ftime, value, duration, level, label);
+            nm->addPoint(point);
+        }
+        return;
+    }
+
+    RegionModel *rm = 
+        dynamic_cast<RegionModel *>(model);
+    if (rm) {
+        if (haveDuration) {
+            RegionModel::Point point
+                (ftime, values.empty() ? 0.f : values[0], fduration, label);
+            rm->addPoint(point);
+        } else {
+            // This won't actually happen -- we only create region models
+            // if we do have duration -- but just for completeness
+            float value = 0.f, duration = 1.f;
+            if (!values.empty()) {
+                value = values[0];
+                if (values.size() > 1) {
+                    duration = values[1];
+                }
+            }
+            RegionModel::Point point(ftime, value, duration, label);
+            rm->addPoint(point);
+        }
+        return;
+    }
+            
+    std::cerr << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << std::endl;
+    return;
+}
+
+
+/*
+void
 RDFImporterImpl::fillModel(SparseOneDimensionalModel *model,
-                           const TimeValueMap &tvm)
+                           const TimeDurationValueMap &tvm)
 {
     //!!! labels &c not yet handled
 
-    for (TimeValueMap::const_iterator tvi = tvm.begin();
+    for (TimeDurationValueMap::const_iterator tvi = tvm.begin();
          tvi != tvm.end(); ++tvi) {
         
         RealTime time = tvi->first;
@@ -628,18 +891,18 @@ RDFImporterImpl::fillModel(SparseOneDimensionalModel *model,
 
 void
 RDFImporterImpl::fillModel(SparseTimeValueModel *model,
-                           const TimeValueMap &tvm)
+                           const TimeDurationValueMap &tvm)
 {
     //!!! labels &c not yet handled
 
-    for (TimeValueMap::const_iterator tvi = tvm.begin();
+    for (TimeDurationValueMap::const_iterator tvi = tvm.begin();
          tvi != tvm.end(); ++tvi) {
         
         RealTime time = tvi->first;
         long frame = RealTime::realTime2Frame(time, m_sampleRate);
 
         float value = 0.f;
-        if (!tvi->second.empty()) value = *tvi->second.begin();
+        if (!tvi->second.empty()) value = *tvi->second.begin()->second;
         
         SparseTimeValueModel::Point point(frame, value, "");
 
@@ -649,7 +912,7 @@ RDFImporterImpl::fillModel(SparseTimeValueModel *model,
 
 void
 RDFImporterImpl::fillModel(EditableDenseThreeDimensionalModel *model,
-                           const TimeValueMap &tvm)
+                           const TimeDurationValueMap &tvm)
 {
     //!!! labels &c not yet handled
 
@@ -657,10 +920,11 @@ RDFImporterImpl::fillModel(EditableDenseThreeDimensionalModel *model,
 
     size_t col = 0;
 
-    for (TimeValueMap::const_iterator tvi = tvm.begin();
+    for (TimeDurationValueMap::const_iterator tvi = tvm.begin();
          tvi != tvm.end(); ++tvi) {
         
-        model->setColumn(col++, tvi->second);
+        model->setColumn(col++, tvi->second.second);
     }
 }
 
+*/
