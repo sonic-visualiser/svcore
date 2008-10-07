@@ -519,27 +519,23 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         QString label = SimpleSPARQLQuery::singleResultQuery
             (labelQueryString.arg(thinguri), "label").value;
 
-        QString timestring = SimpleSPARQLQuery::singleResultQuery
-            (timeQueryString.arg(thinguri), "time").value;
-
-        if (timestring != "") {
-
-            time = RealTime::fromXsdDuration(timestring.toStdString());
-            haveTime = true;
-
-        } else {
-
-            SimpleSPARQLQuery rangeQuery(rangeQueryString.arg(thinguri));
-            SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
-            if (!rangeResults.empty()) {
+        SimpleSPARQLQuery rangeQuery(rangeQueryString.arg(thinguri));
+        SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
+        if (!rangeResults.empty()) {
 //                std::cerr << rangeResults.size() << " range results" << std::endl;
-                time = RealTime::fromXsdDuration
-                    (rangeResults[0]["time"].value.toStdString());
-                duration = RealTime::fromXsdDuration
-                    (rangeResults[0]["duration"].value.toStdString());
+            time = RealTime::fromXsdDuration
+                (rangeResults[0]["time"].value.toStdString());
+            duration = RealTime::fromXsdDuration
+                (rangeResults[0]["duration"].value.toStdString());
 //                std::cerr << "duration string " << rangeResults[0]["duration"].value.toStdString() << std::endl;
+            haveTime = true;
+            haveDuration = true;
+        } else {
+            QString timestring = SimpleSPARQLQuery::singleResultQuery
+                (timeQueryString.arg(thinguri), "time").value;
+            if (timestring != "") {
+                time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;
-                haveDuration = true;
             }
         }
 
