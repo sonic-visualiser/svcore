@@ -203,7 +203,18 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
-	modelRate = size_t(m_descriptor->sampleRate + 0.001);
+        //!!! SV doesn't actually support display of models that have
+        //!!! different underlying rates together -- so we always set
+        //!!! the model rate to be the input model's rate, and adjust
+        //!!! the resolution appropriately.  We can't properly display
+        //!!! data with a higher resolution than the base model at all
+//	modelRate = size_t(m_descriptor->sampleRate + 0.001);
+        if (m_descriptor->sampleRate > input->getSampleRate()) {
+            modelResolution = 1;
+        } else {
+            modelResolution = size_t(input->getSampleRate() /
+                                     m_descriptor->sampleRate);
+        }
 	break;
     }
 
@@ -598,7 +609,9 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	if (feature.hasTimestamp) {
 	    //!!! warning: sampleRate may be non-integral
 	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp,
-                                                   lrintf(m_descriptor->sampleRate));
+//!!! see comment above when setting up modelResolution and modelRate
+//                                                   lrintf(m_descriptor->sampleRate));
+                                                   inputRate);
 	} else {
 	    frame = m_output->getEndFrame();
 	}
