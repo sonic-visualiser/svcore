@@ -21,7 +21,7 @@
 #include <iostream>
 #include <unistd.h>
 
-//#define DEBUG_FILE_READ_THREAD 1
+#define DEBUG_FILE_READ_THREAD 1
 
 FileReadThread::FileReadThread() :
     m_nextToken(0),
