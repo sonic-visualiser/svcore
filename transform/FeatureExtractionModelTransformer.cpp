@@ -633,15 +633,21 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	
     } else if (isOutput<SparseTimeValueModel>()) {
 
-	float value = 0.0;
-	if (feature.values.size() > 0) value = feature.values[0];
-
 	SparseTimeValueModel *model =
             getConformingOutput<SparseTimeValueModel>();
 	if (!model) return;
 
-	model->addPoint(SparseTimeValueModel::Point
-                        (frame, value, feature.label.c_str()));
+        for (int i = 0; i < feature.values.size(); ++i) {
+
+            float value = feature.values[i];
+
+            QString label = feature.label.c_str();
+            if (feature.values.size() > 1) {
+                label = QString("[%1] %2").arg(i+1).arg(label);
+            }
+
+            model->addPoint(SparseTimeValueModel::Point(frame, value, label));
+        }
 
     } else if (isOutput<NoteModel>() || isOutput<RegionModel>()) {
 
@@ -678,11 +684,29 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
                                              feature.label.c_str()));
         } else {
             RegionModel *model = getConformingOutput<RegionModel>();
-            if (model) {
+            if (!model) return;
+
+            if (feature.hasDuration) {
+
+                for (int i = 0; i < feature.values.size(); ++i) {
+
+                    float value = feature.values[i];
+
+                    QString label = feature.label.c_str();
+                    if (feature.values.size() > 1) {
+                        label = QString("[%1] %2").arg(i+1).arg(label);
+                    }
+
+                    model->addPoint(RegionModel::Point(frame, value,
+                                                       lrintf(duration),
+                                                       label));
+                }
+            } else {
+            
                 model->addPoint(RegionModel::Point(frame, value,
                                                    lrintf(duration),
                                                    feature.label.c_str()));
-            } else return;
+            }
         }
 	
     } else if (isOutput<EditableDenseThreeDimensionalModel>()) {

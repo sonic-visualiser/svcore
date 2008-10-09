@@ -63,10 +63,12 @@ signals:
     void frameSelected(size_t);
     void addCommand(Command *);
     void currentChanged(const QModelIndex &);
+    void modelRemoved();
 
 protected slots:
     void modelChanged();
     void modelChanged(size_t, size_t);
+    void modelAboutToBeDeleted();
 
 protected:
     TabularModel *m_model;

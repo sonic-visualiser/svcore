@@ -33,6 +33,8 @@ ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
     connect(baseModel, SIGNAL(modelChanged(size_t, size_t)),
             this, SLOT(modelChanged(size_t, size_t)));
+    connect(baseModel, SIGNAL(aboutToBeDeleted()),
+            this, SLOT(modelAboutToBeDeleted()));
 }
 
 ModelDataTableModel::~ModelDataTableModel()
@@ -42,6 +44,7 @@ ModelDataTableModel::~ModelDataTableModel()
 QVariant
 ModelDataTableModel::data(const QModelIndex &index, int role) const
 {
+    if (!m_model) return QVariant();
     if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
     if (!index.isValid()) return QVariant();
     return m_model->getData(getUnsorted(index.row()), index.column(), role);
@@ -50,6 +53,7 @@ ModelDataTableModel::data(const QModelIndex &index, int role) const
 bool
 ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
+    if (!m_model) return false;
     if (!index.isValid()) return false;
     Command *command = m_model->getSetDataCommand(getUnsorted(index.row()),
                                                   index.column(),
@@ -65,6 +69,7 @@ ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, in
 bool
 ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
 {
+    if (!m_model) return false;
     if (parent.isValid()) return false;
 
     emit beginInsertRows(parent, row, row);
@@ -83,6 +88,7 @@ ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
 bool
 ModelDataTableModel::removeRow(int row, const QModelIndex &parent)
 {
+    if (!m_model) return false;
     if (parent.isValid()) return false;
 
     emit beginRemoveRows(parent, row, row);
@@ -109,6 +115,8 @@ ModelDataTableModel::flags(const QModelIndex &index) const
 QVariant
 ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    if (!m_model) return QVariant();
+
     if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
         return section + 1;
     }
@@ -133,6 +141,7 @@ ModelDataTableModel::parent(const QModelIndex &index) const
 int
 ModelDataTableModel::rowCount(const QModelIndex &parent) const
 {
+    if (!m_model) return 0;
     if (parent.isValid()) return 0;
     return m_model->getRowCount();
 }
@@ -140,6 +149,7 @@ ModelDataTableModel::rowCount(const QModelIndex &parent) const
 int
 ModelDataTableModel::columnCount(const QModelIndex &parent) const
 {
+    if (!m_model) return 0;
     if (parent.isValid()) return 0;
     return m_model->getColumnCount();
 }
@@ -147,6 +157,7 @@ ModelDataTableModel::columnCount(const QModelIndex &parent) const
 QModelIndex 
 ModelDataTableModel::getModelIndexForFrame(size_t frame) const
 {
+    if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
     return createIndex(getSorted(row), 0, 0);
 }
@@ -154,6 +165,7 @@ ModelDataTableModel::getModelIndexForFrame(size_t frame) const
 size_t 
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
+    if (!m_model) return 0;
     return m_model->getFrameForRow(getUnsorted(index.row()));
 }
 
@@ -191,9 +203,18 @@ ModelDataTableModel::modelChanged(size_t f0, size_t f1)
     emit layoutChanged();
 }
 
+void
+ModelDataTableModel::modelAboutToBeDeleted()
+{
+    m_model = 0;
+    emit modelRemoved();
+}
+
 int
 ModelDataTableModel::getSorted(int row) const
 {
+    if (!m_model) return row;
+
     if (m_model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
             return row;
@@ -219,6 +240,8 @@ ModelDataTableModel::getSorted(int row) const
 int
 ModelDataTableModel::getUnsorted(int row) const
 {
+    if (!m_model) return row;
+
     if (m_model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
             return row;
@@ -246,6 +269,8 @@ ModelDataTableModel::getUnsorted(int row) const
 void
 ModelDataTableModel::resort() const
 {
+    if (!m_model) return;
+
     bool numeric = (m_model->getSortType(m_sortColumn) ==
                     TabularModel::SortNumeric);
 
@@ -275,6 +300,8 @@ ModelDataTableModel::resort() const
 void
 ModelDataTableModel::resortNumeric() const
 {
+    if (!m_model) return;
+
     typedef std::multimap<double, int> MapType;
 
     MapType rowMap;
@@ -295,6 +322,8 @@ ModelDataTableModel::resortNumeric() const
 void
 ModelDataTableModel::resortAlphabetical() const
 {
+    if (!m_model) return;
+
     typedef std::multimap<QString, int> MapType;
 
     MapType rowMap;
