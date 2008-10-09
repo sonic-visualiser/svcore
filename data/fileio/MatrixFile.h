@@ -68,7 +68,7 @@ public:
     void reset();
 
     bool haveSetColumnAt(size_t x) const { return m_columnBitset->get(x); }
-    void getColumnAt(size_t x, void *data);
+    void getColumnAt(size_t x, void *data); // may throw FileReadFailed
     void setColumnAt(size_t x, const void *data);
 
     void suspend();

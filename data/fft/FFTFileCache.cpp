@@ -19,6 +19,7 @@
 
 #include "base/Profiler.h"
 #include "base/Thread.h"
+#include "base/Exceptions.h"
 
 #include <iostream>
 
@@ -308,13 +309,19 @@ FFTFileCache::populateReadBuf(size_t x) const
     if (!m_readbuf) {
         m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];
     }
-    m_mfc->getColumnAt(x, m_readbuf);
-    if (m_mfc->haveSetColumnAt(x + 1)) {
-        m_mfc->getColumnAt
-            (x + 1, m_readbuf + m_mfc->getCellSize() * m_mfc->getHeight());
-        m_readbufWidth = 2;
-    } else {
-        m_readbufWidth = 1;
+    try {
+        m_mfc->getColumnAt(x, m_readbuf);
+        if (m_mfc->haveSetColumnAt(x + 1)) {
+            m_mfc->getColumnAt
+                (x + 1, m_readbuf + m_mfc->getCellSize() * m_mfc->getHeight());
+            m_readbufWidth = 2;
+        } else {
+            m_readbufWidth = 1;
+        }
+    } catch (FileReadFailed f) {
+        std::cerr << "ERROR: FFTFileCache::populateReadBuf: File read failed: "
+                  << f.what() << std::endl;
+        memset(m_readbuf, 0, m_mfc->getHeight() * 2 * m_mfc->getCellSize());
     }
     m_readbufCol = x;
 }

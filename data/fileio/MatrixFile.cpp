@@ -35,7 +35,7 @@
 #include <QFileInfo>
 #include <QDir>
 
-#define DEBUG_MATRIX_FILE 1
+//#define DEBUG_MATRIX_FILE 1
 //#define DEBUG_MATRIX_FILE_READ_SET 1
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
@@ -521,8 +521,6 @@ MatrixFile::resume()
 #endif
 }
 
-static int alloc = 0;
-
 void
 MatrixFile::primeCache(size_t x, bool goingLeft)
 {
@@ -565,15 +563,29 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
 
     MutexLocker locker(&m_cacheMutex, "MatrixFile::primeCache::m_cacheMutex");
 
-    FileReadThread::Request request;
+    // Check for the existence of the request first; if it exists,
+    // check whether it's ready.  Only when we know it's ready do we
+    // retrieve the actual request, because the reason we need the
+    // request is to check whether it was successful or not and
+    // extract data from it, and none of that can be relied upon if we
+    // retrieve the request before it's ready.  (There used to be a
+    // race condition here, where we retrieved the request and only
+    // afterwards checked the ready status, pulling data from the
+    // request if it was found to be ready then.)
 
     if (m_requestToken >= 0 &&
-        m_readThread->getRequest(m_requestToken, request)) {
+        m_readThread->haveRequest(m_requestToken)) {
 
         if (x >= m_requestingX &&
             x <  m_requestingX + m_requestingWidth) {
 
             if (m_readThread->isReady(m_requestToken)) {
+
+                FileReadThread::Request request;
+                if (!m_readThread->getRequest(m_requestToken, request)) {
+                    std::cerr << "ERROR: MatrixFile::primeCache: File read thread has lost our request!" << std::endl;
+                    throw FileReadFailed(m_fileName);
+                }
 
                 if (!request.successful) {
                     std::cerr << "ERROR: MatrixFile::primeCache: Last request was unsuccessful" << std::endl;
@@ -610,25 +622,32 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
             return;
         }
 
-        // the current request is no longer of any use
-        m_readThread->cancel(m_requestToken);
+        FileReadThread::Request dud;
 
-        // crude way to avoid leaking the data
-        while (!m_readThread->isCancelled(m_requestToken)) {
-            usleep(10000);
-        }
+        if (!m_readThread->getRequest(m_requestToken, dud)) {
+
+            std::cerr << "ERROR: MatrixFile::primeCache: Inconsistent replies from FileReadThread" << std::endl;
+
+        } else {
+
+            // current request is for the wrong area, so no longer of any use
+            m_readThread->cancel(m_requestToken);
+
+            // crude way to avoid leaking the data
+            while (!m_readThread->isCancelled(m_requestToken)) {
+                usleep(10000);
+            }
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-        std::cerr << "cancelled " << m_requestToken << std::endl;
+            std::cerr << "cancelled " << m_requestToken << std::endl;
 #endif
 
-        if (m_spareData) {
-//            std::cerr << this << ": Freeing spare data" << std::endl;
-            free(m_spareData);
+            if (m_spareData) {
+                free(m_spareData);
+            }
+            m_spareData = dud.data;
+            m_readThread->done(m_requestToken);
         }
-//        std::cerr << this << ": Moving request data to spare" << std::endl;
-        m_spareData = request.data;
-        m_readThread->done(m_requestToken);
 
         m_requestToken = -1;
     }
@@ -637,6 +656,8 @@ MatrixFile::primeCache(size_t x, bool goingLeft)
         MutexLocker locker(&m_fdMutex, "MatrixFile::primeCache::m_fdMutex");
         if (m_fd < 0) resume();
     }
+
+    FileReadThread::Request request;
 
     request.fd = m_fd;
     request.mutex = &m_fdMutex;

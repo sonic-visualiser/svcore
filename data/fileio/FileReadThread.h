@@ -50,6 +50,7 @@ public:
 
     virtual bool isReady(int token);
     virtual bool isCancelled(int token); // and safe to delete
+    virtual bool haveRequest(int token);
     virtual bool getRequest(int token, Request &request);
     virtual void done(int token);
     
