@@ -21,7 +21,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#define DEBUG_FILE_READ_THREAD 1
+//#define DEBUG_FILE_READ_THREAD 1
 
 FileReadThread::FileReadThread() :
     m_nextToken(0),
@@ -141,6 +141,24 @@ FileReadThread::isCancelled(int token)
 }
 
 bool
+FileReadThread::haveRequest(int token)
+{
+    MutexLocker locker(&m_mutex, "FileReadThread::haveRequest::m_mutex");
+
+    bool found = false;
+
+    if (m_queue.find(token) != m_queue.end()) {
+        found = true;
+    } else if (m_cancelledRequests.find(token) != m_cancelledRequests.end()) {
+        found = true;
+    } else if (m_readyRequests.find(token) != m_readyRequests.end()) {
+        found = true;
+    }
+
+    return found;
+}
+
+bool
 FileReadThread::getRequest(int token, Request &request)
 {
     MutexLocker locker(&m_mutex, "FileReadThread::getRequest::m_mutex");
@@ -244,6 +262,9 @@ FileReadThread::process()
     } else {
         if (r < 0) {
             ::perror("ERROR: FileReadThread::process: Read failed");
+            std::cerr << "ERROR: FileReadThread::process: read of "
+                      << request.size << " at "
+                      << request.start << " failed" << std::endl;
             request.size = 0;
         } else if (r < ssize_t(request.size)) {
             std::cerr << "WARNING: FileReadThread::process: read "
@@ -267,11 +288,15 @@ FileReadThread::process()
         m_queue.erase(token);
         m_readyRequests[token] = request;
 #ifdef DEBUG_FILE_READ_THREAD
-        std::cerr << "FileReadThread::process: done, marking as ready" << std::endl;
+        std::cerr << "FileReadThread::process: done, marking as ready (success = " << m_readyRequests[token].successful << ")" << std::endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_READ_THREAD
-        std::cerr << "FileReadThread::process: request disappeared or exiting" << std::endl;
+        if (m_exiting) {
+            std::cerr << "FileReadThread::process: exiting" << std::endl;
+        } else {
+            std::cerr << "FileReadThread::process: request disappeared" << std::endl;
+        }
 #endif
     }
 }
