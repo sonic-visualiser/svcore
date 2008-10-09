@@ -27,7 +27,7 @@
 #include "base/Profiler.h"
 #include "base/Thread.h" // for debug mutex locker
 
-//#define DEBUG_FFT_SERVER 1
+#define DEBUG_FFT_SERVER 1
 //#define DEBUG_FFT_SERVER_FILL 1
 
 #ifdef DEBUG_FFT_SERVER_FILL
