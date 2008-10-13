@@ -17,6 +17,7 @@
 #define _PLUGIN_RDF_INDEXER_H_
 
 #include <QString>
+#include <QStringList>
 #include <map>
 #include <set>
 
@@ -27,10 +28,14 @@ class PluginRDFIndexer
 public:
     static PluginRDFIndexer *getInstance();
 
+    bool indexURL(QString url); // in addition to "installed" URLs
+
     QString getURIForPluginId(QString pluginId);
     QString getIdForPluginURI(QString uri);
     QString getDescriptionURLForPluginId(QString pluginId);
     QString getDescriptionURLForPluginURI(QString uri);
+
+    QStringList getIndexedPluginIds();
 
     ~PluginRDFIndexer();
 
@@ -41,7 +46,6 @@ protected:
     StringMap m_idToUriMap;
     StringMap m_idToDescriptionMap;
     bool indexFile(QString path);
-    bool indexURL(QString url);
     std::set<FileSource *> m_cache;
     static PluginRDFIndexer *m_instance;
 };

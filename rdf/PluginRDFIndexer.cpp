@@ -153,6 +153,17 @@ PluginRDFIndexer::getDescriptionURLForPluginURI(QString uri)
     return getDescriptionURLForPluginId(id);
 }
 
+QStringList
+PluginRDFIndexer::getIndexedPluginIds() 
+{
+    QStringList ids;
+    for (StringMap::const_iterator i = m_idToDescriptionMap.begin();
+         i != m_idToDescriptionMap.end(); ++i) {
+        ids.push_back(i->first);
+    }
+    return ids;
+}
+
 bool
 PluginRDFIndexer::indexFile(QString filepath)
 {
