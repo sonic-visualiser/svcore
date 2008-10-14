@@ -40,6 +40,7 @@ HEADERS += AudioLevel.h \
            Serialiser.h \
            StorageAdviser.h \
            TempDirectory.h \
+           TextMatcher.h \
            Thread.h \
            UnitDatabase.h \
            ViewManagerBase.h \
@@ -67,6 +68,7 @@ SOURCES += AudioLevel.cpp \
            Serialiser.cpp \
            StorageAdviser.cpp \
            TempDirectory.cpp \
+           TextMatcher.cpp \
            Thread.cpp \
            UnitDatabase.cpp \
            ViewManagerBase.cpp \

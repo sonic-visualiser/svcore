@@ -41,12 +41,12 @@ public:
 
 protected:
     PluginRDFIndexer();
+    std::set<FileSource *> m_sources;
     typedef std::map<QString, QString> StringMap;
     StringMap m_uriToIdMap;
     StringMap m_idToUriMap;
     StringMap m_idToDescriptionMap;
     bool indexFile(QString path);
-    std::set<FileSource *> m_cache;
     static PluginRDFIndexer *m_instance;
 };
 

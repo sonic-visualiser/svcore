@@ -20,6 +20,8 @@
 #include "data/fileio/FileSource.h"
 #include "plugin/PluginIdentifier.h"
 
+#include "base/Profiler.h"
+
 #include <vamp-sdk/PluginHostAdapter.h>
 
 #include <QFileInfo>
@@ -93,9 +95,9 @@ PluginRDFIndexer::PluginRDFIndexer()
 
 PluginRDFIndexer::~PluginRDFIndexer()
 {
-    while (!m_cache.empty()) {
-        delete *m_cache.begin();
-        m_cache.erase(m_cache.begin());
+    while (!m_sources.empty()) {
+        delete *m_sources.begin();
+        m_sources.erase(m_sources.begin());
     }
 }
 
@@ -122,13 +124,7 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
 
         QString baseUrl = QUrl(uri).toString(QUrl::RemoveFragment);
 
-        FileSource source(baseUrl);
-        if (source.isAvailable()) {
-            source.waitForData();
-            if (indexFile(source.getLocalFilename())) {
-                m_cache.insert(new FileSource(source));
-            }
-        }
+        indexURL(baseUrl);
 
         if (m_uriToIdMap.find(uri) == m_uriToIdMap.end()) {
             m_uriToIdMap[uri] = "";
@@ -175,6 +171,23 @@ PluginRDFIndexer::indexFile(QString filepath)
 bool
 PluginRDFIndexer::indexURL(QString urlString)
 {
+    Profiler profiler("PluginRDFIndexer::indexURL");
+
+    QString localString = urlString;
+
+    if (FileSource::isRemote(urlString) &&
+        FileSource::canHandleScheme(urlString)) {
+
+        FileSource *source = new FileSource(urlString);
+        if (!source->isAvailable()) {
+            delete source;
+            return false;
+        }
+        source->waitForData();
+        localString = QUrl::fromLocalFile(source->getLocalFilename()).toString();
+        m_sources.insert(source);
+    }
+
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;
 
     SimpleSPARQLQuery query
@@ -206,7 +219,7 @@ PluginRDFIndexer::indexURL(QString urlString)
              "   } "
              " } "
              )
-         .arg(urlString));
+         .arg(localString));
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
