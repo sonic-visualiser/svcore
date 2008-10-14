@@ -18,6 +18,10 @@
 #include "PluginRDFIndexer.h"
 #include "SimpleSPARQLQuery.h"
 
+#include "data/fileio/FileSource.h"
+
+#include "base/Profiler.h"
+
 #include "plugin/PluginIdentifier.h"
 
 #include <iostream>
@@ -25,6 +29,7 @@ using std::cerr;
 using std::endl;
 
 PluginRDFDescription::PluginRDFDescription(QString pluginId) :
+    m_source(0),
     m_pluginId(pluginId),
     m_haveDescription(false)
 {
@@ -45,12 +50,51 @@ PluginRDFDescription::PluginRDFDescription(QString pluginId) :
 
 PluginRDFDescription::~PluginRDFDescription()
 {
+    delete m_source;
 }
 
 bool
 PluginRDFDescription::haveDescription() const
 {
     return m_haveDescription;
+}
+
+QString
+PluginRDFDescription::getPluginName() const
+{
+    return m_pluginName;
+}
+
+QString
+PluginRDFDescription::getPluginDescription() const
+{
+    return m_pluginDescription;
+}
+
+QString
+PluginRDFDescription::getPluginMaker() const
+{
+    return m_pluginMaker;
+}
+
+QStringList
+PluginRDFDescription::getOutputIds() const
+{
+    QStringList ids;
+    for (OutputDispositionMap::const_iterator i = m_outputDispositions.begin();
+         i != m_outputDispositions.end(); ++i) {
+        ids.push_back(i->first);
+    }
+    return ids;
+}
+
+QString
+PluginRDFDescription::getOutputName(QString outputId) const
+{
+    if (m_outputNames.find(outputId) == m_outputNames.end()) {
+        return "";
+    } 
+    return m_outputNames.find(outputId)->second;
 }
 
 PluginRDFDescription::OutputDisposition
@@ -104,8 +148,94 @@ PluginRDFDescription::getOutputUnit(QString outputId) const
 bool
 PluginRDFDescription::indexURL(QString url) 
 {
+    Profiler profiler("PluginRDFDescription::indexURL");
+
     QString type, soname, label;
     PluginIdentifier::parseIdentifier(m_pluginId, type, soname, label);
+
+    bool success = true;
+
+    QString local = url;
+
+    if (FileSource::isRemote(url) &&
+        FileSource::canHandleScheme(url)) {
+
+        m_source = new FileSource(url);
+        if (!m_source->isAvailable()) {
+            delete m_source;
+            m_source = 0;
+            return false;
+        }
+        m_source->waitForData();
+        local = QUrl::fromLocalFile(m_source->getLocalFilename()).toString();
+    }
+    
+    if (!indexMetadata(local, label)) success = false;
+    if (!indexOutputs(local, label)) success = false;
+
+    return success;
+}
+
+bool
+PluginRDFDescription::indexMetadata(QString url, QString label)
+{
+    Profiler profiler("PluginRDFDescription::indexMetadata");
+
+    QString queryTemplate =
+        QString(
+            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+            " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
+            " SELECT ?%4 FROM <%1> "
+            " WHERE { "
+            "   ?plugin a vamp:Plugin ; "
+            "           vamp:identifier \"%2\" ; "
+            "           %3 ?%4 . "
+            " }")
+        .arg(url)
+        .arg(label);
+
+    SimpleSPARQLQuery::Value v;
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (queryTemplate.arg("vamp:name").arg("name"), "name");
+    
+    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
+        m_pluginName = v.value;
+    }
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (queryTemplate.arg("dc:description").arg("description"), "description");
+    
+    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
+        m_pluginDescription = v.value;
+    }
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (QString(
+            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+            " SELECT ?name FROM <%1> "
+            " WHERE { "
+            "   ?plugin a vamp:Plugin ; "
+            "           vamp:identifier \"%2\" ; "
+            "           foaf:maker ?maker . "
+            "   ?maker foaf:name ?name . "
+            " }")
+         .arg(url)
+         .arg(label), "name");
+    
+    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
+        m_pluginMaker = v.value;
+    }
+
+    return true;
+}
+
+bool
+PluginRDFDescription::indexOutputs(QString url, QString label)
+{
+    Profiler profiler("PluginRDFDescription::indexOutputs");
 
     SimpleSPARQLQuery query
         (QString
@@ -166,6 +296,8 @@ PluginRDFDescription::indexURL(QString url)
             m_outputDispositions[outputId] = OutputSparse;
         } else if (outputType.contains("TrackLevelOutput")) {
             m_outputDispositions[outputId] = OutputTrackLevel;
+        } else {
+            m_outputDispositions[outputId] = OutputDispositionUnknown;
         }
             
         if (results[i]["unit"].type == SimpleSPARQLQuery::LiteralValue) {
@@ -177,13 +309,24 @@ PluginRDFDescription::indexURL(QString url)
             }
         }
 
+        SimpleSPARQLQuery::Value v;
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                     " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
+                     " SELECT ?title FROM <%1> "
+                     " WHERE { <%2> dc:title ?title } ")
+             .arg(url).arg(outputUri), "title");
+
+        if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
+            m_outputNames[outputId] = v.value;
+        }
+
         QString queryTemplate = 
             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
                     " SELECT ?%3 FROM <%1> "
                     " WHERE { <%2> vamp:computes_%3 ?%3 } ")
             .arg(url).arg(outputUri);
-
-        SimpleSPARQLQuery::Value v;
 
         v = SimpleSPARQLQuery::singleResultQuery
             (queryTemplate.arg("event_type"), "event_type");

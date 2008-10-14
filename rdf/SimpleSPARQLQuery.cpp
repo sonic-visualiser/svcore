@@ -121,7 +121,7 @@ SimpleSPARQLQuery::Impl::Impl(QString query) :
     m_reporter(0),
     m_cancelled(false)
 {
-    std::cerr << "SimpleSPARQLQuery::Impl: Query is: \"" << query.toStdString() << "\"" << std::endl;
+//    std::cerr << "SimpleSPARQLQuery::Impl: Query is: \"" << query.toStdString() << "\"" << std::endl;
 }
 
 SimpleSPARQLQuery::Impl::~Impl()

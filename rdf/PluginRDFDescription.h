@@ -17,6 +17,7 @@
 #define _PLUGIN_RDF_DESCRIPTION_H_
 
 #include <QString>
+#include <QStringList>
 #include <map>
 
 class FileSource;
@@ -37,6 +38,13 @@ public:
     };
 
     bool haveDescription() const;
+
+    QString getPluginName() const;
+    QString getPluginDescription() const;
+    QString getPluginMaker() const;
+
+    QStringList getOutputIds() const;
+    QString getOutputName(QString outputId) const;
     OutputDisposition getOutputDisposition(QString outputId) const;
     QString getOutputEventTypeURI(QString outputId) const;
     QString getOutputFeatureAttributeURI(QString outputId) const;
@@ -47,14 +55,21 @@ protected:
     typedef std::map<QString, OutputDisposition> OutputDispositionMap;
     typedef std::map<QString, QString> OutputStringMap;
 
+    FileSource *m_source;
     QString m_pluginId;
     bool m_haveDescription;
+    QString m_pluginName;
+    QString m_pluginDescription;
+    QString m_pluginMaker;
+    OutputStringMap m_outputNames;
     OutputDispositionMap m_outputDispositions;
     OutputStringMap m_outputEventTypeURIMap;
     OutputStringMap m_outputFeatureAttributeURIMap;
     OutputStringMap m_outputSignalTypeURIMap;
     OutputStringMap m_outputUnitMap;
     bool indexURL(QString url);
+    bool indexMetadata(QString url, QString label);
+    bool indexOutputs(QString url, QString label);
 };
 
 #endif

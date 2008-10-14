@@ -18,6 +18,8 @@
 
 #include "TransformDescription.h"
 
+#include "base/TextMatcher.h"
+
 #include <vamp-sdk/Plugin.h>
 
 #include <QObject>
@@ -31,6 +33,7 @@ class TransformFactory : public QObject
     Q_OBJECT
 
 public:
+    TransformFactory();
     virtual ~TransformFactory();
 
     static TransformFactory *getInstance();
@@ -38,25 +41,22 @@ public:
     TransformList getAllTransformDescriptions();
     TransformDescription getTransformDescription(TransformId id);
 
+    TransformList getUninstalledTransformDescriptions();
+    TransformDescription getUninstalledTransformDescription(TransformId id);
+    
+    typedef enum {
+        TransformUnknown,
+        TransformInstalled,
+        TransformNotInstalled
+    } TransformInstallStatus;
+
+    TransformInstallStatus getTransformInstallStatus(TransformId id);
+
     std::vector<QString> getAllTransformTypes();
     std::vector<QString> getTransformCategories(QString transformType);
     std::vector<QString> getTransformMakers(QString transformType);
 
-    struct Match
-    {
-        TransformId transform;
-        int score;
-        typedef std::map<QString, QString> FragmentMap;
-        FragmentMap fragments;
-
-        Match() : score(0) { }
-        Match(const Match &m) :
-            transform(m.transform), score(m.score), fragments(m.fragments) { }
-
-        bool operator<(const Match &m) const; // sort by score first
-    };
-
-    typedef std::map<TransformId, Match> SearchResults;
+    typedef std::map<TransformId, TextMatcher::Match> SearchResults;
     SearchResults search(QString keyword);
     SearchResults search(QStringList keywords);
     
@@ -178,14 +178,17 @@ public:
 
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
+
     TransformDescriptionMap m_transforms;
+    bool m_transformsPopulated;
+
+    TransformDescriptionMap m_uninstalledTransforms;
+    bool m_uninstalledTransformsPopulated;
 
     void populateTransforms();
+    void populateUninstalledTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
-
-    void searchTest(Match &match, QStringList keywords, QString text,
-                    QString textType, int score);
 
     Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, size_t rate);
 

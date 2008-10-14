@@ -743,7 +743,9 @@ FileSource::createCacheFile()
     QString filepart = m_url.path().section('/', -1, -1,
                                             QString::SectionSkipEmpty);
 
-    QString extension = filepart.section('.', -1);
+    QString extension = "";
+    if (filepart.contains('.')) extension = filepart.section('.', -1);
+
     QString base = filepart;
     if (extension != "") {
         base = base.left(base.length() - extension.length() - 1);

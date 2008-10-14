@@ -24,6 +24,9 @@
 #include "vamp-sdk/PluginHostAdapter.h"
 #include "vamp-sdk/hostext/PluginWrapper.h"
 
+#include "rdf/PluginRDFIndexer.h"
+#include "rdf/PluginRDFDescription.h"
+
 #include "base/XmlExportable.h"
 
 #include <iostream>
@@ -44,6 +47,12 @@ TransformFactory::getInstance()
     return m_instance;
 }
 
+TransformFactory::TransformFactory() :
+    m_transformsPopulated(false),
+    m_uninstalledTransformsPopulated(false)
+{
+}
+
 TransformFactory::~TransformFactory()
 {
 }
@@ -51,7 +60,7 @@ TransformFactory::~TransformFactory()
 TransformList
 TransformFactory::getAllTransformDescriptions()
 {
-    if (m_transforms.empty()) populateTransforms();
+    if (!m_transformsPopulated) populateTransforms();
 
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -73,7 +82,7 @@ TransformFactory::getAllTransformDescriptions()
 TransformDescription
 TransformFactory::getTransformDescription(TransformId id)
 {
-    if (m_transforms.empty()) populateTransforms();
+    if (!m_transformsPopulated) populateTransforms();
 
     if (m_transforms.find(id) == m_transforms.end()) {
         return TransformDescription();
@@ -82,10 +91,60 @@ TransformFactory::getTransformDescription(TransformId id)
     return m_transforms[id];
 }
 
+TransformList
+TransformFactory::getUninstalledTransformDescriptions()
+{
+    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+    
+    std::set<TransformDescription> dset;
+    for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
+	 i != m_uninstalledTransforms.end(); ++i) {
+//        cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << endl;
+	dset.insert(i->second);
+    }
+
+    TransformList list;
+    for (std::set<TransformDescription>::const_iterator i = dset.begin();
+	 i != dset.end(); ++i) {
+//        cerr << "inserting transform into list: id = " << i->identifier.toStdString() << endl;
+	list.push_back(*i);
+    }
+
+    return list;
+}
+
+TransformDescription
+TransformFactory::getUninstalledTransformDescription(TransformId id)
+{
+    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+
+    if (m_uninstalledTransforms.find(id) == m_uninstalledTransforms.end()) {
+        return TransformDescription();
+    }
+
+    return m_uninstalledTransforms[id];
+}
+
+TransformFactory::TransformInstallStatus
+TransformFactory::getTransformInstallStatus(TransformId id)
+{
+    if (!m_transformsPopulated) populateTransforms();
+    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+
+    if (m_transforms.find(id) != m_transforms.end()) {
+        return TransformInstalled;
+    }
+    if (m_uninstalledTransforms.find(id) != m_uninstalledTransforms.end()) {
+        return TransformNotInstalled;
+    }
+    return TransformUnknown;
+}
+    
+
 std::vector<QString>
 TransformFactory::getAllTransformTypes()
 {
-    if (m_transforms.empty()) populateTransforms();
+    if (!m_transformsPopulated) populateTransforms();
 
     std::set<QString> types;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -104,7 +163,7 @@ TransformFactory::getAllTransformTypes()
 std::vector<QString>
 TransformFactory::getTransformCategories(QString transformType)
 {
-    if (m_transforms.empty()) populateTransforms();
+    if (!m_transformsPopulated) populateTransforms();
 
     std::set<QString> categories;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -131,7 +190,7 @@ TransformFactory::getTransformCategories(QString transformType)
 std::vector<QString>
 TransformFactory::getTransformMakers(QString transformType)
 {
-    if (m_transforms.empty()) populateTransforms();
+    if (!m_transformsPopulated) populateTransforms();
 
     std::set<QString> makers;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -216,6 +275,8 @@ TransformFactory::populateTransforms()
 
 	m_transforms[identifier] = desc;
     }	    
+
+    m_transformsPopulated = true;
 }
 
 void
@@ -448,6 +509,73 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
     }
 }
 
+void
+TransformFactory::populateUninstalledTransforms()
+{
+    if (!m_uninstalledTransforms.empty()) return;
+    if (m_transforms.empty()) populateTransforms();
+
+    //!!! This will be amazingly slow
+
+    QStringList ids = PluginRDFIndexer::getInstance()->getIndexedPluginIds();
+    
+    for (QStringList::const_iterator i = ids.begin(); i != ids.end(); ++i) {
+        
+        PluginRDFDescription desc(*i);
+
+        QString name = desc.getPluginName();
+//        if (name == "") {
+//            std::cerr << "TransformFactory::populateUninstalledTransforms: "
+//                      << "No name available for plugin " << i->toStdString()
+//                      << ", skipping" << std::endl;
+//            continue;
+//        }
+
+        QString description = desc.getPluginDescription();
+        QString maker = desc.getPluginMaker();
+
+        QStringList oids = desc.getOutputIds();
+
+        for (QStringList::const_iterator j = oids.begin(); j != oids.end(); ++j) {
+
+            TransformId tid = Transform::getIdentifierForPluginOutput(*i, *j);
+            
+            if (m_transforms.find(tid) != m_transforms.end()) {
+                std::cerr << "TransformFactory::populateUninstalledTransforms: "
+                          << tid.toStdString() << " is installed, skipping" << std::endl;
+                continue;
+            }
+
+            std::cerr << "TransformFactory::populateUninstalledTransforms: "
+                      << "adding " << tid.toStdString() << std::endl;
+
+            QString oname = desc.getOutputName(*j);
+            if (oname == "") oname = *j;
+            
+            TransformDescription td;
+            td.type = tr("Analysis"); //!!! should be enum or something
+            td.category = "";
+            td.identifier = tid;
+
+            if (oids.size() == 1) {
+                td.name = name;
+            } else if (name != "") {
+                td.name = tr("%1: %2").arg(name).arg(oname);
+            }
+
+            td.friendlyName = name; //!!!???
+            td.description = description;
+            td.longDescription = ""; //!!!
+            td.maker = maker;
+            td.units = "";
+            td.configurable = false;
+
+            m_uninstalledTransforms[tid] = td;
+        }
+    }
+
+    m_uninstalledTransformsPopulated = true;
+}
 
 Transform
 TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
@@ -787,27 +915,6 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     setParametersFromPlugin(t, plugin);
     delete plugin;
 }
-/*
-TransformFactory::SearchResults
-TransformFactory::search(QStringList keywords)
-{
-    SearchResults results;
-    SearchResults partial;
-    for (int i = 0; i < keywords.size(); ++i) {
-        partial = search(keywords[i]);
-        for (SearchResults::const_iterator j = partial.begin();
-             j != partial.end(); ++j) {
-            if (results.find(j->first) == results.end()) {
-                results[j->first] = j->second;
-            } else {
-                results[j->first].score += j->second.score;
-                results[j->first].fragments << j->second.fragments;
-            }
-        }
-    }
-    return results;
-}
-*/
 
 TransformFactory::SearchResults
 TransformFactory::search(QString keyword)
@@ -828,125 +935,46 @@ TransformFactory::search(QStringList keywords)
     }
 
     SearchResults results;
+    TextMatcher matcher;
 
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
          i != m_transforms.end(); ++i) {
 
-        Match match;
+        TextMatcher::Match match;
 
-        match.transform = i->first;
+        match.key = i->first;
         
-        searchTest(match, keywords, i->second.type, tr("Plugin type"), 10);
-        searchTest(match, keywords, i->second.category, tr("Category"), 20);
-        searchTest(match, keywords, i->second.identifier, tr("System Identifier"), 5);
-        searchTest(match, keywords, i->second.name, tr("Name"), 30);
-        searchTest(match, keywords, i->second.description, tr("Description"), 20);
-        searchTest(match, keywords, i->second.maker, tr("Maker"), 10);
-        searchTest(match, keywords, i->second.units, tr("Units"), 10);
+        matcher.test(match, keywords, i->second.type, tr("Plugin type"), 5);
+        matcher.test(match, keywords, i->second.category, tr("Category"), 20);
+        matcher.test(match, keywords, i->second.identifier, tr("System Identifier"), 6);
+        matcher.test(match, keywords, i->second.name, tr("Name"), 30);
+        matcher.test(match, keywords, i->second.description, tr("Description"), 20);
+        matcher.test(match, keywords, i->second.maker, tr("Maker"), 10);
+        matcher.test(match, keywords, i->second.units, tr("Units"), 10);
+
+        if (match.score > 0) results[i->first] = match;
+    }
+
+    if (m_uninstalledTransforms.empty()) populateUninstalledTransforms();
+
+    for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
+         i != m_uninstalledTransforms.end(); ++i) {
+
+        TextMatcher::Match match;
+
+        match.key = i->first;
+        
+        matcher.test(match, keywords, i->second.type, tr("Plugin type"), 2);
+        matcher.test(match, keywords, i->second.category, tr("Category"), 10);
+        matcher.test(match, keywords, i->second.identifier, tr("System Identifier"), 3);
+        matcher.test(match, keywords, i->second.name, tr("Name"), 15);
+        matcher.test(match, keywords, i->second.description, tr("Description"), 10);
+        matcher.test(match, keywords, i->second.maker, tr("Maker"), 5);
+        matcher.test(match, keywords, i->second.units, tr("Units"), 5);
 
         if (match.score > 0) results[i->first] = match;
     }
 
     return results;
-}
-
-void
-TransformFactory::searchTest(Match &match, QStringList keywords, QString text,
-                             QString textType, int score)
-{
-/*
-    if (text.toLower() == keyword.toLower()) {
-        match.score += score * 1.5;
-        match.fragments << tr("%1: <b>%2</b>").arg(textType).arg(text);
-        return;
-    }
-*/
-    int len = text.length();
-    int prevEnd = 0;
-    QString fragment;
-
-    while (1) {
-
-        bool first = (prevEnd == 0);
-        
-        int idx = -1;
-        QString keyword;
-
-        for (int ki = 0; ki < keywords.size(); ++ki) {
-            int midx = text.indexOf(keywords[ki], prevEnd, Qt::CaseInsensitive);
-            if (midx >= 0 && midx < len) {
-                if (midx < idx || idx == -1) {
-                    idx = midx;
-                    keyword = keywords[ki];
-                }
-            }
-        }
-
-        if (idx < 0 || idx >= len) break;
-
-        int klen = keyword.length();
-
-        if (first) {
-            match.score += score;
-        } else {
-            match.score += score / 4;
-        }
-
-        int start = idx;
-        int end = start + klen;
-
-        if (start == 0) match.score += 1;
-        if (end == len) match.score += 1;
-
-        if (start > prevEnd + 14) {
-            QString s = text.right((len - start) + 10);
-            s = XmlExportable::encodeEntities(s.left(10)) + "<b>" +
-                XmlExportable::encodeEntities(s.left(klen + 10).right(klen))
-                + "</b>";
-            fragment += tr("...%1").arg(s);
-        } else {
-            QString s = text.right(len - prevEnd);
-            s = XmlExportable::encodeEntities(s.left(start - prevEnd)) + "<b>" +
-                XmlExportable::encodeEntities(s.left(end - prevEnd).right(klen))
-                + "</b>";
-            fragment += s;
-        }
-
-        prevEnd = end;
-    }
-
-    if (prevEnd > 0 && prevEnd < len) {
-        int n = len - prevEnd;
-        fragment +=
-            XmlExportable::encodeEntities(text.right(n).left(n < 8 ? n : 8));
-    }
-
-    if (fragment != "") {
-        match.fragments[textType] = fragment;
-    }
-}
-
-bool
-TransformFactory::Match::operator<(const Match &m) const
-{
-    if (score != m.score) {
-        return score < m.score;
-    }
-    if (transform != m.transform) {
-        return transform < m.transform;
-    }
-    if (fragments.size() != m.fragments.size()) {
-        return fragments.size() < m.fragments.size();
-    }
-
-    for (FragmentMap::const_iterator
-             i = fragments.begin(),
-             j = m.fragments.begin();
-         i != fragments.end(); ++i, ++j) {
-        if (i->first != j->first) return i->first < j->first;
-        if (i->second != j->second) return i->second < j->second;
-    }
-
-    return false;
 }
 
