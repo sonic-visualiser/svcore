@@ -62,31 +62,43 @@ protected:
     mutable size_t m_readbufWidth;
 
     float getFromReadBufStandard(size_t x, size_t y) const {
+        m_readbufMutex.lock();
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            return ((float *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            float v = ((float *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            m_readbufMutex.unlock();
+            return v;
         } else {
             populateReadBuf(x);
+            m_readbufMutex.unlock();
             return getFromReadBufStandard(x, y);
         }
     }
 
     float getFromReadBufCompactUnsigned(size_t x, size_t y) const {
+        m_readbufMutex.lock();
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            return ((uint16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            float v = ((uint16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            m_readbufMutex.unlock();
+            return v;
         } else {
             populateReadBuf(x);
+            m_readbufMutex.unlock();
             return getFromReadBufCompactUnsigned(x, y);
         }
     }
 
     float getFromReadBufCompactSigned(size_t x, size_t y) const {
+        m_readbufMutex.lock();
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            return ((int16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            float v = ((int16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            m_readbufMutex.unlock();
+            return v;
         } else {
             populateReadBuf(x);
+            m_readbufMutex.unlock();
             return getFromReadBufCompactSigned(x, y);
         }
     }
@@ -99,6 +111,7 @@ protected:
         if (m_storageType != Compact) {
             return getFromReadBufStandard(col, h - 1);
         } else {
+            m_readbufMutex.lock();
             union {
                 float f;
                 uint16_t u[2];
@@ -111,6 +124,7 @@ protected:
             size_t ix = (col - m_readbufCol) * m_mfc->getHeight() + h;
             factor.u[0] = ((uint16_t *)m_readbuf)[ix - 2];
             factor.u[1] = ((uint16_t *)m_readbuf)[ix - 1];
+            m_readbufMutex.unlock();
             return factor.f;
         }
     }
@@ -133,6 +147,7 @@ protected:
 
     MatrixFile *m_mfc;
     QMutex m_writeMutex;
+    mutable QMutex m_readbufMutex;
     StorageType m_storageType;
     size_t m_factorSize;
 };

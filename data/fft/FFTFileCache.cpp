@@ -72,16 +72,21 @@ FFTFileCache::resize(size_t width, size_t height)
     MutexLocker locker(&m_writeMutex, "FFTFileCache::resize::m_writeMutex");
 
     m_mfc->resize(width, height * 2 + m_factorSize);
-    if (m_readbuf) {
-        delete[] m_readbuf;
-        m_readbuf = 0;
+
+    {
+        MutexLocker locker(&m_readbufMutex, "FFTFileCache::resize::m_readMutex");
+        if (m_readbuf) {
+            delete[] m_readbuf;
+            m_readbuf = 0;
+        }
     }
+
     if (m_writebuf) {
         delete[] m_writebuf;
     }
     m_writebuf = new char[(height * 2 + m_factorSize) * m_mfc->getCellSize()];
 }
-
+    
 void
 FFTFileCache::reset()
 {
@@ -302,7 +307,7 @@ FFTFileCache::getCacheSize(size_t width, size_t height, StorageType type)
 }
 
 void
-FFTFileCache::populateReadBuf(size_t x) const
+FFTFileCache::populateReadBuf(size_t x) const // m_readbufMutex already held
 {
     Profiler profiler("FFTFileCache::populateReadBuf", false);
 
