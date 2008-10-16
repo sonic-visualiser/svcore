@@ -101,8 +101,8 @@ public:
     }
 
     RegionModel(size_t sampleRate, size_t resolution,
-	      float valueMinimum, float valueMaximum,
-	      bool notifyOnAdd = true) :
+                float valueMinimum, float valueMaximum,
+                bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
