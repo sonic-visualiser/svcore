@@ -57,6 +57,10 @@ public:
      */
     virtual typename SparseValueModel<PointType>::PointList getPoints(long frame) const;
 
+    virtual const typename SparseModel<PointType>::PointList &getPoints() const {
+        return SparseModel<PointType>::getPoints(); 
+    }
+
     /**
      * TabularModel methods.  
      */

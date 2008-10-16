@@ -79,6 +79,11 @@ public:
     virtual size_t getPointCount() const;
 
     /**
+     * Get all points.
+     */
+    virtual const PointList &getPoints() const;
+
+    /**
      * Get all of the points in this model between the given
      * boundaries (in frames), as well as up to two points before and
      * after the boundaries.  If you need exact boundaries, check the
@@ -91,11 +96,6 @@ public:
      * resolution of the model into account.
      */
     virtual PointList getPoints(long frame) const;
-
-    /**
-     * Get all points.
-     */
-    virtual const PointList &getPoints() const { return m_points; }
 
     /**
      * Return all points that share the nearest frame number prior to
@@ -474,6 +474,13 @@ size_t
 SparseModel<PointType>::getPointCount() const
 {
     return m_pointCount;
+}
+
+template <typename PointType>
+const typename SparseModel<PointType>::PointList &
+SparseModel<PointType>::getPoints() const
+{
+    return m_points;
 }
 
 template <typename PointType>
