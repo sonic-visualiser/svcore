@@ -178,7 +178,8 @@ PluginRDFIndexer::indexURL(QString urlString)
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
 
-        FileSource *source = new FileSource(urlString);
+        FileSource *source = new FileSource
+            (urlString, 0, FileSource::PersistentCache);
         if (!source->isAvailable()) {
             delete source;
             return false;

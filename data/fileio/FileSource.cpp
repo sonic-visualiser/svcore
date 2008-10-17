@@ -24,12 +24,13 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QHttpResponseHeader>
 
 #include <iostream>
 #include <cstdlib>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -46,8 +47,10 @@ FileSource::m_remoteLocalMap;
 QMutex
 FileSource::m_mapMutex;
 
-FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
+FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
+                       LocalCacheMode cacheMode) :
     m_url(fileOrUrl),
+    m_cacheMode(cacheMode),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
@@ -60,7 +63,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ")" << std::endl;
+    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ", " << cacheMode << ")" << std::endl;
 #endif
 
     if (!canHandleScheme(m_url)) {
@@ -110,8 +113,10 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
     }
 }
 
-FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
+FileSource::FileSource(QUrl url, ProgressReporter *reporter,
+                       LocalCacheMode cacheMode) :
     m_url(url),
+    m_cacheMode(cacheMode),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
@@ -139,6 +144,7 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
 FileSource::FileSource(const FileSource &rf) :
     QObject(),
     m_url(rf.m_url),
+    m_cacheMode(rf.m_cacheMode),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
@@ -160,8 +166,14 @@ FileSource::FileSource(const FileSource &rf) :
         return;
     }
 
-    if (!isRemote()) {
+    if (m_cacheMode == PersistentCache) {
+
         m_localFilename = rf.m_localFilename;
+
+    } else if (!isRemote()) {
+
+        m_localFilename = rf.m_localFilename;
+
     } else {
         QMutexLocker locker(&m_mapMutex);
 #ifdef DEBUG_FILE_SOURCE
@@ -192,7 +204,9 @@ FileSource::~FileSource()
 
     cleanup();
 
-    if (isRemote() && !m_leaveLocalFile) deleteCacheFile();
+    if (isRemote() && (m_cacheMode == TemporaryCache) && !m_leaveLocalFile) {
+        deleteCacheFile();
+    }
 }
 
 void
@@ -238,7 +252,8 @@ FileSource::init()
 
     if (createCacheFile()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::init: Already have this one" << std::endl;
+        std::cerr << "FileSource::init: Already have this one at "
+                  << m_localFilename.toStdString() << std::endl;
 #endif
         m_ok = true;
         if (!QFileInfo(m_localFilename).exists()) {
@@ -258,7 +273,8 @@ FileSource::init()
 
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::init: Don't have local copy of \""
-              << m_url.toString().toStdString() << "\", retrieving" << std::endl;
+              << m_url.toString().toStdString() << "\", retrieving to "
+              << m_localFilename.toStdString() << std::endl;
 #endif
 
     if (scheme == "http") {
@@ -693,10 +709,15 @@ FileSource::deleteCacheFile()
 
     m_fileCreationMutex.lock();
 
+    // We always delete the file here, even in PersistentCache mode,
+    // because this function is also used if retrieval failed (in
+    // which case we want to delete the cache so that subsequent users
+    // won't trust it).  It's up to the calling code to determine
+    // whether we actually want to delete the cache or not, e.g. on
+    // destruction.
+
     if (!QFile(m_localFilename).remove()) {
-#ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
-#endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename.toStdString() << "\"" << std::endl;
@@ -709,9 +730,46 @@ FileSource::deleteCacheFile()
     m_done = true;
 }
 
+QString
+FileSource::getPersistentCacheDirectory()
+{
+    QDir dir = TempDirectory::getInstance()->getContainingPath();
+
+    QString cacheDirName("cache");
+
+    QFileInfo fi(dir.filePath(cacheDirName));
+
+    if ((fi.exists() && !fi.isDir()) ||
+        (!fi.exists() && !dir.mkdir(cacheDirName))) {
+
+        throw DirectoryCreationFailed(fi.filePath());
+    }
+
+    return fi.filePath();
+}
+
+QString
+FileSource::getPersistentCacheFilePath(QUrl url)
+{
+    QDir dir(getPersistentCacheDirectory());
+
+    QString filename =
+        QString::fromLocal8Bit
+        (QCryptographicHash::hash(url.toString().toLocal8Bit(),
+                                  QCryptographicHash::Sha1).toBase64());
+
+    return dir.filePath(filename);
+}
+
 bool
 FileSource::createCacheFile()
 {
+    if (m_cacheMode == PersistentCache) {
+        m_localFilename = getPersistentCacheFilePath(m_url);
+        if (QFileInfo(m_localFilename).exists()) return true;
+        else return false;
+    }
+
     {
         QMutexLocker locker(&m_mapMutex);
 

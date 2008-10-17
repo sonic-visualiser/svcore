@@ -24,6 +24,8 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QThread>
+#include <QMutex>
 
 #include <map>
 #include <set>
@@ -191,6 +193,21 @@ protected:
     void populateRealTimePlugins(TransformDescriptionMap &);
 
     Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, size_t rate);
+
+    QMutex m_transformsMutex;
+    QMutex m_uninstalledTransformsMutex;
+
+    class UninstalledTransformsPopulateThread : public QThread
+    {
+    public:
+        UninstalledTransformsPopulateThread(TransformFactory *factory) :
+            m_factory(factory) {
+        }
+        virtual void run() {
+            m_factory->populateUninstalledTransforms();
+        }
+        TransformFactory *m_factory;
+    };
 
     static TransformFactory *m_instance;
 };
