@@ -159,8 +159,11 @@ PluginRDFDescription::indexURL(QString url)
 
     if (FileSource::isRemote(url) &&
         FileSource::canHandleScheme(url)) {
+        
+        //!!! persistent with expiry
 
-        m_source = new FileSource(url);
+        m_source = new FileSource(url, 0, FileSource::PersistentCache);
+
         if (!m_source->isAvailable()) {
             delete m_source;
             m_source = 0;

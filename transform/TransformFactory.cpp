@@ -529,8 +529,9 @@ TransformFactory::populateUninstalledTransforms()
                        "TransformFactory::populateUninstalledTransforms");
     if (m_uninstalledTransformsPopulated) return;
 
-    PluginRDFIndexer::getInstance()->indexURL
-        ("http://www.vamp-plugins.org/rdf/plugins/vamp-example-plugins");
+//        ("http://www.vamp-plugins.org/rdf/plugins/vamp-example-plugins");
+
+    PluginRDFIndexer::getInstance()->indexConfiguredURLs();
 
     //!!! This will be amazingly slow
 

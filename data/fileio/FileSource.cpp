@@ -421,6 +421,10 @@ FileSource::initFtp()
 void
 FileSource::cleanup()
 {
+    if (m_done) {
+        delete m_localFile; // does not actually delete the file
+        m_localFile = 0;
+    }
     m_done = true;
     if (m_http) {
         QHttp *h = m_http;
@@ -434,8 +438,10 @@ FileSource::cleanup()
         f->abort();
         f->deleteLater();
     }
-    delete m_localFile; // does not actually delete the file
-    m_localFile = 0;
+    if (m_localFile) {
+        delete m_localFile; // does not actually delete the file
+        m_localFile = 0;
+    }
 }
 
 bool
@@ -660,7 +666,8 @@ FileSource::done(bool error)
 
     if (error) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::done: error is " << error << ", deleting cache file" << std::endl;
+        std::cerr << "FileSource::done: error is " << error << " (\"" 
+                  << m_errorString.toStdString() << "\"), deleting cache file" << std::endl;
 #endif
         deleteCacheFile();
     }
@@ -756,7 +763,7 @@ FileSource::getPersistentCacheFilePath(QUrl url)
     QString filename =
         QString::fromLocal8Bit
         (QCryptographicHash::hash(url.toString().toLocal8Bit(),
-                                  QCryptographicHash::Sha1).toBase64());
+                                  QCryptographicHash::Sha1).toHex());
 
     return dir.filePath(filename);
 }
