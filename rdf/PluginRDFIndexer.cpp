@@ -18,6 +18,7 @@
 #include "SimpleSPARQLQuery.h"
 
 #include "data/fileio/FileSource.h"
+#include "data/fileio/PlaylistFileReader.h"
 #include "plugin/PluginIdentifier.h"
 
 #include "base/Profiler.h"
@@ -27,6 +28,9 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QUrl>
+#include <QDateTime>
+#include <QSettings>
+#include <QFile>
 
 #include <iostream>
 using std::cerr;
@@ -95,15 +99,66 @@ PluginRDFIndexer::PluginRDFIndexer()
 
 PluginRDFIndexer::~PluginRDFIndexer()
 {
+    QMutexLocker locker(&m_mutex);
+
     while (!m_sources.empty()) {
         delete *m_sources.begin();
         m_sources.erase(m_sources.begin());
     }
 }
 
+bool
+PluginRDFIndexer::indexConfiguredURLs()
+{
+    std::cerr << "PluginRDFIndexer::indexConfiguredURLs" << std::endl;
+
+    QSettings settings;
+    settings.beginGroup("RDF");
+    
+    QString indexKey("rdf-indices");
+    QStringList indices = settings.value(indexKey).toStringList();
+    
+    for (int i = 0; i < indices.size(); ++i) {
+
+        QString index = indices[i];
+
+        std::cerr << "PluginRDFIndexer::indexConfiguredURLs: index url is "
+                  << index.toStdString() << std::endl;
+
+        expireCacheMaybe(index);
+
+        FileSource indexSource(index, 0, FileSource::PersistentCache);
+        if (!indexSource.isAvailable()) continue;
+        indexSource.waitForData();
+
+        PlaylistFileReader reader(indexSource);
+        if (!reader.isOK()) continue;
+
+        PlaylistFileReader::Playlist list = reader.load();
+        for (PlaylistFileReader::Playlist::const_iterator j = list.begin();
+             j != list.end(); ++j) {
+            std::cerr << "PluginRDFIndexer::indexConfiguredURLs: url is "
+                      << j->toStdString() << std::endl;
+            indexURL(*j);
+        }
+    }
+
+    QString urlListKey("rdf-urls");
+    QStringList urls = settings.value(urlListKey).toStringList();
+
+    for (int i = 0; i < urls.size(); ++i) {
+        indexURL(urls[i]);
+    }
+    
+    settings.endGroup();
+    return true;
+}
+
 QString
 PluginRDFIndexer::getURIForPluginId(QString pluginId)
 {
+    QMutexLocker locker(&m_mutex);
+
     if (m_idToUriMap.find(pluginId) == m_idToUriMap.end()) return "";
     return m_idToUriMap[pluginId];
 }
@@ -111,6 +166,8 @@ PluginRDFIndexer::getURIForPluginId(QString pluginId)
 QString
 PluginRDFIndexer::getIdForPluginURI(QString uri)
 {
+    QMutexLocker locker(&m_mutex);
+
     if (m_uriToIdMap.find(uri) == m_uriToIdMap.end()) {
 
         // Haven't found this uri referenced in any document on the
@@ -137,6 +194,8 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
 QString
 PluginRDFIndexer::getDescriptionURLForPluginId(QString pluginId)
 {
+    QMutexLocker locker(&m_mutex);
+
     if (m_idToDescriptionMap.find(pluginId) == m_idToDescriptionMap.end()) return "";
     return m_idToDescriptionMap[pluginId];
 }
@@ -144,6 +203,8 @@ PluginRDFIndexer::getDescriptionURLForPluginId(QString pluginId)
 QString
 PluginRDFIndexer::getDescriptionURLForPluginURI(QString uri)
 {
+    QMutexLocker locker(&m_mutex);
+
     QString id = getIdForPluginURI(uri);
     if (id == "") return "";
     return getDescriptionURLForPluginId(id);
@@ -152,6 +213,8 @@ PluginRDFIndexer::getDescriptionURLForPluginURI(QString uri)
 QStringList
 PluginRDFIndexer::getIndexedPluginIds() 
 {
+    QMutexLocker locker(&m_mutex);
+
     QStringList ids;
     for (StringMap::const_iterator i = m_idToDescriptionMap.begin();
          i != m_idToDescriptionMap.end(); ++i) {
@@ -168,15 +231,60 @@ PluginRDFIndexer::indexFile(QString filepath)
     return indexURL(urlString);
 }
 
+void
+PluginRDFIndexer::expireCacheMaybe(QString urlString)
+{
+    QString cacheFile = FileSource::getPersistentCacheFilePath(urlString);
+
+    QSettings settings;
+    settings.beginGroup("RDF");
+
+    QString key("rdf-expiry-times");
+
+    QMap<QString, QVariant> expiryMap = settings.value(key).toMap();
+    QDateTime lastExpiry = expiryMap[urlString].toDateTime();
+
+    if (!QFileInfo(cacheFile).exists()) {
+        expiryMap[urlString] = QDateTime::currentDateTime();
+        settings.setValue(key, expiryMap);
+        settings.endGroup();
+        return;
+    }
+
+    if (!lastExpiry.isValid() ||
+        (lastExpiry.addDays(2) < QDateTime::currentDateTime())) {
+
+        std::cerr << "Expiring old cache file " << cacheFile.toStdString()
+                  << std::endl;
+
+        if (QFile(cacheFile).remove()) {
+
+            expiryMap[urlString] = QDateTime::currentDateTime();
+            settings.setValue(key, expiryMap);
+        }
+    }
+
+    settings.endGroup();
+}
+
 bool
 PluginRDFIndexer::indexURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
+    std::cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << std::endl;
+
+    QMutexLocker locker(&m_mutex);
+
     QString localString = urlString;
 
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
+
+        //!!! how do we avoid hammering the server if it doesn't have
+        //!!! the file, and/or the network if it can't get through?
+
+        expireCacheMaybe(urlString);
 
         FileSource *source = new FileSource
             (urlString, 0, FileSource::PersistentCache);

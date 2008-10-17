@@ -22,6 +22,8 @@
 #include <rasqal.h>
 #endif
 
+//#define DEBUG_SIMPLE_SPARQL_QUERY 1
+
 #include <iostream>
 
 using std::cerr;
@@ -121,7 +123,9 @@ SimpleSPARQLQuery::Impl::Impl(QString query) :
     m_reporter(0),
     m_cancelled(false)
 {
-//    std::cerr << "SimpleSPARQLQuery::Impl: Query is: \"" << query.toStdString() << "\"" << std::endl;
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
+    std::cerr << "SimpleSPARQLQuery::Impl: Query is: \"" << query.toStdString() << "\"" << std::endl;
+#endif
 }
 
 SimpleSPARQLQuery::Impl::~Impl()
@@ -234,7 +238,9 @@ SimpleSPARQLQuery::Impl::execute()
 
             QString text = (const char *)rasqal_literal_as_string(literal);
 
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
             std::cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << std::endl;
+#endif
 
             resultmap[key] = Value(type, text);
         }
