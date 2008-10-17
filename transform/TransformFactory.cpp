@@ -35,6 +35,8 @@
 #include <QRegExp>
 #include <QTextStream>
 
+#include "base/Thread.h"
+
 using std::cerr;
 using std::endl;
 
@@ -51,6 +53,9 @@ TransformFactory::TransformFactory() :
     m_transformsPopulated(false),
     m_uninstalledTransformsPopulated(false)
 {
+    UninstalledTransformsPopulateThread *thread =
+        new UninstalledTransformsPopulateThread(this);
+    thread->start();
 }
 
 TransformFactory::~TransformFactory()
@@ -60,7 +65,7 @@ TransformFactory::~TransformFactory()
 TransformList
 TransformFactory::getAllTransformDescriptions()
 {
-    if (!m_transformsPopulated) populateTransforms();
+    populateTransforms();
 
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -82,7 +87,7 @@ TransformFactory::getAllTransformDescriptions()
 TransformDescription
 TransformFactory::getTransformDescription(TransformId id)
 {
-    if (!m_transformsPopulated) populateTransforms();
+    populateTransforms();
 
     if (m_transforms.find(id) == m_transforms.end()) {
         return TransformDescription();
@@ -94,7 +99,7 @@ TransformFactory::getTransformDescription(TransformId id)
 TransformList
 TransformFactory::getUninstalledTransformDescriptions()
 {
-    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+    populateUninstalledTransforms();
     
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
@@ -106,7 +111,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     TransformList list;
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
-//        cerr << "inserting transform into list: id = " << i->identifier.toStdString() << endl;
+//        cerr << "inserting transform into uninstalled list: id = " << i->identifier.toStdString() << endl;
 	list.push_back(*i);
     }
 
@@ -116,7 +121,7 @@ TransformFactory::getUninstalledTransformDescriptions()
 TransformDescription
 TransformFactory::getUninstalledTransformDescription(TransformId id)
 {
-    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+    populateUninstalledTransforms();
 
     if (m_uninstalledTransforms.find(id) == m_uninstalledTransforms.end()) {
         return TransformDescription();
@@ -128,8 +133,8 @@ TransformFactory::getUninstalledTransformDescription(TransformId id)
 TransformFactory::TransformInstallStatus
 TransformFactory::getTransformInstallStatus(TransformId id)
 {
-    if (!m_transformsPopulated) populateTransforms();
-    if (!m_uninstalledTransformsPopulated) populateUninstalledTransforms();
+    populateTransforms();
+    populateUninstalledTransforms();
 
     if (m_transforms.find(id) != m_transforms.end()) {
         return TransformInstalled;
@@ -144,7 +149,7 @@ TransformFactory::getTransformInstallStatus(TransformId id)
 std::vector<QString>
 TransformFactory::getAllTransformTypes()
 {
-    if (!m_transformsPopulated) populateTransforms();
+    populateTransforms();
 
     std::set<QString> types;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -163,7 +168,7 @@ TransformFactory::getAllTransformTypes()
 std::vector<QString>
 TransformFactory::getTransformCategories(QString transformType)
 {
-    if (!m_transformsPopulated) populateTransforms();
+    populateTransforms();
 
     std::set<QString> categories;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -190,7 +195,7 @@ TransformFactory::getTransformCategories(QString transformType)
 std::vector<QString>
 TransformFactory::getTransformMakers(QString transformType)
 {
-    if (!m_transformsPopulated) populateTransforms();
+    populateTransforms();
 
     std::set<QString> makers;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
@@ -217,6 +222,12 @@ TransformFactory::getTransformMakers(QString transformType)
 void
 TransformFactory::populateTransforms()
 {
+    MutexLocker locker(&m_transformsMutex,
+                       "TransformFactory::populateTransforms");
+    if (m_transformsPopulated) {
+        return;
+    }
+
     TransformDescriptionMap transforms;
 
     populateFeatureExtractionPlugins(transforms);
@@ -512,8 +523,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 void
 TransformFactory::populateUninstalledTransforms()
 {
-    if (!m_uninstalledTransforms.empty()) return;
-    if (m_transforms.empty()) populateTransforms();
+    populateTransforms();
+
+    MutexLocker locker(&m_uninstalledTransformsMutex,
+                       "TransformFactory::populateUninstalledTransforms");
+    if (m_uninstalledTransformsPopulated) return;
+
+    PluginRDFIndexer::getInstance()->indexURL
+        ("http://www.vamp-plugins.org/rdf/plugins/vamp-example-plugins");
 
     //!!! This will be amazingly slow
 
@@ -575,6 +592,8 @@ TransformFactory::populateUninstalledTransforms()
     }
 
     m_uninstalledTransformsPopulated = true;
+
+    std::cerr << "populateUninstalledTransforms exiting" << std::endl;
 }
 
 Transform
@@ -660,7 +679,7 @@ TransformFactory::downcastVampPlugin(Vamp::PluginBase *plugin)
 bool
 TransformFactory::haveTransform(TransformId identifier)
 {
-    if (m_transforms.empty()) populateTransforms();
+    populateTransforms();
     return (m_transforms.find(identifier) != m_transforms.end());
 }
 
@@ -927,7 +946,7 @@ TransformFactory::search(QString keyword)
 TransformFactory::SearchResults
 TransformFactory::search(QStringList keywords)
 {
-    if (m_transforms.empty()) populateTransforms();
+    populateTransforms();
 
     if (keywords.size() > 1) {
         // Additional score for all keywords in a row
@@ -955,7 +974,21 @@ TransformFactory::search(QStringList keywords)
         if (match.score > 0) results[i->first] = match;
     }
 
-    if (m_uninstalledTransforms.empty()) populateUninstalledTransforms();
+    if (!m_uninstalledTransformsMutex.tryLock()) {
+        // uninstalled transforms are being populated; this may take some time,
+        // and they aren't critical
+        std::cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << std::endl;
+        return results;
+    }
+
+    if (!m_uninstalledTransformsPopulated) {
+        std::cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
+                  << "and are not being populated either -- was the thread not started correctly?" << endl;
+        m_uninstalledTransformsMutex.unlock();
+        return results;
+    }
+
+    m_uninstalledTransformsMutex.unlock();
 
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
          i != m_uninstalledTransforms.end(); ++i) {

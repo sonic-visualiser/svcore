@@ -53,12 +53,10 @@ TempDirectory::cleanup()
 }
 
 QString
-TempDirectory::getPath()
+TempDirectory::getContainingPath()
 {
     QMutexLocker locker(&m_mutex);
     
-    if (m_tmpdir != "") return m_tmpdir;
-
     QSettings settings;
     settings.beginGroup("TempDirectory");
     QString svDirParent = settings.value("create-in", "$HOME").toString();
@@ -80,7 +78,15 @@ TempDirectory::getPath()
 
     cleanupAbandonedDirectories(svDir);
 
-    return createTempDirectoryIn(svDir);
+    return svDir;
+}    
+
+QString
+TempDirectory::getPath()
+{
+    if (m_tmpdir != "") return m_tmpdir;
+
+    return createTempDirectoryIn(getContainingPath());
 }
 
 QString

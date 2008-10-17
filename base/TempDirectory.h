@@ -38,17 +38,36 @@ public:
     virtual ~TempDirectory();
 
     /**
+     * Return the path of the directory in which the temporary
+     * directory has been or will be created.  This directory is
+     * particular to this application, although not to this instance
+     * of it, and it will not be removed when the application exits.
+     * Persistent cache data or similar may be placed in this
+     * directory or other, non-temporary subdirectories of it.
+     *
+     * If this directory does not exist, it will be created.  Throw
+     * DirectoryCreationFailed if the directory cannot be created.
+     */
+    QString getContainingPath();
+
+    /**
      * Create the root temporary directory if necessary, and return
-     * its path.  Throw DirectoryCreationFailed if the directory
-     * cannot be created.
+     * its path.  This directory will be removed when the application
+     * exits.
+     *
+     * Throw DirectoryCreationFailed if the directory cannot be
+     * created.
      */
     QString getPath();
 
     /** 
      * Create an immediate subdirectory of the root temporary
      * directory of the given name, if it doesn't already exist, and
-     * return its path.  Throw DirectoryCreationFailed if the
-     * directory cannot be created.
+     * return its path.  This directory will be removed when the
+     * application exits.
+     * 
+     * Throw DirectoryCreationFailed if the directory cannot be
+     * created.
      */
     QString getSubDirectoryPath(QString subdir);
 
