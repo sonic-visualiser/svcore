@@ -239,7 +239,7 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     }
 
     // If we have a more-information URL for this plugin, then we take
-    // that.  Otherwise, a more-inforomation URL for the plugin
+    // that.  Otherwise, a more-information URL for the plugin
     // library would do nicely.  Failing that, we could perhaps use
     // any foaf:page URL at all that appears in the file -- but
     // perhaps that would be unwise
