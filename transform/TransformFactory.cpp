@@ -551,6 +551,7 @@ TransformFactory::populateUninstalledTransforms()
 
         QString description = desc.getPluginDescription();
         QString maker = desc.getPluginMaker();
+        QString infoUrl = desc.getPluginInfoURL();
 
         QStringList oids = desc.getOutputIds();
 
@@ -581,14 +582,43 @@ TransformFactory::populateUninstalledTransforms()
                 td.name = tr("%1: %2").arg(name).arg(oname);
             }
 
+            QString longDescription = description;
+            //!!! basically duplicated from above
+            if (longDescription == "") {
+                if (oids.size() == 1) {
+                    longDescription = tr("Extract features using \"%1\" plugin (from %2)")
+                        .arg(name).arg(maker);
+                } else {
+                    longDescription = tr("Extract features using \"%1\" output of \"%2\" plugin (from %3)")
+                        .arg(oname).arg(name).arg(maker);
+                }
+            } else {
+                if (oids.size() == 1) {
+                    longDescription = tr("%1 using \"%2\" plugin (from %3)")
+                        .arg(longDescription).arg(name).arg(maker);
+                } else {
+                    longDescription = tr("%1 using \"%2\" output of \"%3\" plugin (from %4)")
+                        .arg(longDescription).arg(oname).arg(name).arg(maker);
+                }
+            }                    
+
             td.friendlyName = name; //!!!???
             td.description = description;
-            td.longDescription = ""; //!!!
+            td.longDescription = longDescription;
             td.maker = maker;
+            td.infoUrl = infoUrl;
             td.units = "";
             td.configurable = false;
 
             m_uninstalledTransforms[tid] = td;
+
+            if (td.infoUrl != "") {
+                if (m_transforms.find(tid) != m_transforms.end()) {
+                    if (m_transforms[tid].infoUrl == "") {
+                        m_transforms[tid].infoUrl = td.infoUrl;
+                    }
+                }
+            }
         }
     }
 

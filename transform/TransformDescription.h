@@ -65,6 +65,7 @@ struct TransformDescription
     QString description; // sentence describing transform
     QString longDescription; // description "using" plugin name "by" maker
     QString maker;
+    QString infoUrl;
     QString units;
     bool configurable;
     

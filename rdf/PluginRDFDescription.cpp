@@ -77,6 +77,12 @@ PluginRDFDescription::getPluginMaker() const
     return m_pluginMaker;
 }
 
+QString
+PluginRDFDescription::getPluginInfoURL() const
+{
+    return m_pluginInfoURL;
+}
+
 QStringList
 PluginRDFDescription::getOutputIds() const
 {
@@ -230,6 +236,52 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginMaker = v.value;
+    }
+
+    // If we have a more-information URL for this plugin, then we take
+    // that.  Otherwise, a more-inforomation URL for the plugin
+    // library would do nicely.  Failing that, we could perhaps use
+    // any foaf:page URL at all that appears in the file -- but
+    // perhaps that would be unwise
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (QString(
+            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+            " SELECT ?page from <%1> "
+            " WHERE { "
+            "   ?plugin a vamp:Plugin ; "
+            "           vamp:identifier \"%2\" ; "
+            "           foaf:page ?page . "
+            " }")
+         .arg(url)
+         .arg(label), "page");
+
+    if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+
+        m_pluginInfoURL = v.value;
+
+    } else {
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (QString(
+                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+                " SELECT ?page from <%1> "
+                " WHERE { "
+                "   ?library a vamp:PluginLibrary ; "
+                "            vamp:available_plugin ?plugin ; "
+                "            foaf:page ?page . "
+                "   ?plugin a vamp:Plugin ; "
+                "           vamp:identifier \"%2\" . "
+                " }")
+             .arg(url)
+             .arg(label), "page");
+
+        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+
+            m_pluginInfoURL = v.value;
+        }
     }
 
     return true;
