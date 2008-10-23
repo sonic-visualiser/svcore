@@ -34,6 +34,8 @@ class Command;
 class TabularModel
 {
 public:
+    virtual ~TabularModel() { }
+
     virtual int getRowCount() const = 0;
     virtual int getColumnCount() const = 0;
 

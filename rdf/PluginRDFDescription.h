@@ -42,6 +42,7 @@ public:
     QString getPluginName() const;
     QString getPluginDescription() const;
     QString getPluginMaker() const;
+    QString getPluginInfoURL() const;
 
     QStringList getOutputIds() const;
     QString getOutputName(QString outputId) const;
@@ -61,6 +62,7 @@ protected:
     QString m_pluginName;
     QString m_pluginDescription;
     QString m_pluginMaker;
+    QString m_pluginInfoURL;
     OutputStringMap m_outputNames;
     OutputDispositionMap m_outputDispositions;
     OutputStringMap m_outputEventTypeURIMap;
