@@ -16,6 +16,7 @@
 #include "LogRange.h"
 
 #include <algorithm>
+#include <iostream>
 #include <cmath>
 
 void
@@ -24,12 +25,16 @@ LogRange::mapRange(float &min, float &max, float logthresh)
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
 
+//    std::cerr << "LogRange::mapRange: min = " << min << ", max = " << max << std::endl;
+
     if (min >= 0.f) {
 
         max = log10f(max); // we know max != 0
 
         if (min == 0.f) min = std::min(logthresh, max);
         else min = log10f(min);
+
+//        std::cerr << "LogRange::mapRange: positive: min = " << min << ", max = " << max << std::endl;
 
     } else if (max <= 0.f) {
         
@@ -40,12 +45,16 @@ LogRange::mapRange(float &min, float &max, float logthresh)
         
         std::swap(min, max);
         
+//        std::cerr << "LogRange::mapRange: negative: min = " << min << ", max = " << max << std::endl;
+
     } else {
         
         // min < 0 and max > 0
         
         max = log10f(std::max(max, -min));
         min = std::min(logthresh, max);
+
+//        std::cerr << "LogRange::mapRange: spanning: min = " << min << ", max = " << max << std::endl;
     }
 
     if (min == max) min = max - 1;
