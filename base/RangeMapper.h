@@ -34,7 +34,7 @@ class LinearRangeMapper : public RangeMapper
 public:
     LinearRangeMapper(int minpos, int maxpos,
                       float minval, float maxval,
-                      QString unit = "");
+                      QString unit = "", bool inverted = false);
     
     virtual int getPositionForValue(float value) const;
     virtual float getValueForPosition(int position) const;
@@ -47,6 +47,7 @@ protected:
     float m_minval;
     float m_maxval;
     QString m_unit;
+    bool m_inverted;
 };
 
 
@@ -55,7 +56,7 @@ class LogRangeMapper : public RangeMapper
 public:
     LogRangeMapper(int minpos, int maxpos,
                    float minval, float maxval,
-                   QString m_unit = "");
+                   QString m_unit = "", bool inverted = false);
 
     static void convertRatioMinLog(float ratio, float minlog,
                                    int minpos, int maxpos,
@@ -77,6 +78,7 @@ protected:
     float m_minlog;
     float m_maxlog;
     QString m_unit;
+    bool m_inverted;
 };
 
 

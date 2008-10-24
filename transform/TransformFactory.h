@@ -204,6 +204,7 @@ protected:
             m_factory(factory) {
         }
         virtual void run() {
+            sleep(2);
             m_factory->populateUninstalledTransforms();
         }
         TransformFactory *m_factory;
