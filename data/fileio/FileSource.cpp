@@ -62,6 +62,12 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     m_reporter(reporter),
     m_refCounted(false)
 {
+
+    if (cacheMode == PersistentCache) {
+        std::cerr << "FileSource::FileSource: Persistent cache mode used for \"" << fileOrUrl.toStdString() << "\"" << std::endl;
+        exit(1);
+    }
+
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ", " << cacheMode << ")" << std::endl;
 #endif
@@ -128,6 +134,12 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter,
     m_reporter(reporter),
     m_refCounted(false)
 {
+
+    if (cacheMode == PersistentCache) {
+        std::cerr << "FileSource::FileSource: Persistent cache mode used for \"" << url.toString().toStdString() << "\"" << std::endl;
+        exit(1);
+    }
+
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << url.toString().toStdString() << ") [as url]" << std::endl;
 #endif
