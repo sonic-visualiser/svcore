@@ -19,12 +19,16 @@
 #include "base/ProgressReporter.h"
 #include "base/Exceptions.h"
 
+#include "FileSource.h"
+
 #include <QFileInfo>
 #include <QSettings>
 #include <QVariant>
 #include <QMap>
 #include <QDir>
 #include <QCryptographicHash>
+
+#include <iostream>
 
 QString
 CachedFile::getLocalFilenameFor(QUrl url)
@@ -60,6 +64,7 @@ CachedFile::getCacheDirectory()
 CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
     m_url(url),
     m_localFilename(getLocalFilenameFor(url)),
+    m_reporter(reporter),
     m_ok(false)
 {
     refresh();
@@ -128,9 +133,43 @@ CachedFile::retrieve()
     //!!! using Qt classes, but a plain delete then copy is probably
     //!!! good enough)
 
+    FileSource fs(m_url, m_reporter);
 
+    if (!fs.isOK() || !fs.isAvailable()) {
+        return false;
+    }
 
+    fs.waitForData();
 
+    if (!fs.isOK()) {
+        return false;
+    }
+
+    QString tempName = fs.getLocalFilename();
+    QFile tempFile(tempName);
+    if (!tempFile.exists()) {
+        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName.toStdString() << "\" does not exist" << std::endl;
+        return false;
+    }
+
+    QFile previous(m_localFilename);
+    if (previous.exists()) {
+        if (!previous.remove()) {
+            std::cerr << "CachedFile::retrieve: ERROR: Failed to remove previous copy of cached file at \"" << m_localFilename.toStdString() << "\"" << std::endl;
+            return false;
+        }
+    }
+
+    //!!! This is not ideal, could leave us with nothing (old file
+    //!!! removed, new file not able to be copied in because e.g. no
+    //!!! disk space left)
+
+    if (!tempFile.copy(m_localFilename)) {
+        std::cerr << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName.toStdString() << "\" to \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 QDateTime

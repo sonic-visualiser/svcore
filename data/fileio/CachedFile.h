@@ -36,6 +36,7 @@ public:
 protected:
     QUrl m_url;
     QString m_localFilename;
+    ProgressReporter *m_reporter;
     bool m_ok;
 
     void refresh();
