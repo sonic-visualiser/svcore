@@ -22,7 +22,7 @@
 #include <map>
 #include <set>
 
-class FileSource;
+//!!!class FileSource;
 
 class PluginRDFIndexer
 {
@@ -55,14 +55,16 @@ public:
 protected:
     PluginRDFIndexer();
     QMutex m_mutex;
+/*!!!
     std::set<FileSource *> m_sources;
+*/
     typedef std::map<QString, QString> StringMap;
     StringMap m_uriToIdMap;
     StringMap m_idToUriMap;
     StringMap m_idToDescriptionMap;
     bool indexFile(QString path);
     static PluginRDFIndexer *m_instance;
-    void expireCacheMaybe(QString);
+//!!!    void expireCacheMaybe(QString);
 };
 
 #endif

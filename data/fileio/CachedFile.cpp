@@ -61,13 +61,30 @@ CachedFile::getCacheDirectory()
     return fi.filePath();
 }
 
-CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
+CachedFile::CachedFile(QString url, ProgressReporter *reporter) :
     m_url(url),
-    m_localFilename(getLocalFilenameFor(url)),
+    m_localFilename(getLocalFilenameFor(m_url)),
     m_reporter(reporter),
     m_ok(false)
 {
-    refresh();
+    std::cerr << "CachedFile::CachedFile: url is \""
+              << url.toStdString() << "\"" << std::endl;
+    check();
+}
+
+CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
+    m_url(url),
+    m_localFilename(getLocalFilenameFor(m_url)),
+    m_reporter(reporter),
+    m_ok(false)
+{
+    std::cerr << "CachedFile::CachedFile: url is \""
+              << url.toString().toStdString() << "\"" << std::endl;
+    check();
+}
+
+CachedFile::~CachedFile()
+{
 }
 
 bool
@@ -83,7 +100,7 @@ CachedFile::getLocalFilename() const
 }
 
 void
-CachedFile::refresh()
+CachedFile::check()
 {
     //!!! n.b. obvious race condition here if different CachedFile
     // objects for same url used in more than one thread -- need to
@@ -91,16 +108,20 @@ CachedFile::refresh()
     // separate instances of the program
 
     if (!QFileInfo(m_localFilename).exists()) {
+        std::cerr << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << std::endl;
         updateLastRetrieval(false); // empirically!
     }
 
     QDateTime lastRetrieval = getLastRetrieval();
 
     if (lastRetrieval.isValid()) {
+        std::cerr << "CachedFile::check: Valid last retrieval at "
+                  << lastRetrieval.toString().toStdString() << std::endl;
         // this will not be the case if the file is missing, after
         // updateLastRetrieval(false) was called above
         m_ok = true;
         if (lastRetrieval.addDays(2) < QDateTime::currentDateTime()) { //!!!
+            std::cerr << "CachedFile::check: Out of date; trying to retrieve again" << std::endl;
             // doesn't matter if retrieval fails -- we just don't
             // update the last retrieval time
 
@@ -109,15 +130,21 @@ CachedFile::refresh()
             // retrieval every single time if it isn't working
 
             if (retrieve()) {
+                std::cerr << "CachedFile::check: Retrieval succeeded" << std::endl;
                 updateLastRetrieval(true);
-            }
+            } else {
+                std::cerr << "CachedFile::check: Retrieval failed, will try again later (using existing file for now)" << std::endl;
+            }                
         }
     } else {
+        std::cerr << "CachedFile::check: No valid last retrieval" << std::endl;
         // there is no acceptable file
         if (retrieve()) {
+            std::cerr << "CachedFile::check: Retrieval succeeded" << std::endl;
             m_ok = true;
             updateLastRetrieval(true);
         } else {
+            std::cerr << "CachedFile::check: Retrieval failed, remaining in invalid state" << std::endl;
             // again, we don't need to do anything here -- the last
             // retrieval timestamp is already invalid
         }
