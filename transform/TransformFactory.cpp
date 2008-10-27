@@ -561,7 +561,12 @@ TransformFactory::populateUninstalledTransforms()
             
             if (m_transforms.find(tid) != m_transforms.end()) {
                 std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                          << tid.toStdString() << " is installed, skipping" << std::endl;
+                          << tid.toStdString() << " is installed; adding info url if appropriate, skipping rest" << std::endl;
+                if (infoUrl != "") {
+                    if (m_transforms[tid].infoUrl == "") {
+                        m_transforms[tid].infoUrl = infoUrl;
+                    }
+                }
                 continue;
             }
 
@@ -611,14 +616,6 @@ TransformFactory::populateUninstalledTransforms()
             td.configurable = false;
 
             m_uninstalledTransforms[tid] = td;
-
-            if (td.infoUrl != "") {
-                if (m_transforms.find(tid) != m_transforms.end()) {
-                    if (m_transforms[tid].infoUrl == "") {
-                        m_transforms[tid].infoUrl = td.infoUrl;
-                    }
-                }
-            }
         }
     }
 

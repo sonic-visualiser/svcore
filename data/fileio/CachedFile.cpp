@@ -61,20 +61,20 @@ CachedFile::getCacheDirectory()
     return fi.filePath();
 }
 
-CachedFile::CachedFile(QString url, ProgressReporter *reporter) :
-    m_url(url),
-    m_localFilename(getLocalFilenameFor(m_url)),
+CachedFile::CachedFile(QString origin, ProgressReporter *reporter) :
+    m_origin(origin),
+    m_localFilename(getLocalFilenameFor(m_origin)),
     m_reporter(reporter),
     m_ok(false)
 {
-    std::cerr << "CachedFile::CachedFile: url is \""
-              << url.toStdString() << "\"" << std::endl;
+    std::cerr << "CachedFile::CachedFile: origin is \""
+              << origin.toStdString() << "\"" << std::endl;
     check();
 }
 
 CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
-    m_url(url),
-    m_localFilename(getLocalFilenameFor(m_url)),
+    m_origin(url.toString()),
+    m_localFilename(getLocalFilenameFor(m_origin)),
     m_reporter(reporter),
     m_ok(false)
 {
@@ -160,15 +160,17 @@ CachedFile::retrieve()
     //!!! using Qt classes, but a plain delete then copy is probably
     //!!! good enough)
 
-    FileSource fs(m_url, m_reporter);
+    FileSource fs(m_origin, m_reporter);
 
     if (!fs.isOK() || !fs.isAvailable()) {
+        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << std::endl;
         return false;
     }
 
     fs.waitForData();
 
     if (!fs.isOK()) {
+        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported failure during receive" << std::endl;
         return false;
     }
 
@@ -195,6 +197,8 @@ CachedFile::retrieve()
         std::cerr << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName.toStdString() << "\" to \"" << m_localFilename.toStdString() << "\"" << std::endl;
         return false;
     }
+
+    std::cerr << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName.toStdString() << "\" to its home at \"" << m_localFilename.toStdString() << "\"" << std::endl;
 
     return true;
 }
