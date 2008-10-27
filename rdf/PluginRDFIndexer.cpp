@@ -17,7 +17,8 @@
 
 #include "SimpleSPARQLQuery.h"
 
-#include "data/fileio/FileSource.h"
+//!!!#include "data/fileio/FileSource.h"
+#include "data/fileio/CachedFile.h"
 #include "data/fileio/PlaylistFileReader.h"
 #include "plugin/PluginIdentifier.h"
 
@@ -100,11 +101,12 @@ PluginRDFIndexer::PluginRDFIndexer()
 PluginRDFIndexer::~PluginRDFIndexer()
 {
     QMutexLocker locker(&m_mutex);
-
+/*!!!
     while (!m_sources.empty()) {
         delete *m_sources.begin();
         m_sources.erase(m_sources.begin());
     }
+*/
 }
 
 bool
@@ -125,11 +127,18 @@ PluginRDFIndexer::indexConfiguredURLs()
         std::cerr << "PluginRDFIndexer::indexConfiguredURLs: index url is "
                   << index.toStdString() << std::endl;
 
+/*!!!
         expireCacheMaybe(index);
 
         FileSource indexSource(index, 0, FileSource::PersistentCache);
         if (!indexSource.isAvailable()) continue;
         indexSource.waitForData();
+*/
+
+        CachedFile cf(index);
+        if (!cf.isOK()) continue;
+
+        FileSource indexSource(cf.getLocalFilename());
 
         PlaylistFileReader reader(indexSource);
         if (!reader.isOK()) continue;
@@ -230,7 +239,7 @@ PluginRDFIndexer::indexFile(QString filepath)
     QString urlString = url.toString();
     return indexURL(urlString);
 }
-
+/*!!!
 void
 PluginRDFIndexer::expireCacheMaybe(QString urlString)
 {
@@ -266,7 +275,7 @@ PluginRDFIndexer::expireCacheMaybe(QString urlString)
 
     settings.endGroup();
 }
-
+*/
 bool
 PluginRDFIndexer::indexURL(QString urlString)
 {
@@ -284,6 +293,13 @@ PluginRDFIndexer::indexURL(QString urlString)
         //!!! how do we avoid hammering the server if it doesn't have
         //!!! the file, and/or the network if it can't get through?
 
+        CachedFile cf(urlString);
+        if (!cf.isOK()) {
+            return false;
+        }
+
+        localString = cf.getLocalFilename();
+/*!!!
         expireCacheMaybe(urlString);
 
         FileSource *source = new FileSource
@@ -295,6 +311,7 @@ PluginRDFIndexer::indexURL(QString urlString)
         source->waitForData();
         localString = QUrl::fromLocalFile(source->getLocalFilename()).toString();
         m_sources.insert(source);
+*/
     }
 
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;

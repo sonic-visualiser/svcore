@@ -25,6 +25,7 @@ class ProgressReporter;
 class CachedFile
 {
 public:
+    CachedFile(QString fileOrUrl, ProgressReporter *reporter = 0);
     CachedFile(QUrl url, ProgressReporter *reporter = 0);
 
     virtual ~CachedFile();
@@ -39,7 +40,7 @@ protected:
     ProgressReporter *m_reporter;
     bool m_ok;
 
-    void refresh();
+    void check();
     bool retrieve();
 
     QDateTime getLastRetrieval();
