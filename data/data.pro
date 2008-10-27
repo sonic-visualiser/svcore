@@ -23,6 +23,7 @@ HEADERS += fft/FFTapi.h \
            fileio/AudioFileReader.h \
            fileio/AudioFileReaderFactory.h \
            fileio/BZipFileDevice.h \
+           fileio/CachedFile.h \
            fileio/CodedAudioFileReader.h \
            fileio/CSVFileReader.h \
            fileio/CSVFileWriter.h \
@@ -77,6 +78,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/AudioFileReader.cpp \
            fileio/AudioFileReaderFactory.cpp \
            fileio/BZipFileDevice.cpp \
+           fileio/CachedFile.cpp \
            fileio/CodedAudioFileReader.cpp \
            fileio/CSVFileReader.cpp \
            fileio/CSVFileWriter.cpp \

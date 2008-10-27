@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _REMOTE_FILE_H_
-#define _REMOTE_FILE_H_
+#ifndef _FILE_SOURCE_H_
+#define _FILE_SOURCE_H_
 
 #include <QUrl>
 #include <QMutex>
