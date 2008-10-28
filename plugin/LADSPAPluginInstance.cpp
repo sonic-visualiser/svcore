@@ -109,7 +109,7 @@ LADSPAPluginInstance::getMaker() const
 int
 LADSPAPluginInstance::getPluginVersion() const
 {
-    return 1;
+    return -1;
 }
 
 std::string
