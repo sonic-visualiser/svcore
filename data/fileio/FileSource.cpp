@@ -59,12 +59,6 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
     m_reporter(reporter),
     m_refCounted(false)
 {
-
-    if (cacheMode == PersistentCache) {
-        std::cerr << "FileSource::FileSource: Persistent cache mode used for \"" << fileOrUrl.toStdString() << "\"" << std::endl;
-        exit(1);
-    }
-
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ")" << std::endl;
 #endif
@@ -129,12 +123,6 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_reporter(reporter),
     m_refCounted(false)
 {
-
-    if (cacheMode == PersistentCache) {
-        std::cerr << "FileSource::FileSource: Persistent cache mode used for \"" << url.toString().toStdString() << "\"" << std::endl;
-        exit(1);
-    }
-
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << url.toString().toStdString() << ") [as url]" << std::endl;
 #endif
@@ -417,6 +405,10 @@ FileSource::initFtp()
 void
 FileSource::cleanup()
 {
+    if (m_done) {
+        delete m_localFile; // does not actually delete the file
+        m_localFile = 0;
+    }
     m_done = true;
     if (m_http) {
         QHttp *h = m_http;
@@ -430,8 +422,10 @@ FileSource::cleanup()
         f->abort();
         f->deleteLater();
     }
-    delete m_localFile; // does not actually delete the file
-    m_localFile = 0;
+    if (m_localFile) {
+        delete m_localFile; // does not actually delete the file
+        m_localFile = 0;
+    }
 }
 
 bool
