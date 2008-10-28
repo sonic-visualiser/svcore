@@ -51,48 +51,16 @@ class ProgressReporter;
  * pass FileSource objects by value.  FileSource only makes sense for
  * stateless URLs that result in the same data on each request.
  *
- * Cached files (in their default temporary mode) share a lifetime
- * with their "owning" FileSource objects.  When the last FileSource
- * referring to a given URL is deleted or goes out of scope, its
- * cached file (if any) is also removed.  You can change this
- * behaviour by using persistent cache mode; \see LocalCacheMode for
- * details and caveats.
+ * Cached files share a lifetime with their "owning" FileSource
+ * objects; when the last FileSource referring to a given URL is
+ * deleted or goes out of scope, its cached file (if any) is also
+ * removed.
  */
 class FileSource : public QObject
 {
     Q_OBJECT
 
 public:
-    /**
-     * Type of local cache to be used when retrieving remote files.
-     *
-     * Temporary cache files are created when a FileSource object is
-     * first created for a given URL, and removed when the last extant
-     * temporary cache mode FileSource object referring to a given URL
-     * is deleted (i.e. when its reference count is lowered to zero).
-     * They are also stored in a temporary directory that will be
-     * deleted when the program exits.
-     *
-     * Persistent cache files are created only when first retrieving a
-     * URL for which no persistent cache already exists, and are never
-     * deleted (by FileSource anyway).  They are stored in a directory
-     * that is not deleted when the program exits.  FileSource creates
-     * a unique local file name for each source URL, so as long as the
-     * local cache file remains on disc, the remote URL will not be
-     * retrieved again during any further run of the program.  You can
-     * find out what local file name will be used for the persistent
-     * cache of a given URL by calling getPersistentCacheFilePath, if
-     * you want to do something such as delete it by hand.
-     *
-     * Note that FileSource does not cache local files (i.e. does not
-     * make a copy of files that already appear to be stored on the
-     * local filesystem) in either mode.
-     */
-    enum LocalCacheMode {
-        TemporaryCache,
-        PersistentCache
-    };
-
     /**
      * Construct a FileSource using the given local file path or URL.
      * The URL may be raw or encoded.
@@ -101,13 +69,8 @@ public:
      * progress status.  Note that the progress() signal will also be
      * emitted regularly during retrieval, even if no reporter is
      * supplied here.  Caller retains ownership of the reporter object.
-     *
-     * If LocalCacheMode is PersistentCache, a persistent cache file
-     * will be used.  See LocalCacheMode documentation for details.
      */
-    FileSource(QString fileOrUrl,
-               ProgressReporter *reporter = 0,
-               LocalCacheMode mode = TemporaryCache);
+    FileSource(QString fileOrUrl, ProgressReporter *reporter = 0);
 
     /**
      * Construct a FileSource using the given remote URL.
@@ -116,13 +79,8 @@ public:
      * progress status.  Note that the progress() signal will also be
      * emitted regularly during retrieval, even if no reporter is
      * supplied here.  Caller retains ownership of the reporter object.
-     *
-     * If LocalCacheMode is PersistentCache, a persistent cache file
-     * will be used.  See LocalCacheMode documentation for details.
      */
-    FileSource(QUrl url,
-               ProgressReporter *reporter = 0,
-               LocalCacheMode mode = TemporaryCache);
+    FileSource(QUrl url, ProgressReporter *reporter = 0);
 
     FileSource(const FileSource &);
 
@@ -200,11 +158,7 @@ public:
     /**
      * Specify whether any local, cached file should remain on disc
      * after this FileSource has been destroyed.  The default is false
-     * (cached files share their FileSource owners' lifespans).  This
-     * is only meaningful in TemporaryCache mode; even if this setting
-     * is true, the temporary cache will still be deleted when the
-     * program exits.  Use PersistentCache mode if you want the cache
-     * to outlast the program.
+     * (cached files share their FileSource owners' lifespans).
      */
     void setLeaveLocalFile(bool leave);
 
@@ -219,17 +173,6 @@ public:
      * the given URL (or if the URL is for a local file).
      */
     static bool canHandleScheme(QUrl url);
-
-    /**
-     * Return the path that will be used for the cache file copy of
-     * the given remote URL by a FileSource object constructed in
-     * PersistentCache mode.
-     *
-     * This method also creates the containing directory for such
-     * cache files, if it does not already exist, and so may throw
-     * DirectoryCreationFailed.
-    */
-    static QString getPersistentCacheFilePath(QUrl url);
 
 signals:
     /**
@@ -263,7 +206,6 @@ protected:
     FileSource &operator=(const FileSource &); // not provided
 
     QUrl m_url;
-    LocalCacheMode m_cacheMode;
     QFtp *m_ftp;
     QHttp *m_http;
     QFile *m_localFile;
@@ -294,8 +236,6 @@ protected:
     // The local filename is stored in m_localFilename.
     bool createCacheFile();
     void deleteCacheFile();
-
-    static QString getPersistentCacheDirectory();
 
     static QMutex m_fileCreationMutex;
     static int m_count;
