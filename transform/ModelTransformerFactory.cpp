@@ -218,6 +218,9 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
 
+        dialog->setMoreInfoUrl(TransformFactory::getInstance()->
+                               getTransformInfoUrl(transform.getIdentifier()));
+
         if (candidateModelNames.size() > 1 && !generator) {
             dialog->setCandidateInputModels(candidateModelNames,
                                             defaultModelName);

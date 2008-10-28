@@ -735,6 +735,14 @@ TransformFactory::getTransformUnits(TransformId identifier)
     } else return "";
 }
 
+QString
+TransformFactory::getTransformInfoUrl(TransformId identifier)
+{
+    if (m_transforms.find(identifier) != m_transforms.end()) {
+	return m_transforms[identifier].infoUrl;
+    } else return "";
+}
+
 Vamp::Plugin::InputDomain
 TransformFactory::getTransformInputDomain(TransformId identifier)
 {
