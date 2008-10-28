@@ -17,8 +17,8 @@
 
 #include "SimpleSPARQLQuery.h"
 
-//!!!#include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
+#include "data/fileio/FileSource.h"
 #include "data/fileio/PlaylistFileReader.h"
 #include "plugin/PluginIdentifier.h"
 
@@ -101,12 +101,6 @@ PluginRDFIndexer::PluginRDFIndexer()
 PluginRDFIndexer::~PluginRDFIndexer()
 {
     QMutexLocker locker(&m_mutex);
-/*!!!
-    while (!m_sources.empty()) {
-        delete *m_sources.begin();
-        m_sources.erase(m_sources.begin());
-    }
-*/
 }
 
 bool
@@ -126,14 +120,6 @@ PluginRDFIndexer::indexConfiguredURLs()
 
         std::cerr << "PluginRDFIndexer::indexConfiguredURLs: index url is "
                   << index.toStdString() << std::endl;
-
-/*!!!
-        expireCacheMaybe(index);
-
-        FileSource indexSource(index, 0, FileSource::PersistentCache);
-        if (!indexSource.isAvailable()) continue;
-        indexSource.waitForData();
-*/
 
         CachedFile cf(index);
         if (!cf.isOK()) continue;
@@ -239,43 +225,7 @@ PluginRDFIndexer::indexFile(QString filepath)
     QString urlString = url.toString();
     return indexURL(urlString);
 }
-/*!!!
-void
-PluginRDFIndexer::expireCacheMaybe(QString urlString)
-{
-    QString cacheFile = FileSource::getPersistentCacheFilePath(urlString);
 
-    QSettings settings;
-    settings.beginGroup("RDF");
-
-    QString key("rdf-expiry-times");
-
-    QMap<QString, QVariant> expiryMap = settings.value(key).toMap();
-    QDateTime lastExpiry = expiryMap[urlString].toDateTime();
-
-    if (!QFileInfo(cacheFile).exists()) {
-        expiryMap[urlString] = QDateTime::currentDateTime();
-        settings.setValue(key, expiryMap);
-        settings.endGroup();
-        return;
-    }
-
-    if (!lastExpiry.isValid() ||
-        (lastExpiry.addDays(2) < QDateTime::currentDateTime())) {
-
-        std::cerr << "Expiring old cache file " << cacheFile.toStdString()
-                  << std::endl;
-
-        if (QFile(cacheFile).remove()) {
-
-            expiryMap[urlString] = QDateTime::currentDateTime();
-            settings.setValue(key, expiryMap);
-        }
-    }
-
-    settings.endGroup();
-}
-*/
 bool
 PluginRDFIndexer::indexURL(QString urlString)
 {
@@ -290,28 +240,12 @@ PluginRDFIndexer::indexURL(QString urlString)
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
 
-        //!!! how do we avoid hammering the server if it doesn't have
-        //!!! the file, and/or the network if it can't get through?
-
         CachedFile cf(urlString);
         if (!cf.isOK()) {
             return false;
         }
 
         localString = cf.getLocalFilename();
-/*!!!
-        expireCacheMaybe(urlString);
-
-        FileSource *source = new FileSource
-            (urlString, 0, FileSource::PersistentCache);
-        if (!source->isAvailable()) {
-            delete source;
-            return false;
-        }
-        source->waitForData();
-        localString = QUrl::fromLocalFile(source->getLocalFilename()).toString();
-        m_sources.insert(source);
-*/
     }
 
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;

@@ -30,7 +30,6 @@ using std::cerr;
 using std::endl;
 
 PluginRDFDescription::PluginRDFDescription(QString pluginId) :
-//!!!    m_source(0),
     m_pluginId(pluginId),
     m_haveDescription(false)
 {
@@ -51,7 +50,6 @@ PluginRDFDescription::PluginRDFDescription(QString pluginId) :
 
 PluginRDFDescription::~PluginRDFDescription()
 {
-//!!!    delete m_source;
 }
 
 bool
@@ -167,25 +165,12 @@ PluginRDFDescription::indexURL(QString url)
     if (FileSource::isRemote(url) &&
         FileSource::canHandleScheme(url)) {
         
-        //!!! persistent with expiry
-
         CachedFile cf(url);
         if (!cf.isOK()) {
             return false;
         }
 
         local = QUrl::fromLocalFile(cf.getLocalFilename()).toString();
-/*!!!
-        m_source = new FileSource(url, 0, FileSource::PersistentCache);
-
-        if (!m_source->isAvailable()) {
-            delete m_source;
-            m_source = 0;
-            return false;
-        }
-        m_source->waitForData();
-        local = QUrl::fromLocalFile(m_source->getLocalFilename()).toString();
-*/
     }
     
     if (!indexMetadata(local, label)) success = false;

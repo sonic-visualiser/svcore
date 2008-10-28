@@ -20,8 +20,6 @@
 #include <QStringList>
 #include <map>
 
-//!!!class FileSource;
-
 class PluginRDFDescription
 {
 public:
@@ -56,7 +54,6 @@ protected:
     typedef std::map<QString, OutputDisposition> OutputDispositionMap;
     typedef std::map<QString, QString> OutputStringMap;
 
-//!!!    FileSource *m_source;
     QString m_pluginId;
     bool m_haveDescription;
     QString m_pluginName;
