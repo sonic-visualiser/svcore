@@ -134,14 +134,29 @@ TransformFactory::TransformInstallStatus
 TransformFactory::getTransformInstallStatus(TransformId id)
 {
     populateTransforms();
-    populateUninstalledTransforms();
 
     if (m_transforms.find(id) != m_transforms.end()) {
         return TransformInstalled;
     }
+    
+    if (!m_uninstalledTransformsMutex.tryLock()) {
+        // uninstalled transforms are being populated; this may take some time,
+        // and they aren't critical
+        return TransformUnknown;
+    }
+
+    if (!m_uninstalledTransformsPopulated) {
+        m_uninstalledTransformsMutex.unlock();
+        populateUninstalledTransforms();
+        m_uninstalledTransformsMutex.lock();
+    }
+
     if (m_uninstalledTransforms.find(id) != m_uninstalledTransforms.end()) {
         return TransformNotInstalled;
     }
+
+    m_uninstalledTransformsMutex.unlock();
+
     return TransformUnknown;
 }
     

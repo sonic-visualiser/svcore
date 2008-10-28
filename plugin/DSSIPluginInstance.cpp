@@ -126,7 +126,7 @@ DSSIPluginInstance::getMaker() const
 int
 DSSIPluginInstance::getPluginVersion() const
 {
-    return 1;
+    return -1;
 }
 
 std::string
