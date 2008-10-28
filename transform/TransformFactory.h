@@ -87,6 +87,8 @@ public:
 
     QString getTransformUnits(TransformId identifier);
 
+    QString getTransformInfoUrl(TransformId identifier);
+
     Vamp::Plugin::InputDomain getTransformInputDomain(TransformId identifier);
 
     /**
