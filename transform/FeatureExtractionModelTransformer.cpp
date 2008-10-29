@@ -686,7 +686,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             RegionModel *model = getConformingOutput<RegionModel>();
             if (!model) return;
 
-            if (feature.hasDuration) {
+            if (feature.hasDuration && !feature.values.empty()) {
 
                 for (int i = 0; i < feature.values.size(); ++i) {
 
