@@ -20,7 +20,7 @@
 
 #include <QString>
 
-#include <vamp-sdk/Plugin.h>
+#include <vamp-hostsdk/Plugin.h>
 
 #include <iostream>
 

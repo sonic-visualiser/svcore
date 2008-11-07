@@ -21,8 +21,8 @@
 #ifndef _REALTIME_PLUGIN_INSTANCE_H_
 #define _REALTIME_PLUGIN_INSTANCE_H_
 
-#include "vamp-sdk/PluginBase.h"
-#include "vamp-sdk/RealTime.h"
+#include <vamp-hostsdk/PluginBase.h>
+#include <vamp-hostsdk/RealTime.h>
 
 #include <QString>
 #include <QStringList>
