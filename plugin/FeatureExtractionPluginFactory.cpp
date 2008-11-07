@@ -16,9 +16,8 @@
 #include "FeatureExtractionPluginFactory.h"
 #include "PluginIdentifier.h"
 
-#include "vamp/vamp.h"
-#include "vamp-sdk/PluginHostAdapter.h"
-#include "vamp-sdk/hostext/PluginWrapper.h"
+#include <vamp-hostsdk/PluginHostAdapter.h>
+#include <vamp-hostsdk/PluginWrapper.h>
 
 #include "system/System.h"
 

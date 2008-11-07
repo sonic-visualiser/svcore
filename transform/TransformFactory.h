@@ -20,7 +20,7 @@
 
 #include "base/TextMatcher.h"
 
-#include <vamp-sdk/Plugin.h>
+#include <vamp-hostsdk/Plugin.h>
 
 #include <QObject>
 #include <QStringList>

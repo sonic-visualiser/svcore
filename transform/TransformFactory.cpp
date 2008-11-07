@@ -20,9 +20,9 @@
 #include "plugin/RealTimePluginInstance.h"
 #include "plugin/PluginXml.h"
 
-#include "vamp-sdk/Plugin.h"
-#include "vamp-sdk/PluginHostAdapter.h"
-#include "vamp-sdk/hostext/PluginWrapper.h"
+#include <vamp-hostsdk/Plugin.h>
+#include <vamp-hostsdk/PluginHostAdapter.h>
+#include <vamp-hostsdk/PluginWrapper.h>
 
 #include "rdf/PluginRDFIndexer.h"
 #include "rdf/PluginRDFDescription.h"

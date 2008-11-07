@@ -17,7 +17,7 @@
 
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/PluginXml.h"
-#include "vamp-sdk/Plugin.h"
+#include <vamp-hostsdk/Plugin.h>
 
 #include "data/model/Model.h"
 #include "base/Window.h"

@@ -30,7 +30,7 @@
 
 #include "data/model/DenseTimeValueModel.h"
 
-#include "vamp-sdk/PluginHostAdapter.h"
+#include <vamp-hostsdk/PluginHostAdapter.h>
 
 #include <iostream>
 #include <set>

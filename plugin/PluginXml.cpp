@@ -25,7 +25,7 @@
 
 #include <QTextStream>
 
-#include "vamp-sdk/PluginBase.h"
+#include <vamp-hostsdk/PluginBase.h>
 #include "RealTimePluginInstance.h"
 
 #include <iostream>
