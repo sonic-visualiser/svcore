@@ -161,9 +161,11 @@ PluginRDFIndexer::getURIForPluginId(QString pluginId)
 QString
 PluginRDFIndexer::getIdForPluginURI(QString uri)
 {
-    QMutexLocker locker(&m_mutex);
+    m_mutex.lock();
 
     if (m_uriToIdMap.find(uri) == m_uriToIdMap.end()) {
+
+        m_mutex.unlock();
 
         // Haven't found this uri referenced in any document on the
         // local filesystem; try resolving the pre-fragment part of
@@ -178,12 +180,16 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
 
         indexURL(baseUrl);
 
+        m_mutex.lock();
+
         if (m_uriToIdMap.find(uri) == m_uriToIdMap.end()) {
             m_uriToIdMap[uri] = "";
         }
     }
 
-    return m_uriToIdMap[uri];
+    QString id = m_uriToIdMap[uri];
+    m_mutex.unlock();
+    return id;
 }
 
 QString
