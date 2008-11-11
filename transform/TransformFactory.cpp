@@ -51,15 +51,25 @@ TransformFactory::getInstance()
 
 TransformFactory::TransformFactory() :
     m_transformsPopulated(false),
-    m_uninstalledTransformsPopulated(false)
+    m_uninstalledTransformsPopulated(false),
+    m_thread(0)
 {
-    UninstalledTransformsPopulateThread *thread =
-        new UninstalledTransformsPopulateThread(this);
-    thread->start();
 }
 
 TransformFactory::~TransformFactory()
 {
+}
+
+void
+TransformFactory::startPopulationThread()
+{
+    MutexLocker locker(&m_uninstalledTransformsMutex,
+                       "TransformFactory::startPopulationThread");
+
+    if (m_thread) return;
+
+    m_thread = new UninstalledTransformsPopulateThread(this);
+    m_thread->start();
 }
 
 TransformList

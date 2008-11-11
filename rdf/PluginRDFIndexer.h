@@ -22,8 +22,6 @@
 #include <map>
 #include <set>
 
-//!!!class FileSource;
-
 class PluginRDFIndexer
 {
 public:
@@ -31,9 +29,11 @@ public:
 
     /**
      * Index all URLs obtained from index files defined in the current
-     * settings.  This is not done automatically because it may incur
-     * significant processing and networking effort.  It could be
-     * called from a background thread at startup, for example.
+     * settings.  In contrast to indexing URLs that are installed
+     * locally alongside plugins, this is not done automatically
+     * because it may incur significant processing and networking
+     * effort.  It could be called from a background thread at
+     * startup, for example.
      *
      * Note that this class has a single mutex, so other functions
      * will block if called from a different thread while this one is
@@ -55,16 +55,15 @@ public:
 protected:
     PluginRDFIndexer();
     QMutex m_mutex;
-/*!!!
-    std::set<FileSource *> m_sources;
-*/
+
     typedef std::map<QString, QString> StringMap;
     StringMap m_uriToIdMap;
     StringMap m_idToUriMap;
     StringMap m_idToDescriptionMap;
+
+    void indexInstalledURLs();
     bool indexFile(QString path);
     static PluginRDFIndexer *m_instance;
-//!!!    void expireCacheMaybe(QString);
 };
 
 #endif

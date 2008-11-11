@@ -52,6 +52,17 @@ PluginRDFIndexer::getInstance()
 
 PluginRDFIndexer::PluginRDFIndexer()
 {
+    indexInstalledURLs();
+}
+
+PluginRDFIndexer::~PluginRDFIndexer()
+{
+    QMutexLocker locker(&m_mutex);
+}
+
+void
+PluginRDFIndexer::indexInstalledURLs()
+{
     vector<string> paths = PluginHostAdapter::getPluginPath();
 
     QStringList filters;
@@ -96,11 +107,6 @@ PluginRDFIndexer::PluginRDFIndexer()
             }
         }
     }
-}
-
-PluginRDFIndexer::~PluginRDFIndexer()
-{
-    QMutexLocker locker(&m_mutex);
 }
 
 bool
