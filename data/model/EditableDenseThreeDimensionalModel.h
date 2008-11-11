@@ -106,6 +106,8 @@ public:
     virtual void setBinName(size_t n, QString);
     virtual void setBinNames(std::vector<QString> names);
 
+    bool shouldUseLogValueScale() const;
+
     virtual void setCompletion(int completion, bool update = true);
     virtual int getCompletion() const { return m_completion; }
 

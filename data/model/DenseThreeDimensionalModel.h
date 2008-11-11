@@ -80,6 +80,12 @@ public:
     virtual QString getBinName(size_t n) const = 0;
 
     /**
+     * Estimate whether a logarithmic scale might be appropriate for
+     * the value scale.
+     */
+    virtual bool shouldUseLogValueScale() const = 0;
+
+    /**
      * Utility function to query whether a given bin is greater than
      * its (vertical) neighbours.
      */
