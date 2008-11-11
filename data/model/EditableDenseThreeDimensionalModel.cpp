@@ -15,8 +15,9 @@
 
 #include "EditableDenseThreeDimensionalModel.h"
 
-#include <QTextStream>
+#include "base/LogRange.h"
 
+#include <QTextStream>
 #include <QStringList>
 
 #include <iostream>
@@ -245,6 +246,35 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 {
     m_binNames = names;
     emit modelChanged();
+}
+
+bool
+EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
+{
+    std::vector<float> sample;
+    std::vector<int> n;
+    
+    for (int i = 0; i < 10; ++i) {
+        size_t index = i * 10;
+        if (index < m_data.size()) {
+            const Column &c = m_data[index];
+            while (c.size() > sample.size()) {
+                sample.push_back(0.f);
+                n.push_back(0);
+            }
+            for (int j = 0; j < c.size(); ++j) {
+                sample[j] += c[j];
+                ++n[j];
+            }
+        }
+    }
+
+    if (sample.empty()) return false;
+    for (int j = 0; j < sample.size(); ++j) {
+        if (n[j]) sample[j] /= n[j];
+    }
+    
+    return LogRange::useLogScale(sample);
 }
 
 void

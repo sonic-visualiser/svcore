@@ -16,6 +16,8 @@
 #ifndef _LOG_RANGE_H_
 #define _LOG_RANGE_H_
 
+#include <vector>
+
 class LogRange
 {
 public:
@@ -39,6 +41,14 @@ public:
      * means taking the value'th power of ten.
      */
     static float unmap(float value);
+
+    /**
+     * Estimate whether a set of values would be more properly shown
+     * using a logarithmic than a linear scale.  This is only ever
+     * going to be a rough guess.
+     */
+    static bool useLogScale(std::vector<float> values);
+
 };
 
 #endif

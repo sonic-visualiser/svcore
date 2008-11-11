@@ -139,6 +139,10 @@ public:
     virtual void getColumn(size_t x, Column &result) const;
     virtual QString getBinName(size_t n) const;
 
+    virtual bool shouldUseLogValueScale() const {
+        return true; // Although obviously it's up to the user...
+    }
+
     /**
      * Calculate an estimated frequency for a stable signal in this
      * bin, using phase unwrapping.  This will be completely wrong if
