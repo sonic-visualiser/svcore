@@ -40,6 +40,18 @@ public:
 
     static TransformFactory *getInstance();
 
+    /**
+     * TransformFactory has a background thread that can populate
+     * uninstalled transforms from network RDF resources.  It is not
+     * started by default, but it's a good idea to start it when the
+     * program starts up, if the uninstalled transforms may be of use
+     * later; otherwise there will be a bottleneck the first time
+     * they're requested.
+     *
+     * If this thread is not already running, start it now.
+     */
+    void startPopulationThread();
+
     TransformList getAllTransformDescriptions();
     TransformDescription getTransformDescription(TransformId id);
 
@@ -211,6 +223,8 @@ protected:
         }
         TransformFactory *m_factory;
     };
+
+    UninstalledTransformsPopulateThread *m_thread;
 
     static TransformFactory *m_instance;
 };
