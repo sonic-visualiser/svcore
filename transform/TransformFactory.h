@@ -218,6 +218,7 @@ protected:
             m_factory(factory) {
         }
         virtual void run() {
+            m_factory->m_populatingSlowly = true;
             sleep(2);
             m_factory->populateUninstalledTransforms();
         }
@@ -225,6 +226,7 @@ protected:
     };
 
     UninstalledTransformsPopulateThread *m_thread;
+    bool m_populatingSlowly;
 
     static TransformFactory *m_instance;
 };
