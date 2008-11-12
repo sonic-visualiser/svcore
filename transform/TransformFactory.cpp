@@ -109,6 +109,7 @@ TransformFactory::getTransformDescription(TransformId id)
 TransformList
 TransformFactory::getUninstalledTransformDescriptions()
 {
+    m_populatingSlowly = false;
     populateUninstalledTransforms();
     
     std::set<TransformDescription> dset;
@@ -131,6 +132,7 @@ TransformFactory::getUninstalledTransformDescriptions()
 TransformDescription
 TransformFactory::getUninstalledTransformDescription(TransformId id)
 {
+    m_populatingSlowly = false;
     populateUninstalledTransforms();
 
     if (m_uninstalledTransforms.find(id) == m_uninstalledTransforms.end()) {
@@ -157,6 +159,7 @@ TransformFactory::getTransformInstallStatus(TransformId id)
 
     if (!m_uninstalledTransformsPopulated) {
         m_uninstalledTransformsMutex.unlock();
+        m_populatingSlowly = false;
         populateUninstalledTransforms();
         m_uninstalledTransformsMutex.lock();
     }
@@ -553,8 +556,6 @@ TransformFactory::populateUninstalledTransforms()
     MutexLocker locker(&m_uninstalledTransformsMutex,
                        "TransformFactory::populateUninstalledTransforms");
     if (m_uninstalledTransformsPopulated) return;
-
-//        ("http://www.vamp-plugins.org/rdf/plugins/vamp-example-plugins");
 
     PluginRDFIndexer::getInstance()->indexConfiguredURLs();
 
