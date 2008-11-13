@@ -257,13 +257,14 @@ PluginRDFIndexer::indexURL(QString urlString)
             return false;
         }
 
-        localString = cf.getLocalFilename();
+        localString = "file://" + cf.getLocalFilename(); //!!! crud - fix!
     }
 
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;
 
     SimpleSPARQLQuery query
-        (QString
+        (localString,
+         QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 

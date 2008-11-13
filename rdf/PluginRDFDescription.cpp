@@ -201,21 +201,22 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     SimpleSPARQLQuery::Value v;
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (queryTemplate.arg("vamp:name").arg("name"), "name");
+        (url, queryTemplate.arg("vamp:name").arg("name"), "name");
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginName = v.value;
     }
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (queryTemplate.arg("dc:description").arg("description"), "description");
+        (url, queryTemplate.arg("dc:description").arg("description"), "description");
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginDescription = v.value;
     }
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (QString(
+        (url,
+         QString(
             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             " SELECT ?name FROM <%1> "
@@ -239,7 +240,8 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     // perhaps that would be unwise
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (QString(
+        (url,
+         QString(
             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             " SELECT ?page from <%1> "
@@ -258,7 +260,8 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     } else {
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (QString(
+            (url,
+             QString(
                 " PREFIX vamp: <http://purl.org/ontology/vamp/> "
                 " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
                 " SELECT ?page from <%1> "
@@ -287,7 +290,8 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
     Profiler profiler("PluginRDFDescription::indexOutputs");
 
     SimpleSPARQLQuery query
-        (QString
+        (url,
+         QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
@@ -361,7 +365,8 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
         SimpleSPARQLQuery::Value v;
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+            (url, 
+             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
                      " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
                      " SELECT ?title FROM <%1> "
                      " WHERE { <%2> dc:title ?title } ")
@@ -378,21 +383,21 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
             .arg(url).arg(outputUri);
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (queryTemplate.arg("event_type"), "event_type");
+            (url, queryTemplate.arg("event_type"), "event_type");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputEventTypeURIMap[outputId] = v.value;
         }
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (queryTemplate.arg("feature_attribute"), "feature_attribute");
+            (url, queryTemplate.arg("feature_attribute"), "feature_attribute");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputFeatureAttributeURIMap[outputId] = v.value;
         }
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (queryTemplate.arg("signal_type"), "signal_type");
+            (url, queryTemplate.arg("signal_type"), "signal_type");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputSignalTypeURIMap[outputId] = v.value;

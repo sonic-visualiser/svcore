@@ -37,7 +37,7 @@ public:
     typedef std::map<QString, Value> KeyValueMap;
     typedef std::vector<KeyValueMap> ResultList;
 
-    SimpleSPARQLQuery(QString query);
+    SimpleSPARQLQuery(QString fromUri, QString query);
     ~SimpleSPARQLQuery();
 
     void setProgressReporter(ProgressReporter *reporter);
@@ -50,7 +50,15 @@ public:
 
     // Do a query and return the value for the given binding, from the
     // first result that has a value for it
-    static Value singleResultQuery(QString query, QString binding);
+    static Value singleResultQuery(QString fromUri,
+                                   QString query,
+                                   QString binding);
+
+    enum ImplementationPreference {
+        UseDirectParser, // rasqal (default because it's simpler if seldom used)
+        UseDatastore     // redland
+    };
+    static void setImplementationPreference(ImplementationPreference);
 
 protected:
     class Impl;

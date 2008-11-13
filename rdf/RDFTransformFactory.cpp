@@ -143,7 +143,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         " } ";
 
     SimpleSPARQLQuery transformsQuery
-        (queryTemplate.arg("").arg(m_urlString).arg(""));
+        (m_urlString, queryTemplate.arg("").arg(m_urlString).arg(""));
 
     SimpleSPARQLQuery::ResultList transformResults = transformsQuery.execute();
 
@@ -203,7 +203,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         QString optional = optionals[i];
 
         SimpleSPARQLQuery query
-            (queryTemplate
+            (m_urlString,
+             queryTemplate
              .arg(QString("?%1").arg(optional))
              .arg(m_urlString)
              .arg(QString("?transform vamp:%1 ?%2")
@@ -277,7 +278,8 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
                                    QString pluginDescriptionURL)
 {
     SimpleSPARQLQuery outputQuery
-        (QString
+        (m_urlString,
+         QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
              
@@ -322,7 +324,8 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
                                        QString pluginDescriptionURL)
 {
     SimpleSPARQLQuery paramQuery
-        (QString
+        (m_urlString,
+         QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
              
