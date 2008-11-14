@@ -191,8 +191,8 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
             " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
             " SELECT ?%4 FROM <%1> "
             " WHERE { "
-            "   ?plugin a vamp:Plugin ; "
-            "           vamp:identifier \"%2\" ; "
+            "   ?plugin vamp:identifier \"%2\" ; "
+            "           a vamp:Plugin ; "
             "           %3 ?%4 . "
             " }")
         .arg(url)
@@ -221,8 +221,8 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             " SELECT ?name FROM <%1> "
             " WHERE { "
-            "   ?plugin a vamp:Plugin ; "
-            "           vamp:identifier \"%2\" ; "
+            "   ?plugin vamp:identifier \"%2\" ; "
+            "           a vamp:Plugin ; "
             "           foaf:maker ?maker . "
             "   ?maker foaf:name ?name . "
             " }")
@@ -246,8 +246,8 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             " SELECT ?page from <%1> "
             " WHERE { "
-            "   ?plugin a vamp:Plugin ; "
-            "           vamp:identifier \"%2\" ; "
+            "   ?plugin vamp:identifier \"%2\" ; "
+            "           a vamp:Plugin ; "
             "           foaf:page ?page . "
             " }")
          .arg(url)
@@ -300,8 +300,8 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
 
              " WHERE { "
 
-             "   ?plugin a vamp:Plugin ; "
-             "           vamp:identifier \"%2\" ; "
+             "   ?plugin vamp:identifier \"%2\" ; "
+             "           a vamp:Plugin ; "
              "           vamp:output ?output . "
 
              "   ?output vamp:identifier ?output_id ; "
