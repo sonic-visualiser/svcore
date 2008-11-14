@@ -19,6 +19,7 @@
 #include <QString>
 #include <QUrl>
 #include <QDateTime>
+#include <map>
 
 class ProgressReporter;
 
@@ -48,6 +49,9 @@ protected:
 
     static QString getCacheDirectory();
     static QString getLocalFilenameFor(QUrl url);
+
+    typedef std::map<QString, QString> OriginLocalFilenameMap;
+    static OriginLocalFilenameMap m_knownGoodCaches;
 };
 
 #endif

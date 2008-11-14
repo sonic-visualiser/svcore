@@ -72,6 +72,14 @@ TransformFactory::startPopulationThread()
     m_thread->start();
 }
 
+void
+TransformFactory::UninstalledTransformsPopulateThread::run()
+{
+    m_factory->m_populatingSlowly = true;
+    sleep(1);
+    m_factory->populateUninstalledTransforms();
+}
+
 TransformList
 TransformFactory::getAllTransformDescriptions()
 {

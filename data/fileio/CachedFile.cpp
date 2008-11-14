@@ -28,11 +28,18 @@
 #include <QDir>
 #include <QCryptographicHash>
 
+#include "base/Profiler.h"
+
 #include <iostream>
+
+CachedFile::OriginLocalFilenameMap
+CachedFile::m_knownGoodCaches;
 
 QString
 CachedFile::getLocalFilenameFor(QUrl url)
 {
+    Profiler p("CachedFile::getLocalFilenameFor");
+
     QDir dir(getCacheDirectory());
 
     QString filename =
@@ -63,10 +70,11 @@ CachedFile::getCacheDirectory()
 
 CachedFile::CachedFile(QString origin, ProgressReporter *reporter) :
     m_origin(origin),
-    m_localFilename(getLocalFilenameFor(m_origin)),
     m_reporter(reporter),
     m_ok(false)
 {
+    Profiler p("CachedFile::CachedFile[1]");
+
     std::cerr << "CachedFile::CachedFile: origin is \""
               << origin.toStdString() << "\"" << std::endl;
     check();
@@ -74,10 +82,11 @@ CachedFile::CachedFile(QString origin, ProgressReporter *reporter) :
 
 CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
     m_origin(url.toString()),
-    m_localFilename(getLocalFilenameFor(m_origin)),
     m_reporter(reporter),
     m_ok(false)
 {
+    Profiler p("CachedFile::CachedFile[2]");
+
     std::cerr << "CachedFile::CachedFile: url is \""
               << url.toString().toStdString() << "\"" << std::endl;
     check();
@@ -105,7 +114,16 @@ CachedFile::check()
     //!!! n.b. obvious race condition here if different CachedFile
     // objects for same url used in more than one thread -- need to
     // lock appropriately.  also consider race condition between
-    // separate instances of the program
+    // separate instances of the program!
+
+    OriginLocalFilenameMap::const_iterator i = m_knownGoodCaches.find(m_origin);
+    if (i != m_knownGoodCaches.end()) {
+        m_ok = true;
+        m_localFilename = i->second;
+        return;
+    }
+
+    m_localFilename = getLocalFilenameFor(m_origin);
 
     if (!QFileInfo(m_localFilename).exists()) {
         std::cerr << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << std::endl;
@@ -148,6 +166,10 @@ CachedFile::check()
             // again, we don't need to do anything here -- the last
             // retrieval timestamp is already invalid
         }
+    }
+
+    if (m_ok) {
+        m_knownGoodCaches[m_origin] = m_localFilename;
     }
 }
 

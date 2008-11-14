@@ -217,11 +217,7 @@ protected:
         UninstalledTransformsPopulateThread(TransformFactory *factory) :
             m_factory(factory) {
         }
-        virtual void run() {
-            m_factory->m_populatingSlowly = true;
-            sleep(2);
-            m_factory->populateUninstalledTransforms();
-        }
+        virtual void run();
         TransformFactory *m_factory;
     };
 

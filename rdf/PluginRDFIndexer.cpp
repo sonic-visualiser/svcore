@@ -261,7 +261,7 @@ PluginRDFIndexer::indexURL(QString urlString)
     }
 
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;
-
+/*!!!
     SimpleSPARQLQuery query
         (localString,
          QString
@@ -293,6 +293,26 @@ PluginRDFIndexer::indexURL(QString urlString)
              " } "
              )
          .arg(localString));
+*/
+    SimpleSPARQLQuery query
+        (localString,
+         QString
+         (
+             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+
+             " SELECT ?plugin ?library ?plugin_id "
+             " FROM <%1> "
+
+             " WHERE { "
+             "   ?plugin a vamp:Plugin . "
+             "   ?plugin vamp:identifier ?plugin_id . "
+
+             "   OPTIONAL { "
+             "     ?library vamp:available_plugin ?plugin "
+             "   } "
+             " } "
+             )
+         .arg(localString));
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
@@ -317,7 +337,8 @@ PluginRDFIndexer::indexURL(QString urlString)
          i != results.end(); ++i) {
 
         QString pluginUri = (*i)["plugin"].value;
-        QString soname = (*i)["library_id"].value;
+//!!!        QString soname = (*i)["library_id"].value;
+        QString soUri = (*i)["library"].value;
         QString identifier = (*i)["plugin_id"].value;
 
         if (identifier == "") {
@@ -328,13 +349,38 @@ PluginRDFIndexer::indexURL(QString urlString)
                  << endl;
             continue;
         }
-        if (soname == "") {
+        if (soUri == "") {
             cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
                  << urlString.toStdString() << "> does not associate plugin <"
                  << pluginUri.toStdString() << "> with any implementation library"
                  << endl;
             continue;
         }
+
+        QString sonameQuery =
+            QString(
+                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                " SELECT ?library_id "
+                " FROM <%1> "
+                " WHERE { "
+                "   <%2> vamp:identifier ?library_id "
+                " } "
+                )
+            .arg(localString)
+            .arg(soUri);
+
+        SimpleSPARQLQuery::Value sonameValue = 
+            SimpleSPARQLQuery::singleResultQuery(localString, sonameQuery, "library_id");
+        QString soname = sonameValue.value;
+        if (soname == "") {
+            cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
+                 << urlString.toStdString() << "> omits identifier for library <"
+                 << soUri.toStdString() << ">"
+                 << endl;
+            continue;
+        }
+
+
 /*
         cerr << "PluginRDFIndexer::indexURL: Document for plugin \""
              << soname.toStdString() << ":" << identifier.toStdString()

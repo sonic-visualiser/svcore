@@ -54,11 +54,16 @@ public:
                                    QString query,
                                    QString binding);
 
-    enum ImplementationPreference {
-        UseDirectParser, // rasqal (default because it's simpler if seldom used)
-        UseDatastore     // redland
+    enum BackEndPreference {
+        AutoSelectBackEnd,   // pick based on likely speed of available storage
+        DirectParserBackEnd, // use rasqal (simpler if seldom used)
+        DatastoreBackEnd,    // use redland (faster if version not too old)
     };
-    static void setImplementationPreference(ImplementationPreference);
+    /**
+     * Select the preferred query back end.  This should be called
+     * before any queries are made.  The default is AutoSelectBackEnd.
+     */
+    static void setBackEnd(BackEndPreference);
 
 protected:
     class Impl;

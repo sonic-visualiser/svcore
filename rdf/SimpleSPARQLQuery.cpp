@@ -19,6 +19,7 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <QRegExp>
 
 #include <set>
 
@@ -43,8 +44,25 @@ using std::endl;
 class WrasqalWorldWrapper // wrong but wromantic, etc
 {
 public:
-    WrasqalWorldWrapper() : m_world(rasqal_new_world()) { }
-    ~WrasqalWorldWrapper() { rasqal_free_world(m_world); }
+    WrasqalWorldWrapper() :
+        m_world(0)
+    {
+        m_world = rasqal_new_world();
+        if (!m_world) {
+            cerr << "SimpleSPARQLQuery: ERROR: Failed to create RASQAL world!" << endl;
+            return;
+        }
+/*!!! This appears to be new for 0.9.17?
+        if (rasqal_world_open(m_world)) {
+            cerr << "SimpleSPARQLQuery: ERROR: Failed to open RASQAL world!" << endl;
+            return;
+        }
+*/
+    }
+    ~WrasqalWorldWrapper()
+    {
+        rasqal_free_world(m_world);
+    }
 
     rasqal_world *getWorld() { return m_world; }
     const rasqal_world *getWorld() const { return m_world; }
@@ -62,12 +80,14 @@ public:
         m_world(0), m_storage(0), m_model(0)
     {
         m_world = librdf_new_world();
+        if (!m_world) {
+            cerr << "SimpleSPARQLQuery: ERROR: Failed to create LIBRDF world!" << endl;
+            return;
+        }
         librdf_world_open(m_world);
-            m_storage = librdf_new_storage(m_world, NULL, NULL, NULL);
-//        m_storage = librdf_new_storage(m_world, "hashes", NULL,
-//.                                       "hash-type='memory',indexes=1");
+        m_storage = librdf_new_storage(m_world, "trees", NULL, NULL);
         if (!m_storage) {
-            std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland hashes datastore, falling back to memory store" << std::endl;
+            std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland trees datastore, falling back to memory store" << std::endl;
             m_storage = librdf_new_storage(m_world, NULL, NULL, NULL);
             if (!m_storage) {
                 std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland memory datastore" << std::endl;
@@ -165,8 +185,7 @@ public:
     bool isOK() const;
     QString getErrorString() const;
 
-    static void setImplementationPreference
-    (SimpleSPARQLQuery::ImplementationPreference p) {
+    static void setBackEnd(SimpleSPARQLQuery::BackEndPreference p) {
         m_preference = p;
     }
 
@@ -185,7 +204,7 @@ protected:
     static WredlandWorldWrapper *m_redland;
 #endif
 
-    static SimpleSPARQLQuery::ImplementationPreference m_preference;
+    static SimpleSPARQLQuery::BackEndPreference m_preference;
 
     ResultList executeDirectParser();
     ResultList executeDatastore();
@@ -209,8 +228,8 @@ WredlandWorldWrapper *SimpleSPARQLQuery::Impl::m_redland = 0;
 
 QMutex SimpleSPARQLQuery::Impl::m_mutex;
 
-SimpleSPARQLQuery::ImplementationPreference
-SimpleSPARQLQuery::Impl::m_preference = SimpleSPARQLQuery::UseDirectParser;
+SimpleSPARQLQuery::BackEndPreference
+SimpleSPARQLQuery::Impl::m_preference = SimpleSPARQLQuery::AutoSelectBackEnd;
 
 SimpleSPARQLQuery::SimpleSPARQLQuery(QString fromUri, QString query) :
     m_impl(new Impl(fromUri, query))
@@ -253,9 +272,9 @@ SimpleSPARQLQuery::getErrorString() const
 }
 
 void
-SimpleSPARQLQuery::setImplementationPreference(ImplementationPreference p)
+SimpleSPARQLQuery::setBackEnd(BackEndPreference p)
 {
-    SimpleSPARQLQuery::Impl::setImplementationPreference(p);
+    SimpleSPARQLQuery::Impl::setBackEnd(p);
 }
 
 SimpleSPARQLQuery::Impl::Impl(QString fromUri, QString query) :
@@ -292,11 +311,14 @@ SimpleSPARQLQuery::Impl::errorHandler(void *data,
 {
     SimpleSPARQLQuery::Impl *impl = (SimpleSPARQLQuery::Impl *)data;
     
-//    char buffer[256];
-//    raptor_format_locator(buffer, 255, locator);
-//    impl->m_errorString = QString("%1 - %2").arg(buffer).arg(message);
-
-    impl->m_errorString = message;
+    char buffer[256];
+    raptor_format_locator(buffer, 255, locator);
+    QString loc(buffer);
+    if (loc != "") {
+        impl->m_errorString = QString("%1 - %2").arg(loc).arg(message);
+    } else {
+        impl->m_errorString = message;
+    }
 
     cerr << "SimpleSPARQLQuery: ERROR: " << impl->m_errorString.toStdString() << endl;
 }
@@ -306,27 +328,45 @@ SimpleSPARQLQuery::Impl::execute()
 {
     ResultList list;
 
-    ImplementationPreference preference;
+    BackEndPreference preference;
 
     m_mutex.lock();
 
-    if (m_preference == UseDatastore) {
+    if (m_preference == AutoSelectBackEnd) {
+#ifdef HAVE_REDLAND
+//        cerr << "librdf version: " << librdf_version_major << "." << librdf_version_minor << "." << librdf_version_release << endl;
+        if (librdf_version_major > 1 ||
+            (librdf_version_major == 1 &&
+             (librdf_version_minor > 0 ||
+              (librdf_version_minor == 0 &&
+               librdf_version_release > 7)))) {
+            cerr << "SimpleSPARQLQuery: Auto-selecting LIBRDF back-end for tree-based storage" << endl;
+            m_preference = DatastoreBackEnd;
+        }
+#endif
+        if (m_preference == AutoSelectBackEnd) {
+            cerr << "SimpleSPARQLQuery: Auto-selecting RASQAL back-end" << endl;
+            m_preference = DirectParserBackEnd;
+        }
+    }
+
+    if (m_preference == DatastoreBackEnd) {
 #ifdef HAVE_REDLAND
         if (!m_redland) {
             m_redland = new WredlandWorldWrapper();
             if (!m_redland->isOK()) {
                 cerr << "WARNING: SimpleSPARQLQuery::execute: Failed to initialise Redland datastore, falling back to direct parser implementation" << endl;
                 delete m_redland;
-                m_preference = UseDirectParser;
+                m_preference = DirectParserBackEnd;
             }
         }
 #else
         cerr << "WARNING: SimpleSPARQLQuery::execute: Datastore implementation preference indicated, but no datastore compiled in; using direct parser" << endl;
-        m_preference = UseDirectParser;
+        m_preference = DirectParserBackEnd;
 #endif
     }
 
-    if (m_preference == UseDirectParser) {
+    if (m_preference == DirectParserBackEnd) {
 #ifdef USE_NEW_RASQAL_API
         if (!m_rasqal) m_rasqal = new WrasqalWorldWrapper();
 #else
@@ -340,7 +380,7 @@ SimpleSPARQLQuery::Impl::execute()
     preference = m_preference;
     m_mutex.unlock();
 
-    if (preference == SimpleSPARQLQuery::UseDirectParser) {
+    if (preference == SimpleSPARQLQuery::DirectParserBackEnd) {
         return executeDirectParser();
     } else {
         return executeDatastore();
@@ -480,11 +520,16 @@ SimpleSPARQLQuery::Impl::executeDatastore()
     librdf_uri *uri = m_redland->getUri(m_fromUri, m_errorString);
     if (!uri) return list;
 
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
     std::cerr << "SimpleSPARQLQuery: Query is: \"" << m_query.toStdString() << "\"" << std::endl;
+#endif
+/*!!!
     static std::map<QString, int> counter;
     if (counter.find(m_query) == counter.end()) counter[m_query] = 1;
     else ++counter[m_query];
     std::cerr << "Counter for this query: " << counter[m_query] << std::endl;
+    std::cerr << "Base URI is: \"" << m_fromUri.toStdString() << "\"" << std::endl;
+*/
 
     librdf_query *query;
 
@@ -494,7 +539,6 @@ SimpleSPARQLQuery::Impl::executeDatastore()
             (m_redland->getWorld(), "sparql", NULL,
              (const unsigned char *)m_query.toUtf8().data(), uri);
     }
-    std::cerr << "Prepared" << std::endl;
     
     if (!query) {
         m_errorString = "Failed to construct query";
@@ -506,7 +550,6 @@ SimpleSPARQLQuery::Impl::executeDatastore()
         Profiler p("SimpleSPARQLQuery: Execute LIBRDF query");
         results = librdf_query_execute(query, m_redland->getModel());
     }
-    std::cerr << "Executed" << std::endl;
 
     if (!results) {
         cerr << "SimpleSPARQLQuery: LIBRDF query failed" << endl;
@@ -547,20 +590,30 @@ SimpleSPARQLQuery::Impl::executeDatastore()
             }
 
             ValueType type = LiteralValue;
-            if (librdf_node_is_resource(node)) type = URIValue;
-            else if (librdf_node_is_literal(node)) type = LiteralValue;
-            else if (librdf_node_is_blank(node)) type = BlankValue;
-            else {
+            QString text;
+
+            if (librdf_node_is_resource(node)) {
+
+                type = URIValue;
+                librdf_uri *uri = librdf_node_get_uri(node);
+                text = (const char *)librdf_uri_as_string(uri);
+
+            } else if (librdf_node_is_literal(node)) {
+
+                type = LiteralValue;
+                text = (const char *)librdf_node_get_literal_value(node);
+
+            } else if (librdf_node_is_blank(node)) {
+
+                type = BlankValue;
+
+            } else {
+
                 cerr << "SimpleSPARQLQuery: LIBRDF query returned unknown node type (not resource, literal, or blank)" << endl;
-                resultmap[key] = Value();
-                librdf_free_node(node);
-                continue;
             }
 
-            QString text = (const char *)librdf_node_get_literal_value(node);
-
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-            std::cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << std::endl;
+            cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << endl;
 #endif
 
             resultmap[key] = Value(type, text);
@@ -592,7 +645,9 @@ SimpleSPARQLQuery::Impl::executeDatastore()
     librdf_free_query_results(results);
     librdf_free_query(query);
 
-    std::cerr << "All results retrieved" << std::endl;
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
+    cerr << "All results retrieved (" << resultCount << " of them)" << endl;
+#endif
 
     return list;
 #endif
