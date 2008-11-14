@@ -63,12 +63,16 @@ TransformFactory::~TransformFactory()
 void
 TransformFactory::startPopulationThread()
 {
-    MutexLocker locker(&m_uninstalledTransformsMutex,
-                       "TransformFactory::startPopulationThread");
+    m_uninstalledTransformsMutex.lock();
 
-    if (m_thread) return;
-
+    if (m_thread) {
+        m_uninstalledTransformsMutex.unlock();
+        return;
+    }
     m_thread = new UninstalledTransformsPopulateThread(this);
+
+    m_uninstalledTransformsMutex.unlock();
+
     m_thread->start();
 }
 
@@ -173,11 +177,11 @@ TransformFactory::getTransformInstallStatus(TransformId id)
     }
 
     if (m_uninstalledTransforms.find(id) != m_uninstalledTransforms.end()) {
+        m_uninstalledTransformsMutex.unlock();
         return TransformNotInstalled;
     }
 
     m_uninstalledTransformsMutex.unlock();
-
     return TransformUnknown;
 }
     
