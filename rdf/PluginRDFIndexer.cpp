@@ -342,17 +342,14 @@ PluginRDFIndexer::indexURL(QString urlString)
         QString identifier = (*i)["plugin_id"].value;
 
         if (identifier == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
-                 << urlString.toStdString()
-                 << "> fails to define any vamp:identifier for plugin <"
+            cerr << "PluginRDFIndexer::indexURL: NOTE: No vamp:identifier for plugin <"
                  << pluginUri.toStdString() << ">"
                  << endl;
             continue;
         }
         if (soUri == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
-                 << urlString.toStdString() << "> does not associate plugin <"
-                 << pluginUri.toStdString() << "> with any implementation library"
+            cerr << "PluginRDFIndexer::indexURL: NOTE: No implementation library for plugin <"
+                 << pluginUri.toStdString() << ">"
                  << endl;
             continue;
         }
@@ -373,8 +370,7 @@ PluginRDFIndexer::indexURL(QString urlString)
             SimpleSPARQLQuery::singleResultQuery(localString, sonameQuery, "library_id");
         QString soname = sonameValue.value;
         if (soname == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
-                 << urlString.toStdString() << "> omits identifier for library <"
+            cerr << "PluginRDFIndexer::indexURL: NOTE: No identifier for library <"
                  << soUri.toStdString() << ">"
                  << endl;
             continue;
@@ -393,12 +389,23 @@ PluginRDFIndexer::indexURL(QString urlString)
         foundSomething = true;
 
         if (m_idToDescriptionMap.find(pluginId) != m_idToDescriptionMap.end()) {
+/*!!!
+
+  This can happen quite legitimately when using an RDF datastore rather
+  than querying individual files, as of course the datastore contains
+  all plugin data found so far, and each time a file is added to it,
+  subsequent queries will return all older plugins as well.
+
+  It would be more efficient to add everything at once and then do all
+  queries, of course.
+
             cerr << "PluginRDFIndexer::indexURL: NOTE: Plugin id \""
                  << pluginId.toStdString() << "\", described in document at <"
                  << urlString.toStdString()
                  << ">, has already been described in document <"
                  << m_idToDescriptionMap[pluginId].toStdString()
                  << ">: ignoring this new description" << endl;
+*/
             continue;
         }
 
