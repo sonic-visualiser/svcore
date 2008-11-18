@@ -257,7 +257,8 @@ PluginRDFIndexer::indexURL(QString urlString)
             return false;
         }
 
-        localString = "file://" + cf.getLocalFilename(); //!!! crud - fix!
+        localString = QUrl::fromLocalFile(cf.getLocalFilename()).toString();
+//        localString = "file://" + cf.getLocalFilename(); //!!! crud - fix!
     }
 
 //    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;
