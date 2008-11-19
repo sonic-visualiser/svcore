@@ -1050,8 +1050,9 @@ TransformFactory::search(QStringList keywords)
 
     if (!m_uninstalledTransformsMutex.tryLock()) {
         // uninstalled transforms are being populated; this may take some time,
-        // and they aren't critical
+        // and they aren't critical, but we will speed them up if necessary
         std::cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << std::endl;
+        m_populatingSlowly = false;
         return results;
     }
 
