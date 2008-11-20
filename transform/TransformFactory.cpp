@@ -118,6 +118,13 @@ TransformFactory::getTransformDescription(TransformId id)
     return m_transforms[id];
 }
 
+bool
+TransformFactory::haveInstalledTransforms()
+{
+    populateTransforms();
+    return !m_transforms.empty();
+}
+
 TransformList
 TransformFactory::getUninstalledTransformDescriptions()
 {
@@ -152,6 +159,25 @@ TransformFactory::getUninstalledTransformDescription(TransformId id)
     }
 
     return m_uninstalledTransforms[id];
+}
+
+bool
+TransformFactory::haveUninstalledTransforms(bool waitForCheckToComplete)
+{
+    if (waitForCheckToComplete) {
+        populateUninstalledTransforms();
+    } else {
+        if (!m_uninstalledTransformsMutex.tryLock()) {
+            return false;
+        }
+        if (!m_uninstalledTransformsPopulated) {
+            m_uninstalledTransformsMutex.unlock();
+            return false;
+        }
+        m_uninstalledTransformsMutex.unlock();
+    }
+
+    return !m_uninstalledTransforms.empty();
 }
 
 TransformFactory::TransformInstallStatus

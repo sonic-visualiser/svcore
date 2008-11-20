@@ -54,9 +54,11 @@ public:
 
     TransformList getAllTransformDescriptions();
     TransformDescription getTransformDescription(TransformId id);
+    bool haveInstalledTransforms();
 
     TransformList getUninstalledTransformDescriptions();
     TransformDescription getUninstalledTransformDescription(TransformId id);
+    bool haveUninstalledTransforms(bool waitForCheckToComplete = false);
     
     typedef enum {
         TransformUnknown,
