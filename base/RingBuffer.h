@@ -26,6 +26,8 @@
 #include "system/System.h"
 #include "Scavenger.h"
 
+#include <cstring> // memcpy, memset &c
+
 //#define DEBUG_RINGBUFFER 1
 
 #ifdef DEBUG_RINGBUFFER
