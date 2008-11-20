@@ -21,10 +21,10 @@
 
 #include "ModelTransformer.h"
 
+#include <vamp-hostsdk/PluginBase.h>
+
 #include <map>
 #include <set>
-
-namespace Vamp { class PluginBase; }
 
 class AudioPlaySource;
 

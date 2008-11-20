@@ -20,6 +20,8 @@
 #include "base/Window.h"
 #include "base/RealTime.h"
 
+#include <vamp-hostsdk/PluginBase.h>
+
 #include <QString>
 
 #include <map>
@@ -27,10 +29,6 @@
 typedef QString TransformId;
 
 class QXmlAttributes;
-
-namespace Vamp {
-    class PluginBase;
-}
 
 class Transform : public XmlExportable
 {

@@ -17,8 +17,7 @@
 #define _PLUGIN_XML_H_
 
 #include "base/XmlExportable.h"
-
-namespace Vamp { class PluginBase; }
+#include <vamp-hostsdk/PluginBase.h>
 
 class QXmlAttributes;
 
