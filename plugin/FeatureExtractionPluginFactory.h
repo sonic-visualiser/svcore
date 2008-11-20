@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 
-namespace Vamp { class Plugin; }
+#include <vamp-hostsdk/Plugin.h>
 
 class FeatureExtractionPluginFactory
 {
