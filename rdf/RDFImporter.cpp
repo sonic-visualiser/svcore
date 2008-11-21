@@ -40,15 +40,20 @@ class RDFImporterImpl
 public:
     RDFImporterImpl(QString url, int sampleRate);
     virtual ~RDFImporterImpl();
+
+    void setSampleRate(int sampleRate) { m_sampleRate = sampleRate; }
     
     bool isOK();
     QString getErrorString() const;
+
+    QString getAudioAvailableUrl() const { return m_audioAvailableAt; }
 
     std::vector<Model *> getDataModels(ProgressReporter *);
 
 protected:
     QString m_uristring;
     QString m_errorString;
+    QString m_audioAvailableAt;
     int m_sampleRate;
 
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
@@ -79,6 +84,12 @@ RDFImporter::~RDFImporter()
     delete m_d;
 }
 
+void
+RDFImporter::setSampleRate(int sampleRate)
+{
+    m_d->setSampleRate(sampleRate);
+}
+
 bool
 RDFImporter::isOK()
 {
@@ -91,6 +102,12 @@ RDFImporter::getErrorString() const
     return m_d->getErrorString();
 }
 
+QString
+RDFImporter::getAudioAvailableUrl() const
+{
+    return m_d->getAudioAvailableUrl();
+}
+
 std::vector<Model *>
 RDFImporter::getDataModels(ProgressReporter *r)
 {
@@ -101,6 +118,19 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
     m_uristring(uri),
     m_sampleRate(sampleRate)
 {
+    SimpleSPARQLQuery::Value value =
+        SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         QString
+         (" PREFIX mo: <http://purl.org/ontology/mo/> "
+          " SELECT ?url FROM <%1> "
+          " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
+             ).arg(uri),
+         "url");
+
+    if (value.type == SimpleSPARQLQuery::URIValue) {
+        m_audioAvailableAt = value.value;
+    }
 }
 
 RDFImporterImpl::~RDFImporterImpl()
@@ -123,6 +153,11 @@ std::vector<Model *>
 RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
     std::vector<Model *> models;
+
+    if (m_sampleRate == 0) {
+        std::cerr << "RDFImporter::getDataModels: invalid sample rate" << std::endl;
+        return models;
+    }
 
     getDataModelsDense(models, reporter);
 
@@ -701,6 +736,72 @@ RDFImporterImpl::fillModel(Model *model,
             
     std::cerr << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << std::endl;
     return;
+}
+
+RDFImporter::RDFDocumentType
+RDFImporter::identifyDocumentType(QString url)
+{
+    bool haveAudio = false;
+    bool haveAnnotations = false;
+
+    SimpleSPARQLQuery::Value value =
+        SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         QString
+         (" PREFIX mo: <http://purl.org/ontology/mo/> "
+          " SELECT ?url FROM <%1> "
+          " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
+             ).arg(url),
+         "url");
+
+    if (value.type == SimpleSPARQLQuery::URIValue) {
+        haveAudio = true;
+    }
+
+    value =
+        SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         QString
+         (" PREFIX event: <http://purl.org/NET/c4dm/event.owl#> "
+          " SELECT ?thing FROM <%1> "
+          " WHERE { ?thing event:time ?time } "
+             ).arg(url),
+         "thing");
+
+    if (value.type == SimpleSPARQLQuery::URIValue) {
+        haveAnnotations = true;
+    }
+
+    if (!haveAnnotations) {
+        
+        value =
+            SimpleSPARQLQuery::singleResultQuery
+            (SimpleSPARQLQuery::QueryFromSingleSource,
+             QString
+             (" PREFIX af: <http://purl.org/ontology/af/> "
+              " SELECT ?thing FROM <%1> "
+              " WHERE { ?signal af:signal_feature ?thing } "
+             ).arg(url),
+             "thing");
+        
+        if (value.type == SimpleSPARQLQuery::URIValue) {
+            haveAnnotations = true;
+        }
+    }
+
+    if (haveAudio) {
+        if (haveAnnotations) {
+            return AudioRefAndAnnotations;
+        } else {
+            return AudioRef;
+        }
+    } else {
+        if (haveAnnotations) {
+            return Annotations;
+        } else {
+            return OtherDocument;
+        }
+    }
 }
 
 

@@ -37,13 +37,26 @@ public:
      */
     static QString getKnownExtensions();
 
-    RDFImporter(QString url, int sampleRate);
+    RDFImporter(QString url, int sampleRate = 0);
     virtual ~RDFImporter();
+
+    void setSampleRate(int sampleRate);
 
     bool isOK();
     QString getErrorString() const;
 
+    QString getAudioAvailableUrl() const;
+
     std::vector<Model *> getDataModels(ProgressReporter *reporter);
+
+    enum RDFDocumentType {
+        AudioRefAndAnnotations,
+        Annotations,
+        AudioRef,
+        OtherDocument
+    };
+
+    static RDFDocumentType identifyDocumentType(QString url);
 
 protected:
     RDFImporterImpl *m_d;

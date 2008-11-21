@@ -31,7 +31,7 @@
 
 #include <redland.h>
 
-//#define DEBUG_SIMPLE_SPARQL_QUERY 1
+#define DEBUG_SIMPLE_SPARQL_QUERY 1
 
 #include <iostream>
 
@@ -115,8 +115,6 @@ public:
 
     librdf_uri *getUri(QString uriString, QString &errorString)
     {
-        QMutexLocker locker(&m_mutex);
-
         if (m_parsedUris.find(uriString) != m_parsedUris.end()) {
             return m_parsedUris[uriString];
         }
@@ -143,7 +141,7 @@ public:
             errorString = QString("Failed to parse RDF from URI \"%1\"")
                 .arg(uriString);
             librdf_free_parser(parser);
-            librdf_free_uri(uri);
+//            librdf_free_uri(uri);
             return 0;
 
         } else {
@@ -315,7 +313,7 @@ SimpleSPARQLQuery::Impl::execute()
 {
     ResultList list;
 
-    m_mutex.lock();
+    QMutexLocker locker(&m_mutex);
 
     if (m_type == QueryFromModel) {
         if (!m_redland) {
@@ -323,7 +321,6 @@ SimpleSPARQLQuery::Impl::execute()
             // added to the model yet (m_redland is only created when
             // addSourceToModel is called)
             cerr << "SimpleSPARQLQuery::execute: NOTE: No sources have been added to data model yet, so no results are possible" << endl;
-            m_mutex.unlock();
             return list;
         }
     }
@@ -336,7 +333,6 @@ SimpleSPARQLQuery::Impl::execute()
                 cerr << "ERROR: SimpleSPARQLQuery::execute: Failed to initialise Rasqal query engine" << endl;
                 delete m_rasqal;
                 m_rasqal = 0;
-                m_mutex.unlock();
                 return list;
             }
         }
@@ -347,8 +343,6 @@ SimpleSPARQLQuery::Impl::execute()
         }
 #endif
     }
-
-    m_mutex.unlock();
 
     if (m_type == QueryFromSingleSource) {
         return executeDirectParser();
@@ -426,6 +420,11 @@ SimpleSPARQLQuery::Impl::executeDirectParser()
             const unsigned char *name =
                 rasqal_query_results_get_binding_name(results, i);
 
+            if (!name) {
+                std::cerr << "WARNING: Result " << i << " of query has no name" << std::endl;
+                continue;
+            }
+
             rasqal_literal *literal =
                 rasqal_query_results_get_binding_value(results, i);
 
@@ -437,10 +436,16 @@ SimpleSPARQLQuery::Impl::executeDirectParser()
             }
 
             ValueType type = LiteralValue;
-            if (literal->type == RASQAL_LITERAL_URI) type = URIValue;
-            else if (literal->type == RASQAL_LITERAL_BLANK) type = BlankValue;
+            if (literal->type == RASQAL_LITERAL_BLANK) type = BlankValue;
+            else if (literal->type == RASQAL_LITERAL_URI) type = URIValue;
 
-            QString text = (const char *)rasqal_literal_as_string(literal);
+            QString text;
+            const char *lit = (const char *)rasqal_literal_as_string(literal);
+            if (!lit) {
+                std::cerr << "WARNING: Result " << i << " of query has null value" << std::endl;
+            } else {
+                text = lit;
+            }
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
             std::cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << std::endl;
@@ -539,6 +544,11 @@ SimpleSPARQLQuery::Impl::executeDatastore()
             const char *name =
                 librdf_query_results_get_binding_name(results, i);
 
+            if (!name) {
+                std::cerr << "WARNING: Result " << i << " of query has no name" << std::endl;
+                continue;
+            }
+
             librdf_node *node =
                 librdf_query_results_get_binding_value(results, i);
 
@@ -556,12 +566,24 @@ SimpleSPARQLQuery::Impl::executeDatastore()
 
                 type = URIValue;
                 librdf_uri *uri = librdf_node_get_uri(node);
-                text = (const char *)librdf_uri_as_string(uri);
+                const char *us = (const char *)librdf_uri_as_string(uri);
+
+                if (!us) {
+                    std::cerr << "WARNING: Result " << i << " of query claims URI type, but has null URI" << std::endl;
+                } else {
+                    text = us;
+                }
 
             } else if (librdf_node_is_literal(node)) {
 
                 type = LiteralValue;
-                text = (const char *)librdf_node_get_literal_value(node);
+
+                const char *lit = (const char *)librdf_node_get_literal_value(node);
+                if (!lit) {
+                    std::cerr << "WARNING: Result " << i << " of query claims literal type, but has no literal" << std::endl;
+                } else {
+                    text = lit;
+                }
 
             } else if (librdf_node_is_blank(node)) {
 
@@ -617,7 +639,7 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
 {
     QString err;
 
-    m_mutex.lock();
+    QMutexLocker locker(&m_mutex);
 
     if (!m_redland) {
         m_redland = new WredlandWorldWrapper();
@@ -625,12 +647,9 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
             cerr << "ERROR: SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << endl;
             delete m_redland;
             m_redland = 0;
-            m_mutex.unlock();
             return false;
         }
     }
-
-    m_mutex.unlock();
 
     librdf_uri *uri = m_redland->getUri(sourceUri, err);
 
