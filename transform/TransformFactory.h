@@ -68,9 +68,10 @@ public:
 
     TransformInstallStatus getTransformInstallStatus(TransformId id);
 
-    std::vector<QString> getAllTransformTypes();
-    std::vector<QString> getTransformCategories(QString transformType);
-    std::vector<QString> getTransformMakers(QString transformType);
+    std::vector<TransformDescription::Type> getAllTransformTypes();
+    std::vector<QString> getTransformCategories(TransformDescription::Type);
+    std::vector<QString> getTransformMakers(TransformDescription::Type);
+    QString getTransformTypeName(TransformDescription::Type) const;
 
     typedef std::map<TransformId, TextMatcher::Match> SearchResults;
     SearchResults search(QString keyword);
