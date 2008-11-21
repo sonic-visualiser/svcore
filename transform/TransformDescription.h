@@ -45,8 +45,16 @@
 
 struct TransformDescription
 {
+    enum Type {
+        Analysis,    // e.g. vamp plugin output
+        Effects,     // e.g. ladspa plugin with audio in and out
+        EffectsData, // e.g. control output of ladspa plugin
+        Generator,   // e.g. audio out of ladspa plugin with no audio in
+        UnknownType
+    };
+
     TransformDescription() { }
-    TransformDescription(QString _type, QString _category,
+    TransformDescription(Type _type, QString _category,
                          TransformId _identifier, QString _name,
                          QString _friendlyName, QString _description,
                          QString _longDescription,
@@ -57,7 +65,7 @@ struct TransformDescription
         longDescription(_longDescription),
         maker(_maker), units(_units), configurable(_configurable) { }
 
-    QString type; // e.g. feature extraction plugin
+    Type type;
     QString category; // e.g. time > onsets
     TransformId identifier; // e.g. vamp:vamp-aubio:aubioonset
     QString name; // plugin's name if 1 output, else "name: output"

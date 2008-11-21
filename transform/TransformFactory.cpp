@@ -212,19 +212,19 @@ TransformFactory::getTransformInstallStatus(TransformId id)
 }
     
 
-std::vector<QString>
+std::vector<TransformDescription::Type>
 TransformFactory::getAllTransformTypes()
 {
     populateTransforms();
 
-    std::set<QString> types;
+    std::set<TransformDescription::Type> types;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
         types.insert(i->second.type);
     }
 
-    std::vector<QString> rv;
-    for (std::set<QString>::iterator i = types.begin(); i != types.end(); ++i) {
+    std::vector<TransformDescription::Type> rv;
+    for (std::set<TransformDescription::Type>::iterator i = types.begin(); i != types.end(); ++i) {
         rv.push_back(*i);
     }
 
@@ -232,7 +232,7 @@ TransformFactory::getAllTransformTypes()
 }
 
 std::vector<QString>
-TransformFactory::getTransformCategories(QString transformType)
+TransformFactory::getTransformCategories(TransformDescription::Type transformType)
 {
     populateTransforms();
 
@@ -259,7 +259,7 @@ TransformFactory::getTransformCategories(QString transformType)
 }
 
 std::vector<QString>
-TransformFactory::getTransformMakers(QString transformType)
+TransformFactory::getTransformMakers(TransformDescription::Type transformType)
 {
     populateTransforms();
 
@@ -283,6 +283,18 @@ TransformFactory::getTransformMakers(QString transformType)
     if (haveEmpty) rv.push_back(""); // make sure empty category sorts last
 
     return rv;
+}
+
+QString
+TransformFactory::getTransformTypeName(TransformDescription::Type type) const
+{
+    switch (type) {
+    case TransformDescription::Analysis: return tr("Analysis");
+    case TransformDescription::Effects: return tr("Effects");
+    case TransformDescription::EffectsData: return tr("Effects Data");
+    case TransformDescription::Generator: return tr("Generator");
+    case TransformDescription::UnknownType: return tr("Other");
+    }
 }
 
 void
@@ -436,7 +448,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 //            cerr << "Feature extraction plugin transform: " << transformId.toStdString() << " friendly name: " << friendlyName.toStdString() << endl;
 
 	    transforms[transformId] = 
-                TransformDescription(tr("Analysis"),
+                TransformDescription(TransformDescription::Analysis,
                                      category,
                                      transformId,
                                      userName,
@@ -539,7 +551,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                 }
 
                 transforms[transformId] = 
-                    TransformDescription(tr("Effects Data"),
+                    TransformDescription(TransformDescription::EffectsData,
                                          category,
                                          transformId,
                                          userName,
@@ -557,14 +569,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             if (descriptor->audioOutputPortCount > 0) {
 
                 QString transformId = QString("%1:A").arg(pluginId);
-                QString type = tr("Effects");
+                TransformDescription::Type type = TransformDescription::Effects;
 
                 QString description = tr("Transform audio signal with \"%1\" effect plugin (from %2)")
                     .arg(pluginName)
                     .arg(maker);
 
                 if (descriptor->audioInputPortCount == 0) {
-                    type = tr("Generators");
+                    type = TransformDescription::Generator;
                     QString description = tr("Generate audio signal using \"%1\" plugin (from %2)")
                         .arg(pluginName)
                         .arg(maker);
@@ -641,7 +653,7 @@ TransformFactory::populateUninstalledTransforms()
             if (oname == "") oname = *j;
             
             TransformDescription td;
-            td.type = tr("Analysis"); //!!! should be enum or something
+            td.type = TransformDescription::Analysis;
             td.category = "";
             td.identifier = tid;
 
@@ -1063,7 +1075,10 @@ TransformFactory::search(QStringList keywords)
 
         match.key = i->first;
         
-        matcher.test(match, keywords, i->second.type, tr("Plugin type"), 5);
+        matcher.test(match, keywords,
+                     getTransformTypeName(i->second.type),
+                     tr("Plugin type"), 5);
+
         matcher.test(match, keywords, i->second.category, tr("Category"), 20);
         matcher.test(match, keywords, i->second.identifier, tr("System Identifier"), 6);
         matcher.test(match, keywords, i->second.name, tr("Name"), 30);
@@ -1098,7 +1113,10 @@ TransformFactory::search(QStringList keywords)
 
         match.key = i->first;
         
-        matcher.test(match, keywords, i->second.type, tr("Plugin type"), 2);
+        matcher.test(match, keywords,
+                     getTransformTypeName(i->second.type),
+                     tr("Plugin type"), 2);
+
         matcher.test(match, keywords, i->second.category, tr("Category"), 10);
         matcher.test(match, keywords, i->second.identifier, tr("System Identifier"), 3);
         matcher.test(match, keywords, i->second.name, tr("Name"), 15);
