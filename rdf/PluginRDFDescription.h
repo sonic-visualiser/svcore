@@ -55,6 +55,7 @@ protected:
     typedef std::map<QString, QString> OutputStringMap;
 
     QString m_pluginId;
+    QString m_pluginUri;
     bool m_haveDescription;
     QString m_pluginName;
     QString m_pluginDescription;
@@ -66,9 +67,9 @@ protected:
     OutputStringMap m_outputFeatureAttributeURIMap;
     OutputStringMap m_outputSignalTypeURIMap;
     OutputStringMap m_outputUnitMap;
-    bool indexURL(QString url);
-    bool indexMetadata(QString url, QString label);
-    bool indexOutputs(QString url, QString label);
+    bool index();
+    bool indexMetadata();
+    bool indexOutputs();
 };
 
 #endif

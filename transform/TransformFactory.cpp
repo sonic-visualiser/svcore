@@ -295,6 +295,7 @@ TransformFactory::getTransformTypeName(TransformDescription::Type type) const
     case TransformDescription::Generator: return tr("Generator");
     case TransformDescription::UnknownType: return tr("Other");
     }
+    return tr("Other");
 }
 
 void

@@ -29,9 +29,7 @@
 #include <rasqal.h>
 #endif
 
-#ifdef HAVE_REDLAND
 #include <redland.h>
-#endif
 
 //#define DEBUG_SIMPLE_SPARQL_QUERY 1
 
@@ -64,6 +62,8 @@ public:
         rasqal_free_world(m_world);
     }
 
+    bool isOK() const { return (m_world != 0); }
+
     rasqal_world *getWorld() { return m_world; }
     const rasqal_world *getWorld() const { return m_world; }
 
@@ -72,7 +72,6 @@ private:
 };
 #endif
 
-#ifdef HAVE_REDLAND
 class WredlandWorldWrapper
 {
 public:
@@ -169,13 +168,14 @@ private:
     QMutex m_mutex;
     std::map<QString, librdf_uri *> m_parsedUris;
 };
-#endif
 
 class SimpleSPARQLQuery::Impl
 {
 public:
-    Impl(QString fromUri, QString query);
+    Impl(SimpleSPARQLQuery::QueryType, QString query);
     ~Impl();
+
+    static bool addSourceToModel(QString sourceUri);
 
     void setProgressReporter(ProgressReporter *reporter) { m_reporter = reporter; }
     bool wasCancelled() const { return m_cancelled; }
@@ -184,10 +184,6 @@ public:
 
     bool isOK() const;
     QString getErrorString() const;
-
-    static void setBackEnd(SimpleSPARQLQuery::BackEndPreference p) {
-        m_preference = p;
-    }
 
 protected:
     static void errorHandler(void *, raptor_locator *, const char *);
@@ -200,16 +196,12 @@ protected:
     static bool m_rasqalInitialised;
 #endif
 
-#ifdef HAVE_REDLAND
     static WredlandWorldWrapper *m_redland;
-#endif
-
-    static SimpleSPARQLQuery::BackEndPreference m_preference;
 
     ResultList executeDirectParser();
     ResultList executeDatastore();
 
-    QString m_fromUri;
+    QueryType m_type;
     QString m_query;
     QString m_errorString;
     ProgressReporter *m_reporter;
@@ -222,17 +214,12 @@ WrasqalWorldWrapper *SimpleSPARQLQuery::Impl::m_rasqal = 0;
 bool SimpleSPARQLQuery::Impl::m_rasqalInitialised = false;
 #endif
 
-#ifdef HAVE_REDLAND
 WredlandWorldWrapper *SimpleSPARQLQuery::Impl::m_redland = 0;
-#endif
 
 QMutex SimpleSPARQLQuery::Impl::m_mutex;
 
-SimpleSPARQLQuery::BackEndPreference
-SimpleSPARQLQuery::Impl::m_preference = SimpleSPARQLQuery::AutoSelectBackEnd;
-
-SimpleSPARQLQuery::SimpleSPARQLQuery(QString fromUri, QString query) :
-    m_impl(new Impl(fromUri, query))
+SimpleSPARQLQuery::SimpleSPARQLQuery(QueryType type, QString query) :
+    m_impl(new Impl(type, query))
 {
 }
 
@@ -271,14 +258,14 @@ SimpleSPARQLQuery::getErrorString() const
     return m_impl->getErrorString();
 }
 
-void
-SimpleSPARQLQuery::setBackEnd(BackEndPreference p)
+bool
+SimpleSPARQLQuery::addSourceToModel(QString sourceUri)
 {
-    SimpleSPARQLQuery::Impl::setBackEnd(p);
+    return SimpleSPARQLQuery::Impl::addSourceToModel(sourceUri);
 }
 
-SimpleSPARQLQuery::Impl::Impl(QString fromUri, QString query) :
-    m_fromUri(fromUri),
+SimpleSPARQLQuery::Impl::Impl(QueryType type, QString query) :
+    m_type(type),
     m_query(query),
     m_reporter(0),
     m_cancelled(false)
@@ -328,47 +315,31 @@ SimpleSPARQLQuery::Impl::execute()
 {
     ResultList list;
 
-    BackEndPreference preference;
-
     m_mutex.lock();
 
-    if (m_preference == AutoSelectBackEnd) {
-#ifdef HAVE_REDLAND
-//        cerr << "librdf version: " << librdf_version_major << "." << librdf_version_minor << "." << librdf_version_release << endl;
-        if (librdf_version_major > 1 ||
-            (librdf_version_major == 1 &&
-             (librdf_version_minor > 0 ||
-              (librdf_version_minor == 0 &&
-               librdf_version_release > 7)))) {
-            cerr << "SimpleSPARQLQuery: Auto-selecting LIBRDF back-end for tree-based storage" << endl;
-            m_preference = DatastoreBackEnd;
-        }
-#endif
-        if (m_preference == AutoSelectBackEnd) {
-            cerr << "SimpleSPARQLQuery: Auto-selecting RASQAL back-end" << endl;
-            m_preference = DirectParserBackEnd;
+    if (m_type == QueryFromModel) {
+        if (!m_redland) {
+            // There can be no results, because no sources have been
+            // added to the model yet (m_redland is only created when
+            // addSourceToModel is called)
+            cerr << "SimpleSPARQLQuery::execute: NOTE: No sources have been added to data model yet, so no results are possible" << endl;
+            m_mutex.unlock();
+            return list;
         }
     }
 
-    if (m_preference == DatastoreBackEnd) {
-#ifdef HAVE_REDLAND
-        if (!m_redland) {
-            m_redland = new WredlandWorldWrapper();
-            if (!m_redland->isOK()) {
-                cerr << "WARNING: SimpleSPARQLQuery::execute: Failed to initialise Redland datastore, falling back to direct parser implementation" << endl;
-                delete m_redland;
-                m_preference = DirectParserBackEnd;
+    if (m_type == QueryFromSingleSource) {
+#ifdef USE_NEW_RASQAL_API
+        if (!m_rasqal) {
+            m_rasqal = new WrasqalWorldWrapper();
+            if (!m_rasqal->isOK()) {
+                cerr << "ERROR: SimpleSPARQLQuery::execute: Failed to initialise Rasqal query engine" << endl;
+                delete m_rasqal;
+                m_rasqal = 0;
+                m_mutex.unlock();
+                return list;
             }
         }
-#else
-        cerr << "WARNING: SimpleSPARQLQuery::execute: Datastore implementation preference indicated, but no datastore compiled in; using direct parser" << endl;
-        m_preference = DirectParserBackEnd;
-#endif
-    }
-
-    if (m_preference == DirectParserBackEnd) {
-#ifdef USE_NEW_RASQAL_API
-        if (!m_rasqal) m_rasqal = new WrasqalWorldWrapper();
 #else
         if (!m_rasqalInitialised) {
             rasqal_init();
@@ -377,10 +348,9 @@ SimpleSPARQLQuery::Impl::execute()
 #endif
     }
 
-    preference = m_preference;
     m_mutex.unlock();
 
-    if (preference == SimpleSPARQLQuery::DirectParserBackEnd) {
+    if (m_type == QueryFromSingleSource) {
         return executeDirectParser();
     } else {
         return executeDatastore();
@@ -510,19 +480,9 @@ SimpleSPARQLQuery::ResultList
 SimpleSPARQLQuery::Impl::executeDatastore()
 {
     ResultList list;
-#ifndef HAVE_REDLAND
-    // This should have been caught by execute()
-    cerr << "SimpleSPARQLQuery: INTERNAL ERROR: Datastore not compiled in" << endl;
-    return list;
-#else
+
     Profiler profiler("SimpleSPARQLQuery::executeDatastore");
 
-    librdf_uri *uri = m_redland->getUri(m_fromUri, m_errorString);
-    if (!uri) return list;
-
-#ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery: Query is: \"" << m_query.toStdString() << "\"" << std::endl;
-#endif
 /*!!!
     static std::map<QString, int> counter;
     if (counter.find(m_query) == counter.end()) counter[m_query] = 1;
@@ -537,7 +497,7 @@ SimpleSPARQLQuery::Impl::executeDatastore()
         Profiler p("SimpleSPARQLQuery: Prepare LIBRDF query");
         query = librdf_new_query
             (m_redland->getWorld(), "sparql", NULL,
-             (const unsigned char *)m_query.toUtf8().data(), uri);
+             (const unsigned char *)m_query.toUtf8().data(), NULL);
     }
     
     if (!query) {
@@ -650,14 +610,42 @@ SimpleSPARQLQuery::Impl::executeDatastore()
 #endif
 
     return list;
-#endif
+}
+
+bool
+SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
+{
+    QString err;
+
+    m_mutex.lock();
+
+    if (!m_redland) {
+        m_redland = new WredlandWorldWrapper();
+        if (!m_redland->isOK()) {
+            cerr << "ERROR: SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << endl;
+            delete m_redland;
+            m_redland = 0;
+            m_mutex.unlock();
+            return false;
+        }
+    }
+
+    m_mutex.unlock();
+
+    librdf_uri *uri = m_redland->getUri(sourceUri, err);
+
+    if (!uri) {
+        std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri.toStdString() << ": " << err.toStdString() << std::endl;
+        return false;
+    }
+    return true;
 }
 
 SimpleSPARQLQuery::Value
-SimpleSPARQLQuery::singleResultQuery(QString fromUri,
+SimpleSPARQLQuery::singleResultQuery(QueryType type,
                                      QString query, QString binding)
 {
-    SimpleSPARQLQuery q(fromUri, query);
+    SimpleSPARQLQuery q(type, query);
     ResultList results = q.execute();
     if (!q.isOK()) {
         cerr << "SimpleSPARQLQuery::singleResultQuery: ERROR: "

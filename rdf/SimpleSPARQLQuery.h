@@ -37,8 +37,15 @@ public:
     typedef std::map<QString, Value> KeyValueMap;
     typedef std::vector<KeyValueMap> ResultList;
 
-    SimpleSPARQLQuery(QString fromUri, QString query);
+    enum QueryType {
+        QueryFromModel,
+        QueryFromSingleSource
+    };
+
+    SimpleSPARQLQuery(QueryType type, QString query);
     ~SimpleSPARQLQuery();
+
+    static bool addSourceToModel(QString sourceUri);
 
     void setProgressReporter(ProgressReporter *reporter);
     bool wasCancelled() const;
@@ -50,20 +57,9 @@ public:
 
     // Do a query and return the value for the given binding, from the
     // first result that has a value for it
-    static Value singleResultQuery(QString fromUri,
+    static Value singleResultQuery(QueryType type,
                                    QString query,
                                    QString binding);
-
-    enum BackEndPreference {
-        AutoSelectBackEnd,   // pick based on likely speed of available storage
-        DirectParserBackEnd, // use rasqal (simpler if seldom used)
-        DatastoreBackEnd,    // use redland (faster if version not too old)
-    };
-    /**
-     * Select the preferred query back end.  This should be called
-     * before any queries are made.  The default is AutoSelectBackEnd.
-     */
-    static void setBackEnd(BackEndPreference);
 
 protected:
     class Impl;

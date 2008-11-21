@@ -34,15 +34,14 @@ PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     m_haveDescription(false)
 {
     PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
-    QString url = indexer->getDescriptionURLForPluginId(pluginId);
-    if (url == "") {
+    m_pluginUri = indexer->getURIForPluginId(pluginId);
+    if (m_pluginUri == "") {
         cerr << "PluginRDFDescription: WARNING: No RDF description available for plugin ID \""
              << pluginId.toStdString() << "\"" << endl;
     } else {
-        if (!indexURL(url)) {
-            cerr << "PluginRDFDescription: ERROR: Failed to query RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
-        } else {
+        // All the data we need should be in our RDF model already:
+        // if it's not there, we don't know where to find it anyway
+        if (index()) {
             m_haveDescription = true;
         }
     }
@@ -151,83 +150,63 @@ PluginRDFDescription::getOutputUnit(QString outputId) const
 }
 
 bool
-PluginRDFDescription::indexURL(QString url) 
+PluginRDFDescription::index() 
 {
-    Profiler profiler("PluginRDFDescription::indexURL");
-
-    QString type, soname, label;
-    PluginIdentifier::parseIdentifier(m_pluginId, type, soname, label);
+    Profiler profiler("PluginRDFDescription::index");
 
     bool success = true;
-
-    QString local = url;
-
-    if (FileSource::isRemote(url) &&
-        FileSource::canHandleScheme(url)) {
-        
-        CachedFile cf(url);
-        if (!cf.isOK()) {
-            return false;
-        }
-
-        local = QUrl::fromLocalFile(cf.getLocalFilename()).toString();
-    }
-    
-    if (!indexMetadata(local, label)) success = false;
-    if (!indexOutputs(local, label)) success = false;
+    if (!indexMetadata()) success = false;
+    if (!indexOutputs()) success = false;
 
     return success;
 }
 
 bool
-PluginRDFDescription::indexMetadata(QString url, QString label)
+PluginRDFDescription::indexMetadata()
 {
-    Profiler profiler("PluginRDFDescription::indexMetadata");
+    Profiler profiler("PluginRDFDescription::index");
+
+    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
 
     QString queryTemplate =
         QString(
             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-            " SELECT ?%4 FROM <%1> "
+            " SELECT ?%3 "
             " WHERE { "
-            "   ?plugin vamp:identifier \"%2\" ; "
-            "           a vamp:Plugin ; "
-            "           %3 ?%4 . "
+            "   <%1> %2 ?%3 . "
             " }")
-        .arg(url)
-        .arg(label);
+        .arg(m_pluginUri);
 
     SimpleSPARQLQuery::Value v;
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (url, queryTemplate.arg("vamp:name").arg("name"), "name");
+        (m, queryTemplate.arg("vamp:name").arg("name"), "name");
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginName = v.value;
     }
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (url, queryTemplate.arg("dc:description").arg("description"), "description");
+        (m, queryTemplate.arg("dc:description").arg("description"), "description");
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginDescription = v.value;
     }
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (url,
+        (m,
          QString(
             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-            " SELECT ?name FROM <%1> "
+            " SELECT ?name "
             " WHERE { "
-            "   ?plugin vamp:identifier \"%2\" ; "
-            "           a vamp:Plugin ; "
-            "           foaf:maker ?maker . "
+            "   <%1> foaf:maker ?maker . "
             "   ?maker foaf:name ?name . "
             " }")
-         .arg(url)
-         .arg(label), "name");
+         .arg(m_pluginUri),
+         "name");
     
     if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
         m_pluginMaker = v.value;
@@ -240,18 +219,16 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     // perhaps that would be unwise
 
     v = SimpleSPARQLQuery::singleResultQuery
-        (url,
+        (m,
          QString(
             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
             " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-            " SELECT ?page from <%1> "
+            " SELECT ?page "
             " WHERE { "
-            "   ?plugin vamp:identifier \"%2\" ; "
-            "           a vamp:Plugin ; "
-            "           foaf:page ?page . "
+            "   <%1> foaf:page ?page . "
             " }")
-         .arg(url)
-         .arg(label), "page");
+         .arg(m_pluginUri),
+         "page");
 
     if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
 
@@ -260,20 +237,18 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
     } else {
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (url,
+            (m,
              QString(
                 " PREFIX vamp: <http://purl.org/ontology/vamp/> "
                 " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-                " SELECT ?page from <%1> "
+                " SELECT ?page "
                 " WHERE { "
-                "   ?library a vamp:PluginLibrary ; "
-                "            vamp:available_plugin ?plugin ; "
+                "   ?library vamp:available_plugin <%1> ; "
+                "            a vamp:PluginLibrary ; "
                 "            foaf:page ?page . "
-                "   ?plugin a vamp:Plugin ; "
-                "           vamp:identifier \"%2\" . "
                 " }")
-             .arg(url)
-             .arg(label), "page");
+             .arg(m_pluginUri),
+             "page");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
 
@@ -285,24 +260,23 @@ PluginRDFDescription::indexMetadata(QString url, QString label)
 }
 
 bool
-PluginRDFDescription::indexOutputs(QString url, QString label)
+PluginRDFDescription::indexOutputs()
 {
     Profiler profiler("PluginRDFDescription::indexOutputs");
+    
+    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
 
     SimpleSPARQLQuery query
-        (url,
+        (m,
          QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
              " SELECT ?output ?output_id ?output_type ?unit "
-             " FROM <%1> "
 
              " WHERE { "
 
-             "   ?plugin vamp:identifier \"%2\" ; "
-             "           a vamp:Plugin ; "
-             "           vamp:output ?output . "
+             "   <%1> vamp:output ?output . "
 
              "   ?output vamp:identifier ?output_id ; "
              "           a ?output_type . "
@@ -313,23 +287,20 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
 
              " } "
              )
-         .arg(url)
-         .arg(label));
+         .arg(m_pluginUri));
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
     if (!query.isOK()) {
-        cerr << "ERROR: PluginRDFDescription::indexURL: ERROR: Failed to query document at <"
-             << url.toStdString() << ">: "
+        cerr << "ERROR: PluginRDFDescription::index: ERROR: Failed to query outputs for <"
+             << m_pluginUri.toStdString() << ">: "
              << query.getErrorString().toStdString() << endl;
         return false;
     }
 
     if (results.empty()) {
-        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: Document at <"
-             << url.toStdString()
-             << "> does not appear to describe any outputs for plugin with id \""
-             << label.toStdString() << "\"" << endl;
+        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
+             << m_pluginUri.toStdString() << ">" << endl;
         return false;
     }
 
@@ -365,12 +336,12 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
         SimpleSPARQLQuery::Value v;
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (url, 
+            (m, 
              QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
                      " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-                     " SELECT ?title FROM <%1> "
+                     " SELECT ?title "
                      " WHERE { <%2> dc:title ?title } ")
-             .arg(url).arg(outputUri), "title");
+             .arg(outputUri), "title");
 
         if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
             m_outputNames[outputId] = v.value;
@@ -378,26 +349,26 @@ PluginRDFDescription::indexOutputs(QString url, QString label)
 
         QString queryTemplate = 
             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                    " SELECT ?%3 FROM <%1> "
+                    " SELECT ?%3 "
                     " WHERE { <%2> vamp:computes_%3 ?%3 } ")
-            .arg(url).arg(outputUri);
+            .arg(outputUri);
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (url, queryTemplate.arg("event_type"), "event_type");
+            (m, queryTemplate.arg("event_type"), "event_type");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputEventTypeURIMap[outputId] = v.value;
         }
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (url, queryTemplate.arg("feature_attribute"), "feature_attribute");
+            (m, queryTemplate.arg("feature_attribute"), "feature_attribute");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputFeatureAttributeURIMap[outputId] = v.value;
         }
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (url, queryTemplate.arg("signal_type"), "signal_type");
+            (m, queryTemplate.arg("signal_type"), "signal_type");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
             m_outputSignalTypeURIMap[outputId] = v.value;
