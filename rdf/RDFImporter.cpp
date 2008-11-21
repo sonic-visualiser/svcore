@@ -142,7 +142,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                                     ProgressReporter *reporter)
 {
     SimpleSPARQLQuery query = SimpleSPARQLQuery
-        (m_uristring,
+        (SimpleSPARQLQuery::QueryFromSingleSource,
          QString
          (
              " PREFIX mo: <http://purl.org/ontology/mo/>"
@@ -258,6 +258,8 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
                                            int &sampleRate, int &windowLength,
                                            int &hopSize, int &width, int &height)
 {
+    SimpleSPARQLQuery::QueryType s = SimpleSPARQLQuery::QueryFromSingleSource;
+
     QString dimensionsQuery 
         (
             " PREFIX mo: <http://purl.org/ontology/mo/>"
@@ -274,10 +276,8 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
             );
 
     SimpleSPARQLQuery::Value dimensionsValue =
-        SimpleSPARQLQuery::singleResultQuery(m_uristring,
-                                             dimensionsQuery
-                                             .arg(m_uristring).arg(featureUri),
-                                             "dimensions");
+        SimpleSPARQLQuery::singleResultQuery
+        (s, dimensionsQuery.arg(m_uristring).arg(featureUri), "dimensions");
 
     cerr << "Dimensions = \"" << dimensionsValue.value.toStdString() << "\""
          << endl;
@@ -316,7 +316,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     // multiple optionals properly
 
     SimpleSPARQLQuery::Value srValue = 
-        SimpleSPARQLQuery::singleResultQuery(m_uristring,
+        SimpleSPARQLQuery::singleResultQuery(s,
                                              queryTemplate
                                              .arg(m_uristring).arg(featureUri)
                                              .arg("sampleRate"),
@@ -326,7 +326,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     }
 
     SimpleSPARQLQuery::Value hopValue = 
-        SimpleSPARQLQuery::singleResultQuery(m_uristring,
+        SimpleSPARQLQuery::singleResultQuery(s,
                                              queryTemplate
                                              .arg(m_uristring).arg(featureUri)
                                              .arg("hopSize"),
@@ -336,7 +336,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     }
 
     SimpleSPARQLQuery::Value winValue = 
-        SimpleSPARQLQuery::singleResultQuery(m_uristring,
+        SimpleSPARQLQuery::singleResultQuery(s,
                                              queryTemplate
                                              .arg(m_uristring).arg(featureUri)
                                              .arg("windowLength"),
@@ -352,6 +352,8 @@ void
 RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                                      ProgressReporter *reporter)
 {
+    SimpleSPARQLQuery::QueryType s = SimpleSPARQLQuery::QueryFromSingleSource;
+
     // Our query is intended to retrieve every thing that has a time,
     // and every feature type and value associated with a thing that
     // has a time.
@@ -443,7 +445,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
         ).arg(m_uristring);
 
-    SimpleSPARQLQuery query(m_uristring, queryString);
+    SimpleSPARQLQuery query(s, queryString);
     query.setProgressReporter(reporter);
 
     cerr << "Query will be: " << queryString.toStdString() << endl;
@@ -505,9 +507,9 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         bool haveDuration = false;
 
         QString label = SimpleSPARQLQuery::singleResultQuery
-            (m_uristring, labelQueryString.arg(thinguri), "label").value;
+            (s, labelQueryString.arg(thinguri), "label").value;
 
-        SimpleSPARQLQuery rangeQuery(m_uristring, rangeQueryString.arg(thinguri));
+        SimpleSPARQLQuery rangeQuery(s, rangeQueryString.arg(thinguri));
         SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
         if (!rangeResults.empty()) {
 //                std::cerr << rangeResults.size() << " range results" << std::endl;
@@ -520,7 +522,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
             haveDuration = true;
         } else {
             QString timestring = SimpleSPARQLQuery::singleResultQuery
-                (m_uristring, timeQueryString.arg(thinguri), "time").value;
+                (s, timeQueryString.arg(thinguri), "time").value;
             if (timestring != "") {
                 time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;

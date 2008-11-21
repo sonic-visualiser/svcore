@@ -45,8 +45,6 @@ public:
 
     QString getURIForPluginId(QString pluginId);
     QString getIdForPluginURI(QString uri);
-    QString getDescriptionURLForPluginId(QString pluginId);
-    QString getDescriptionURLForPluginURI(QString uri);
 
     QStringList getIndexedPluginIds();
 
@@ -59,10 +57,13 @@ protected:
     typedef std::map<QString, QString> StringMap;
     StringMap m_uriToIdMap;
     StringMap m_idToUriMap;
-    StringMap m_idToDescriptionMap;
 
     void indexInstalledURLs();
-    bool indexFile(QString path);
+
+    bool pullFile(QString path);
+    bool pullURL(QString urlString);
+    bool reindex();
+
     static PluginRDFIndexer *m_instance;
 };
 

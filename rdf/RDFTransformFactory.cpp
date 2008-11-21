@@ -47,8 +47,8 @@ public:
 protected:
     QString m_urlString;
     QString m_errorString;
-    bool setOutput(Transform &, QString, QString);
-    bool setParameters(Transform &, QString, QString);
+    bool setOutput(Transform &, QString);
+    bool setParameters(Transform &, QString);
 };
 
 
@@ -112,38 +112,22 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 {
     std::vector<Transform> transforms;
 
-    // We have to do this a very long way round, to work around
-    // rasqal's current inability to handle correctly more than one
-    // OPTIONAL graph in a query
-
-    const char *optionals[] = {
-        "output",
-        "program",
-        "step_size",
-        "block_size",
-        "window_type",
-        "sample_rate",
-        "start", 
-        "duration"
-    };
-
     std::map<QString, Transform> uriTransformMap;
 
-    QString queryTemplate = 
+    QString query = 
         " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
-        " SELECT ?transform ?plugin %1 "
+        " SELECT ?transform ?plugin "
         
         " FROM <%2> "
 
         " WHERE { "
         "   ?transform a vamp:Transform ; "
         "              vamp:plugin ?plugin . "
-        "   %3 "
         " } ";
 
     SimpleSPARQLQuery transformsQuery
-        (m_urlString, queryTemplate.arg("").arg(m_urlString).arg(""));
+        (SimpleSPARQLQuery::QueryFromSingleSource, query.arg(m_urlString));
 
     SimpleSPARQLQuery::ResultList transformResults = transformsQuery.execute();
 
@@ -156,6 +140,17 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         cerr << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString.toStdString() << ">" << endl;
         return transforms;
     }
+
+    // There are various queries we need to make that might include
+    // data from iether the transform RDF or the model accumulated
+    // from plugin descriptions.  For example, the transform RDF may
+    // specify the output's true URI, or it might have a blank node or
+    // some other URI with the appropriate vamp:identifier included in
+    // the file.  To cover both cases, we need to add the file itself
+    // into the model and always query the model using the transform
+    // URI rather than querying the file itself subsequently.
+
+    SimpleSPARQLQuery::addSourceToModel(m_urlString);
 
     PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
 
@@ -175,93 +170,89 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
             continue;
         }
 
-        QString pluginDescriptionURL =
-            indexer->getDescriptionURLForPluginId(pluginId);
-        if (pluginDescriptionURL == "") {
-            cerr << "RDFTransformFactory: WARNING: No RDF description available for plugin <"
-                 << pluginUri.toStdString() << ">, skipping transform <"
-                 << transformUri.toStdString() << ">" << endl;
-            continue;
-        }
-
         Transform transform;
         transform.setPluginIdentifier(pluginId);
 
-        if (!setOutput(transform, transformUri, pluginDescriptionURL)) {
+        if (!setOutput(transform, transformUri)) {
             return transforms;
         }
 
-        if (!setParameters(transform, transformUri, pluginDescriptionURL)) {
+        if (!setParameters(transform, transformUri)) {
             return transforms;
         }
 
         uriTransformMap[transformUri] = transform;
-    }
 
-    for (int i = 0; i < sizeof(optionals)/sizeof(optionals[0]); ++i) {
+        // We have to do this a very long way round, to work around
+        // rasqal's current inability to handle correctly more than one
+        // OPTIONAL graph in a query
 
-        QString optional = optionals[i];
-
-        SimpleSPARQLQuery query
-            (m_urlString,
-             queryTemplate
-             .arg(QString("?%1").arg(optional))
-             .arg(m_urlString)
-             .arg(QString("?transform vamp:%1 ?%2")
-                  .arg(optionals[i]).arg(optional)));
+        static const char *optionals[] = {
+            "output",
+            "program",
+            "step_size",
+            "block_size",
+            "window_type",
+            "sample_rate",
+            "start", 
+            "duration"
+        };
         
-        SimpleSPARQLQuery::ResultList results = query.execute();
+        for (int j = 0; j < sizeof(optionals)/sizeof(optionals[0]); ++j) {
 
-        if (!query.isOK()) {
-            m_errorString = query.getErrorString();
-            return transforms;
-        }
+            QString optional = optionals[j];
 
-        if (results.empty()) continue;
-
-        for (int j = 0; j < results.size(); ++j) {
-
-            QString transformUri = results[j]["transform"].value;
+            QString queryTemplate = 
+                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                
+                " SELECT ?%1 "
+                
+                " WHERE { "
+                "   <%2> vamp:%1 ?%1 "
+                " } ";
             
-            if (uriTransformMap.find(transformUri) == uriTransformMap.end()) {
-                cerr << "RDFTransformFactory: ERROR: Transform URI <"
-                     << transformUri.toStdString() << "> not found in internal map!" << endl;
-                continue;
+            SimpleSPARQLQuery query
+                (SimpleSPARQLQuery::QueryFromModel,
+                 queryTemplate.arg(optional).arg(transformUri));
+        
+            SimpleSPARQLQuery::ResultList results = query.execute();
+
+            if (!query.isOK()) {
+                m_errorString = query.getErrorString();
+                return transforms;
             }
 
-            Transform &transform = uriTransformMap[transformUri];
-            const SimpleSPARQLQuery::Value &v = results[j][optional];
+            if (results.empty()) continue;
 
-            if (v.type == SimpleSPARQLQuery::LiteralValue) {
+            for (int k = 0; k < results.size(); ++k) {
+
+                const SimpleSPARQLQuery::Value &v = results[k][optional];
+
+                if (v.type == SimpleSPARQLQuery::LiteralValue) {
                 
-                if (optional == "program") {
-                    transform.setProgram(v.value);
-                } else if (optional == "step_size") {
-                    transform.setStepSize(v.value.toUInt());
-                } else if (optional == "block_size") {
-                    transform.setBlockSize(v.value.toUInt());
-                } else if (optional == "window_type") {
-                    cerr << "NOTE: can't handle window type yet (value is \""
-                         << v.value.toStdString() << "\")" << endl;
-                } else if (optional == "sample_rate") {
-                    transform.setSampleRate(v.value.toFloat());
-                } else if (optional == "start") {
-                    transform.setStartTime
-                        (RealTime::fromXsdDuration(v.value.toStdString()));
-                } else if (optional == "duration") {
-                    transform.setDuration
-                        (RealTime::fromXsdDuration(v.value.toStdString()));
-                } else {
-                    cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional.toStdString() << "\"" << endl;
+                    if (optional == "program") {
+                        transform.setProgram(v.value);
+                    } else if (optional == "step_size") {
+                        transform.setStepSize(v.value.toUInt());
+                    } else if (optional == "block_size") {
+                        transform.setBlockSize(v.value.toUInt());
+                    } else if (optional == "window_type") {
+                        cerr << "NOTE: can't handle window type yet (value is \""
+                             << v.value.toStdString() << "\")" << endl;
+                    } else if (optional == "sample_rate") {
+                        transform.setSampleRate(v.value.toFloat());
+                    } else if (optional == "start") {
+                        transform.setStartTime
+                            (RealTime::fromXsdDuration(v.value.toStdString()));
+                    } else if (optional == "duration") {
+                        transform.setDuration
+                            (RealTime::fromXsdDuration(v.value.toStdString()));
+                    } else {
+                        cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional.toStdString() << "\"" << endl;
+                    }
                 }
             }
         }
-    }
-
-    for (std::map<QString, Transform>::iterator i = uriTransformMap.begin();
-         i != uriTransformMap.end(); ++i) {
-
-        Transform &transform = i->second;
 
         cerr << "RDFTransformFactory: NOTE: Transform is: " << endl;
         cerr << transform.toXmlString().toStdString() << endl;
@@ -274,45 +265,55 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 
 bool
 RDFTransformFactoryImpl::setOutput(Transform &transform,
-                                   QString transformUri,
-                                   QString pluginDescriptionURL)
+                                   QString transformUri)
 {
-    SimpleSPARQLQuery outputQuery
-        (m_urlString,
+    SimpleSPARQLQuery::Value outputValue =
+        SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromModel,
+         QString
+         (
+             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+             
+             " SELECT ?output "
+
+             " WHERE { "
+             "   <%1> vamp:output ?output . "
+             " } "
+             )
+         .arg(transformUri),
+         "output");
+    
+    if (outputValue.type == SimpleSPARQLQuery::NoValue) {
+        return true;
+    }
+
+    if (outputValue.type != SimpleSPARQLQuery::URIValue) {
+        m_errorString = "No vamp:output given, or not a URI";
+        return false;
+    }
+
+    SimpleSPARQLQuery::Value outputIdValue =
+        SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromModel,
          QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
              
              " SELECT ?output_id "
              
-             " FROM <%1> "
-             " FROM <%2> "
-             
              " WHERE { "
-             "   <%3> vamp:output ?output . "
-             "   ?output vamp:identifier ?output_id "
+             "   <%1> vamp:identifier ?output_id "
              " } "
              )
-         .arg(m_urlString)
-         .arg(pluginDescriptionURL)
-         .arg(transformUri));
+         .arg(outputValue.value),
+         "output_id");
     
-    SimpleSPARQLQuery::ResultList outputResults = outputQuery.execute();
-    
-    if (!outputQuery.isOK()) {
-        m_errorString = outputQuery.getErrorString();
+    if (outputIdValue.type != SimpleSPARQLQuery::LiteralValue) {
+        m_errorString = "No output vamp:identifier available, or not a literal";
         return false;
     }
-    
-    if (outputQuery.wasCancelled()) {
-        m_errorString = "Query cancelled";
-        return false;
-    }
-    
-    for (int j = 0; j < outputResults.size(); ++j) {
-        QString outputId = outputResults[j]["output_id"].value;
-        transform.setOutput(outputId);
-    }
+
+    transform.setOutput(outputIdValue.value);
 
     return true;
 }
@@ -320,29 +321,23 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
 
 bool
 RDFTransformFactoryImpl::setParameters(Transform &transform,
-                                       QString transformUri,
-                                       QString pluginDescriptionURL)
+                                       QString transformUri)
 {
     SimpleSPARQLQuery paramQuery
-        (m_urlString,
+        (SimpleSPARQLQuery::QueryFromModel,
          QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
              
              " SELECT ?param_id ?param_value "
              
-             " FROM <%1> "
-             " FROM <%2> "
-             
              " WHERE { "
-             "   <%3> vamp:parameter_binding ?binding . "
+             "   <%1> vamp:parameter_binding ?binding . "
              "   ?binding vamp:parameter ?param ; "
              "            vamp:value ?param_value . "
              "   ?param vamp:identifier ?param_id "
              " } "
              )
-         .arg(m_urlString)
-         .arg(pluginDescriptionURL)
          .arg(transformUri));
     
     SimpleSPARQLQuery::ResultList paramResults = paramQuery.execute();

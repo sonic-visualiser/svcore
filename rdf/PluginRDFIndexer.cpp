@@ -87,7 +87,7 @@ PluginRDFIndexer::indexInstalledURLs()
         for (QStringList::const_iterator j = entries.begin();
              j != entries.end(); ++j) {
             QFileInfo fi(dir.filePath(*j));
-            indexFile(fi.absoluteFilePath());
+            pullFile(fi.absoluteFilePath());
         }
 
         QStringList subdirs = dir.entryList
@@ -102,11 +102,13 @@ PluginRDFIndexer::indexInstalledURLs()
                 for (QStringList::const_iterator k = entries.begin();
                      k != entries.end(); ++k) {
                     QFileInfo fi(subdir.filePath(*k));
-                    indexFile(fi.absoluteFilePath());
+                    pullFile(fi.absoluteFilePath());
                 }
             }
         }
     }
+
+    reindex();
 }
 
 bool
@@ -140,7 +142,7 @@ PluginRDFIndexer::indexConfiguredURLs()
              j != list.end(); ++j) {
             std::cerr << "PluginRDFIndexer::indexConfiguredURLs: url is "
                       << j->toStdString() << std::endl;
-            indexURL(*j);
+            pullURL(*j);
         }
     }
 
@@ -148,10 +150,11 @@ PluginRDFIndexer::indexConfiguredURLs()
     QStringList urls = settings.value(urlListKey).toStringList();
 
     for (int i = 0; i < urls.size(); ++i) {
-        indexURL(urls[i]);
+        pullURL(urls[i]);
     }
     
     settings.endGroup();
+    reindex();
     return true;
 }
 
@@ -198,48 +201,38 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
     return id;
 }
 
-QString
-PluginRDFIndexer::getDescriptionURLForPluginId(QString pluginId)
-{
-    QMutexLocker locker(&m_mutex);
-
-    if (m_idToDescriptionMap.find(pluginId) == m_idToDescriptionMap.end()) return "";
-    return m_idToDescriptionMap[pluginId];
-}
-
-QString
-PluginRDFIndexer::getDescriptionURLForPluginURI(QString uri)
-{
-    QMutexLocker locker(&m_mutex);
-
-    QString id = getIdForPluginURI(uri);
-    if (id == "") return "";
-    return getDescriptionURLForPluginId(id);
-}
-
 QStringList
 PluginRDFIndexer::getIndexedPluginIds() 
 {
     QMutexLocker locker(&m_mutex);
 
     QStringList ids;
-    for (StringMap::const_iterator i = m_idToDescriptionMap.begin();
-         i != m_idToDescriptionMap.end(); ++i) {
+    for (StringMap::const_iterator i = m_idToUriMap.begin();
+         i != m_idToUriMap.end(); ++i) {
         ids.push_back(i->first);
     }
     return ids;
 }
 
 bool
-PluginRDFIndexer::indexFile(QString filepath)
+PluginRDFIndexer::pullFile(QString filepath)
 {
     QUrl url = QUrl::fromLocalFile(filepath);
     QString urlString = url.toString();
-    return indexURL(urlString);
+    return pullURL(urlString);
 }
 
 bool
 PluginRDFIndexer::indexURL(QString urlString)
+{
+    bool pulled = pullURL(urlString);
+    if (!pulled) return false;
+    reindex();
+    return true;
+}
+
+bool
+PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
@@ -258,51 +251,23 @@ PluginRDFIndexer::indexURL(QString urlString)
         }
 
         localString = QUrl::fromLocalFile(cf.getLocalFilename()).toString();
-//        localString = "file://" + cf.getLocalFilename(); //!!! crud - fix!
     }
 
-//    cerr << "PluginRDFIndexer::indexURL: url = <" << urlString.toStdString() << ">" << endl;
-/*!!!
+    return SimpleSPARQLQuery::addSourceToModel(localString);
+}
+
+bool
+PluginRDFIndexer::reindex()
+{
+    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
+
     SimpleSPARQLQuery query
-        (localString,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-
-             " SELECT ?plugin ?library_id ?plugin_id "
-             " FROM <%1> "
-
-             " WHERE { "
-             "   ?plugin a vamp:Plugin . "
-
-             // Make the identifier and library parts optional, so
-             // that we can check and report helpfully if one or both
-             // is absent instead of just getting no results
-
-             //!!! No -- because of rasqal's inability to correctly
-             // handle more than one OPTIONAL graph in a query, let's
-             // make identifier compulsory after all
-             //"   OPTIONAL { ?plugin vamp:identifier ?plugin_id } . "
-
-             "   ?plugin vamp:identifier ?plugin_id . "
-
-             "   OPTIONAL { "
-             "     ?library a vamp:PluginLibrary ; "
-             "              vamp:available_plugin ?plugin ; "
-             "              vamp:identifier ?library_id "
-             "   } "
-             " } "
-             )
-         .arg(localString));
-*/
-    SimpleSPARQLQuery query
-        (localString,
+        (m,
          QString
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
              " SELECT ?plugin ?library ?plugin_id "
-             " FROM <%1> "
 
              " WHERE { "
              "   ?plugin a vamp:Plugin . "
@@ -312,22 +277,18 @@ PluginRDFIndexer::indexURL(QString urlString)
              "     ?library vamp:available_plugin ?plugin "
              "   } "
              " } "
-             )
-         .arg(localString));
+             ));
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
     if (!query.isOK()) {
-        cerr << "ERROR: PluginRDFIndexer::indexURL: ERROR: Failed to index document at <"
-             << urlString.toStdString() << ">: "
+        cerr << "ERROR: PluginRDFIndexer::reindex: ERROR: Failed to query plugins from model: "
              << query.getErrorString().toStdString() << endl;
         return false;
     }
 
     if (results.empty()) {
-        cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
-             << urlString.toStdString()
-             << "> does not describe any vamp:Plugin resources" << endl;
+        cerr << "PluginRDFIndexer::reindex: NOTE: no vamp:Plugin resources found in indexed documents" << endl;
         return false;
     }
 
@@ -338,18 +299,17 @@ PluginRDFIndexer::indexURL(QString urlString)
          i != results.end(); ++i) {
 
         QString pluginUri = (*i)["plugin"].value;
-//!!!        QString soname = (*i)["library_id"].value;
         QString soUri = (*i)["library"].value;
         QString identifier = (*i)["plugin_id"].value;
 
         if (identifier == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: No vamp:identifier for plugin <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No vamp:identifier for plugin <"
                  << pluginUri.toStdString() << ">"
                  << endl;
             continue;
         }
         if (soUri == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: No implementation library for plugin <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No implementation library for plugin <"
                  << pluginUri.toStdString() << ">"
                  << endl;
             continue;
@@ -359,69 +319,40 @@ PluginRDFIndexer::indexURL(QString urlString)
             QString(
                 " PREFIX vamp: <http://purl.org/ontology/vamp/> "
                 " SELECT ?library_id "
-                " FROM <%1> "
                 " WHERE { "
-                "   <%2> vamp:identifier ?library_id "
+                "   <%1> vamp:identifier ?library_id "
                 " } "
                 )
-            .arg(localString)
             .arg(soUri);
 
         SimpleSPARQLQuery::Value sonameValue = 
-            SimpleSPARQLQuery::singleResultQuery(localString, sonameQuery, "library_id");
+            SimpleSPARQLQuery::singleResultQuery(m, sonameQuery, "library_id");
         QString soname = sonameValue.value;
         if (soname == "") {
-            cerr << "PluginRDFIndexer::indexURL: NOTE: No identifier for library <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No identifier for library <"
                  << soUri.toStdString() << ">"
                  << endl;
             continue;
         }
 
-
-/*
-        cerr << "PluginRDFIndexer::indexURL: Document for plugin \""
-             << soname.toStdString() << ":" << identifier.toStdString()
-             << "\" (uri <" << pluginUri.toStdString() << ">) is at url <"
-             << urlString.toStdString() << ">" << endl;
-*/
         QString pluginId = PluginIdentifier::createIdentifier
             ("vamp", soname, identifier);
 
         foundSomething = true;
 
-        if (m_idToDescriptionMap.find(pluginId) != m_idToDescriptionMap.end()) {
-/*!!!
-
-  This can happen quite legitimately when using an RDF datastore rather
-  than querying individual files, as of course the datastore contains
-  all plugin data found so far, and each time a file is added to it,
-  subsequent queries will return all older plugins as well.
-
-  It would be more efficient to add everything at once and then do all
-  queries, of course.
-
-            cerr << "PluginRDFIndexer::indexURL: NOTE: Plugin id \""
-                 << pluginId.toStdString() << "\", described in document at <"
-                 << urlString.toStdString()
-                 << ">, has already been described in document <"
-                 << m_idToDescriptionMap[pluginId].toStdString()
-                 << ">: ignoring this new description" << endl;
-*/
+        if (m_idToUriMap.find(pluginId) != m_idToUriMap.end()) {
             continue;
         }
 
-        m_idToDescriptionMap[pluginId] = urlString;
         m_idToUriMap[pluginId] = pluginUri;
 
         addedSomething = true;
 
         if (pluginUri != "") {
             if (m_uriToIdMap.find(pluginUri) != m_uriToIdMap.end()) {
-                cerr << "PluginRDFIndexer::indexURL: WARNING: Found multiple plugins with the same URI:" << endl;
+                cerr << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
                 cerr << "  1. Plugin id \"" << m_uriToIdMap[pluginUri].toStdString() << "\"" << endl;
-                cerr << "     described in <" << m_idToDescriptionMap[m_uriToIdMap[pluginUri]].toStdString() << ">" << endl;
                 cerr << "  2. Plugin id \"" << pluginId.toStdString() << "\"" << endl;
-                cerr << "     described in <" << urlString.toStdString() << ">" << endl;
                 cerr << "both claim URI <" << pluginUri.toStdString() << ">" << endl;
             } else {
                 m_uriToIdMap[pluginUri] = pluginId;
@@ -430,9 +361,7 @@ PluginRDFIndexer::indexURL(QString urlString)
     }
 
     if (!foundSomething) {
-        cerr << "PluginRDFIndexer::indexURL: NOTE: Document at <"
-             << urlString.toStdString()
-             << "> does not sufficiently describe any plugins" << endl;
+        cerr << "PluginRDFIndexer::reindex: NOTE: Plugins found, but none sufficiently described" << endl;
     }
     
     return addedSomething;
