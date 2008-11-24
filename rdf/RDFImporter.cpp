@@ -125,7 +125,7 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
          (" PREFIX mo: <http://purl.org/ontology/mo/> "
           " SELECT ?url FROM <%1> "
           " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
-             ).arg(uri),
+             ).arg(m_uristring),
          "url");
 
     if (value.type == SimpleSPARQLQuery::URIValue) {
@@ -135,6 +135,7 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
 
 RDFImporterImpl::~RDFImporterImpl()
 {
+    SimpleSPARQLQuery::closeSingleSource(m_uristring);
 }
 
 bool
@@ -664,6 +665,8 @@ RDFImporterImpl::fillModel(Model *model,
                            std::vector<float> &values,
                            QString label)
 {
+    std::cerr << "RDFImporterImpl::fillModel: adding point at frame " << ftime << std::endl;
+
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
     if (sodm) {
@@ -802,6 +805,8 @@ RDFImporter::identifyDocumentType(QString url)
             return OtherDocument;
         }
     }
+
+    SimpleSPARQLQuery::closeSingleSource(url);
 }
 
 
