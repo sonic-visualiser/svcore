@@ -189,7 +189,7 @@ CSVFileReader::load() const
                     if (timeUnits == CSVFormat::TimeSeconds) {
 
                         double time = numeric.toDouble(&ok);
-                        frameNo = int(time * sampleRate + 0.00001);
+                        frameNo = int(time * sampleRate + 0.5);
 
                     } else {
 
@@ -205,7 +205,7 @@ CSVFileReader::load() const
                             std::cerr << "WARNING: CSVFileReader::load: "
                                       << "Bad time format (\"" << s.toStdString()
                                       << "\") in data line "
-                                      << lineno << ":" << std::endl;
+                                      << lineno+1 << ":" << std::endl;
                             std::cerr << line.toStdString() << std::endl;
                         } else if (warnings == warnLimit) {
                             std::cerr << "WARNING: Too many warnings" << std::endl;
@@ -222,7 +222,7 @@ CSVFileReader::load() const
                 SparseOneDimensionalModel::Point point
                     (frameNo,
                      tidyList.size() > 0 ? tidyList[tidyList.size()-1] :
-                     QString("%1").arg(lineno));
+                     QString("%1").arg(lineno+1));
 
                 model1->addPoint(point);
 
@@ -231,7 +231,7 @@ CSVFileReader::load() const
                 SparseTimeValueModel::Point point
                     (frameNo,
                      tidyList.size() > 0 ? tidyList[0].toFloat() : 0.0,
-                     tidyList.size() > 1 ? tidyList[1] : QString("%1").arg(lineno));
+                     tidyList.size() > 1 ? tidyList[1] : QString("%1").arg(lineno+1));
 
                 model2->addPoint(point);
 
@@ -253,7 +253,7 @@ CSVFileReader::load() const
                             std::cerr << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
                                       << list[i].toStdString()
-                                      << "\" in data line " << lineno
+                                      << "\" in data line " << lineno+1
                                       << ":" << std::endl;
                             std::cerr << line.toStdString() << std::endl;
                             ++warnings;
