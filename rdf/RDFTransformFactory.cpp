@@ -93,6 +93,7 @@ RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
 
 RDFTransformFactoryImpl::~RDFTransformFactoryImpl()
 {
+    SimpleSPARQLQuery::closeSingleSource(m_urlString);
 }
 
 bool
