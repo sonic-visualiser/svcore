@@ -36,7 +36,8 @@ public:
     RDFTransformFactory(QString url);
     virtual ~RDFTransformFactory();
 
-    bool isOK();
+    bool isRDF(); // true if the file was parseable and had transforms in it
+    bool isOK();  // true if the transforms could be completely constructed
     QString getErrorString() const;
 
     std::vector<Transform> getTransforms(ProgressReporter *reporter);

@@ -59,6 +59,8 @@ protected:
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
 
+    void getDenseModelTitle(Model *, QString, QString);
+
     void getDenseFeatureProperties(QString featureUri,
                                    int &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
@@ -184,14 +186,12 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
              " PREFIX mo: <http://purl.org/ontology/mo/>"
              " PREFIX af: <http://purl.org/ontology/af/>"
              
-             " SELECT ?feature ?signal_source ?feature_signal_type ?value "
+             " SELECT ?feature ?feature_signal_type ?value "
              " FROM <%1> "
              
              " WHERE { "
              
-             "   ?signal a mo:Signal ; "
-             "           mo:available_as ?signal_source ; "
-             "           af:signal_feature ?feature . "
+             "   ?signal af:signal_feature ?feature . "
              
              "   ?feature a ?feature_signal_type ; "
              "            af:value ?value . "
@@ -215,7 +215,6 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
     for (int i = 0; i < results.size(); ++i) {
 
         QString feature = results[i]["feature"].value;
-        QString source = results[i]["signal_source"].value;
         QString type = results[i]["feature_signal_type"].value;
         QString value = results[i]["value"].value;
 
@@ -259,6 +258,8 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                 SparseTimeValueModel::Point point(j * hopSize, f, "");
                 m->addPoint(point);
             }
+
+            getDenseModelTitle(m, feature, type);
         
             models.push_back(m);
 
@@ -284,9 +285,53 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                 m->setColumn(x++, column);
             }
 
+            getDenseModelTitle(m, feature, type);
+        
             models.push_back(m);
         }
     }
+}
+
+void
+RDFImporterImpl::getDenseModelTitle(Model *m,
+                                    QString featureUri,
+                                    QString featureTypeUri)
+{
+    QString titleQuery = QString
+        (
+            " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
+            " SELECT ?title "
+            " FROM <%1> " 
+            " WHERE { "
+            "   <%2> dc:title ?title . "
+            " } "
+            ).arg(m_uristring);
+    
+    SimpleSPARQLQuery::Value v;
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         titleQuery.arg(featureUri),
+         "title");
+
+    if (v.value != "") {
+        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value.toStdString() << "\"" << std::endl;
+        m->setObjectName(v.value);
+        return;
+    }
+
+    v = SimpleSPARQLQuery::singleResultQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         titleQuery.arg(featureTypeUri),
+         "title");
+    
+    if (v.value != "") {
+        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value.toStdString() << "\"" << std::endl;
+        m->setObjectName(v.value);
+        return;
+    }
+
+    std::cerr << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri.toStdString() << ">" << std::endl;
 }
 
 void
@@ -643,6 +688,19 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 }
             }
 
+            QString titleQuery = QString
+                (
+                    " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
+                    " SELECT ?title "
+                    " FROM <%1> " 
+                    " WHERE { "
+                    "   <%2> dc:title ?title . "
+                    " } "
+                    ).arg(m_uristring).arg(type);
+            QString title = SimpleSPARQLQuery::singleResultQuery
+                (s, titleQuery, "title").value;
+            if (title != "") model->setObjectName(title);
+
             modelMap[source][type][dimensions][haveDuration] = model;
             models.push_back(model);
         }
@@ -665,7 +723,7 @@ RDFImporterImpl::fillModel(Model *model,
                            std::vector<float> &values,
                            QString label)
 {
-    std::cerr << "RDFImporterImpl::fillModel: adding point at frame " << ftime << std::endl;
+//    std::cerr << "RDFImporterImpl::fillModel: adding point at frame " << ftime << std::endl;
 
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);

@@ -39,6 +39,7 @@ public:
     RDFTransformFactoryImpl(QString url);
     virtual ~RDFTransformFactoryImpl();
     
+    bool isRDF();
     bool isOK();
     QString getErrorString() const;
 
@@ -47,6 +48,7 @@ public:
 protected:
     QString m_urlString;
     QString m_errorString;
+    bool m_isRDF;
     bool setOutput(Transform &, QString);
     bool setParameters(Transform &, QString);
 };
@@ -69,6 +71,12 @@ RDFTransformFactory::~RDFTransformFactory()
 }
 
 bool
+RDFTransformFactory::isRDF()
+{
+    return m_d->isRDF();
+}
+
+bool
 RDFTransformFactory::isOK()
 {
     return m_d->isOK();
@@ -87,13 +95,20 @@ RDFTransformFactory::getTransforms(ProgressReporter *r)
 }
 
 RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
-    m_urlString(url)
+    m_urlString(url),
+    m_isRDF(false)
 {
 }
 
 RDFTransformFactoryImpl::~RDFTransformFactoryImpl()
 {
     SimpleSPARQLQuery::closeSingleSource(m_urlString);
+}
+
+bool
+RDFTransformFactoryImpl::isRDF()
+{
+    return m_isRDF;
 }
 
 bool
@@ -136,6 +151,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         m_errorString = transformsQuery.getErrorString();
         return transforms;
     }
+
+    m_isRDF = true;
 
     if (transformResults.empty()) {
         cerr << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString.toStdString() << ">" << endl;
@@ -289,7 +306,7 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
     }
 
     if (outputValue.type != SimpleSPARQLQuery::URIValue) {
-        m_errorString = "No vamp:output given, or not a URI";
+        m_errorString = QString("vamp:output given for transform <%1> is not a URI").arg(transformUri);
         return false;
     }
 
@@ -310,7 +327,7 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
          "output_id");
     
     if (outputIdValue.type != SimpleSPARQLQuery::LiteralValue) {
-        m_errorString = "No output vamp:identifier available, or not a literal";
+        m_errorString = QString("No vamp:identifier found for output <%1>, or vamp:identifier is not a literal").arg(outputValue.value);
         return false;
     }
 

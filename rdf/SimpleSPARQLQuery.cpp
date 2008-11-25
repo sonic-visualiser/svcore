@@ -165,13 +165,19 @@ WredlandWorldWrapper::getModel(QString fromUri)
 void
 WredlandWorldWrapper::freeModel(QString forUri)
 {
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
+    std::cerr << "SimpleSPARQLQuery::freeModel: Model uri = \"" << forUri.toStdString() << "\"" << std::endl;
+#endif
+
     QMutexLocker locker(&m_mutex);
     if (forUri == "") {
         std::cerr << "SimpleSPARQLQuery::freeModel: ERROR: Can't free default model" << std::endl;
         return;
     }
     if (m_ownModelUris.find(forUri) == m_ownModelUris.end()) {
-        std::cerr << "SimpleSPARQLQuery::freeModel: ERROR: Never heard of this model (uri = \"" << forUri.toStdString() << "\")" << std::endl;
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
+        std::cerr << "SimpleSPARQLQuery::freeModel: NOTE: Unknown or already-freed model (uri = \"" << forUri.toStdString() << "\")" << std::endl;
+#endif
         return;
     }
 
@@ -408,11 +414,13 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     ResultList list;
     librdf_query *query;
 
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY
     static std::map<QString, int> counter;
     if (counter.find(m_query) == counter.end()) counter[m_query] = 1;
     else ++counter[m_query];
     std::cerr << "Counter for this query: " << counter[m_query] << std::endl;
     std::cerr << "Base URI is: \"" << modelUri.toStdString() << "\"" << std::endl;
+#endif
 
     {
         Profiler p("SimpleSPARQLQuery: Prepare LIBRDF query");
