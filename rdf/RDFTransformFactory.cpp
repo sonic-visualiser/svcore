@@ -18,11 +18,14 @@
 #include <map>
 #include <vector>
 
+#include <QTextStream>
+
 #include <iostream>
 #include <cmath>
 
 #include "SimpleSPARQLQuery.h"
 #include "PluginRDFIndexer.h"
+#include "PluginRDFDescription.h"
 #include "base/ProgressReporter.h"
 
 #include "transform/TransformFactory.h"
@@ -44,6 +47,8 @@ public:
     QString getErrorString() const;
 
     std::vector<Transform> getTransforms(ProgressReporter *);
+
+    static QString writeTransformToRDF(const Transform &, QString);
 
 protected:
     QString m_urlString;
@@ -92,6 +97,12 @@ std::vector<Transform>
 RDFTransformFactory::getTransforms(ProgressReporter *r)
 {
     return m_d->getTransforms(r);
+}
+
+QString
+RDFTransformFactory::writeTransformToRDF(const Transform &t, QString f)
+{
+    return RDFTransformFactoryImpl::writeTransformToRDF(t, f);
 }
 
 RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
@@ -160,7 +171,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     }
 
     // There are various queries we need to make that might include
-    // data from iether the transform RDF or the model accumulated
+    // data from either the transform RDF or the model accumulated
     // from plugin descriptions.  For example, the transform RDF may
     // specify the output's true URI, or it might have a blank node or
     // some other URI with the appropriate vamp:identifier included in
@@ -292,46 +303,26 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
              
-             " SELECT ?output "
+             " SELECT ?output_id "
 
              " WHERE { "
              "   <%1> vamp:output ?output . "
+             "   ?output vamp:identifier ?output_id "
              " } "
              )
          .arg(transformUri),
-         "output");
+         "output_id");
     
     if (outputValue.type == SimpleSPARQLQuery::NoValue) {
         return true;
     }
-
-    if (outputValue.type != SimpleSPARQLQuery::URIValue) {
-        m_errorString = QString("vamp:output given for transform <%1> is not a URI").arg(transformUri);
-        return false;
-    }
-
-    SimpleSPARQLQuery::Value outputIdValue =
-        SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromModel,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-             
-             " SELECT ?output_id "
-             
-             " WHERE { "
-             "   <%1> vamp:identifier ?output_id "
-             " } "
-             )
-         .arg(outputValue.value),
-         "output_id");
     
-    if (outputIdValue.type != SimpleSPARQLQuery::LiteralValue) {
-        m_errorString = QString("No vamp:identifier found for output <%1>, or vamp:identifier is not a literal").arg(outputValue.value);
+    if (outputValue.type != SimpleSPARQLQuery::LiteralValue) {
+        m_errorString = QString("No vamp:identifier found for output of transform <%1>, or vamp:identifier is not a literal").arg(transformUri);
         return false;
     }
 
-    transform.setOutput(outputIdValue.value);
+    transform.setOutput(outputValue.value);
 
     return true;
 }
@@ -381,5 +372,70 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
     }
 
     return true;
+}
+
+QString
+RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
+                                             QString uri)
+{
+    QString str;
+    QTextStream s(&str);
+
+    // assumes the usual prefixes are available
+
+    s << uri << " a vamp:Transform ;" << endl;
+
+    QString pluginId = transform.getPluginIdentifier();
+    QString pluginUri = PluginRDFIndexer::getInstance()->getURIForPluginId(pluginId);
+
+    PluginRDFDescription description(pluginId);
+    QString outputUri = description.getOutputUri(transform.getOutput());
+
+    if (transform.getOutput() != "" && outputUri == "") {
+        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput().toStdString() << "\"" << std::endl;
+    }
+
+    s << "    vamp:plugin <" << pluginUri << "> ;" << endl;
+
+    if (transform.getStepSize() != 0) {
+        s << "    vamp:step_size \"" << transform.getStepSize() << "\"^^xsd:int ; " << endl;
+    }
+    if (transform.getBlockSize() != 0) {
+        s << "    vamp:block_size \"" << transform.getBlockSize() << "\"^^xsd:int ; " << endl;
+    }
+    if (transform.getStartTime() != RealTime::zeroTime) {
+        s << "    vamp:start \"" << transform.getStartTime().toXsdDuration().c_str() << "\"^^xsd:duration ; " << endl;
+    }
+    if (transform.getDuration() != RealTime::zeroTime) {
+        s << "    vamp:duration \"" << transform.getDuration().toXsdDuration().c_str() << "\"^^xsd:duration ; " << endl;
+    }
+    if (transform.getSampleRate() != 0) {
+        s << "    vamp:sample_rate \"" << transform.getSampleRate() << "\"^^xsd:float ; " << endl;
+    }
+    
+    QString program = transform.getProgram();
+
+    if (program != "") {
+        s << "    vamp:program \"\"\"" << program << "\"\"\" ;" << endl;
+    }
+
+    Transform::ParameterMap parameters = transform.getParameters();
+    for (Transform::ParameterMap::const_iterator i = parameters.begin();
+         i != parameters.end(); ++i) {
+        QString name = i->first;
+        float value = i->second;
+        s << "    vamp:parameter_binding [" << endl;
+        s << "        vamp:parameter [ vamp:identifier \"" << name << "\" ] ;" << endl;
+        s << "        vamp:value \"" << value << "\"^^xsd:float ;" << endl;
+        s << "    ] ;" << endl;
+    }
+
+    if (outputUri != "") {
+        s << "    vamp:output <" << outputUri << "> ." << endl;
+    } else {
+        s << "    ." << endl;
+    }
+
+    return str;
 }
 

@@ -637,8 +637,8 @@ TransformFactory::populateUninstalledTransforms()
             TransformId tid = Transform::getIdentifierForPluginOutput(*i, *j);
             
             if (m_transforms.find(tid) != m_transforms.end()) {
-                std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                          << tid.toStdString() << " is installed; adding info url if appropriate, skipping rest" << std::endl;
+//                std::cerr << "TransformFactory::populateUninstalledTransforms: "
+//                          << tid.toStdString() << " is installed; adding info url if appropriate, skipping rest" << std::endl;
                 if (infoUrl != "") {
                     if (m_transforms[tid].infoUrl == "") {
                         m_transforms[tid].infoUrl = infoUrl;
@@ -647,8 +647,8 @@ TransformFactory::populateUninstalledTransforms()
                 continue;
             }
 
-            std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                      << "adding " << tid.toStdString() << std::endl;
+//            std::cerr << "TransformFactory::populateUninstalledTransforms: "
+//                      << "adding " << tid.toStdString() << std::endl;
 
             QString oname = desc.getOutputName(*j);
             if (oname == "") oname = *j;

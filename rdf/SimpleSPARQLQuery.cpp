@@ -516,6 +516,9 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
 
                 type = BlankValue;
 
+                const char *lit = (const char *)librdf_node_get_literal_value(node);
+                if (lit) text = lit;
+
             } else {
 
                 cerr << "SimpleSPARQLQuery: LIBRDF query returned unknown node type (not resource, literal, or blank)" << endl;

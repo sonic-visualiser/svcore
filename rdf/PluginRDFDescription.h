@@ -49,6 +49,7 @@ public:
     QString getOutputFeatureAttributeURI(QString outputId) const;
     QString getOutputSignalTypeURI(QString outputId) const;
     QString getOutputUnit(QString outputId) const;
+    QString getOutputUri(QString outputId) const;
 
 protected:    
     typedef std::map<QString, OutputDisposition> OutputDispositionMap;
@@ -67,6 +68,7 @@ protected:
     OutputStringMap m_outputFeatureAttributeURIMap;
     OutputStringMap m_outputSignalTypeURIMap;
     OutputStringMap m_outputUnitMap;
+    OutputStringMap m_outputUriMap;
     bool index();
     bool indexMetadata();
     bool indexOutputs();
