@@ -342,6 +342,13 @@ RealTime::toSecText() const
     return s;
 }
 
+std::string
+RealTime::toXsdDuration() const
+{
+    std::string s = "PT" + toString(false) + "S";
+    return s;
+}
+
 RealTime
 RealTime::operator*(int m) const
 {

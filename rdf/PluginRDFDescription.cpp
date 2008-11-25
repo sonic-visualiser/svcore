@@ -149,6 +149,15 @@ PluginRDFDescription::getOutputUnit(QString outputId) const
     return m_outputUnitMap.find(outputId)->second;
 }
 
+QString
+PluginRDFDescription::getOutputUri(QString outputId) const
+{
+    if (m_outputUriMap.find(outputId) == m_outputUriMap.end()) {
+        return "";
+    }
+    return m_outputUriMap.find(outputId)->second;
+}
+
 bool
 PluginRDFDescription::index() 
 {
@@ -313,6 +322,8 @@ PluginRDFDescription::indexOutputs()
         QString outputUri = results[i]["output"].value;
         QString outputId = results[i]["output_id"].value;
         QString outputType = results[i]["output_type"].value;
+
+        m_outputUriMap[outputId] = outputUri;
 
         if (outputType.contains("DenseOutput")) {
             m_outputDispositions[outputId] = OutputDense;

@@ -42,6 +42,8 @@ public:
 
     std::vector<Transform> getTransforms(ProgressReporter *reporter);
 
+    static QString writeTransformToRDF(const Transform &, QString uri);
+
 protected:
     RDFTransformFactoryImpl *m_d;
 };

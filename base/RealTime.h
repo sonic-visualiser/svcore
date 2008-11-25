@@ -133,6 +133,11 @@ struct RealTime
     std::string toSecText() const;
 
     /**
+     * Return a string in xsd:duration format.
+     */
+    std::string toXsdDuration() const;
+
+    /**
      * Convert a RealTime into a sample frame at the given sample rate.
      */
     static long realTime2Frame(const RealTime &r, unsigned int sampleRate);
