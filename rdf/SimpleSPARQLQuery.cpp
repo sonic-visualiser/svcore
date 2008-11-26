@@ -78,7 +78,7 @@ WredlandWorldWrapper::WredlandWorldWrapper() :
 
     m_defaultStorage = librdf_new_storage(m_world, "trees", NULL, NULL);
     if (!m_defaultStorage) {
-        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland trees datastore, falling back to memory store" << std::endl;
+        std::cerr << "SimpleSPARQLQuery: WARNING: Failed to initialise Redland trees datastore, falling back to memory store" << std::endl;
         m_defaultStorage = librdf_new_storage(m_world, NULL, NULL, NULL);
         if (!m_defaultStorage) {
             std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland memory datastore" << std::endl;
