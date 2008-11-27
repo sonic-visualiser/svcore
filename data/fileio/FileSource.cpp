@@ -29,7 +29,7 @@
 #include <iostream>
 #include <cstdlib>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -546,6 +546,28 @@ void
 FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
 {
     m_lastStatus = resp.statusCode();
+    if (m_lastStatus / 100 == 3) {
+        QString location = resp.value("Location");
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::responseHeaderReceived: redirect to \""
+                  << location.toStdString() << "\" received" << std::endl;
+#endif
+        if (location != "") {
+            QUrl newUrl(location);
+            if (newUrl != m_url) {
+                m_url = newUrl;
+                m_lastStatus = 0;
+                disconnect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
+                disconnect(m_http, SIGNAL(dataReadProgress(int, int)),
+                           this, SLOT(dataReadProgress(int, int)));
+                m_http->abort();
+                m_http->deleteLater();
+                m_http = 0;
+                init();
+                return;
+            }
+        }
+    }
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
             .arg(resp.statusCode()).arg(resp.reasonPhrase());
