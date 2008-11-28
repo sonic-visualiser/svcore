@@ -66,43 +66,43 @@ public:
              size_t fillFromColumn = 0);
     ~FFTModel();
 
-    float getMagnitudeAt(size_t x, size_t y) {
+    inline float getMagnitudeAt(size_t x, size_t y) {
         return m_server->getMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    float getNormalizedMagnitudeAt(size_t x, size_t y) {
+    inline float getNormalizedMagnitudeAt(size_t x, size_t y) {
         return m_server->getNormalizedMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    float getMaximumMagnitudeAt(size_t x) {
+    inline float getMaximumMagnitudeAt(size_t x) {
         return m_server->getMaximumMagnitudeAt(x << m_xshift);
     }
-    float getPhaseAt(size_t x, size_t y) {
+    inline float getPhaseAt(size_t x, size_t y) {
         return m_server->getPhaseAt(x << m_xshift, y << m_yshift);
     }
-    void getValuesAt(size_t x, size_t y, float &real, float &imaginary) {
+    inline void getValuesAt(size_t x, size_t y, float &real, float &imaginary) {
         m_server->getValuesAt(x << m_xshift, y << m_yshift, real, imaginary);
     }
-    bool isColumnAvailable(size_t x) const {
+    inline bool isColumnAvailable(size_t x) const {
         return m_server->isColumnReady(x << m_xshift);
     }
 
-    float getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline float getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    float getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline float getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getNormalizedMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    float getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline float getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getPhasesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
 
-    size_t getFillExtent() const { return m_server->getFillExtent(); }
+    inline size_t getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
     //
-    virtual size_t getWidth() const {
+    inline virtual size_t getWidth() const {
         return m_server->getWidth() >> m_xshift;
     }
-    virtual size_t getHeight() const {
+    inline virtual size_t getHeight() const {
         // If there is no y-shift, the server's height (based on its
         // fftsize/2 + 1) is correct.  If there is a shift, then the
         // server is using a larger fft size than we want, so we shift

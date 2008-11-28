@@ -29,7 +29,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#define DEBUG_FILE_SOURCE 1
+//#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -108,6 +108,8 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
         emit statusAvailable();
         emit ready();
     }
+
+    std::cerr << "FileSource::FileSource(string) exiting" << std::endl;
 }
 
 FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
@@ -134,6 +136,8 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     }
 
     init();
+
+    std::cerr << "FileSource::FileSource(url) exiting" << std::endl;
 }
 
 FileSource::FileSource(const FileSource &rf) :
@@ -182,6 +186,8 @@ FileSource::FileSource(const FileSource &rf) :
     }
 
     m_done = true;
+
+    std::cerr << "FileSource::FileSource(copy ctor) exiting" << std::endl;
 }
 
 FileSource::~FileSource()
@@ -311,7 +317,8 @@ void
 FileSource::initHttp()
 {
     m_ok = true;
-    m_http = new QHttp(m_url.host(), m_url.port(80));
+    int port = m_url.port();
+    m_http = new QHttp(m_url.host(), port < 0 ? 80 : port);
     connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
     connect(m_http, SIGNAL(dataReadProgress(int, int)),
             this, SLOT(dataReadProgress(int, int)));
@@ -475,6 +482,7 @@ FileSource::waitForData()
     while (m_ok && !m_done) {
 //        std::cerr << "FileSource::waitForData: calling QApplication::processEvents" << std::endl;
         QCoreApplication::processEvents();
+        usleep(10000);
     }
 }
 
@@ -545,8 +553,9 @@ FileSource::dataReadProgress(int done, int total)
 void
 FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
 {
-    m_lastStatus = resp.statusCode();
-    if (m_lastStatus / 100 == 3) {
+    std::cerr << "FileSource::httpResponseHeaderReceived" << std::endl;
+
+    if (resp.statusCode() / 100 == 3) {
         QString location = resp.value("Location");
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::responseHeaderReceived: redirect to \""
@@ -555,19 +564,20 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
         if (location != "") {
             QUrl newUrl(location);
             if (newUrl != m_url) {
+                cleanup();
+                deleteCacheFile();
                 m_url = newUrl;
+                m_localFile = 0;
                 m_lastStatus = 0;
-                disconnect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
-                disconnect(m_http, SIGNAL(dataReadProgress(int, int)),
-                           this, SLOT(dataReadProgress(int, int)));
-                m_http->abort();
-                m_http->deleteLater();
-                m_http = 0;
+                m_done = false;
+                m_refCounted = false;
                 init();
                 return;
             }
         }
     }
+
+    m_lastStatus = resp.statusCode();
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
             .arg(resp.statusCode()).arg(resp.reasonPhrase());
