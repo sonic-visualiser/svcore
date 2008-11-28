@@ -45,15 +45,14 @@ public:
     bool isOK();
     QString getErrorString() const;
 
-    QString getAudioAvailableUrl() const;
-
     std::vector<Model *> getDataModels(ProgressReporter *reporter);
 
     enum RDFDocumentType {
         AudioRefAndAnnotations,
         Annotations,
         AudioRef,
-        OtherDocument
+        OtherRDFDocument,
+        NotRDF
     };
 
     static RDFDocumentType identifyDocumentType(QString url);

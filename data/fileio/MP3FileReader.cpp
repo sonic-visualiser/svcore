@@ -1,4 +1,3 @@
-
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
@@ -138,6 +137,10 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         }
         
         std::cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << std::endl;
+    }
+
+    if (m_error != "") {
+        std::cerr << "MP3FileReader::MP3FileReader(\"" << m_path.toStdString() << "\"): ERROR: " << m_error.toStdString() << std::endl;
     }
 }
 
