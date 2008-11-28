@@ -31,6 +31,9 @@
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 #include "data/model/NoteModel.h"
 #include "data/model/RegionModel.h"
+#include "data/model/WaveFileModel.h"
+
+#include "data/fileio/FileSource.h"
 
 using std::cerr;
 using std::endl;
@@ -46,16 +49,15 @@ public:
     bool isOK();
     QString getErrorString() const;
 
-    QString getAudioAvailableUrl() const { return m_audioAvailableAt; }
-
     std::vector<Model *> getDataModels(ProgressReporter *);
 
 protected:
     QString m_uristring;
     QString m_errorString;
-    QString m_audioAvailableAt;
+    std::map<QString, Model *> m_audioModelMap;
     int m_sampleRate;
 
+    void getDataModelsAudio(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
 
@@ -64,7 +66,6 @@ protected:
     void getDenseFeatureProperties(QString featureUri,
                                    int &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
-
 
     void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
 };
@@ -104,12 +105,6 @@ RDFImporter::getErrorString() const
     return m_d->getErrorString();
 }
 
-QString
-RDFImporter::getAudioAvailableUrl() const
-{
-    return m_d->getAudioAvailableUrl();
-}
-
 std::vector<Model *>
 RDFImporter::getDataModels(ProgressReporter *r)
 {
@@ -120,19 +115,6 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
     m_uristring(uri),
     m_sampleRate(sampleRate)
 {
-    SimpleSPARQLQuery::Value value =
-        SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         QString
-         (" PREFIX mo: <http://purl.org/ontology/mo/> "
-          " SELECT ?url FROM <%1> "
-          " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
-             ).arg(m_uristring),
-         "url");
-
-    if (value.type == SimpleSPARQLQuery::URIValue) {
-        m_audioAvailableAt = value.value;
-    }
 }
 
 RDFImporterImpl::~RDFImporterImpl()
@@ -157,6 +139,8 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
     std::vector<Model *> models;
 
+    getDataModelsAudio(models, reporter);
+
     if (m_sampleRate == 0) {
         std::cerr << "RDFImporter::getDataModels: invalid sample rate" << std::endl;
         return models;
@@ -176,9 +160,56 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 }
 
 void
+RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
+                                    ProgressReporter *reporter)
+{
+    SimpleSPARQLQuery query = SimpleSPARQLQuery
+        (SimpleSPARQLQuery::QueryFromSingleSource,
+         QString
+         (
+             " PREFIX mo: <http://purl.org/ontology/mo/> "
+             " SELECT ?signal ?source FROM <%1> "
+             " WHERE { ?signal a mo:Signal ; mo:available_as ?source } "
+             )
+         .arg(m_uristring));
+
+    SimpleSPARQLQuery::ResultList results = query.execute();
+
+    for (int i = 0; i < results.size(); ++i) {
+
+        QString signal = results[i]["signal"].value;
+        QString source = results[i]["source"].value;
+
+        FileSource fs(source, reporter);
+        if (fs.isAvailable()) {
+            if (reporter) {
+                reporter->setMessage(RDFImporter::tr("Importing audio referenced in RDF..."));
+            }
+            fs.waitForData();
+            WaveFileModel *newModel = new WaveFileModel(fs, m_sampleRate);
+            if (newModel->isOK()) {
+                std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+                models.push_back(newModel);
+                m_audioModelMap[signal] = newModel;
+                if (m_sampleRate == 0) {
+                    m_sampleRate = newModel->getSampleRate();
+                }
+            } else {
+                std::cerr << "Failed to create wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+                delete newModel;
+            }
+        }
+    }
+}
+
+void
 RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                                     ProgressReporter *reporter)
 {
+    if (reporter) {
+        reporter->setMessage(RDFImporter::tr("Importing dense signal data from RDF..."));
+    }
+
     SimpleSPARQLQuery query = SimpleSPARQLQuery
         (SimpleSPARQLQuery::QueryFromSingleSource,
          QString
@@ -433,6 +464,10 @@ void
 RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                                      ProgressReporter *reporter)
 {
+    if (reporter) {
+        reporter->setMessage(RDFImporter::tr("Importing event data from RDF..."));
+    }
+
     SimpleSPARQLQuery::QueryType s = SimpleSPARQLQuery::QueryFromSingleSource;
 
     // Our query is intended to retrieve every thing that has a time,
@@ -475,12 +510,11 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
     QString queryString = prefixes + QString(
 
-        " SELECT ?signal_source ?timed_thing ?event_type ?value"
+        " SELECT ?signal ?timed_thing ?event_type ?value"
         " FROM <%1>"
 
         " WHERE {"
 
-        "   ?signal mo:available_as ?signal_source ."
         "   ?signal a mo:Signal ."
 
         "   ?signal mo:time ?interval ."
@@ -543,10 +577,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         return;
     }        
 
-
-
     /*
-
       This function is now only used for sparse data (for dense data
       we would be in getDataModelsDense instead).
 
@@ -566,8 +597,6 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
       start, for each of the source+type keys, and then push each
       feature into the relevant model depending on what we find out
       about it.  Then return only non-empty models.
-
-      
     */
 
     // Map from signal source to event type to dimensionality to
@@ -577,7 +606,11 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
     for (int i = 0; i < results.size(); ++i) {
 
-        QString source = results[i]["signal_source"].value;
+        if (i % 4 == 0) {
+            if (reporter) reporter->setProgress(i/4);
+        }
+
+        QString source = results[i]["signal"].value;
         QString type = results[i]["event_type"].value;
         QString thinguri = results[i]["timed_thing"].value;
         
@@ -686,6 +719,11 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 //                    std::cerr << "NoteModel" << std::endl;
                     model = new NoteModel(m_sampleRate, 1, false);
                 }
+            }
+
+            if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
+                std::cerr << "source model for " << model << " is " << m_audioModelMap[source] << std::endl;
+                model->setSourceModel(m_audioModelMap[source]);
             }
 
             QString titleQuery = QString
@@ -805,6 +843,18 @@ RDFImporter::identifyDocumentType(QString url)
     bool haveAudio = false;
     bool haveAnnotations = false;
 
+    // This query is not expected to return any values, but if it
+    // executes successfully (leaving no error in the error string)
+    // then we know we have RDF
+    SimpleSPARQLQuery q(SimpleSPARQLQuery::QueryFromSingleSource,
+                        QString(" SELECT ?x FROM <%1> WHERE { ?x <y> <z> } ")
+                        .arg(url));
+    
+    SimpleSPARQLQuery::ResultList r = q.execute();
+    if (!q.isOK()) {
+        return NotRDF;
+    }
+
     SimpleSPARQLQuery::Value value =
         SimpleSPARQLQuery::singleResultQuery
         (SimpleSPARQLQuery::QueryFromSingleSource,
@@ -860,7 +910,7 @@ RDFImporter::identifyDocumentType(QString url)
         if (haveAnnotations) {
             return Annotations;
         } else {
-            return OtherDocument;
+            return OtherRDFDocument;
         }
     }
 
