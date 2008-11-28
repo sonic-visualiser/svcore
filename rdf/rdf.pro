@@ -15,11 +15,13 @@ MOC_DIR = tmp_moc
 # Input
 HEADERS += PluginRDFDescription.h \
            PluginRDFIndexer.h \
+           RDFFeatureWriter.h \
            RDFImporter.h \
 	   RDFTransformFactory.h \
            SimpleSPARQLQuery.h
 SOURCES += PluginRDFDescription.cpp \
            PluginRDFIndexer.cpp \
+           RDFFeatureWriter.cpp \
            RDFImporter.cpp \
            RDFTransformFactory.cpp \
            SimpleSPARQLQuery.cpp

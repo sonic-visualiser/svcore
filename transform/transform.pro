@@ -14,14 +14,19 @@ OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
 # Input
-HEADERS += FeatureExtractionModelTransformer.h \
+HEADERS += CSVFeatureWriter.h \
+           FeatureExtractionModelTransformer.h \
+           FeatureWriter.h \
+           FileFeatureWriter.h \
            RealTimeEffectModelTransformer.h \
            Transform.h \
            TransformDescription.h \
            TransformFactory.h \
            ModelTransformer.h \
            ModelTransformerFactory.h
-SOURCES += FeatureExtractionModelTransformer.cpp \
+SOURCES += CSVFeatureWriter.cpp \
+           FeatureExtractionModelTransformer.cpp \
+           FileFeatureWriter.cpp \
            RealTimeEffectModelTransformer.cpp \
            Transform.cpp \
            TransformFactory.cpp \
