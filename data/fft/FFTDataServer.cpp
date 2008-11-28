@@ -451,6 +451,7 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
 
             if (i->second.second > 0) {
                 std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                server->suspendWrites();
                 return;
             }
             for (ServerQueue::iterator j = m_releasedServers.begin();

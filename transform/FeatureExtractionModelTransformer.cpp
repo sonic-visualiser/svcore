@@ -371,10 +371,11 @@ FeatureExtractionModelTransformer::run()
 
     if (!m_output) return;
 
-    while (!input->isReady()) {
+    while (!input->isReady() && !m_abandoned) {
         std::cerr << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << std::endl;
-        sleep(1);
+        usleep(500000);
     }
+    if (m_abandoned) return;
 
     size_t sampleRate = input->getSampleRate();
 
@@ -478,8 +479,12 @@ FeatureExtractionModelTransformer::run()
             getFrames(channelCount, blockFrame, blockSize, buffers);
         }
 
+        if (m_abandoned) break;
+
 	Vamp::Plugin::FeatureSet features = m_plugin->process
 	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
+
+        if (m_abandoned) break;
 
 	for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
 	    Vamp::Plugin::Feature feature =
@@ -495,23 +500,23 @@ FeatureExtractionModelTransformer::run()
 	blockFrame += stepSize;
     }
 
-    if (m_abandoned) return;
+    if (!m_abandoned) {
+        Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
-    Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
-
-    for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-	Vamp::Plugin::Feature feature =
-	    features[m_outputFeatureNo][fi];
-	addFeature(blockFrame, feature);
+        for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
+            Vamp::Plugin::Feature feature =
+                features[m_outputFeatureNo][fi];
+            addFeature(blockFrame, feature);
+        }
     }
+
+    setCompletion(100);
 
     if (frequencyDomain) {
         for (size_t ch = 0; ch < channelCount; ++ch) {
             delete fftModels[ch];
         }
     }
-
-    setCompletion(100);
 }
 
 void

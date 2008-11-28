@@ -121,10 +121,11 @@ RealTimeEffectModelTransformer::run()
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
-    while (!input->isReady()) {
+    while (!input->isReady() && !m_abandoned) {
         std::cerr << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << std::endl;
-        sleep(1);
+        usleep(500000);
     }
+    if (m_abandoned) return;
 
     SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_output);
     WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_output);
