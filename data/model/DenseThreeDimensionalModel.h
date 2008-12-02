@@ -17,12 +17,15 @@
 #define _DENSE_THREE_DIMENSIONAL_MODEL_H_
 
 #include "Model.h"
+#include "TabularModel.h"
 #include "base/ZoomConstraint.h"
+#include "base/RealTime.h"
 
 #include <QMutex>
 #include <vector>
 
-class DenseThreeDimensionalModel : public Model
+class DenseThreeDimensionalModel : public Model,
+                                   public TabularModel
 {
     Q_OBJECT
 
@@ -107,6 +110,54 @@ public:
     QString getTypeName() const { return tr("Dense 3-D"); }
 
     virtual int getCompletion() const = 0;
+
+    /*
+       TabularModel methods.
+       This class is non-editable -- subclasses may be editable.
+       Row and column are transposed for the tabular view (which is
+       "on its side").
+     */
+    
+    virtual int getRowCount() const { return getWidth(); }
+    virtual int getColumnCount() const { return getHeight() + 2; }
+
+    virtual QString getHeading(int column) const
+    {
+        switch (column) {
+        case 0: return tr("Time");
+        case 1: return tr("Frame");
+        default: return getBinName(column - 2);
+        }
+    }
+
+    virtual QVariant getData(int row, int column, int role) const 
+    {
+        switch (column) {
+        case 0: {
+            RealTime rt = RealTime::frame2RealTime(row * getResolution(),
+                                                   getSampleRate());
+            return rt.toText().c_str();
+        }
+        case 1:
+            return int(row * getResolution());
+        default:
+            return getValueAt(row, column - 2);
+        }
+    }
+
+    virtual bool isColumnTimeValue(int col) const {
+        return col < 2;
+    }
+    virtual SortType getSortType(int col) const {
+        return SortNumeric;
+    }
+
+    virtual long getFrameForRow(int row) const {
+        return row * getSampleRate();
+    }
+    virtual int getRowForFrame(long frame) const {
+        return frame / getSampleRate();
+    }
 
 protected:
     DenseThreeDimensionalModel() { }

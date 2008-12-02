@@ -221,11 +221,18 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     }
     QString timelineURI = m_trackTimelineURIs[trackId];
 
-    stream << "\n<" << url.toEncoded().data() << "> a mo:AudioFile .\n\n"
-           << signalURI << " a mo:Signal ;\n"
-           << "    mo:available_as <" << url.toEncoded().data()
-           << "> ;\n"
-           << "    mo:time [\n"
+    if (trackId != "") {
+        stream << "\n<" << url.toEncoded().data() << "> a mo:AudioFile .\n\n";
+    }
+
+    stream << signalURI << " a mo:Signal ;\n";
+
+    if (trackId != "") {
+        stream << "    mo:available_as <" << url.toEncoded().data()
+               << "> ;\n";
+    }
+
+    stream << "    mo:time [\n"
            << "        a tl:Interval ;\n"
            << "        tl:onTimeLine "
            << timelineURI << "\n    ] .\n\n";
@@ -284,8 +291,10 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
         m_transformURIs[transform] = transformUri;
     }
 
-    stream << RDFTransformFactory::writeTransformToRDF(transform, transformUri)
-           << endl;
+    if (transform.getIdentifier() != "") {
+        stream << RDFTransformFactory::writeTransformToRDF(transform, transformUri)
+               << endl;
+    }
 
     if (needEventType) {
 
@@ -388,8 +397,10 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
                    << "S\"^^xsd:duration ;\n    ] ";
         }
 
-        stream << ";\n";
-        stream << "    vamp:computed_by " << m_transformURIs[transform] << " ";
+        if (transform.getIdentifier() != "") {
+            stream << ";\n";
+            stream << "    vamp:computed_by " << m_transformURIs[transform] << " ";
+        }
 
         if (feature.label.length() > 0) {
             stream << ";\n";

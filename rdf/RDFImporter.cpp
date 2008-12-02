@@ -563,7 +563,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     SimpleSPARQLQuery query(s, queryString);
     query.setProgressReporter(reporter);
 
-    cerr << "Query will be: " << queryString.toStdString() << endl;
+//    cerr << "Query will be: " << queryString.toStdString() << endl;
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 

@@ -170,10 +170,13 @@ FFTModel::getColumn(size_t x, Column &result) const
     size_t h = getHeight();
 
     float magnitudes[h];
+
     if (m_server->getMagnitudesAt(x << m_xshift, magnitudes)) {
+
         for (size_t y = 0; y < h; ++y) {
-            result.push_back(magnitudes[h]);
+            result.push_back(magnitudes[y]);
         }
+
     } else {
         for (size_t i = 0; i < h; ++i) result.push_back(0.f);
     }
@@ -259,6 +262,10 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 
     getColumn(x, values);
 
+    float mean = 0.f;
+    for (int i =0; i < values.size(); ++i) mean += values[i];
+    if (values.size() >0) mean /= values.size();
+
     // For peak picking we use a moving median window, picking the
     // highest value within each continuous region of values that
     // exceed the median.  For pitch adaptivity, we adjust the window
@@ -269,6 +276,7 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
     std::deque<float> window;
     std::vector<size_t> inrange;
     float dist = 0.5;
+
     size_t medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin, dist);
     size_t halfWin = medianWinSize/2;
 
@@ -280,6 +288,8 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
     if (ymax + halfWin < values.size()) binmax = ymax + halfWin;
     else binmax = values.size()-1;
 
+    size_t prevcentre = 0;
+
     for (size_t bin = binmin; bin <= binmax; ++bin) {
 
         float value = values[bin];
@@ -290,7 +300,11 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
         medianWinSize = getPeakPickWindowSize(type, sampleRate, bin, dist);
         halfWin = medianWinSize/2;
 
-        while (window.size() > medianWinSize) window.pop_front();
+        while (window.size() > medianWinSize) {
+            window.pop_front();
+        }
+
+        size_t actualSize = window.size();
 
         if (type == MajorPitchAdaptivePeaks) {
             if (ymax + halfWin < values.size()) binmax = ymax + halfWin;
@@ -301,25 +315,37 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
         std::sort(sorted.begin(), sorted.end());
         float median = sorted[int(sorted.size() * dist)];
 
-        if (value > median) {
-            inrange.push_back(bin);
-        }
+        size_t centrebin = 0;
+        if (bin > actualSize/2) centrebin = bin - actualSize/2;
+        
+        while (centrebin > prevcentre || bin == binmin) {
 
-        if (value <= median || bin+1 == values.size()) {
-            size_t peakbin = 0;
-            float peakval = 0.f;
-            if (!inrange.empty()) {
-                for (size_t i = 0; i < inrange.size(); ++i) {
-                    if (i == 0 || values[inrange[i]] > peakval) {
-                        peakval = values[inrange[i]];
-                        peakbin = inrange[i];
+            if (centrebin > prevcentre) ++prevcentre;
+
+            float centre = values[prevcentre];
+
+            if (centre > median) {
+                inrange.push_back(centrebin);
+            }
+
+            if (centre <= median || centrebin+1 == values.size()) {
+                if (!inrange.empty()) {
+                    size_t peakbin = 0;
+                    float peakval = 0.f;
+                    for (size_t i = 0; i < inrange.size(); ++i) {
+                        if (i == 0 || values[inrange[i]] > peakval) {
+                            peakval = values[inrange[i]];
+                            peakbin = inrange[i];
+                        }
+                    }
+                    inrange.clear();
+                    if (peakbin >= ymin && peakbin <= ymax) {
+                        peaks.insert(peakbin);
                     }
                 }
-                inrange.clear();
-                if (peakbin >= ymin && peakbin <= ymax) {
-                    peaks.insert(peakbin);
-                }
             }
+
+            if (bin == binmin) break;
         }
     }
 
