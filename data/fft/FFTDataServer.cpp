@@ -916,10 +916,14 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
         fillColumn(x, true);
     }
 
+    float mean = 0.f;
     for (size_t i = 0; i < count; ++i) {
         values[i] = cache->getMagnitudeAt(col, i * step + minbin);
+        mean += values[i];
     }
+    if (count > 0) mean /= count;
 
+//    std::cerr << "FFTDataServer::getMagnitudeAt: returning " << count << " values of mean " << mean << std::endl;
     return true;
 }
 
