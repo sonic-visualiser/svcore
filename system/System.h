@@ -55,7 +55,7 @@
 
 extern "C" {
 void usleep(unsigned long usec);
-void gettimeofday(struct timeval *p, void *tz);
+int gettimeofday(struct timeval *p, void *tz);
 }
 
 #else
