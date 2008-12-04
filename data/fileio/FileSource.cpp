@@ -18,6 +18,7 @@
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 #include "base/ProgressReporter.h"
+#include "system/System.h"
 
 #include <QHttp>
 #include <QFtp>
