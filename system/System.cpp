@@ -59,7 +59,7 @@ void usleep(unsigned long usec)
     ::Sleep(usec / 1000);
 }
 
-void gettimeofday(struct timeval *tv, void *tz)
+int gettimeofday(struct timeval *tv, void *tz)
 {
     union { 
 	long long ns100;  
