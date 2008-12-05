@@ -78,11 +78,21 @@ RDFFeatureWriter::setParameters(map<string, string> &params)
     }
 }
 
-void RDFFeatureWriter::write(QString trackId,
-                             const Transform &transform,
-                             const Plugin::OutputDescriptor& output,
-                             const Plugin::FeatureList& features,
-                             std::string summaryType)
+void
+RDFFeatureWriter::setTrackMetadata(QString trackId,
+                                   TrackMetadata metadata)
+{
+    std::cerr << "RDFFeatureWriter::setTrackMetadata: \""
+              << trackId.toStdString() << "\" -> \"" << metadata.title.toStdString() << "\",\"" << metadata.maker.toStdString() << "\"" << std::endl;
+    m_metadata[trackId] = metadata;
+}
+
+void
+RDFFeatureWriter::write(QString trackId,
+                        const Transform &transform,
+                        const Plugin::OutputDescriptor& output,
+                        const Plugin::FeatureList& features,
+                        std::string summaryType)
 {
     QString pluginId = transform.getPluginIdentifier();
 
@@ -170,6 +180,7 @@ RDFFeatureWriter::writePrefixes(QTextStream *sptr)
     stream << "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"
            << "@prefix mo: <http://purl.org/ontology/mo/> .\n"
            << "@prefix af: <http://purl.org/ontology/af/> .\n"
+           << "@prefix foaf: <http://xmlns.com/foaf/0.1/> . \n"
            << "@prefix event: <http://purl.org/NET/c4dm/event.owl#> .\n"
            << "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
            << "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
@@ -230,6 +241,16 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     if (trackId != "") {
         stream << "    mo:available_as <" << url.toEncoded().data()
                << "> ;\n";
+    }
+
+    if (m_metadata.find(trackId) != m_metadata.end()) {
+        TrackMetadata tm = m_metadata[trackId];
+        if (tm.title != "") {
+            stream << "    dc:title \"\"\"" << tm.title << "\"\"\" ;\n";
+        }
+        if (tm.maker != "") {
+            stream << "    dc:creator [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ;\n";
+        }
     }
 
     stream << "    mo:time [\n"

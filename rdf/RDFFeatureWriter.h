@@ -47,6 +47,8 @@ public:
     virtual ParameterList getSupportedParameters() const;
     virtual void setParameters(map<string, string> &params);
 
+    virtual void setTrackMetadata(QString trackid, TrackMetadata metadata);
+
     virtual void write(QString trackid,
                        const Transform &transform,
                        const Vamp::Plugin::OutputDescriptor &output,
@@ -58,6 +60,9 @@ public:
 private:
     typedef map<QString, PluginRDFDescription> RDFDescriptionMap; // by plugin id
     RDFDescriptionMap m_rdfDescriptions;
+
+    typedef map<QString, TrackMetadata> TrackMetadataMap;
+    TrackMetadataMap m_metadata;
 
     void writePrefixes(QTextStream *);
     void writeSignalDescription(QTextStream *, QString);
