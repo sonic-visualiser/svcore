@@ -53,6 +53,12 @@ public:
         return;
     }
 
+    struct TrackMetadata {
+        QString title;
+        QString maker;
+    };
+    virtual void setTrackMetadata(QString trackid, TrackMetadata metadata) { }
+
     // may throw FailedToOpenFile or other exceptions
 
     virtual void write(QString trackid,

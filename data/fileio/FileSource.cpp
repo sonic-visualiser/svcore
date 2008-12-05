@@ -110,7 +110,9 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
         emit ready();
     }
 
+#ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(string) exiting" << std::endl;
+#endif
 }
 
 FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
@@ -138,7 +140,9 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
 
     init();
 
+#ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(url) exiting" << std::endl;
+#endif
 }
 
 FileSource::FileSource(const FileSource &rf) :
@@ -188,7 +192,9 @@ FileSource::FileSource(const FileSource &rf) :
 
     m_done = true;
 
+#ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(copy ctor) exiting" << std::endl;
+#endif
 }
 
 FileSource::~FileSource()
