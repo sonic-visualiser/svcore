@@ -31,6 +31,7 @@
 #include <iostream>
 
 Transform::Transform() :
+    m_summaryType(NoSummary),
     m_stepSize(0),
     m_blockSize(0),
     m_windowType(HanningWindow),
@@ -39,6 +40,7 @@ Transform::Transform() :
 }
 
 Transform::Transform(QString xml) :
+    m_summaryType(NoSummary),
     m_stepSize(0),
     m_blockSize(0),
     m_windowType(HanningWindow),
@@ -114,6 +116,7 @@ Transform::operator==(const Transform &t) const
         m_parameters == t.m_parameters &&
         m_configuration == t.m_configuration &&
         m_program == t.m_program &&
+        m_summaryType == t.m_summaryType &&
         m_stepSize == t.m_stepSize &&
         m_blockSize == t.m_blockSize &&
         m_windowType == t.m_windowType &&
@@ -136,6 +139,9 @@ Transform::operator<(const Transform &t) const
     }
     if (m_program != t.m_program) {
         return m_program < t.m_program;
+    }
+    if (m_summaryType != t.m_summaryType) {
+        return int(m_summaryType) < int(t.m_summaryType);
     }
     if (m_stepSize != t.m_stepSize) {
         return m_stepSize < t.m_stepSize;
@@ -295,6 +301,17 @@ Transform::setProgram(QString program)
     m_program = program;
 }
 
+Transform::SummaryType
+Transform::getSummaryType() const
+{
+    return m_summaryType;
+}
+
+void
+Transform::setSummaryType(SummaryType type)
+{
+    m_summaryType = type;
+}
     
 size_t
 Transform::getStepSize() const
@@ -387,6 +404,10 @@ Transform::toXml(QTextStream &out, QString indent, QString extraAttributes) cons
         .arg(encodeEntities(m_duration.toString().c_str()))
         .arg(m_sampleRate);
 
+    if (m_summaryType != NoSummary) {
+        out << QString("\n    summaryType=\"%1\"").arg(summaryTypeToString(m_summaryType));
+    }
+
     if (extraAttributes != "") {
         out << " " << extraAttributes;
     }
@@ -416,6 +437,47 @@ Transform::toXml(QTextStream &out, QString indent, QString extraAttributes) cons
     } else {
 
         out << "/>\n";
+    }
+}
+
+Transform::SummaryType
+Transform::stringToSummaryType(QString str)
+{
+    str = str.toLower();
+    if (str == "minimum" || str == "min") return Minimum;
+    if (str == "maximum" || str == "max") return Maximum;
+    if (str == "mean") return Mean;
+    if (str == "median") return Median;
+    if (str == "mode") return Mode;
+    if (str == "sum") return Sum;
+    if (str == "variance") return Variance;
+    if (str == "standard-deviation" || str == "standardDeviation" ||
+        str == "standard deviation" || str == "sd") return StandardDeviation;
+    if (str == "count") return Count;
+    if (str == "") return NoSummary;
+    std::cerr << "Transform::stringToSummaryType: unknown summary type \""
+              << str.toStdString() << "\"" << std::endl;
+    return NoSummary;
+}
+
+QString
+Transform::summaryTypeToString(SummaryType type)
+{
+    switch (type) {
+    case Minimum: return "min";
+    case Maximum: return "max";
+    case Mean: return "mean";
+    case Median: return "median";
+    case Mode: return "mode";
+    case Sum: return "sum";
+    case Variance: return "variance";
+    case StandardDeviation: return "sd";
+    case Count: return "count";
+    case NoSummary: return "";
+    default:
+        std::cerr << "Transform::summaryTypeToString: unexpected summary type "
+                  << int(type) << std::endl;
+        return "";
     }
 }
 
@@ -457,6 +519,10 @@ Transform::setFromXmlAttributes(const QXmlAttributes &attrs)
     
     if (attrs.value("sampleRate") != "") {
         setSampleRate(attrs.value("sampleRate").toFloat());
+    }
+
+    if (attrs.value("summaryType") != "") {
+        setSummaryType(stringToSummaryType(attrs.value("summaryType")));
     }
 }
 

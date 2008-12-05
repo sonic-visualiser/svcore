@@ -210,7 +210,6 @@ protected:
     void populateRealTimePlugins(TransformDescriptionMap &);
 
     Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, size_t rate);
-
     QMutex m_transformsMutex;
     QMutex m_uninstalledTransformsMutex;
 

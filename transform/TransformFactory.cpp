@@ -725,9 +725,11 @@ TransformFactory::instantiatePluginFor(const Transform &transform)
 {
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (transform.getIdentifier(), transform.getSampleRate());
+
     if (plugin) {
         setPluginParameters(transform, plugin);
     }
+
     return plugin;
 }
 

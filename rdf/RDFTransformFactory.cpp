@@ -220,6 +220,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         static const char *optionals[] = {
             "output",
             "program",
+            "summary_type",
             "step_size",
             "block_size",
             "window_type",
@@ -262,6 +263,9 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
                 
                     if (optional == "program") {
                         transform.setProgram(v.value);
+                    } else if (optional == "summary_type") {
+                        transform.setSummaryType
+                            (transform.stringToSummaryType(v.value));
                     } else if (optional == "step_size") {
                         transform.setStepSize(v.value.toUInt());
                     } else if (optional == "block_size") {
@@ -430,9 +434,13 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     }
     
     QString program = transform.getProgram();
-
     if (program != "") {
         s << "    vamp:program \"\"\"" << program << "\"\"\" ;" << endl;
+    }
+
+    QString summary = transform.summaryTypeToString(transform.getSummaryType());
+    if (summary != "") {
+        s << "    vamp:summary_type \"" << summary << "\" ;" << endl;
     }
 
     Transform::ParameterMap parameters = transform.getParameters();

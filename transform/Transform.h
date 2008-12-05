@@ -93,6 +93,26 @@ public:
     void setConfiguration(const ConfigurationMap &cm);
     void setConfigurationValue(QString name, QString value);
 
+    enum SummaryType {
+
+        // This is the same as Vamp::PluginSummarisingAdapter::SummaryType
+        // except with NoSummary instead of UnknownSummaryType
+
+        Minimum            = 0,
+        Maximum            = 1,
+        Mean               = 2,
+        Median             = 3,
+        Mode               = 4,
+        Sum                = 5,
+        Variance           = 6,
+        StandardDeviation  = 7,
+        Count              = 8,
+
+        NoSummary          = 999
+    };
+    SummaryType getSummaryType() const;
+    void setSummaryType(SummaryType type);
+
     QString getPluginVersion() const;
     void setPluginVersion(QString version);
 
@@ -135,6 +155,9 @@ public:
      */
     void setFromXmlAttributes(const QXmlAttributes &);
 
+    static SummaryType stringToSummaryType(QString);
+    static QString summaryTypeToString(SummaryType);
+
 protected:
     TransformId m_id; // pluginid:output, that is type:soname:label:output
     
@@ -162,6 +185,7 @@ protected:
 
     ParameterMap m_parameters;
     ConfigurationMap m_configuration;
+    SummaryType m_summaryType;
     QString m_pluginVersion;
     QString m_program;
     size_t m_stepSize;

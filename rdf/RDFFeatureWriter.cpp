@@ -23,6 +23,7 @@
 
 #include <QTextStream>
 #include <QUrl>
+#include <QFileInfo>
 #include <QRegExp>
 
 using namespace std;
@@ -223,6 +224,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     if (local) {
         if (scheme == "") {
             url.setScheme("file");
+            url.setPath(QFileInfo(url.path()).absoluteFilePath());
         } else if (scheme.length() == 1) { // DOS drive letter!
             url.setScheme("file");
             url.setPath(scheme + ":" + url.path());
@@ -315,8 +317,6 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
         // see note above -- need to generate an event type if no
         // feature type given, or if in plain mode
 
-        cerr << "Note: track level output" << endl;
-
         if (m_plain) {
         
             needEventType = true;
@@ -352,7 +352,8 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
     }
 
     if (transform.getIdentifier() != "") {
-        stream << RDFTransformFactory::writeTransformToRDF(transform, transformUri)
+        stream << endl
+               << RDFTransformFactory::writeTransformToRDF(transform, transformUri)
                << endl;
     }
 
@@ -510,8 +511,8 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
 
             if (feature.label == "") continue;
 
-            stream << signalURI << " " << featureUri << " \""
-                   << feature.label.c_str() << "\" .\n";
+            stream << signalURI << " " << featureUri << " \"\"\""
+                   << feature.label.c_str() << "\"\"\" .\n";
 
         } else {
 
