@@ -94,6 +94,11 @@ WredlandWorldWrapper::WredlandWorldWrapper() :
 
 WredlandWorldWrapper::~WredlandWorldWrapper()
 {
+/*!!! This is a static singleton; destroying it while there are
+      queries outstanding can be problematic, it appears, and since
+      the storage is non-persistent there shouldn't be any need to
+      destroy it explicitly, except for the sake of tidiness.
+
     while (!m_ownModelUris.empty()) {
         librdf_free_model(m_ownModelUris.begin()->second);
         m_ownModelUris.erase(m_ownModelUris.begin());
@@ -105,6 +110,7 @@ WredlandWorldWrapper::~WredlandWorldWrapper()
     if (m_defaultModel) librdf_free_model(m_defaultModel);
     if (m_defaultStorage) librdf_free_storage(m_defaultStorage);
     if (m_world) librdf_free_world(m_world);
+*/
 }
 
 bool
