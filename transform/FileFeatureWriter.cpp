@@ -182,7 +182,7 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     QString filename;
 
     if (m_manyFiles && transformId != "") {
-        filename = QString("%1:%2.%3").arg(basename).arg(transformId).arg(m_extension);
+        filename = QString("%1-%2.%3").arg(basename).arg(transformId).arg(m_extension);
     } else {
         filename = QString("%1.%2").arg(basename).arg(m_extension);
     }
