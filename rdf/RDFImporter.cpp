@@ -146,9 +146,13 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
         return models;
     }
 
+    QString error;
+
+    if (!isOK()) error = m_errorString;
+    m_errorString = "";
+
     getDataModelsDense(models, reporter);
 
-    QString error;
     if (!isOK()) error = m_errorString;
     m_errorString = "";
 
@@ -195,9 +199,11 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                     m_sampleRate = newModel->getSampleRate();
                 }
             } else {
-                std::cerr << "Failed to create wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+                m_errorString = QString("Failed to create wave file model from source at \"%1\"").arg(source);
                 delete newModel;
             }
+        } else {
+            m_errorString = QString("Signal source \"%1\" is not available").arg(source);
         }
     }
 }
