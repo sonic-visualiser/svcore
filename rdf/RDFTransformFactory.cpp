@@ -27,6 +27,7 @@
 #include "PluginRDFIndexer.h"
 #include "PluginRDFDescription.h"
 #include "base/ProgressReporter.h"
+#include "plugin/PluginIdentifier.h"
 
 #include "transform/TransformFactory.h"
 
@@ -381,21 +382,36 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     QString str;
     QTextStream s(&str);
 
-    // assumes the usual prefixes are available
-
-    s << uri << " a vamp:Transform ;" << endl;
+    // assumes the usual prefixes are available; requires that uri be
+    // a local fragment (e.g. ":transform") rather than a uri enclosed
+    // in <>, so that we can suffix it if need be
 
     QString pluginId = transform.getPluginIdentifier();
     QString pluginUri = PluginRDFIndexer::getInstance()->getURIForPluginId(pluginId);
 
-    PluginRDFDescription description(pluginId);
-    QString outputUri = description.getOutputUri(transform.getOutput());
-
-    if (transform.getOutput() != "" && outputUri == "") {
-        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput().toStdString() << "\"" << std::endl;
+    if (pluginUri != "") {
+        s << uri << " a vamp:Transform ;" << endl;
+        s << "    vamp:plugin <" << pluginUri << "> ;" << endl;
+    } else {
+        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId.toStdString() << "\", writing synthetic plugin and library resources" << std::endl;
+        QString type, soname, label;
+        PluginIdentifier::parseIdentifier(pluginId, type, soname, label);
+        s << uri << "_plugin a vamp:Plugin ;" << endl;
+        s << "    vamp:identifier \"" << label << "\" .\n" << endl;
+        s << uri << "_library a vamp:PluginLibrary ;" << endl;
+        s << "    vamp:identifier \"" << soname << "\" ;" << endl;
+        s << "    vamp:available_plugin " << uri << "_plugin .\n" << endl;
+        s << uri << " a vamp:Transform ;" << endl;
+        s << "    vamp:plugin " << uri << "_plugin ;" << endl;
     }
 
-    s << "    vamp:plugin <" << pluginUri << "> ;" << endl;
+    PluginRDFDescription description(pluginId);
+    QString outputId = transform.getOutput();
+    QString outputUri = description.getOutputUri(outputId);
+
+    if (transform.getOutput() != "" && outputUri == "") {
+        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput().toStdString() << "\", writing a synthetic output resource" << std::endl;
+    }
 
     if (transform.getStepSize() != 0) {
         s << "    vamp:step_size \"" << transform.getStepSize() << "\"^^xsd:int ; " << endl;
@@ -432,6 +448,8 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
 
     if (outputUri != "") {
         s << "    vamp:output <" << outputUri << "> ." << endl;
+    } else if (outputId != "") {
+        s << "    vamp:output [ vamp:identifier \"" << outputId << "\" ] ." << endl;
     } else {
         s << "    ." << endl;
     }
