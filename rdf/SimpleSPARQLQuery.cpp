@@ -213,8 +213,10 @@ WredlandWorldWrapper::loadUri(librdf_model *model, QString uri, QString &errorSt
         errorString = "Failed to initialise Redland parser";
         return false;
     }
-    
+
+#ifdef DEBUG_SIMPLE_SPARQL_QUERY    
     std::cerr << "About to parse \"" << uri.toStdString() << "\"" << std::endl;
+#endif
     
     Profiler p("SimpleSPARQLQuery: Parse URI into LIBRDF model");
     

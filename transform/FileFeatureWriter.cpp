@@ -171,8 +171,9 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     QString infilename = url.toLocalFile();
     if (infilename == "") infilename = url.path();
     basename = QFileInfo(infilename).baseName();
-//    cerr << "url = " << url.toString().toStdString() << ", infilename = "
-//         << infilename.toStdString() << ", basename = " << basename.toStdString() << endl;
+
+    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
+         << infilename.toStdString() << ", basename = " << basename.toStdString() << endl;
 
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();

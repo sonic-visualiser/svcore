@@ -78,6 +78,13 @@ private:
                         PluginRDFDescription &desc,
                         QString timelineURI);
 
+    void writeTrackLevelRDF(QTextStream *stream,
+                            const Transform &transform,
+                            const Vamp::Plugin::OutputDescriptor &output,
+                            const Vamp::Plugin::FeatureList &features,
+                            PluginRDFDescription &desc,
+                            QString signalURI);
+
     void writeDenseRDF(QTextStream *stream,
                        const Transform &transform,
                        const Vamp::Plugin::OutputDescriptor &output,
