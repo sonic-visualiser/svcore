@@ -372,11 +372,14 @@ PluginRDFDescription::indexOutputs()
         }
 
         v = SimpleSPARQLQuery::singleResultQuery
-            (m, queryTemplate.arg("feature_attribute"), "feature_attribute");
+            (m, queryTemplate.arg("feature"), "feature");
 
         if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
+            cerr << "Feature attribute URI: \"" << v.value.toStdString() << "\"" << endl;
             m_outputFeatureAttributeURIMap[outputId] = v.value;
-        }
+        } else {
+            cerr << "No feature attribute URI: \"" << v.value.toStdString() << "\"" << endl;
+        }           
 
         v = SimpleSPARQLQuery::singleResultQuery
             (m, queryTemplate.arg("signal_type"), "signal_type");

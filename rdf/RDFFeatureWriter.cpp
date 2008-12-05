@@ -82,8 +82,6 @@ void
 RDFFeatureWriter::setTrackMetadata(QString trackId,
                                    TrackMetadata metadata)
 {
-    std::cerr << "RDFFeatureWriter::setTrackMetadata: \""
-              << trackId.toStdString() << "\" -> \"" << metadata.title.toStdString() << "\",\"" << metadata.maker.toStdString() << "\"" << std::endl;
     m_metadata[trackId] = metadata;
 }
 
@@ -164,6 +162,24 @@ RDFFeatureWriter::write(QString trackId,
 
         writeDenseRDF(stream, transform, output, features,
                       m_rdfDescriptions[pluginId], signalURI, timelineURI);
+
+    } else if (!m_plain &&
+               m_rdfDescriptions[pluginId].haveDescription() &&
+               m_rdfDescriptions[pluginId].getOutputDisposition
+               (output.identifier.c_str()) ==
+               PluginRDFDescription::OutputTrackLevel &&
+               m_rdfDescriptions[pluginId].getOutputFeatureAttributeURI
+               (output.identifier.c_str()) != "") {
+
+        QString signalURI = m_trackSignalURIs[trackId];
+
+        if (signalURI == "") {
+            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing track-level features without having established a signal URI!" << endl;
+            exit(1);
+        }
+
+        writeTrackLevelRDF(stream, transform, output, features,
+                           m_rdfDescriptions[pluginId], signalURI);
 
     } else {
 
@@ -249,7 +265,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
             stream << "    dc:title \"\"\"" << tm.title << "\"\"\" ;\n";
         }
         if (tm.maker != "") {
-            stream << "    dc:creator [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ;\n";
+            stream << "    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ;\n";
         }
     }
 
@@ -268,10 +284,13 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
     QString outputId = od.identifier.c_str();
     QTextStream &stream = *sptr;
 
+    // There is no "needFeatureType" for track-level outputs, because
+    // we can't meaningfully write a feature at all if we don't know
+    // what property to use for it.  If the output is track level but
+    // there is no feature type given, we have to revert to events.
+
     bool needEventType = false;
     bool needSignalType = false;
-
-    //!!! feature attribute type is not yet supported
 
     //!!! bin names, extents and so on can be written out using e.g. vamp:bin_names ( "a" "b" "c" ) 
 
@@ -288,6 +307,26 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
         } else if (desc.getOutputSignalTypeURI(outputId) == "") {
             
             needSignalType = true;
+        }
+
+    } else if (desc.getOutputDisposition(outputId) ==
+               PluginRDFDescription::OutputTrackLevel) {
+
+        // see note above -- need to generate an event type if no
+        // feature type given, or if in plain mode
+
+        cerr << "Note: track level output" << endl;
+
+        if (m_plain) {
+        
+            needEventType = true;
+
+        } else if (desc.getOutputFeatureAttributeURI(outputId) == "") {
+    
+            if (desc.getOutputEventTypeURI(outputId) == "") {
+
+                needEventType = true;
+            }
         }
 
     } else {
@@ -439,6 +478,46 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
         }
 
         stream << ".\n";
+    }
+}
+
+void
+RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
+                                     const Transform &transform,
+                                     const Plugin::OutputDescriptor& od,
+                                     const Plugin::FeatureList& featureList,
+                                     PluginRDFDescription &desc,
+                                     QString signalURI)
+{
+    if (featureList.empty()) return;
+    QTextStream &stream = *sptr;
+        
+    bool plain = (m_plain || !desc.haveDescription());
+
+    QString outputId = od.identifier.c_str();
+    QString featureUri = desc.getOutputFeatureAttributeURI(outputId);
+
+    if (featureUri == "") {
+        cerr << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
+        return;
+    }
+
+    for (int i = 0; i < featureList.size(); ++i) {
+
+        const Plugin::Feature &feature = featureList[i];
+
+        if (feature.values.empty()) {
+
+            if (feature.label == "") continue;
+
+            stream << signalURI << " " << featureUri << " \""
+                   << feature.label.c_str() << "\" .\n";
+
+        } else {
+
+            stream << signalURI << " " << featureUri << " \""
+                   << feature.values[0] << "\"^^xsd:float .\n";
+        }
     }
 }
 
