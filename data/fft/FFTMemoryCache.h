@@ -55,8 +55,8 @@ public:
     virtual float getMagnitudeAt(size_t x, size_t y) const {
         if (m_storageType == Rectangular) {
             Profiler profiler("FFTMemoryCache::getMagnitudeAt: cart to polar");
-            return sqrt(m_freal[x][y] * m_freal[x][y] +
-                        m_fimag[x][y] * m_fimag[x][y]);
+            return sqrtf(m_freal[x][y] * m_freal[x][y] +
+                         m_fimag[x][y] * m_fimag[x][y]);
         } else {
             return getNormalizedMagnitudeAt(x, y) * m_factor[x];
         }
@@ -94,6 +94,27 @@ public:
             float phase = getPhaseAt(x, y);
             real = mag * cosf(phase);
             imag = mag * sinf(phase);
+        }
+    }
+
+    virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
+    {
+        if (m_storageType == Rectangular) {
+            for (size_t i = 0; i < count; ++i) {
+                size_t y = i * step + minbin;
+                values[i] = sqrtf(m_freal[x][y] * m_freal[x][y] +
+                                  m_fimag[x][y] * m_fimag[x][y]);
+            }
+        } else if (m_storageType == Polar) {
+            for (size_t i = 0; i < count; ++i) {
+                size_t y = i * step + minbin;
+                values[i] = m_fmagnitude[x][y] * m_factor[x];
+            }
+        } else {
+            for (size_t i = 0; i < count; ++i) {
+                size_t y = i * step + minbin;
+                values[i] = (float(m_magnitude[x][y]) * m_factor[x]) / 65535.0;
+            }
         }
     }
 

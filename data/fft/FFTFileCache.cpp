@@ -103,8 +103,8 @@ FFTFileCache::getMagnitudeAt(size_t x, size_t y) const
     switch (m_storageType) {
 
     case Compact:
-        value = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.0)
-            * getNormalizationFactor(x);
+        value = (getFromReadBufCompactUnsigned(x, y * 2, true) / 65535.0)
+            * getNormalizationFactor(x, true);
         break;
 
     case Rectangular:
@@ -116,7 +116,7 @@ FFTFileCache::getMagnitudeAt(size_t x, size_t y) const
     }
 
     case Polar:
-        value = getFromReadBufStandard(x, y * 2);
+        value = getFromReadBufStandard(x, y * 2, true);
         break;
     }
 
@@ -131,13 +131,13 @@ FFTFileCache::getNormalizedMagnitudeAt(size_t x, size_t y) const
     switch (m_storageType) {
 
     case Compact:
-        value = getFromReadBufCompactUnsigned(x, y * 2) / 65535.0;
+        value = getFromReadBufCompactUnsigned(x, y * 2, true) / 65535.0;
         break;
 
     default:
     {
         float mag = getMagnitudeAt(x, y);
-        float factor = getNormalizationFactor(x);
+        float factor = getNormalizationFactor(x, true);
         if (factor != 0) value = mag / factor;
         else value = 0.f;
         break;
@@ -150,7 +150,7 @@ FFTFileCache::getNormalizedMagnitudeAt(size_t x, size_t y) const
 float
 FFTFileCache::getMaximumMagnitudeAt(size_t x) const
 {
-    return getNormalizationFactor(x);
+    return getNormalizationFactor(x, true);
 }
 
 float
@@ -161,7 +161,7 @@ FFTFileCache::getPhaseAt(size_t x, size_t y) const
     switch (m_storageType) {
 
     case Compact:
-        value = (getFromReadBufCompactSigned(x, y * 2 + 1) / 32767.0) * M_PI;
+        value = (getFromReadBufCompactSigned(x, y * 2 + 1, true) / 32767.0) * M_PI;
         break;
 
     case Rectangular:
@@ -173,7 +173,7 @@ FFTFileCache::getPhaseAt(size_t x, size_t y) const
     }
 
     case Polar:
-        value = getFromReadBufStandard(x, y * 2 + 1);
+        value = getFromReadBufStandard(x, y * 2 + 1, true);
         break;
     }
 
@@ -186,8 +186,10 @@ FFTFileCache::getValuesAt(size_t x, size_t y, float &real, float &imag) const
     switch (m_storageType) {
 
     case Rectangular:
-        real = getFromReadBufStandard(x, y * 2);
-        imag = getFromReadBufStandard(x, y * 2 + 1);
+        m_readbufMutex.lock();
+        real = getFromReadBufStandard(x, y * 2, false);
+        imag = getFromReadBufStandard(x, y * 2 + 1, false);
+        m_readbufMutex.unlock();
         return;
 
     default:
@@ -197,6 +199,46 @@ FFTFileCache::getValuesAt(size_t x, size_t y, float &real, float &imag) const
         imag = mag * sinf(phase);
         return;
     }
+}
+
+void
+FFTFileCache::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
+{
+    Profiler profiler("FFTFileCache::getMagnitudesAt");
+
+    m_readbufMutex.lock();
+
+    switch (m_storageType) {
+
+    case Compact:
+        for (size_t i = 0; i < count; ++i) {
+            size_t y = minbin + i * step;
+            values[i] = (getFromReadBufCompactUnsigned(x, y * 2, false) / 65535.0)
+                * getNormalizationFactor(x, false);
+        }
+        break;
+
+    case Rectangular:
+    {
+        float real, imag;
+        for (size_t i = 0; i < count; ++i) {
+            size_t y = minbin + i * step;
+            real = getFromReadBufStandard(x, y * 2, false);
+            imag = getFromReadBufStandard(x, y * 2 + 1, false);
+            values[i] = sqrtf(real * real + imag * imag);
+        }
+        break;
+    }
+
+    case Polar:
+        for (size_t i = 0; i < count; ++i) {
+            size_t y = minbin + i * step;
+            values[i] = getFromReadBufStandard(x, y * 2, false);
+        }
+        break;
+    }
+
+    m_readbufMutex.unlock();
 }
 
 bool

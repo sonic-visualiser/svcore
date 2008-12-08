@@ -916,9 +916,8 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
         fillColumn(x, true);
     }
 
-    for (size_t i = 0; i < count; ++i) {
-        values[i] = cache->getMagnitudeAt(col, i * step + minbin);
-    }
+    cache->getMagnitudesAt(col, values, minbin, count, step);
+
     return true;
 }
 
