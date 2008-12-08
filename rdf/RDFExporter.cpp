@@ -155,6 +155,7 @@ RDFExporter::write()
             f.hasTimestamp = true;
             f.hasDuration = false;
             const TextModel::PointList &pl(m->getPoints());
+            m_fw->setFixedEventTypeURI("af:Text");
             for (TextModel::PointList::const_iterator i = pl.begin(); 
                  i != pl.end(); ++i) {
                 f.timestamp = Vamp::RealTime::frame2RealTime(i->frame, sr);

@@ -24,7 +24,7 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-    std::cerr << "Model::~Model(" << this << ")" << std::endl;
+//    std::cerr << "Model::~Model(" << this << ")" << std::endl;
 
     if (!m_aboutToDelete) {
         std::cerr << "NOTE: Model::~Model(" << this << ", \""

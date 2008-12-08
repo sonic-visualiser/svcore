@@ -30,6 +30,7 @@
 #include "data/model/SparseTimeValueModel.h"
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 #include "data/model/NoteModel.h"
+#include "data/model/TextModel.h"
 #include "data/model/RegionModel.h"
 #include "data/model/WaveFileModel.h"
 
@@ -566,6 +567,15 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
         ).arg(m_uristring);
 
+    QString textQueryString = prefixes + QString(
+        
+        " SELECT ?label FROM <%1> "
+        " WHERE { "
+        "   <%2> af:text ?label . "
+        " } "
+
+        ).arg(m_uristring);
+
     SimpleSPARQLQuery query(s, queryString);
     query.setProgressReporter(reporter);
 
@@ -626,8 +636,18 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         bool haveTime = false;
         bool haveDuration = false;
 
-        QString label = SimpleSPARQLQuery::singleResultQuery
-            (s, labelQueryString.arg(thinguri), "label").value;
+        QString label = "";
+        bool text = (type.contains("Text") || type.contains("text")); // Ha, ha
+
+        if (text) {
+            label = SimpleSPARQLQuery::singleResultQuery
+                (s, textQueryString.arg(thinguri), "label").value;
+        }
+
+        if (label == "") {
+            label = SimpleSPARQLQuery::singleResultQuery
+                (s, labelQueryString.arg(thinguri), "label").value;
+        }
 
         SimpleSPARQLQuery rangeQuery(s, rangeQueryString.arg(thinguri));
         SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
@@ -682,13 +702,25 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
                 if (dimensions == 1) {
 
-//                    std::cerr << "SparseOneDimensionalModel" << std::endl;
-                    model = new SparseOneDimensionalModel(m_sampleRate, 1, false);
+                    if (text) {
+                        
+                        model = new TextModel(m_sampleRate, 1, false);
+
+                    } else {
+
+                        model = new SparseOneDimensionalModel(m_sampleRate, 1, false);
+                    }
 
                 } else if (dimensions == 2) {
 
-//                    std::cerr << "SparseTimeValueModel" << std::endl;
-                    model = new SparseTimeValueModel(m_sampleRate, 1, false);
+                    if (text) {
+
+                        model = new TextModel(m_sampleRate, 1, false);
+
+                    } else {
+
+                        model = new SparseTimeValueModel(m_sampleRate, 1, false);
+                    }
 
                 } else {
 
@@ -699,7 +731,6 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     // but it's hard to apply it because we don't have
                     // all the necessary timing data yet... hmm
 
-//                    std::cerr << "NoteModel" << std::endl;
                     model = new NoteModel(m_sampleRate, 1, false);
                 }
 
@@ -710,7 +741,6 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     // If our units are frequency or midi pitch, we
                     // should be using a note model... hm
                     
-//                    std::cerr << "RegionModel" << std::endl;
                     model = new RegionModel(m_sampleRate, 1, false);
 
                 } else {
@@ -722,7 +752,6 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     // but it's hard to apply it because we don't have
                     // all the necessary timing data yet... hmm
 
-//                    std::cerr << "NoteModel" << std::endl;
                     model = new NoteModel(m_sampleRate, 1, false);
                 }
             }
@@ -774,6 +803,17 @@ RDFImporterImpl::fillModel(Model *model,
     if (sodm) {
         SparseOneDimensionalModel::Point point(ftime, label);
         sodm->addPoint(point);
+        return;
+    }
+
+    TextModel *tm =
+        dynamic_cast<TextModel *>(model);
+    if (tm) {
+        TextModel::Point point
+            (ftime,
+             values.empty() ? 0.5f : values[0] < 0.f ? 0.f : values[0] > 1.f ? 1.f : values[0], // I was young and feckless once too
+             label);
+        tm->addPoint(point);
         return;
     }
 
