@@ -59,7 +59,7 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-    std::cerr << "Model(" << this << ")::aboutToDelete()" << std::endl;
+//    std::cerr << "Model(" << this << ")::aboutToDelete()" << std::endl;
 
     if (m_aboutToDelete) {
         std::cerr << "WARNING: Model(" << this << ", \""

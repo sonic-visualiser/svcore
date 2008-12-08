@@ -449,13 +449,13 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     }
 
     if (!results) {
-        cerr << "SimpleSPARQLQuery: LIBRDF query failed" << endl;
+        m_errorString = "RDF query failed";
         librdf_free_query(query);
         return list;
     }
 
     if (!librdf_query_results_is_bindings(results)) {
-        cerr << "SimpleSPARQLQuery: LIBRDF query has wrong result type (not bindings)" << endl;
+        m_errorString = "RDF query returned non-bindings results";
         librdf_free_query_results(results);
         librdf_free_query(query);
         return list;
