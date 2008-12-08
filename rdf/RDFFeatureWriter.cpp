@@ -87,6 +87,12 @@ RDFFeatureWriter::setTrackMetadata(QString trackId,
 }
 
 void
+RDFFeatureWriter::setFixedEventTypeURI(QString uri)
+{
+    m_fixedEventTypeURI = uri;
+}
+
+void
 RDFFeatureWriter::write(QString trackId,
                         const Transform &transform,
                         const Plugin::OutputDescriptor& output,
@@ -357,7 +363,7 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
                << endl;
     }
 
-    if (needEventType) {
+    if (needEventType && m_fixedEventTypeURI == "") {
 
         QString uri;
         if (m_syntheticEventTypeURIs.find(transform) !=
@@ -420,16 +426,20 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
 
         stream << ":event_" << featureNumber << " a ";
 
-        QString eventTypeURI = desc.getOutputEventTypeURI(outputId);
-        if (plain || eventTypeURI == "") {
-            if (m_syntheticEventTypeURIs.find(transform) != 
-                m_syntheticEventTypeURIs.end()) {
-                stream << m_syntheticEventTypeURIs[transform] << " ;\n";
-            } else {
-                stream << ":event_type_" << outputId << " ;\n";
-            }
+        if (m_fixedEventTypeURI != "") {
+            stream << m_fixedEventTypeURI << " ;\n";
         } else {
-            stream << "<" << eventTypeURI << "> ;\n";
+            QString eventTypeURI = desc.getOutputEventTypeURI(outputId);
+            if (plain || eventTypeURI == "") {
+                if (m_syntheticEventTypeURIs.find(transform) != 
+                    m_syntheticEventTypeURIs.end()) {
+                    stream << m_syntheticEventTypeURIs[transform] << " ;\n";
+                } else {
+                    stream << ":event_type_" << outputId << " ;\n";
+                }
+            } else {
+                stream << "<" << eventTypeURI << "> ;\n";
+            }
         }
 
         QString timestamp = feature.timestamp.toString().c_str();
@@ -465,7 +475,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
 
         if (feature.label.length() > 0) {
             stream << ";\n";
-            stream << "    rdfs:label \"" << feature.label.c_str() << "\" ";
+            stream << "    rdfs:label \"\"\"" << feature.label.c_str() << "\"\"\" ";
         }
 
         if (!feature.values.empty()) {

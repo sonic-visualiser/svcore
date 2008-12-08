@@ -55,6 +55,8 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "");
 
+    virtual void setFixedEventTypeURI(QString uri); // something of a hack
+
     virtual void finish();
 
 private:
@@ -63,6 +65,8 @@ private:
 
     typedef map<QString, TrackMetadata> TrackMetadataMap;
     TrackMetadataMap m_metadata;
+
+    QString m_fixedEventTypeURI;
 
     void writePrefixes(QTextStream *);
     void writeSignalDescription(QTextStream *, QString);
