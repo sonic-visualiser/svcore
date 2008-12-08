@@ -168,6 +168,7 @@ FFTModel::getColumn(size_t x, Column &result) const
 
     result.clear();
     size_t h = getHeight();
+    result.reserve(h);
 
     float magnitudes[h];
 

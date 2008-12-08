@@ -42,6 +42,7 @@ public:
     virtual float getPhaseAt(size_t x, size_t y) const;
 
     virtual void getValuesAt(size_t x, size_t y, float &real, float &imag) const;
+    virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const;
 
     virtual bool haveSetColumnAt(size_t x) const;
 
@@ -61,57 +62,63 @@ protected:
     mutable size_t m_readbufCol;
     mutable size_t m_readbufWidth;
 
-    float getFromReadBufStandard(size_t x, size_t y) const {
-        m_readbufMutex.lock();
+    float getFromReadBufStandard(size_t x, size_t y, bool lock) const {
+        if (lock) m_readbufMutex.lock();
+        float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            float v = ((float *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
-            m_readbufMutex.unlock();
+            v = ((float *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            if (lock) m_readbufMutex.unlock();
             return v;
         } else {
             populateReadBuf(x);
-            m_readbufMutex.unlock();
-            return getFromReadBufStandard(x, y);
+            v = getFromReadBufStandard(x, y, false);
+            if (lock) m_readbufMutex.unlock();
+            return v;
         }
     }
 
-    float getFromReadBufCompactUnsigned(size_t x, size_t y) const {
-        m_readbufMutex.lock();
+    float getFromReadBufCompactUnsigned(size_t x, size_t y, bool lock) const {
+        if (lock) m_readbufMutex.lock();
+        float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            float v = ((uint16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
-            m_readbufMutex.unlock();
+            v = ((uint16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            if (lock) m_readbufMutex.unlock();
             return v;
         } else {
             populateReadBuf(x);
-            m_readbufMutex.unlock();
-            return getFromReadBufCompactUnsigned(x, y);
+            v = getFromReadBufCompactUnsigned(x, y, false);
+            if (lock) m_readbufMutex.unlock();
+            return v;
         }
     }
 
-    float getFromReadBufCompactSigned(size_t x, size_t y) const {
-        m_readbufMutex.lock();
+    float getFromReadBufCompactSigned(size_t x, size_t y, bool lock) const {
+        if (lock) m_readbufMutex.lock();
+        float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-            float v = ((int16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
-            m_readbufMutex.unlock();
+            v = ((int16_t *)m_readbuf)[(x - m_readbufCol) * m_mfc->getHeight() + y];
+            if (lock) m_readbufMutex.unlock();
             return v;
         } else {
             populateReadBuf(x);
-            m_readbufMutex.unlock();
-            return getFromReadBufCompactSigned(x, y);
+            v = getFromReadBufCompactSigned(x, y, false);
+            if (lock) m_readbufMutex.unlock();
+            return v;
         }
     }
 
     void populateReadBuf(size_t x) const;
 
-    float getNormalizationFactor(size_t col) const {
+    float getNormalizationFactor(size_t col, bool lock) const {
         size_t h = m_mfc->getHeight();
         if (h < m_factorSize) return 0;
         if (m_storageType != Compact) {
-            return getFromReadBufStandard(col, h - 1);
+            return getFromReadBufStandard(col, h - 1, lock);
         } else {
-            m_readbufMutex.lock();
+            if (lock) m_readbufMutex.lock();
             union {
                 float f;
                 uint16_t u[2];
@@ -124,7 +131,7 @@ protected:
             size_t ix = (col - m_readbufCol) * m_mfc->getHeight() + h;
             factor.u[0] = ((uint16_t *)m_readbuf)[ix - 2];
             factor.u[1] = ((uint16_t *)m_readbuf)[ix - 1];
-            m_readbufMutex.unlock();
+            if (lock) m_readbufMutex.unlock();
             return factor.f;
         }
     }

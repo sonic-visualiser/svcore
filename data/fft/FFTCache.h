@@ -38,6 +38,7 @@ public:
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
     virtual void getValuesAt(size_t x, size_t y, float &real, float &imaginary) const = 0;
+    virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const = 0;
 
     virtual bool haveSetColumnAt(size_t x) const = 0;
 
