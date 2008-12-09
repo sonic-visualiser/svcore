@@ -57,6 +57,7 @@ protected:
     typedef map<QFile *, QTextStream *> FileStreamMap;
     FileMap m_files;
     FileStreamMap m_streams;
+    QTextStream *m_prevstream;
 
     QString getOutputFilename(QString, TransformId);
     QFile *getOutputFile(QString, TransformId);
