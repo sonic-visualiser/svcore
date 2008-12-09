@@ -118,11 +118,16 @@ RDFFeatureWriter::write(QString trackId,
     // combination
 
     QTextStream *stream = getOutputStream(trackId, transform.getIdentifier());
-    if (!stream) return; //!!! this is probably better handled with an exception
+    if (!stream) {
+        std::cerr << "RDFFeatureWriter::write: ERROR: No output stream for track id \""
+                  << trackId.toStdString() << "\" and transform \""
+                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
+        return;
+    }
 
     if (m_startedStreamTransforms.find(stream) ==
         m_startedStreamTransforms.end()) {
-        cerr << "This stream is new, writing prefixes" << endl;
+//        cerr << "This stream is new, writing prefixes" << endl;
         writePrefixes(stream);
         if (m_singleFileName == "" && !m_stdout) {
             writeSignalDescription(stream, trackId);
@@ -410,6 +415,8 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
                                  PluginRDFDescription &desc,
                                  QString timelineURI)
 {
+//    std::cerr << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << std::endl;
+
     if (featureList.empty()) return;
     QTextStream &stream = *sptr;
         
@@ -656,7 +663,7 @@ void RDFFeatureWriter::finish()
     for (map<StringTransformPair, StreamBuffer>::iterator i =
              m_openDenseFeatures.begin();
          i != m_openDenseFeatures.end(); ++i) {
-        cerr << "closing a stream" << endl;
+//        cerr << "closing a stream" << endl;
         StreamBuffer &b = i->second;
         *(b.first) << b.second << "\" ." << endl;
     }

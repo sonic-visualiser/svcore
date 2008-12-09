@@ -32,6 +32,7 @@ using namespace Vamp;
 
 FileFeatureWriter::FileFeatureWriter(int support,
                                      QString extension) :
+    m_prevstream(0),
     m_support(support),
     m_extension(extension),
     m_manyFiles(false),
@@ -258,6 +259,13 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
         }
     }
 
-    return m_streams[file];
+    QTextStream *stream = m_streams[file];
+
+    if (m_prevstream && stream != m_prevstream) {
+        m_prevstream->flush();
+    }
+    m_prevstream = stream;
+
+    return stream;
 }
             
