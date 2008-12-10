@@ -271,3 +271,12 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
     return stream;
 }
             
+
+void
+FileFeatureWriter::flush()
+{
+    if (m_prevstream) {
+        m_prevstream->flush();
+    }
+}
+

@@ -67,6 +67,8 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "") = 0;
 
+    virtual void flush() { } // whatever the last stream was
+
     virtual void finish() = 0;
 };
 

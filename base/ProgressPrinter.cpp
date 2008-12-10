@@ -52,6 +52,12 @@ ProgressPrinter::setMessage(QString message)
 }
 
 void
+ProgressPrinter::done()
+{
+    setProgress(100);
+}
+
+void
 ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;

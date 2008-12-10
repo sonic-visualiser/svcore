@@ -42,6 +42,8 @@ public:
     virtual ParameterList getSupportedParameters() const;
     virtual void setParameters(map<string, string> &params);
 
+    virtual void flush();
+
 protected:
     enum FileWriteSupport {
         SupportOneFilePerTrackTransform = 1,
