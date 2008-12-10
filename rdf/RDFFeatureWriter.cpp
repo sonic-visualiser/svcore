@@ -122,7 +122,7 @@ RDFFeatureWriter::write(QString trackId,
         std::cerr << "RDFFeatureWriter::write: ERROR: No output stream for track id \""
                   << trackId.toStdString() << "\" and transform \""
                   << transform.getIdentifier().toStdString() << "\"" << std::endl;
-        return;
+        exit(1);
     }
 
     if (m_startedStreamTransforms.find(stream) ==
