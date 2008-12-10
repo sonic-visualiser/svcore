@@ -34,6 +34,7 @@ public:
 public slots:
     virtual void setMessage(QString);
     virtual void setProgress(int);
+    virtual void done();
 
 protected:
     QString m_prefix;
