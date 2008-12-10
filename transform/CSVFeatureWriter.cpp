@@ -85,10 +85,24 @@ CSVFeatureWriter::write(QString trackId,
 
     for (unsigned int i = 0; i < features.size(); ++i) {
 
+        if (m_stdout || m_singleFileName != "") {
+            if (trackId != m_prevPrintedTrackId) {
+                stream << "\"" << trackId << "\"" << m_separator;
+                m_prevPrintedTrackId = trackId;
+            } else {
+                stream << m_separator;
+            }
+        }
+
         QString timestamp = features[i].timestamp.toString().c_str();
         timestamp.replace(QRegExp("^ +"), "");
-
         stream << timestamp;
+
+        if (features[i].hasDuration) {
+            QString duration = features[i].duration.toString().c_str();
+            duration.replace(QRegExp("^ +"), "");
+            stream << m_separator << duration;
+        }            
 
         if (summaryType != "") {
             stream << m_separator << summaryType.c_str();
@@ -96,6 +110,10 @@ CSVFeatureWriter::write(QString trackId,
 
         for (unsigned int j = 0; j < features[i].values.size(); ++j) {
             stream << m_separator << features[i].values[j];
+        }
+
+        if (features[i].label != "") {
+            stream << m_separator << "\"" << features[i].label.c_str() << "\"";
         }
 
         stream << "\n";

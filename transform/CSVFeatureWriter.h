@@ -53,6 +53,7 @@ public:
 
 private:
     QString m_separator;
+    QString m_prevPrintedTrackId;
 };
 
 #endif
