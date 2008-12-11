@@ -54,23 +54,23 @@ ProgressPrinter::setMessage(QString message)
 void
 ProgressPrinter::done()
 {
-    setProgress(100);
+    std::cerr << "\r"
+              << m_prefix.toStdString() 
+              << (m_prefix == "" ? "" : " ")
+              << "Done" << std::endl;
 }
 
 void
 ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;
-    if (progress == 100) std::cerr << "\r\n";
-    else {
-        std::cerr << "\r"
-                  << m_prefix.toStdString() 
-                  << (m_prefix == "" ? "" : " ");
-        if (m_definite) {
-            std::cerr << progress << "%";
-        } else {
-            std::cerr << "|/-\\"[progress % 4];
-        }
+    std::cerr << "\r"
+              << m_prefix.toStdString() 
+              << (m_prefix == "" ? "" : " ");
+    if (m_definite) {
+        std::cerr << progress << "%";
+    } else {
+        std::cerr << "|/-\\"[progress % 4];
     }
     m_lastProgress = progress;
 }
