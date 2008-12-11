@@ -64,6 +64,8 @@ protected:
     bool pullURL(QString urlString);
     bool reindex();
 
+    static void loadPrefixes();
+    static bool m_prefixesLoaded;
     static PluginRDFIndexer *m_instance;
 };
 

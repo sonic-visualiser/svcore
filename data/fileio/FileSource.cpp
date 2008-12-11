@@ -30,7 +30,7 @@
 #include <iostream>
 #include <cstdlib>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -47,11 +47,13 @@ FileSource::m_remoteLocalMap;
 QMutex
 FileSource::m_mapMutex;
 
-FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter) :
+FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
+                       QString preferredContentType) :
     m_url(fileOrUrl),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
+    m_preferredContentType(preferredContentType),
     m_ok(false),
     m_lastStatus(0),
     m_remote(isRemote(fileOrUrl)),
@@ -276,7 +278,9 @@ FileSource::init()
 
     if (scheme == "http") {
         initHttp();
+#ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource: initHttp succeeded" << std::endl;
+#endif
     } else if (scheme == "ftp") {
         initFtp();
     } else {
@@ -381,7 +385,18 @@ FileSource::initHttp()
               << path.toStdString() << "\"" << std::endl;
 #endif
         
-    m_http->get(path, m_localFile);
+    if (m_preferredContentType == "") {
+        m_http->get(path, m_localFile);
+    } else {
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource: indicating preferred content type of \""
+                  << m_preferredContentType.toStdString() << "\"" << std::endl;
+#endif
+        QHttpRequestHeader header("GET", path);
+        header.setValue("Host", m_url.host());
+        header.setValue("Accept", QString("%1, */*").arg(m_preferredContentType));
+        m_http->request(header, 0, m_localFile);
+    }
 }
 
 void
@@ -560,7 +575,9 @@ FileSource::dataReadProgress(int done, int total)
 void
 FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
 {
+#ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::httpResponseHeaderReceived" << std::endl;
+#endif
 
     if (resp.statusCode() / 100 == 3) {
         QString location = resp.value("Location");
@@ -695,6 +712,7 @@ FileSource::done(bool error)
     }
 
     m_ok = !error;
+    if (m_localFile) m_localFile->flush();
     m_done = true;
     emit ready();
 }

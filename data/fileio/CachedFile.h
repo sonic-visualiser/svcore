@@ -26,8 +26,12 @@ class ProgressReporter;
 class CachedFile
 {
 public:
-    CachedFile(QString fileOrUrl, ProgressReporter *reporter = 0);
-    CachedFile(QUrl url, ProgressReporter *reporter = 0);
+    CachedFile(QString fileOrUrl,
+               ProgressReporter *reporter = 0,
+               QString preferredContentType = "");
+    CachedFile(QUrl url,
+               ProgressReporter *reporter = 0,
+               QString preferredContentType = "");
 
     virtual ~CachedFile();
 
@@ -38,6 +42,7 @@ public:
 protected:
     QString m_origin;
     QString m_localFilename;
+    QString m_preferredContentType;
     ProgressReporter *m_reporter;
     bool m_ok;
 
