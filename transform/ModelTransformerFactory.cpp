@@ -26,7 +26,9 @@
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/PluginXml.h"
 
+#ifndef NO_SV_GUI
 #include "widgets/PluginParameterDialog.h"
+#endif
 
 #include "data/model/DenseTimeValueModel.h"
 
@@ -198,6 +200,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         // whatever the user chose last time around
         PluginXml(plugin).setParametersFromXml(configurationXml);
 
+#ifndef NO_SV_GUI
         int sourceChannels = 1;
         if (dynamic_cast<DenseTimeValueModel *>(inputModel)) {
             sourceChannels = dynamic_cast<DenseTimeValueModel *>(inputModel)
@@ -286,12 +289,16 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         transform.setBlockSize(blockSize);
         transform.setWindowType(windowType);
 
+#endif
+
         TransformFactory::getInstance()->
             makeContextConsistentWithPlugin(transform, plugin);
 
         configurationXml = PluginXml(plugin).toXmlString();
 
+#ifndef NO_SV_GUI
         delete dialog;
+#endif
 
         if (effect && source) {
             source->setAuditioningEffect(0); // will delete our plugin
@@ -307,30 +314,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
     return input;
 }
-/*!!!
-PluginTransformer::ExecutionContext
-ModelTransformerFactory::getDefaultContextForTransformer(TransformId identifier,
-                                                Model *inputModel)
-{
-    PluginTransformer::ExecutionContext context(-1);
 
-    QString id = identifier.section(':', 0, 2);
-
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        Vamp::Plugin *vp =
-            FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
-            (id, inputModel ? inputModel->getSampleRate() : 48000);
-
-        if (vp) {
-            context = PluginTransformer::ExecutionContext(-1, vp);
-            delete vp;
-        }
-    }
-
-    return context;
-}
-*/
 ModelTransformer *
 ModelTransformerFactory::createTransformer(const Transform &transform,
                                            const ModelTransformer::Input &input)
