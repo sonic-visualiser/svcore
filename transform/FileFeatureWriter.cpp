@@ -170,6 +170,7 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
 
     QString dirname, basename;
     QString infilename = url.toLocalFile();
+    if (scheme.length() == 1) infilename = scheme + ":" + infilename; // DOS drive!
     if (infilename == "") infilename = url.path();
     basename = QFileInfo(infilename).baseName();
 
