@@ -43,6 +43,9 @@ using Vamp::PluginHostAdapter;
 PluginRDFIndexer *
 PluginRDFIndexer::m_instance = 0;
 
+bool
+PluginRDFIndexer::m_prefixesLoaded = false;
+
 PluginRDFIndexer *
 PluginRDFIndexer::getInstance() 
 {
@@ -236,6 +239,8 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
+    loadPrefixes();
+
 //    std::cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << std::endl;
 
     QMutexLocker locker(&m_mutex);
@@ -245,7 +250,7 @@ PluginRDFIndexer::pullURL(QString urlString)
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
 
-        CachedFile cf(urlString);
+        CachedFile cf(urlString, 0, "application/rdf+xml");
         if (!cf.isOK()) {
             return false;
         }
@@ -367,5 +372,22 @@ PluginRDFIndexer::reindex()
     return addedSomething;
 }
 
+void
+PluginRDFIndexer::loadPrefixes()
+{
+    return;
+//!!!
+    if (m_prefixesLoaded) return;
+    const char *prefixes[] = {
+        "http://purl.org/ontology/vamp/"
+    };
+    for (size_t i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); ++i) {
+        CachedFile cf(prefixes[i], 0, "application/rdf+xml");
+        if (!cf.isOK()) continue;
+        SimpleSPARQLQuery::addSourceToModel
+            (QUrl::fromLocalFile(cf.getLocalFilename()).toString());
+    }
+    m_prefixesLoaded = true;
+}
 
 

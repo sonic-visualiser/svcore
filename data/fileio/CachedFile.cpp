@@ -68,8 +68,11 @@ CachedFile::getCacheDirectory()
     return fi.filePath();
 }
 
-CachedFile::CachedFile(QString origin, ProgressReporter *reporter) :
+CachedFile::CachedFile(QString origin,
+                       ProgressReporter *reporter,
+                       QString preferredContentType) :
     m_origin(origin),
+    m_preferredContentType(preferredContentType),
     m_reporter(reporter),
     m_ok(false)
 {
@@ -80,8 +83,11 @@ CachedFile::CachedFile(QString origin, ProgressReporter *reporter) :
     check();
 }
 
-CachedFile::CachedFile(QUrl url, ProgressReporter *reporter) :
+CachedFile::CachedFile(QUrl url,
+                       ProgressReporter *reporter,
+    QString preferredContentType) :
     m_origin(url.toString()),
+    m_preferredContentType(preferredContentType),
     m_reporter(reporter),
     m_ok(false)
 {
@@ -182,7 +188,7 @@ CachedFile::retrieve()
     //!!! using Qt classes, but a plain delete then copy is probably
     //!!! good enough)
 
-    FileSource fs(m_origin, m_reporter);
+    FileSource fs(m_origin, m_reporter, m_preferredContentType);
 
     if (!fs.isOK() || !fs.isAvailable()) {
         std::cerr << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << std::endl;

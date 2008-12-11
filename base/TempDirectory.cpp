@@ -62,7 +62,17 @@ TempDirectory::getContainingPath()
     QString svDirParent = settings.value("create-in", "$HOME").toString();
     settings.endGroup();
 
+#ifdef Q_OS_WIN32
+    char *homedrive = getenv("HOMEDRIVE");
+    char *homepath = getenv("HOMEPATH");
+    if (homedrive && homepath) {
+        svDirParent.replace("$HOME", QString("%1%2").arg(homedrive).arg(homepath));
+    } else {
+        svDirParent.replace("$HOME", QDir::home().absolutePath());
+    }
+#else
     svDirParent.replace("$HOME", QDir::home().absolutePath());
+#endif
 
     QString svDirBase = ".sv1";
     QString svDir = QDir(svDirParent).filePath(svDirBase);

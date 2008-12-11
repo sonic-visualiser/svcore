@@ -18,9 +18,6 @@
 #include "PluginRDFIndexer.h"
 #include "SimpleSPARQLQuery.h"
 
-#include "data/fileio/FileSource.h"
-#include "data/fileio/CachedFile.h"
-
 #include "base/Profiler.h"
 
 #include "plugin/PluginIdentifier.h"

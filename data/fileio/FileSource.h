@@ -70,7 +70,9 @@ public:
      * emitted regularly during retrieval, even if no reporter is
      * supplied here.  Caller retains ownership of the reporter object.
      */
-    FileSource(QString fileOrUrl, ProgressReporter *reporter = 0);
+    FileSource(QString fileOrUrl,
+               ProgressReporter *reporter = 0,
+               QString preferredContentType = "");
 
     /**
      * Construct a FileSource using the given remote URL.
@@ -212,6 +214,7 @@ protected:
     QString m_localFilename;
     QString m_errorString;
     QString m_contentType;
+    QString m_preferredContentType;
     bool m_ok;
     int m_lastStatus;
     bool m_remote;

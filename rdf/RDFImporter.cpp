@@ -35,6 +35,7 @@
 #include "data/model/WaveFileModel.h"
 
 #include "data/fileio/FileSource.h"
+#include "data/fileio/CachedFile.h"
 
 using std::cerr;
 using std::endl;
@@ -58,6 +59,9 @@ protected:
     std::map<QString, Model *> m_audioModelMap;
     int m_sampleRate;
 
+    static bool m_prefixesLoaded;
+    static void loadPrefixes(ProgressReporter *reporter);
+
     void getDataModelsAudio(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
@@ -71,6 +75,7 @@ protected:
     void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
 };
 
+bool RDFImporterImpl::m_prefixesLoaded = false;
 
 QString
 RDFImporter::getKnownExtensions()
@@ -138,6 +143,8 @@ RDFImporterImpl::getErrorString() const
 std::vector<Model *>
 RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
+    loadPrefixes(reporter);
+
     std::vector<Model *> models;
 
     getDataModelsAudio(models, reporter);
@@ -663,6 +670,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         } else {
             QString timestring = SimpleSPARQLQuery::singleResultQuery
                 (s, timeQueryString.arg(thinguri), "time").value;
+//            std::cerr << "timestring = " << timestring.toStdString() << std::endl;
             if (timestring != "") {
                 time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;
@@ -963,4 +971,25 @@ RDFImporter::identifyDocumentType(QString url)
     SimpleSPARQLQuery::closeSingleSource(url);
 }
 
-
+void
+RDFImporterImpl::loadPrefixes(ProgressReporter *reporter)
+{
+    return;
+//!!!
+    if (m_prefixesLoaded) return;
+    const char *prefixes[] = {
+        "http://purl.org/NET/c4dm/event.owl",
+        "http://purl.org/NET/c4dm/timeline.owl",
+        "http://purl.org/ontology/mo/",
+        "http://purl.org/ontology/af/",
+        "http://www.w3.org/2000/01/rdf-schema",
+        "http://purl.org/dc/elements/1.1/",
+    };
+    for (size_t i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); ++i) {
+        CachedFile cf(prefixes[i], reporter, "application/rdf+xml");
+        if (!cf.isOK()) continue;
+        SimpleSPARQLQuery::addSourceToModel
+            (QUrl::fromLocalFile(cf.getLocalFilename()).toString());
+    }
+    m_prefixesLoaded = true;
+}
