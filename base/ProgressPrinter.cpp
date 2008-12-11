@@ -23,6 +23,9 @@ ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
     m_lastProgress(0),
     m_definite(true)
 {
+    if (m_prefix.length() > 70) {
+        m_prefix = m_prefix.left(70) + "...";
+    }
 }
 
 ProgressPrinter::~ProgressPrinter()
