@@ -37,6 +37,10 @@
 #include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
 
+#ifndef NO_SV_GUI
+#include "widgets/FileFinder.h"
+#endif
+
 using std::cerr;
 using std::endl;
 
@@ -156,17 +160,23 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     QString error;
 
-    if (!isOK()) error = m_errorString;
+    if (m_errorString != "") {
+        error = m_errorString;
+    }
     m_errorString = "";
 
     getDataModelsDense(models, reporter);
 
-    if (!isOK()) error = m_errorString;
+    if (m_errorString != "") {
+        error = m_errorString;
+    }
     m_errorString = "";
 
     getDataModelsSparse(models, reporter);
 
-    if (isOK()) m_errorString = error;
+    if (m_errorString == "" && error != "") {
+        m_errorString = error;
+    }
 
     return models;
 }
@@ -192,27 +202,48 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         QString signal = results[i]["signal"].value;
         QString source = results[i]["source"].value;
 
-        FileSource fs(source, reporter);
-        if (fs.isAvailable()) {
-            if (reporter) {
-                reporter->setMessage(RDFImporter::tr("Importing audio referenced in RDF..."));
-            }
-            fs.waitForData();
-            WaveFileModel *newModel = new WaveFileModel(fs, m_sampleRate);
-            if (newModel->isOK()) {
-                std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
-                models.push_back(newModel);
-                m_audioModelMap[signal] = newModel;
-                if (m_sampleRate == 0) {
-                    m_sampleRate = newModel->getSampleRate();
+        FileSource *fs = new FileSource(source, reporter);
+#ifdef NO_SV_GUI
+        if (!fs->isAvailable()) {
+            m_errorString = QString("Signal source \"%1\" is not available").arg(source);
+            delete fs;
+            continue;
+        }
+#else
+        if (!fs->isAvailable()) {
+            FileFinder *ff = FileFinder::getInstance();
+            QString path = ff->find(FileFinder::AudioFile,
+                                    fs->getLocation(),
+                                    m_uristring);
+            if (path != "") {
+                delete fs;
+                fs = new FileSource(path, reporter);
+                if (!fs->isAvailable()) {
+                    delete fs;
+                    m_errorString = QString("Signal source \"%1\" is not available").arg(source);
+                    continue;
                 }
-            } else {
-                m_errorString = QString("Failed to create wave file model from source at \"%1\"").arg(source);
-                delete newModel;
+            }
+        }
+#endif
+
+        if (reporter) {
+            reporter->setMessage(RDFImporter::tr("Importing audio referenced in RDF..."));
+        }
+        fs->waitForData();
+        WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
+        if (newModel->isOK()) {
+            std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+            models.push_back(newModel);
+            m_audioModelMap[signal] = newModel;
+            if (m_sampleRate == 0) {
+                m_sampleRate = newModel->getSampleRate();
             }
         } else {
-            m_errorString = QString("Signal source \"%1\" is not available").arg(source);
+            m_errorString = QString("Failed to create wave file model from source at \"%1\"").arg(source);
+            delete newModel;
         }
+        delete fs;
     }
 }
 

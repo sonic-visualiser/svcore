@@ -90,7 +90,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
+//    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
 
     if (m_fileRate == 0) {
         std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;

@@ -357,8 +357,7 @@ MP3FileReader::accept(struct mad_header const *header,
         initialiseDecodeCache();
 
         if (m_cacheMode == CacheInTemporaryFile) {
-//            m_completion = 1;
-            std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
+//            std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
             startSerialised("MP3FileReader::Decode");
         }
     }
