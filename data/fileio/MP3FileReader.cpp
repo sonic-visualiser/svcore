@@ -425,9 +425,9 @@ MP3FileReader::error(void *dp,
 {
     DecoderData *data = (DecoderData *)dp;
 
-    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
-	    stream->error, mad_stream_errorstr(stream),
-	    (unsigned long)(stream->this_frame - data->start));
+//    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
+//	    stream->error, mad_stream_errorstr(stream),
+//	    (unsigned long)(stream->this_frame - data->start));
 
     return MAD_FLOW_CONTINUE;
 }
