@@ -50,7 +50,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
+//    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
 
