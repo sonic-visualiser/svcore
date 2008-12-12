@@ -178,8 +178,8 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
         infilename = scheme + ":" + infilename; // DOS drive!
     }
 
-    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
-         << infilename.toStdString() << ", basename = " << basename.toStdString() << endl;
+//    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
+//         << infilename.toStdString() << ", basename = " << basename.toStdString() << endl;
 
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();

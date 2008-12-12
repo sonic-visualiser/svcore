@@ -29,7 +29,7 @@
 
 #include <QFileInfo>
 
-static int instances = 0;
+//static int instances = 0;
 
 OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                                          DecodeMode decodeMode,
@@ -102,7 +102,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
 OggVorbisFileReader::~OggVorbisFileReader()
 {
-    std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
+//    std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
