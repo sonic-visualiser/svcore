@@ -1,6 +1,6 @@
 #!/bin/bash
 
-audio=/data/music
+audio=/share/music
 preferred=$audio/free
 list=audiofiles.txt
 used=audiofiles-used.txt
@@ -42,7 +42,7 @@ pick_file()
     fi
     while [ -z "$file" ]; do
 	index=$((RANDOM % $count))
-	file=`tail +"$index" "$list" | head -1`
+	file=`head -"$index" "$list" | tail -1`
 	[ -f "$file" ] || continue
     done
     fgrep -v "$file" "$list" > "$list"_ && mv "$list"_ "$list"
@@ -57,8 +57,8 @@ load_a_file()
 	if [ -z "$pid" ]; then
 	    ( setsid sonic-visualiser -geometry 1000x500+10+100 & )
 	    sleep 2
-            sudo renice +19 `pidof sonic-visualiser`
-            sudo renice +18 `pidof Xorg`
+            #sudo renice +19 `pidof sonic-visualiser`
+            #sudo renice +18 `pidof Xorg`
             sv-command resize 1000 500
 	    load_a_file
 	else
