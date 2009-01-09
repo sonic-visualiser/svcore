@@ -255,7 +255,7 @@ public:
 protected:
     static QMutex m_mutex;
 
-    static WredlandWorldWrapper m_redland;
+    static WredlandWorldWrapper *m_redland;
 
     ResultList executeDirectParser();
     ResultList executeDatastore();
@@ -268,7 +268,7 @@ protected:
     bool m_cancelled;
 };
 
-WredlandWorldWrapper SimpleSPARQLQuery::Impl::m_redland;
+WredlandWorldWrapper *SimpleSPARQLQuery::Impl::m_redland = 0;
 
 QMutex SimpleSPARQLQuery::Impl::m_mutex;
 
@@ -355,7 +355,11 @@ SimpleSPARQLQuery::Impl::execute()
 
     QMutexLocker locker(&m_mutex);
 
-    if (!m_redland.isOK()) {
+    if (!m_redland) {
+        m_redland = new WredlandWorldWrapper();
+    }
+
+    if (!m_redland->isOK()) {
         cerr << "ERROR: SimpleSPARQLQuery::execute: Failed to initialise Redland datastore" << endl;
         return list;
     }
@@ -433,7 +437,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     {
         Profiler p("SimpleSPARQLQuery: Prepare LIBRDF query");
         query = librdf_new_query
-            (m_redland.getWorld(), "sparql", NULL,
+            (m_redland->getWorld(), "sparql", NULL,
              (const unsigned char *)m_query.toUtf8().data(), NULL);
     }
     
@@ -445,7 +449,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     librdf_query_results *results;
     {
         Profiler p("SimpleSPARQLQuery: Execute LIBRDF query");
-        results = librdf_query_execute(query, m_redland.getModel(modelUri));
+        results = librdf_query_execute(query, m_redland->getModel(modelUri));
     }
 
     if (!results) {
@@ -579,12 +583,12 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
 
     QMutexLocker locker(&m_mutex);
 
-    if (!m_redland.isOK()) {
+    if (!m_redland->isOK()) {
         std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << std::endl;
         return false;
     }
 
-    if (!m_redland.loadUriIntoDefaultModel(sourceUri, err)) {
+    if (!m_redland->loadUriIntoDefaultModel(sourceUri, err)) {
         std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri.toStdString() << ": " << err.toStdString() << std::endl;
         return false;
     }
@@ -596,7 +600,7 @@ SimpleSPARQLQuery::Impl::closeSingleSource(QString sourceUri)
 {
     QMutexLocker locker(&m_mutex);
 
-    m_redland.freeModel(sourceUri);
+    m_redland->freeModel(sourceUri);
 }
 
 SimpleSPARQLQuery::Value
