@@ -583,6 +583,10 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
 
     QMutexLocker locker(&m_mutex);
 
+    if (!m_redland) {
+        m_redland = new WredlandWorldWrapper();
+    }
+
     if (!m_redland->isOK()) {
         std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << std::endl;
         return false;

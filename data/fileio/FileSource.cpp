@@ -30,7 +30,7 @@
 #include <iostream>
 #include <cstdlib>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -195,6 +195,10 @@ FileSource::FileSource(const FileSource &rf) :
     m_done = true;
 
 #ifdef DEBUG_FILE_SOURCE
+    std::cerr << "FileSource::FileSource(" << m_url.toString().toStdString() << ") [copy ctor]: note: local filename is \"" << m_localFilename.toStdString() << "\"" << std::endl;
+#endif
+
+#ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(copy ctor) exiting" << std::endl;
 #endif
 }
@@ -234,6 +238,9 @@ FileSource::init()
         m_lastStatus = 200;
 
         if (!QFileInfo(m_localFilename).exists()) {
+#ifdef DEBUG_FILE_SOURCE
+            std::cerr << "FileSource::init: Local file of this name does not exist, trying URL as a literal filename" << std::endl;
+#endif
             if (literal) {
                 m_lastStatus = 404;
             } else {
