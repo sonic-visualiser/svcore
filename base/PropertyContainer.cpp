@@ -80,7 +80,7 @@ PropertyContainer::getSetPropertyCommand(const PropertyName &name, int value)
 }
  
 void
-PropertyContainer::setProperty(QString nameString, QString valueString)
+PropertyContainer::setPropertyFuzzy(QString nameString, QString valueString)
 {
     PropertyName name;
     int value;
