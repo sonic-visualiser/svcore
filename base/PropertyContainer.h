@@ -139,7 +139,7 @@ public slots:
      *
      * The default implementation should work for most subclasses.
      */
-    virtual void setProperty(QString nameString, QString valueString);
+    virtual void setPropertyFuzzy(QString nameString, QString valueString);
 
     /**
      * As above, but returning a command.
