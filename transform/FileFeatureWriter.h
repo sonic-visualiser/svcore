@@ -43,6 +43,7 @@ public:
     virtual void setParameters(map<string, string> &params);
 
     virtual void flush();
+    virtual void finish();
 
 protected:
     enum FileWriteSupport {
