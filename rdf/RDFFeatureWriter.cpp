@@ -127,7 +127,7 @@ RDFFeatureWriter::write(QString trackId,
 
     if (m_startedStreamTransforms.find(stream) ==
         m_startedStreamTransforms.end()) {
-//        cerr << "This stream is new, writing prefixes" << endl;
+        cerr << "This stream is new, writing prefixes" << endl;
         writePrefixes(stream);
         if (m_singleFileName == "" && !m_stdout) {
             writeSignalDescription(stream, trackId);
@@ -222,6 +222,8 @@ void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
+    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
+
     QTextStream &stream = *sptr;
 
     /*
@@ -656,7 +658,7 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
 void RDFFeatureWriter::finish()
 {
-//    cerr << "RDFFeatureWriter::finish()" << endl;
+    cerr << "RDFFeatureWriter::finish()" << endl;
 
     // close any open dense feature literals
 
@@ -669,6 +671,9 @@ void RDFFeatureWriter::finish()
     }
 
     m_openDenseFeatures.clear();
+    m_startedStreamTransforms.clear();
+
+    FileFeatureWriter::finish();
 }
 
 
