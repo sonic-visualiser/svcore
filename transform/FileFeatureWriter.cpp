@@ -285,3 +285,23 @@ FileFeatureWriter::flush()
     }
 }
 
+
+void
+FileFeatureWriter::finish()
+{
+    cerr << "FileFeatureWriter::finish()" << endl;
+
+    if (m_singleFileName != "" || m_stdout) return;
+
+    while (!m_streams.empty()) {
+        m_streams.begin()->second->flush();
+        delete m_streams.begin()->second;
+        m_streams.erase(m_streams.begin());
+    }
+    while (!m_files.empty()) {
+        delete m_files.begin()->second;
+        m_files.erase(m_files.begin());
+    }
+    m_prevstream = 0;
+}
+
