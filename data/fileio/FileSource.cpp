@@ -47,6 +47,25 @@ FileSource::m_remoteLocalMap;
 QMutex
 FileSource::m_mapMutex;
 
+#ifdef DEBUG_FILE_SOURCE
+static int extantCount = 0;
+static std::map<QString, int> urlExtantCountMap;
+static void incCount(QString url) {
+    ++extantCount;
+    if (urlExtantCountMap.find(url) == urlExtantCountMap.end()) {
+        urlExtantCountMap[url] = 1;
+    } else {
+        ++urlExtantCountMap[url];
+    }
+    std::cerr << "FileSource: Now " << urlExtantCountMap[url] << " for this url, " << extantCount << " total" << std::endl;
+}
+static void decCount(QString url) {
+    --extantCount;
+    --urlExtantCountMap[url];
+    std::cerr << "FileSource: Now " << urlExtantCountMap[url] << " for this url, " << extantCount << " total" << std::endl;
+}
+#endif
+
 FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
     m_url(fileOrUrl),
@@ -64,6 +83,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
 {
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ")" << std::endl;
+    incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
@@ -132,6 +152,7 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
 {
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << url.toString().toStdString() << ") [as url]" << std::endl;
+    incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
@@ -163,6 +184,7 @@ FileSource::FileSource(const FileSource &rf) :
 {
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::FileSource(" << m_url.toString().toStdString() << ") [copy ctor]" << std::endl;
+    incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
@@ -207,6 +229,7 @@ FileSource::~FileSource()
 {
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource(" << m_url.toString().toStdString() << ")::~FileSource" << std::endl;
+    decCount(m_url.toString());
 #endif
 
     cleanup();
@@ -597,6 +620,10 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
             if (newUrl != m_url) {
                 cleanup();
                 deleteCacheFile();
+#ifdef DEBUG_FILE_SOURCE
+                decCount(m_url.toString());
+                incCount(newUrl.toString());
+#endif
                 m_url = newUrl;
                 m_localFile = 0;
                 m_lastStatus = 0;
