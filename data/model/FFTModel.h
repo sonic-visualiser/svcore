@@ -136,7 +136,7 @@ public:
     virtual float getMaximumLevel() const {
         return 1.f; // Can't provide
     }
-    virtual void getColumn(size_t x, Column &result) const;
+    virtual Column getColumn(size_t x) const;
     virtual QString getBinName(size_t n) const;
 
     virtual bool shouldUseLogValueScale() const {
