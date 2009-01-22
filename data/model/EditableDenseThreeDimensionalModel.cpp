@@ -77,7 +77,7 @@ EditableDenseThreeDimensionalModel::clone() const
     model->m_haveExtents = m_haveExtents;
 
     for (size_t i = 0; i < m_data.size(); ++i) {
-	model->setColumn(i, m_data[i]);
+	model->setColumn(i, m_data.at(i));
     }
 
     return model;
@@ -137,19 +137,21 @@ EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
     m_maximum = level;
 }
 
-void
-EditableDenseThreeDimensionalModel::getColumn(size_t index,
-                                              Column &result) const
+EditableDenseThreeDimensionalModel::Column
+EditableDenseThreeDimensionalModel::getColumn(size_t index) const
 {
     QMutexLocker locker(&m_mutex);
 
+    Column result;
+
     if (index < m_data.size()) {
-	result = m_data[index];
+	result = m_data.at(index);
     } else {
 	result.clear();
     }
 
     while (result.size() < m_yBinCount) result.push_back(m_minimum);
+    return result;
 }
 
 float
@@ -158,10 +160,10 @@ EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
     QMutexLocker locker(&m_mutex);
 
     if (index < m_data.size()) {
-	const Column &s = m_data[index];
+	const Column &s = m_data.at(index);
 //        std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
 //                  << std::endl;
-	if (n < s.size()) return s[n];
+	if (n < s.size()) return s.at(n);
     }
 
     return m_minimum;
@@ -251,19 +253,19 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 bool
 EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
-    std::vector<float> sample;
-    std::vector<int> n;
+    QVector<float> sample;
+    QVector<int> n;
     
     for (int i = 0; i < 10; ++i) {
         size_t index = i * 10;
         if (index < m_data.size()) {
-            const Column &c = m_data[index];
+            const Column &c = m_data.at(index);
             while (c.size() > sample.size()) {
                 sample.push_back(0.f);
                 n.push_back(0);
             }
             for (int j = 0; j < c.size(); ++j) {
-                sample[j] += c[j];
+                sample[j] += c.at(j);
                 ++n[j];
             }
         }
@@ -274,7 +276,7 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
         if (n[j]) sample[j] /= n[j];
     }
     
-    return LogRange::useLogScale(sample);
+    return LogRange::useLogScale(sample.toStdVector());
 }
 
 void
@@ -311,8 +313,8 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
     QString s;
     for (size_t i = 0; i < m_data.size(); ++i) {
         QStringList list;
-	for (size_t j = 0; j < m_data[i].size(); ++j) {
-            list << QString("%1").arg(m_data[i][j]);
+	for (size_t j = 0; j < m_data.at(i).size(); ++j) {
+            list << QString("%1").arg(m_data.at(i).at(j));
         }
         s += list.join(delimiter) + "\n";
     }
@@ -353,9 +355,9 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     for (size_t i = 0; i < m_data.size(); ++i) {
 	out << indent + "  ";
 	out << QString("<row n=\"%1\">").arg(i);
-	for (size_t j = 0; j < m_data[i].size(); ++j) {
+	for (size_t j = 0; j < m_data.at(i).size(); ++j) {
 	    if (j > 0) out << " ";
-	    out << m_data[i][j];
+	    out << m_data.at(i).at(j);
 	}
 	out << QString("</row>\n");
         out.flush();

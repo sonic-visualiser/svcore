@@ -18,6 +18,8 @@
 
 #include "DenseThreeDimensionalModel.h"
 
+#include <vector>
+
 class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
@@ -90,7 +92,7 @@ public:
     /**
      * Get the set of bin values at the given column.
      */
-    virtual void getColumn(size_t x, Column &) const;
+    virtual Column getColumn(size_t x) const;
 
     /**
      * Get a single value, from the n'th bin of the given column.
@@ -120,7 +122,7 @@ public:
                        QString extraAttributes = "") const;
 
 protected:
-    typedef std::vector<Column> ValueMatrix;
+    typedef QVector<Column> ValueMatrix;
     ValueMatrix m_data;
 
     std::vector<QString> m_binNames;

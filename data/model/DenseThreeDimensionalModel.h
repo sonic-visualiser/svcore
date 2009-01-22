@@ -22,7 +22,7 @@
 #include "base/RealTime.h"
 
 #include <QMutex>
-#include <vector>
+#include <QVector>
 
 class DenseThreeDimensionalModel : public Model,
                                    public TabularModel
@@ -64,12 +64,12 @@ public:
      */
     virtual bool isColumnAvailable(size_t column) const = 0;
 
-    typedef std::vector<float> Column;
+    typedef QVector<float> Column;
 
     /**
      * Get data from the given column of bin values.
      */
-    virtual void getColumn(size_t column, Column &result) const = 0;
+    virtual Column getColumn(size_t column) const = 0;
 
     /**
      * Get the single data point from the n'th bin of the given column.

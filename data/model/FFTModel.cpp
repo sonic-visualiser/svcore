@@ -161,10 +161,12 @@ FFTModel::getSampleRate() const
     return isOK() ? m_server->getModel()->getSampleRate() : 0;
 }
 
-void
-FFTModel::getColumn(size_t x, Column &result) const
+FFTModel::Column
+FFTModel::getColumn(size_t x) const
 {
     Profiler profiler("FFTModel::getColumn", false);
+
+    Column result;
 
     result.clear();
     size_t h = getHeight();
@@ -181,6 +183,8 @@ FFTModel::getColumn(size_t x, Column &result) const
     } else {
         for (size_t i = 0; i < h; ++i) result.push_back(0.f);
     }
+
+    return result;
 }
 
 QString
@@ -261,7 +265,7 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
         return peaks;
     }
 
-    getColumn(x, values);
+    values = getColumn(x);
 
     float mean = 0.f;
     for (int i =0; i < values.size(); ++i) mean += values[i];

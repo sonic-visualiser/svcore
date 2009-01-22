@@ -716,7 +716,8 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	
     } else if (isOutput<EditableDenseThreeDimensionalModel>()) {
 	
-	DenseThreeDimensionalModel::Column values = feature.values;
+	DenseThreeDimensionalModel::Column values =
+            DenseThreeDimensionalModel::Column::fromStdVector(feature.values);
 	
 	EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>();
