@@ -25,9 +25,25 @@ class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
     Q_OBJECT
 
 public:
+
+    // EditableDenseThreeDimensionalModel supports a basic compression
+    // method that reduces the size of multirate data (e.g. wavelet
+    // transform outputs) that are stored as plain 3d grids by about
+    // 60% or thereabouts.  However, it can only be used for models
+    // whose columns are set in order from 0 and never subsequently
+    // changed.  If the model is going to be actually edited, it must
+    // have NoCompression.
+
+    enum CompressionType
+    {
+        NoCompression,
+        BasicMultirateCompression
+    };
+
     EditableDenseThreeDimensionalModel(size_t sampleRate,
 				       size_t resolution,
 				       size_t yBinCount,
+                                       CompressionType compression,
 				       bool notifyOnAdd = true);
 
     virtual bool isOK() const;
@@ -125,7 +141,15 @@ protected:
     typedef QVector<Column> ValueMatrix;
     ValueMatrix m_data;
 
-    std::vector<signed char> m_trunc; // +ve -> top is truncated, -ve -> bottom
+    // m_trunc is used for simple compression.  If at least the top N
+    // elements of column x (for N = some proportion of the column
+    // height) are equal to those of an earlier column x', then
+    // m_trunc[x] will contain x-x' and column x will be truncated so
+    // as to remove the duplicate elements.  If the equal elements are
+    // at the bottom, then m_trunc[x] will contain x'-x (a negative
+    // value).  If m_trunc[x] is 0 then the whole of column x is
+    // stored.
+    std::vector<signed char> m_trunc;
     void truncateAndStore(size_t index, const Column & values);
     Column expandAndRetrieve(size_t index) const;
 
@@ -134,6 +158,7 @@ protected:
     size_t m_sampleRate;
     size_t m_resolution;
     size_t m_yBinCount;
+    CompressionType m_compression;
     float m_minimum;
     float m_maximum;
     bool m_haveExtents;

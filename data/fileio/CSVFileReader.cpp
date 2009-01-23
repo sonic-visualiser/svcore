@@ -159,9 +159,11 @@ CSVFileReader::load() const
                     break;
 		
                 case CSVFormat::ThreeDimensionalModel:
-                    model3 = new EditableDenseThreeDimensionalModel(sampleRate,
-                                                                    windowSize,
-                                                                    list.size());
+                    model3 = new EditableDenseThreeDimensionalModel
+                        (sampleRate,
+                         windowSize,
+                         list.size(),
+                         EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
                     break;
                 }

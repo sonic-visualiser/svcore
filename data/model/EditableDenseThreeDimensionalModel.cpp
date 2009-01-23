@@ -28,10 +28,12 @@
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
                                                                        size_t resolution,
                                                                        size_t yBinCount,
+                                                                       CompressionType compression,
                                                                        bool notifyOnAdd) :
     m_sampleRate(sampleRate),
     m_resolution(resolution),
     m_yBinCount(yBinCount),
+    m_compression(compression),
     m_minimum(0.0),
     m_maximum(0.0),
     m_haveExtents(false),
@@ -73,7 +75,7 @@ EditableDenseThreeDimensionalModel::clone() const
 
     EditableDenseThreeDimensionalModel *model =
         new EditableDenseThreeDimensionalModel
-	(m_sampleRate, m_resolution, m_yBinCount);
+	(m_sampleRate, m_resolution, m_yBinCount, m_compression);
 
     model->m_minimum = m_minimum;
     model->m_maximum = m_maximum;
@@ -152,11 +154,11 @@ float
 EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
 {
     Column c = getColumn(index);
-    if (n < c.size()) return s.at(n);
+    if (n < c.size()) return c.at(n);
     return m_minimum;
 }
 
-static int given = 0, stored = 0;
+//static int given = 0, stored = 0;
 
 void
 EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
@@ -166,19 +168,36 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 
     //std::cout << "truncateAndStore(" << index << ", " << values.size() << ")" << std::endl;
 
+    // The default case is to store the entire column at m_data[index]
+    // and place 0 at m_trunc[index] to indicate that it has not been
+    // truncated.  We only do clever stuff if one of the clever-stuff
+    // tests works out.
+
     m_trunc[index] = 0;
-    if (index == 0 || values.size() != m_yBinCount) {
-        given += values.size();
-        stored += values.size();
+    if (index == 0 ||
+        m_compression == NoCompression ||
+        values.size() != m_yBinCount) {
+//        given += values.size();
+//        stored += values.size();
         m_data[index] = values;
         return;
     }
 
-    static int maxdist = 120;
+    // Maximum distance between a column and the one we refer to as
+    // the source of its truncated values.  Limited by having to fit
+    // in a signed char, but in any case small values are usually
+    // better
+    static int maxdist = 6;
 
-    bool known = false;
-    bool top = false;
+    bool known = false; // do we know whether to truncate at top or bottom?
+    bool top = false;   // if we do know, will we truncate at top?
 
+    // If the previous column is not truncated, then it is the only
+    // candidate for comparison.  If it is truncated, then the column
+    // that it refers to is the only candidate.  Either way, we only
+    // have one possible column to compare against here, and we are
+    // being careful to ensure it is not a truncated one (to avoid
+    // doing more work recursively when uncompressing).
     int tdist = 1;
     int ptrunc = m_trunc[index-1];
     if (ptrunc < 0) {
@@ -198,12 +217,14 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 
         int bcount = 0, tcount = 0;
         if (!known || !top) {
+            // count how many identical values there are at the bottom
             for (int i = 0; i < h; ++i) {
                 if (values.at(i) == p.at(i)) ++bcount;
                 else break;
             }
         }
         if (!known || top) {
+            // count how many identical values there are at the top
             for (int i = h; i > 0; --i) {
                 if (values.at(i-1) == p.at(i-1)) ++tcount;
                 else break;
@@ -211,41 +232,41 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
         }
         if (!known) top = (tcount > bcount);
 
-        int limit = h / 4;
+        int limit = h / 4; // don't bother unless we have at least this many
         if ((top ? tcount : bcount) > limit) {
         
             if (!top) {
+                // create a new column with h - bcount values from bcount up
                 Column tcol(h - bcount);
-                given += values.size();
-                stored += h - bcount;
+//                given += values.size();
+//                stored += h - bcount;
                 for (int i = bcount; i < h; ++i) {
                     tcol[i - bcount] = values.at(i);
                 }
                 m_data[index] = tcol;
                 m_trunc[index] = -tdist;
-                //std::cout << "bottom " << bcount << " as col at " << -tdist << std::endl;
                 return;
             } else {
+                // create a new column with h - tcount values from 0 up
                 Column tcol(h - tcount);
-                given += values.size();
-                stored += h - tcount;
+//                given += values.size();
+//                stored += h - tcount;
                 for (int i = 0; i < h - tcount; ++i) {
                     tcol[i] = values.at(i);
                 }
                 m_data[index] = tcol;
                 m_trunc[index] = tdist;
-                //std::cout << "top " << tcount << " as col at " << -tdist << std::endl;
                 return;
             }
         }
     }                
 
-    given += values.size();
-    stored += values.size();
-
+//    given += values.size();
+//    stored += values.size();
 //    std::cout << "given: " << given << ", stored: " << stored << " (" 
 //              << ((float(stored) / float(given)) * 100.f) << "%)" << std::endl;
 
+    // default case if nothing wacky worked out
     m_data[index] = values;
     return;
 }
@@ -253,6 +274,8 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
 {
+    // See comment above m_trunc declaration in header
+
     assert(index < m_data.size());
     Column c = m_data.at(index);
     if (index == 0) {
