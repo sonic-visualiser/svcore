@@ -125,6 +125,10 @@ protected:
     typedef QVector<Column> ValueMatrix;
     ValueMatrix m_data;
 
+    std::vector<signed char> m_trunc; // +ve -> top is truncated, -ve -> bottom
+    void truncateAndStore(size_t index, const Column & values);
+    Column expandAndRetrieve(size_t index) const;
+
     std::vector<QString> m_binNames;
 
     size_t m_sampleRate;

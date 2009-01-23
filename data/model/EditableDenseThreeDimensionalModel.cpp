@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include <cmath>
+#include <cassert>
 
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
                                                                        size_t resolution,
@@ -68,6 +69,8 @@ EditableDenseThreeDimensionalModel::getEndFrame() const
 Model *
 EditableDenseThreeDimensionalModel::clone() const
 {
+    QMutexLocker locker(&m_mutex);
+
     EditableDenseThreeDimensionalModel *model =
         new EditableDenseThreeDimensionalModel
 	(m_sampleRate, m_resolution, m_yBinCount);
@@ -141,32 +144,141 @@ EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::getColumn(size_t index) const
 {
     QMutexLocker locker(&m_mutex);
-
-    Column result;
-
-    if (index < m_data.size()) {
-	result = m_data.at(index);
-    } else {
-	result.clear();
-    }
-
-    while (result.size() < m_yBinCount) result.push_back(m_minimum);
-    return result;
+    if (index >= m_data.size()) return Column();
+    return expandAndRetrieve(index);
 }
 
 float
 EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
 {
-    QMutexLocker locker(&m_mutex);
+    Column c = getColumn(index);
+    if (n < c.size()) return s.at(n);
+    return m_minimum;
+}
 
-    if (index < m_data.size()) {
-	const Column &s = m_data.at(index);
-//        std::cerr << "index " << index << ", n " << n << ", res " << m_resolution << ", size " << s.size()
-//                  << std::endl;
-	if (n < s.size()) return s.at(n);
+static int given = 0, stored = 0;
+
+void
+EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
+                                                     const Column &values)
+{
+    assert(index < m_data.size());
+
+    //std::cout << "truncateAndStore(" << index << ", " << values.size() << ")" << std::endl;
+
+    m_trunc[index] = 0;
+    if (index == 0 || values.size() != m_yBinCount) {
+        given += values.size();
+        stored += values.size();
+        m_data[index] = values;
+        return;
     }
 
-    return m_minimum;
+    static int maxdist = 120;
+
+    bool known = false;
+    bool top = false;
+
+    int tdist = 1;
+    int ptrunc = m_trunc[index-1];
+    if (ptrunc < 0) {
+        top = false;
+        known = true;
+        tdist = -ptrunc + 1;
+    } else if (ptrunc > 0) {
+        top = true;
+        known = true;
+        tdist = ptrunc + 1;
+    }
+
+    Column p = expandAndRetrieve(index - tdist);
+    int h = m_yBinCount;
+
+    if (p.size() == h && tdist <= maxdist) {
+
+        int bcount = 0, tcount = 0;
+        if (!known || !top) {
+            for (int i = 0; i < h; ++i) {
+                if (values.at(i) == p.at(i)) ++bcount;
+                else break;
+            }
+        }
+        if (!known || top) {
+            for (int i = h; i > 0; --i) {
+                if (values.at(i-1) == p.at(i-1)) ++tcount;
+                else break;
+            }
+        }
+        if (!known) top = (tcount > bcount);
+
+        int limit = h / 4;
+        if ((top ? tcount : bcount) > limit) {
+        
+            if (!top) {
+                Column tcol(h - bcount);
+                given += values.size();
+                stored += h - bcount;
+                for (int i = bcount; i < h; ++i) {
+                    tcol[i - bcount] = values.at(i);
+                }
+                m_data[index] = tcol;
+                m_trunc[index] = -tdist;
+                //std::cout << "bottom " << bcount << " as col at " << -tdist << std::endl;
+                return;
+            } else {
+                Column tcol(h - tcount);
+                given += values.size();
+                stored += h - tcount;
+                for (int i = 0; i < h - tcount; ++i) {
+                    tcol[i] = values.at(i);
+                }
+                m_data[index] = tcol;
+                m_trunc[index] = tdist;
+                //std::cout << "top " << tcount << " as col at " << -tdist << std::endl;
+                return;
+            }
+        }
+    }                
+
+    given += values.size();
+    stored += values.size();
+
+//    std::cout << "given: " << given << ", stored: " << stored << " (" 
+//              << ((float(stored) / float(given)) * 100.f) << "%)" << std::endl;
+
+    m_data[index] = values;
+    return;
+}
+
+EditableDenseThreeDimensionalModel::Column
+EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
+{
+    assert(index < m_data.size());
+    Column c = m_data.at(index);
+    if (index == 0) {
+        return c;
+    }
+    int trunc = (int)m_trunc[index];
+    if (trunc == 0) {
+        return c;
+    }
+    bool top = true;
+    int tdist = trunc;
+    if (trunc < 0) { top = false; tdist = -trunc; }
+    Column p = expandAndRetrieve(index - tdist);
+    if (p.size() != m_yBinCount) {
+        std::cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << std::endl;
+    }
+    if (top) {
+        for (int i = c.size(); i < p.size(); ++i) {
+            c.push_back(p.at(i));
+        }
+    } else {
+        for (int i = int(p.size()) - int(c.size()); i >= 0; --i) {
+            c.push_front(p.at(i));
+        }
+    }
+    return c;
 }
 
 void
@@ -177,11 +289,12 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 
     while (index >= m_data.size()) {
 	m_data.push_back(Column());
+        m_trunc.push_back(0);
     }
 
     bool allChange = false;
 
-    if (values.size() > m_yBinCount) m_yBinCount = values.size();
+//    if (values.size() > m_yBinCount) m_yBinCount = values.size();
 
     for (size_t i = 0; i < values.size(); ++i) {
         float value = values[i];
@@ -199,7 +312,9 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
         m_haveExtents = true;
     }
 
-    m_data[index] = values;
+    truncateAndStore(index, values);
+
+    assert(values == expandAndRetrieve(index));
 
     long windowStart = index;
     windowStart *= m_resolution;
@@ -253,6 +368,8 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 bool
 EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
+    QMutexLocker locker(&m_mutex);
+
     QVector<float> sample;
     QVector<int> n;
     
@@ -310,6 +427,7 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 QString
 EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) const
 {
+    QMutexLocker locker(&m_mutex);
     QString s;
     for (size_t i = 0; i < m_data.size(); ++i) {
         QStringList list;
@@ -326,6 +444,8 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
                                           QString indent,
                                           QString extraAttributes) const
 {
+    QMutexLocker locker(&m_mutex);
+
     // For historical reasons we read and write "resolution" as "windowSize"
 
     std::cerr << "EditableDenseThreeDimensionalModel::toXml" << std::endl;
