@@ -342,8 +342,9 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
         } else {
 
             EditableDenseThreeDimensionalModel *m =
-                new EditableDenseThreeDimensionalModel(sampleRate, hopSize,
-                                                       height, false);
+                new EditableDenseThreeDimensionalModel
+                (sampleRate, hopSize, height, 
+                 EditableDenseThreeDimensionalModel::NoCompression, false);
             
             EditableDenseThreeDimensionalModel::Column column;
 

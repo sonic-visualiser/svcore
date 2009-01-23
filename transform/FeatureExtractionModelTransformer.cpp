@@ -327,7 +327,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 
         EditableDenseThreeDimensionalModel *model =
             new EditableDenseThreeDimensionalModel
-            (modelRate, modelResolution, binCount, false);
+            (modelRate, modelResolution, binCount,
+             EditableDenseThreeDimensionalModel::BasicMultirateCompression,
+             false);
 
 	if (!m_descriptor->binNames.empty()) {
 	    std::vector<QString> names;
