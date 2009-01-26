@@ -19,6 +19,8 @@
 
 #include <QTextStream>
 #include <QStringList>
+#include <QReadLocker>
+#include <QWriteLocker>
 
 #include <iostream>
 
@@ -71,7 +73,7 @@ EditableDenseThreeDimensionalModel::getEndFrame() const
 Model *
 EditableDenseThreeDimensionalModel::clone() const
 {
-    QMutexLocker locker(&m_mutex);
+    QReadLocker locker(&m_lock);
 
     EditableDenseThreeDimensionalModel *model =
         new EditableDenseThreeDimensionalModel
@@ -145,7 +147,7 @@ EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::getColumn(size_t index) const
 {
-    QMutexLocker locker(&m_mutex);
+    QReadLocker locker(&m_lock);
     if (index >= m_data.size()) return Column();
     return expandAndRetrieve(index);
 }
@@ -308,7 +310,7 @@ void
 EditableDenseThreeDimensionalModel::setColumn(size_t index,
                                               const Column &values)
 {
-    QMutexLocker locker(&m_mutex);
+    QWriteLocker locker(&m_lock);
 
     while (index >= m_data.size()) {
 	m_data.push_back(Column());
@@ -391,7 +393,7 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 bool
 EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
-    QMutexLocker locker(&m_mutex);
+    QReadLocker locker(&m_lock);
 
     QVector<float> sample;
     QVector<int> n;
@@ -450,7 +452,7 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 QString
 EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) const
 {
-    QMutexLocker locker(&m_mutex);
+    QReadLocker locker(&m_lock);
     QString s;
     for (size_t i = 0; i < m_data.size(); ++i) {
         QStringList list;
@@ -467,7 +469,7 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
                                           QString indent,
                                           QString extraAttributes) const
 {
-    QMutexLocker locker(&m_mutex);
+    QReadLocker locker(&m_lock);
 
     // For historical reasons we read and write "resolution" as "windowSize"
 

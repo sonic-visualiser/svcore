@@ -18,6 +18,8 @@
 
 #include "DenseThreeDimensionalModel.h"
 
+#include <QReadWriteLock>
+
 #include <vector>
 
 class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
@@ -167,7 +169,7 @@ protected:
     long m_sinceLastNotifyMax;
     int m_completion;
 
-    mutable QMutex m_mutex;
+    mutable QReadWriteLock m_lock;
 };
 
 #endif
