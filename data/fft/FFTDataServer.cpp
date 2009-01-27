@@ -722,7 +722,7 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
 
     if ((recommendation & StorageAdviser::UseMemory) ||
         (recommendation & StorageAdviser::PreferMemory)) {
-//!!!        memoryCache = true;
+        memoryCache = true;
     }
 
     compactCache = canCompact &&
