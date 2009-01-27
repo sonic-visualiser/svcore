@@ -21,8 +21,13 @@
 #include "base/StorageAdviser.h"
 
 #include "FFTapi.h"
+#include "FFTFileCacheReader.h"
+#include "FFTFileCacheWriter.h"
+#include "FFTMemoryCache.h"
 
 #include <QMutex>
+#include <QReadWriteLock>
+#include <QReadLocker>
 #include <QWaitCondition>
 #include <QString>
 
@@ -31,7 +36,6 @@
 
 class DenseTimeValueModel;
 class Model;
-class FFTCache;
 
 class FFTDataServer
 {
@@ -140,33 +144,86 @@ private:
     size_t m_cacheWidthPower;
     size_t m_cacheWidthMask;
 
-    int m_lastUsedCache;
-    FFTCache *getCache(size_t x, size_t &col) {
-        col   = x & m_cacheWidthMask;
+    struct CacheBlock {
+        FFTMemoryCache *memoryCache;
+        typedef std::map<QThread *, FFTFileCacheReader *> ThreadReaderMap;
+        ThreadReaderMap fileCacheReader;
+        FFTFileCacheWriter *fileCacheWriter;
+        CacheBlock() : memoryCache(0), fileCacheWriter(0) { }
+        ~CacheBlock() {
+            delete memoryCache; 
+            while (!fileCacheReader.empty()) {
+                delete fileCacheReader.begin()->second;
+                fileCacheReader.erase(fileCacheReader.begin());
+            }
+            delete fileCacheWriter;
+        }
+    };
+
+    typedef std::vector<CacheBlock *> CacheVector;
+    CacheVector m_caches;
+    QReadWriteLock m_cacheVectorLock; // locks cache lookup, not use
+
+    FFTCacheReader *getCacheReader(size_t x, size_t &col) {
+        Profiler profiler("FFTDataServer::getCacheReader");
+        col = x & m_cacheWidthMask;
         int c = x >> m_cacheWidthPower;
-        // The only use of m_lastUsedCache without a lock is to
-        // establish whether a cache has been created at all (they're
-        // created on demand, but not destroyed until the server is).
-        if (c == m_lastUsedCache) return m_caches[c];
-        else return getCacheAux(c);
+        m_cacheVectorLock.lockForRead();
+        CacheBlock *cb(m_caches.at(c));
+        if (cb) {
+            if (cb->memoryCache) return cb->memoryCache;
+            if (cb->fileCacheWriter) {
+                QThread *me = QThread::currentThread();
+                CacheBlock::ThreadReaderMap &map = cb->fileCacheReader;
+                if (map.find(me) == map.end()) {
+                    m_cacheVectorLock.unlock();
+                    if (!makeCacheReader(c)) return 0;
+                    return getCacheReader(x, col);
+                }
+                FFTCacheReader *reader = cb->fileCacheReader.at(me);
+                m_cacheVectorLock.unlock();
+                return reader;
+            }
+            // if cb exists but cb->fileCacheWriter doesn't, creation
+            // must have failed: don't try again
+            m_cacheVectorLock.unlock();
+            return 0;
+        }
+        m_cacheVectorLock.unlock();
+        if (!makeCache(c)) return 0;
+        return getCacheReader(x, col);
     }
+    
+    FFTCacheWriter *getCacheWriter(size_t x, size_t &col) {
+        Profiler profiler("FFTDataServer::getCacheWriter");
+        col = x & m_cacheWidthMask;
+        int c = x >> m_cacheWidthPower;
+        {
+            QReadLocker locker(&m_cacheVectorLock);
+            CacheBlock *cb(m_caches.at(c));
+            if (cb) {
+                if (cb->memoryCache) return cb->memoryCache;
+                if (cb->fileCacheWriter) return cb->fileCacheWriter;
+                // if cb exists, creation must have failed: don't try again
+                return 0;
+            }
+        }
+        if (!makeCache(c)) return 0;
+        return getCacheWriter(x, col);
+    }
+
     bool haveCache(size_t x) {
         int c = x >> m_cacheWidthPower;
-        if (c == m_lastUsedCache) return true;
-        else return (m_caches[c] != 0);
+        return (m_caches[c] != 0);
     }
-
-    typedef std::vector<FFTCache *> CacheVector;
-    CacheVector m_caches;
     
-    typedef std::deque<int> IntQueue;
-    IntQueue m_dormantCaches;
-
+    bool makeCache(int c);
+    bool makeCacheReader(int c);
+    
     StorageAdviser::Criteria m_criteria;
 
     void getStorageAdvice(size_t w, size_t h, bool &memory, bool &compact);
         
-    FFTCache *getCacheAux(size_t c);
     QMutex m_writeMutex;
     QWaitCondition m_condition;
 
@@ -199,6 +256,7 @@ private:
 
     void deleteProcessingData();
     void fillColumn(size_t x, bool lockHeld);
+    void fillComplete();
 
     QString generateFileBasename() const;
     static QString generateFileBasename(const DenseTimeValueModel *model,

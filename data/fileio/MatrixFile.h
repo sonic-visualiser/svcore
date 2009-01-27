@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2009 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -30,7 +30,7 @@ class MatrixFile : public QObject
     Q_OBJECT
 
 public:
-    enum Mode { ReadOnly, ReadWrite };
+    enum Mode { ReadOnly, WriteOnly };
 
     /**
      * Construct a MatrixFile object reading from and/or writing to
@@ -39,23 +39,27 @@ public:
      *
      * If mode is ReadOnly, the file must exist and be readable.
      *
-     * If mode is ReadWrite and the file does not exist, it will be
-     * created.  If mode is ReadWrite and the file does exist, the
-     * existing file will be used and the mode will be reset to
-     * ReadOnly.  Call getMode() to check whether this has occurred
-     * after construction.
+     * If mode is WriteOnly, the file must not exist.
      *
      * cellSize specifies the size in bytes of the object type stored
      * in the matrix.  For example, use cellSize = sizeof(float) for a
      * matrix of floats.  The MatrixFile object doesn't care about the
      * objects themselves, it just deals with raw data of a given size.
      *
-     * If eagerCache is true, blocks from the file will be cached for
-     * read.  If eagerCache is false, only columns that have been set
-     * by calling setColumnAt on this MatrixFile (i.e. columns for
-     * which haveSetColumnAt returns true) will be cached.
+     * width and height specify the dimensions of the file.  These
+     * cannot be changed after construction.
+     *
+     * MatrixFiles are reference counted by name.  When the last
+     * MatrixFile with a given name is destroyed, the file is removed.
+     * These are temporary files; the normal usage is to have one
+     * MatrixFile of WriteOnly type creating the file and then
+     * persisting until all readers are complete.
+     *
+     * MatrixFile has no built-in cache and is not thread-safe.  Use a
+     * separate MatrixFile in each thread.
      */
-    MatrixFile(QString fileBase, Mode mode, size_t cellSize, bool eagerCache);
+    MatrixFile(QString fileBase, Mode mode, size_t cellSize,
+               size_t width, size_t height);
     virtual ~MatrixFile();
 
     Mode getMode() const { return m_mode; }
@@ -64,14 +68,11 @@ public:
     size_t getHeight() const { return m_height; }
     size_t getCellSize() const { return m_cellSize; }
     
-    void resize(size_t width, size_t height);
-    void reset();
+    void close(); // does not decrement ref count; that happens in dtor
 
-    bool haveSetColumnAt(size_t x) const { return m_columnBitset->get(x); }
+    bool haveSetColumnAt(size_t x) const;
     void getColumnAt(size_t x, void *data); // may throw FileReadFailed
     void setColumnAt(size_t x, const void *data);
-
-    void suspend();
 
 protected:
     int     m_fd;
@@ -83,41 +84,12 @@ protected:
     size_t  m_height;
     size_t  m_headerSize;
     QString m_fileName;
-    size_t  m_defaultCacheWidth;
-    size_t  m_prevX;
-
-    struct Cache {
-        size_t x;
-        size_t width;
-        char *data;
-    };
-
-    Cache m_cache;
-    bool  m_eagerCache;
-
-    bool getFromCache(size_t x, size_t ystart, size_t ycount, void *data);
-    void primeCache(size_t x, bool left);
-
-    void resume();
-
-    bool seekTo(size_t x, size_t y);
-
-    static FileReadThread *m_readThread;
-    int m_requestToken;
-
-    size_t m_requestingX;
-    size_t m_requestingWidth;
-    char *m_spareData;
 
     static std::map<QString, int> m_refcount;
-    static QMutex m_refcountMutex;
-    QMutex m_fdMutex;
-    QMutex m_cacheMutex;
+    static QMutex m_createMutex;
 
-    typedef std::map<QString, ResizeableBitset *> ResizeableBitsetMap;
-    static ResizeableBitsetMap m_columnBitsets;
-    static QMutex m_columnBitsetWriteMutex;
-    ResizeableBitset *m_columnBitset;
+    void initialise();
+    bool seekTo(size_t x, size_t y) const;
 };
 
 #endif

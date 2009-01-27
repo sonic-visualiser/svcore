@@ -17,12 +17,14 @@
 #include "system/System.h"
 
 #include <iostream>
+#include <cstdlib>
 
 //#define DEBUG_FFT_MEMORY_CACHE 1
 
-FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
-    m_width(0),
-    m_height(0),
+FFTMemoryCache::FFTMemoryCache(FFTCache::StorageType storageType,
+                               size_t width, size_t height) :
+    m_width(width),
+    m_height(height),
     m_magnitude(0),
     m_phase(0),
     m_fmagnitude(0),
@@ -34,8 +36,10 @@ FFTMemoryCache::FFTMemoryCache(StorageType storageType) :
 {
 #ifdef DEBUG_FFT_MEMORY_CACHE
     std::cerr << "FFTMemoryCache[" << this << "]::FFTMemoryCache (type "
-              << m_storageType << ")" << std::endl;
+              << m_storageType << "), size " << m_width << "x" << m_height << std::endl;
 #endif
+
+    initialise();
 }
 
 FFTMemoryCache::~FFTMemoryCache()
@@ -63,25 +67,25 @@ FFTMemoryCache::~FFTMemoryCache()
 }
 
 void
-FFTMemoryCache::resize(size_t width, size_t height)
+FFTMemoryCache::initialise()
 {
-    Profiler profiler("FFTMemoryCache::resize");
+    Profiler profiler("FFTMemoryCache::initialise");
+
+    size_t width = m_width, height = m_height;
 
 #ifdef DEBUG_FFT_MEMORY_CACHE
-    std::cerr << "FFTMemoryCache[" << this << "]::resize(" << width << "x" << height << " = " << width*height << ")" << std::endl;
+    std::cerr << "FFTMemoryCache[" << this << "]::initialise(" << width << "x" << height << " = " << width*height << ")" << std::endl;
 #endif
-    
-    if (m_width == width && m_height == height) return;
 
-    if (m_storageType == Compact) {
-        resize(m_magnitude, width, height);
-        resize(m_phase, width, height);
-    } else if (m_storageType == Polar) {
-        resize(m_fmagnitude, width, height);
-        resize(m_fphase, width, height);
+    if (m_storageType == FFTCache::Compact) {
+        initialise(m_magnitude);
+        initialise(m_phase);
+    } else if (m_storageType == FFTCache::Polar) {
+        initialise(m_fmagnitude);
+        initialise(m_fphase);
     } else {
-        resize(m_freal, width, height);
-        resize(m_fimag, width, height);
+        initialise(m_freal);
+        initialise(m_fimag);
     }
 
     m_colset.resize(width);
@@ -97,89 +101,32 @@ FFTMemoryCache::resize(size_t width, size_t height)
 }
 
 void
-FFTMemoryCache::resize(uint16_t **&array, size_t width, size_t height)
+FFTMemoryCache::initialise(uint16_t **&array)
 {
-    for (size_t i = width; i < m_width; ++i) {
-	free(array[i]);
-    }
+    array = (uint16_t **)malloc(m_width * sizeof(uint16_t *));
+    if (!array) throw std::bad_alloc();
+    MUNLOCK(array, m_width * sizeof(uint16_t *));
 
-    if (width != m_width) {
-	array = (uint16_t **)realloc(array, width * sizeof(uint16_t *));
-	if (!array) throw std::bad_alloc();
-	MUNLOCK(array, width * sizeof(uint16_t *));
-    }
-
-    for (size_t i = m_width; i < width; ++i) {
-	array[i] = 0;
-    }
-
-    for (size_t i = 0; i < width; ++i) {
-	array[i] = (uint16_t *)realloc(array[i], height * sizeof(uint16_t));
+    for (size_t i = 0; i < m_width; ++i) {
+	array[i] = (uint16_t *)malloc(m_height * sizeof(uint16_t));
 	if (!array[i]) throw std::bad_alloc();
-	MUNLOCK(array[i], height * sizeof(uint16_t));
+	MUNLOCK(array[i], m_height * sizeof(uint16_t));
     }
 }
 
 void
-FFTMemoryCache::resize(float **&array, size_t width, size_t height)
+FFTMemoryCache::initialise(float **&array)
 {
-    for (size_t i = width; i < m_width; ++i) {
-	free(array[i]);
-    }
+    array = (float **)malloc(m_width * sizeof(float *));
+    if (!array) throw std::bad_alloc();
+    MUNLOCK(array, m_width * sizeof(float *));
 
-    if (width != m_width) {
-	array = (float **)realloc(array, width * sizeof(float *));
-	if (!array) throw std::bad_alloc();
-	MUNLOCK(array, width * sizeof(float *));
-    }
-
-    for (size_t i = m_width; i < width; ++i) {
-	array[i] = 0;
-    }
-
-    for (size_t i = 0; i < width; ++i) {
-	array[i] = (float *)realloc(array[i], height * sizeof(float));
+    for (size_t i = 0; i < m_width; ++i) {
+	array[i] = (float *)malloc(m_height * sizeof(float));
 	if (!array[i]) throw std::bad_alloc();
-	MUNLOCK(array[i], height * sizeof(float));
+	MUNLOCK(array[i], m_height * sizeof(float));
     }
 }
-
-void
-FFTMemoryCache::reset()
-{
-    switch (m_storageType) {
-
-    case Compact:
-        for (size_t x = 0; x < m_width; ++x) {
-            for (size_t y = 0; y < m_height; ++y) {
-                m_magnitude[x][y] = 0;
-                m_phase[x][y] = 0;
-            }
-            m_factor[x] = 1.0;
-        }
-        break;
-        
-    case Polar:
-        for (size_t x = 0; x < m_width; ++x) {
-            for (size_t y = 0; y < m_height; ++y) {
-                m_fmagnitude[x][y] = 0;
-                m_fphase[x][y] = 0;
-            }
-            m_factor[x] = 1.0;
-        }
-        break;
-
-    case Rectangular:
-        for (size_t x = 0; x < m_width; ++x) {
-            for (size_t y = 0; y < m_height; ++y) {
-                m_freal[x][y] = 0;
-                m_fimag[x][y] = 0;
-            }
-            m_factor[x] = 1.0;
-        }
-        break;        
-    }
-}	    
 
 void
 FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
@@ -188,7 +135,7 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 
     setNormalizationFactor(x, factor);
 
-    if (m_storageType == Rectangular) {
+    if (m_storageType == FFTCache::Rectangular) {
         Profiler subprof("FFTMemoryCache::setColumnAt: polar to cart");
         for (size_t y = 0; y < m_height; ++y) {
             m_freal[x][y] = mags[y] * cosf(phases[y]);
@@ -201,7 +148,9 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
         }
     }
 
+    m_colsetMutex.lock();
     m_colset.set(x);
+    m_colsetMutex.unlock();
 }
 
 void
@@ -213,7 +162,7 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
 
     switch (m_storageType) {
 
-    case Rectangular:
+    case FFTCache::Rectangular:
         for (size_t y = 0; y < m_height; ++y) {
             m_freal[x][y] = reals[y];
             m_fimag[x][y] = imags[y];
@@ -222,8 +171,8 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
         }
         break;
 
-    case Compact:
-    case Polar:
+    case FFTCache::Compact:
+    case FFTCache::Polar:
     {
         Profiler subprof("FFTMemoryCache::setColumnAt: cart to polar");
         for (size_t y = 0; y < m_height; ++y) {
@@ -237,26 +186,28 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     }
     };
 
-    if (m_storageType == Rectangular) {
+    if (m_storageType == FFTCache::Rectangular) {
         m_factor[x] = max;
+        m_colsetMutex.lock();
         m_colset.set(x);
+        m_colsetMutex.unlock();
     } else {
         setColumnAt(x, reals, imags, max);
     }
 }
 
 size_t
-FFTMemoryCache::getCacheSize(size_t width, size_t height, StorageType type)
+FFTMemoryCache::getCacheSize(size_t width, size_t height, FFTCache::StorageType type)
 {
     size_t sz = 0;
 
     switch (type) {
 
-    case Compact:
+    case FFTCache::Compact:
         sz = (height * 2 + 1) * width * sizeof(uint16_t);
 
-    case Polar:
-    case Rectangular:
+    case FFTCache::Polar:
+    case FFTCache::Rectangular:
         sz = (height * 2 + 1) * width * sizeof(float);
     }
 

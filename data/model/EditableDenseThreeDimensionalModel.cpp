@@ -291,15 +291,16 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
     int tdist = trunc;
     if (trunc < 0) { top = false; tdist = -trunc; }
     Column p = expandAndRetrieve(index - tdist);
-    if (p.size() != m_yBinCount) {
+    int psize = p.size(), csize = c.size();
+    if (psize != m_yBinCount) {
         std::cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << std::endl;
     }
     if (top) {
-        for (int i = c.size(); i < p.size(); ++i) {
+        for (int i = csize; i < psize; ++i) {
             c.push_back(p.at(i));
         }
     } else {
-        for (int i = int(p.size()) - int(c.size()); i >= 0; --i) {
+        for (int i = psize - csize - 1; i >= 0; --i) {
             c.push_front(p.at(i));
         }
     }
