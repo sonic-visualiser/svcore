@@ -16,10 +16,13 @@
 #ifndef _FFT_MEMORY_CACHE_H_
 #define _FFT_MEMORY_CACHE_H_
 
-#include "FFTCache.h"
-
+#include "FFTCacheReader.h"
+#include "FFTCacheWriter.h"
+#include "FFTCacheStorageType.h"
 #include "base/ResizeableBitset.h"
 #include "base/Profiler.h"
+
+#include <QMutex>
 
 /**
  * In-memory FFT cache.  For this we want to cache magnitude with
@@ -40,20 +43,18 @@
  * set appropriately.
  */
 
-class FFTMemoryCache : public FFTCache
+class FFTMemoryCache : public FFTCacheReader, public FFTCacheWriter
 {
 public:
-    FFTMemoryCache(StorageType storageType); // of size zero, call resize() before using
-    virtual ~FFTMemoryCache();
+    FFTMemoryCache(FFTCache::StorageType storageType,
+                   size_t width, size_t height);
+    ~FFTMemoryCache();
 	
-    virtual size_t getWidth() const { return m_width; }
-    virtual size_t getHeight() const { return m_height; }
+    size_t getWidth() const { return m_width; }
+    size_t getHeight() const { return m_height; }
 	
-    virtual void resize(size_t width, size_t height);
-    virtual void reset(); // zero-fill or 1-fill as appropriate without changing size
-    
-    virtual float getMagnitudeAt(size_t x, size_t y) const {
-        if (m_storageType == Rectangular) {
+    float getMagnitudeAt(size_t x, size_t y) const {
+        if (m_storageType == FFTCache::Rectangular) {
             Profiler profiler("FFTMemoryCache::getMagnitudeAt: cart to polar");
             return sqrtf(m_freal[x][y] * m_freal[x][y] +
                          m_fimag[x][y] * m_fimag[x][y]);
@@ -62,21 +63,21 @@ public:
         }
     }
     
-    virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const {
-        if (m_storageType == Rectangular) return getMagnitudeAt(x, y) / m_factor[x];
-        else if (m_storageType == Polar) return m_fmagnitude[x][y];
+    float getNormalizedMagnitudeAt(size_t x, size_t y) const {
+        if (m_storageType == FFTCache::Rectangular) return getMagnitudeAt(x, y) / m_factor[x];
+        else if (m_storageType == FFTCache::Polar) return m_fmagnitude[x][y];
         else return float(m_magnitude[x][y]) / 65535.0;
     }
     
-    virtual float getMaximumMagnitudeAt(size_t x) const {
+    float getMaximumMagnitudeAt(size_t x) const {
         return m_factor[x];
     }
     
-    virtual float getPhaseAt(size_t x, size_t y) const {
-        if (m_storageType == Rectangular) {
+    float getPhaseAt(size_t x, size_t y) const {
+        if (m_storageType == FFTCache::Rectangular) {
             Profiler profiler("FFTMemoryCache::getValuesAt: cart to polar");
             return atan2f(m_fimag[x][y], m_freal[x][y]);
-        } else if (m_storageType == Polar) {
+        } else if (m_storageType == FFTCache::Polar) {
             return m_fphase[x][y];
         } else {
             int16_t i = (int16_t)m_phase[x][y];
@@ -84,8 +85,8 @@ public:
         }
     }
     
-    virtual void getValuesAt(size_t x, size_t y, float &real, float &imag) const {
-        if (m_storageType == Rectangular) {
+    void getValuesAt(size_t x, size_t y, float &real, float &imag) const {
+        if (m_storageType == FFTCache::Rectangular) {
             real = m_freal[x][y];
             imag = m_fimag[x][y];
         } else {
@@ -97,15 +98,15 @@ public:
         }
     }
 
-    virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
+    void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
     {
-        if (m_storageType == Rectangular) {
+        if (m_storageType == FFTCache::Rectangular) {
             for (size_t i = 0; i < count; ++i) {
                 size_t y = i * step + minbin;
                 values[i] = sqrtf(m_freal[x][y] * m_freal[x][y] +
                                   m_fimag[x][y] * m_fimag[x][y]);
             }
-        } else if (m_storageType == Polar) {
+        } else if (m_storageType == FFTCache::Polar) {
             for (size_t i = 0; i < count; ++i) {
                 size_t y = i * step + minbin;
                 values[i] = m_fmagnitude[x][y] * m_factor[x];
@@ -118,18 +119,23 @@ public:
         }
     }
 
-    virtual bool haveSetColumnAt(size_t x) const {
-        return m_colset.get(x);
+    bool haveSetColumnAt(size_t x) const {
+        m_colsetMutex.lock();
+        bool have = m_colset.get(x);
+        m_colsetMutex.unlock();
+        return have;
     }
 
-    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor);
+    void setColumnAt(size_t x, float *mags, float *phases, float factor);
 
-    virtual void setColumnAt(size_t x, float *reals, float *imags);
+    void setColumnAt(size_t x, float *reals, float *imags);
 
-    static size_t getCacheSize(size_t width, size_t height, StorageType type);
+    void allColumnsWritten() { } 
 
-    virtual StorageType getStorageType() { return m_storageType; }
-    virtual Type getType() { return MemoryCache; }
+    static size_t getCacheSize(size_t width, size_t height,
+                               FFTCache::StorageType type);
+
+    FFTCache::StorageType getStorageType() const { return m_storageType; }
 
 private:
     size_t m_width;
@@ -141,35 +147,38 @@ private:
     float **m_freal;
     float **m_fimag;
     float *m_factor;
-    StorageType m_storageType;
+    FFTCache::StorageType m_storageType;
     ResizeableBitset m_colset;
+    mutable QMutex m_colsetMutex;
 
-    virtual void setNormalizationFactor(size_t x, float factor) {
+    void initialise();
+
+    void setNormalizationFactor(size_t x, float factor) {
         if (x < m_width) m_factor[x] = factor;
     }
     
-    virtual void setMagnitudeAt(size_t x, size_t y, float mag) {
+    void setMagnitudeAt(size_t x, size_t y, float mag) {
          // norm factor must already be set
         setNormalizedMagnitudeAt(x, y, mag / m_factor[x]);
     }
     
-    virtual void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) {
+    void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) {
         if (x < m_width && y < m_height) {
-            if (m_storageType == Polar) m_fmagnitude[x][y] = norm;
+            if (m_storageType == FFTCache::Polar) m_fmagnitude[x][y] = norm;
             else m_magnitude[x][y] = uint16_t(norm * 65535.0);
         }
     }
     
-    virtual void setPhaseAt(size_t x, size_t y, float phase) {
+    void setPhaseAt(size_t x, size_t y, float phase) {
         // phase in range -pi -> pi
         if (x < m_width && y < m_height) {
-            if (m_storageType == Polar) m_fphase[x][y] = phase;
+            if (m_storageType == FFTCache::Polar) m_fphase[x][y] = phase;
             else m_phase[x][y] = uint16_t(int16_t((phase * 32767) / M_PI));
         }
     }
 
-    void resize(uint16_t **&, size_t, size_t);
-    void resize(float **&, size_t, size_t);
+    void initialise(uint16_t **&);
+    void initialise(float **&);
 };
 
 

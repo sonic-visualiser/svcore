@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2009 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,56 +13,29 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FFT_CACHE_H_
-#define _FFT_CACHE_H_
+#ifndef _FFT_CACHE_READER_H_
+#define _FFT_CACHE_READER_H_
 
-#include <cstdlib>
-#include <cmath>
+#include "FFTCacheStorageType.h"
+#include <stddef.h>
 
-#include <stdint.h>
-
-class FFTCache
+class FFTCacheReader
 {
 public:
-    virtual ~FFTCache() { }
-
     virtual size_t getWidth() const = 0;
     virtual size_t getHeight() const = 0;
-	
-    virtual void resize(size_t width, size_t height) = 0;
-    virtual void reset() = 0; // zero-fill or 1-fill as appropriate without changing size
 	
     virtual float getMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
     virtual float getMaximumMagnitudeAt(size_t x) const = 0;
     virtual float getPhaseAt(size_t x, size_t y) const = 0;
 
-    virtual void getValuesAt(size_t x, size_t y, float &real, float &imaginary) const = 0;
+    virtual void getValuesAt(size_t x, size_t y, float &real, float &imag) const = 0;
     virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const = 0;
 
     virtual bool haveSetColumnAt(size_t x) const = 0;
 
-    // may modify argument arrays
-    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
-
-    // may modify argument arrays
-    virtual void setColumnAt(size_t x, float *reals, float *imags) = 0;
-
-    virtual void suspend() { }
-
-    enum StorageType {
-        Compact, // 16 bits normalized polar
-        Rectangular, // floating point real+imag
-        Polar // floating point mag+phase
-    };
-    virtual StorageType getStorageType() = 0;
-
-    enum Type { MemoryCache, FileCache };
-    virtual Type getType() = 0;
-
-protected:
-    FFTCache() { }
+    virtual FFTCache::StorageType getStorageType() const = 0;
 };
-
 
 #endif

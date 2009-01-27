@@ -16,9 +16,12 @@ MOC_DIR = tmp_moc
 
 # Input
 HEADERS += fft/FFTapi.h \
-           fft/FFTCache.h \
+           fft/FFTCacheReader.h \
+           fft/FFTCacheStorageType.h \
+           fft/FFTCacheWriter.h \
            fft/FFTDataServer.h \
-           fft/FFTFileCache.h \
+           fft/FFTFileCacheReader.h \
+           fft/FFTFileCacheWriter.h \
            fft/FFTMemoryCache.h \
            fileio/AudioFileReader.h \
            fileio/AudioFileReaderFactory.h \
@@ -73,7 +76,8 @@ HEADERS += fft/FFTapi.h \
            osc/OSCQueue.h 
 SOURCES += fft/FFTapi.cpp \
            fft/FFTDataServer.cpp \
-           fft/FFTFileCache.cpp \
+           fft/FFTFileCacheReader.cpp \
+           fft/FFTFileCacheWriter.cpp \
            fft/FFTMemoryCache.cpp \
            fileio/AudioFileReader.cpp \
            fileio/AudioFileReaderFactory.cpp \
