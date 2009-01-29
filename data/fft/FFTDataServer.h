@@ -180,7 +180,7 @@ private:
                     if (!makeCacheReader(c)) return 0;
                     return getCacheReader(x, col);
                 }
-                FFTCacheReader *reader = cb->fileCacheReader.at(me);
+                FFTCacheReader *reader = cb->fileCacheReader[me];
                 m_cacheVectorLock.unlock();
                 return reader;
             }
