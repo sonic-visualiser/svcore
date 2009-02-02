@@ -45,7 +45,13 @@ StorageAdviser::recommend(Criteria criteria,
         return m_baseRecommendation; // for now
     }
 
-    QString path = TempDirectory::getInstance()->getPath();
+    QString path;
+    try {
+        path = TempDirectory::getInstance()->getPath();
+    } catch (std::exception e) {
+        std::cerr << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << std::endl;
+        return Recommendation(UseMemory | ConserveSpace);
+    }
     int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
     int memoryFree, memoryTotal;
     GetRealMemoryMBAvailable(memoryFree, memoryTotal);
