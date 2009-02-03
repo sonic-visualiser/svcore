@@ -938,6 +938,7 @@ RDFImporter::identifyDocumentType(QString url)
     
     SimpleSPARQLQuery::ResultList r = q.execute();
     if (!q.isOK()) {
+        SimpleSPARQLQuery::closeSingleSource(url);
         return NotRDF;
     }
 
@@ -986,6 +987,8 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
+    SimpleSPARQLQuery::closeSingleSource(url);
+
     if (haveAudio) {
         if (haveAnnotations) {
             return AudioRefAndAnnotations;
@@ -1000,7 +1003,7 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
-    SimpleSPARQLQuery::closeSingleSource(url);
+    return OtherRDFDocument;
 }
 
 void
