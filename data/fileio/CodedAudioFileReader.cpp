@@ -269,7 +269,6 @@ CodedAudioFileReader::finishDecodeCache()
     }
 
     if (m_cacheWriteBufferIndex > 0) {
-        //!!! check for return value! out of disk space, etc!
         pushBuffer(m_cacheWriteBuffer,
                    m_cacheWriteBufferIndex / m_channelCount,
                    true);
@@ -328,8 +327,11 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
-        //!!! check for return value! out of disk space, etc!
-        sf_writef_float(m_cacheFileWritePtr, buffer, sz);
+        if (sf_writef_float(m_cacheFileWritePtr, buffer, sz) < sz) {
+            sf_close(m_cacheFileWritePtr);
+            m_cacheFileWritePtr = 0;
+            throw InsufficientDiscSpace(TempDirectory::getInstance()->getPath());
+        }
         break;
 
     case CacheInMemory:

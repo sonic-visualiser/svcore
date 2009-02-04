@@ -100,11 +100,25 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
               << ", only have " << available << std::endl;
 }
 
+InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
+    m_directory(directory),
+    m_required(0),
+    m_available(0)
+{
+    std::cerr << "ERROR: Not enough disc space available in "
+              << directory.toStdString() << std::endl;
+}
+
 const char *
 InsufficientDiscSpace::what() const throw()
 {
-    return QString("Not enough space available in \"%1\": need %2, have %3")
-        .arg(m_directory).arg(m_required).arg(m_available).toLocal8Bit().data();
+    if (m_required > 0) {
+        return QString("Not enough space available in \"%1\": need %2, have %3")
+            .arg(m_directory).arg(m_required).arg(m_available).toLocal8Bit().data();
+    } else {
+        return QString("Not enough space available in \"%1\"")
+            .arg(m_directory).toLocal8Bit().data();
+    }
 }
 
 AllocationFailed::AllocationFailed(QString purpose) throw() :
