@@ -333,10 +333,12 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
         break;
 
     case CacheInMemory:
+        m_dataLock.lockForWrite();
         for (size_t s = 0; s < count; ++s) {
-            m_data.push_back(buffer[count]);
+            m_data.push_back(buffer[s]);
         }
 	MUNLOCK_SAMPLEBLOCK(m_data);
+        m_dataLock.unlock();
         break;
     }
 }
@@ -345,8 +347,9 @@ void
 CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
                                            SampleBlock &frames) const
 {
-    //!!! we want to ensure this doesn't require a lock -- at the
-    // moment it does need one, but it doesn't have one...
+    // Lock is only required in CacheInMemory mode (the cache file
+    // reader is expected to be thread safe and manage its own
+    // locking)
 
     if (!m_initialised) {
         std::cerr << "CodedAudioFileReader::getInterleavedFrames: not initialised" << std::endl;
@@ -366,16 +369,17 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
         frames.clear();
         if (!isOK()) return;
         if (count == 0) return;
+        frames.reserve(count * m_channelCount);
 
-        // slownessabounds
+        size_t idx = start * m_channelCount;
+        size_t i = 0;
 
-        for (size_t i = start; i < start + count; ++i) {
-            for (size_t ch = 0; ch < m_channelCount; ++ch) {
-                size_t index = i * m_channelCount + ch;
-                if (index >= m_data.size()) return;
-                frames.push_back(m_data[index]);
-            }
+        m_dataLock.lockForRead();
+        while (i < count * m_channelCount && idx < m_data.size()) {
+            frames.push_back(m_data[idx]);
+            ++idx;
         }
+        m_dataLock.unlock();
     }
     }
 }
