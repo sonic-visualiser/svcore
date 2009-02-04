@@ -20,6 +20,7 @@
 
 #include <sndfile.h>
 #include <QMutex>
+#include <QReadWriteLock>
 
 class WavFileReader;
 class Serialiser;
@@ -65,6 +66,7 @@ protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
     SampleBlock m_data;
+    mutable QReadWriteLock m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;
     size_t m_fileRate;
