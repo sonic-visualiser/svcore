@@ -50,10 +50,15 @@ protected:
     CodedAudioFileReader(CacheMode cacheMode, size_t targetRate);
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
+
+    // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, size_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, size_t nframes);
     void addSamplesToDecodeCache(const SampleBlock &interleaved);
+
+    // may throw InsufficientDiscSpace:
     void finishDecodeCache();
+
     bool isDecodeCacheInitialised() const { return m_initialised; }
 
     void startSerialised(QString id);
