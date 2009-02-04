@@ -209,7 +209,7 @@ MatrixFile::initialise()
     }
 
     if (::lseek(m_fd, 0, SEEK_SET) < 0) {
-        ::perror("ERROR: MatrixFile::resize: Seek to write header failed");
+        ::perror("ERROR: MatrixFile::initialise: Seek to write header failed");
         throw FileOperationFailed(m_fileName, "lseek");
     }
 
@@ -217,7 +217,7 @@ MatrixFile::initialise()
     header[0] = m_width;
     header[1] = m_height;
     if (::write(m_fd, header, 2 * sizeof(size_t)) != 2 * sizeof(size_t)) {
-        ::perror("ERROR: MatrixFile::resize: Failed to write header");
+        ::perror("ERROR: MatrixFile::initialise: Failed to write header");
         throw FileOperationFailed(m_fileName, "write");
     }
 
@@ -226,7 +226,7 @@ MatrixFile::initialise()
     }
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::resize(" << m_width << ", " << m_height << "): storage "
+    std::cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): storage "
               << (m_headerSize + m_width * m_height * m_cellSize + m_width) << std::endl;
 
     std::cerr << "MatrixFile: Total storage " << totalStorage/1024 << "K" << std::endl;
