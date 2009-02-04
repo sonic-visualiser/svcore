@@ -20,6 +20,8 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
     m_source(source),
     m_resolution(columnsPerPeak)
 {
+    m_coverage.resize(1); // otherwise it is simply invalid
+
     m_cache = new EditableDenseThreeDimensionalModel
         (source->getSampleRate(),
          getResolution(),
@@ -29,7 +31,7 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
 
     connect(source, SIGNAL(modelChanged()),
             this, SLOT(sourceModelChanged()));
-    connect(source, SIGNAL(modelAboutToBeDeleted()),
+    connect(source, SIGNAL(aboutToBeDeleted()),
             this, SLOT(sourceModelAboutToBeDeleted()));
 
 }
@@ -72,7 +74,14 @@ void
 Dense3DModelPeakCache::sourceModelChanged()
 {
     if (!m_source) return;
-    m_coverage.resize(getWidth());
+    if (m_coverage.size() > 0) {
+        // The last peak may have come from an incomplete read, which
+        // may since have been filled, so reset it
+        m_coverage.reset(m_coverage.size()-1);
+    }
+    if (getWidth() > m_coverage.size()) {
+        m_coverage.resize(getWidth()); // clears all bits, which is OK with us
+    }
 }
 
 void
@@ -84,12 +93,14 @@ Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 bool
 Dense3DModelPeakCache::haveColumn(size_t column) const
 {
-    return m_coverage.get(column);
+    return column < m_coverage.size() && m_coverage.get(column);
 }
 
 void
 Dense3DModelPeakCache::fillColumn(size_t column) const
 {
+    if (column >= m_coverage.size()) m_coverage.resize(column + 1);
+
     Column peak;
     for (int i = 0; i < m_resolution; ++i) {
         Column here = m_source->getColumn(column * m_resolution + i);
@@ -101,6 +112,7 @@ Dense3DModelPeakCache::fillColumn(size_t column) const
             }
         }
     }
+
     m_cache->setColumn(column, peak);
     m_coverage.set(column);
 }

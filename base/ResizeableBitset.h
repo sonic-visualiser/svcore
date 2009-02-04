@@ -24,7 +24,7 @@ class ResizeableBitset {
 public:
     ResizeableBitset() : m_bits(0) {
     }
-    ResizeableBitset(size_t size) : m_bits(new std::vector<uint8_t>) {
+    ResizeableBitset(size_t size) : m_bits(new std::vector<uint8_t>), m_size(size) {
         m_bits->assign((size >> 3) + 1, 0);
     }
     ResizeableBitset(const ResizeableBitset &b) {
@@ -46,6 +46,7 @@ public:
             m_bits = new std::vector<uint8_t>;
         }
         m_bits->assign((bits >> 3) + 1, 0);
+        m_size = bits;
     }
     
     bool get(size_t column) const {
@@ -63,9 +64,14 @@ public:
     void copy(size_t source, size_t dest) {
         get(source) ? set(dest) : reset(dest);
     }
+
+    size_t size() const {
+        return m_size;
+    }
     
 private:
     std::vector<uint8_t> *m_bits;
+    size_t m_size;
 };
 
 
