@@ -49,6 +49,7 @@ HEADERS += fft/FFTapi.h \
            fileio/WavFileWriter.h \
            model/AggregateWaveModel.h \
            model/AlignmentModel.h \
+           model/Dense3DModelPeakCache.h \
            model/DenseThreeDimensionalModel.h \
            model/DenseTimeValueModel.h \
            model/EditableDenseThreeDimensionalModel.h \
@@ -103,6 +104,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/WavFileWriter.cpp \
            model/AggregateWaveModel.cpp \
            model/AlignmentModel.cpp \
+           model/Dense3DModelPeakCache.cpp \
            model/DenseTimeValueModel.cpp \
            model/EditableDenseThreeDimensionalModel.cpp \
            model/FFTModel.cpp \
