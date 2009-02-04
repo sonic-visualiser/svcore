@@ -171,7 +171,10 @@ private:
         m_cacheVectorLock.lockForRead();
         CacheBlock *cb(m_caches.at(c));
         if (cb) {
-            if (cb->memoryCache) return cb->memoryCache;
+            if (cb->memoryCache) {
+                m_cacheVectorLock.unlock();
+                return cb->memoryCache;
+            }
             if (cb->fileCacheWriter) {
                 QThread *me = QThread::currentThread();
                 CacheBlock::ThreadReaderMap &map = cb->fileCacheReader;
