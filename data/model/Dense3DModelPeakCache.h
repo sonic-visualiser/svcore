@@ -22,11 +22,33 @@
 
 class Dense3DModelPeakCache : public DenseThreeDimensionalModel
 {
+    Q_OBJECT
+
 public:
     Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
                           size_t columnsPerPeak);
     ~Dense3DModelPeakCache();
 
+    virtual bool isOK() const {
+        return m_source && m_source->isOK(); 
+    }
+
+    virtual size_t getSampleRate() const {
+        return m_source->getSampleRate();
+    }
+
+    virtual size_t getStartFrame() const {
+        return m_source->getStartFrame();
+    }
+
+    virtual size_t getEndFrame() const {
+        return m_source->getEndFrame();
+    }
+
+    virtual Model *clone() const {
+        return new Dense3DModelPeakCache(m_source, m_resolution);
+    }
+    
     virtual size_t getResolution() const {
         return m_source->getResolution() * m_resolution;
     }

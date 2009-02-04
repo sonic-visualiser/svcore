@@ -156,6 +156,7 @@ MatrixFile::~MatrixFile()
         if (::close(m_fd) < 0) {
             ::perror("MatrixFile::~MatrixFile: close failed");
         }
+        openCount --;
     }
 
     QMutexLocker locker(&m_createMutex);
@@ -176,7 +177,6 @@ MatrixFile::~MatrixFile()
         totalStorage -= (m_headerSize + (m_width * m_height * m_cellSize) + m_width);
     }
     totalCount --;
-    openCount --;
 
 #ifdef DEBUG_MATRIX_FILE
     std::cerr << "MatrixFile[" << m_fd << "]::~MatrixFile: " << std::endl;
