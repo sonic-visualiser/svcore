@@ -15,6 +15,8 @@
 
 #include "Dense3DModelPeakCache.h"
 
+#include "base/Profiler.h"
+
 Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
 					     size_t columnsPerPeak) :
     m_source(source),
@@ -57,6 +59,7 @@ Dense3DModelPeakCache::isColumnAvailable(size_t column) const
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(size_t column) const
 {
+    Profiler profiler("Dense3DModelPeakCache::getColumn");
     if (!m_source) return Column();
     if (!haveColumn(column)) fillColumn(column);
     return m_cache->getColumn(column);
@@ -97,7 +100,13 @@ Dense3DModelPeakCache::haveColumn(size_t column) const
 void
 Dense3DModelPeakCache::fillColumn(size_t column) const
 {
-    if (column >= m_coverage.size()) m_coverage.resize(column + 1);
+    Profiler profiler("Dense3DModelPeakCache::fillColumn");
+
+    if (column >= m_coverage.size()) {
+        // see note in sourceModelChanged
+        if (m_coverage.size() > 0) m_coverage.reset(m_coverage.size()-1);
+        m_coverage.resize(column + 1);
+    }
 
     Column peak;
     for (int i = 0; i < m_resolution; ++i) {

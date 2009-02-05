@@ -85,13 +85,13 @@ public:
         return m_server->isColumnReady(x << m_xshift);
     }
 
-    inline float getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    inline float getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getNormalizedMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    inline float getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getPhasesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
 
@@ -157,8 +157,8 @@ public:
         MajorPitchAdaptivePeaks  /// Bigger window for higher frequencies
     };
 
-    typedef std::set<size_t> PeakLocationSet;
-    typedef std::map<size_t, float> PeakSet;
+    typedef std::set<size_t> PeakLocationSet; // bin
+    typedef std::map<size_t, float> PeakSet; // bin -> freq
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
