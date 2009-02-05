@@ -241,6 +241,8 @@ FFTModel::estimateStableFrequency(size_t x, size_t y, float &frequency)
 FFTModel::PeakLocationSet
 FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
 {
+    Profiler profiler("FFTModel::getPeaks");
+
     FFTModel::PeakLocationSet peaks;
     if (!isOK()) return peaks;
 
@@ -248,27 +250,28 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
         ymax = getHeight() - 1;
     }
 
-    Column values;
-
     if (type == AllPeaks) {
-        for (size_t y = ymin; y <= ymax; ++y) {
-            values.push_back(getMagnitudeAt(x, y));
-        }
-        size_t i = 0;
+        int minbin = ymin;
+        if (minbin > 0) minbin = minbin - 1;
+        int maxbin = ymax;
+        if (maxbin < getHeight() - 1) maxbin = maxbin + 1;
+        const int n = maxbin - minbin + 1;
+        float values[n];
+        getMagnitudesAt(x, values, minbin, maxbin - minbin + 1);
         for (size_t bin = ymin; bin <= ymax; ++bin) {
-            if ((i == 0 || values[i] > values[i-1]) &&
-                (i == values.size()-1 || values[i] >= values[i+1])) {
+            if (bin == minbin || bin == maxbin) continue;
+            if (values[bin - minbin] > values[bin - minbin - 1] &&
+                values[bin - minbin] > values[bin - minbin + 1]) {
                 peaks.insert(bin);
             }
-            ++i;
         }
         return peaks;
     }
 
-    values = getColumn(x);
+    Column values = getColumn(x);
 
     float mean = 0.f;
-    for (int i =0; i < values.size(); ++i) mean += values[i];
+    for (int i = 0; i < values.size(); ++i) mean += values[i];
     if (values.size() >0) mean /= values.size();
 
     // For peak picking we use a moving median window, picking the
@@ -382,6 +385,8 @@ FFTModel::PeakSet
 FFTModel::getPeakFrequencies(PeakPickType type, size_t x,
                              size_t ymin, size_t ymax)
 {
+    Profiler profiler("FFTModel::getPeakFrequencies");
+
     PeakSet peaks;
     if (!isOK()) return peaks;
     PeakLocationSet locations = getPeaks(type, x, ymin, ymax);
