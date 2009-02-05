@@ -228,7 +228,7 @@ private:
 
     void getStorageAdvice(size_t w, size_t h, bool &memory, bool &compact);
         
-    QMutex m_writeMutex;
+    QMutex m_fftBuffersLock;
     QWaitCondition m_condition;
 
     fftsample *m_fftInput;
@@ -259,7 +259,7 @@ private:
     FillThread *m_fillThread;
 
     void deleteProcessingData();
-    void fillColumn(size_t x, bool lockHeld);
+    void fillColumn(size_t x, FFTCacheReader *tester = 0);
     void fillComplete();
 
     QString generateFileBasename() const;
