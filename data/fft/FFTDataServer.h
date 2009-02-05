@@ -259,7 +259,7 @@ private:
     FillThread *m_fillThread;
 
     void deleteProcessingData();
-    void fillColumn(size_t x, FFTCacheReader *tester = 0);
+    void fillColumn(size_t x);
     void fillComplete();
 
     QString generateFileBasename() const;

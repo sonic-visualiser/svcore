@@ -37,6 +37,8 @@ public:
     static size_t getCacheSize(size_t width, size_t height,
                                FFTCache::StorageType type);
 
+    bool haveSetColumnAt(size_t x) const;
+
     void allColumnsWritten();
 
     QString getFileBase() const;
