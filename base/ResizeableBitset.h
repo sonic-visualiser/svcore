@@ -40,13 +40,19 @@ public:
         delete m_bits;
     }
     
-    void resize(size_t bits) { // losing all data
-        if (!m_bits || bits < m_bits->size()) {
+    void resize(size_t size) { // retaining existing data; not thread safe
+        size_t bytes = (size >> 3) + 1;
+        if (m_bits && bytes == m_bits->size()) return;
+        std::vector<uint8_t> *newbits = new std::vector<uint8_t>(bytes);
+        newbits->assign(bytes, 0);
+        if (m_bits) {
+            for (size_t i = 0; i < bytes && i < m_bits->size(); ++i) {
+                (*newbits)[i] = (*m_bits)[i];
+            }
             delete m_bits;
-            m_bits = new std::vector<uint8_t>;
         }
-        m_bits->assign((bits >> 3) + 1, 0);
-        m_size = bits;
+        m_bits = newbits;
+        m_size = size;
     }
     
     bool get(size_t column) const {

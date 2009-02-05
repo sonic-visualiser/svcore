@@ -79,9 +79,7 @@ Dense3DModelPeakCache::sourceModelChanged()
         // may since have been filled, so reset it
         m_coverage.reset(m_coverage.size()-1);
     }
-    if (getWidth() > m_coverage.size()) {
-        m_coverage.resize(getWidth()); // clears all bits, which is OK with us
-    }
+    m_coverage.resize(getWidth()); // retaining data
 }
 
 void

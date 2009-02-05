@@ -738,13 +738,25 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
 bool
 FFTDataServer::makeCache(int c)
 {
-    QWriteLocker locker(&m_cacheVectorLock);
+    // Creating the cache could take a significant amount of time.  We
+    // don't want to block readers on m_cacheVectorLock while this is
+    // happening, but we do want to block any further calls to
+    // makeCache.  So we use this lock solely to serialise this
+    // particular function -- it isn't used anywhere else.
 
+    QMutexLocker locker(&m_cacheCreationMutex);
+
+    m_cacheVectorLock.lockForRead();
     if (m_caches[c]) {
         // someone else must have created the cache between our
-        // testing for it and taking the write lock
+        // testing for it and taking the mutex
+        m_cacheVectorLock.unlock();
         return true;
     }
+    m_cacheVectorLock.unlock();
+
+    // Now m_cacheCreationMutex is held, but m_cacheVectorLock is not
+    // -- readers can proceed, but callers to this function will block
 
     CacheBlock *cb = new CacheBlock;
 
@@ -811,7 +823,11 @@ FFTDataServer::makeCache(int c)
         }
     }
 
+    m_cacheVectorLock.lockForWrite();
+
     m_caches[c] = cb;
+
+    m_cacheVectorLock.unlock();
 
     return success;
 }

@@ -22,7 +22,7 @@
 #include "base/ResizeableBitset.h"
 #include "base/Profiler.h"
 
-#include <QMutex>
+#include <QReadWriteLock>
 
 /**
  * In-memory FFT cache.  For this we want to cache magnitude with
@@ -120,9 +120,9 @@ public:
     }
 
     bool haveSetColumnAt(size_t x) const {
-        m_colsetMutex.lock();
+        m_colsetLock.lockForRead();
         bool have = m_colset.get(x);
-        m_colsetMutex.unlock();
+        m_colsetLock.unlock();
         return have;
     }
 
@@ -149,7 +149,7 @@ private:
     float *m_factor;
     FFTCache::StorageType m_storageType;
     ResizeableBitset m_colset;
-    mutable QMutex m_colsetMutex;
+    mutable QReadWriteLock m_colsetLock;
 
     void initialise();
 

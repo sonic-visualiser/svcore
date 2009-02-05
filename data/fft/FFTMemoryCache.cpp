@@ -148,9 +148,9 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
         }
     }
 
-    m_colsetMutex.lock();
+    m_colsetLock.lockForWrite();
     m_colset.set(x);
-    m_colsetMutex.unlock();
+    m_colsetLock.unlock();
 }
 
 void
@@ -188,9 +188,9 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
 
     if (m_storageType == FFTCache::Rectangular) {
         m_factor[x] = max;
-        m_colsetMutex.lock();
+        m_colsetLock.lockForWrite();
         m_colset.set(x);
-        m_colsetMutex.unlock();
+        m_colsetLock.unlock();
     } else {
         setColumnAt(x, reals, imags, max);
     }
