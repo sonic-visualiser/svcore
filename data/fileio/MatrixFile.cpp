@@ -68,7 +68,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     std::cerr << "MatrixFile::MatrixFile(" << fileBase.toStdString() << ", " << int(mode) << ", " << cellSize << ", " << width << ", " << height << ")" << std::endl;
 #endif
 
-    QMutexLocker locker(&m_createMutex);
+    m_createMutex.lock();
 
     QDir tempDir(TempDirectory::getInstance()->getPath());
     QString fileName(tempDir.filePath(QString("%1.mfc").arg(fileBase)));
@@ -112,6 +112,8 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
         std::cerr << std::endl;
         throw FailedToOpenFile(fileName);
     }
+
+    m_createMutex.unlock();
 
 #ifdef DEBUG_MATRIX_FILE
     std::cerr << "MatrixFile(" << this << ")::MatrixFile: fd is " << m_fd << std::endl;

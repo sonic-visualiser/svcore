@@ -163,6 +163,7 @@ private:
     typedef std::vector<CacheBlock *> CacheVector;
     CacheVector m_caches;
     QReadWriteLock m_cacheVectorLock; // locks cache lookup, not use
+    QMutex m_cacheCreationMutex; // solely to serialise makeCache() calls
 
     FFTCacheReader *getCacheReader(size_t x, size_t &col) {
         Profiler profiler("FFTDataServer::getCacheReader");
@@ -217,7 +218,7 @@ private:
 
     bool haveCache(size_t x) {
         int c = x >> m_cacheWidthPower;
-        return (m_caches[c] != 0);
+        return (m_caches.at(c) != 0);
     }
     
     bool makeCache(int c);
