@@ -48,7 +48,8 @@ Dense3DModelPeakCache::isColumnAvailable(size_t column) const
 {
     if (!m_source) return false;
     if (haveColumn(column)) return true;
-    for (int i = 0; i < m_resolution; ++i) {
+    for (int i = m_resolution; i > 0; ) {
+        --i;
         if (!m_source->isColumnAvailable(column * m_resolution + i)) {
             return false;
         }
