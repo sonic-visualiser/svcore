@@ -60,7 +60,9 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     m_cellSize(cellSize),
     m_width(width),
     m_height(height),
-    m_headerSize(2 * sizeof(size_t))
+    m_headerSize(2 * sizeof(size_t)),
+    m_setColumns(0),
+    m_autoClose(false)
 {
     Profiler profiler("MatrixFile::MatrixFile", true);
 
@@ -163,6 +165,8 @@ MatrixFile::~MatrixFile()
 
     QMutexLocker locker(&m_createMutex);
 
+    delete m_setColumns;
+
     if (m_fileName != "") {
 
         if (--m_refcount[m_fileName] == 0) {
@@ -192,6 +196,8 @@ MatrixFile::initialise()
     Profiler profiler("MatrixFile::initialise", true);
 
     assert(m_mode == WriteOnly);
+
+    m_setColumns = new ResizeableBitset(m_width);
     
     off_t off = m_headerSize + (m_width * m_height * m_cellSize) + m_width;
 
@@ -249,6 +255,9 @@ MatrixFile::close()
         }
         m_fd = -1;
         -- openCount;
+#ifdef DEBUG_MATRIX_FILE
+        std::cerr << "MatrixFile: Now " << openCount << " open instances" << std::endl;
+#endif
     }
 }
 
@@ -290,7 +299,9 @@ MatrixFile::getColumnAt(size_t x, void *data)
 bool
 MatrixFile::haveSetColumnAt(size_t x) const
 {
-    assert(m_mode == ReadOnly);
+    if (m_mode == WriteOnly) {
+        return m_setColumns->get(x);
+    }
 
     Profiler profiler("MatrixFile::haveSetColumnAt");
 
@@ -319,6 +330,7 @@ void
 MatrixFile::setColumnAt(size_t x, const void *data)
 {
     assert(m_mode == WriteOnly);
+    if (m_fd < 0) return; // closed
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
     std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << ")" << std::endl;
@@ -363,6 +375,22 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     if (w != 1) {
         ::perror("WARNING: MatrixFile::setColumnAt: write failed (3)");
         throw FileOperationFailed(m_fileName, "write");
+    }
+
+    m_setColumns->set(x);
+    if (m_autoClose) {
+        if (m_setColumns->isAllOn()) {
+            std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): All columns set: auto-closing" << std::endl;
+            close();
+/*
+        } else {
+            int set = 0;
+            for (int i = 0; i < m_width; ++i) {
+                if (m_setColumns->get(i)) ++set;
+            }
+            std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Auto-close on, but not all columns set yet (" << set << " of " << m_width << ")" << std::endl;
+*/
+        }
     }
 }
 

@@ -900,7 +900,7 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
         std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
                   << x << ")" << std::endl;
 #endif
-        fillColumn(x, cache);
+        fillColumn(x);
     }
     return cache->getMagnitudeAt(col, y);
 }
@@ -925,7 +925,7 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getMagnitudesAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
 
     cache->getMagnitudesAt(col, values, minbin, count, step);
@@ -947,7 +947,7 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
     return cache->getNormalizedMagnitudeAt(col, y);
 }
@@ -972,7 +972,7 @@ FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin,
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
 
     for (size_t i = 0; i < count; ++i) {
@@ -996,7 +996,7 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getMaximumMagnitudeAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
     return cache->getMaximumMagnitudeAt(col);
 }
@@ -1015,7 +1015,7 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getPhaseAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
     return cache->getPhaseAt(col, y);
 }
@@ -1040,7 +1040,7 @@ FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count,
     //!!! n.b. can throw
     if (!cache->haveSetColumnAt(col)) {
         Profiler profiler("FFTDataServer::getPhasesAt: filling");
-        fillColumn(x, cache);
+        fillColumn(x);
     }
 
     for (size_t i = 0; i < count; ++i) {
@@ -1076,7 +1076,7 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 #ifdef DEBUG_FFT_SERVER
         std::cerr << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << std::endl;
 #endif
-        fillColumn(x, cache);
+        fillColumn(x);
     }        
 
     cache->getValuesAt(col, y, real, imaginary);
@@ -1111,7 +1111,7 @@ FFTDataServer::isColumnReady(size_t x)
 }    
 
 void
-FFTDataServer::fillColumn(size_t x, FFTCacheReader *tester)
+FFTDataServer::fillColumn(size_t x)
 {
     Profiler profiler("FFTDataServer::fillColumn", false);
 
@@ -1166,16 +1166,14 @@ FFTDataServer::fillColumn(size_t x, FFTCacheReader *tester)
 
     QMutexLocker locker(&m_fftBuffersLock);
 
-    if (tester) {
-        // We are being called from a function that wanted to obtain a
-        // column using an FFTCacheReader.  Before calling us, it
-        // checked whether the column was available already, and the
-        // reader reported that it wasn't.  Now we test again with the
-        // mutex held, to avoid a race condition in case another
-        // thread has called fillColumn at the same time.
-        if (tester->haveSetColumnAt(x & m_cacheWidthMask)) {
-            return;
-        }
+    // We may have been called from a function that wanted to obtain a
+    // column using an FFTCacheReader.  Before calling us, it checked
+    // whether the column was available already, and the reader
+    // reported that it wasn't.  Now we test again, with the mutex
+    // held, to avoid a race condition in case another thread has
+    // called fillColumn at the same time.
+    if (cache->haveSetColumnAt(x & m_cacheWidthMask)) {
+        return;
     }
 
     if (!m_fftInput) {

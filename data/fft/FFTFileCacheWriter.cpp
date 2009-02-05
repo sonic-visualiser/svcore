@@ -44,6 +44,7 @@ FFTFileCacheWriter::FFTFileCacheWriter(QString fileBase,
            width, height * 2 + m_factorSize))
 {
     std::cerr << "FFTFileCacheWriter: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == FFTCache::Polar ? "Polar" : "Rectangular") << ", size " << width << "x" << height << std::endl;
+    m_mfc->setAutoClose(true);
     m_writebuf = new char[(height * 2 + m_factorSize) * m_mfc->getCellSize()];
 }
 
@@ -71,6 +72,12 @@ FFTFileCacheWriter::getHeight() const
     size_t mh = m_mfc->getHeight();
     if (mh > m_factorSize) return (mh - m_factorSize) / 2;
     else return 0;
+}
+
+bool
+FFTFileCacheWriter::haveSetColumnAt(size_t x) const
+{
+    return m_mfc->haveSetColumnAt(x);
 }
 
 void

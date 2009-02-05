@@ -71,6 +71,23 @@ public:
         get(source) ? set(dest) : reset(dest);
     }
 
+    bool isAllOff() const {
+        for (size_t i = 0; i < m_bits->size(); ++i) {
+            if ((*m_bits)[i]) return false;
+        }
+        return true;
+    }
+
+    bool isAllOn() const {
+        for (size_t i = 0; i + 1 < m_bits->size(); ++i) {
+            if ((*m_bits)[i] != 0xff) return false;
+        }
+        for (size_t i = (m_size / 8) * 8; i < m_size; ++i) {
+            if (!get(i)) return false;
+        }
+        return true;
+    }
+
     size_t size() const {
         return m_size;
     }

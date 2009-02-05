@@ -29,7 +29,9 @@ public:
     virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
     virtual void setColumnAt(size_t x, float *reals, float *imags) = 0;
 
-    virtual void allColumnsWritten() = 0;
+    virtual bool haveSetColumnAt(size_t x) const = 0;
+
+    virtual void allColumnsWritten() = 0; // notify cache to close
 
     virtual FFTCache::StorageType getStorageType() const = 0;
 };

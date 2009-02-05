@@ -67,7 +67,13 @@ public:
     size_t getWidth() const { return m_width; }
     size_t getHeight() const { return m_height; }
     size_t getCellSize() const { return m_cellSize; }
-    
+
+    /**
+     * If this is set true on a write-mode MatrixFile, then the file
+     * will close() itself when all columns have been written.
+     */
+    void setAutoClose(bool a) { m_autoClose = a; }
+
     void close(); // does not decrement ref count; that happens in dtor
 
     bool haveSetColumnAt(size_t x) const;
@@ -84,6 +90,9 @@ protected:
     size_t  m_height;
     size_t  m_headerSize;
     QString m_fileName;
+
+    ResizeableBitset *m_setColumns; // only in writer
+    bool m_autoClose;
 
     static std::map<QString, int> m_refcount;
     static QMutex m_createMutex;
