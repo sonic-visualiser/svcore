@@ -62,7 +62,8 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     m_height(height),
     m_headerSize(2 * sizeof(size_t)),
     m_setColumns(0),
-    m_autoClose(false)
+    m_autoClose(false),
+    m_readyToReadColumn(-1)
 {
     Profiler profiler("MatrixFile::MatrixFile", true);
 
@@ -240,7 +241,7 @@ MatrixFile::initialise()
     std::cerr << "MatrixFile: Total storage " << totalStorage/1024 << "K" << std::endl;
 #endif
 
-    seekTo(0, 0);
+    seekTo(0);
 }
 
 void
@@ -272,21 +273,26 @@ MatrixFile::getColumnAt(size_t x, void *data)
 
     Profiler profiler("MatrixFile::getColumnAt");
 
-    unsigned char set = 0;
-    if (!seekTo(x, 0)) {
-        std::cerr << "ERROR: MatrixFile::getColumnAt(" << x << "): Seek failed" << std::endl;
-        throw FileOperationFailed(m_fileName, "seek");
-    }
-
     ssize_t r = -1;
-    r = ::read(m_fd, &set, 1);
-    if (r < 0) {
-        ::perror("MatrixFile::getColumnAt: read failed");
-        throw FileReadFailed(m_fileName);
-    }
-    if (!set) {
-        std::cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << "): Column has not been set" << std::endl;
-        return;
+
+    if (m_readyToReadColumn < 0 ||
+        size_t(m_readyToReadColumn) != x) {
+
+        unsigned char set = 0;
+        if (!seekTo(x)) {
+            std::cerr << "ERROR: MatrixFile::getColumnAt(" << x << "): Seek failed" << std::endl;
+            throw FileOperationFailed(m_fileName, "seek");
+        }
+
+        r = ::read(m_fd, &set, 1);
+        if (r < 0) {
+            ::perror("MatrixFile::getColumnAt: read failed");
+            throw FileReadFailed(m_fileName);
+        }
+        if (!set) {
+            std::cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << "): Column has not been set" << std::endl;
+            return;
+        }
     }
 
     r = ::read(m_fd, data, m_height * m_cellSize);
@@ -303,6 +309,9 @@ MatrixFile::haveSetColumnAt(size_t x) const
         return m_setColumns->get(x);
     }
 
+    if (m_readyToReadColumn >= 0 &&
+        size_t(m_readyToReadColumn) == x) return true;
+    
     Profiler profiler("MatrixFile::haveSetColumnAt");
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
@@ -311,7 +320,7 @@ MatrixFile::haveSetColumnAt(size_t x) const
 #endif
 
     unsigned char set = 0;
-    if (!seekTo(x, 0)) {
+    if (!seekTo(x)) {
         std::cerr << "ERROR: MatrixFile::haveSetColumnAt(" << x << "): Seek failed" << std::endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
@@ -322,6 +331,8 @@ MatrixFile::haveSetColumnAt(size_t x) const
         ::perror("MatrixFile::haveSetColumnAt: read failed");
         throw FileReadFailed(m_fileName);
     }
+
+    if (set) m_readyToReadColumn = int(x);
 
     return set;
 }
@@ -339,7 +350,7 @@ MatrixFile::setColumnAt(size_t x, const void *data)
 
     ssize_t w = 0;
 
-    if (!seekTo(x, 0)) {
+    if (!seekTo(x)) {
         std::cerr << "ERROR: MatrixFile::setColumnAt(" << x << "): Seek failed" << std::endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
@@ -365,7 +376,7 @@ MatrixFile::setColumnAt(size_t x, const void *data)
         std::cerr << std::endl;
     }
 */
-    if (!seekTo(x, 0)) {
+    if (!seekTo(x)) {
         std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Seek failed" << std::endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
@@ -395,22 +406,28 @@ MatrixFile::setColumnAt(size_t x, const void *data)
 }
 
 bool
-MatrixFile::seekTo(size_t x, size_t y) const
+MatrixFile::seekTo(size_t x) const
 {
     if (m_fd < 0) {
         std::cerr << "ERROR: MatrixFile::seekTo: File not open" << std::endl;
         return false;
     }
 
-    off_t off = m_headerSize + x * m_height * m_cellSize + x + y * m_cellSize;
+    m_readyToReadColumn = -1; // not ready, unless this is subsequently re-set
+
+    off_t off = m_headerSize + x * m_height * m_cellSize + x;
+
+    if (m_mode == ReadOnly) {
+        std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
+    }
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-    std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "," << y << "): off = " << off << std::endl;
+    std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
 #endif
 
     if (::lseek(m_fd, off, SEEK_SET) == (off_t)-1) {
         ::perror("Seek failed");
-        std::cerr << "ERROR: MatrixFile::seekTo(" << x << ", " << y
+        std::cerr << "ERROR: MatrixFile::seekTo(" << x 
                   << ") = " << off << " failed" << std::endl;
         return false;
     }

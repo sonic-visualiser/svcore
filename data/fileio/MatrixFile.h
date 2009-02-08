@@ -94,11 +94,15 @@ protected:
     ResizeableBitset *m_setColumns; // only in writer
     bool m_autoClose;
 
+    // In reader: if this is >= 0, we can read that column directly
+    // without seeking (and we know that the column exists)
+    mutable int m_readyToReadColumn;
+
     static std::map<QString, int> m_refcount;
     static QMutex m_createMutex;
 
     void initialise();
-    bool seekTo(size_t x, size_t y) const;
+    bool seekTo(size_t x) const;
 };
 
 #endif
