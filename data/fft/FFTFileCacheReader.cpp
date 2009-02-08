@@ -228,6 +228,8 @@ FFTFileCacheReader::populateReadBuf(size_t x) const
 {
     Profiler profiler("FFTFileCacheReader::populateReadBuf", false);
 
+    std::cerr << "FFTFileCacheReader::populateReadBuf(" << x << ")" << std::endl;
+
     if (!m_readbuf) {
         m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];
     }
