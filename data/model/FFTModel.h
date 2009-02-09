@@ -94,6 +94,9 @@ public:
     inline bool getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
         return m_server->getPhasesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
+    inline bool getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin = 0, size_t count = 0) {
+        return m_server->getValuesAt(x << m_xshift, reals, imaginaries, minbin << m_yshift, count, getYRatio());
+    }
 
     inline size_t getFillExtent() const { return m_server->getFillExtent(); }
 

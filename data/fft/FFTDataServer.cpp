@@ -1083,6 +1083,36 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 }
 
 bool
+FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin, size_t count, size_t step)
+{
+    Profiler profiler("FFTDataServer::getValuesAt", false);
+
+    if (x >= m_width) return false;
+
+    if (minbin >= m_height) minbin = m_height - 1;
+    if (count == 0) count = (m_height - minbin) / step;
+    else if (minbin + count * step > m_height) {
+        count = (m_height - minbin) / step;
+    }
+
+    size_t col;
+    FFTCacheReader *cache = getCacheReader(x, col);
+    if (!cache) return false;
+
+    //!!! n.b. can throw
+    if (!cache->haveSetColumnAt(col)) {
+        Profiler profiler("FFTDataServer::getValuesAt: filling");
+        fillColumn(x);
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        cache->getValuesAt(col, i * step + minbin, reals[i], imaginaries[i]);
+    }
+
+    return true;
+}
+
+bool
 FFTDataServer::isColumnReady(size_t x)
 {
     Profiler profiler("FFTDataServer::isColumnReady", false);
