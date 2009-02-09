@@ -88,6 +88,7 @@ public:
     bool       getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
     bool       getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
     bool       getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
+    bool       getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin = 0, size_t count = 0, size_t step = 1);
 
     void       suspend();
     void       suspendWrites();

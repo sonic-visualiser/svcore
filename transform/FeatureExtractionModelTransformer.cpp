@@ -449,6 +449,13 @@ FeatureExtractionModelTransformer::run()
 
     setCompletion(0);
 
+    float *reals = 0;
+    float *imaginaries = 0;
+    if (frequencyDomain) {
+        reals = new float[blockSize/2 + 1];
+        imaginaries = new float[blockSize/2 + 1];
+    }
+
     while (!m_abandoned) {
 
         if (frequencyDomain) {
@@ -472,9 +479,10 @@ FeatureExtractionModelTransformer::run()
         if (frequencyDomain) {
             for (size_t ch = 0; ch < channelCount; ++ch) {
                 int column = (blockFrame - startFrame) / stepSize;
+                fftModels[ch]->getValuesAt(column, reals, imaginaries);
                 for (size_t i = 0; i <= blockSize/2; ++i) {
-                    fftModels[ch]->getValuesAt
-                        (column, i, buffers[ch][i*2], buffers[ch][i*2+1]);
+                    buffers[ch][i*2] = reals[i];
+                    buffers[ch][i*2+1] = imaginaries[i];
                 }
             }
         } else {
@@ -518,6 +526,8 @@ FeatureExtractionModelTransformer::run()
         for (size_t ch = 0; ch < channelCount; ++ch) {
             delete fftModels[ch];
         }
+        delete[] reals;
+        delete[] imaginaries;
     }
 }
 
