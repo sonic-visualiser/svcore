@@ -417,9 +417,11 @@ MatrixFile::seekTo(size_t x) const
 
     off_t off = m_headerSize + x * m_height * m_cellSize + x;
 
+#ifdef DEBUG_MATRIX_FILE_READ_SET
     if (m_mode == ReadOnly) {
         std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
     }
+#endif
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
     std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
