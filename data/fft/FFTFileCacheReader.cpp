@@ -34,6 +34,7 @@ FFTFileCacheReader::FFTFileCacheReader(FFTFileCacheWriter *writer) :
     m_readbuf(0),
     m_readbufCol(0),
     m_readbufWidth(0),
+    m_readbufGood(false),
     m_storageType(writer->getStorageType()),
     m_factorSize(m_storageType == FFTCache::Compact ? 2 : 1),
     m_mfc(new MatrixFile
@@ -156,6 +157,8 @@ FFTFileCacheReader::getPhaseAt(size_t x, size_t y) const
 void
 FFTFileCacheReader::getValuesAt(size_t x, size_t y, float &real, float &imag) const
 {
+//    std::cerr << "FFTFileCacheReader::getValuesAt(" << x << "," << y << ")" << std::endl;
+
     switch (m_storageType) {
 
     case FFTCache::Rectangular:
@@ -211,6 +214,11 @@ FFTFileCacheReader::getMagnitudesAt(size_t x, float *values, size_t minbin, size
 bool
 FFTFileCacheReader::haveSetColumnAt(size_t x) const
 {
+    if (m_readbuf && m_readbufGood &&
+        (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
+//        std::cerr << "FFTFileCacheReader::haveSetColumnAt: short-circuiting; we know about this one" << std::endl;
+        return true;
+    }
     return m_mfc->haveSetColumnAt(x);
 }
 
@@ -228,14 +236,28 @@ FFTFileCacheReader::populateReadBuf(size_t x) const
 {
     Profiler profiler("FFTFileCacheReader::populateReadBuf", false);
 
-    std::cerr << "FFTFileCacheReader::populateReadBuf(" << x << ")" << std::endl;
+//    std::cerr << "FFTFileCacheReader::populateReadBuf(" << x << ")" << std::endl;
 
     if (!m_readbuf) {
         m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];
     }
 
+    m_readbufGood = false;
+
     try {
-        m_mfc->getColumnAt(x, m_readbuf);
+        bool good = false;
+        if (m_mfc->haveSetColumnAt(x)) {
+            // If the column is not available, we have no obligation
+            // to do anything with the readbuf -- we can cheerfully
+            // return garbage.  It's the responsibility of the caller
+            // to check haveSetColumnAt before trusting any retrieved
+            // data.  However, we do record whether the data in the
+            // readbuf is good or not, because we can use that to
+            // return an immediate result for haveSetColumnAt if the
+            // column is right.
+            good = true;
+            m_mfc->getColumnAt(x, m_readbuf);
+        }
         if (m_mfc->haveSetColumnAt(x + 1)) {
             m_mfc->getColumnAt
                 (x + 1, m_readbuf + m_mfc->getCellSize() * m_mfc->getHeight());
@@ -243,6 +265,7 @@ FFTFileCacheReader::populateReadBuf(size_t x) const
         } else {
             m_readbufWidth = 1;
         }
+        m_readbufGood = good;
     } catch (FileReadFailed f) {
         std::cerr << "ERROR: FFTFileCacheReader::populateReadBuf: File read failed: "
                   << f.what() << std::endl;

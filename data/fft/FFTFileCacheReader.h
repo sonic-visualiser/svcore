@@ -50,6 +50,7 @@ protected:
     mutable char *m_readbuf;
     mutable size_t m_readbufCol;
     mutable size_t m_readbufWidth;
+    mutable bool m_readbufGood;
 
     float getFromReadBufStandard(size_t x, size_t y) const {
         float v;
