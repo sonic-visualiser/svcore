@@ -472,7 +472,7 @@ FeatureExtractionModelTransformer::run()
 
 	long completion =
 	    (((blockFrame - contextStart) / stepSize) * 99) /
-	    (contextDuration / stepSize);
+	    (contextDuration / stepSize + 1);
 
 	// channelCount is either m_input.getModel()->channelCount or 1
 
