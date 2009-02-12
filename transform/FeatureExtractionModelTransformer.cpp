@@ -30,6 +30,7 @@
 #include "data/model/RegionModel.h"
 #include "data/model/FFTModel.h"
 #include "data/model/WaveFileModel.h"
+#include "rdf/PluginRDFDescription.h"
 
 #include "TransformFactory.h"
 
@@ -167,8 +168,19 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	return;
     }
 
+    createOutputModel();
+}
+
+void
+FeatureExtractionModelTransformer::createOutputModel()
+{
+    DenseTimeValueModel *input = getConformingInput();
+
 //    std::cerr << "FeatureExtractionModelTransformer: output sample type "
 //	      << m_descriptor->sampleType << std::endl;
+
+    PluginRDFDescription description(m_transform.getPluginIdentifier());
+    QString outputId = m_transform.getOutput();
 
     int binCount = 1;
     float minValue = 0.0, maxValue = 0.0;
@@ -227,6 +239,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 
 	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
 						 false);
+
+        QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        m_output->setRDFTypeURI(outputEventTypeURI);
 
     } else if ((preDurationPlugin && binCount > 1 &&
                 (m_descriptor->sampleType ==
@@ -294,6 +309,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
             m_output = model;
         }
 
+        QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        m_output->setRDFTypeURI(outputEventTypeURI);
+
     } else if (binCount == 1 ||
                (m_descriptor->sampleType == 
                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
@@ -315,9 +333,14 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
             model = new SparseTimeValueModel
                 (modelRate, modelResolution, false);
         }
+
+        Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
         model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
 
         m_output = model;
+
+        QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        m_output->setRDFTypeURI(outputEventTypeURI);
 
     } else {
 
@@ -340,6 +363,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	}
         
         m_output = model;
+
+        QString outputSignalTypeURI = description.getOutputSignalTypeURI(outputId);
+        m_output->setRDFTypeURI(outputSignalTypeURI);
     }
 
     if (m_output) m_output->setSourceModel(input);

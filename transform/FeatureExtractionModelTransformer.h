@@ -42,6 +42,8 @@ protected:
     Vamp::Plugin::OutputDescriptor *m_descriptor;
     int m_outputFeatureNo;
 
+    void createOutputModel();
+
     void addFeature(size_t blockFrame,
 		    const Vamp::Plugin::Feature &feature);
 

@@ -337,6 +337,8 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
 
             getDenseModelTitle(m, feature, type);
         
+            m->setRDFTypeURI(type);
+
             models.push_back(m);
 
         } else {
@@ -364,6 +366,8 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
 
             getDenseModelTitle(m, feature, type);
         
+            m->setRDFTypeURI(type);
+
             models.push_back(m);
         }
     }
@@ -795,6 +799,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     model = new NoteModel(m_sampleRate, 1, false);
                 }
             }
+
+            model->setRDFTypeURI(type);
 
             if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
                 std::cerr << "source model for " << model << " is " << m_audioModelMap[source] << std::endl;

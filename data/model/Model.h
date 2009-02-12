@@ -195,6 +195,20 @@ public:
      */
     virtual int getAlignmentCompletion() const;
 
+    /**
+     * Set the event, feature, or signal type URI for the features
+     * contained in this model, according to the Audio Features RDF
+     * ontology.
+     */
+    void setRDFTypeURI(QString uri) { m_typeUri = uri; }
+
+    /**
+     * Retrieve the event, feature, or signal type URI for the
+     * features contained in this model, if previously set with
+     * setRDFTypeURI.
+     */
+    QString getRDFTypeURI() const { return m_typeUri; }
+
     virtual void toXml(QTextStream &stream,
                        QString indent = "",
                        QString extraAttributes = "") const;
@@ -257,6 +271,7 @@ protected:
 
     Model *m_sourceModel;
     AlignmentModel *m_alignment;
+    QString m_typeUri;
     bool m_aboutToDelete;
 };
 
