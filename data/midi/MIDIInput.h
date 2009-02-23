@@ -22,7 +22,7 @@
 #include <vector>
 #include "base/RingBuffer.h"
 
-class RtMidi;
+class RtMidiIn;
 
 class MIDIInput : public QObject
 {
@@ -32,19 +32,19 @@ public:
     MIDIInput();
     virtual ~MIDIInput();
 
-    bool isOK() const;
+    bool isOK() const { return m_rtmidi != 0; }
 
     bool isEmpty() const { return getEventsAvailable() == 0; }
-    size_t getEventsAvailable() const;
+    size_t getEventsAvailable() const { return m_buffer.getReadSpace(); }
     MIDIEvent readEvent();
 
 signals:
     void eventsAvailable();
 
 protected:
-    RtMidi *m_rtmidi;
+    RtMidiIn *m_rtmidi;
 
-    static void callback(double, std::vector<unsigned char> *, void *);
+    static void staticCallback(double, std::vector<unsigned char> *, void *);
     void callback(double, std::vector<unsigned char> *);
 
     void postEvent(MIDIEvent);
