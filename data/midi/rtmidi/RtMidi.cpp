@@ -69,9 +69,9 @@ void RtMidi :: error( RtError::Type type )
 //  Common RtMidiIn Definitions
 //*********************************************************************//
 
-RtMidiIn :: RtMidiIn() : RtMidi()
+RtMidiIn :: RtMidiIn(std::string name) : RtMidi()
 {
-  this->initialize();
+  this->initialize(name);
 }
 
 void RtMidiIn :: setCallback( RtMidiCallback callback, void *userData )
@@ -144,9 +144,9 @@ double RtMidiIn :: getMessage( std::vector<unsigned char> *message )
 //  Common RtMidiOut Definitions
 //*********************************************************************//
 
-RtMidiOut :: RtMidiOut() : RtMidi()
+RtMidiOut :: RtMidiOut(std::string name) : RtMidi()
 {
-  this->initialize();
+  this->initialize(name);
 }
 
 
@@ -311,11 +311,11 @@ void midiInputCallback( const MIDIPacketList *list, void *procRef, void *srcRef 
   }
 }
 
-void RtMidiIn :: initialize( void )
+void RtMidiIn :: initialize(std::string name)
 {
   // Set up our client.
   MIDIClientRef client;
-  OSStatus result = MIDIClientCreate( CFSTR("RtMidi Input Client"), NULL, NULL, &client );
+  OSStatus result = MIDIClientCreate( CFSTR(name.c_str()), NULL, NULL, &client );
   if ( result != noErr ) {
     errorString_ = "RtMidiIn::initialize: error creating OS-X MIDI client object.";
     error( RtError::DRIVER_ERROR );
@@ -479,11 +479,11 @@ std::string RtMidiOut :: getPortName( unsigned int portNumber )
   return stringName;
 }
 
-void RtMidiOut :: initialize( void )
+void RtMidiOut :: initialize(std::string name)
 {
   // Set up our client.
   MIDIClientRef client;
-  OSStatus result = MIDIClientCreate( CFSTR("RtMidi Output Client"), NULL, NULL, &client );
+  OSStatus result = MIDIClientCreate( CFSTR(name.c_str()), NULL, NULL, &client );
   if ( result != noErr ) {
     errorString_ = "RtMidiOut::initialize: error creating OS-X MIDI client object.";
     error( RtError::DRIVER_ERROR );
@@ -813,7 +813,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
   return 0;
 }
 
-void RtMidiIn :: initialize( void )
+void RtMidiIn :: initialize(std::string name)
 {
   // Set up the ALSA sequencer client.
 	snd_seq_t *seq;
@@ -824,7 +824,7 @@ void RtMidiIn :: initialize( void )
 	}
 
   // Set client name.
-  snd_seq_set_client_name(seq, "RtMidi Input Client");
+  snd_seq_set_client_name(seq, name.c_str());
 
   // Save our api-specific connection information.
   AlsaMidiData *data = (AlsaMidiData *) new AlsaMidiData;
@@ -885,8 +885,8 @@ void RtMidiIn :: openPort( unsigned int portNumber )
     error( RtError::NO_DEVICES_FOUND );
   }
 
-	snd_seq_port_info_t *pinfo;
-	snd_seq_port_info_alloca( &pinfo );
+  snd_seq_port_info_t *pinfo;
+  snd_seq_port_info_alloca( &pinfo );
   std::ostringstream ost;
   AlsaMidiData *data = static_cast<AlsaMidiData *> (apiData_);
   if ( portInfo( data->seq, pinfo, SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ, (int) portNumber ) == 0 ) {
@@ -895,6 +895,8 @@ void RtMidiIn :: openPort( unsigned int portNumber )
     error( RtError::INVALID_PARAMETER );
   }
 
+  char name[20];
+  sprintf(name, "Input %d", portNumber + 1);
 
   snd_seq_addr_t sender, receiver;
   sender.client = snd_seq_port_info_get_client( pinfo );
@@ -913,7 +915,7 @@ void RtMidiIn :: openPort( unsigned int portNumber )
     snd_seq_port_info_set_timestamping(pinfo, 1);
     snd_seq_port_info_set_timestamp_real(pinfo, 1);    
     snd_seq_port_info_set_timestamp_queue(pinfo, data->queue_id);
-    snd_seq_port_info_set_name(pinfo, "RtMidi Input");
+    snd_seq_port_info_set_name(pinfo, name);
     data->vport = snd_seq_create_port(data->seq, pinfo);
   
     if ( data->vport < 0 ) {
@@ -1095,7 +1097,7 @@ std::string RtMidiOut :: getPortName( unsigned int portNumber )
   return 0;
 }
 
-void RtMidiOut :: initialize( void )
+void RtMidiOut :: initialize(std::string name)
 {
   // Set up the ALSA sequencer client.
 	snd_seq_t *seq;
@@ -1106,7 +1108,7 @@ void RtMidiOut :: initialize( void )
 	}
 
   // Set client name.
-  snd_seq_set_client_name(seq, "RtMidi Output Client");
+  snd_seq_set_client_name(seq, name.c_str());
 
   // Save our api-specific connection information.
   AlsaMidiData *data = (AlsaMidiData *) new AlsaMidiData;
@@ -1145,8 +1147,8 @@ void RtMidiOut :: openPort( unsigned int portNumber )
     error( RtError::NO_DEVICES_FOUND );
   }
 
-	snd_seq_port_info_t *pinfo;
-	snd_seq_port_info_alloca( &pinfo );
+  snd_seq_port_info_t *pinfo;
+  snd_seq_port_info_alloca( &pinfo );
   std::ostringstream ost;
   AlsaMidiData *data = static_cast<AlsaMidiData *> (apiData_);
   if ( portInfo( data->seq, pinfo, SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE, (int) portNumber ) == 0 ) {
@@ -1160,8 +1162,11 @@ void RtMidiOut :: openPort( unsigned int portNumber )
   receiver.port = snd_seq_port_info_get_port( pinfo );
   sender.client = snd_seq_client_id( data->seq );
 
+  char name[20];
+  sprintf(name, "Output %d", portNumber + 1);
+
   if ( data->vport < 0 ) {
-    data->vport = snd_seq_create_simple_port( data->seq, "RtMidi Output",
+    data->vport = snd_seq_create_simple_port( data->seq, name,
                                               SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
                                               SND_SEQ_PORT_TYPE_MIDI_GENERIC );
     if ( data->vport < 0 ) {
@@ -1423,7 +1428,7 @@ extern "C" void *irixMidiHandler( void *ptr )
   return 0;
 }
 
-void RtMidiIn :: initialize( void )
+void RtMidiIn :: initialize(std::string name)
 {
   // Initialize the Irix MIDI system.  At the moment, we will not
   // worry about a return value of zero (ports) because there is a
@@ -1564,7 +1569,7 @@ std::string RtMidiOut :: getPortName( unsigned int portNumber )
   return stringName;
 }
 
-void RtMidiOut :: initialize( void )
+void RtMidiOut :: initialize(std::string name)
 {
   // Initialize the Irix MIDI system.  At the moment, we will not
   // worry about a return value of zero (ports) because there is a
@@ -1789,7 +1794,7 @@ static void CALLBACK midiInputCallback( HMIDIOUT hmin,
   apiData->message.bytes.clear();
 }
 
-void RtMidiIn :: initialize( void )
+void RtMidiIn :: initialize(std::string name)
 {
   // We'll issue a warning here if no devices are available but not
   // throw an error since the user can plugin something later.
@@ -1970,7 +1975,7 @@ std::string RtMidiOut :: getPortName( unsigned int portNumber )
   return stringName;
 }
 
-void RtMidiOut :: initialize( void )
+void RtMidiOut :: initialize(std::string name)
 {
   // We'll issue a warning here if no devices are available but not
   // throw an error since the user can plug something in later.

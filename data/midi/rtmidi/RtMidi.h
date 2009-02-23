@@ -109,7 +109,7 @@ class RtMidiIn : public RtMidi
   /*!
       An exception will be thrown if a MIDI system initialization error occurs.
   */
-  RtMidiIn();
+  RtMidiIn(std::string inputName = std::string("RtMidi Input Client"));
 
   //! If a MIDI connection is still open, it will be closed by the destructor.
   ~RtMidiIn();
@@ -217,7 +217,7 @@ class RtMidiIn : public RtMidi
 
  private:
 
-  void initialize( void );
+  void initialize(std::string name);
   RtMidiInData inputData_;
 
 };
@@ -244,7 +244,7 @@ class RtMidiOut : public RtMidi
   /*!
       An exception will be thrown if a MIDI system initialization error occurs.
   */
-  RtMidiOut();
+  RtMidiOut(std::string outputName = "RtMidi Output Client");
 
   //! The destructor closes any open MIDI connections.
   ~RtMidiOut();
@@ -290,7 +290,7 @@ class RtMidiOut : public RtMidi
 
  private:
 
-  void initialize( void );
+  void initialize(std::string name);
 };
 
 #endif

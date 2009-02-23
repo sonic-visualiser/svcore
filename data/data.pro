@@ -14,6 +14,11 @@ INCLUDEPATH += . fft fileio model osc ..
 OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
+# Set up suitable platform defines for RtMidi
+linux*: DEFINES += __LINUX_ALSASEQ__
+macx*:  DEFINES += __MACOSX_CORE__
+win*:   DEFINES += __WINDOWS_MM__
+
 # Input
 HEADERS += fft/FFTapi.h \
            fft/FFTCacheReader.h \
@@ -48,6 +53,8 @@ HEADERS += fft/FFTapi.h \
            fileio/WavFileWriter.h \
            midi/MIDIEvent.h \
            midi/MIDIInput.h \
+           midi/rtmidi/RtError.h \
+           midi/rtmidi/RtMidi.h \
            model/AggregateWaveModel.h \
            model/AlignmentModel.h \
            model/Dense3DModelPeakCache.h \
@@ -104,6 +111,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
            midi/MIDIInput.cpp \
+           midi/rtmidi/RtMidi.cpp \
            model/AggregateWaveModel.cpp \
            model/AlignmentModel.cpp \
            model/Dense3DModelPeakCache.cpp \

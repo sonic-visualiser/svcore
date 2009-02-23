@@ -29,7 +29,7 @@ class MIDIInput : public QObject
     Q_OBJECT
 
 public:
-    MIDIInput();
+    MIDIInput(QString name);
     virtual ~MIDIInput();
 
     bool isOK() const { return m_rtmidi != 0; }
