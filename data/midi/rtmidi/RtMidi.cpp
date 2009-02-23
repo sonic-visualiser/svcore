@@ -315,7 +315,9 @@ void RtMidiIn :: initialize(std::string name)
 {
   // Set up our client.
   MIDIClientRef client;
-  OSStatus result = MIDIClientCreate( CFSTR(name.c_str()), NULL, NULL, &client );
+  OSStatus result = MIDIClientCreate
+    ( CFStringCreateWithBytes(0, (unsigned char *)name.data(),
+      name.size(), kCFStringEncodingUTF8, 0), NULL, NULL, &client );
   if ( result != noErr ) {
     errorString_ = "RtMidiIn::initialize: error creating OS-X MIDI client object.";
     error( RtError::DRIVER_ERROR );
@@ -352,7 +354,7 @@ void RtMidiIn :: openPort( unsigned int portNumber )
 
   MIDIPortRef port;
   CoreMidiData *data = static_cast<CoreMidiData *> (apiData_);
-  OSStatus result = MIDIInputPortCreate( data->client, CFSTR("RtMidi MIDI Input Port"), midiInputCallback, (void *)&inputData_, &port );
+  OSStatus result = MIDIInputPortCreate( data->client, CFSTR("MIDI Input Port"), midiInputCallback, (void *)&inputData_, &port );
   if ( result != noErr ) {
     MIDIClientDispose( data->client );
     errorString_ = "RtMidiIn::openPort: error creating OS-X MIDI input port.";
@@ -483,7 +485,9 @@ void RtMidiOut :: initialize(std::string name)
 {
   // Set up our client.
   MIDIClientRef client;
-  OSStatus result = MIDIClientCreate( CFSTR(name.c_str()), NULL, NULL, &client );
+  OSStatus result = MIDIClientCreate
+    ( CFStringCreateWithBytes(0, (unsigned char *)name.data(),
+      name.size(), kCFStringEncodingUTF8, 0), NULL, NULL, &client );
   if ( result != noErr ) {
     errorString_ = "RtMidiOut::initialize: error creating OS-X MIDI client object.";
     error( RtError::DRIVER_ERROR );
@@ -519,7 +523,7 @@ void RtMidiOut :: openPort( unsigned int portNumber )
 
   MIDIPortRef port;
   CoreMidiData *data = static_cast<CoreMidiData *> (apiData_);
-  OSStatus result = MIDIOutputPortCreate( data->client, CFSTR("RtMidi Virtual MIDI Output Port"), &port );
+  OSStatus result = MIDIOutputPortCreate( data->client, CFSTR("Virtual MIDI Output Port"), &port );
   if ( result != noErr ) {
     MIDIClientDispose( data->client );
     errorString_ = "RtMidiOut::openPort: error creating OS-X MIDI output port.";
