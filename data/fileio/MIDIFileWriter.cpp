@@ -22,7 +22,7 @@
 
 #include "MIDIFileWriter.h"
 
-#include "MIDIEvent.h"
+#include "data/midi/MIDIEvent.h"
 
 #include "model/NoteModel.h"
 

@@ -28,7 +28,7 @@
 
 #include "MIDIFileReader.h"
 
-#include "MIDIEvent.h"
+#include "data/midi/MIDIEvent.h"
 
 #include "model/Model.h"
 #include "base/Pitch.h"

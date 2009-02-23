@@ -19,6 +19,9 @@
 #include <QObject>
 #include "MIDIEvent.h"
 
+#include <vector>
+#include "base/RingBuffer.h"
+
 class RtMidi;
 
 class MIDIInput : public QObject
