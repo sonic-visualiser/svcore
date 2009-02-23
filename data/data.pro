@@ -103,6 +103,7 @@ SOURCES += fft/FFTapi.cpp \
            fileio/ResamplingWavFileReader.cpp \
            fileio/WavFileReader.cpp \
            fileio/WavFileWriter.cpp \
+           midi/MIDIInput.cpp \
            model/AggregateWaveModel.cpp \
            model/AlignmentModel.cpp \
            model/Dense3DModelPeakCache.cpp \
