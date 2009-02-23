@@ -37,7 +37,6 @@ HEADERS += fft/FFTapi.h \
            fileio/FileSource.h \
            fileio/MatchFileReader.h \
            fileio/MatrixFile.h \
-           fileio/MIDIEvent.h \
            fileio/MIDIFileReader.h \
            fileio/MIDIFileWriter.h \
            fileio/MP3FileReader.h \
@@ -47,6 +46,8 @@ HEADERS += fft/FFTapi.h \
            fileio/ResamplingWavFileReader.h \
            fileio/WavFileReader.h \
            fileio/WavFileWriter.h \
+           midi/MIDIEvent.h \
+           midi/MIDIInput.h \
            model/AggregateWaveModel.h \
            model/AlignmentModel.h \
            model/Dense3DModelPeakCache.h \
