@@ -65,6 +65,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 WavFileReader::~WavFileReader()
 {
     if (m_file) sf_close(m_file);
+    delete[] m_buffer;
 }
 
 void
