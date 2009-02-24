@@ -24,7 +24,7 @@ MIDIInput::MIDIInput(QString name) :
     try {
         m_rtmidi = new RtMidiIn(name.toStdString());
         m_rtmidi->setCallback(staticCallback, this);
-        m_rtmidi->openPort();
+        m_rtmidi->openPort(0, tr("Input").toStdString());
     } catch (RtError e) {
         e.printMessage();
         delete m_rtmidi;
