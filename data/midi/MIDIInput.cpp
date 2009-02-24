@@ -48,7 +48,14 @@ void
 MIDIInput::callback(double timestamp, std::vector<unsigned char> *message)
 {
     std::cerr << "MIDIInput::callback(" << timestamp << ")" << std::endl;
-
+    unsigned long deltaTime = 0;
+    if (timestamp > 0) deltaTime = (unsigned long)(timestamp * 100000); //!!! for now!
+    if (!message || message->empty()) return;
+    MIDIEvent ev(deltaTime,
+                 (*message)[0],
+                 message->size() > 1 ? (*message)[1] : 0,
+                 message->size() > 2 ? (*message)[2] : 0);
+    postEvent(ev);
 }
 
 MIDIEvent
