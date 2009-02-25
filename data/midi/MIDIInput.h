@@ -21,6 +21,7 @@
 
 #include <vector>
 #include "base/RingBuffer.h"
+#include "base/FrameTimer.h"
 
 class RtMidiIn;
 
@@ -29,7 +30,7 @@ class MIDIInput : public QObject
     Q_OBJECT
 
 public:
-    MIDIInput(QString name);
+    MIDIInput(QString name, FrameTimer *timer);
     virtual ~MIDIInput();
 
     bool isOK() const { return m_rtmidi != 0; }
@@ -43,6 +44,7 @@ signals:
 
 protected:
     RtMidiIn *m_rtmidi;
+    FrameTimer *m_frameTimer;
 
     static void staticCallback(double, std::vector<unsigned char> *, void *);
     void callback(double, std::vector<unsigned char> *);

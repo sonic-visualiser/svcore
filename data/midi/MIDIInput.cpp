@@ -17,8 +17,9 @@
 
 #include "rtmidi/RtMidi.h"
 
-MIDIInput::MIDIInput(QString name) :
+MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
     m_rtmidi(),
+    m_frameTimer(timer),
     m_buffer(1023)
 {
     try {
@@ -48,10 +49,13 @@ void
 MIDIInput::callback(double timestamp, std::vector<unsigned char> *message)
 {
     std::cerr << "MIDIInput::callback(" << timestamp << ")" << std::endl;
-    unsigned long deltaTime = 0;
-    if (timestamp > 0) deltaTime = (unsigned long)(timestamp * 100000); //!!! for now!
+    // In my experience so far, the timings passed to this function
+    // are not reliable enough to use.  We request instead an audio
+    // frame time from whatever FrameTimer we have been given, and use
+    // that as the event time.
     if (!message || message->empty()) return;
-    MIDIEvent ev(deltaTime,
+    unsigned long t = m_frameTimer->getFrame();
+    MIDIEvent ev(t,
                  (*message)[0],
                  message->size() > 1 ? (*message)[1] : 0,
                  message->size() > 2 ? (*message)[2] : 0);
