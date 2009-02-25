@@ -130,7 +130,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const 
+    virtual QVariant getData(int row, int column, int) const 
     {
         switch (column) {
         case 0: {
@@ -148,7 +148,7 @@ public:
     virtual bool isColumnTimeValue(int col) const {
         return col < 2;
     }
-    virtual SortType getSortType(int col) const {
+    virtual SortType getSortType(int) const {
         return SortNumeric;
     }
 
