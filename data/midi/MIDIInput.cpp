@@ -55,8 +55,9 @@ MIDIInput::callback(double timestamp, std::vector<unsigned char> *message)
     // that as the event time.
     if (!message || message->empty()) return;
     unsigned long t = m_frameTimer->getFrame();
+    MIDIByte code = (*message)[0];
     MIDIEvent ev(t,
-                 (*message)[0],
+                 code,
                  message->size() > 1 ? (*message)[1] : 0,
                  message->size() > 2 ? (*message)[2] : 0);
     postEvent(ev);
