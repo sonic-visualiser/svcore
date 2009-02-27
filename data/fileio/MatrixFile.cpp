@@ -35,7 +35,7 @@
 #include <QFileInfo>
 #include <QDir>
 
-#define DEBUG_MATRIX_FILE 1
+//#define DEBUG_MATRIX_FILE 1
 //#define DEBUG_MATRIX_FILE_READ_SET 1
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
