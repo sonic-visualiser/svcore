@@ -391,7 +391,9 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     m_setColumns->set(x);
     if (m_autoClose) {
         if (m_setColumns->isAllOn()) {
+#ifdef DEBUG_MATRIX_FILE
             std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): All columns set: auto-closing" << std::endl;
+#endif
             close();
 /*
         } else {
