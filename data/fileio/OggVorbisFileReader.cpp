@@ -209,6 +209,7 @@ void
 OggVorbisFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("ogg");
+    extensions.insert("oga");
 }
 
 bool
