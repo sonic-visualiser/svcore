@@ -25,7 +25,7 @@
 
 #include <iostream>
 #include <unistd.h>
-#include <math.h>
+#include <cmath>
 #include <sndfile.h>
 
 #include <cassert>
