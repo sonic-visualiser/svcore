@@ -18,6 +18,7 @@
 */
 
 #include "SamplePlayer.h"
+#include "system/System.h"
 
 #include <dssi.h>
 #include <cmath>

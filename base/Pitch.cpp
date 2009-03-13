@@ -15,6 +15,7 @@
 
 #include "Pitch.h"
 #include "Preferences.h"
+#include "system/System.h"
 
 #include <cmath>
 
