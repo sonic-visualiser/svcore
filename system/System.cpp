@@ -69,6 +69,7 @@ int gettimeofday(struct timeval *tv, void *tz)
     ::GetSystemTimeAsFileTime(&now.ft); 
     tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
     tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
+    return 0;
 }
 
 }
