@@ -121,6 +121,10 @@ extern float modf(float x, float y);
 extern double princarg(double a);
 extern float princargf(float a);
 
+#ifdef USE_POW_NO_F
+#define powf pow
+#endif
+
 #endif /* ! _SYSTEM_H_ */
 
 

@@ -24,6 +24,7 @@
 #include <map>
 #include <vector>
 #include <cassert>
+#include "system/System.h"
 
 const float AudioLevel::DB_FLOOR = -1000.f;
 

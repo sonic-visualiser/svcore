@@ -14,6 +14,7 @@
 */
 
 #include "RangeMapper.h"
+#include "system/System.h"
 
 #include <cassert>
 #include <cmath>

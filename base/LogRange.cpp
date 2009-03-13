@@ -14,6 +14,7 @@
 */
 
 #include "LogRange.h"
+#include "system/System.h"
 
 #include <algorithm>
 #include <iostream>
