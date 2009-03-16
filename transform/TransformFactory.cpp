@@ -325,7 +325,9 @@ TransformFactory::populateTransforms()
     TransformDescriptionMap transforms;
 
     populateFeatureExtractionPlugins(transforms);
+    if (m_exiting) return;
     populateRealTimePlugins(transforms);
+    if (m_exiting) return;
 
     // disambiguate plugins with similar names
 
@@ -389,6 +391,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 {
     std::vector<QString> plugs =
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
+    if (m_exiting) return;
 
     for (size_t i = 0; i < plugs.size(); ++i) {
 
@@ -485,6 +488,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 {
     std::vector<QString> plugs =
 	RealTimePluginFactory::getAllPluginIdentifiers();
+    if (m_exiting) return;
 
     static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
@@ -617,13 +621,17 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 void
 TransformFactory::populateUninstalledTransforms()
 {
+    if (m_exiting) return;
+
     populateTransforms();
+    if (m_exiting) return;
 
     MutexLocker locker(&m_uninstalledTransformsMutex,
                        "TransformFactory::populateUninstalledTransforms");
     if (m_uninstalledTransformsPopulated) return;
 
     PluginRDFIndexer::getInstance()->indexConfiguredURLs();
+    if (m_exiting) return;
 
     //!!! This will be amazingly slow
 
@@ -710,7 +718,7 @@ TransformFactory::populateUninstalledTransforms()
             m_uninstalledTransforms[tid] = td;
         }
 
-        if (m_exiting) break;
+        if (m_exiting) return;
     }
 
     m_uninstalledTransformsPopulated = true;
