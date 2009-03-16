@@ -43,7 +43,9 @@ FFTFileCacheWriter::FFTFileCacheWriter(QString fileBase,
            storageType == FFTCache::Compact ? sizeof(uint16_t) : sizeof(float),
            width, height * 2 + m_factorSize))
 {
+#ifdef DEBUG_FFT_FILE_CACHE_WRITER
     std::cerr << "FFTFileCacheWriter: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == FFTCache::Polar ? "Polar" : "Rectangular") << ", size " << width << "x" << height << std::endl;
+#endif
     m_mfc->setAutoClose(true);
     m_writebuf = new char[(height * 2 + m_factorSize) * m_mfc->getCellSize()];
 }
