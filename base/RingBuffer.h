@@ -165,6 +165,7 @@ protected:
     size_t  m_writer;
     size_t *m_readers;
     size_t  m_size;
+    size_t  m_spare;
 
     static Scavenger<ScavengerArrayWrapper<T> > m_scavenger;
 
@@ -187,9 +188,16 @@ RingBuffer<T, N>::RingBuffer(size_t n) :
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::RingBuffer(" << n << ")" << std::endl;
 #endif
+/*
+    std::cerr << "note: sizeof(RingBuffer<T,N> = " << sizeof(RingBuffer<T,N>) << ")" << std::endl;
 
-    std::cerr << "note: sizeof(RingBuffer<T,N> = " << sizeof(RingBuffer<T,N>) << std::endl;
-
+    std::cerr << "this = " << this << std::endl;
+    std::cerr << "&m_buffer = " << &m_buffer << std::endl;
+    std::cerr << "&m_mlocked = " << &m_mlocked << std::endl;
+    std::cerr << "&m_writer = " << &m_writer << std::endl;
+    std::cerr << "&m_readers = " << &m_readers << std::endl;
+    std::cerr << "&m_size = " << &m_size << std::endl;
+*/
     for (int i = 0; i < N; ++i) m_readers[i] = 0;
 
     m_scavenger.scavenge();
