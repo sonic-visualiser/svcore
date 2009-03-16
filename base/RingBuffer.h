@@ -198,6 +198,7 @@ RingBuffer<T, N>::RingBuffer(size_t n) :
     std::cerr << "&m_readers = " << &m_readers << std::endl;
     std::cerr << "&m_size = " << &m_size << std::endl;
 */
+    
     for (int i = 0; i < N; ++i) m_readers[i] = 0;
 
     m_scavenger.scavenge();
