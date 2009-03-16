@@ -49,15 +49,30 @@ TransformFactory::getInstance()
     return m_instance;
 }
 
+void
+TransformFactory::deleteInstance()
+{
+    std::cerr << "TransformFactory::deleteInstance called" << std::endl;
+    delete m_instance;
+    m_instance = 0;
+}
+
 TransformFactory::TransformFactory() :
     m_transformsPopulated(false),
     m_uninstalledTransformsPopulated(false),
-    m_thread(0)
+    m_thread(0),
+    m_exiting(false)
 {
 }
 
 TransformFactory::~TransformFactory()
 {
+    m_exiting = true;
+    if (m_thread) {
+        std::cerr << "TransformFactory::~TransformFactory: waiting on thread" << std::endl;
+        m_thread->wait();
+        delete m_thread;
+    }
 }
 
 void
@@ -694,6 +709,8 @@ TransformFactory::populateUninstalledTransforms()
 
             m_uninstalledTransforms[tid] = td;
         }
+
+        if (m_exiting) break;
     }
 
     m_uninstalledTransformsPopulated = true;

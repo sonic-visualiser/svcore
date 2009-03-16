@@ -39,6 +39,7 @@ public:
     virtual ~TransformFactory();
 
     static TransformFactory *getInstance();
+    static void deleteInstance(); // only when exiting
 
     /**
      * TransformFactory has a background thread that can populate
@@ -224,6 +225,7 @@ protected:
     };
 
     UninstalledTransformsPopulateThread *m_thread;
+    bool m_exiting;
     bool m_populatingSlowly;
 
     static TransformFactory *m_instance;

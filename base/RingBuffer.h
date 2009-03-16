@@ -160,11 +160,11 @@ public:
     size_t zero(size_t n);
 
 protected:
-    T               *m_buffer;
-    volatile size_t  m_writer;
-    volatile size_t  m_readers[N];
-    size_t           m_size;
-    bool             m_mlocked;
+    T      *m_buffer;
+    bool    m_mlocked;
+    size_t  m_writer;
+    size_t *m_readers;
+    size_t  m_size;
 
     static Scavenger<ScavengerArrayWrapper<T> > m_scavenger;
 
@@ -179,13 +179,16 @@ Scavenger<ScavengerArrayWrapper<T> > RingBuffer<T, N>::m_scavenger;
 template <typename T, int N>
 RingBuffer<T, N>::RingBuffer(size_t n) :
     m_buffer(new T[n + 1]),
+    m_mlocked(false),
     m_writer(0),
-    m_size(n + 1),
-    m_mlocked(false)
+    m_readers(new size_t[N]),
+    m_size(n + 1)
 {
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::RingBuffer(" << n << ")" << std::endl;
 #endif
+
+    std::cerr << "note: sizeof(RingBuffer<T,N> = " << sizeof(RingBuffer<T,N>) << std::endl;
 
     for (int i = 0; i < N; ++i) m_readers[i] = 0;
 
@@ -198,6 +201,8 @@ RingBuffer<T, N>::~RingBuffer()
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::~RingBuffer" << std::endl;
 #endif
+
+    delete[] m_readers;
 
     if (m_mlocked) {
 	MUNLOCK((void *)m_buffer, m_size * sizeof(T));
