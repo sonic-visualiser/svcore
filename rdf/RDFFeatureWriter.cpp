@@ -658,7 +658,7 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
 void RDFFeatureWriter::finish()
 {
-    cerr << "RDFFeatureWriter::finish()" << endl;
+//    cerr << "RDFFeatureWriter::finish()" << endl;
 
     // close any open dense feature literals
 
