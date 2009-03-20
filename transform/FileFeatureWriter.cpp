@@ -289,7 +289,7 @@ FileFeatureWriter::flush()
 void
 FileFeatureWriter::finish()
 {
-    cerr << "FileFeatureWriter::finish()" << endl;
+//    cerr << "FileFeatureWriter::finish()" << endl;
 
     if (m_singleFileName != "" || m_stdout) return;
 
