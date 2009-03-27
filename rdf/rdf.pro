@@ -1,7 +1,7 @@
 TEMPLATE = lib
 
 SV_UNIT_PACKAGES = redland rasqal raptor
-load(../sv.prf)
+load(../prf/sv.prf)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 
