@@ -36,10 +36,7 @@
 
 #include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
-
-#ifndef NO_SV_GUI
-#include "widgets/FileFinder.h"
-#endif
+#include "data/fileio/FileFinder.h"
 
 using std::cerr;
 using std::endl;
@@ -212,16 +209,18 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
 #else
         if (!fs->isAvailable()) {
             FileFinder *ff = FileFinder::getInstance();
-            QString path = ff->find(FileFinder::AudioFile,
-                                    fs->getLocation(),
-                                    m_uristring);
-            if (path != "") {
-                delete fs;
-                fs = new FileSource(path, reporter);
-                if (!fs->isAvailable()) {
+            if (ff) {
+                QString path = ff->find(FileFinder::AudioFile,
+                                        fs->getLocation(),
+                                        m_uristring);
+                if (path != "") {
                     delete fs;
-                    m_errorString = QString("Signal source \"%1\" is not available").arg(source);
-                    continue;
+                    fs = new FileSource(path, reporter);
+                    if (!fs->isAvailable()) {
+                        delete fs;
+                        m_errorString = QString("Signal source \"%1\" is not available").arg(source);
+                        continue;
+                    }
                 }
             }
         }
