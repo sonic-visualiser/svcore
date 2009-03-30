@@ -111,7 +111,7 @@ Transform::~Transform()
 bool
 Transform::operator==(const Transform &t) const
 {
-    return 
+    bool identical =  
         m_id == t.m_id &&
         m_parameters == t.m_parameters &&
         m_configuration == t.m_configuration &&
@@ -123,6 +123,14 @@ Transform::operator==(const Transform &t) const
         m_startTime == t.m_startTime &&
         m_duration == t.m_duration &&
         m_sampleRate == t.m_sampleRate;
+/*
+    std::cerr << "Transform::operator==: identical = " << identical << std::endl;
+    std::cerr << "A = " << std::endl;
+    std::cerr << toXmlString().toStdString() << std::endl;
+    std::cerr << "B = " << std::endl;
+    std::cerr << t.toXmlString().toStdString() << std::endl;
+*/
+    return identical;
 }
 
 bool
