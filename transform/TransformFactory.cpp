@@ -930,6 +930,9 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
         pmap[i->identifier.c_str()] = plugin->getParameter(i->identifier);
+//        std::cerr << "TransformFactory::setParametersFromPlugin: parameter "
+//                  << i->identifier << " -> value " <<
+//            pmap[i->identifier.c_str()] << std::endl;
     }
 
     transform.setParameters(pmap);
