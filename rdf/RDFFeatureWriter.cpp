@@ -252,42 +252,60 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     if (m_trackSignalURIs.find(trackId) == m_trackSignalURIs.end()) {
         m_trackSignalURIs[trackId] = QString(":signal_%1").arg(signalCount);
     }
-    
+
     if (m_suri != NULL) {
         m_trackSignalURIs[trackId] = "<" + m_suri + ">";
     }
     QString signalURI = m_trackSignalURIs[trackId];
    
+    if (m_trackTrackURIs.find(trackId) == m_trackTrackURIs.end()) {
+        m_trackTrackURIs[trackId] = QString(":track_%1").arg(signalCount);
+    }
+    QString trackURI = m_trackTrackURIs[trackId];
+    
     if (m_trackTimelineURIs.find(trackId) == m_trackTimelineURIs.end()) {
         m_trackTimelineURIs[trackId] = QString(":signal_timeline_%1").arg(signalCount);
     }
     QString timelineURI = m_trackTimelineURIs[trackId];
 
+    if (m_metadata.find(trackId) != m_metadata.end()) {
+        TrackMetadata tm = m_metadata[trackId];
+        if (tm.title != "" || tm.maker != "") {
+            // We only write a Track at all if we have some
+            // title/artist metadata to put in it.  Otherwise we can't
+            // be sure that what we have is a Track, in the
+            // publication sense -- it may just be a fragment, a test
+            // file, whatever.  Since we'd have no metadata to
+            // associate with our Track, the only effect of including
+            // a Track would be to assert that this was one, which is
+            // the one thing we wouldn't know...
+            stream << trackURI << " a mo:Track ";
+            if (tm.title != "") {
+                stream << ";\n    dc:title \"\"\"" << tm.title << "\"\"\" ";
+            }
+            if (tm.maker != "") {
+                stream << ";\n    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ";
+            }
+            if (trackId != "") {
+                stream << ";\n    mo:available_as <" << url.toEncoded().data() << "> ";
+            }
+            stream << ".\n\n";
+        }
+    }
+
     if (trackId != "") {
-        stream << "\n<" << url.toEncoded().data() << "> a mo:AudioFile .\n\n";
+        stream << "<" << url.toEncoded().data() << "> a mo:AudioFile ;\n";
+        stream << "    mo:encodes " << signalURI << ".\n\n";
     }
 
     stream << signalURI << " a mo:Signal ;\n";
-
-    if (trackId != "") {
-        stream << "    mo:available_as <" << url.toEncoded().data()
-               << "> ;\n";
-    }
-
-    if (m_metadata.find(trackId) != m_metadata.end()) {
-        TrackMetadata tm = m_metadata[trackId];
-        if (tm.title != "") {
-            stream << "    dc:title \"\"\"" << tm.title << "\"\"\" ;\n";
-        }
-        if (tm.maker != "") {
-            stream << "    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ;\n";
-        }
-    }
 
     stream << "    mo:time [\n"
            << "        a tl:Interval ;\n"
            << "        tl:onTimeLine "
            << timelineURI << "\n    ] .\n\n";
+
+    stream << timelineURI << " a tl:Timeline .\n";
 } 
 
 void

@@ -101,6 +101,7 @@ private:
 
     map<QTextStream *, set<Transform> > m_startedStreamTransforms;
 
+    map<QString, QString> m_trackTrackURIs;
     map<QString, QString> m_trackTimelineURIs;
     map<QString, QString> m_trackSignalURIs;
 
