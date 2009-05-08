@@ -635,6 +635,10 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
         stream << "\n    ] ;\n";
 
+        if (transform.getIdentifier() != "") {
+            stream << "    vamp:computed_by " << m_transformURIs[transform] << " ;\n";
+        }
+
         if (od.hasFixedBinCount) {
             // We only know the height, so write the width as zero
             stream << "    af:dimensions \"" << od.binCount << " 0\" ;\n";
