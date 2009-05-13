@@ -947,18 +947,41 @@ RDFImporter::identifyDocumentType(QString url)
         return NotRDF;
     }
 
+    // "MO-conformant" structure for audio files
+
     SimpleSPARQLQuery::Value value =
         SimpleSPARQLQuery::singleResultQuery
         (SimpleSPARQLQuery::QueryFromSingleSource,
          QString
          (" PREFIX mo: <http://purl.org/ontology/mo/> "
           " SELECT ?url FROM <%1> "
-          " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
+          " WHERE { ?url a mo:AudioFile } "
              ).arg(url),
          "url");
 
     if (value.type == SimpleSPARQLQuery::URIValue) {
+
         haveAudio = true;
+
+    } else {
+
+        // Sonic Annotator v0.2 and below used to write this structure
+        // (which is not properly in conformance with the Music
+        // Ontology)
+
+        value =
+            SimpleSPARQLQuery::singleResultQuery
+            (SimpleSPARQLQuery::QueryFromSingleSource,
+             QString
+             (" PREFIX mo: <http://purl.org/ontology/mo/> "
+              " SELECT ?url FROM <%1> "
+              " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
+                 ).arg(url),
+             "url");
+
+        if (value.type == SimpleSPARQLQuery::URIValue) {
+            haveAudio = true;
+        }
     }
 
     value =
