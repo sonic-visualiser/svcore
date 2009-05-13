@@ -55,8 +55,8 @@ RDFFeatureWriter::getSupportedParameters() const
     p.hasArg = false;
     pl.push_back(p);
 
-    p.name = "signal-uri";
-    p.description = "Link the output RDF to the given signal URI.";
+    p.name = "audiofile-uri";
+    p.description = "Link the output RDF to the given audio file URI instead of its actual location.";
     p.hasArg = true;
     pl.push_back(p);
     
@@ -73,7 +73,7 @@ RDFFeatureWriter::setParameters(map<string, string> &params)
         if (i->first == "plain") {
             m_plain = true;
         }
-        if (i->first == "signal-uri") {
+        if (i->first == "audiofile-uri") {
             m_suri = i->second.c_str();
         }
     }
@@ -252,10 +252,6 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     if (m_trackSignalURIs.find(trackId) == m_trackSignalURIs.end()) {
         m_trackSignalURIs[trackId] = QString(":signal_%1").arg(signalCount);
     }
-
-    if (m_suri != NULL) {
-        m_trackSignalURIs[trackId] = "<" + m_suri + ">";
-    }
     QString signalURI = m_trackSignalURIs[trackId];
    
     if (m_trackTrackURIs.find(trackId) == m_trackTrackURIs.end()) {
@@ -267,6 +263,9 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
         m_trackTimelineURIs[trackId] = QString(":signal_timeline_%1").arg(signalCount);
     }
     QString timelineURI = m_trackTimelineURIs[trackId];
+
+    QString afURI = url.toEncoded().data();
+    if (m_suri != NULL) afURI = m_suri;
 
     if (m_metadata.find(trackId) != m_metadata.end()) {
         TrackMetadata tm = m_metadata[trackId];
@@ -287,14 +286,14 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                 stream << ";\n    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ";
             }
             if (trackId != "") {
-                stream << ";\n    mo:available_as <" << url.toEncoded().data() << "> ";
+                stream << ";\n    mo:available_as <" << afURI << "> ";
             }
             stream << ".\n\n";
         }
     }
 
     if (trackId != "") {
-        stream << "<" << url.toEncoded().data() << "> a mo:AudioFile ;\n";
+        stream << "<" << afURI << "> a mo:AudioFile ;\n";
         stream << "    mo:encodes " << signalURI << ".\n\n";
     }
 
