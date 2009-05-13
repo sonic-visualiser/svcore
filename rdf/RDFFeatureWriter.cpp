@@ -630,7 +630,7 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
                 stream << ":signal_type_" << outputId << " ;\n";
             }
         } else {
-            stream << signalTypeURI << " ;\n";
+            stream << "<" << signalTypeURI << "> ;\n";
         }
 
         stream << "    mo:time ["
