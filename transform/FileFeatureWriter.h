@@ -64,6 +64,9 @@ protected:
 
     QString getOutputFilename(QString, TransformId);
     QFile *getOutputFile(QString, TransformId);
+    
+    // subclass can implement this to be called before file is opened for append
+    virtual void reviewFileForAppending(QString filename) { }
 
     int m_support;
     QString m_extension;
