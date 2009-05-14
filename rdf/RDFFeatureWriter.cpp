@@ -219,6 +219,40 @@ RDFFeatureWriter::writePrefixes(QTextStream *sptr)
 }
 
 void
+RDFFeatureWriter::reviewFileForAppending(QString filename)
+{
+    // Appending to an RDF file is tricky, because we need to ensure
+    // that our URIs differ from any already in the file.  This is a
+    // dirty grubby low-rent way of doing that.  This function is
+    // called by FileFeatureWriter::getOutputFile when in append mode.
+
+    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
+
+    QFile file(filename);
+
+    // just return, don't report failure -- function that called us will do that
+    if (!file.open(QIODevice::ReadOnly)) return;
+
+    QTextStream in(&file);
+
+    QRegExp localObjectUriWithDigits(":[^ ]+_([0-9]+) a ");
+
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        if (line.length() > 120) { // probably data
+            continue;
+        }
+        if (localObjectUriWithDigits.indexIn(line) > -1) {
+            QString numeric = localObjectUriWithDigits.cap(1);
+            int number = numeric.toInt();
+            if (number >= m_count) m_count = number + 1;
+        }
+    }
+
+    file.close();
+}
+
+void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
@@ -244,8 +278,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
         }
     }
 
-    //!!! FIX: If we are appending, we need to start counting after
-    //all of the existing counts that are already in the file!
+    // Note reviewFileForAppending above (when opening in append mode)
 
     uint64_t signalCount = m_count++;
 

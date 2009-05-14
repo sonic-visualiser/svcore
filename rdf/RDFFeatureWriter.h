@@ -68,6 +68,8 @@ private:
 
     QString m_fixedEventTypeURI;
 
+    virtual void reviewFileForAppending(QString filename);
+
     void writePrefixes(QTextStream *);
     void writeSignalDescription(QTextStream *, QString);
     void writeLocalFeatureTypes(QTextStream *,
