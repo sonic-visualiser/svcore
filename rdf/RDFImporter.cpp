@@ -151,7 +151,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
     getDataModelsAudio(models, reporter);
 
     if (m_sampleRate == 0) {
-        std::cerr << "RDFImporter::getDataModels: invalid sample rate" << std::endl;
+        std::cerr << "RDFImporter::getDataModels: invalid sample rate from audio" << std::endl;
         return models;
     }
 
@@ -182,17 +182,34 @@ void
 RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                     ProgressReporter *reporter)
 {
-    SimpleSPARQLQuery query = SimpleSPARQLQuery
+    SimpleSPARQLQuery query
         (SimpleSPARQLQuery::QueryFromSingleSource,
          QString
          (
              " PREFIX mo: <http://purl.org/ontology/mo/> "
              " SELECT ?signal ?source FROM <%1> "
-             " WHERE { ?signal a mo:Signal ; mo:available_as ?source } "
+             " WHERE { ?source a mo:AudioFile . "
+             "         ?signal a mo:Signal . "
+             "         ?source mo:encodes ?signal } "
              )
          .arg(m_uristring));
 
     SimpleSPARQLQuery::ResultList results = query.execute();
+
+    if (results.empty()) {
+
+        SimpleSPARQLQuery query2
+            (SimpleSPARQLQuery::QueryFromSingleSource,
+             QString
+             (
+                 " PREFIX mo: <http://purl.org/ontology/mo/> "
+                 " SELECT ?signal ?source FROM <%1> "
+                 " WHERE { ?signal a mo:Signal ; mo:available_as ?source } "
+                 )
+             .arg(m_uristring));
+        
+        results = query.execute();
+    }
 
     for (int i = 0; i < results.size(); ++i) {
 
@@ -254,7 +271,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
         reporter->setMessage(RDFImporter::tr("Importing dense signal data from RDF..."));
     }
 
-    SimpleSPARQLQuery query = SimpleSPARQLQuery
+    SimpleSPARQLQuery query
         (SimpleSPARQLQuery::QueryFromSingleSource,
          QString
          (

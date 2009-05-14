@@ -102,6 +102,10 @@ public:
 protected:
     class Impl;
     Impl *m_impl;
+
+private:
+    SimpleSPARQLQuery(const SimpleSPARQLQuery &); // not provided
+    SimpleSPARQLQuery &operator=(const SimpleSPARQLQuery &); // not provided
 };
 
 #endif
