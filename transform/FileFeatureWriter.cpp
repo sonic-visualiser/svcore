@@ -231,6 +231,11 @@ QFile *FileFeatureWriter::getOutputFile(QString trackId,
         cerr << "FileFeatureWriter: NOTE: Using output filename \""
              << filename.toStdString() << "\"" << endl;
 
+        if (m_append) {
+            cerr << "FileFeatureWriter: NOTE: Calling reviewFileForAppending" << endl;
+            reviewFileForAppending(filename);
+        }
+        
         QFile *file = new QFile(filename);
         QIODevice::OpenMode mode = (QIODevice::WriteOnly);
         if (m_append) mode |= QIODevice::Append;
