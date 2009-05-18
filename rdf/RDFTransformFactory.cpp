@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <QTextStream>
+#include <QUrl>
 
 #include <iostream>
 #include <cmath>
@@ -395,7 +396,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
 
     if (pluginUri != "") {
         s << uri << " a vamp:Transform ;" << endl;
-        s << "    vamp:plugin <" << pluginUri << "> ;" << endl;
+        s << "    vamp:plugin <" << QUrl(pluginUri).toEncoded().data() << "> ;" << endl;
     } else {
         std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId.toStdString() << "\", writing synthetic plugin and library resources" << std::endl;
         QString type, soname, label;
@@ -455,7 +456,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     }
 
     if (outputUri != "") {
-        s << "    vamp:output <" << outputUri << "> ." << endl;
+        s << "    vamp:output <" << QUrl(outputUri).toEncoded().data() << "> ." << endl;
     } else if (outputId != "") {
         s << "    vamp:output [ vamp:identifier \"" << outputId << "\" ] ." << endl;
     } else {
