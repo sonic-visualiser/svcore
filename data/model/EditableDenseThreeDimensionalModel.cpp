@@ -300,9 +300,18 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
             c.push_back(p.at(i));
         }
     } else {
-        for (int i = psize - csize - 1; i >= 0; --i) {
-            c.push_front(p.at(i));
+        // push_front is very slow on QVector -- but not enough to
+        // make it desirable to choose a different container, since
+        // QVector has all the other advantages for us.  easier to
+        // write the whole array out to a new vector
+        Column cc(psize);
+        for (int i = 0; i < psize - csize; ++i) {
+            cc[i] = p.at(i);
         }
+        for (int i = 0; i < csize; ++i) {
+            cc[i + (psize - csize)] = c.at(i);
+        }
+        return cc;
     }
     return c;
 }
@@ -340,7 +349,7 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 
     truncateAndStore(index, values);
 
-    assert(values == expandAndRetrieve(index));
+//    assert(values == expandAndRetrieve(index));
 
     long windowStart = index;
     windowStart *= m_resolution;
