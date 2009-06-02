@@ -114,7 +114,9 @@ private:
     typedef pair<QString, Transform> StringTransformPair;
     typedef pair<QTextStream *, QString> StreamBuffer;
     map<StringTransformPair, StreamBuffer> m_openDenseFeatures; // signal URI + transform -> stream + text
-    QString m_suri;
+    QString m_userAudioFileUri;
+    QString m_userTrackUri;
+    QString m_userMakerUri;
 
     bool m_plain;
 

@@ -59,6 +59,16 @@ RDFFeatureWriter::getSupportedParameters() const
     p.description = "Link the output RDF to the given audio file URI instead of its actual location.";
     p.hasArg = true;
     pl.push_back(p);
+
+    p.name = "track-uri";
+    p.description = "Link the output RDF to the given track URI.";
+    p.hasArg = true;
+    pl.push_back(p);
+
+    p.name = "maker-uri";
+    p.description = "Link the track in the output RDF to the given foaf:maker URI.";
+    p.hasArg = true;
+    pl.push_back(p);
     
     return pl;
 }
@@ -74,7 +84,13 @@ RDFFeatureWriter::setParameters(map<string, string> &params)
             m_plain = true;
         }
         if (i->first == "audiofile-uri") {
-            m_suri = i->second.c_str();
+            m_userAudioFileUri = i->second.c_str();
+        }
+        if (i->first == "track-uri") {
+            m_userTrackUri = i->second.c_str();
+        }
+        if (i->first == "maker-uri") {
+            m_userMakerUri = i->second.c_str();
         }
     }
 }
@@ -83,6 +99,7 @@ void
 RDFFeatureWriter::setTrackMetadata(QString trackId,
                                    TrackMetadata metadata)
 {
+//    cerr << "setTrackMetadata: title = " << metadata.title.toStdString() << ", maker = " << metadata.maker.toStdString() << endl;
     m_metadata[trackId] = metadata;
 }
 
@@ -127,7 +144,7 @@ RDFFeatureWriter::write(QString trackId,
 
     if (m_startedStreamTransforms.find(stream) ==
         m_startedStreamTransforms.end()) {
-        cerr << "This stream is new, writing prefixes" << endl;
+//        cerr << "This stream is new, writing prefixes" << endl;
         writePrefixes(stream);
         if (m_singleFileName == "" && !m_stdout) {
             writeSignalDescription(stream, trackId);
@@ -226,7 +243,7 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
     // dirty grubby low-rent way of doing that.  This function is
     // called by FileFeatureWriter::getOutputFile when in append mode.
 
-    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
+//    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
 
     QFile file(filename);
 
@@ -256,7 +273,7 @@ void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
-    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
+//    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
 
     QTextStream &stream = *sptr;
 
@@ -291,6 +308,13 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
         m_trackTrackURIs[trackId] = QString(":track_%1").arg(signalCount);
     }
     QString trackURI = m_trackTrackURIs[trackId];
+
+    bool userSpecifiedTrack = false;
+    if (m_userTrackUri != "") {
+        trackURI = "<" + m_userTrackUri + ">";
+        m_trackTrackURIs[trackId] = trackURI;
+        userSpecifiedTrack = true;
+    }
     
     if (m_trackTimelineURIs.find(trackId) == m_trackTimelineURIs.end()) {
         m_trackTimelineURIs[trackId] = QString(":signal_timeline_%1").arg(signalCount);
@@ -298,34 +322,44 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
     QString timelineURI = m_trackTimelineURIs[trackId];
 
     QString afURI = url.toEncoded().data();
-    if (m_suri != NULL) afURI = m_suri;
+    if (m_userAudioFileUri != "") afURI = m_userAudioFileUri;
 
-    if (m_metadata.find(trackId) != m_metadata.end()) {
-        TrackMetadata tm = m_metadata[trackId];
-        if (tm.title != "" || tm.maker != "") {
-            // We only write a Track at all if we have some
-            // title/artist metadata to put in it.  Otherwise we can't
-            // be sure that what we have is a Track, in the
-            // publication sense -- it may just be a fragment, a test
-            // file, whatever.  Since we'd have no metadata to
-            // associate with our Track, the only effect of including
-            // a Track would be to assert that this was one, which is
-            // the one thing we wouldn't know...
-            stream << trackURI << " a mo:Track ";
-            if (tm.title != "") {
-                stream << ";\n    dc:title \"\"\"" << tm.title << "\"\"\" ";
-            }
-            if (tm.maker != "") {
-                stream << ";\n    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ";
-            }
-            if (trackId != "") {
-                stream << ";\n    mo:available_as <" << afURI << "> ";
-            }
-            stream << ".\n\n";
+    bool wantTrack = (userSpecifiedTrack ||
+                      (m_userMakerUri != "") ||
+                      (m_metadata.find(trackId) != m_metadata.end()));
+
+//    cerr << "wantTrack = " << wantTrack << " (userSpecifiedTrack = "
+//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri.toStdString() << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
+
+    if (wantTrack) {
+        // We only write a Track at all if we have some title/artist
+        // metadata to put in it, or if the user has requested a
+        // specific track URI.  Otherwise we can't be sure that what
+        // we have is a Track, in the publication sense -- it may just
+        // be a fragment, a test file, whatever.  Since we'd have no
+        // metadata to associate with our Track, the only effect of
+        // including a Track would be to assert that this was one,
+        // which is the one thing we wouldn't know...
+        TrackMetadata tm;
+        if (m_metadata.find(trackId) != m_metadata.end()) {
+            tm = m_metadata[trackId];
         }
+        stream << trackURI << " a mo:Track ";
+        if (tm.title != "") {
+            stream << ";\n    dc:title \"\"\"" << tm.title << "\"\"\" ";
+        }
+        if (m_userMakerUri != "") {
+            stream << ";\n    foaf:maker <" << m_userMakerUri << "> ";
+        } else if (tm.maker != "") {
+            stream << ";\n    foaf:maker [ a mo:MusicArtist; foaf:name \"\"\"" << tm.maker << "\"\"\" ] ";
+        }
+        if (afURI != "") {
+            stream << ";\n    mo:available_as <" << afURI << "> ";
+        }
+        stream << ".\n\n";
     }
 
-    if (trackId != "") {
+    if (afURI != "") {
         stream << "<" << afURI << "> a mo:AudioFile ;\n";
         stream << "    mo:encodes " << signalURI << ".\n\n";
     }
