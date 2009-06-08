@@ -275,8 +275,13 @@ FeatureExtractionModelTransformer::createOutputModel()
         // duration)
         if (binCount > 1) isNoteModel = true;
 
-        // Regions do not have units of Hz (a sweeping assumption!)
-        if (m_descriptor->unit == "Hz") isNoteModel = true;
+        // Regions do not have units of Hz or MIDI things (a sweeping
+        // assumption!)
+        if (m_descriptor->unit == "Hz" ||
+            m_descriptor->unit.find("MIDI") != std::string::npos ||
+            m_descriptor->unit.find("midi") != std::string::npos) {
+            isNoteModel = true;
+        }
 
         // If we had a "sparse 3D model", we would have the additional
         // problem of determining whether to use that here (if bin
