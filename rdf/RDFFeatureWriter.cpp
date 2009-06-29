@@ -20,6 +20,7 @@
 
 #include "RDFFeatureWriter.h"
 #include "RDFTransformFactory.h"
+#include "PluginRDFIndexer.h"
 
 #include <QTextStream>
 #include <QUrl>
@@ -36,6 +37,8 @@ RDFFeatureWriter::RDFFeatureWriter() :
                       SupportOneFileTotal,
                       "n3"),
     m_plain(false),
+    m_network(false),
+    m_networkRetrieved(false),
     m_count(0)
 {
 }
@@ -69,6 +72,11 @@ RDFFeatureWriter::getSupportedParameters() const
     p.description = "Link the track in the output RDF to the given foaf:maker URI.";
     p.hasArg = true;
     pl.push_back(p);
+
+    p.name = "network";
+    p.description = "Attempt to retrieve RDF descriptions of plugins from network, if not available locally";
+    p.hasArg = false;
+    pl.push_back(p);
     
     return pl;
 }
@@ -91,6 +99,9 @@ RDFFeatureWriter::setParameters(map<string, string> &params)
         }
         if (i->first == "maker-uri") {
             m_userMakerUri = i->second.c_str();
+        }
+        if (i->first == "network") {
+            m_network = true;
         }
     }
 }
@@ -120,14 +131,23 @@ RDFFeatureWriter::write(QString trackId,
 
     if (m_rdfDescriptions.find(pluginId) == m_rdfDescriptions.end()) {
 
+        if (m_network && !m_networkRetrieved) {
+            PluginRDFIndexer::getInstance()->indexConfiguredURLs();
+            m_networkRetrieved = true;
+        }
+
         m_rdfDescriptions[pluginId] = PluginRDFDescription(pluginId);
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
             cerr << "NOTE: Have RDF description for plugin ID \""
                  << pluginId.toStdString() << "\"" << endl;
         } else {
-            cerr << "NOTE: Do not have RDF description for plugin ID \""
+            cerr << "NOTE: No RDF description for plugin ID \""
                  << pluginId.toStdString() << "\"" << endl;
+            if (!m_network) {
+                cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
+                cerr << "      from the network where possible." << endl;
+            }
         }
     }
 

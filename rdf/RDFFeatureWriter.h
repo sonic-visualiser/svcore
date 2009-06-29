@@ -120,6 +120,9 @@ private:
 
     bool m_plain;
 
+    bool m_network;
+    bool m_networkRetrieved;
+
     uint64_t m_count;
 };
 
