@@ -18,6 +18,8 @@
 #include "vamp-hostsdk/PluginHostAdapter.h"
 #include "vamp-hostsdk/PluginLoader.h"
 
+#include "base/Exceptions.h"
+
 #include "RDFFeatureWriter.h"
 #include "RDFTransformFactory.h"
 #include "PluginRDFIndexer.h"
@@ -159,7 +161,7 @@ RDFFeatureWriter::write(QString trackId,
         std::cerr << "RDFFeatureWriter::write: ERROR: No output stream for track id \""
                   << trackId.toStdString() << "\" and transform \""
                   << transform.getIdentifier().toStdString() << "\"" << std::endl;
-        exit(1);
+        throw FileOperationFailed("", "output stream write");
     }
 
     if (m_startedStreamTransforms.find(stream) ==
