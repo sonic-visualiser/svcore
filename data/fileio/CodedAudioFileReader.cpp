@@ -54,7 +54,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
-    std::cerr << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << std::endl;
+//    std::cerr << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << std::endl;
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
