@@ -32,6 +32,8 @@
 #include <samplerate.h>
 #include <iostream>
 
+//#define DEBUG_SAMPLE_PLAYER 1
+
 const char *const
 SamplePlayer::portNames[PortCount] =
 {
@@ -317,7 +319,9 @@ SamplePlayer::workThreadCallback(LADSPA_Handle handle)
 
     if (player->m_pendingProgramChange >= 0) {
 
-//	std::cerr << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << std::endl;
+#ifdef DEBUG_SAMPLE_PLAYER
+	std::cerr << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << std::endl;
+#endif
 
 	player->m_mutex.lock();
 
@@ -358,8 +362,10 @@ SamplePlayer::searchSamples()
 
     m_samples.clear();
 
+#ifdef DEBUG_SAMPLE_PLAYER
     std::cerr << "SamplePlayer::searchSamples: Directory is \""
 	      << m_sampleDir.toLocal8Bit().data() << "\"" << std::endl;
+#endif
 
     QDir dir(m_sampleDir, "*.wav");
     
@@ -368,7 +374,9 @@ SamplePlayer::searchSamples()
         if (file.isReadable()) {
             m_samples.push_back(std::pair<QString, QString>
                                 (file.baseName(), file.filePath()));
-//            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+#ifdef DEBUG_SAMPLE_PLAYER
+            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+#endif
         }
     }
     
@@ -494,6 +502,10 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 	       && pos >= events[event_pos].time.tick) {
 
 	    if (events[event_pos].type == SND_SEQ_EVENT_NOTEON) {
+#ifdef DEBUG_SAMPLE_PLAYER
+                std::cerr << "SamplePlayer: found NOTEON at time " 
+                          << events[event_pos].time.tick << std::endl;
+#endif
 		snd_seq_ev_note_t n = events[event_pos].data.note;
 		if (n.velocity > 0) {
 		    m_ons[n.note] =
@@ -508,6 +520,10 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 		}
 	    } else if (events[event_pos].type == SND_SEQ_EVENT_NOTEOFF &&
 		       (!m_sustain || (*m_sustain < 0.001))) {
+#ifdef DEBUG_SAMPLE_PLAYER
+                std::cerr << "SamplePlayer: found NOTEOFF at time " 
+                          << events[event_pos].time.tick << std::endl;
+#endif
 		snd_seq_ev_note_t n = events[event_pos].data.note;
 		m_offs[n.note] = 
 		    m_sampleNo + events[event_pos].time.tick;
@@ -522,11 +538,18 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 	    count = events[event_pos].time.tick - pos;
 	}
 
+        int notecount = 0;
+
 	for (i = 0; i < Polyphony; ++i) {
 	    if (m_ons[i] >= 0) {
+                ++notecount;
 		addSample(i, pos, count);
 	    }
 	}
+
+#ifdef DEBUG_SAMPLE_PLAYER
+        std::cerr << "SamplePlayer: have " << notecount << " note(s) sounding currently" << std::endl;
+#endif
 
 	pos += count;
     }
@@ -564,6 +587,9 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 	unsigned long rsi = lrintf(floor(rs));
 
 	if (rsi >= m_sampleCount) {
+#ifdef DEBUG_SAMPLE_PLAYER
+            std::cerr << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << std::endl;
+#endif
 	    m_ons[n] = -1;
 	    break;
 	}
@@ -580,6 +606,9 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 	    }
 
 	    if (dist > releaseFrames) {
+#ifdef DEBUG_SAMPLE_PLAYER
+                std::cerr << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << std::endl;
+#endif
 		m_ons[n] = -1;
 		break;
 	    } else {
