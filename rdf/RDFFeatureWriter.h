@@ -123,7 +123,7 @@ private:
     bool m_network;
     bool m_networkRetrieved;
 
-    uint64_t m_count;
+    unsigned long m_count;
 };
 
 #endif
