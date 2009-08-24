@@ -319,7 +319,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
 
     // Note reviewFileForAppending above (when opening in append mode)
 
-    uint64_t signalCount = m_count++;
+    unsigned long signalCount = m_count++;
 
     if (m_trackSignalURIs.find(trackId) == m_trackSignalURIs.end()) {
         m_trackSignalURIs[trackId] = QString(":signal_%1").arg(signalCount);
@@ -537,7 +537,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
     for (int i = 0; i < featureList.size(); ++i) {
 
         const Plugin::Feature &feature = featureList[i];
-        uint64_t featureNumber = m_count++;
+        unsigned long featureNumber = m_count++;
 
         stream << ":event_" << featureNumber << " a ";
 
@@ -671,7 +671,7 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
         bool plain = (m_plain || !desc.haveDescription());
         QString outputId = od.identifier.c_str();
 
-        uint64_t featureNumber = m_count++;
+        unsigned long featureNumber = m_count++;
 
         // need to write out feature timeline map -- for this we need
         // the sample rate, window length and hop size from the
