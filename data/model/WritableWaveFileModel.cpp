@@ -234,6 +234,7 @@ WritableWaveFileModel::toXml(QTextStream &out,
     Model::toXml
         (out, indent,
          QString("type=\"writablewavefile\" file=\"%1\" channels=\"%2\" %3")
-         .arg(m_writer->getPath()).arg(m_model->getChannelCount()).arg(extraAttributes));
+         .arg(encodeEntities(m_writer->getPath()))
+         .arg(m_model->getChannelCount()).arg(extraAttributes));
 }
 

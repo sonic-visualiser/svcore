@@ -40,7 +40,8 @@ public:
                QString extraAttributes = "") const
     {
         stream << QString("%1<point frame=\"%2\" label=\"%3\" %4/>\n")
-	    .arg(indent).arg(frame).arg(label).arg(extraAttributes);
+	    .arg(indent).arg(frame).arg(XmlExportable::encodeEntities(label))
+            .arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
