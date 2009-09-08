@@ -158,10 +158,7 @@ RDFFeatureWriter::write(QString trackId,
 
     QTextStream *stream = getOutputStream(trackId, transform.getIdentifier());
     if (!stream) {
-        std::cerr << "RDFFeatureWriter::write: ERROR: No output stream for track id \""
-                  << trackId.toStdString() << "\" and transform \""
-                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
-        throw FileOperationFailed("", "output stream write");
+        throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
     }
 
     if (m_startedStreamTransforms.find(stream) ==
