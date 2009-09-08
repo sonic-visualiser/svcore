@@ -49,7 +49,7 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "");
 
-    virtual void finish() { }
+    virtual QString getWriterTag() const { return "csv"; }
 
 private:
     QString m_separator;

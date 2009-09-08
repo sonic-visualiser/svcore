@@ -79,7 +79,9 @@ CSVFeatureWriter::write(QString trackId,
     // combination
 
     QTextStream *sptr = getOutputStream(trackId, transform.getIdentifier());
-    if (!sptr) return; //!!! this is probably better handled with an exception
+    if (!sptr) {
+        throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
+    }
 
     QTextStream &stream = *sptr;
 
