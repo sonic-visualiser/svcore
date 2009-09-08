@@ -59,6 +59,24 @@ public:
     };
     virtual void setTrackMetadata(QString trackid, TrackMetadata metadata) { }
 
+    class FailedToOpenOutputStream : virtual public std::exception
+    {
+    public:
+        FailedToOpenOutputStream(QString trackId, QString transformId) throw() :
+            m_trackId(trackId),
+            m_transformId(transformId)
+        { }
+        virtual ~FailedToOpenOutputStream() throw() { }
+        virtual const char *what() const throw() {
+            return QString("Failed to open output stream for track id \"%1\", transform id \"%2\"")
+                .arg(m_trackId).arg(m_transformId).toLocal8Bit().data();
+        }            
+        
+    protected:
+        QString m_trackId;
+        QString m_transformId;
+    };
+
     // may throw FailedToOpenFile or other exceptions
 
     virtual void write(QString trackid,
@@ -70,6 +88,8 @@ public:
     virtual void flush() { } // whatever the last stream was
 
     virtual void finish() = 0;
+
+    virtual QString getWriterTag() const = 0;
 };
 
 #endif

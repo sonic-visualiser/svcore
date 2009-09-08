@@ -59,6 +59,8 @@ FileFeatureWriter::~FileFeatureWriter()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
+        cerr << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
+             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
         delete m_files.begin()->second;
         m_files.erase(m_files.begin());
     }
@@ -156,7 +158,8 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
 {
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
-            cerr << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName.toStdString() << "\" exists and neither force nor append flag is specified -- not overwriting" << endl;
+            cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName.toStdString() << "\" exists and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append flag is specified -- not overwriting" << endl;
+            cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
             return "";
         }
         return m_singleFileName;
@@ -178,13 +181,14 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
         infilename = scheme + ":" + infilename; // DOS drive!
     }
 
-//    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
-//         << infilename.toStdString() << ", basename = " << basename.toStdString() << endl;
-
+    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
+         << infilename.toStdString() << ", basename = " << basename.toStdString() << ", m_baseDir = " << m_baseDir.toStdString() << endl;
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();
     else if (local) dirname = QFileInfo(infilename).absolutePath();
     else dirname = QDir::currentPath();
+
+    cerr << "dirname = " << dirname.toStdString() << endl;
 
     QString filename;
 
@@ -199,7 +203,8 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     filename = QDir(dirname).filePath(filename);
 
     if (QFileInfo(filename).exists() && !(m_force || m_append)) {
-        cerr << "FileFeatureWriter: ERROR: Output file \"" << filename.toStdString() << "\" exists (for input file or URL \"" << trackId.toStdString() << "\" and transform \"" << transformId.toStdString() << "\") and neither force nor append is specified -- not overwriting" << endl;
+        cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename.toStdString() << "\" exists (for input file or URL \"" << trackId.toStdString() << "\" and transform \"" << transformId.toStdString() << "\") and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append is specified -- not overwriting" << endl;
+        cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
         return "";
     }
     
@@ -304,6 +309,8 @@ FileFeatureWriter::finish()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
+        cerr << "FileFeatureWriter::finish: NOTE: Closing feature file \""
+             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
         delete m_files.begin()->second;
         m_files.erase(m_files.begin());
     }
