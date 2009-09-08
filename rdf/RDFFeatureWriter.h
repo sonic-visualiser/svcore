@@ -59,6 +59,8 @@ public:
 
     virtual void finish();
 
+    virtual QString getWriterTag() const { return "rdf"; }
+
 private:
     typedef map<QString, PluginRDFDescription> RDFDescriptionMap; // by plugin id
     RDFDescriptionMap m_rdfDescriptions;
