@@ -19,7 +19,7 @@
 #include "SparseModel.h"
 #include "base/UnitDatabase.h"
 
-#include <cmath>
+#include "system/System.h"
 
 /**
  * Model containing sparse data (points with some properties) of which
@@ -68,7 +68,7 @@ public:
     {
 	bool allChange = false;
 
-        if (!std::isnan(point.value) && !std::isinf(point.value)) {
+        if (!ISNAN(point.value) && !ISINF(point.value)) {
             if (!m_haveExtents || point.value < m_valueMinimum) {
                 m_valueMinimum = point.value; allChange = true;
 //                std::cerr << "addPoint: value min = " << m_valueMinimum << std::endl;
