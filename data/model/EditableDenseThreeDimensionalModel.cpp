@@ -27,6 +27,8 @@
 #include <cmath>
 #include <cassert>
 
+#include "system/System.h"
+
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
                                                                        size_t resolution,
                                                                        size_t yBinCount,
