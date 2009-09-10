@@ -2193,3 +2193,72 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 }
 
 #endif  // __WINDOWS_MM__
+
+#ifdef __RTMIDI_DUMMY_ONLY__
+
+void RtMidiIn :: initialize( const std::string& /*clientName*/ )
+{
+}
+
+void RtMidiIn :: openPort( unsigned int portNumber, const std::string /*portName*/ )
+{
+}
+
+void RtMidiIn :: openVirtualPort( std::string portName )
+{
+}
+
+void RtMidiIn :: closePort( void )
+{
+}
+
+RtMidiIn :: ~RtMidiIn()
+{
+}
+
+unsigned int RtMidiIn :: getPortCount()
+{
+    return 0;
+}
+
+std::string RtMidiIn :: getPortName( unsigned int portNumber )
+{
+    return "";
+}
+
+unsigned int RtMidiOut :: getPortCount()
+{
+    return 0;
+}
+
+std::string RtMidiOut :: getPortName( unsigned int portNumber )
+{
+    return "";
+}
+
+void RtMidiOut :: initialize( const std::string& /*clientName*/ )
+{
+}
+
+void RtMidiOut :: openPort( unsigned int portNumber, const std::string /*portName*/ )
+{
+}
+
+void RtMidiOut :: closePort( void )
+{
+}
+
+void RtMidiOut :: openVirtualPort( std::string portName )
+{
+}
+
+RtMidiOut :: ~RtMidiOut()
+{
+}
+
+void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
+{
+}
+
+#endif __RTMIDI_DUMMY_ONLY__
+

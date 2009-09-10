@@ -15,9 +15,10 @@ OBJECTS_DIR = tmp_obj
 MOC_DIR = tmp_moc
 
 # Set up suitable platform defines for RtMidi
-linux*: DEFINES += __LINUX_ALSASEQ__
-macx*:  DEFINES += __MACOSX_CORE__
-win*:   DEFINES += __WINDOWS_MM__
+linux*:   DEFINES += __LINUX_ALSASEQ__
+macx*:    DEFINES += __MACOSX_CORE__
+win*:     DEFINES += __WINDOWS_MM__
+solaris*: DEFINES += __RTMIDI_DUMMY_ONLY__
 
 # Input
 HEADERS += fft/FFTapi.h \
