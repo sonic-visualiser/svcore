@@ -102,7 +102,8 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
     }
 
     // Plugins can change the locale, revert it to default.
-    setlocale(LC_ALL, "C");
+    RestoreStartupLocale();
+
     return rv;
 }
 

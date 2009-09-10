@@ -24,6 +24,10 @@
 
 #include <cassert>
 
+#ifndef __GNUC__
+#include <alloca.h>
+#endif
+
 FFTModel::FFTModel(const DenseTimeValueModel *model,
                    int channel,
                    WindowType windowType,
@@ -172,7 +176,11 @@ FFTModel::getColumn(size_t x) const
     size_t h = getHeight();
     result.reserve(h);
 
+#ifdef __GNUC__
     float magnitudes[h];
+#else
+    float *magnitudes = (float *)alloca(h * sizeof(float));
+#endif
 
     if (m_server->getMagnitudesAt(x << m_xshift, magnitudes)) {
 
@@ -256,7 +264,11 @@ FFTModel::getPeaks(PeakPickType type, size_t x, size_t ymin, size_t ymax)
         int maxbin = ymax;
         if (maxbin < getHeight() - 1) maxbin = maxbin + 1;
         const int n = maxbin - minbin + 1;
+#ifdef __GNUC__
         float values[n];
+#else
+        float *values = (float *)alloca(n * sizeof(float));
+#endif
         getMagnitudesAt(x, values, minbin, maxbin - minbin + 1);
         for (size_t bin = ymin; bin <= ymax; ++bin) {
             if (bin == minbin || bin == maxbin) continue;

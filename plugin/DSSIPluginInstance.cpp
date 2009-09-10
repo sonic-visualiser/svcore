@@ -27,6 +27,8 @@
 
 #include <cstdlib>
 
+#include <alloca.h>
+
 //#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
 

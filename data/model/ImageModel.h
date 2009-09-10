@@ -164,7 +164,7 @@ public:
                 (row, column, role);
         }
 
-        PointListIterator i = getPointListIteratorForRow(row);
+        PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {

@@ -25,6 +25,7 @@
 #define FIXED_EV(x)	(_SND_SEQ_TYPE(SND_SEQ_EVFLG_FIXED) | _SND_SEQ_TYPE(x))
 
 /** Event types conversion array */
+/*
 const unsigned int snd_seq_event_types[256] = {
 	[SND_SEQ_EVENT_SYSTEM ... SND_SEQ_EVENT_RESULT]
 	= FIXED_EV(SND_SEQ_EVFLG_RESULT),
@@ -63,7 +64,7 @@ const unsigned int snd_seq_event_types[256] = {
 	[SND_SEQ_EVENT_NONE]
 	= FIXED_EV(SND_SEQ_EVFLG_NONE),
 };
-
+*/
 /**
  * \file seq/seq_midi_event.c
  * \brief MIDI byte <-> sequencer event coder
