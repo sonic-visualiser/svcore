@@ -134,14 +134,14 @@ IntervalModel<PointType>::getPoints(long start, long end) const
 
     PointType endPoint(end);
     
-    typename I::PointListIterator endItr = I::m_points.upper_bound(endPoint);
+    typename I::PointListConstIterator endItr = I::m_points.upper_bound(endPoint);
 
     if (endItr != I::m_points.end()) ++endItr;
     if (endItr != I::m_points.end()) ++endItr;
 
     typename I::PointList rv;
 
-    for (typename I::PointListIterator i = endItr; i != I::m_points.begin(); ) {
+    for (typename I::PointListConstIterator i = endItr; i != I::m_points.begin(); ) {
         --i;
         if (i->frame < start) {
             if (i->frame + long(i->duration) >= start) {
@@ -171,11 +171,11 @@ IntervalModel<PointType>::getPoints(long frame) const
 
     PointType endPoint(end);
     
-    typename I::PointListIterator endItr = I::m_points.upper_bound(endPoint);
+    typename I::PointListConstIterator endItr = I::m_points.upper_bound(endPoint);
 
     typename I::PointList rv;
 
-    for (typename I::PointListIterator i = endItr; i != I::m_points.begin(); ) {
+    for (typename I::PointListConstIterator i = endItr; i != I::m_points.begin(); ) {
         --i;
         if (i->frame < start) {
             if (i->frame + long(i->duration) >= start) {

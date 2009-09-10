@@ -494,8 +494,8 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 	    cacheBlock = (1 << m_zoomConstraint.getMinCachePower());
             div = (1 << power) / cacheBlock;
 	} else {
-	    cacheBlock = ((unsigned int)((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2) + 0.01));
-            div = ((unsigned int)((1 << power) * sqrt(2) + 0.01)) / cacheBlock;
+	    cacheBlock = ((unsigned int)((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2.) + 0.01));
+            div = ((unsigned int)((1 << power) * sqrt(2.) + 0.01)) / cacheBlock;
 	}
 
 	size_t startIndex = start / cacheBlock;
@@ -656,7 +656,7 @@ WaveFileModel::RangeCacheFillThread::run()
     size_t cacheBlockSize[2];
     cacheBlockSize[0] = (1 << m_model.m_zoomConstraint.getMinCachePower());
     cacheBlockSize[1] = ((unsigned int)((1 << m_model.m_zoomConstraint.getMinCachePower()) *
-                                        sqrt(2) + 0.01));
+                                        sqrt(2.) + 0.01));
     
     size_t frame = 0;
     int readBlockSize = 16384;

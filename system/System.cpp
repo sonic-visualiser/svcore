@@ -23,6 +23,8 @@
 #ifndef _WIN32
 #include <signal.h>
 #include <sys/statvfs.h>
+#include <locale.h>
+#include <unistd.h>
 #endif
 
 #ifdef __APPLE__

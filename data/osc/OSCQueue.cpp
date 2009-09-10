@@ -23,6 +23,7 @@
 #include "base/Profiler.h"
 
 #include <iostream>
+#include <unistd.h>
 
 #define OSC_MESSAGE_QUEUE_SIZE 1023
 

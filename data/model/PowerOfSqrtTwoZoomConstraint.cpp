@@ -44,7 +44,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 	float val = 1.0, prevVal = 1.0;
 	while (val + 0.01 < blockSize) {
 	    prevVal = val;
-	    val *= sqrt(2);
+	    val *= sqrt(2.f);
 	}
 	size_t rval;
 	if (dir == RoundUp) rval = size_t(val + 0.01);
@@ -70,7 +70,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 	if (type == 0) {
 	    base = (1 << power);
 	} else {
-	    base = (((unsigned int)((1 << minCachePower) * sqrt(2) + 0.01))
+	    base = (((unsigned int)((1 << minCachePower) * sqrt(2.) + 0.01))
 		    << (power - minCachePower));
 	}
 

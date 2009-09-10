@@ -26,6 +26,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 #include <cmath>
 
@@ -287,7 +288,12 @@ public:
         if (m_rows.empty()) rebuildRowVector();
         std::vector<long>::iterator i =
             std::lower_bound(m_rows.begin(), m_rows.end(), frame);
+#if defined(__SUNPRO_CC) && defined(__STD_RW_ITERATOR__)
+        int row = 0;
+        std::distance(m_rows.begin(), i, row);
+#else
         int row = std::distance(m_rows.begin(), i);
+#endif
         if (i != m_rows.begin() && (i == m_rows.end() || *i != frame)) {
             --row;
         }
@@ -368,7 +374,10 @@ protected:
 
     void getPointIterators(long frame,
                            PointListIterator &startItr,
-                           PointListIterator &endItr) const;
+                           PointListIterator &endItr);
+    void getPointIterators(long frame,
+                           PointListConstIterator &startItr,
+                           PointListConstIterator &endItr) const;
 
     // This is only used if the model is called on to act in
     // TabularModel mode
@@ -376,12 +385,12 @@ protected:
     void rebuildRowVector() const
     {
         m_rows.clear();
-        for (PointListIterator i = m_points.begin(); i != m_points.end(); ++i) {
+        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
             m_rows.push_back(i->frame);
         }
     }
 
-    PointListIterator getPointListIteratorForRow(int row) const
+    PointListIterator getPointListIteratorForRow(int row)
     {
         if (m_rows.empty()) rebuildRowVector();
         if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
@@ -395,6 +404,32 @@ protected:
         PointListIterator i0, i1;
         getPointIterators(frame, i0, i1);
         PointListIterator i = i0;
+
+        for (i = i0; i != i1; ++i) {
+            if (indexAtFrame > 0) { --indexAtFrame; continue; }
+            return i;
+        }
+
+        if (indexAtFrame > 0) {
+            std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
+        }
+        return i;
+    }
+
+    PointListConstIterator getPointListIteratorForRow(int row) const
+    {
+        if (m_rows.empty()) rebuildRowVector();
+        if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
+
+        size_t frame = m_rows[row];
+        int indexAtFrame = 0;
+        int ri = row;
+        while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
+        int initialIndexAtFrame = indexAtFrame;
+
+        PointListConstIterator i0, i1;
+        getPointIterators(frame, i0, i1);
+        PointListConstIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
@@ -443,7 +478,7 @@ SparseModel<PointType>::getEndFrame() const
     QMutexLocker locker(&m_mutex);
     size_t f = 0;
     if (!m_points.empty()) {
-	PointListIterator i(m_points.end());
+	PointListConstIterator i(m_points.end());
 	f = (--i)->frame;
     }
     return f;
@@ -493,8 +528,8 @@ SparseModel<PointType>::getPoints(long start, long end) const
 
     PointType startPoint(start), endPoint(end);
     
-    PointListIterator startItr = m_points.lower_bound(startPoint);
-    PointListIterator   endItr = m_points.upper_bound(endPoint);
+    PointListConstIterator startItr = m_points.lower_bound(startPoint);
+    PointListConstIterator   endItr = m_points.upper_bound(endPoint);
 
     if (startItr != m_points.begin()) --startItr;
     if (startItr != m_points.begin()) --startItr;
@@ -503,7 +538,7 @@ SparseModel<PointType>::getPoints(long start, long end) const
 
     PointList rv;
 
-    for (PointListIterator i = startItr; i != endItr; ++i) {
+    for (PointListConstIterator i = startItr; i != endItr; ++i) {
 	rv.insert(*i);
     }
 
@@ -514,12 +549,12 @@ template <typename PointType>
 typename SparseModel<PointType>::PointList
 SparseModel<PointType>::getPoints(long frame) const
 {
-    PointListIterator startItr, endItr;
+    PointListConstIterator startItr, endItr;
     getPointIterators(frame, startItr, endItr);
 
     PointList rv;
 
-    for (PointListIterator i = startItr; i != endItr; ++i) {
+    for (PointListConstIterator i = startItr; i != endItr; ++i) {
 	rv.insert(*i);
     }
 
@@ -530,7 +565,30 @@ template <typename PointType>
 void
 SparseModel<PointType>::getPointIterators(long frame,
                                           PointListIterator &startItr,
-                                          PointListIterator &endItr) const
+                                          PointListIterator &endItr)
+{
+    QMutexLocker locker(&m_mutex);
+
+    if (m_resolution == 0) {
+        startItr = m_points.end();
+        endItr = m_points.end();
+        return;
+    }
+
+    long start = (frame / m_resolution) * m_resolution;
+    long end = start + m_resolution;
+
+    PointType startPoint(start), endPoint(end);
+    
+    startItr = m_points.lower_bound(startPoint);
+      endItr = m_points.upper_bound(endPoint);
+}
+
+template <typename PointType>
+void
+SparseModel<PointType>::getPointIterators(long frame,
+                                          PointListConstIterator &startItr,
+                                          PointListConstIterator &endItr) const
 {
     QMutexLocker locker(&m_mutex);
 
@@ -558,7 +616,7 @@ SparseModel<PointType>::getPreviousPoints(long originFrame) const
     PointType lookupPoint(originFrame);
     PointList rv;
 
-    PointListIterator i = m_points.lower_bound(lookupPoint);
+    PointListConstIterator i = m_points.lower_bound(lookupPoint);
     if (i == m_points.begin()) return rv;
 
     --i;
@@ -581,7 +639,7 @@ SparseModel<PointType>::getNextPoints(long originFrame) const
     PointType lookupPoint(originFrame);
     PointList rv;
 
-    PointListIterator i = m_points.upper_bound(lookupPoint);
+    PointListConstIterator i = m_points.upper_bound(lookupPoint);
     if (i == m_points.end()) return rv;
 
     long frame = i->frame;
@@ -738,7 +796,7 @@ SparseModel<PointType>::toXml(QTextStream &out,
 	.arg(getObjectExportId(&m_points))
 	.arg(PointType(0).getDimensions());
 
-    for (PointListIterator i = m_points.begin(); i != m_points.end(); ++i) {
+    for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
         i->toXml(out, indent + "  ");
     }
 
