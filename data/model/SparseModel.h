@@ -67,6 +67,7 @@ public:
     typedef std::multiset<PointType,
 			  typename PointType::OrderComparator> PointList;
     typedef typename PointList::iterator PointListIterator;
+    typedef typename PointList::const_iterator PointListConstIterator;
 
     /**
      * Return whether the model is empty or not.
@@ -149,7 +150,7 @@ public:
     virtual QString toDelimitedDataString(QString delimiter) const
     { 
         QString s;
-        for (PointListIterator i = m_points.begin(); i != m_points.end(); ++i) {
+        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
             s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
         }
         return s;
@@ -276,7 +277,7 @@ public:
 
     virtual long getFrameForRow(int row) const
     {
-        PointListIterator i = getPointListIteratorForRow(row);
+        PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return 0;
         return i->frame;
     }
@@ -296,7 +297,7 @@ public:
     virtual int getColumnCount() const { return 1; }
     virtual QVariant getData(int row, int column, int role) const
     {
-        PointListIterator i = getPointListIteratorForRow(row);
+        PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {

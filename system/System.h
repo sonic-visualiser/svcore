@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <malloc.h>
 #include <process.h>
+#include <math.h>
 
 #define MLOCK(a,b)   1
 #define MUNLOCK(a,b) 1
@@ -58,11 +59,15 @@ void usleep(unsigned long usec);
 int gettimeofday(struct timeval *p, void *tz);
 }
 
+#define ISNAN isnan
+#define ISINF isinf
+
 #else
 
 #include <sys/mman.h>
 #include <dlfcn.h>
 #include <stdio.h> // for perror
+#include <cmath>
 
 #define MLOCK(a,b)   ::mlock((a),(b))
 #define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
@@ -76,6 +81,10 @@ int gettimeofday(struct timeval *p, void *tz);
 #define DLCLOSE(a)   dlclose((a))
 #define DLERROR()    dlerror()
 
+#include <cmath>
+#define ISNAN std::isnan
+#define ISINF std::isinf
+
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib *.so"
@@ -87,6 +96,19 @@ int gettimeofday(struct timeval *p, void *tz);
 #define MUNLOCKALL() 1
 
 #else 
+
+#ifdef sun
+#undef MLOCK
+#undef MUNLOCK
+#define MLOCK(a,b) ::mlock((char *)a,b)
+#define MUNLOCK(a,b) ::munlock((char *)a,b)
+#ifdef __SUNPRO_CC
+#undef ISNAN
+#undef ISINF
+#define ISNAN(x) ((x)!=(x))
+#define ISINF(x) 0
+#endif
+#endif
 
 #define PLUGIN_GLOB  "*.so"
 #define PATH_SEPARATOR ':'

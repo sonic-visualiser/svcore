@@ -178,7 +178,7 @@ public:
             return IntervalModel<Note>::getData(row, column, role);
         }
 
-        PointListIterator i = getPointListIteratorForRow(row);
+        PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return QVariant();
 
         switch (column) {
@@ -196,7 +196,7 @@ public:
         }
 
         if (role != Qt::EditRole) return false;
-        PointListIterator i = getPointListIteratorForRow(row);
+        PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return false;
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
 
