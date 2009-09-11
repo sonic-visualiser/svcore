@@ -58,6 +58,11 @@ public:
     
 
     /**
+     * Set the frame offset of the first column.
+     */
+    virtual void setStartFrame(size_t);
+
+    /**
      * Return the number of sample frames covered by each set of bins.
      */
     virtual size_t getResolution() const;
@@ -157,6 +162,7 @@ protected:
 
     std::vector<QString> m_binNames;
 
+    size_t m_startFrame;
     size_t m_sampleRate;
     size_t m_resolution;
     size_t m_yBinCount;

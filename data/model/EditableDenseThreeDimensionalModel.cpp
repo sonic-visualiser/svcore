@@ -34,6 +34,7 @@ EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sa
                                                                        size_t yBinCount,
                                                                        CompressionType compression,
                                                                        bool notifyOnAdd) :
+    m_startFrame(0),
     m_sampleRate(sampleRate),
     m_resolution(resolution),
     m_yBinCount(yBinCount),
@@ -63,7 +64,13 @@ EditableDenseThreeDimensionalModel::getSampleRate() const
 size_t
 EditableDenseThreeDimensionalModel::getStartFrame() const
 {
-    return 0;
+    return m_startFrame;
+}
+
+void
+EditableDenseThreeDimensionalModel::setStartFrame(size_t f)
+{
+    m_startFrame = f; 
 }
 
 size_t
@@ -489,12 +496,13 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 
     Model::toXml
 	(out, indent,
-         QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" %6")
+         QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" startFrame=\"%6\" %7")
 	 .arg(m_resolution)
 	 .arg(m_yBinCount)
 	 .arg(m_minimum)
 	 .arg(m_maximum)
 	 .arg(getObjectExportId(&m_data))
+         .arg(m_startFrame)
 	 .arg(extraAttributes));
 
     out << indent;

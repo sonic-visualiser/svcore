@@ -99,7 +99,14 @@ CSVFileReader::load() const
     size_t windowSize = m_format.getWindowSize();
 
     if (timingType == CSVFormat::ExplicitTiming) {
-	windowSize = 1;
+        if (modelType == CSVFormat::ThreeDimensionalModel) {
+            // This will be overridden later if more than one line
+            // appears in our file, but we want to choose a default
+            // that's likely to be visible
+            windowSize = 1024;
+        } else {
+            windowSize = 1;
+        }
 	if (timeUnits == CSVFormat::TimeSeconds) {
 	    sampleRate = m_mainModelSampleRate;
 	}
@@ -119,6 +126,7 @@ CSVFileReader::load() const
     float min = 0.0, max = 0.0;
 
     size_t frameNo = 0;
+    size_t startFrame = 0; // for calculation of dense model resolution
 
     while (!in.atEnd()) {
 
@@ -245,10 +253,23 @@ CSVFileReader::load() const
 
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
-                    values.push_back(value);
+
+                    if (i > 0 || timingType != CSVFormat::ExplicitTiming) {
+                        values.push_back(value);
+                    }
 	    
-                    if ((lineno == 0 && i == 0) || value < min) min = value;
-                    if ((lineno == 0 && i == 0) || value > max) max = value;
+                    bool firstEver = (lineno == 0 && i == 0);
+
+                    if (firstEver || value < min) min = value;
+                    if (firstEver || value > max) max = value;
+
+                    if (firstEver) {
+                        startFrame = frameNo;
+                        model3->setStartFrame(startFrame);
+                    } else if (lineno == 1 &&
+                               timingType == CSVFormat::ExplicitTiming) {
+                        model3->setResolution(frameNo - startFrame);
+                    }
 
                     if (!ok) {
                         if (warnings < warnLimit) {
@@ -268,7 +289,7 @@ CSVFileReader::load() const
 //                std::cerr << "Setting bin values for count " << lineno << ", frame "
 //                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
 
-                model3->setColumn(frameNo / model3->getResolution(), values);
+                model3->setColumn(lineno, values);
             }
 
             ++lineno;
