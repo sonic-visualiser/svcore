@@ -46,6 +46,7 @@ Preferences::Preferences() :
     m_resampleOnLoad(false),
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
+    m_timeToTextMode(TimeToTextMs),
     m_showSplash(true)
 {
     QSettings settings;
@@ -63,6 +64,8 @@ Preferences::Preferences() :
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
+    m_timeToTextMode = TimeToTextMode
+        (settings.value("time-to-text-mode", int(TimeToTextMs)).toInt());
     m_viewFontSize = settings.value("view-font-size", 10).toInt();
     m_showSplash = settings.value("show-splash", true).toBool();
     settings.endGroup();
@@ -90,6 +93,7 @@ Preferences::getProperties() const
     props.push_back("Resample On Load");
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
+    props.push_back("Time To Text Mode");
     props.push_back("View Font Size");
     props.push_back("Show Splash Screen");
     return props;
@@ -127,6 +131,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Background Mode") {
         return tr("Background colour preference");
+    }
+    if (name == "Time To Text Mode") {
+        return tr("Time display format");
     }
     if (name == "View Font Size") {
         return tr("Font size for text overlays");
@@ -169,6 +176,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return InvalidProperty;
     }
     if (name == "Background Mode") {
+        return ValueProperty;
+    }
+    if (name == "Time To Text Mode") {
         return ValueProperty;
     }
     if (name == "View Font Size") {
@@ -229,6 +239,13 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         if (max) *max = 2;
         if (deflt) *deflt = 0;
         return int(m_backgroundMode);
+    }        
+
+    if (name == "Time To Text Mode") {
+        if (min) *min = 0;
+        if (max) *max = 6;
+        if (deflt) *deflt = 0;
+        return int(m_timeToTextMode);
     }        
 
     if (name == "View Font Size") {
@@ -294,6 +311,17 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case LightBackground: return tr("Light background");
         }
     }
+    if (name == "Time To Text Mode") {
+        switch (value) {
+        case TimeToTextMs: return tr("Standard (to millisecond)");
+        case TimeToTextUs: return tr("High resolution (to microsecond)");
+        case TimeToText24Frame: return tr("24 FPS");
+        case TimeToText25Frame: return tr("25 FPS");
+        case TimeToText30Frame: return tr("30 FPS");
+        case TimeToText50Frame: return tr("50 FPS");
+        case TimeToText60Frame: return tr("60 FPS");
+        }
+    }
             
     return "";
 }
@@ -329,6 +357,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setOmitTempsFromRecentFiles(value ? true : false);
     } else if (name == "Background Mode") {
         setBackgroundMode(BackgroundMode(value));
+    } else if (name == "Time To Text Mode") {
+        setTimeToTextMode(TimeToTextMode(value));
     } else if (name == "View Font Size") {
         setViewFontSize(value);
     } else if (name == "Show Splash Screen") {
@@ -476,6 +506,21 @@ Preferences::setBackgroundMode(BackgroundMode mode)
         settings.setValue("background-mode", int(mode));
         settings.endGroup();
         emit propertyChanged("Background Mode");
+    }
+}
+
+void
+Preferences::setTimeToTextMode(TimeToTextMode mode)
+{
+    if (m_timeToTextMode != mode) {
+
+        m_timeToTextMode = mode;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("time-to-text-mode", int(mode));
+        settings.endGroup();
+        emit propertyChanged("Time To Text Mode");
     }
 }
 

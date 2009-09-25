@@ -75,6 +75,17 @@ public:
     };
     BackgroundMode getBackgroundMode() const { return m_backgroundMode; }
 
+    enum TimeToTextMode {
+        TimeToTextMs,
+        TimeToTextUs,
+        TimeToText24Frame,
+        TimeToText25Frame,
+        TimeToText30Frame,
+        TimeToText50Frame,
+        TimeToText60Frame
+    };
+    TimeToTextMode getTimeToTextMode() const { return m_timeToTextMode; }
+
     bool getShowSplash() const { return m_showSplash; }
 
 public slots:
@@ -90,6 +101,7 @@ public slots:
     void setTemporaryDirectoryRoot(QString tempDirRoot);
     void setResampleOnLoad(bool);
     void setBackgroundMode(BackgroundMode mode);
+    void setTimeToTextMode(TimeToTextMode mode);
     void setViewFontSize(int size);
     void setShowSplash(bool);
 
@@ -110,6 +122,7 @@ private:
     bool m_resampleOnLoad;
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
+    TimeToTextMode m_timeToTextMode;
     bool m_showSplash;
 };
 

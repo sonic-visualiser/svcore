@@ -127,6 +127,15 @@ struct RealTime
     std::string toText(bool fixedDp = false) const;
 
     /**
+     * Return a user-readable string in which seconds are divided into
+     * frames (presumably at a lower frame rate than audio rate,
+     * e.g. 24 or 25 video frames), in a form like HH:MM:SS:FF.  fps
+     * gives the number of frames per second, and must be integral
+     * (29.97 not supported).
+     */
+    std::string toFrameText(int fps) const;
+
+    /**
      * Return a user-readable string to the nearest second, in a form
      * like "6s" (for less than a minute) or "2:21" (for more).
      */
