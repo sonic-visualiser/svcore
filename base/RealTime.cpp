@@ -21,19 +21,15 @@
 #include <iostream>
 
 #include <cstdlib>
-
-#if (__GNUC__ < 3)
-#include <strstream>
-#define stringstream strstream
-#else
 #include <sstream>
-#endif
 
 using std::cerr;
 using std::endl;
 
 #include "RealTime.h"
 #include "sys/time.h"
+
+#include "Preferences.h"
 
 // A RealTime consists of two ints that must be at least 32 bits each.
 // A signed 32-bit int can store values exceeding +/- 2 billion.  This
@@ -197,10 +193,6 @@ RealTime::toString(bool align) const
     std::stringstream out;
     out << *this;
     
-#if (__GNUC__ < 3)
-    out << std::ends;
-#endif
-
     std::string s = out.str();
 
     if (!align && *this >= RealTime::zeroTime) {
@@ -261,6 +253,21 @@ RealTime::toText(bool fixedDp) const
 {
     if (*this < RealTime::zeroTime) return "-" + (-*this).toText(fixedDp);
 
+    Preferences *p = Preferences::getInstance();
+    if (p) {
+        int fps = 0;
+        switch (p->getTimeToTextMode()) {
+        case Preferences::TimeToTextMs: break;
+        case Preferences::TimeToTextUs: fps = 1000000; break;
+        case Preferences::TimeToText24Frame: fps = 24; break;
+        case Preferences::TimeToText25Frame: fps = 25; break;
+        case Preferences::TimeToText30Frame: fps = 30; break;
+        case Preferences::TimeToText50Frame: fps = 50; break;
+        case Preferences::TimeToText60Frame: fps = 60; break;
+        }
+        if (fps != 0) return toFrameText(fps);
+    }
+
     std::stringstream out;
 
     if (sec >= 3600) {
@@ -298,11 +305,53 @@ RealTime::toText(bool fixedDp) const
 	out << ".000";
     }
 	
-#if (__GNUC__ < 3)
-    out << std::ends;
-#endif
-
     std::string s = out.str();
+
+    return s;
+}
+
+std::string
+RealTime::toFrameText(int fps) const
+{
+    if (*this < RealTime::zeroTime) return "-" + (-*this).toFrameText(fps);
+
+    std::stringstream out;
+
+    if (sec >= 3600) {
+	out << (sec / 3600) << ":";
+    }
+
+    if (sec >= 60) {
+	out << (sec % 3600) / 60 << ":";
+    }
+
+    if (sec >= 10) {
+	out << ((sec % 60) / 10);
+    }
+
+    out << (sec % 10);
+    
+    int f = nsec / (ONE_BILLION / fps);
+
+    int div = 1;
+    int n = fps - 1;
+    while ((n = n / 10)) {
+        div *= 10;
+    }
+
+    out << ":";
+
+    std::cerr << "div = " << div << ", f =  "<< f << std::endl;
+
+    while (div) {
+        int d = (f / div) % 10;
+        out << d;
+        div /= 10;
+    }
+	
+    std::string s = out.str();
+
+    std::cerr << "converted " << toString() << " to " << s << std::endl;
 
     return s;
 }
@@ -331,11 +380,6 @@ RealTime::toSecText() const
     if (sec < 60) {
         out << "s";
     }
-
-	
-#if (__GNUC__ < 3)
-    out << std::ends;
-#endif
 
     std::string s = out.str();
 
