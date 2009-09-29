@@ -108,7 +108,10 @@ protected:
 
     bool skipToNextTrack();
 
+    bool                   m_smpte;
     int                    m_timingDivision;   // pulses per quarter note
+    int                    m_fps;              // if smpte
+    int                    m_subframes;        // if smpte
     MIDIFileFormatType     m_format;
     unsigned int           m_numberOfTracks;
 

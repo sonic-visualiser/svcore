@@ -58,7 +58,10 @@ using namespace MIDIConstants;
 MIDIFileReader::MIDIFileReader(QString path,
                                MIDIFileImportPreferenceAcquirer *acquirer,
 			       size_t mainModelSampleRate) :
+    m_smpte(false),
     m_timingDivision(0),
+    m_fps(0),
+    m_subframes(0),
     m_format(MIDI_FILE_BAD_FORMAT),
     m_numberOfTracks(0),
     m_trackByteCount(0),
@@ -416,22 +419,13 @@ MIDIFileReader::parseHeader(const string &midiHeader)
     m_numberOfTracks = midiBytesToInt(midiHeader.substr(10,2));
     m_timingDivision = midiBytesToInt(midiHeader.substr(12,2));
 
-    if (m_format == MIDI_SEQUENTIAL_TRACK_FILE) {
-#ifdef MIDI_DEBUG
-        cerr << "MIDIFileReader::parseHeader()"
-                  << "- can't load sequential track file"
-                  << endl;
-#endif
-        return false;
+    if (m_timingDivision >= 32768) {
+        m_smpte = true;
+        m_fps = 256 - (m_timingDivision >> 8);
+        m_subframes = (m_timingDivision & 0xff);
+    } else {
+        m_smpte = false;
     }
-
-#ifdef MIDI_DEBUG
-    if (m_timingDivision < 0) {
-        cerr << "MIDIFileReader::parseHeader()"
-                  << " - file uses SMPTE timing"
-                  << endl;
-    }
-#endif
 
     return true; 
 }
@@ -706,7 +700,7 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
             if (!noteOffFound) {
 		MIDITrack::iterator j = m_midiComposition[track].end();
 		--j;
-                (*i)->setDuration((*j)->getTime()  - (*i)->getTime());
+                (*i)->setDuration((*j)->getTime() - (*i)->getTime());
 	    }
         }
     }
@@ -957,7 +951,14 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
     for (MIDITrack::const_iterator i = track.begin(); i != track.end(); ++i) {
 
-	RealTime rt = getTimeForMIDITime((*i)->getTime());
+        RealTime rt;
+        unsigned long midiTime = (*i)->getTime();
+
+        if (m_smpte) {
+            rt = RealTime::frame2RealTime(midiTime, m_fps * m_subframes);
+        } else {
+            rt = getTimeForMIDITime(midiTime);
+        }
 
 	// We ignore most of these event types for now, though in
 	// theory some of the text ones could usefully be incorporated
@@ -1006,8 +1007,13 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
                 if ((*i)->getVelocity() == 0) break; // effective note-off
 		else {
-		    RealTime endRT = getTimeForMIDITime((*i)->getTime() +
-							(*i)->getDuration());
+		    RealTime endRT;
+                    unsigned long endMidiTime = (*i)->getTime() + (*i)->getDuration();
+                    if (m_smpte) {
+                        endRT = RealTime::frame2RealTime(endMidiTime, m_fps * m_subframes);
+                    } else {
+                        endRT = getTimeForMIDITime(endMidiTime);
+                    }
 
 		    long startFrame = RealTime::realTime2Frame
 			(rt, model->getSampleRate());
