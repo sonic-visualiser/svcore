@@ -167,7 +167,7 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
 
     if (m_stdout) return "";
     
-    QUrl url(trackId);
+    QUrl url(trackId, QUrl::StrictMode);
     QString scheme = url.scheme().toLower();
     bool local = (scheme == "" || scheme == "file" || scheme.length() == 1);
 
@@ -176,7 +176,7 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     if (infilename == "") {
         infilename = url.path();
     }
-    basename = QFileInfo(infilename).baseName();
+    basename = QFileInfo(infilename).completeBaseName();
     if (scheme.length() == 1) {
         infilename = scheme + ":" + infilename; // DOS drive!
     }
