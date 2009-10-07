@@ -70,7 +70,7 @@ static void decCount(QString url) {
 
 FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
-    m_url(fileOrUrl),
+    m_url(fileOrUrl, QUrl::StrictMode),
     m_ftp(0),
     m_http(0),
     m_localFile(0),
@@ -95,6 +95,15 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     }
 
     init();
+
+    if (!isRemote() &&
+        !isAvailable()) {
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString().toStdString() << "; trying again with tolerant encoding" << std::endl;
+#endif
+        m_url = QUrl(fileOrUrl, QUrl::TolerantMode);
+        init();
+    }
 
     if (isRemote() &&
         (fileOrUrl.contains('%') ||
@@ -263,12 +272,12 @@ FileSource::init()
         m_lastStatus = 200;
 
         if (!QFileInfo(m_localFilename).exists()) {
-#ifdef DEBUG_FILE_SOURCE
-            std::cerr << "FileSource::init: Local file of this name does not exist, trying URL as a literal filename" << std::endl;
-#endif
             if (literal) {
                 m_lastStatus = 404;
             } else {
+#ifdef DEBUG_FILE_SOURCE
+                std::cerr << "FileSource::init: Local file of this name does not exist, trying URL as a literal filename" << std::endl;
+#endif
                 // Again, QUrl may have been mistreating us --
                 // e.g. dropping a part that looks like query data
                 m_localFilename = m_url.toString();
