@@ -300,7 +300,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
      * Describe signal we're analysing (AudioFile, Signal, TimeLine, etc.)
      */
     
-    QUrl url(trackId);
+    QUrl url(trackId, QUrl::StrictMode);
     QString scheme = url.scheme().toLower();
     bool local = (scheme == "" || scheme == "file" || scheme.length() == 1);
 
