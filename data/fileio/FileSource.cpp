@@ -99,9 +99,9 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     if (!isRemote() &&
         !isAvailable()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString().toStdString() << "; trying again with tolerant encoding" << std::endl;
+        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString().toStdString() << "; trying again assuming filename was encoded" << std::endl;
 #endif
-        m_url = QUrl(fileOrUrl, QUrl::TolerantMode);
+        m_url = QUrl::fromEncoded(fileOrUrl.toAscii());
         init();
     }
 
