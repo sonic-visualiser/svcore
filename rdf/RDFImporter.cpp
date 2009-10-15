@@ -60,6 +60,8 @@ protected:
     std::map<QString, Model *> m_audioModelMap;
     int m_sampleRate;
 
+    std::map<Model *, std::map<QString, float> > m_labelValueMap;
+
     static bool m_prefixesLoaded;
     static void loadPrefixes(ProgressReporter *reporter);
 
@@ -243,6 +245,8 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                         fs->getLocation(),
                                         m_uristring);
                 if (path != "") {
+                    std::cerr << "File finder returns: \"" << path.toStdString()
+                              << "\"" << std::endl;
                     delete fs;
                     fs = new FileSource(path, reporter);
                     if (!fs->isAvailable()) {
@@ -938,14 +942,23 @@ RDFImporterImpl::fillModel(Model *model,
     RegionModel *rm = 
         dynamic_cast<RegionModel *>(model);
     if (rm) {
+        float value = 0.f;
+        if (values.empty()) {
+            // no values? map each unique label to a distinct value
+            if (m_labelValueMap[model].find(label) == m_labelValueMap[model].end()) {
+                m_labelValueMap[model][label] = rm->getValueMaximum() + 1.f;
+            }
+            value = m_labelValueMap[model][label];
+        } else {
+            value = values[0];
+        }
         if (haveDuration) {
-            RegionModel::Point point
-                (ftime, values.empty() ? 0.f : values[0], fduration, label);
+            RegionModel::Point point(ftime, value, fduration, label);
             rm->addPoint(point);
         } else {
             // This won't actually happen -- we only create region models
             // if we do have duration -- but just for completeness
-            float value = 0.f, duration = 1.f;
+            float duration = 1.f;
             if (!values.empty()) {
                 value = values[0];
                 if (values.size() > 1) {
