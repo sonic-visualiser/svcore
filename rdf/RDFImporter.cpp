@@ -151,7 +151,8 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
     getDataModelsAudio(models, reporter);
 
     if (m_sampleRate == 0) {
-        std::cerr << "RDFImporter::getDataModels: invalid sample rate from audio" << std::endl;
+        m_errorString = QString("Invalid audio data model (is audio file format supported?)");
+        std::cerr << m_errorString.toStdString() << std::endl;
         return models;
     }
 
@@ -216,7 +217,16 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         QString signal = results[i]["signal"].value;
         QString source = results[i]["source"].value;
 
+        std::cerr << "NOTE: Seeking signal source \"" << source.toStdString()
+                  << "\"..." << std::endl;
+
         FileSource *fs = new FileSource(source, reporter);
+        if (fs->isAvailable()) {
+            std::cerr << "NOTE: Source is available: Local filename is \""
+                      << fs->getLocalFilename().toStdString()
+                      << "\"..." << std::endl;
+        }
+            
 #ifdef NO_SV_GUI
         if (!fs->isAvailable()) {
             m_errorString = QString("Signal source \"%1\" is not available").arg(source);
@@ -225,6 +235,8 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         }
 #else
         if (!fs->isAvailable()) {
+            std::cerr << "NOTE: Signal source \"" << source.toStdString()
+                      << "\" is not available, using file finder..." << std::endl;
             FileFinder *ff = FileFinder::getInstance();
             if (ff) {
                 QString path = ff->find(FileFinder::AudioFile,
@@ -576,7 +588,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
     QString queryString = prefixes + QString(
 
-        " SELECT ?signal ?timed_thing ?event_type ?value"
+        " SELECT ?signal ?timed_thing ?timeline ?event_type ?value"
         " FROM <%1>"
 
         " WHERE {"
@@ -584,8 +596,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         "   ?signal a mo:Signal ."
 
         "   ?signal mo:time ?interval ."
-        "   ?interval tl:onTimeLine ?tl ."
-        "   ?time tl:onTimeLine ?tl ."
+        "   ?interval tl:onTimeLine ?timeline ."
+        "   ?time tl:onTimeLine ?timeline ."
         "   ?timed_thing event:time ?time ."
         "   ?timed_thing a ?event_type ."
 
@@ -595,6 +607,10 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         " }"
 
         ).arg(m_uristring);
+
+    //!!! NB we're using rather old terminology for these things, apparently:
+    // beginsAt -> start
+    // onTimeLine -> timeline
 
     QString timeQueryString = prefixes + QString(
         
@@ -674,7 +690,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
       about it.  Then return only non-empty models.
     */
 
-    // Map from signal source to event type to dimensionality to
+    // Map from timeline uri to event type to dimensionality to
     // presence of duration to model ptr.  Whee!
     std::map<QString, std::map<QString, std::map<int, std::map<bool, Model *> > > >
         modelMap;
@@ -686,6 +702,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         }
 
         QString source = results[i]["signal"].value;
+        QString timeline = results[i]["timeline"].value;
         QString type = results[i]["event_type"].value;
         QString thinguri = results[i]["timed_thing"].value;
         
@@ -747,8 +764,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
         Model *model = 0;
 
-        if (modelMap[source][type][dimensions].find(haveDuration) ==
-            modelMap[source][type][dimensions].end()) {
+        if (modelMap[timeline][type][dimensions].find(haveDuration) ==
+            modelMap[timeline][type][dimensions].end()) {
 
 /*
             std::cerr << "Creating new model: source = " << source.toStdString()
@@ -836,11 +853,11 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 (s, titleQuery, "title").value;
             if (title != "") model->setObjectName(title);
 
-            modelMap[source][type][dimensions][haveDuration] = model;
+            modelMap[timeline][type][dimensions][haveDuration] = model;
             models.push_back(model);
         }
 
-        model = modelMap[source][type][dimensions][haveDuration];
+        model = modelMap[timeline][type][dimensions][haveDuration];
 
         if (model) {
             long ftime = RealTime::realTime2Frame(time, m_sampleRate);
@@ -1001,6 +1018,9 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
+    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
+              << haveAudio << std::endl;
+
     value =
         SimpleSPARQLQuery::singleResultQuery
         (SimpleSPARQLQuery::QueryFromSingleSource,
@@ -1031,6 +1051,9 @@ RDFImporter::identifyDocumentType(QString url)
             haveAnnotations = true;
         }
     }
+
+    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
+              << haveAnnotations << std::endl;
 
     SimpleSPARQLQuery::closeSingleSource(url);
 
