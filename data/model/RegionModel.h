@@ -142,7 +142,7 @@ public:
     
     virtual int getColumnCount() const
     {
-        return 6;
+        return 5;
     }
 
     virtual QString getHeading(int column) const
@@ -197,7 +197,7 @@ public:
 
     virtual SortType getSortType(int column) const
     {
-        if (column == 5) return SortAlphabetical;
+        if (column == 4) return SortAlphabetical;
         return SortNumeric;
     }
 

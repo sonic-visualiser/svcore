@@ -117,7 +117,9 @@ public:
 
     virtual bool isColumnTimeValue(int column) const
     {
-        return (column < 2 || column == 3);
+        // NB duration is not a "time value" -- that's for columns
+        // whose sort ordering is exactly that of the frame time
+        return (column < 2);
     }
 };
 

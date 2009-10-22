@@ -56,8 +56,10 @@ public:
 
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 
+    QModelIndex findText(QString text) const;
+
     void setCurrentRow(int row);
-    int getCurrentRow();
+    int getCurrentRow() const;
 
 signals:
     void frameSelected(size_t);

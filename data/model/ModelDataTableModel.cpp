@@ -169,6 +169,29 @@ ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
     return m_model->getFrameForRow(getUnsorted(index.row()));
 }
 
+QModelIndex
+ModelDataTableModel::findText(QString text) const
+{
+    if (text == "") return QModelIndex();
+    int rows = rowCount();
+    int cols = columnCount();
+    int current = getCurrentRow();
+    for (int row = 1; row <= rows; ++row) {
+        int wrapped = (row + current) % rows;
+        for (int col = 0; col < cols; ++col) {
+            if (m_model->getSortType(col) != TabularModel::SortAlphabetical) {
+                continue;
+            }
+            QString cell = m_model->getData(getUnsorted(wrapped), col,
+                                            Qt::DisplayRole).toString();
+            if (cell.contains(text, Qt::CaseInsensitive)) {
+                return createIndex(wrapped, col);
+            }
+        }
+    }
+    return QModelIndex();
+}
+
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
@@ -274,6 +297,8 @@ ModelDataTableModel::resort() const
     bool numeric = (m_model->getSortType(m_sortColumn) ==
                     TabularModel::SortNumeric);
 
+//    std::cerr << "resort: numeric == " << numeric << std::endl;
+
     m_sort.clear();
     m_rsort.clear();
 
@@ -313,6 +338,7 @@ ModelDataTableModel::resortNumeric() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
+//        std::cerr << "resortNumeric: " << i->second << ": " << i->first << std::endl;
         m_rsort.push_back(i->second);
     }
 
@@ -336,6 +362,7 @@ ModelDataTableModel::resortAlphabetical() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
+//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first.toStdString() << std::endl;
         m_rsort.push_back(i->second);
     }
 
@@ -343,7 +370,7 @@ ModelDataTableModel::resortAlphabetical() const
 }
 
 int
-ModelDataTableModel::getCurrentRow()
+ModelDataTableModel::getCurrentRow() const
 {
     return getSorted(m_currentRow);
 }

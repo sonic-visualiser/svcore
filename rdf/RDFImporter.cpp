@@ -855,7 +855,12 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     ).arg(m_uristring).arg(type);
             QString title = SimpleSPARQLQuery::singleResultQuery
                 (s, titleQuery, "title").value;
-            if (title != "") model->setObjectName(title);
+            if (title == "") {
+                // take it from the end of the event type
+                title = type;
+                title.replace(QRegExp("^.*[/#]"), "");
+            }
+            model->setObjectName(title);
 
             modelMap[timeline][type][dimensions][haveDuration] = model;
             models.push_back(model);
