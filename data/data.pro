@@ -99,7 +99,6 @@ SOURCES += fft/FFTapi.cpp \
            fileio/CSVFileWriter.cpp \
            fileio/CSVFormat.cpp \
            fileio/DataFileReaderFactory.cpp \
-           fileio/FileFinder.cpp \
            fileio/FileReadThread.cpp \
            fileio/FileSource.cpp \
            fileio/MatchFileReader.cpp \
