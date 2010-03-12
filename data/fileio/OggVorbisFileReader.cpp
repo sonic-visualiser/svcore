@@ -138,15 +138,15 @@ OggVorbisFileReader::DecodeThread::run()
 } 
 
 int
-OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
+OggVorbisFileReader::readPacket(OGGZ *, oggz_packet *packet, long, void *data)
 {
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
     FishSound *fs = reader->m_fishSound;
 
-    fish_sound_prepare_truncation(fs, packet->granulepos, packet->e_o_s);
-    fish_sound_decode(fs, packet->packet, packet->bytes);
+    fish_sound_prepare_truncation(fs, packet->op.granulepos, packet->op.e_o_s);
+    fish_sound_decode(fs, packet->op.packet, packet->op.bytes);
 
-    reader->m_bytesRead += packet->bytes;
+    reader->m_bytesRead += packet->op.bytes;
 
     // The number of bytes read by this function is smaller than
     // the file size because of the packet headers
