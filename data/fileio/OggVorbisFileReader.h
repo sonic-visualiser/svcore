@@ -82,7 +82,7 @@ protected:
     bool m_cancelled;
     int m_completion;
  
-    static int readPacket(OGGZ *, oggz_packet *, long, void *);
+    static int readPacket(OGGZ *, ogg_packet *, long, void *);
     static int acceptFrames(FishSound *, float **, long, void *);
 
     class DecodeThread : public Thread
