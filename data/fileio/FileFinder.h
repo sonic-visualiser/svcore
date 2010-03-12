@@ -37,11 +37,28 @@ public:
 
     virtual QString find(FileType type, QString location, QString lastKnownLocation = "") = 0;
 
-    static FileFinder *getInstance() { return m_instance; }
+    static FileFinder *getInstance() {
+        FFContainer *container = FFContainer::getInstance();
+        return container->getFileFinder();
+    }
 
 protected:
-    static void registerFileFinder(FileFinder *ff) { m_instance = ff; }
-    static FileFinder *m_instance;
+    class FFContainer {
+    public:
+        static FFContainer *getInstance() {
+            static FFContainer instance;
+            return &instance;
+        }
+        void setFileFinder(FileFinder *ff) { m_ff = ff; }
+        FileFinder *getFileFinder() const { return m_ff; }
+    private:
+        FileFinder *m_ff;
+    };
+
+    static void registerFileFinder(FileFinder *ff) {
+        FFContainer *container = FFContainer::getInstance();
+        container->setFileFinder(ff);
+    }
 };
 
 #endif
