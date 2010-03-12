@@ -248,7 +248,17 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
 
     for (unsigned int i = 0; i < dir.count(); ++i) {
         
-        QDir subdir(dir.filePath(dir[i]), "*.pid", QDir::Name, QDir::Files);
+        QString dirpath = dir.filePath(dir[i]);
+
+        QDir subdir(dirpath, "*.pid", QDir::Name, QDir::Files);
+
+        if (subdir.count() == 0) {
+            std::cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
+                      << dirpath.toStdString() << "\").  Removing it..." << std::endl;
+            cleanupDirectory(dirpath);
+            std::cerr << "...done." << std::endl;
+            continue;
+        }
 
         for (unsigned int j = 0; j < subdir.count(); ++j) {
 
@@ -260,9 +270,9 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
                 std::cerr << "INFO: Found abandoned temporary directory from "
                           << "a previous, defunct process\n(pid=" << pid
                           << ", directory=\""
-                          << dir.filePath(dir[i]).toStdString()
+                          << dirpath.toStdString()
                           << "\").  Removing it..." << std::endl;
-                cleanupDirectory(dir.filePath(dir[i]));
+                cleanupDirectory(dirpath);
                 std::cerr << "...done." << std::endl;
                 break;
             }
