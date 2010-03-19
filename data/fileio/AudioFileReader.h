@@ -21,6 +21,7 @@
 #include "FileSource.h"
 
 #include <vector>
+#include <map>
 
 typedef std::vector<float> SampleBlock;
 
@@ -59,6 +60,9 @@ public:
      * conductor, artist etc).
      */
     virtual QString getMaker() const { return ""; }
+
+    typedef std::map<QString, QString> TagMap;
+    virtual TagMap getTags() const { return TagMap(); }
 
     /** 
      * Return interleaved samples for count frames from index start.

@@ -189,6 +189,13 @@ MP3FileReader::loadTags()
     m_maker = loadTag(tag, "TPE1"); // "lead artist"
     if (m_maker == "") m_maker = loadTag(tag, "TPE2");
 
+    for (unsigned int i = 0; i < tag->nframes; ++i) {
+        if (tag->frames[i]) {
+            QString value = loadTag(tag, tag->frames[i]->id);
+            if (value != "") m_tags[tag->frames[i]->id] = value;
+        }
+    }
+
     id3_file_close(file);
 
 #else
