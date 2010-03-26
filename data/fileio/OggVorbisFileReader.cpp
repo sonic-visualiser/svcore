@@ -182,7 +182,7 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
         }
         comment = fish_sound_comment_first(fs);
         while (comment) {
-            reader->m_tags[QString::fromUtf8(comment->name)] =
+            reader->m_tags[QString::fromUtf8(comment->name).toUpper()] =
                 QString::fromUtf8(comment->value);
             comment = fish_sound_comment_next(fs, comment);
         }
