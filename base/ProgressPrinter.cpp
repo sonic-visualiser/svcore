@@ -52,6 +52,9 @@ void
 ProgressPrinter::setMessage(QString message)
 {
     m_prefix = message;
+    if (m_prefix.length() > 70) {
+        m_prefix = m_prefix.left(70) + "...";
+    }
 }
 
 void
