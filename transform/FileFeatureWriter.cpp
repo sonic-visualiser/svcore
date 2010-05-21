@@ -59,9 +59,11 @@ FileFeatureWriter::~FileFeatureWriter()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
-        cerr << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
-             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
-        delete m_files.begin()->second;
+        if (m_files.begin()->second) {
+            cerr << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
+                 << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
+            delete m_files.begin()->second;
+        }
         m_files.erase(m_files.begin());
     }
 }
@@ -153,8 +155,9 @@ FileFeatureWriter::setParameters(map<string, string> &params)
     }
 }
 
-QString FileFeatureWriter::getOutputFilename(QString trackId,
-                                             TransformId transformId)
+QString
+FileFeatureWriter::getOutputFilename(QString trackId,
+                                     TransformId transformId)
 {
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
@@ -181,14 +184,14 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
         infilename = scheme + ":" + infilename; // DOS drive!
     }
 
-    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
-         << infilename.toStdString() << ", basename = " << basename.toStdString() << ", m_baseDir = " << m_baseDir.toStdString() << endl;
+//    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
+//         << infilename.toStdString() << ", basename = " << basename.toStdString() << ", m_baseDir = " << m_baseDir.toStdString() << endl;
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();
     else if (local) dirname = QFileInfo(infilename).absolutePath();
     else dirname = QDir::currentPath();
 
-    cerr << "dirname = " << dirname.toStdString() << endl;
+//    cerr << "dirname = " << dirname.toStdString() << endl;
 
     QString filename;
 
@@ -211,9 +214,20 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     return filename;
 }
 
+void
+FileFeatureWriter::testOutputFile(QString trackId,
+                                  TransformId transformId)
+{
+    if (m_stdout) return;
+    QString filename = getOutputFilename(trackId, transformId);
+    if (filename == "") {
+        throw FailedToOpenOutputStream(trackId, transformId);
+    }
+}
 
-QFile *FileFeatureWriter::getOutputFile(QString trackId,
-                                        TransformId transformId)
+QFile *
+FileFeatureWriter::getOutputFile(QString trackId,
+                                 TransformId transformId)
 {
     pair<QString, TransformId> key;
 
@@ -229,7 +243,7 @@ QFile *FileFeatureWriter::getOutputFile(QString trackId,
 
         QString filename = getOutputFilename(trackId, transformId);
 
-        if (filename == "") { // stdout
+        if (filename == "") { // stdout or failure
             return 0;
         }
 
@@ -309,9 +323,11 @@ FileFeatureWriter::finish()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
-        cerr << "FileFeatureWriter::finish: NOTE: Closing feature file \""
-             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
-        delete m_files.begin()->second;
+        if (m_files.begin()->second) {
+            cerr << "FileFeatureWriter::finish: NOTE: Closing feature file \""
+                 << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
+            delete m_files.begin()->second;
+        }
         m_files.erase(m_files.begin());
     }
     m_prevstream = 0;

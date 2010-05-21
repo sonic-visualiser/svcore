@@ -85,6 +85,16 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "") = 0;
 
+    /**
+     * Throw FailedToOpenOutputStream if we can already tell that we
+     * will be unable to write to the output file.  This is called to
+     * test the output stream before processing begins.  The writer
+     * may legitimately succeed here but still fail later -- this is
+     * really an optimisation to ensure that easy-to-recognise failure
+     * cases fail early.
+     */
+    virtual void testOutputFile(QString trackId, TransformId transformId) { }
+
     virtual void flush() { } // whatever the last stream was
 
     virtual void finish() = 0;
