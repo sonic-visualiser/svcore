@@ -218,7 +218,14 @@ void
 FileFeatureWriter::testOutputFile(QString trackId,
                                   TransformId transformId)
 {
-    if (m_stdout) return;
+    // Obviously, if we're writing to stdout we can't test for an
+    // openable output file. But when writing a single file we don't
+    // want to either, because this test would fail on the second and
+    // subsequent input files (because the file would already exist).
+    // getOutputFile does the right thing in this case, so we just
+    // leave it to it
+    if (m_stdout || m_singleFileName != "") return;
+
     QString filename = getOutputFilename(trackId, transformId);
     if (filename == "") {
         throw FailedToOpenOutputStream(trackId, transformId);
@@ -266,7 +273,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
             m_files[key] = 0;
             throw FailedToOpenFile(filename);
         }
-
+        
         m_files[key] = file;
     }
 
@@ -281,7 +288,7 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
     if (!file && !m_stdout) {
         return 0;
     }
-
+    
     if (m_streams.find(file) == m_streams.end()) {
         if (m_stdout) {
             m_streams[file] = new QTextStream(stdout);
