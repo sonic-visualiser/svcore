@@ -56,7 +56,8 @@ public:
     {
 	stream <<
             QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level).arg(label).arg(extraAttributes);
+	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level)
+            .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
