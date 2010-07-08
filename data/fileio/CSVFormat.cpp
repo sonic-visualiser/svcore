@@ -26,6 +26,7 @@
 CSVFormat::CSVFormat(QString filename) :
     m_modelType(TwoDimensionalModel),
     m_timingType(ExplicitTiming),
+    m_durationType(Durations),
     m_timeUnits(TimeSeconds),
     m_separator(","),
     m_sampleRate(44100),
@@ -43,6 +44,7 @@ CSVFormat::CSVFormat(QString filename) :
     unsigned int lineno = 0;
 
     bool nonIncreasingPrimaries = false;
+    bool nonIncreasingSecondaries = false;
     bool nonNumericPrimaries = false;
     bool floatPrimaries = false;
     bool variableItemCount = false;
@@ -50,6 +52,7 @@ CSVFormat::CSVFormat(QString filename) :
     int earliestNonNumericItem = -1;
 
     float prevPrimary = 0.0;
+    float prevSecondary = 0.0;
 
     m_maxExampleCols = 0;
     m_separator = "";
@@ -137,6 +140,12 @@ CSVFormat::CSVFormat(QString filename) :
                             i < earliestNonNumericItem) {
                             earliestNonNumericItem = i;
                         }
+                    } else if (i == 1) {
+                        float secondary = s.toFloat();
+                        if (lineno > 0 && secondary <= prevSecondary) {
+                            nonIncreasingSecondaries = true;
+                        }
+                        prevSecondary = secondary;
                     }
                 }
             }
@@ -193,10 +202,17 @@ CSVFormat::CSVFormat(QString filename) :
 	} else {
 	    m_modelType = CSVFormat::ThreeDimensionalModel;
 	}
+
+        if (nonIncreasingSecondaries) {
+            m_durationType = Durations;
+        } else {
+            m_durationType = EndTimes;
+        }
     }
 
     std::cerr << "Estimated model type: " << m_modelType << std::endl;
     std::cerr << "Estimated timing type: " << m_timingType << std::endl;
+    std::cerr << "Estimated duration type: " << m_durationType << std::endl;
     std::cerr << "Estimated units: " << m_timeUnits << std::endl;
 }
 

@@ -20,6 +20,7 @@
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
+#include "model/RegionModel.h"
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
@@ -29,6 +30,7 @@
 #include <QTextStream>
 
 #include <iostream>
+#include <map>
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              size_t mainModelSampleRate) :
@@ -90,9 +92,10 @@ CSVFileReader::load() const
     }
 */
 
-    CSVFormat::ModelType   modelType = m_format.getModelType();
+    CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
-    CSVFormat::TimeUnits   timeUnits = m_format.getTimeUnits();
+    CSVFormat::DurationType durationType = m_format.getDurationType();
+    CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
     QString separator = m_format.getSeparator();
     QString::SplitBehavior behaviour = m_format.getSplitBehaviour();
     size_t sampleRate = m_format.getSampleRate();
@@ -114,6 +117,7 @@ CSVFileReader::load() const
 
     SparseOneDimensionalModel *model1 = 0;
     SparseTimeValueModel *model2 = 0;
+    RegionModel *model2a = 0;
     EditableDenseThreeDimensionalModel *model3 = 0;
     Model *model = 0;
 
@@ -126,7 +130,11 @@ CSVFileReader::load() const
     float min = 0.0, max = 0.0;
 
     size_t frameNo = 0;
+    size_t duration = 0;
     size_t startFrame = 0; // for calculation of dense model resolution
+
+    std::map<QString, float> labelValueMap;
+    float syntheticMax = 0.f;
 
     while (!in.atEnd()) {
 
@@ -166,6 +174,11 @@ CSVFileReader::load() const
                     model = model2;
                     break;
 		
+                case CSVFormat::TwoDimensionalModelWithDuration:
+                    model2a = new RegionModel(sampleRate, windowSize, false);
+                    model = model2a;
+                    break;
+		
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate,
@@ -180,6 +193,8 @@ CSVFileReader::load() const
             QStringList tidyList;
             QRegExp nonNumericRx("[^0-9eE.,+-]");
 
+            float value = 0.f;
+
             for (int i = 0; i < list.size(); ++i) {
 	    
                 QString s(list[i].trimmed());
@@ -190,41 +205,82 @@ CSVFileReader::load() const
                     s = s.mid(1, s.length() - 2);
                 }
 
-                if (i == 0 && timingType == CSVFormat::ExplicitTiming) {
+                if (timingType == CSVFormat::ExplicitTiming) {
 
-                    bool ok = false;
-                    QString numeric = s;
-                    numeric.remove(nonNumericRx);
+                    size_t calculatedFrame = 0;
 
-                    if (timeUnits == CSVFormat::TimeSeconds) {
+                    if (i == 0 ||
+                        (i == 1 &&
+                         modelType == CSVFormat::TwoDimensionalModelWithDuration)) {
 
-                        double time = numeric.toDouble(&ok);
-                        frameNo = int(time * sampleRate + 0.5);
+                        bool ok = false;
+                        QString numeric = s;
+                        numeric.remove(nonNumericRx);
 
-                    } else {
+                        if (timeUnits == CSVFormat::TimeSeconds) {
 
-                        frameNo = numeric.toInt(&ok);
+                            double time = numeric.toDouble(&ok);
+                            calculatedFrame = int(time * sampleRate + 0.5);
 
-                        if (timeUnits == CSVFormat::TimeWindows) {
-                            frameNo *= windowSize;
+                        } else {
+
+                            calculatedFrame = numeric.toInt(&ok);
+
+                            if (timeUnits == CSVFormat::TimeWindows) {
+                                calculatedFrame *= windowSize;
+                            }
                         }
-                    }
 			       
-                    if (!ok) {
-                        if (warnings < warnLimit) {
-                            std::cerr << "WARNING: CSVFileReader::load: "
-                                      << "Bad time format (\"" << s.toStdString()
-                                      << "\") in data line "
-                                      << lineno+1 << ":" << std::endl;
-                            std::cerr << line.toStdString() << std::endl;
-                        } else if (warnings == warnLimit) {
-                            std::cerr << "WARNING: Too many warnings" << std::endl;
+                        if (!ok) {
+                            if (warnings < warnLimit) {
+                                std::cerr << "WARNING: CSVFileReader::load: "
+                                          << "Bad time format (\"" << s.toStdString()
+                                          << "\") in data line "
+                                          << lineno+1 << ":" << std::endl;
+                                std::cerr << line.toStdString() << std::endl;
+                            } else if (warnings == warnLimit) {
+                                std::cerr << "WARNING: Too many warnings" << std::endl;
+                            }
+                            ++warnings;
                         }
-                        ++warnings;
+
+                        if (i == 0) frameNo = calculatedFrame;
+                        else {
+                            if (durationType == CSVFormat::EndTimes) {
+                                duration = calculatedFrame - frameNo;
+                            } else {
+                                duration = calculatedFrame;
+                            }
+                        }
+
+                        continue;
                     }
-                } else {
-                    tidyList.push_back(s);
                 }
+
+                if ((i == 1 &&
+                     modelType == CSVFormat::TwoDimensionalModel) ||
+                    (i == 2 &&
+                     modelType == CSVFormat::TwoDimensionalModelWithDuration)) {
+                    bool ok = false;
+                    value = s.toFloat(&ok);
+                    if (!ok) {
+                        // cf. RDFImporter::fillModel
+                        if (labelValueMap.find(s) == labelValueMap.end()) {
+                            syntheticMax = syntheticMax + 1.f;
+                            labelValueMap[s] = syntheticMax;
+                        }
+                        value = labelValueMap[s];
+                    } else {
+                        if (value > syntheticMax) syntheticMax = value;
+                    }
+                    if (i + 1 == list.size()) {
+                        // keep text around for use as label (none other given)
+                        tidyList.push_back(s);
+                    }
+                    continue;
+                }
+
+                tidyList.push_back(s);
             }
 
             if (modelType == CSVFormat::OneDimensionalModel) {
@@ -240,10 +296,20 @@ CSVFileReader::load() const
 
                 SparseTimeValueModel::Point point
                     (frameNo,
-                     tidyList.size() > 0 ? tidyList[0].toFloat() : 0.0,
-                     tidyList.size() > 1 ? tidyList[1] : QString("%1").arg(lineno+1));
+                     value,
+                     tidyList.size() > 0 ? tidyList[0] : QString("%1").arg(lineno+1));
 
                 model2->addPoint(point);
+
+            } else if (modelType == CSVFormat::TwoDimensionalModelWithDuration) {
+
+                RegionModel::Point point
+                    (frameNo,
+                     value,
+                     duration,
+                     tidyList.size() > 0 ? tidyList[0] : QString("%1").arg(lineno+1));
+
+                model2a->addPoint(point);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 
