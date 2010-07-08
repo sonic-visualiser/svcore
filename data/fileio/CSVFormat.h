@@ -25,12 +25,18 @@ public:
     enum ModelType {
 	OneDimensionalModel,
 	TwoDimensionalModel,
+        TwoDimensionalModelWithDuration,
 	ThreeDimensionalModel
     };
     
     enum TimingType {
 	ExplicitTiming,
 	ImplicitTiming
+    };
+
+    enum DurationType {
+        Durations,
+        EndTimes
     };
     
     enum TimeUnits {
@@ -44,28 +50,31 @@ public:
     CSVFormat() : // arbitrary defaults
         m_modelType(TwoDimensionalModel),
         m_timingType(ExplicitTiming),
+        m_durationType(Durations),
         m_timeUnits(TimeSeconds),
         m_separator(","),
         m_sampleRate(44100),
         m_windowSize(1024),
         m_behaviour(QString::KeepEmptyParts)
     { }
-
-    ModelType  getModelType()   const { return m_modelType;   }
-    TimingType getTimingType()  const { return m_timingType;  }
-    TimeUnits  getTimeUnits()   const { return m_timeUnits;   }
-    QString    getSeparator()   const { return m_separator;   }
-    size_t     getSampleRate()  const { return m_sampleRate;  }
-    size_t     getWindowSize()  const { return m_windowSize;  }
+ 
+    ModelType    getModelType()     const { return m_modelType;     }
+    TimingType   getTimingType()    const { return m_timingType;    }
+    DurationType getDurationType()  const { return m_durationType;  }
+    TimeUnits    getTimeUnits()     const { return m_timeUnits;     }
+    QString      getSeparator()     const { return m_separator;     }
+    size_t       getSampleRate()    const { return m_sampleRate;    }
+    size_t       getWindowSize()    const { return m_windowSize;    }
 
     QString::SplitBehavior getSplitBehaviour() const { return m_behaviour; }
 	
-    void setModelType(ModelType t)    { m_modelType  = t; }
-    void setTimingType(TimingType t)  { m_timingType = t; }
-    void setTimeUnits(TimeUnits t)    { m_timeUnits  = t; }
-    void setSeparator(QString s)      { m_separator  = s; }
-    void setSampleRate(size_t r)      { m_sampleRate = r; }
-    void setWindowSize(size_t s)      { m_windowSize = s; }
+    void setModelType(ModelType t)        { m_modelType    = t; }
+    void setTimingType(TimingType t)      { m_timingType   = t; }
+    void setDurationType(DurationType t)  { m_durationType = t; }
+    void setTimeUnits(TimeUnits t)        { m_timeUnits    = t; }
+    void setSeparator(QString s)          { m_separator    = s; }
+    void setSampleRate(size_t r)          { m_sampleRate   = r; }
+    void setWindowSize(size_t s)          { m_windowSize   = s; }
 
     void setSplitBehaviour(QString::SplitBehavior b) { m_behaviour = b; }
     
@@ -74,12 +83,13 @@ public:
     int getMaxExampleCols() const { return m_maxExampleCols; }
 
 protected:
-    ModelType  m_modelType;
-    TimingType m_timingType;
-    TimeUnits  m_timeUnits;
-    QString    m_separator;
-    size_t     m_sampleRate;
-    size_t     m_windowSize;
+    ModelType    m_modelType;
+    TimingType   m_timingType;
+    DurationType m_durationType;
+    TimeUnits    m_timeUnits;
+    QString      m_separator;
+    size_t       m_sampleRate;
+    size_t       m_windowSize;
 
     QString::SplitBehavior m_behaviour;
 
