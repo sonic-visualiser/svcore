@@ -15,6 +15,8 @@
 
 #include "CSVFormat.h"
 
+#include "base/StringBits.h"
+
 #include <QFile>
 #include <QString>
 #include <QRegExp>
@@ -23,39 +25,41 @@
 
 #include <iostream>
 
-CSVFormat::CSVFormat(QString filename) :
-    m_modelType(TwoDimensionalModel),
-    m_timingType(ExplicitTiming),
-    m_durationType(Durations),
-    m_timeUnits(TimeSeconds),
-    m_separator(","),
+CSVFormat::CSVFormat(QString path) :
+    m_separator(""),
     m_sampleRate(44100),
     m_windowSize(1024),
-    m_behaviour(QString::KeepEmptyParts),
-    m_maxExampleCols(0)
+    m_allowQuoting(true)
 {
-    QFile file(filename);
+    guessFormatFor(path);
+}
+
+void
+CSVFormat::guessFormatFor(QString path)
+{
+    m_modelType = TwoDimensionalModel;
+    m_timingType = ExplicitTiming;
+    m_durationType = Durations;
+    m_timeUnits = TimeSeconds;
+    m_behaviour = QString::KeepEmptyParts;
+
+    m_maxExampleCols = 0;
+    m_columnCount = 0;
+    m_variableColumnCount = false;
+
+    m_example.clear();
+    m_columnQualities.clear();
+    m_columnPurposes.clear();
+    m_prevValues.clear();
+
+    QFile file(path);
     if (!file.exists()) return;
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
 
     QTextStream in(&file);
     in.seek(0);
 
-    unsigned int lineno = 0;
-
-    bool nonIncreasingPrimaries = false;
-    bool nonIncreasingSecondaries = false;
-    bool nonNumericPrimaries = false;
-    bool floatPrimaries = false;
-    bool variableItemCount = false;
-    int itemCount = 1;
-    int earliestNonNumericItem = -1;
-
-    float prevPrimary = 0.0;
-    float prevSecondary = 0.0;
-
-    m_maxExampleCols = 0;
-    m_separator = "";
+    int lineno = 0;
 
     while (!in.atEnd()) {
 
@@ -67,152 +71,203 @@ CSVFormat::CSVFormat(QString filename) :
         for (size_t li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
+            if (line.startsWith("#") || line == "") continue;
 
-            if (line.startsWith("#")) continue;
+            guessQualities(line, lineno);
 
-            m_behaviour = QString::KeepEmptyParts;
-
-            if (m_separator == "") {
-                //!!! to do: ask the user
-                if (line.split(",").size() >= 2) m_separator = ",";
-                else if (line.split("\t").size() >= 2) m_separator = "\t";
-                else if (line.split("|").size() >= 2) m_separator = "|";
-                else if (line.split("/").size() >= 2) m_separator = "/";
-                else if (line.split(":").size() >= 2) m_separator = ":";
-                else {
-                    m_separator = " ";
-                    m_behaviour = QString::SkipEmptyParts;
-                }
-            }
-
-//            std::cerr << "separator = \"" << m_separator.toStdString() << "\"" << std::endl;
-
-            QStringList list = line.split(m_separator, m_behaviour);
-            QStringList tidyList;
-
-            for (int i = 0; i < list.size(); ++i) {
-	    
-                QString s(list[i]);
-                bool numeric = false;
-
-                if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
-                    s = s.mid(1, s.length() - 2);
-                } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
-                    s = s.mid(1, s.length() - 2);
-                } else {
-                    float f = s.toFloat(&numeric);
-//                    std::cerr << "converted \"" << s.toStdString() << "\" to float, got " << f << " and success = " << numeric << std::endl;
-                }
-
-                tidyList.push_back(s);
-
-                if (lineno == 0 || (list.size() < itemCount)) {
-                    itemCount = list.size();
-                } else {
-                    if (itemCount != list.size()) {
-                        variableItemCount = true;
-                    }
-                }
-	    
-                if (i == 0) { // primary
-
-                    if (numeric) {
-
-                        float primary = s.toFloat();
-
-                        if (lineno > 0 && primary <= prevPrimary) {
-                            nonIncreasingPrimaries = true;
-                        }
-
-                        if (s.contains(".") || s.contains(",")) {
-                            floatPrimaries = true;
-                        }
-
-                        prevPrimary = primary;
-
-                    } else {
-                        nonNumericPrimaries = true;
-                    }
-                } else { // secondary
-
-                    if (!numeric) {
-                        if (earliestNonNumericItem < 0 ||
-                            i < earliestNonNumericItem) {
-                            earliestNonNumericItem = i;
-                        }
-                    } else if (i == 1) {
-                        float secondary = s.toFloat();
-                        if (lineno > 0 && secondary <= prevSecondary) {
-                            nonIncreasingSecondaries = true;
-                        }
-                        prevSecondary = secondary;
-                    }
-                }
-            }
-
-            if (lineno < 10) {
-                m_example.push_back(tidyList);
-                if (lineno == 0 || tidyList.size() > m_maxExampleCols) {
-                    m_maxExampleCols = tidyList.size();
-                }
-            }
-
-            ++lineno;
-
-            if (lineno == 50) break;
+            if (++lineno == 50) break;
         }
     }
 
-    if (nonNumericPrimaries || nonIncreasingPrimaries) {
-	
-	// Primaries are probably not a series of times
+    guessPurposes();
+}
 
-	m_timingType = CSVFormat::ImplicitTiming;
-	m_timeUnits = CSVFormat::TimeWindows;
-	
-	if (nonNumericPrimaries) {
-	    m_modelType = CSVFormat::OneDimensionalModel;
-	} else if (itemCount == 1 || variableItemCount ||
-		   (earliestNonNumericItem != -1)) {
-	    m_modelType = CSVFormat::TwoDimensionalModel;
-	} else {
-	    m_modelType = CSVFormat::ThreeDimensionalModel;
-	}
+void
+CSVFormat::guessSeparator(QString line)
+{
+    char candidates[] = { ',', '\t', ' ', '|', '/', ':' };
+    for (int i = 0; i < sizeof(candidates)/sizeof(candidates[0]); ++i) {
+        if (StringBits::split(line, candidates[i], m_allowQuoting).size() >= 2) {
+            m_separator = candidates[i];
+            return;
+        }
+    }
+    m_separator = " ";
+}
 
+void
+CSVFormat::guessQualities(QString line, int lineno)
+{
+    if (m_separator == "") guessSeparator(line);
+
+    QStringList list = StringBits::split(line, m_separator[0], m_allowQuoting);
+
+    int cols = list.size();
+    if (lineno == 0 || (cols < m_columnCount)) m_columnCount = cols;
+    if (cols != m_columnCount) m_variableColumnCount = true;
+
+    // All columns are regarded as having these qualities until we see
+    // something that indicates otherwise:
+
+    ColumnQualities defaultQualities =
+        ColumnNumeric | ColumnIntegral | ColumnIncreasing;
+    
+    for (int i = 0; i < cols; ++i) {
+	    
+        while (m_columnQualities.size() <= i) {
+            m_columnQualities.push_back(defaultQualities);
+            m_prevValues.push_back(0.f);
+        }
+
+        QString s(list[i]);
+        bool ok = false;
+
+        ColumnQualities qualities = m_columnQualities[i];
+
+        bool numeric    = (qualities & ColumnNumeric);
+        bool integral   = (qualities & ColumnIntegral);
+        bool increasing = (qualities & ColumnIncreasing);
+        bool large      = (qualities & ColumnLarge); // this one defaults to off
+
+        float value = 0.f;
+
+        //!!! how to take into account headers?
+
+        if (numeric) {
+            value = s.toFloat(&ok);
+            if (!ok) {
+                value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
+            }
+            if (ok) {
+                if (lineno < 2 && value > 1000.f) large = true;
+            } else {
+                numeric = false;
+            }
+        }
+
+        if (numeric) {
+
+            if (integral) {
+                if (s.contains('.') || s.contains(',')) {
+                    integral = false;
+                }
+            }
+
+            if (increasing) {
+                if (lineno > 0 && value <= m_prevValues[i]) {
+                    increasing = false;
+                }
+            }
+
+            m_prevValues[i] = value;
+        }
+
+        m_columnQualities[i] =
+            (numeric    ? ColumnNumeric : 0) |
+            (integral   ? ColumnIntegral : 0) |
+            (increasing ? ColumnIncreasing : 0) |
+            (large      ? ColumnLarge : 0);
+    }
+
+    if (lineno < 10) {
+        m_example.push_back(list);
+        if (lineno == 0 || cols > m_maxExampleCols) {
+            m_maxExampleCols = cols;
+        }
+    }
+
+    std::cerr << "Estimated column qualities: ";
+    for (int i = 0; i < m_columnCount; ++i) {
+        std::cerr << int(m_columnQualities[i]) << " ";
+    }
+    std::cerr << std::endl;
+}
+
+void
+CSVFormat::guessPurposes()
+{
+    while (m_columnPurposes.size() <= m_columnCount) {
+        m_columnPurposes.push_back(ColumnUnknown);
+    }
+
+    m_timingType = CSVFormat::ImplicitTiming;
+    m_timeUnits = CSVFormat::TimeWindows;
+	
+    int timingColumnCount = 0;
+    
+    for (int i = 0; i < m_columnCount; ++i) {
+        
+        ColumnPurpose purpose = ColumnUnknown;
+        bool primary = (i == 0);
+
+        ColumnQualities qualities = m_columnQualities[i];
+
+        bool numeric    = (qualities & ColumnNumeric);
+        bool integral   = (qualities & ColumnIntegral);
+        bool increasing = (qualities & ColumnIncreasing);
+        bool large      = (qualities & ColumnLarge);
+
+        bool timingColumn = (numeric && increasing);
+
+        if (timingColumn) {
+
+            ++timingColumnCount;
+                              
+            if (primary) {
+
+                purpose = ColumnStartTime;
+
+                m_timingType = ExplicitTiming;
+
+                if (integral && large) {
+                    m_timeUnits = TimeAudioFrames;
+                } else {
+                    m_timeUnits = TimeSeconds;
+                }
+
+            } else {
+
+                if (timingColumnCount == 2 && m_timingType == ExplicitTiming) {
+                    purpose = ColumnEndTime;
+                    m_durationType = EndTimes;
+                }
+            }
+        }
+
+        if (purpose == ColumnUnknown) {
+            if (numeric) {
+                purpose = ColumnValue;
+            } else {
+                purpose = ColumnLabel;
+            }
+        }
+
+        m_columnPurposes[i] = purpose;
+    }            
+
+    int valueCount = 0;
+    for (int i = 0; i < m_columnCount; ++i) {
+        if (m_columnPurposes[i] == ColumnValue) ++valueCount;
+    }
+
+    if (valueCount == 0) {
+        m_modelType = OneDimensionalModel;
+    } else if (valueCount == 1) {
+        m_modelType = TwoDimensionalModel;
     } else {
-
-	// Increasing numeric primaries -- likely to be time
-
-	m_timingType = CSVFormat::ExplicitTiming;
-
-	if (floatPrimaries) {
-	    m_timeUnits = CSVFormat::TimeSeconds;
-	} else {
-	    m_timeUnits = CSVFormat::TimeAudioFrames;
-	}
-
-	if (itemCount == 1) {
-	    m_modelType = CSVFormat::OneDimensionalModel;
-	} else if (variableItemCount || (earliestNonNumericItem != -1)) {
-	    if (earliestNonNumericItem != -1 && earliestNonNumericItem < 2) {
-		m_modelType = CSVFormat::OneDimensionalModel;
-	    } else {
-		m_modelType = CSVFormat::TwoDimensionalModel;
-	    }
-	} else {
-	    m_modelType = CSVFormat::ThreeDimensionalModel;
-	}
-
-        if (nonIncreasingSecondaries) {
-            m_durationType = Durations;
-        } else {
-            m_durationType = EndTimes;
-        }
+        m_modelType = ThreeDimensionalModel;
     }
+
+    std::cerr << "Estimated column purposes: ";
+    for (int i = 0; i < m_columnCount; ++i) {
+        std::cerr << int(m_columnPurposes[i]) << " ";
+    }
+    std::cerr << std::endl;
 
     std::cerr << "Estimated model type: " << m_modelType << std::endl;
     std::cerr << "Estimated timing type: " << m_timingType << std::endl;
     std::cerr << "Estimated duration type: " << m_durationType << std::endl;
     std::cerr << "Estimated units: " << m_timeUnits << std::endl;
 }
+
 

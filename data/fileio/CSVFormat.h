@@ -45,7 +45,22 @@ public:
 	TimeWindows
     };
 
-    CSVFormat(QString path); // guess format
+    enum ColumnPurpose {
+        ColumnUnknown,
+        ColumnStartTime,
+        ColumnEndTime,
+        ColumnDuration,
+        ColumnValue,
+        ColumnLabel
+    };
+
+    enum ColumnQuality {
+        ColumnNumeric    = 0x1,
+        ColumnIntegral   = 0x2,
+        ColumnIncreasing = 0x4,
+        ColumnLarge      = 0x8
+    };
+    typedef unsigned int ColumnQualities;
 
     CSVFormat() : // arbitrary defaults
         m_modelType(TwoDimensionalModel),
@@ -55,8 +70,23 @@ public:
         m_separator(","),
         m_sampleRate(44100),
         m_windowSize(1024),
-        m_behaviour(QString::KeepEmptyParts)
+        m_columnCount(0),
+        m_variableColumnCount(false),
+        m_behaviour(QString::KeepEmptyParts),
+        m_allowQuoting(true),
+        m_maxExampleCols(0)
     { }
+
+    CSVFormat(QString path); // guess format
+
+    /**
+     * Guess the format of the given CSV file, setting the fields in
+     * this object accordingly.  If the current separator is the empty
+     * string, the separator character will also be guessed; otherwise
+     * the current separator will be used.  The other properties of
+     * this object will be set according to guesses from the file.
+     */
+    void guessFormatFor(QString path);
  
     ModelType    getModelType()     const { return m_modelType;     }
     TimingType   getTimingType()    const { return m_timingType;    }
@@ -65,8 +95,9 @@ public:
     QString      getSeparator()     const { return m_separator;     }
     size_t       getSampleRate()    const { return m_sampleRate;    }
     size_t       getWindowSize()    const { return m_windowSize;    }
-
+    
     QString::SplitBehavior getSplitBehaviour() const { return m_behaviour; }
+    QList<ColumnPurpose> getColumnPurposes() const { return m_columnPurposes; }
 	
     void setModelType(ModelType t)        { m_modelType    = t; }
     void setTimingType(TimingType t)      { m_timingType   = t; }
@@ -77,8 +108,12 @@ public:
     void setWindowSize(size_t s)          { m_windowSize   = s; }
 
     void setSplitBehaviour(QString::SplitBehavior b) { m_behaviour = b; }
+    void setColumnPurposes(QList<ColumnPurpose> cl) { m_columnPurposes = cl; }
     
-    // only valid if constructor that guesses format was used:
+    // read-only; only valid if format has been guessed:
+    QList<ColumnQualities> getColumnQualities() const { return m_columnQualities; }
+
+    // read-only; only valid if format has been guessed:
     QList<QStringList> getExample() const { return m_example; }
     int getMaxExampleCols() const { return m_maxExampleCols; }
 
@@ -91,10 +126,26 @@ protected:
     size_t       m_sampleRate;
     size_t       m_windowSize;
 
+    int          m_columnCount;
+    bool         m_variableColumnCount;
+
+    QList<ColumnQualities> m_columnQualities;
+    QList<ColumnPurpose> m_columnPurposes;
+
+    QList<float> m_prevValues;
+
     QString::SplitBehavior m_behaviour;
+    bool m_allowQuoting;
 
     QList<QStringList> m_example;
     int m_maxExampleCols;
+
+    void guessSeparator(QString line);
+    void guessQualities(QString line, int lineno);
+    void guessPurposes();
+
+    void guessFormatFor_Old(QString path);
+ 
 };
 
 #endif

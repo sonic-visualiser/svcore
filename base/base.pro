@@ -39,6 +39,7 @@ HEADERS += AudioLevel.h \
            Selection.h \
            Serialiser.h \
            StorageAdviser.h \
+           StringBits.h \
            TempDirectory.h \
            TextMatcher.h \
            Thread.h \
@@ -67,6 +68,7 @@ SOURCES += AudioLevel.cpp \
            Selection.cpp \
            Serialiser.cpp \
            StorageAdviser.cpp \
+           StringBits.cpp \
            TempDirectory.cpp \
            TextMatcher.cpp \
            Thread.cpp \
