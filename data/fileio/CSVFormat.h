@@ -95,9 +95,12 @@ public:
     QString      getSeparator()     const { return m_separator;     }
     size_t       getSampleRate()    const { return m_sampleRate;    }
     size_t       getWindowSize()    const { return m_windowSize;    }
+    int          getColumnCount()   const { return m_columnCount;   }
     
     QString::SplitBehavior getSplitBehaviour() const { return m_behaviour; }
     QList<ColumnPurpose> getColumnPurposes() const { return m_columnPurposes; }
+
+    ColumnPurpose getColumnPurpose(int i) { return m_columnPurposes[i]; }
 	
     void setModelType(ModelType t)        { m_modelType    = t; }
     void setTimingType(TimingType t)      { m_timingType   = t; }
@@ -106,10 +109,13 @@ public:
     void setSeparator(QString s)          { m_separator    = s; }
     void setSampleRate(size_t r)          { m_sampleRate   = r; }
     void setWindowSize(size_t s)          { m_windowSize   = s; }
+    void setColumnCount(int c)            { m_columnCount  = c; }
 
     void setSplitBehaviour(QString::SplitBehavior b) { m_behaviour = b; }
     void setColumnPurposes(QList<ColumnPurpose> cl) { m_columnPurposes = cl; }
     
+    void setColumnPurpose(int i, ColumnPurpose p) { m_columnPurposes[i] = p; }
+
     // read-only; only valid if format has been guessed:
     QList<ColumnQualities> getColumnQualities() const { return m_columnQualities; }
 
