@@ -250,6 +250,37 @@ CSVFormat::guessPurposes()
         if (m_columnPurposes[i] == ColumnValue) ++valueCount;
     }
 
+    if (valueCount == 2 && timingColumnCount == 1) {
+        // If we have exactly two apparent value columns and only one
+        // timing column, but one value column is integral and the
+        // other is not, guess that whichever one matches the integral
+        // status of the time column is either duration or end time
+        if (m_timingType == ExplicitTiming) {
+            int a = -1, b = -1;
+            for (int i = 0; i < m_columnCount; ++i) {
+                if (m_columnPurposes[i] == ColumnValue) {
+                    if (a == -1) a = i;
+                    else b = i;
+                }
+            }
+            if ((m_columnQualities[a] & ColumnIntegral) !=
+                (m_columnQualities[b] & ColumnIntegral)) {
+                int timecol = a;
+                if ((m_columnQualities[a] & ColumnIntegral) !=
+                    (m_columnQualities[0] & ColumnIntegral)) {
+                    timecol = b;
+                }
+                if (m_columnQualities[timecol] & ColumnIncreasing) {
+                    // This shouldn't happen; should have been settled above
+                    m_columnPurposes[timecol] = ColumnEndTime;
+                } else {
+                    m_columnPurposes[timecol] = ColumnDuration;
+                }
+                --valueCount;
+            }
+        }
+    }
+
     if (valueCount == 0) {
         m_modelType = OneDimensionalModel;
     } else if (valueCount == 1) {
