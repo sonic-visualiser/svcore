@@ -39,9 +39,7 @@ CSVFormat::guessFormatFor(QString path)
 {
     m_modelType = TwoDimensionalModel;
     m_timingType = ExplicitTiming;
-    m_durationType = Durations;
     m_timeUnits = TimeSeconds;
-    m_behaviour = QString::KeepEmptyParts;
 
     m_maxExampleCols = 0;
     m_columnCount = 0;
@@ -186,10 +184,6 @@ CSVFormat::guessQualities(QString line, int lineno)
 void
 CSVFormat::guessPurposes()
 {
-    while (m_columnPurposes.size() <= m_columnCount) {
-        m_columnPurposes.push_back(ColumnUnknown);
-    }
-
     m_timingType = CSVFormat::ImplicitTiming;
     m_timeUnits = CSVFormat::TimeWindows;
 	
@@ -229,7 +223,6 @@ CSVFormat::guessPurposes()
 
                 if (timingColumnCount == 2 && m_timingType == ExplicitTiming) {
                     purpose = ColumnEndTime;
-                    m_durationType = EndTimes;
                 }
             }
         }
@@ -242,7 +235,7 @@ CSVFormat::guessPurposes()
             }
         }
 
-        m_columnPurposes[i] = purpose;
+        setColumnPurpose(i, purpose);
     }            
 
     int valueCount = 0;
@@ -281,12 +274,16 @@ CSVFormat::guessPurposes()
         }
     }
 
-    if (valueCount == 0) {
-        m_modelType = OneDimensionalModel;
-    } else if (valueCount == 1) {
-        m_modelType = TwoDimensionalModel;
+    if (timingColumnCount > 1) {
+        m_modelType = TwoDimensionalModelWithDuration;
     } else {
-        m_modelType = ThreeDimensionalModel;
+        if (valueCount == 0) {
+            m_modelType = OneDimensionalModel;
+        } else if (valueCount == 1) {
+            m_modelType = TwoDimensionalModel;
+        } else {
+            m_modelType = ThreeDimensionalModel;
+        }
     }
 
     std::cerr << "Estimated column purposes: ";
@@ -297,8 +294,33 @@ CSVFormat::guessPurposes()
 
     std::cerr << "Estimated model type: " << m_modelType << std::endl;
     std::cerr << "Estimated timing type: " << m_timingType << std::endl;
-    std::cerr << "Estimated duration type: " << m_durationType << std::endl;
     std::cerr << "Estimated units: " << m_timeUnits << std::endl;
 }
+
+CSVFormat::ColumnPurpose
+CSVFormat::getColumnPurpose(int i)
+{
+    while (m_columnPurposes.size() <= i) {
+        m_columnPurposes.push_back(ColumnUnknown);
+    }
+    return m_columnPurposes[i];
+}
+
+CSVFormat::ColumnPurpose
+CSVFormat::getColumnPurpose(int i) const
+{
+    return m_columnPurposes[i];
+}
+
+void
+CSVFormat::setColumnPurpose(int i, ColumnPurpose p)
+{
+    while (m_columnPurposes.size() <= i) {
+        m_columnPurposes.push_back(ColumnUnknown);
+    }
+    m_columnPurposes[i] = p;
+}
+
+
 
 

@@ -36,6 +36,7 @@
 struct RegionRec
 {
 public:
+    RegionRec() : frame(0), value(0.f), duration(0) { }
     RegionRec(long _frame) : frame(_frame), value(0.0f), duration(0) { }
     RegionRec(long _frame, float _value, size_t _duration, QString _label) :
 	frame(_frame), value(_value), duration(_duration), label(_label) { }

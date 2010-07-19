@@ -17,6 +17,7 @@
 
 #include "model/Model.h"
 #include "base/RealTime.h"
+#include "base/StringBits.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
@@ -36,6 +37,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              size_t mainModelSampleRate) :
     m_format(format),
     m_file(0),
+    m_warnings(0),
     m_mainModelSampleRate(mainModelSampleRate)
 {
     m_file = new QFile(path);
@@ -78,28 +80,64 @@ CSVFileReader::getError() const
     return m_error;
 }
 
+size_t
+CSVFileReader::convertTimeValue(QString s, int lineno, size_t sampleRate,
+                                size_t windowSize) const
+{
+    QRegExp nonNumericRx("[^0-9eE.,+-]");
+    unsigned int warnLimit = 10;
+
+    CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
+
+    size_t calculatedFrame = 0;
+
+    bool ok = false;
+    QString numeric = s;
+    numeric.remove(nonNumericRx);
+    
+    if (timeUnits == CSVFormat::TimeSeconds) {
+
+        double time = numeric.toDouble(&ok);
+        if (!ok) time = StringBits::stringToDoubleLocaleFree(numeric, &ok);
+        calculatedFrame = int(time * sampleRate + 0.5);
+        
+    } else {
+        
+        long n = numeric.toLong(&ok);
+        if (n >= 0) calculatedFrame = n;
+        
+        if (timeUnits == CSVFormat::TimeWindows) {
+            calculatedFrame *= windowSize;
+        }
+    }
+    
+    if (!ok) {
+        if (m_warnings < warnLimit) {
+            std::cerr << "WARNING: CSVFileReader::load: "
+                      << "Bad time format (\"" << s.toStdString()
+                      << "\") in data line "
+                      << lineno+1 << std::endl;
+        } else if (m_warnings == warnLimit) {
+            std::cerr << "WARNING: Too many warnings" << std::endl;
+        }
+        ++m_warnings;
+    }
+
+    return calculatedFrame;
+}
+
 Model *
 CSVFileReader::load() const
 {
     if (!m_file) return 0;
-/*!!!
-    CSVFormatDialog *dialog = new CSVFormatDialog
-	(0, m_file, m_mainModelSampleRate);
-
-    if (dialog->exec() == QDialog::Rejected) {
-	delete dialog;
-        throw DataFileReaderFactory::ImportCancelled;
-    }
-*/
 
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
-    CSVFormat::DurationType durationType = m_format.getDurationType();
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
-    QString separator = m_format.getSeparator();
-    QString::SplitBehavior behaviour = m_format.getSplitBehaviour();
     size_t sampleRate = m_format.getSampleRate();
     size_t windowSize = m_format.getWindowSize();
+    QChar separator = m_format.getSeparator();
+    bool allowQuoting = m_format.getAllowQuoting();
 
     if (timingType == CSVFormat::ExplicitTiming) {
         if (modelType == CSVFormat::ThreeDimensionalModel) {
@@ -131,11 +169,16 @@ CSVFileReader::load() const
 
     size_t frameNo = 0;
     size_t duration = 0;
+    size_t endFrame = 0;
+
+    bool haveAnyValue = false;
+    bool haveEndTime = false;
+
     size_t startFrame = 0; // for calculation of dense model resolution
+    bool firstEverValue = true;
 
-    std::map<QString, float> labelValueMap;
-    float syntheticMax = 0.f;
-
+    std::map<QString, int> labelCountMap;
+    
     while (!in.atEnd()) {
 
         // QTextStream's readLine doesn't cope with old-style Mac
@@ -158,8 +201,7 @@ CSVFileReader::load() const
 
             if (line.startsWith("#")) continue;
 
-            QStringList list = line.split(separator, behaviour);
-
+            QStringList list = StringBits::split(line, separator, allowQuoting);
             if (!model) {
 
                 switch (modelType) {
@@ -190,152 +232,94 @@ CSVFileReader::load() const
                 }
             }
 
-            QStringList tidyList;
-            QRegExp nonNumericRx("[^0-9eE.,+-]");
-
             float value = 0.f;
+            QString label = "";
+
+            duration = 0.f;
+            haveEndTime = false;
 
             for (int i = 0; i < list.size(); ++i) {
-	    
-                QString s(list[i].trimmed());
 
-                if (s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) {
-                    s = s.mid(1, s.length() - 2);
-                } else if (s.length() >= 2 && s.startsWith("'") && s.endsWith("'")) {
-                    s = s.mid(1, s.length() - 2);
+                QString s = list[i];
+
+                CSVFormat::ColumnPurpose purpose = m_format.getColumnPurpose(i);
+
+                switch (purpose) {
+
+                case CSVFormat::ColumnUnknown:
+                    break;
+
+                case CSVFormat::ColumnStartTime:
+                    frameNo = convertTimeValue(s, lineno, sampleRate, windowSize);
+                    break;
+                
+                case CSVFormat::ColumnEndTime:
+                    endFrame = convertTimeValue(s, lineno, sampleRate, windowSize);
+                    haveEndTime = true;
+                    break;
+
+                case CSVFormat::ColumnDuration:
+                    duration = convertTimeValue(s, lineno, sampleRate, windowSize);
+                    break;
+
+                case CSVFormat::ColumnValue:
+                    value = s.toFloat();
+                    haveAnyValue = true;
+                    break;
+
+                case CSVFormat::ColumnLabel:
+                    label = s;
+                    ++labelCountMap[label];
+                    break;
                 }
+            }
 
-                if (timingType == CSVFormat::ExplicitTiming) {
-
-                    size_t calculatedFrame = 0;
-
-                    if (i == 0 ||
-                        (i == 1 &&
-                         modelType == CSVFormat::TwoDimensionalModelWithDuration)) {
-
-                        bool ok = false;
-                        QString numeric = s;
-                        numeric.remove(nonNumericRx);
-
-                        if (timeUnits == CSVFormat::TimeSeconds) {
-
-                            double time = numeric.toDouble(&ok);
-                            calculatedFrame = int(time * sampleRate + 0.5);
-
-                        } else {
-
-                            calculatedFrame = numeric.toInt(&ok);
-
-                            if (timeUnits == CSVFormat::TimeWindows) {
-                                calculatedFrame *= windowSize;
-                            }
-                        }
-			       
-                        if (!ok) {
-                            if (warnings < warnLimit) {
-                                std::cerr << "WARNING: CSVFileReader::load: "
-                                          << "Bad time format (\"" << s.toStdString()
-                                          << "\") in data line "
-                                          << lineno+1 << ":" << std::endl;
-                                std::cerr << line.toStdString() << std::endl;
-                            } else if (warnings == warnLimit) {
-                                std::cerr << "WARNING: Too many warnings" << std::endl;
-                            }
-                            ++warnings;
-                        }
-
-                        if (i == 0) frameNo = calculatedFrame;
-                        else {
-                            if (durationType == CSVFormat::EndTimes) {
-                                duration = calculatedFrame - frameNo;
-                            } else {
-                                duration = calculatedFrame;
-                            }
-                        }
-
-                        continue;
-                    }
+            if (haveEndTime) { // ... calculate duration now all cols read
+                if (endFrame > frameNo) {
+                    duration = endFrame - frameNo;
                 }
-
-                if ((i == 1 &&
-                     modelType == CSVFormat::TwoDimensionalModel) ||
-                    (i == 2 &&
-                     modelType == CSVFormat::TwoDimensionalModelWithDuration)) {
-                    bool ok = false;
-                    value = s.toFloat(&ok);
-                    if (!ok) {
-                        // cf. RDFImporter::fillModel
-                        if (labelValueMap.find(s) == labelValueMap.end()) {
-                            syntheticMax = syntheticMax + 1.f;
-                            labelValueMap[s] = syntheticMax;
-                        }
-                        value = labelValueMap[s];
-                    } else {
-                        if (value > syntheticMax) syntheticMax = value;
-                    }
-                    if (i + 1 == list.size()) {
-                        // keep text around for use as label (none other given)
-                        tidyList.push_back(s);
-                    }
-                    continue;
-                }
-
-                tidyList.push_back(s);
             }
 
             if (modelType == CSVFormat::OneDimensionalModel) {
 	    
-                SparseOneDimensionalModel::Point point
-                    (frameNo,
-                     tidyList.size() > 0 ? tidyList[tidyList.size()-1] :
-                     QString("%1").arg(lineno+1));
-
+                SparseOneDimensionalModel::Point point(frameNo, label);
                 model1->addPoint(point);
 
             } else if (modelType == CSVFormat::TwoDimensionalModel) {
 
-                SparseTimeValueModel::Point point
-                    (frameNo,
-                     value,
-                     tidyList.size() > 0 ? tidyList[0] : QString("%1").arg(lineno+1));
-
+                SparseTimeValueModel::Point point(frameNo, value, label);
                 model2->addPoint(point);
 
             } else if (modelType == CSVFormat::TwoDimensionalModelWithDuration) {
 
-                RegionModel::Point point
-                    (frameNo,
-                     value,
-                     duration,
-                     tidyList.size() > 0 ? tidyList[0] : QString("%1").arg(lineno+1));
-
+                RegionModel::Point point(frameNo, value, duration, label);
                 model2a->addPoint(point);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 
                 DenseThreeDimensionalModel::Column values;
 
-                for (int i = 0; i < tidyList.size(); ++i) {
+                for (int i = 0; i < list.size(); ++i) {
 
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
 
-                    if (i > 0 || timingType != CSVFormat::ExplicitTiming) {
+                    if (m_format.getColumnPurpose(i) == CSVFormat::ColumnValue) {
                         values.push_back(value);
                     }
 	    
-                    bool firstEver = (lineno == 0 && i == 0);
+                    if (firstEverValue || value < min) min = value;
+                    if (firstEverValue || value > max) max = value;
 
-                    if (firstEver || value < min) min = value;
-                    if (firstEver || value > max) max = value;
-
-                    if (firstEver) {
+                    if (firstEverValue) {
                         startFrame = frameNo;
                         model3->setStartFrame(startFrame);
                     } else if (lineno == 1 &&
                                timingType == CSVFormat::ExplicitTiming) {
                         model3->setResolution(frameNo - startFrame);
                     }
+                    
+                    firstEverValue = false;
 
                     if (!ok) {
                         if (warnings < warnLimit) {
@@ -366,6 +350,47 @@ CSVFileReader::load() const
         }
     }
 
+    if (!haveAnyValue) {
+        if (model2a) {
+            // assign values for regions based on label frequency; we
+            // have this in our labelCountMap, sort of
+
+            std::map<int, std::map<QString, float> > countLabelValueMap;
+            for (std::map<QString, int>::iterator i = labelCountMap.begin();
+                 i != labelCountMap.end(); ++i) {
+                countLabelValueMap[i->second][i->first] = 0.f;
+            }
+
+            float v = 0.f;
+            for (std::map<int, std::map<QString, float> >::iterator i =
+                     countLabelValueMap.end(); i != countLabelValueMap.begin(); ) {
+                --i;
+                for (std::map<QString, float>::iterator j = i->second.begin();
+                     j != i->second.end(); ++j) {
+                    j->second = v;
+                    v = v + 1.f;
+                }
+            }
+
+            std::map<RegionModel::Point, RegionModel::Point,
+                RegionModel::Point::Comparator> pointMap;
+            for (RegionModel::PointList::const_iterator i =
+                     model2a->getPoints().begin();
+                 i != model2a->getPoints().end(); ++i) {
+                RegionModel::Point p(*i);
+                v = countLabelValueMap[labelCountMap[p.label]][p.label];
+                RegionModel::Point pp(p.frame, v, p.duration, p.label);
+                pointMap[p] = pp;
+            }
+
+            for (std::map<RegionModel::Point, RegionModel::Point>::iterator i = 
+                     pointMap.begin(); i != pointMap.end(); ++i) {
+                model2a->deletePoint(i->first);
+                model2a->addPoint(i->second);
+            }
+        }
+    }
+                
     if (modelType == CSVFormat::ThreeDimensionalModel) {
 	model3->setMinimumLevel(min);
 	model3->setMaximumLevel(max);
