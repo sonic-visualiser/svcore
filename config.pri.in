@@ -1,0 +1,9 @@
+
+#!!! not all things in configure.ac are necessarily sensible and not
+#!!! all of them are taken into account here
+
+DEFINES += @HAVES@
+
+QMAKE_CFLAGS += @CFLAGS@
+QMAKE_CXXFLAGS += @CXXFLAGS@
+
