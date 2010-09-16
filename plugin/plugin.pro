@@ -1,7 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = vamp vamp-hostsdk lrdf raptor
-load(../prf/sv.prf)
+include(../config.pri)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 QT += xml
