@@ -1,9 +1,6 @@
 TEMPLATE = lib
 
-#SV_UNIT_PACKAGES =
 include(../config.pri)
-
-#CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 
 CONFIG += staticlib qt thread warn_on stl rtti exceptions
 QT -= gui

@@ -1,7 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = redland rasqal raptor vamp-hostsdk
-load(../prf/sv.prf)
+include(../config.pri)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 

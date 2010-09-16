@@ -1,7 +1,7 @@
 
 AC_INIT(SVcore, 1.8, cannam@all-day-breakfast.com)
 
-AC_CONFIG_SRCDIR(base/AudioLevel.cpp)
+AC_CONFIG_SRCDIR(base/base.pro)
 
 # Autoconf will set CXXFLAGS; we don't usually want it to, because we
 # either define our own flags (at least if GCC is in use) or else use
@@ -18,7 +18,6 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
-AC_PATH_X
 AC_HEADER_STDC
 
 # These are the flags Autoconf guesses for us; we use them later if
@@ -29,57 +28,6 @@ AUTOCONF_CXXFLAGS="$CXXFLAGS"
 PKG_PROG_PKG_CONFIG
 
 SV_CHECK_QT
-
-AC_CHECK_LIB([bz2],[BZ2_bzReadOpen],[LIBS="$LIBS -lbz2"],[AC_MSG_ERROR(Failed to find required bzip2 library)])
-
-PKG_CHECK_MODULES([JACK],[jack >= 0.100],[HAVES="$HAVES HAVE_LIBJACK"],[
-AC_MSG_WARN(No JACK library found)])
-
-PKG_CHECK_MODULES([libpulse],[libpulse >= 0.9],[HAVES="$HAVES HAVE_LIBPULSE"],[
-AC_MSG_WARN(No PulseAudio library found)])
-
-# bit messy this
-PKG_CHECK_MODULES([fftw3],[fftw3 >= 3.0.0],[HAVES="$HAVES HAVE_FFTW3"],[])
-PKG_CHECK_MODULES([fftw3f],[fftw3f >= 3.0.0],[HAVES="$HAVES HAVE_FFTW3F"],[])
-PKG_CHECK_MODULES([sndfile],[sndfile >= 1.0.16],[HAVES="$HAVES HAVE_SNDFILE"],[])
-PKG_CHECK_MODULES([liblo],[liblo >= 0.7],[HAVES="$HAVES HAVE_LIBLO"],[])
-PKG_CHECK_MODULES([lrdf],[lrdf >= 0.2],[HAVES="$HAVES HAVE_LRDF"],[])
-PKG_CHECK_MODULES([samplerate],[samplerate >= 0.1.2],[HAVES="$HAVES HAVE_SAMPLERATE"],[])
-PKG_CHECK_MODULES([vamp],[vamp >= 2.1],[HAVES="$HAVES HAVE_VAMP"],[])
-PKG_CHECK_MODULES([vamphostsdk],[vamp-hostsdk >= 2.1],[HAVES="$HAVES HAVE_VAMP_HOSTSDK"],[])
-PKG_CHECK_MODULES([oggz],[oggz >= 1.0.0],[HAVES="$HAVES HAVE_OGGZ"],[])
-PKG_CHECK_MODULES([fishsound],[fishsound >= 1.0.0],[HAVES="$HAVES HAVE_FISHSOUND"],[])
-PKG_CHECK_MODULES([mad],[fishsound >= 0.15.0],[HAVES="$HAVES HAVE_MAD"],[])
-PKG_CHECK_MODULES([id3tag],[id3tag >= 0.15.0],[HAVES="$HAVES HAVE_ID3TAG"],[])
-PKG_CHECK_MODULES([raptor],[raptor >= 1.4.20],[HAVES="$HAVES HAVE_RAPTOR"],[])
-PKG_CHECK_MODULES([rasqal],[rasqal >= 0.9.19],[HAVES="$HAVES HAVE_RASQAL"],[])
-PKG_CHECK_MODULES([redland],[redland >= 1.0.10],[HAVES="$HAVES HAVE_REDLAND"],[])
-
-AC_PATH_PROG([PERL],[perl])
-if test x$PERL = x ; then
-       	AC_MSG_ERROR([Failed to find required perl program.])
-fi
-
-AC_PATH_PROG([XARGS],[xargs])
-if test x$XARGS = x ; then
-       	AC_MSG_ERROR([Failed to find required xargs program.])
-fi
-
-AC_PATH_PROG([MAKEDEPEND],[makedepend])
-if test x$MAKEDEPEND = x ; then
-       	AC_MSG_ERROR([Failed to find required makedepend program.])
-fi
-
-AC_PATH_PROG([SHA1SUM],[sha1sum])
-AC_PATH_PROG([SHA1SUM],[sha1 -q])
-if test x$SHA1SUM = x ; then
-       	AC_MSG_ERROR([Failed to find required sha1sum or sha1 program.])
-fi
-
-AC_PATH_PROG([CUT],[cut])
-if test x$CUT = x ; then
-       	AC_MSG_ERROR([Failed to find required cut program.])
-fi
 
 SV_DEFINES_DEBUG="-DDEBUG -DBUILD_DEBUG -DWANT_TIMING"
 SV_DEFINES_RELEASE="-DNDEBUG -DBUILD_RELEASE -DNO_TIMING"
@@ -116,12 +64,26 @@ fi
 
 CXXFLAGS="$CXXFLAGS_BUILD $SV_DEFINES_BUILD"
 
-#if test -z "$JACK_CFLAGS" ; then
-#   AC_MSG_WARN([Required JACK library not found, building with no audio!])
-#fi
-#if test -z "$ALSA_CFLAGS" ; then
-#   AC_MSG_WARN([Required ALSA library not found, building with no MIDI!])
-#fi
+SV_MODULE_REQUIRED([bz2],[],[bzlib.h],[bz2],[BZ2_bzReadOpen])
+SV_MODULE_REQUIRED([fftw3],[fftw3 >= 3.0.0],[fftw3.h],[fftw3],[fftw_execute])
+SV_MODULE_REQUIRED([fftw3f],[fftw3f >= 3.0.0],[fftw3.h],[fftw3f],[fftwf_execute])
+SV_MODULE_REQUIRED([sndfile],[sndfile >= 1.0.16],[sndfile.h],[sndfile],[sf_open])
+SV_MODULE_REQUIRED([samplerate],[samplerate >= 0.1.2],[samplerate.h],[samplerate],[src_new])
+SV_MODULE_REQUIRED([vamp],[vamp >= 2.1],[vamp/vamp.h],[],[])
+SV_MODULE_REQUIRED([vamphostsdk],[vamp-hostsdk >= 2.0],[vamp-hostsdk/PluginLoader.h],[],[])
+SV_MODULE_REQUIRED([rubberband],[rubberband],[rubberband/RubberBandStretcher.h],[rubberband],[rubberband_new])
+SV_MODULE_REQUIRED([raptor],[raptor >= 1.4.20],[raptor.h],[raptor],[raptor_new_world])
+SV_MODULE_REQUIRED([rasqal],[rasqal >= 0.9.19],[rasqal/rasqal.h],[rasqal],[rasqal_new_world])
+SV_MODULE_REQUIRED([redland],[redland >= 1.0.10],[librdf.h],[rdf],[librdf_new_world])
+
+SV_MODULE_OPTIONAL([liblo],[],[lo/lo.h],[lo],[lo_address_new])
+SV_MODULE_OPTIONAL([JACK],[jack >= 0.100],[jack/jack.h],[jack],[jack_client_open])
+SV_MODULE_OPTIONAL([libpulse],[libpulse >= 0.9],[pulse/pulseaudio.h],[pulse],[pa_stream_new])
+SV_MODULE_OPTIONAL([lrdf],[lrdf >= 0.2],[lrdf.h],[lrdf],[lrdf_init])
+SV_MODULE_OPTIONAL([oggz],[oggz >= 1.0.0],[oggz/oggz.h],[oggz],[oggz_run])
+SV_MODULE_OPTIONAL([fishsound],[fishsound >= 1.0.0],[fishsound/fishsound.h],[fishsound],[fish_sound_new])
+SV_MODULE_OPTIONAL([mad],[mad >= 0.15.0],[mad.h],[mad],[mad_decoder_init])
+SV_MODULE_OPTIONAL([id3tag],[id3tag >= 0.15.0],[id3tag.h],[id3tag],[id3_tag_new])
 
 AC_SUBST(PERL)
 AC_SUBST(XARGS)
@@ -133,7 +95,7 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CXXFLAGS_MINIMAL)
 AC_SUBST(HAVES)
-#AC_SUBST(DSSI_LOCALFLAGS)
+AC_SUBST(LIBS)
 
 AC_SUBST(CC)
 AC_SUBST(CXX)
@@ -141,6 +103,8 @@ AC_SUBST(CXX)
 AC_SUBST(CODENAME)
 
 AC_OUTPUT([config.pri])
+
+$QMAKE -r
 
 # qmake builds our static libraries, which is fine -- what we'd really
 # like to do afterwards is bundle them into a single .so with e.g.
@@ -150,3 +114,13 @@ AC_OUTPUT([config.pri])
 # but how best to arrange this? if it's not possible, we'll presumably
 # just have to use a single (q)make(project)file instead.
 
+AC_MSG_NOTICE([
+
+Configuration complete.
+Please check the above messages for any warnings that you
+might care about, and then run "make".
+
+The file config.pri contains the configuration settings for
+qmake.  If you want to adjust these by hand, edit config.pri
+and run "qmake -r" again to regenerate the Makefile.
+])

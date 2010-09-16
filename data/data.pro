@@ -1,7 +1,6 @@
 TEMPLATE = lib
 
-SV_UNIT_PACKAGES = fftw3f sndfile mad quicktime id3tag oggz fishsound liblo
-load(../prf/sv.prf)
+include(../config.pri)
 
 CONFIG += sv staticlib qt thread warn_on stl rtti exceptions
 QT += network
