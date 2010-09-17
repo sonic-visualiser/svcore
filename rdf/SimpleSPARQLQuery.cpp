@@ -23,7 +23,13 @@
 
 #include <set>
 
-#include <redland.h>
+// Rather than including <redland.h> -- for some reason redland.h
+// includes <rasqal.h>, while the rasqal header actually gets
+// installed as <rasqal/rasqal.h> which breaks the inclusion all over
+// the place unless a very clever include path is set
+#include <raptor.h>
+#include <rasqal/rasqal.h>
+#include <librdf.h>
 
 //#define DEBUG_SIMPLE_SPARQL_QUERY 1
 
