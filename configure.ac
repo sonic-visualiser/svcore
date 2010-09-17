@@ -104,7 +104,9 @@ AC_SUBST(CODENAME)
 
 AC_OUTPUT([config.pri])
 
-$QMAKE -r
+if ! $QMAKE -r; then
+   AC_MSG_ERROR([qmake failed: Command was "$QMAKE -r"])
+fi
 
 # qmake builds our static libraries, which is fine -- what we'd really
 # like to do afterwards is bundle them into a single .so with e.g.
