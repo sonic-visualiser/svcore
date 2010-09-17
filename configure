@@ -6090,7 +6090,7 @@ SV_MODULE_MODULE=raptor
 SV_MODULE_VERSION_TEST="raptor >= 1.4.20"
 SV_MODULE_HEADER=raptor.h
 SV_MODULE_LIB=raptor
-SV_MODULE_FUNC=raptor_new_world
+SV_MODULE_FUNC=raptor_start_parse
 SV_MODULE_HAVE=HAVE_$(echo raptor | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
 if test -z "$SV_MODULE_VERSION_TEST" ; then
