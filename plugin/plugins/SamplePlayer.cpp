@@ -20,7 +20,8 @@
 #include "SamplePlayer.h"
 #include "system/System.h"
 
-#include <dssi.h>
+#include "../api/dssi.h"
+
 #include <cmath>
 #include <cstdlib>
 
