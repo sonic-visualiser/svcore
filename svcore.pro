@@ -17,14 +17,6 @@ MOC_DIR = o
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
 
-
-#DEPENDPATH += fft fileio model osc ..
-#INCLUDEPATH += . fft fileio model osc ..
-
-#DEPENDPATH += . .. api plugins api/alsa api/alsa/sound 
-#INCLUDEPATH += . .. api api/alsa plugins api/alsa/sound 
-
-
 # Set up suitable platform defines for RtMidi
 linux*:   DEFINES += __LINUX_ALSASEQ__
 macx*:    DEFINES += __MACOSX_CORE__
