@@ -7,5 +7,8 @@ DEFINES += NO_SV_GUI
 QMAKE_CFLAGS += @CFLAGS@
 QMAKE_CXXFLAGS += @CXXFLAGS@
 
+macx*:DEFINES += HAVE_QUICKTIME
+macx*:LIBS += -framework QuickTime -framework CoreAudio -framework CoreMidi -framework AudioUnit -framework AudioToolbox
+
 LIBS += @LIBS@
 
