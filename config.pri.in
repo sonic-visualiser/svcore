@@ -1,9 +1,6 @@
 
 DEFINES += @HAVES@
 
-##!!!
-DEFINES += NO_SV_GUI
-
 QMAKE_CC = @CC@
 QMAKE_CXX = @CXX@
 
