@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <cstdio>
 
 //#define DEBUG_FILE_READ_THREAD 1
 

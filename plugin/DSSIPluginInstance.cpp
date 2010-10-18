@@ -27,7 +27,11 @@
 
 #include <cstdlib>
 
+#ifndef Q_OS_WIN32
 #include <alloca.h>
+#else
+#include <memory.h>
+#endif
 
 //#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1

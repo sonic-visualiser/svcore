@@ -86,11 +86,6 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-signals:
-    void modelChanged();
-    void modelChanged(size_t, size_t);
-    void completionChanged();
-
 protected slots:
     void fillTimerTimedOut();
     void cacheFilled();
