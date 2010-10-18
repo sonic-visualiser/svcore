@@ -22,6 +22,8 @@
 #include <iostream>
 #include "Profiler.h"
 
+#include <cstdio>
+
 #include <vector>
 #include <algorithm>
 #include <set>

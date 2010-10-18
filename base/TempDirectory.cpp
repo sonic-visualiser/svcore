@@ -25,6 +25,7 @@
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
+#include <time.h>
 
 TempDirectory *
 TempDirectory::m_instance = new TempDirectory;
