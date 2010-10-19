@@ -83,8 +83,12 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     m_reporter(reporter),
     m_refCounted(false)
 {
+    if (m_url.toString() == "") {
+        m_url = QUrl(fileOrUrl, QUrl::TolerantMode);
+    }
+ 
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << ")" << std::endl;
+    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << "): url <" << m_url.toString().toStdString() << ">" << std::endl;
     incCount(m_url.toString());
 #endif
 
@@ -266,7 +270,7 @@ FileSource::init()
 
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::init: URL translates to local filename \""
-                  << m_localFilename.toStdString() << "\"" << std::endl;
+                  << m_localFilename.toStdString() << "\" (with literal=" << literal << ")" << std::endl;
 #endif
         m_ok = true;
         m_lastStatus = 200;
