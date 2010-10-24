@@ -250,15 +250,6 @@ void
 AlignmentModel::constructReversePath() const
 {
     if (!m_reversePath) {
-/*!!!
-        if (!m_rawPath) {
-            std::cerr << "ERROR: AlignmentModel::constructReversePath: "
-                      << "No raw path available" << std::endl;
-            return;
-        }
-        m_reversePath = new PathModel
-            (m_rawPath->getSampleRate(), m_rawPath->getResolution(), false);
-*/
         if (!m_path) {
             std::cerr << "ERROR: AlignmentModel::constructReversePath: "
                       << "No forward path available" << std::endl;
@@ -267,24 +258,10 @@ AlignmentModel::constructReversePath() const
         m_reversePath = new PathModel
             (m_path->getSampleRate(), m_path->getResolution(), false);
     } else {
-/*!!!
-        if (!m_rawPath) return;
-*/
         if (!m_path) return;
     }
         
     m_reversePath->clear();
-/*!!!
-    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
-        
-    for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-        long frame = i->frame;
-        float value = i->value;
-        long rframe = lrintf(value * m_aligned->getSampleRate());
-        m_reversePath->addPoint(PathPoint(rframe, frame));
-    }
-*/
 
     PathModel::PointList points = m_path->getPoints();
         
@@ -375,7 +352,14 @@ AlignmentModel::setPath(PathModel *path)
     if (m_path) m_path->aboutToDelete();
     delete m_path;
     m_path = path;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::setPath: path = " << m_path << std::endl;
+#endif
     constructReversePath();
+#ifdef DEBUG_ALIGNMENT_MODEL
+    std::cerr << "AlignmentModel::setPath: after construction path = "
+              << m_path << ", rpath = " << m_reversePath << std::endl;
+#endif
 }
     
 void
