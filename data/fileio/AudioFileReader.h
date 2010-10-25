@@ -39,7 +39,8 @@ public:
     size_t getFrameCount() const { return m_frameCount; }
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
-    size_t getNativeRate() const { return m_sampleRate; } // if resampled
+
+    virtual size_t getNativeRate() const { return m_sampleRate; } // if resampled
 
     /**
      * Return the location of the audio data in the reader (as passed

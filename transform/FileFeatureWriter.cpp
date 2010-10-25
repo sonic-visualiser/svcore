@@ -90,7 +90,11 @@ FileFeatureWriter::getSupportedParameters() const
     if (m_support & SupportOneFileTotal) {
         if (m_support & ~SupportOneFileTotal) { // not only option
             p.name = "one-file";
-            p.description = "Write all transform results for all input files into the single named output file.";
+            if (m_support & SupportOneFilePerTrack) {
+                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
+            } else {
+                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create a separate output file for each combination of input audio file and transform.)";
+            }                
             p.hasArg = true;
             pl.push_back(p);
         }
@@ -132,11 +136,16 @@ FileFeatureWriter::setParameters(map<string, string> &params)
         } else if (i->first == "one-file") {
             if (m_support & SupportOneFileTotal) {
                 if (m_support & ~SupportOneFileTotal) { // not only option
-                    if (m_manyFiles) {
-                        cerr << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
-                    } else {
+                    // No, we cannot do this test because m_manyFiles
+                    // may be on by default (for any FileFeatureWriter
+                    // that supports OneFilePerTrackTransform but not
+                    // OneFilePerTrack), so we need to be able to
+                    // override it
+//                    if (m_manyFiles) {
+//                        cerr << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
+//                    } else {
                         m_singleFileName = i->second.c_str();
-                    }
+//                    }
                 }
             }
         } else if (i->first == "stdout") {
