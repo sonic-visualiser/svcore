@@ -43,7 +43,7 @@ public:
         virtual bool configure(ModelTransformer::Input &input,
                                Transform &transform,
                                Vamp::PluginBase *plugin,
-                               Model *inputModel,
+                               Model *&inputModel,
                                AudioPlaySource *source,
                                size_t startFrame,
                                size_t duration,
