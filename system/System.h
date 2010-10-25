@@ -59,8 +59,8 @@ void usleep(unsigned long usec);
 int gettimeofday(struct timeval *p, void *tz);
 }
 
-#define ISNAN isnan
-#define ISINF isinf
+#define ISNAN _isnan
+#define ISINF _isinf
 
 #else
 
