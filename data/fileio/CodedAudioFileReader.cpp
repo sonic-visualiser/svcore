@@ -40,7 +40,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_resampler(0),
     m_resampleBuffer(0)
 {
-//    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
+    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -54,7 +54,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
-//    std::cerr << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << std::endl;
+    std::cerr << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << std::endl;
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
@@ -72,7 +72,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-//    std::cerr << "CodedAudioFileReader::startSerialised(" << id.toStdString() << ")" << std::endl;
+    std::cerr << "CodedAudioFileReader::startSerialised(" << id.toStdString() << ")" << std::endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -81,7 +81,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-//    std::cerr << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << std::endl;
+    std::cerr << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << std::endl;
 
     delete m_serialiser;
     m_serialiser = 0;
@@ -92,7 +92,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-//    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
+    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
 
     if (m_fileRate == 0) {
         std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;
