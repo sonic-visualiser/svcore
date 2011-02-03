@@ -75,8 +75,13 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
 //    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
 
-    if (!source.isOK() || !source.isAvailable()) {
-        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source unavailable" << std::endl;
+    if (!source.isOK()) {
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString().toStdString() << std::endl;
+        return 0;
+    }
+
+    if (!source.isAvailable()) {
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source not found" << std::endl;
         return 0;
     }
 
