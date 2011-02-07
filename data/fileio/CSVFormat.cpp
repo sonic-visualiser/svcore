@@ -309,6 +309,9 @@ CSVFormat::getColumnPurpose(int i)
 CSVFormat::ColumnPurpose
 CSVFormat::getColumnPurpose(int i) const
 {
+    if (m_columnPurposes.size() <= i) {
+        return ColumnUnknown;
+    }
     return m_columnPurposes[i];
 }
 
