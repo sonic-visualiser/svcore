@@ -53,6 +53,7 @@ public:
 
 private:
     QString m_separator;
+    bool m_sampleTiming;
     QString m_prevPrintedTrackId;
 };
 
