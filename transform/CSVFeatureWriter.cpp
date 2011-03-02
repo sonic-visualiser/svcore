@@ -31,7 +31,8 @@ CSVFeatureWriter::CSVFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
                       SupportOneFileTotal,
                       "csv"),
-    m_separator(",")
+    m_separator(","),
+    m_sampleTiming(false)
 {
 }
 
@@ -49,6 +50,11 @@ CSVFeatureWriter::getSupportedParameters() const
     p.description = "Column separator for output.  Default is \",\" (comma).";
     p.hasArg = true;
     pl.push_back(p);
+    
+    p.name = "sample-timing";
+    p.description = "Show timings as sample frame counts instead of in seconds.";
+    p.hasArg = false;
+    pl.push_back(p);
 
     return pl;
 }
@@ -64,6 +70,8 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
         cerr << i->first << " -> " << i->second << endl;
         if (i->first == "separator") {
             m_separator = i->second.c_str();
+        } else if (i->first == "sample-timing") {
+            m_sampleTiming = true;
         }
     }
 }
@@ -96,15 +104,29 @@ CSVFeatureWriter::write(QString trackId,
             }
         }
 
-        QString timestamp = features[i].timestamp.toString().c_str();
-        timestamp.replace(QRegExp("^ +"), "");
-        stream << timestamp;
+        if (m_sampleTiming) {
 
-        if (features[i].hasDuration) {
-            QString duration = features[i].duration.toString().c_str();
-            duration.replace(QRegExp("^ +"), "");
-            stream << m_separator << duration;
-        }            
+            stream << Vamp::RealTime::realTime2Frame
+                (features[i].timestamp, transform.getSampleRate());
+
+            if (features[i].hasDuration) {
+                stream << m_separator;
+                stream << Vamp::RealTime::realTime2Frame
+                    (features[i].duration, transform.getSampleRate());
+            }
+
+        } else {
+
+            QString timestamp = features[i].timestamp.toString().c_str();
+            timestamp.replace(QRegExp("^ +"), "");
+            stream << timestamp;
+
+            if (features[i].hasDuration) {
+                QString duration = features[i].duration.toString().c_str();
+                duration.replace(QRegExp("^ +"), "");
+                stream << m_separator << duration;
+            }            
+        }
 
         if (summaryType != "") {
             stream << m_separator << summaryType.c_str();
