@@ -4258,6 +4258,8 @@ SV_MODULE_FAILED=1
 if test -n "$bz2_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $bz2_CFLAGS"
+   LIBS="$LIBS $bz2_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -4405,6 +4407,8 @@ SV_MODULE_FAILED=1
 if test -n "$fftw3_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $fftw3_CFLAGS"
+   LIBS="$LIBS $fftw3_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -4552,6 +4556,8 @@ SV_MODULE_FAILED=1
 if test -n "$fftw3f_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $fftw3f_CFLAGS"
+   LIBS="$LIBS $fftw3f_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -4699,6 +4705,8 @@ SV_MODULE_FAILED=1
 if test -n "$sndfile_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $sndfile_CFLAGS"
+   LIBS="$LIBS $sndfile_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -4846,6 +4854,8 @@ SV_MODULE_FAILED=1
 if test -n "$samplerate_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $samplerate_CFLAGS"
+   LIBS="$LIBS $samplerate_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -4993,6 +5003,8 @@ SV_MODULE_FAILED=1
 if test -n "$vamp_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $vamp_CFLAGS"
+   LIBS="$LIBS $vamp_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5140,6 +5152,8 @@ SV_MODULE_FAILED=1
 if test -n "$vamphostsdk_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $vamphostsdk_CFLAGS"
+   LIBS="$LIBS $vamphostsdk_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5287,6 +5301,8 @@ SV_MODULE_FAILED=1
 if test -n "$rubberband_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $rubberband_CFLAGS"
+   LIBS="$LIBS $rubberband_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5434,6 +5450,8 @@ SV_MODULE_FAILED=1
 if test -n "$raptor_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $raptor_CFLAGS"
+   LIBS="$LIBS $raptor_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5581,6 +5599,8 @@ SV_MODULE_FAILED=1
 if test -n "$rasqal_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $rasqal_CFLAGS"
+   LIBS="$LIBS $rasqal_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5728,6 +5748,8 @@ SV_MODULE_FAILED=1
 if test -n "$redland_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $redland_CFLAGS"
+   LIBS="$LIBS $redland_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -5876,6 +5898,8 @@ SV_MODULE_FAILED=1
 if test -n "$liblo_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $liblo_CFLAGS"
+   LIBS="$LIBS $liblo_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6027,6 +6051,8 @@ SV_MODULE_FAILED=1
 if test -n "$portaudio_2_0_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $portaudio_2_0_CFLAGS"
+   LIBS="$LIBS $portaudio_2_0_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6178,6 +6204,8 @@ SV_MODULE_FAILED=1
 if test -n "$JACK_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $JACK_CFLAGS"
+   LIBS="$LIBS $JACK_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6329,6 +6357,8 @@ SV_MODULE_FAILED=1
 if test -n "$libpulse_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $libpulse_CFLAGS"
+   LIBS="$LIBS $libpulse_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6480,6 +6510,8 @@ SV_MODULE_FAILED=1
 if test -n "$lrdf_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $lrdf_CFLAGS"
+   LIBS="$LIBS $lrdf_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6631,6 +6663,8 @@ SV_MODULE_FAILED=1
 if test -n "$oggz_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $oggz_CFLAGS"
+   LIBS="$LIBS $oggz_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6782,6 +6816,8 @@ SV_MODULE_FAILED=1
 if test -n "$fishsound_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $fishsound_CFLAGS"
+   LIBS="$LIBS $fishsound_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -6933,6 +6969,8 @@ SV_MODULE_FAILED=1
 if test -n "$mad_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $mad_CFLAGS"
+   LIBS="$LIBS $mad_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -7084,6 +7122,8 @@ SV_MODULE_FAILED=1
 if test -n "$id3tag_LIBS" ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
 $as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   CXXFLAGS="$CXXFLAGS $id3tag_CFLAGS"
+   LIBS="$LIBS $id3tag_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then

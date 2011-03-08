@@ -10,6 +10,8 @@ SV_MODULE_HAVE=HAVE_$(echo $1 | tr '[a-z]' '[A-Z]')
 SV_MODULE_FAILED=1
 if test -n "$$1_LIBS" ; then
    AC_MSG_NOTICE([User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE])
+   CXXFLAGS="$CXXFLAGS $$1_CFLAGS"
+   LIBS="$LIBS $$1_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
@@ -37,6 +39,8 @@ SV_MODULE_HAVE=HAVE_$(echo $1 | tr '[a-z]' '[A-Z]')
 SV_MODULE_FAILED=1
 if test -n "$$1_LIBS" ; then
    AC_MSG_NOTICE([User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE])
+   CXXFLAGS="$CXXFLAGS $$1_CFLAGS"
+   LIBS="$LIBS $$1_LIBS"
    SV_MODULE_FAILED=""
 fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
