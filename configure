@@ -4255,10 +4255,15 @@ SV_MODULE_LIB=bz2
 SV_MODULE_FUNC=BZ2_bzReadOpen
 SV_MODULE_HAVE=HAVE_$(echo bz2 | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$bz2_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for bz2" >&5
@@ -4397,10 +4402,15 @@ SV_MODULE_LIB=fftw3
 SV_MODULE_FUNC=fftw_execute
 SV_MODULE_HAVE=HAVE_$(echo fftw3 | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$fftw3_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fftw3" >&5
@@ -4539,10 +4549,15 @@ SV_MODULE_LIB=fftw3f
 SV_MODULE_FUNC=fftwf_execute
 SV_MODULE_HAVE=HAVE_$(echo fftw3f | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$fftw3f_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fftw3f" >&5
@@ -4681,10 +4696,15 @@ SV_MODULE_LIB=sndfile
 SV_MODULE_FUNC=sf_open
 SV_MODULE_HAVE=HAVE_$(echo sndfile | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$sndfile_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sndfile" >&5
@@ -4823,10 +4843,15 @@ SV_MODULE_LIB=samplerate
 SV_MODULE_FUNC=src_new
 SV_MODULE_HAVE=HAVE_$(echo samplerate | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$samplerate_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for samplerate" >&5
@@ -4965,10 +4990,15 @@ SV_MODULE_LIB=
 SV_MODULE_FUNC=
 SV_MODULE_HAVE=HAVE_$(echo vamp | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$vamp_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for vamp" >&5
@@ -5107,10 +5137,15 @@ SV_MODULE_LIB=
 SV_MODULE_FUNC=
 SV_MODULE_HAVE=HAVE_$(echo vamphostsdk | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$vamphostsdk_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for vamphostsdk" >&5
@@ -5249,10 +5284,15 @@ SV_MODULE_LIB=rubberband
 SV_MODULE_FUNC=rubberband_new
 SV_MODULE_HAVE=HAVE_$(echo rubberband | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$rubberband_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rubberband" >&5
@@ -5391,10 +5431,15 @@ SV_MODULE_LIB=raptor
 SV_MODULE_FUNC=raptor_start_parse
 SV_MODULE_HAVE=HAVE_$(echo raptor | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$raptor_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for raptor" >&5
@@ -5533,10 +5578,15 @@ SV_MODULE_LIB=rasqal
 SV_MODULE_FUNC=rasqal_new_world
 SV_MODULE_HAVE=HAVE_$(echo rasqal | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$rasqal_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rasqal" >&5
@@ -5675,10 +5725,15 @@ SV_MODULE_LIB=rdf
 SV_MODULE_FUNC=librdf_new_world
 SV_MODULE_HAVE=HAVE_$(echo redland | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$redland_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for redland" >&5
@@ -5818,10 +5873,15 @@ SV_MODULE_LIB=lo
 SV_MODULE_FUNC=lo_address_new
 SV_MODULE_HAVE=HAVE_$(echo liblo | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$liblo_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for liblo" >&5
@@ -5964,10 +6024,15 @@ SV_MODULE_LIB=portaudio
 SV_MODULE_FUNC=Pa_IsFormatSupported
 SV_MODULE_HAVE=HAVE_$(echo portaudio_2_0 | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$portaudio_2_0_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for portaudio_2_0" >&5
@@ -6110,10 +6175,15 @@ SV_MODULE_LIB=jack
 SV_MODULE_FUNC=jack_client_open
 SV_MODULE_HAVE=HAVE_$(echo JACK | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$JACK_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JACK" >&5
@@ -6256,10 +6326,15 @@ SV_MODULE_LIB=pulse
 SV_MODULE_FUNC=pa_stream_new
 SV_MODULE_HAVE=HAVE_$(echo libpulse | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$libpulse_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libpulse" >&5
@@ -6402,10 +6477,15 @@ SV_MODULE_LIB=lrdf
 SV_MODULE_FUNC=lrdf_init
 SV_MODULE_HAVE=HAVE_$(echo lrdf | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$lrdf_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lrdf" >&5
@@ -6548,10 +6628,15 @@ SV_MODULE_LIB=oggz
 SV_MODULE_FUNC=oggz_run
 SV_MODULE_HAVE=HAVE_$(echo oggz | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$oggz_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for oggz" >&5
@@ -6694,10 +6779,15 @@ SV_MODULE_LIB=fishsound
 SV_MODULE_FUNC=fish_sound_new
 SV_MODULE_HAVE=HAVE_$(echo fishsound | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$fishsound_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fishsound" >&5
@@ -6840,10 +6930,15 @@ SV_MODULE_LIB=mad
 SV_MODULE_FUNC=mad_decoder_init
 SV_MODULE_HAVE=HAVE_$(echo mad | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$mad_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mad" >&5
@@ -6986,10 +7081,15 @@ SV_MODULE_LIB=id3tag
 SV_MODULE_FUNC=id3_tag_new
 SV_MODULE_HAVE=HAVE_$(echo id3tag | tr 'a-z' 'A-Z')
 SV_MODULE_FAILED=1
+if test -n "$id3tag_LIBS" ; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&5
+$as_echo "$as_me: User set ${SV_MODULE_MODULE}_LIBS explicitly, skipping test for $SV_MODULE_MODULE" >&6;}
+   SV_MODULE_FAILED=""
+fi
 if test -z "$SV_MODULE_VERSION_TEST" ; then
    SV_MODULE_VERSION_TEST=$SV_MODULE_MODULE
 fi
-if test -n "$PKG_CONFIG"; then
+if test -n "$SV_MODULE_FAILED" && test -n "$PKG_CONFIG"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for id3tag" >&5
