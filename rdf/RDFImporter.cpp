@@ -214,7 +214,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         results = query.execute();
     }
 
-    for (int i = 0; i < results.size(); ++i) {
+    for (int i = 0; i < (int)results.size(); ++i) {
 
         QString signal = results[i]["signal"].value;
         QString source = results[i]["source"].value;
@@ -320,7 +320,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
         return;
     }        
 
-    for (int i = 0; i < results.size(); ++i) {
+    for (int i = 0; i < (int)results.size(); ++i) {
 
         QString feature = results[i]["feature"].value;
         QString type = results[i]["feature_signal_type"].value;
@@ -699,7 +699,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     std::map<QString, std::map<QString, std::map<int, std::map<bool, Model *> > > >
         modelMap;
 
-    for (int i = 0; i < results.size(); ++i) {
+    for (int i = 0; i < (int)results.size(); ++i) {
 
         if (i % 4 == 0) {
             if (reporter) reporter->setProgress(i/4);
@@ -718,6 +718,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
         QString label = "";
         bool text = (type.contains("Text") || type.contains("text")); // Ha, ha
+        bool note = (type.contains("Note") || type.contains("note")); // Guffaw
 
         if (text) {
             label = SimpleSPARQLQuery::singleResultQuery
@@ -817,23 +818,16 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
             } else { // haveDuration
 
-                if (dimensions == 1 || dimensions == 2) {
+                if (note || (dimensions > 2)) {
+
+                    model = new NoteModel(m_sampleRate, 1, false);
+
+                } else {
 
                     // If our units are frequency or midi pitch, we
                     // should be using a note model... hm
                     
                     model = new RegionModel(m_sampleRate, 1, false);
-
-                } else {
-
-                    // We don't have a three-dimensional sparse model,
-                    // so use a note model.  We do have some logic (in
-                    // extractStructure below) for guessing whether
-                    // this should after all have been a dense model,
-                    // but it's hard to apply it because we don't have
-                    // all the necessary timing data yet... hmm
-
-                    model = new NoteModel(m_sampleRate, 1, false);
                 }
             }
 
