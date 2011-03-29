@@ -50,6 +50,7 @@ HEADERS += base/AudioLevel.h \
            base/StorageAdviser.h \
            base/StringBits.h \
            base/TempDirectory.h \
+           base/TempWriteFile.h \
            base/TextMatcher.h \
            base/Thread.h \
            base/UnitDatabase.h \
@@ -79,6 +80,7 @@ SOURCES += base/AudioLevel.cpp \
            base/StorageAdviser.cpp \
            base/StringBits.cpp \
            base/TempDirectory.cpp \
+           base/TempWriteFile.cpp \
            base/TextMatcher.cpp \
            base/Thread.cpp \
            base/UnitDatabase.cpp \

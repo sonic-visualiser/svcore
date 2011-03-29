@@ -17,6 +17,8 @@
 
 #include "model/DenseTimeValueModel.h"
 #include "base/Selection.h"
+#include "base/TempWriteFile.h"
+#include "base/Exceptions.h"
 
 #include <QFileInfo>
 
@@ -28,19 +30,28 @@ WavFileWriter::WavFileWriter(QString path,
     m_path(path),
     m_sampleRate(sampleRate),
     m_channels(channels),
+    m_temp(0),
     m_file(0)
 {
     SF_INFO fileInfo;
     fileInfo.samplerate = m_sampleRate;
     fileInfo.channels = m_channels;
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-    
-    m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
-    if (!m_file) {
-	std::cerr << "WavFileWriter: Failed to open file ("
-		  << sf_strerror(m_file) << ")" << std::endl;
-	m_error = QString("Failed to open audio file '%1' for writing")
-	    .arg(m_path);
+
+    try {
+        m_temp = new TempWriteFile(m_path);
+        m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
+                         SFM_WRITE, &fileInfo);
+        if (!m_file) {
+            std::cerr << "WavFileWriter: Failed to open file ("
+                      << sf_strerror(m_file) << ")" << std::endl;
+            m_error = QString("Failed to open audio file '%1' for writing")
+                .arg(m_temp->getTemporaryFilename());
+        }
+    } catch (FileOperationFailed &f) {
+        m_error = f.what();
+        m_temp = 0;
+        m_file = 0;
     }
 }
 
@@ -65,18 +76,23 @@ bool
 WavFileWriter::writeModel(DenseTimeValueModel *source,
                           MultiSelection *selection)
 {
+    if (!m_temp) {
+        m_error = QString("Failed to write model to audio file: No file open");
+        return false;
+    }
+
     if (source->getChannelCount() != m_channels) {
         std::cerr << "WavFileWriter::writeModel: Wrong number of channels ("
                   << source->getChannelCount()  << " != " << m_channels << ")"
                   << std::endl;
         m_error = QString("Failed to write model to audio file '%1'")
-            .arg(m_path);
+            .arg(m_temp->getTemporaryFilename());
         return false;
     }
 
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
-            .arg(m_path);
+            .arg(m_temp->getTemporaryFilename());
 	return false;
     }
 
@@ -129,9 +145,14 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 bool
 WavFileWriter::writeSamples(float **samples, size_t count)
 {
+    if (!m_temp) {
+        m_error = QString("Failed to write model to audio file: No file open");
+        return false;
+    }
+
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
-            .arg(m_path);
+            .arg(m_temp->getTemporaryFilename());
 	return false;
     }
 
@@ -161,6 +182,9 @@ WavFileWriter::close()
         sf_close(m_file);
         m_file = 0;
     }
+    m_temp->moveToTarget();
+    delete m_temp;
+    m_temp = 0;
     return true;
 }
 

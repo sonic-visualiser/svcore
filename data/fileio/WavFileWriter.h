@@ -22,6 +22,7 @@
 
 class DenseTimeValueModel;
 class MultiSelection;
+class TempWriteFile;
 
 class WavFileWriter
 {
@@ -46,6 +47,7 @@ protected:
     QString m_path;
     size_t m_sampleRate;
     size_t m_channels;
+    TempWriteFile *m_temp;
     SNDFILE *m_file;
     QString m_error;
 };
