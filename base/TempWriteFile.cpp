@@ -32,7 +32,7 @@ TempWriteFile::TempWriteFile(QString target) :
     }
     
     m_temp = temp.fileName();
-    temp.close();
+    temp.close(); // does not remove the file
 }
 
 TempWriteFile::~TempWriteFile()
