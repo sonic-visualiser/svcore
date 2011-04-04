@@ -179,6 +179,13 @@ CSVFileReader::load() const
 
     std::map<QString, int> labelCountMap;
     
+    int valueColumns = 0;
+    for (int i = 0; i < m_format.getColumnCount(); ++i) {
+        if (m_format.getColumnPurpose(i) == CSVFormat::ColumnValue) {
+            ++valueColumns;
+        }
+    }
+
     while (!in.atEnd()) {
 
         // QTextStream's readLine doesn't cope with old-style Mac
@@ -225,7 +232,7 @@ CSVFileReader::load() const
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate,
                          windowSize,
-                         list.size(),
+                         valueColumns,
                          EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
                     break;
@@ -301,16 +308,18 @@ CSVFileReader::load() const
 
                 for (int i = 0; i < list.size(); ++i) {
 
+                    if (m_format.getColumnPurpose(i) != CSVFormat::ColumnValue) {
+                        continue;
+                    }
+
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
 
-                    if (m_format.getColumnPurpose(i) == CSVFormat::ColumnValue) {
-                        values.push_back(value);
-                    }
+                    values.push_back(value);
 	    
                     if (firstEverValue || value < min) min = value;
                     if (firstEverValue || value > max) max = value;
-
+                    
                     if (firstEverValue) {
                         startFrame = frameNo;
                         model3->setStartFrame(startFrame);
