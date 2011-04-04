@@ -174,11 +174,11 @@ CSVFormat::guessQualities(QString line, int lineno)
         }
     }
 
-    std::cerr << "Estimated column qualities: ";
-    for (int i = 0; i < m_columnCount; ++i) {
-        std::cerr << int(m_columnQualities[i]) << " ";
-    }
-    std::cerr << std::endl;
+//    std::cerr << "Estimated column qualities: ";
+//    for (int i = 0; i < m_columnCount; ++i) {
+//        std::cerr << int(m_columnQualities[i]) << " ";
+//    }
+//    std::cerr << std::endl;
 }
 
 void
@@ -286,15 +286,15 @@ CSVFormat::guessPurposes()
         }
     }
 
-    std::cerr << "Estimated column purposes: ";
-    for (int i = 0; i < m_columnCount; ++i) {
-        std::cerr << int(m_columnPurposes[i]) << " ";
-    }
-    std::cerr << std::endl;
+//    std::cerr << "Estimated column purposes: ";
+//    for (int i = 0; i < m_columnCount; ++i) {
+//        std::cerr << int(m_columnPurposes[i]) << " ";
+//    }
+//    std::cerr << std::endl;
 
-    std::cerr << "Estimated model type: " << m_modelType << std::endl;
-    std::cerr << "Estimated timing type: " << m_timingType << std::endl;
-    std::cerr << "Estimated units: " << m_timeUnits << std::endl;
+//    std::cerr << "Estimated model type: " << m_modelType << std::endl;
+//    std::cerr << "Estimated timing type: " << m_timingType << std::endl;
+//    std::cerr << "Estimated units: " << m_timeUnits << std::endl;
 }
 
 CSVFormat::ColumnPurpose
