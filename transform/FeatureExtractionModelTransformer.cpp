@@ -487,6 +487,8 @@ FeatureExtractionModelTransformer::run()
         imaginaries = new float[blockSize/2 + 1];
     }
 
+    QString error = "";
+
     while (!m_abandoned) {
 
         if (frequencyDomain) {
@@ -514,6 +516,12 @@ FeatureExtractionModelTransformer::run()
                 for (size_t i = 0; i <= blockSize/2; ++i) {
                     buffers[ch][i*2] = reals[i];
                     buffers[ch][i*2+1] = imaginaries[i];
+                }
+                error = fftModels[ch]->getError();
+                if (error != "") {
+                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << std::endl;
+                    m_abandoned = true;
+                    m_message = error;
                 }
             }
         } else {

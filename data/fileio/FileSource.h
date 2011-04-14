@@ -143,6 +143,12 @@ public:
     QString getLocalFilename() const;
 
     /**
+     * Return the base name, i.e. the final path element (including
+     * extension, if any) of the location.
+     */
+    QString getBasename() const;
+
+    /**
      * Return the MIME content type of this file, if known.
      */
     QString getContentType() const;

@@ -590,6 +590,12 @@ FileSource::getLocalFilename() const
 }
 
 QString
+FileSource::getBasename() const
+{
+    return QFileInfo(m_localFilename).fileName();
+}
+
+QString
 FileSource::getContentType() const
 {
     return m_contentType;
