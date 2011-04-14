@@ -106,6 +106,7 @@ public:
         return getMagnitudeAt(x, y) > threshold;
     }
 
+    QString getError() const;
     size_t getFillCompletion() const;
     size_t getFillExtent() const;
 
@@ -246,6 +247,7 @@ private:
 
         size_t getExtent() const { return m_extent; }
         size_t getCompletion() const { return m_completion ? m_completion : 1; }
+        QString getError() const { return m_error; }
         virtual void run();
 
     protected:
@@ -253,11 +255,13 @@ private:
         size_t m_extent;
         size_t m_completion;
         size_t m_fillFrom;
+        QString m_error;
     };
 
     bool m_exiting;
     bool m_suspended;
     FillThread *m_fillThread;
+    QString m_error;
 
     void deleteProcessingData();
     void fillColumn(size_t x);
