@@ -43,6 +43,7 @@ HEADERS += base/AudioLevel.h \
            base/RecentFiles.h \
            base/Resampler.h \
            base/ResizeableBitset.h \
+           base/ResourceFinder.h \
            base/RingBuffer.h \
            base/Scavenger.h \
            base/Selection.h \
@@ -75,6 +76,7 @@ SOURCES += base/AudioLevel.cpp \
            base/RealTime.cpp \
            base/RecentFiles.cpp \
            base/Resampler.cpp \
+           base/ResourceFinder.cpp \
            base/Selection.cpp \
            base/Serialiser.cpp \
            base/StorageAdviser.cpp \

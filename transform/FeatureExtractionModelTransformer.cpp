@@ -519,7 +519,7 @@ FeatureExtractionModelTransformer::run()
                 }
                 error = fftModels[ch]->getError();
                 if (error != "") {
-                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << std::endl;
+                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error.toStdString() << std::endl;
                     m_abandoned = true;
                     m_message = error;
                 }
