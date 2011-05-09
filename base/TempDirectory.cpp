@@ -14,6 +14,7 @@
 */
 
 #include "TempDirectory.h"
+#include "ResourceFinder.h"
 #include "system/System.h"
 #include "Exceptions.h"
 
@@ -58,34 +59,26 @@ QString
 TempDirectory::getContainingPath()
 {
     QMutexLocker locker(&m_mutex);
-    
+
     QSettings settings;
     settings.beginGroup("TempDirectory");
     QString svDirParent = settings.value("create-in", "$HOME").toString();
     settings.endGroup();
 
-#ifdef Q_OS_WIN32
-    char *homedrive = getenv("HOMEDRIVE");
-    char *homepath = getenv("HOMEPATH");
-    if (homedrive && homepath) {
-        svDirParent.replace("$HOME", QString("%1%2").arg(homedrive).arg(homepath));
-    } else {
-        svDirParent.replace("$HOME", QDir::home().absolutePath());
+    QString svDir = ResourceFinder().getUserResourcePrefix();
+    if (svDirParent != "$HOME") {
+        //!!! iffy
+        svDir.replace(QDir::home().absolutePath(), svDirParent);
     }
-#else
-    svDirParent.replace("$HOME", QDir::home().absolutePath());
-#endif
 
-    QString svDirBase = ".sv1";
-    QString svDir = QDir(svDirParent).filePath(svDirBase);
     if (!QFileInfo(svDir).exists()) {
-        if (!QDir(svDirParent).mkdir(svDirBase)) {
+        if (!QDir(svDirParent).mkdir(svDir)) {
             throw DirectoryCreationFailed(QString("%1 directory in %2")
-                                          .arg(svDirBase).arg(svDirParent));
+                                          .arg(svDir).arg(svDirParent));
         }
     } else if (!QFileInfo(svDir).isDir()) {
-        throw DirectoryCreationFailed(QString("%1/%2 is not a directory")
-                                      .arg(svDirParent).arg(svDirBase));
+        throw DirectoryCreationFailed(QString("%1 is not a directory")
+                                      .arg(svDir));
     }
 
     cleanupAbandonedDirectories(svDir);
