@@ -47,7 +47,7 @@
      - on OS/X, in $HOME/Library/Application Support/<appname>
 
      - on Windows, in %ProgramFiles%/<company>/<appname>
-     - on Windows, in (where?)
+     - on Windows, in (where?) something from http://msdn.microsoft.com/en-us/library/dd378457%28v=vs.85%29.aspx ?
 
    These locations are searched in reverse order (user-installed
    copies take priority over system-installed copies take priority
@@ -92,12 +92,20 @@ ResourceFinder::getSystemResourcePrefixList()
 QString
 ResourceFinder::getUserResourcePrefix()
 {
+#ifdef Q_OS_WIN32
+    char *homedrive = getenv("HOMEDRIVE");
+    char *homepath = getenv("HOMEPATH");
+    QString home;
+    if (homedrive && homepath) {
+        home = QString("%1%2").arg(homedrive).arg(homepath);
+    } else {
+        home = QDir::home().absolutePath();
+    }
+    if (home == "") return "";
+    return QString("%1/.%2").arg(qApp->applicationName()); //!!! wrong
+#else
     char *home = getenv("HOME");
     if (!home || !home[0]) return "";
-
-#ifdef Q_OS_WIN32
-    return QString(); //!!!???
-#else
 #ifdef Q_OS_MAC
     return QString("%1/Library/Application Support/%2/%3")
         .arg(home)

@@ -106,9 +106,26 @@ public:
      */
     bool unbundleResource(QString resourceCat, QString fileName);
 
-protected:
+    /**
+     * Return the root path for user-specific resource installation
+     * for this application (i.e. resources beneath the user's home
+     * directory).
+     */
     QString getUserResourcePrefix();
+
+    /**
+     * Return the root paths for systemwide resource installations for
+     * this application.
+     */
     QStringList getSystemResourcePrefixList();
+
+    /**
+     * Return all root paths for resource installations for this
+     * application, in the order in which they will be searched.  This
+     * list consists of the user-specific path
+     * (getUserResourcePrefix()) followed by the systemwide paths
+     * (getSystemResourcePrefixList()).
+     */
     QStringList getResourcePrefixList();
 };
 
