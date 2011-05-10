@@ -81,6 +81,8 @@ public:
     /**
      * Return the true file path for the location in which the named
      * resource file in the given resource category should be saved.
+     * ResourceFinder will make a best effort to ensure this directory
+     * actually exists, before returning.
      */
     QString getResourceSavePath(QString resourceCat, QString fileName);
 
