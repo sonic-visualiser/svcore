@@ -39,7 +39,8 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
-	std::cerr << "WavFileReader::initialize: Failed to open file ("
+	std::cerr << "WavFileReader::initialize: Failed to open file at \""
+                  << m_path.toStdString() << "\" ("
 		  << sf_strerror(m_file) << ")" << std::endl;
 
 	if (m_file) {
@@ -79,7 +80,7 @@ WavFileReader::updateFrameCount()
         sf_close(m_file);
         m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
         if (!m_file || m_fileInfo.channels <= 0) {
-            std::cerr << "WavFileReader::updateFrameCount: Failed to open file ("
+            std::cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path.toStdString() << "\" ("
                       << sf_strerror(m_file) << ")" << std::endl;
         }
     }
