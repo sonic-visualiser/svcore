@@ -179,7 +179,7 @@ RealTimeEffectModelTransformer::run()
 
 	long completion =
 	    (((blockFrame - contextStart) / blockSize) * 99) /
-	    ((contextDuration) / blockSize);
+	    (1 + ((contextDuration) / blockSize));
 
 	long got = 0;
 
