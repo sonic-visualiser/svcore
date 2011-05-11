@@ -26,7 +26,8 @@
 
 WavFileWriter::WavFileWriter(QString path,
 			     size_t sampleRate,
-                             size_t channels) :
+                             size_t channels,
+                             FileWriteMode mode) :
     m_path(path),
     m_sampleRate(sampleRate),
     m_channels(channels),
@@ -39,15 +40,25 @@ WavFileWriter::WavFileWriter(QString path,
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
     try {
-        m_temp = new TempWriteFile(m_path);
-        m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
-                         SFM_WRITE, &fileInfo);
-        if (!m_file) {
-            std::cerr << "WavFileWriter: Failed to open file ("
-                      << sf_strerror(m_file) << ")" << std::endl;
-            m_error = QString("Failed to open audio file '%1' for writing")
-                .arg(m_temp->getTemporaryFilename());
-        }
+        if (mode == WriteToTemporary) {
+            m_temp = new TempWriteFile(m_path);
+            m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
+                             SFM_WRITE, &fileInfo);
+            if (!m_file) {
+                std::cerr << "WavFileWriter: Failed to open file ("
+                          << sf_strerror(m_file) << ")" << std::endl;
+                m_error = QString("Failed to open audio file '%1' for writing")
+                    .arg(m_temp->getTemporaryFilename());
+            }
+        } else {
+            m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
+            if (!m_file) {
+                std::cerr << "WavFileWriter: Failed to open file ("
+                          << sf_strerror(m_file) << ")" << std::endl;
+                m_error = QString("Failed to open audio file '%1' for writing")
+                    .arg(m_path);
+            }
+        }            
     } catch (FileOperationFailed &f) {
         m_error = f.what();
         m_temp = 0;
@@ -72,27 +83,32 @@ WavFileWriter::getError() const
     return m_error;
 }
 
+QString
+WavFileWriter::getWriteFilename() const
+{
+    if (m_temp) {
+        return m_temp->getTemporaryFilename();
+    } else {
+        return m_path;
+    }
+}
+
 bool
 WavFileWriter::writeModel(DenseTimeValueModel *source,
                           MultiSelection *selection)
 {
-    if (!m_temp) {
-        m_error = QString("Failed to write model to audio file: No file open");
-        return false;
-    }
-
     if (source->getChannelCount() != m_channels) {
         std::cerr << "WavFileWriter::writeModel: Wrong number of channels ("
                   << source->getChannelCount()  << " != " << m_channels << ")"
                   << std::endl;
         m_error = QString("Failed to write model to audio file '%1'")
-            .arg(m_temp->getTemporaryFilename());
+            .arg(getWriteFilename());
         return false;
     }
 
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
-            .arg(m_temp->getTemporaryFilename());
+            .arg(getWriteFilename());
 	return false;
     }
 
@@ -145,14 +161,9 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 bool
 WavFileWriter::writeSamples(float **samples, size_t count)
 {
-    if (!m_temp) {
-        m_error = QString("Failed to write model to audio file: No file open");
-        return false;
-    }
-
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
-            .arg(m_temp->getTemporaryFilename());
+            .arg(getWriteFilename());
 	return false;
     }
 
@@ -182,9 +193,11 @@ WavFileWriter::close()
         sf_close(m_file);
         m_file = 0;
     }
-    m_temp->moveToTarget();
-    delete m_temp;
-    m_temp = 0;
+    if (m_temp) {
+        m_temp->moveToTarget();
+        delete m_temp;
+        m_temp = 0;
+    }
     return true;
 }
 

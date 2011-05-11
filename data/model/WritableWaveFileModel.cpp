@@ -52,7 +52,10 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
         }
     }
 
-    m_writer = new WavFileWriter(path, sampleRate, channels);
+    // Write directly to the target file, so that we can do
+    // incremental writes and concurrent reads
+    m_writer = new WavFileWriter(path, sampleRate, channels,
+                                 WavFileWriter::WriteToTarget);
     if (!m_writer->isOK()) {
         std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError().toStdString() << std::endl;
         delete m_writer; 
