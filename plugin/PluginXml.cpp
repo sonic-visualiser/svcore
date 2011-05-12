@@ -119,7 +119,7 @@ PluginXml::toXml(QTextStream &stream,
     if (ATTRIBUTE != "" && ATTRIBUTE != ACCESSOR().c_str()) { \
         std::cerr << "WARNING: PluginXml::setParameters: Plugin " \
                   << #ATTRIBUTE << " does not match (attributes have \"" \
-                  << ATTRIBUTE.toStdString() << "\", my " \
+                  << ATTRIBUTE << "\", my " \
                   << #ATTRIBUTE << " is \"" << ACCESSOR() << "\")" << std::endl; \
     }
 
@@ -174,7 +174,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  (QString(i->identifier.c_str())));
 
         if (attrs.value(pname) == "") {
-//            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
+//            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name << "\")" << std::endl;
             continue;
         }
 
@@ -185,7 +185,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
 //                      << i->identifier << "\" to value " << value << std::endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
-            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname).toStdString() << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname.toStdString() << "\")" << std::endl;
+            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << std::endl;
         }
     }
 }
@@ -203,9 +203,9 @@ PluginXml::setParametersFromXml(QString xml)
 //              << xml.toLocal8Bit().data() << "\"" << std::endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error.toStdString() << " at line " << errorLine << ", column " << errorColumn << std::endl;
+        std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << std::endl;
         std::cerr << "Input follows:" << std::endl;
-        std::cerr << xml.toStdString() << std::endl;
+        std::cerr << xml << std::endl;
         std::cerr << "Input ends." << std::endl;
         return;
     }
@@ -218,7 +218,7 @@ PluginXml::setParametersFromXml(QString xml)
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
 //        std::cerr << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name().toStdString()
-//                  << "\" with value \"" << attr.value().toStdString() << "\"" << std::endl;
+//                  << "\" with value \"" << attr.value() << "\"" << std::endl;
         attrs.append(attr.name(), "", "", attr.value());
     }
 

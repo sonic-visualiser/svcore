@@ -88,12 +88,12 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     }
  
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << fileOrUrl.toStdString() << "): url <" << m_url.toString().toStdString() << ">" << std::endl;
+    std::cerr << "FileSource::FileSource(" << fileOrUrl << "): url <" << m_url.toString() << ">" << std::endl;
     incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -103,7 +103,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     if (!isRemote() &&
         !isAvailable()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString().toStdString() << "; trying again assuming filename was encoded" << std::endl;
+        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString() << "; trying again assuming filename was encoded" << std::endl;
 #endif
         m_url = QUrl::fromEncoded(fileOrUrl.toAscii());
         init();
@@ -166,12 +166,12 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << url.toString().toStdString() << ") [as url]" << std::endl;
+    std::cerr << "FileSource::FileSource(" << url.toString() << ") [as url]" << std::endl;
     incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -198,12 +198,12 @@ FileSource::FileSource(const FileSource &rf) :
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << m_url.toString().toStdString() << ") [copy ctor]" << std::endl;
+    std::cerr << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]" << std::endl;
     incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
-        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString().toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -232,7 +232,7 @@ FileSource::FileSource(const FileSource &rf) :
     m_done = true;
 
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::FileSource(" << m_url.toString().toStdString() << ") [copy ctor]: note: local filename is \"" << m_localFilename.toStdString() << "\"" << std::endl;
+    std::cerr << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]: note: local filename is \"" << m_localFilename << "\"" << std::endl;
 #endif
 
 #ifdef DEBUG_FILE_SOURCE
@@ -243,7 +243,7 @@ FileSource::FileSource(const FileSource &rf) :
 FileSource::~FileSource()
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource(" << m_url.toString().toStdString() << ")::~FileSource" << std::endl;
+    std::cerr << "FileSource(" << m_url.toString() << ")::~FileSource" << std::endl;
     decCount(m_url.toString());
 #endif
 
@@ -270,7 +270,7 @@ FileSource::init()
 
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::init: URL translates to local filename \""
-                  << m_localFilename.toStdString() << "\" (with literal=" << literal << ")" << std::endl;
+                  << m_localFilename << "\" (with literal=" << literal << ")" << std::endl;
 #endif
         m_ok = true;
         m_lastStatus = 200;
@@ -318,7 +318,7 @@ FileSource::init()
 
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::init: Don't have local copy of \""
-              << m_url.toString().toStdString() << "\", retrieving" << std::endl;
+              << m_url.toString() << "\", retrieving" << std::endl;
 #endif
 
     if (scheme == "http") {
@@ -427,7 +427,7 @@ FileSource::initHttp()
 
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource: path is \""
-              << path.toStdString() << "\"" << std::endl;
+              << path << "\"" << std::endl;
 #endif
         
     if (m_preferredContentType == "") {
@@ -435,7 +435,7 @@ FileSource::initHttp()
     } else {
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource: indicating preferred content type of \""
-                  << m_preferredContentType.toStdString() << "\"" << std::endl;
+                  << m_preferredContentType << "\"" << std::endl;
 #endif
         QHttpRequestHeader header("GET", path);
         header.setValue("Host", m_url.host());
@@ -634,7 +634,7 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
         QString location = resp.value("Location");
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::responseHeaderReceived: redirect to \""
-                  << location.toStdString() << "\" received" << std::endl;
+                  << location << "\" received" << std::endl;
 #endif
         if (location != "") {
             QUrl newUrl(location);
@@ -662,7 +662,7 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
             .arg(resp.statusCode()).arg(resp.reasonPhrase());
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::responseHeaderReceived: "
-                  << m_errorString.toStdString() << std::endl;
+                  << m_errorString << std::endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
@@ -776,7 +776,7 @@ void
 FileSource::deleteCacheFile()
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::deleteCacheFile(\"" << m_localFilename.toStdString() << "\")" << std::endl;
+    std::cerr << "FileSource::deleteCacheFile(\"" << m_localFilename << "\")" << std::endl;
 #endif
 
     cleanup();
@@ -813,11 +813,11 @@ FileSource::deleteCacheFile()
 
     if (!QFile(m_localFilename).remove()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename << "\"" << std::endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename << "\"" << std::endl;
 #endif
         m_localFilename = "";
     }
@@ -881,7 +881,7 @@ FileSource::createCacheFile()
     QString filepath(dir.filePath(filename));
 
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::createCacheFile: URL is \"" << m_url.toString().toStdString() << "\", dir is \"" << dir.path().toStdString() << "\", base \"" << base.toStdString() << "\", extension \"" << extension.toStdString() << "\", filebase \"" << filename.toStdString() << "\", filename \"" << filepath.toStdString() << "\"" << std::endl;
+    std::cerr << "FileSource::createCacheFile: URL is \"" << m_url.toString() << "\", dir is \"" << dir.path() << "\", base \"" << base << "\", extension \"" << extension << "\", filebase \"" << filename << "\", filename \"" << filepath << "\"" << std::endl;
 #endif
 
     QMutexLocker fcLocker(&m_fileCreationMutex);
@@ -893,8 +893,8 @@ FileSource::createCacheFile()
 
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::createCacheFile: Failed to create local file \""
-                  << filepath.toStdString() << "\" for URL \""
-                  << m_url.toString().toStdString() << "\" (or file already exists): appending suffix instead" << std::endl;
+                  << filepath << "\" for URL \""
+                  << m_url.toString() << "\" (or file already exists): appending suffix instead" << std::endl;
 #endif
 
         if (extension == "") {
@@ -909,8 +909,8 @@ FileSource::createCacheFile()
 
 #ifdef DEBUG_FILE_SOURCE
             std::cerr << "FileSource::createCacheFile: ERROR: Failed to create local file \""
-                      << filepath.toStdString() << "\" for URL \""
-                      << m_url.toString().toStdString() << "\" (or file already exists)" << std::endl;
+                      << filepath << "\" for URL \""
+                      << m_url.toString() << "\" (or file already exists)" << std::endl;
 #endif
 
             return "";
@@ -919,8 +919,8 @@ FileSource::createCacheFile()
 
 #ifdef DEBUG_FILE_SOURCE
     std::cerr << "FileSource::createCacheFile: url "
-              << m_url.toString().toStdString() << " -> local filename "
-              << filepath.toStdString() << std::endl;
+              << m_url.toString() << " -> local filename "
+              << filepath << std::endl;
 #endif
     
     m_localFilename = filepath;

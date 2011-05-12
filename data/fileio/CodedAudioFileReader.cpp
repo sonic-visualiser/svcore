@@ -61,7 +61,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileName != "") {
         if (!QFile(m_cacheFileName).remove()) {
-            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName.toStdString() << "\"" << std::endl;
+            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << std::endl;
         }
     }
 
@@ -72,7 +72,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-//    std::cerr << "CodedAudioFileReader::startSerialised(" << id.toStdString() << ")" << std::endl;
+//    std::cerr << "CodedAudioFileReader::startSerialised(" << id << ")" << std::endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -144,7 +144,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
                 if (!m_cacheFileReader->isOK()) {
-                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
+                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << std::endl;
                     delete m_cacheFileReader;
                     m_cacheFileReader = 0;
                     m_cacheMode = CacheInMemory;
@@ -152,7 +152,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 }
 
             } else {
-                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName.toStdString() << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
+                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
                 m_cacheMode = CacheInMemory;
             }
 

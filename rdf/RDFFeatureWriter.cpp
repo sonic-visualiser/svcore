@@ -112,7 +112,7 @@ void
 RDFFeatureWriter::setTrackMetadata(QString trackId,
                                    TrackMetadata metadata)
 {
-//    cerr << "setTrackMetadata: title = " << metadata.title.toStdString() << ", maker = " << metadata.maker.toStdString() << endl;
+//    cerr << "setTrackMetadata: title = " << metadata.title << ", maker = " << metadata.maker << endl;
     m_metadata[trackId] = metadata;
 }
 
@@ -142,10 +142,10 @@ RDFFeatureWriter::write(QString trackId,
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
             cerr << "NOTE: Have RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+                 << pluginId << "\"" << endl;
         } else {
             cerr << "NOTE: No RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+                 << pluginId << "\"" << endl;
             if (!m_network) {
                 cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
                 cerr << "      from the network where possible." << endl;
@@ -262,7 +262,7 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
     // dirty grubby low-rent way of doing that.  This function is
     // called by FileFeatureWriter::getOutputFile when in append mode.
 
-//    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
+//    std::cerr << "reviewFileForAppending(" << filename << ")" << std::endl;
 
     QFile file(filename);
 
@@ -348,7 +348,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                       (m_metadata.find(trackId) != m_metadata.end()));
 
 //    cerr << "wantTrack = " << wantTrack << " (userSpecifiedTrack = "
-//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri.toStdString() << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
+//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
 
     if (wantTrack) {
         // We only write a Track at all if we have some title/artist

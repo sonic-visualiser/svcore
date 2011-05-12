@@ -154,7 +154,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     if (m_sampleRate == 0) {
         m_errorString = QString("Invalid audio data model (is audio file format supported?)");
-        std::cerr << m_errorString.toStdString() << std::endl;
+        std::cerr << m_errorString << std::endl;
         return models;
     }
 
@@ -265,7 +265,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         fs->waitForData();
         WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
         if (newModel->isOK()) {
-            std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+            std::cerr << "Successfully created wave file model from source at \"" << source << "\"" << std::endl;
             models.push_back(newModel);
             m_audioModelMap[signal] = newModel;
             if (m_sampleRate == 0) {
@@ -428,7 +428,7 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
 
     if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value.toStdString() << "\"" << std::endl;
+        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value << "\"" << std::endl;
         m->setObjectName(v.value);
         return;
     }
@@ -439,12 +439,12 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
     
     if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value.toStdString() << "\"" << std::endl;
+        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value << "\"" << std::endl;
         m->setObjectName(v.value);
         return;
     }
 
-    std::cerr << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri.toStdString() << ">" << std::endl;
+    std::cerr << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << std::endl;
 }
 
 void
@@ -473,7 +473,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
         SimpleSPARQLQuery::singleResultQuery
         (s, dimensionsQuery.arg(m_uristring).arg(featureUri), "dimensions");
 
-    cerr << "Dimensions = \"" << dimensionsValue.value.toStdString() << "\""
+    cerr << "Dimensions = \"" << dimensionsValue.value << "\""
          << endl;
 
     if (dimensionsValue.value != "") {
@@ -658,7 +658,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     SimpleSPARQLQuery query(s, queryString);
     query.setProgressReporter(reporter);
 
-//    cerr << "Query will be: " << queryString.toStdString() << endl;
+//    cerr << "Query will be: " << queryString << endl;
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
@@ -738,13 +738,13 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 (rangeResults[0]["time"].value.toStdString());
             duration = RealTime::fromXsdDuration
                 (rangeResults[0]["duration"].value.toStdString());
-//                std::cerr << "duration string " << rangeResults[0]["duration"].value.toStdString() << std::endl;
+//                std::cerr << "duration string " << rangeResults[0]["duration"].value << std::endl;
             haveTime = true;
             haveDuration = true;
         } else {
             QString timestring = SimpleSPARQLQuery::singleResultQuery
                 (s, timeQueryString.arg(thinguri), "time").value;
-//            std::cerr << "timestring = " << timestring.toStdString() << std::endl;
+//            std::cerr << "timestring = " << timestring << std::endl;
             if (timestring != "") {
                 time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;
@@ -774,7 +774,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
 /*
             std::cerr << "Creating new model: source = " << source.toStdString()
-                      << ", type = " << type.toStdString() << ", dimensions = "
+                      << ", type = " << type << ", dimensions = "
                       << dimensions << ", haveDuration = " << haveDuration
                       << ", time = " << time << ", duration = " << duration
                       << std::endl;

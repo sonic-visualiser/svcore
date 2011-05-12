@@ -337,7 +337,7 @@ CSVFileReader::load() const
                                       << list[i].toStdString()
                                       << "\" in data line " << lineno+1
                                       << ":" << std::endl;
-                            std::cerr << line.toStdString() << std::endl;
+                            std::cerr << line << std::endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
 //                            std::cerr << "WARNING: Too many warnings" << std::endl;

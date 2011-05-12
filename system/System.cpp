@@ -219,7 +219,7 @@ GetRealMemoryMBAvailable(int &available, int &total)
             if (elements.size() > 2) unit = elements[2];
             int size = elements[1].toInt();
 //            std::cerr << "have size \"" << size << "\", unit \""
-//                      << unit.toStdString() << "\"" << std::endl;
+//                      << unit << "\"" << std::endl;
             if (unit.toLower() == "gb") size = size * 1024;
             else if (unit.toLower() == "mb") size = size;
             else if (unit.toLower() == "kb") size = size / 1024;

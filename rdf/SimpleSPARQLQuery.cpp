@@ -163,7 +163,7 @@ WredlandWorldWrapper::getModel(QString fromUri)
     }
     QString err;
     if (!loadUri(model, fromUri, err)) {
-        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to parse into new model: " << err.toStdString() << std::endl;
+        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to parse into new model: " << err << std::endl;
         librdf_free_model(model);
         librdf_free_storage(storage);
         m_ownModelUris[fromUri] = 0;
@@ -178,7 +178,7 @@ void
 WredlandWorldWrapper::freeModel(QString forUri)
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::freeModel: Model uri = \"" << forUri.toStdString() << "\"" << std::endl;
+    std::cerr << "SimpleSPARQLQuery::freeModel: Model uri = \"" << forUri << "\"" << std::endl;
 #endif
 
     QMutexLocker locker(&m_mutex);
@@ -188,7 +188,7 @@ WredlandWorldWrapper::freeModel(QString forUri)
     }
     if (m_ownModelUris.find(forUri) == m_ownModelUris.end()) {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-        std::cerr << "SimpleSPARQLQuery::freeModel: NOTE: Unknown or already-freed model (uri = \"" << forUri.toStdString() << "\")" << std::endl;
+        std::cerr << "SimpleSPARQLQuery::freeModel: NOTE: Unknown or already-freed model (uri = \"" << forUri << "\")" << std::endl;
 #endif
         return;
     }
@@ -221,7 +221,7 @@ WredlandWorldWrapper::loadUri(librdf_model *model, QString uri, QString &errorSt
     }
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY    
-    std::cerr << "About to parse \"" << uri.toStdString() << "\"" << std::endl;
+    std::cerr << "About to parse \"" << uri << "\"" << std::endl;
 #endif
     
     Profiler p("SimpleSPARQLQuery: Parse URI into LIBRDF model");
@@ -379,7 +379,7 @@ SimpleSPARQLQuery::Impl::execute()
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
     if (m_errorString != "") {
         std::cerr << "SimpleSPARQLQuery::execute: error returned: \""
-                  << m_errorString.toStdString() << "\"" << std::endl;
+                  << m_errorString << "\"" << std::endl;
     }
 #endif
 }
@@ -388,7 +388,7 @@ SimpleSPARQLQuery::ResultList
 SimpleSPARQLQuery::Impl::executeDirectParser()
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::executeDirectParser: Query is: \"" << m_query.toStdString() << "\"" << std::endl;
+    std::cerr << "SimpleSPARQLQuery::executeDirectParser: Query is: \"" << m_query << "\"" << std::endl;
 #endif
 
     ResultList list;
@@ -405,7 +405,7 @@ SimpleSPARQLQuery::Impl::executeDirectParser()
         fromUri = fromRE.cap(1);
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
         std::cerr << "SimpleSPARQLQuery::executeDirectParser: FROM URI is <"
-                  << fromUri.toStdString() << ">" << std::endl;
+                  << fromUri << ">" << std::endl;
 #endif
     }
 
@@ -416,7 +416,7 @@ SimpleSPARQLQuery::ResultList
 SimpleSPARQLQuery::Impl::executeDatastore()
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::executeDatastore: Query is: \"" << m_query.toStdString() << "\"" << std::endl;
+    std::cerr << "SimpleSPARQLQuery::executeDatastore: Query is: \"" << m_query << "\"" << std::endl;
 #endif
 
     ResultList list;
@@ -437,7 +437,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     if (counter.find(m_query) == counter.end()) counter[m_query] = 1;
     else ++counter[m_query];
     std::cerr << "Counter for this query: " << counter[m_query] << std::endl;
-    std::cerr << "Base URI is: \"" << modelUri.toStdString() << "\"" << std::endl;
+    std::cerr << "Base URI is: \"" << modelUri << "\"" << std::endl;
 #endif
 
     {
@@ -498,7 +498,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
 
             if (!node) {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-                std::cerr << i << ". " << key.toStdString() << " -> (nil)" << std::endl;
+                std::cerr << i << ". " << key << " -> (nil)" << std::endl;
 #endif
                 resultmap[key] = Value();
                 continue;
@@ -543,7 +543,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
             }
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-            cerr << i << ". " << key.toStdString() << " -> " << text.toStdString() << " (type " << type << ")" << endl;
+            cerr << i << ". " << key << " -> " << text << " (type " << type << ")" << endl;
 #endif
 
             resultmap[key] = Value(type, text);
@@ -599,7 +599,7 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
     }
 
     if (!m_redland->loadUriIntoDefaultModel(sourceUri, err)) {
-        std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri.toStdString() << ": " << err.toStdString() << std::endl;
+        std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri << ": " << err << std::endl;
         return false;
     }
     return true;
@@ -621,7 +621,7 @@ SimpleSPARQLQuery::singleResultQuery(QueryType type,
     ResultList results = q.execute();
     if (!q.isOK()) {
         cerr << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
-             << q.getErrorString().toStdString() << endl;
+             << q.getErrorString() << endl;
         return Value();
     }
     if (results.empty()) {

@@ -79,7 +79,7 @@ CachedFile::CachedFile(QString origin,
     Profiler p("CachedFile::CachedFile[1]");
 
     std::cerr << "CachedFile::CachedFile: origin is \""
-              << origin.toStdString() << "\"" << std::endl;
+              << origin << "\"" << std::endl;
     check();
 }
 
@@ -94,7 +94,7 @@ CachedFile::CachedFile(QUrl url,
     Profiler p("CachedFile::CachedFile[2]");
 
     std::cerr << "CachedFile::CachedFile: url is \""
-              << url.toString().toStdString() << "\"" << std::endl;
+              << url.toString() << "\"" << std::endl;
     check();
 }
 
@@ -140,7 +140,7 @@ CachedFile::check()
 
     if (lastRetrieval.isValid()) {
         std::cerr << "CachedFile::check: Valid last retrieval at "
-                  << lastRetrieval.toString().toStdString() << std::endl;
+                  << lastRetrieval.toString() << std::endl;
         // this will not be the case if the file is missing, after
         // updateLastRetrieval(false) was called above
         m_ok = true;
@@ -205,14 +205,14 @@ CachedFile::retrieve()
     QString tempName = fs.getLocalFilename();
     QFile tempFile(tempName);
     if (!tempFile.exists()) {
-        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName.toStdString() << "\" does not exist" << std::endl;
+        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName << "\" does not exist" << std::endl;
         return false;
     }
 
     QFile previous(m_localFilename);
     if (previous.exists()) {
         if (!previous.remove()) {
-            std::cerr << "CachedFile::retrieve: ERROR: Failed to remove previous copy of cached file at \"" << m_localFilename.toStdString() << "\"" << std::endl;
+            std::cerr << "CachedFile::retrieve: ERROR: Failed to remove previous copy of cached file at \"" << m_localFilename << "\"" << std::endl;
             return false;
         }
     }
@@ -222,11 +222,11 @@ CachedFile::retrieve()
     //!!! disk space left)
 
     if (!tempFile.copy(m_localFilename)) {
-        std::cerr << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName.toStdString() << "\" to \"" << m_localFilename.toStdString() << "\"" << std::endl;
+        std::cerr << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName << "\" to \"" << m_localFilename << "\"" << std::endl;
         return false;
     }
 
-    std::cerr << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName.toStdString() << "\" to its home at \"" << m_localFilename.toStdString() << "\"" << std::endl;
+    std::cerr << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName << "\" to its home at \"" << m_localFilename << "\"" << std::endl;
 
     return true;
 }

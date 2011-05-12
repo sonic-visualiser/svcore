@@ -30,7 +30,7 @@ BZipFileDevice::BZipFileDevice(QString fileName) :
 
 BZipFileDevice::~BZipFileDevice()
 {
-//    std::cerr << "BZipFileDevice::~BZipFileDevice(" << m_fileName.toStdString() << ")" << std::endl;
+//    std::cerr << "BZipFileDevice::~BZipFileDevice(" << m_fileName << ")" << std::endl;
     if (m_bzFile) close();
 }
 
@@ -88,7 +88,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName.toStdString() << "\" for writing" << std::endl;
+//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for writing" << std::endl;
 
         setErrorString(QString());
         setOpenMode(mode);
@@ -115,7 +115,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName.toStdString() << "\" for reading" << std::endl;
+//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for reading" << std::endl;
 
         m_atEnd = false;
 

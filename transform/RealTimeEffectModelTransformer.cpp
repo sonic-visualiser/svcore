@@ -43,14 +43,14 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (!m_transform.getBlockSize()) m_transform.setBlockSize(1024);
 
-//    std::cerr << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
+//    std::cerr << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << std::endl;
 
     RealTimePluginFactory *factory =
 	RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
 	std::cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+		  << pluginId << "\"" << std::endl;
 	return;
     }
 
@@ -64,7 +64,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (!m_plugin) {
 	std::cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+		  << pluginId << "\"" << std::endl;
 	return;
     }
 

@@ -113,7 +113,7 @@ TransformFactory::getAllTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << endl;
+        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -122,7 +122,7 @@ TransformFactory::getAllTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into list: id = " << i->identifier.toStdString() << endl;
+        cerr << "inserting transform into list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -159,7 +159,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
 	 i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier.toStdString() << endl;
+        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -168,7 +168,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into uninstalled list: id = " << i->identifier.toStdString() << endl;
+        cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -478,7 +478,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                  !plugin->getParameterDescriptors().empty());
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-            cerr << "Feature extraction plugin transform: " << transformId.toStdString() << " friendly name: " << friendlyName.toStdString() << endl;
+            cerr << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
 #endif
 
 	    transforms[transformId] = 
@@ -530,7 +530,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 //!!!        if (descriptor->controlOutputPortCount == 0 ||
 //            descriptor->audioInputPortCount == 0) continue;
 
-//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId.toStdString() << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
+//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
 	
 	QString pluginName = descriptor->name.c_str();
         QString category = factory->getPluginCategory(pluginId);
@@ -679,7 +679,7 @@ TransformFactory::populateUninstalledTransforms()
             if (m_transforms.find(tid) != m_transforms.end()) {
 #ifdef DEBUG_TRANSFORM_FACTORY
                 std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                          << tid.toStdString() << " is installed; adding info url if appropriate, skipping rest" << std::endl;
+                          << tid << " is installed; adding info url if appropriate, skipping rest" << std::endl;
 #endif
                 if (infoUrl != "") {
                     if (m_transforms[tid].infoUrl == "") {
@@ -691,7 +691,7 @@ TransformFactory::populateUninstalledTransforms()
 
 #ifdef DEBUG_TRANSFORM_FACTORY
             std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                      << "adding " << tid.toStdString() << std::endl;
+                      << "adding " << tid << std::endl;
 #endif
 
             QString oname = desc.getOutputName(*j);
@@ -1070,7 +1070,7 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
     if (!plugin) {
         cerr << "TransformFactory::getPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier().toStdString() << "\"" << endl;
+                  << t.getIdentifier() << "\"" << endl;
         return xml;
     }
 
@@ -1092,7 +1092,7 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     if (!plugin) {
         cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier().toStdString() << "\"" << endl;
+                  << t.getIdentifier() << "\"" << endl;
         return;
     }
 

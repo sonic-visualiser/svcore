@@ -135,7 +135,7 @@ PlaylistFileReader::load() const
                         QFileInfo(testpath).isFile()) {
                         std::cerr << "Path \"" << line.toStdString()
                                   << "\" is relative, resolving to \""
-                                  << testpath.toStdString() << "\""
+                                  << testpath << "\""
                                   << std::endl;
                         line = testpath;
                     }

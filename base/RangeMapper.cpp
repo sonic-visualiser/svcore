@@ -76,7 +76,7 @@ LogRangeMapper::LogRangeMapper(int minpos, int maxpos,
     std::cerr << "LogRangeMapper: minpos " << minpos << ", maxpos "
               << maxpos << ", minval " << minval << ", maxval "
               << maxval << ", minlog " << m_minlog << ", ratio " << m_ratio
-              << ", unit " << unit.toStdString() << std::endl;
+              << ", unit " << unit << std::endl;
 
     assert(m_maxpos != m_minpos);
 

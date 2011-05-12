@@ -130,7 +130,7 @@ PluginRDFIndexer::indexConfiguredURLs()
         QString index = indices[i];
 
         std::cerr << "PluginRDFIndexer::indexConfiguredURLs: index url is "
-                  << index.toStdString() << std::endl;
+                  << index << std::endl;
 
         CachedFile cf(index);
         if (!cf.isOK()) continue;
@@ -186,7 +186,7 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
         // Because we may want to refer to this document again, we
         // cache it locally if it turns out to exist.
 
-        cerr << "PluginRDFIndexer::getIdForPluginURI: NOTE: Failed to find a local RDF document describing plugin <" << uri.toStdString() << ">: attempting to retrieve one remotely by guesswork" << endl;
+        cerr << "PluginRDFIndexer::getIdForPluginURI: NOTE: Failed to find a local RDF document describing plugin <" << uri << ">: attempting to retrieve one remotely by guesswork" << endl;
 
         QString baseUrl = QUrl(uri).toString(QUrl::RemoveFragment);
 
@@ -241,7 +241,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 
     loadPrefixes();
 
-//    std::cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << std::endl;
+//    std::cerr << "PluginRDFIndexer::indexURL(" << urlString << ")" << std::endl;
 
     QMutexLocker locker(&m_mutex);
 
@@ -288,7 +288,7 @@ PluginRDFIndexer::reindex()
 
     if (!query.isOK()) {
         cerr << "ERROR: PluginRDFIndexer::reindex: ERROR: Failed to query plugins from model: "
-             << query.getErrorString().toStdString() << endl;
+             << query.getErrorString() << endl;
         return false;
     }
 
@@ -309,13 +309,13 @@ PluginRDFIndexer::reindex()
 
         if (identifier == "") {
             cerr << "PluginRDFIndexer::reindex: NOTE: No vamp:identifier for plugin <"
-                 << pluginUri.toStdString() << ">"
+                 << pluginUri << ">"
                  << endl;
             continue;
         }
         if (soUri == "") {
             cerr << "PluginRDFIndexer::reindex: NOTE: No implementation library for plugin <"
-                 << pluginUri.toStdString() << ">"
+                 << pluginUri << ">"
                  << endl;
             continue;
         }
@@ -335,7 +335,7 @@ PluginRDFIndexer::reindex()
         QString soname = sonameValue.value;
         if (soname == "") {
             cerr << "PluginRDFIndexer::reindex: NOTE: No identifier for library <"
-                 << soUri.toStdString() << ">"
+                 << soUri << ">"
                  << endl;
             continue;
         }
@@ -356,9 +356,9 @@ PluginRDFIndexer::reindex()
         if (pluginUri != "") {
             if (m_uriToIdMap.find(pluginUri) != m_uriToIdMap.end()) {
                 cerr << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
-                cerr << "  1. Plugin id \"" << m_uriToIdMap[pluginUri].toStdString() << "\"" << endl;
-                cerr << "  2. Plugin id \"" << pluginId.toStdString() << "\"" << endl;
-                cerr << "both claim URI <" << pluginUri.toStdString() << ">" << endl;
+                cerr << "  1. Plugin id \"" << m_uriToIdMap[pluginUri] << "\"" << endl;
+                cerr << "  2. Plugin id \"" << pluginId << "\"" << endl;
+                cerr << "both claim URI <" << pluginUri << ">" << endl;
             } else {
                 m_uriToIdMap[pluginUri] = pluginId;
             }

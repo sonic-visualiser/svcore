@@ -28,7 +28,7 @@ Model::~Model()
 
     if (!m_aboutToDelete) {
         std::cerr << "NOTE: Model::~Model(" << this << ", \""
-                  << objectName().toStdString() << "\"): Model deleted "
+                  << objectName() << "\"): Model deleted "
                   << "with no aboutToDelete notification" << std::endl;
     }
 
@@ -63,7 +63,7 @@ Model::aboutToDelete()
 
     if (m_aboutToDelete) {
         std::cerr << "WARNING: Model(" << this << ", \""
-                  << objectName().toStdString() << "\")::aboutToDelete: "
+                  << objectName() << "\")::aboutToDelete: "
                   << "aboutToDelete called more than once for the same model"
                   << std::endl;
     }
