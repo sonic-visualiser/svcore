@@ -27,6 +27,7 @@ HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
            base/Clipboard.h \
            base/Command.h \
+           base/Debug.h \
            base/Exceptions.h \
            base/LogRange.h \
            base/Pitch.h \
@@ -62,6 +63,7 @@ HEADERS += base/AudioLevel.h \
 SOURCES += base/AudioLevel.cpp \
            base/Clipboard.cpp \
            base/Command.cpp \
+           base/Debug.cpp \
            base/Exceptions.cpp \
            base/LogRange.cpp \
            base/Pitch.cpp \
