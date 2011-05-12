@@ -168,7 +168,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     m_isRDF = true;
 
     if (transformResults.empty()) {
-        cerr << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString.toStdString() << ">" << endl;
+        cerr << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
         return transforms;
     }
 
@@ -195,8 +195,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
         QString pluginId = indexer->getIdForPluginURI(pluginUri);
         if (pluginId == "") {
             cerr << "RDFTransformFactory: WARNING: Unknown plugin <"
-                 << pluginUri.toStdString() << "> for transform <"
-                 << transformUri.toStdString() << ">, skipping this transform"
+                 << pluginUri << "> for transform <"
+                 << transformUri << ">, skipping this transform"
                  << endl;
             continue;
         }
@@ -273,7 +273,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
                         transform.setBlockSize(v.value.toUInt());
                     } else if (optional == "window_type") {
                         cerr << "NOTE: can't handle window type yet (value is \""
-                             << v.value.toStdString() << "\")" << endl;
+                             << v.value << "\")" << endl;
                     } else if (optional == "sample_rate") {
                         transform.setSampleRate(v.value.toFloat());
                     } else if (optional == "start") {
@@ -283,14 +283,14 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
                         transform.setDuration
                             (RealTime::fromXsdDuration(v.value.toStdString()));
                     } else {
-                        cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional.toStdString() << "\"" << endl;
+                        cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
                     }
                 }
             }
         }
 
         cerr << "RDFTransformFactory: NOTE: Transform is: " << endl;
-        cerr << transform.toXmlString().toStdString() << endl;
+        cerr << transform.toXmlString() << endl;
 
         transforms.push_back(transform);
     }
@@ -398,7 +398,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
         s << uri << " a vamp:Transform ;" << endl;
         s << "    vamp:plugin <" << QUrl(pluginUri).toEncoded().data() << "> ;" << endl;
     } else {
-        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId.toStdString() << "\", writing synthetic plugin and library resources" << std::endl;
+        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId << "\", writing synthetic plugin and library resources" << std::endl;
         QString type, soname, label;
         PluginIdentifier::parseIdentifier(pluginId, type, soname, label);
         s << uri << "_plugin a vamp:Plugin ;" << endl;
@@ -415,7 +415,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     QString outputUri = description.getOutputUri(outputId);
 
     if (transform.getOutput() != "" && outputUri == "") {
-        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput().toStdString() << "\", writing a synthetic output resource" << std::endl;
+        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput() << "\", writing a synthetic output resource" << std::endl;
     }
 
     if (transform.getStepSize() != 0) {

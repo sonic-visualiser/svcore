@@ -23,6 +23,8 @@
 
 #include <map>
 
+#include "base/Debug.h"
+
 class QFtp;
 class QHttp;
 class QFile;

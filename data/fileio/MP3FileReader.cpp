@@ -96,7 +96,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             return;
         } else if (sz == 0) {
             std::cerr << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
-                .arg(offset).arg(m_fileSize).toStdString() << std::endl;
+                .arg(offset).arg(m_fileSize) << std::endl;
             m_fileSize = offset;
             break;
         }
@@ -141,7 +141,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     }
 
     if (m_error != "") {
-        std::cerr << "MP3FileReader::MP3FileReader(\"" << m_path.toStdString() << "\"): ERROR: " << m_error.toStdString() << std::endl;
+        std::cerr << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << std::endl;
     }
 }
 
@@ -252,7 +252,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
 
 #ifdef DEBUG_ID3TAG
 	std::cerr << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
-	<< rv.toStdString() << "\"" << std::endl;
+	<< rv << "\"" << std::endl;
 #endif
 
 

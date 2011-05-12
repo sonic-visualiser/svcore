@@ -43,7 +43,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
-//    std::cerr << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId.toStdString() << ", outputName " << m_transform.getOutput().toStdString() << std::endl;
+//    std::cerr << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << std::endl;
 
     QString pluginId = transform.getPluginIdentifier();
 
@@ -152,7 +152,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     }
     
     for (size_t i = 0; i < outputs.size(); ++i) {
-//        std::cerr << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput().toStdString() << "\"" << std::endl;
+//        std::cerr << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << std::endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
 	    m_outputFeatureNo = i;
@@ -519,7 +519,7 @@ FeatureExtractionModelTransformer::run()
                 }
                 error = fftModels[ch]->getError();
                 if (error != "") {
-                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error.toStdString() << std::endl;
+                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << std::endl;
                     m_abandoned = true;
                     m_message = error;
                 }

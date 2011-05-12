@@ -23,6 +23,8 @@
 #define _RESOURCE_FINDER_H_
 
 #include <QString>
+
+#include "Debug.h"
 	
 class ResourceFinder
 {

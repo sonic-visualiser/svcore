@@ -27,7 +27,7 @@ TempWriteFile::TempWriteFile(QString target) :
     temp.setAutoRemove(false);
     temp.open(); // creates the file and opens it atomically
     if (temp.error()) {
-	std::cerr << "TempWriteFile: Failed to create temporary file in directory of " << m_target.toStdString() << ": " << temp.errorString().toStdString() << std::endl;
+	std::cerr << "TempWriteFile: Failed to create temporary file in directory of " << m_target << ": " << temp.errorString() << std::endl;
 	throw FileOperationFailed(temp.fileName(), "creation");
     }
     
@@ -60,7 +60,7 @@ TempWriteFile::moveToTarget()
     // Therefore, delete first the existing file.
     if (dir.exists(m_target)) dir.remove(m_target);
     if (!dir.rename(m_temp, m_target)) {
-	std::cerr << "TempWriteFile: Failed to rename temporary file " << m_temp.toStdString() << " to target " << m_target.toStdString() << std::endl;
+	std::cerr << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << std::endl;
 	throw FileOperationFailed(m_temp, "rename");
     }
 

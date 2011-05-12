@@ -152,7 +152,7 @@ ResourceFinder::getResourcePath(QString resourceCat, QString fileName)
         
         QString prefix = *i;
 
-        std::cerr << "ResourceFinder::getResourcePath: Looking up file \"" << fileName.toStdString() << "\" for category \"" << resourceCat.toStdString() << "\" in prefix \"" << prefix.toStdString() << "\"" << std::endl;
+        std::cerr << "ResourceFinder::getResourcePath: Looking up file \"" << fileName << "\" for category \"" << resourceCat << "\" in prefix \"" << prefix << "\"" << std::endl;
 
         QString path =
             QString("%1%2/%3").arg(prefix).arg(resourceCat).arg(fileName);
@@ -211,7 +211,7 @@ ResourceFinder::getResourceSaveDir(QString resourceCat)
     QDir userDir(user);
     if (!userDir.exists()) {
         if (!userDir.mkpath(user)) {
-            std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << user.toStdString() << "\"" << std::endl;
+            std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << user << "\"" << std::endl;
             return "";
         }
     }
@@ -221,7 +221,7 @@ ResourceFinder::getResourceSaveDir(QString resourceCat)
         QDir saveDir(save);
         if (!saveDir.exists()) {
             if (!userDir.mkpath(save)) {
-                std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << save.toStdString() << "\"" << std::endl;
+                std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << save << "\"" << std::endl;
                 return "";
             }
         }
@@ -278,11 +278,11 @@ ResourceFinder::unbundleResource(QString resourceCat, QString fileName)
     // This is the lowest-priority alternative path for this
     // resource, so we know that there must be no installed copy.
     // Install one to the user location.
-    std::cerr << "ResourceFinder::unbundleResource: File " << fileName.toStdString() << " is bundled, un-bundling it" << std::endl;
+    std::cerr << "ResourceFinder::unbundleResource: File " << fileName << " is bundled, un-bundling it" << std::endl;
     QString target = getResourceSavePath(resourceCat, fileName);
     QFile file(path);
     if (!file.copy(target)) {
-        std::cerr << "ResourceFinder::unbundleResource: ERROR: Failed to un-bundle resource file \"" << fileName.toStdString() << "\" to user location \"" << target.toStdString() << "\"" << std::endl;
+        std::cerr << "ResourceFinder::unbundleResource: ERROR: Failed to un-bundle resource file \"" << fileName << "\" to user location \"" << target << "\"" << std::endl;
         return false;
     }
 

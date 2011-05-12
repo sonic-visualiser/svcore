@@ -73,15 +73,15 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 {
     QString err;
 
-//    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
+//    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << std::endl;
 
     if (!source.isOK()) {
-        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString().toStdString() << std::endl;
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << std::endl;
         return 0;
     }
 
     if (!source.isAvailable()) {
-        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source not found" << std::endl;
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << std::endl;
         return 0;
     }
 
@@ -272,10 +272,10 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
         std::cerr << "AudioFileReaderFactory: Preferred reader for "
                   << "url \"" << source.getLocation().toStdString()
                   << "\" (content type \""
-                  << source.getContentType().toStdString() << "\") failed";
+                  << source.getContentType() << "\") failed";
 
         if (reader->getError() != "") {
-            std::cerr << ": \"" << reader->getError().toStdString() << "\"";
+            std::cerr << ": \"" << reader->getError() << "\"";
         }
         std::cerr << std::endl;
         delete reader;

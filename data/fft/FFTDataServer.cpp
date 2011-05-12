@@ -228,7 +228,7 @@ FFTDataServer *
 FFTDataServer::findServer(QString n)
 {    
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\")" << std::endl;
+    std::cerr << "FFTDataServer::findServer(\"" << n << "\")" << std::endl;
 #endif
 
     if (m_servers.find(n) != m_servers.end()) {
@@ -236,7 +236,7 @@ FFTDataServer::findServer(QString n)
         FFTDataServer *server = m_servers[n].first;
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\"): found " << server << std::endl;
+        std::cerr << "FFTDataServer::findServer(\"" << n << "\"): found " << server << std::endl;
 #endif
 
         claimInstance(server, false);
@@ -245,7 +245,7 @@ FFTDataServer::findServer(QString n)
     }
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\"): not found" << std::endl;
+        std::cerr << "FFTDataServer::findServer(\"" << n << "\"): not found" << std::endl;
 #endif
 
     return 0;
@@ -455,7 +455,7 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
 #endif
 
             if (i->second.second > 0) {
-                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
                 server->suspendWrites();
                 return;
             }

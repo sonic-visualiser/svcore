@@ -87,7 +87,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+    std::cerr << "last configuration: " << configurationXml << std::endl;
 
     Vamp::PluginBase *plugin = 0;
 
@@ -182,7 +182,7 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
 
     } else {
         std::cerr << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
+                  << transform.getIdentifier() << "\"" << std::endl;
         return transformer;
     }
 

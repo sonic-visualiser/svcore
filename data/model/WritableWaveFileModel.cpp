@@ -54,7 +54,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
 
     m_writer = new WavFileWriter(path, sampleRate, channels);
     if (!m_writer->isOK()) {
-        std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError().toStdString() << std::endl;
+        std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << std::endl;
         delete m_writer; 
         m_writer = 0;
         return;
@@ -110,7 +110,7 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 #endif
 
     if (!m_writer->writeSamples(samples, count)) {
-        std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError().toStdString() << std::endl;
+        std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << std::endl;
         return false;
     }
 

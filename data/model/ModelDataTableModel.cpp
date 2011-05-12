@@ -362,7 +362,7 @@ ModelDataTableModel::resortAlphabetical() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
-//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first.toStdString() << std::endl;
+//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first << std::endl;
         m_rsort.push_back(i->second);
     }
 

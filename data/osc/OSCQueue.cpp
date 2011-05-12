@@ -180,7 +180,7 @@ OSCQueue::postMessage(OSCMessage message)
     m_buffer.write(&mp, 1);
     std::cerr << "OSCQueue::postMessage: Posted OSC message: target "
               << message.getTarget() << ", target data " << message.getTargetData()
-              << ", method " << message.getMethod().toStdString() << std::endl;
+              << ", method " << message.getMethod() << std::endl;
     emit messagesAvailable();
 }
 
@@ -213,7 +213,7 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
 
     if (method.contains('/')) {
         std::cerr << "ERROR: OSCQueue::parseOSCPath: malformed path \""
-                  << path.toStdString() << "\" (should be target/data/method or "
+                  << path << "\" (should be target/data/method or "
                   << "target/method or method, where target and data "
                   << "are numeric)" << std::endl;
         return false;

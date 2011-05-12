@@ -61,7 +61,7 @@ FileFeatureWriter::~FileFeatureWriter()
     while (!m_files.empty()) {
         if (m_files.begin()->second) {
             cerr << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
-                 << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
+                 << m_files.begin()->second->fileName() << "\"" << endl;
             delete m_files.begin()->second;
         }
         m_files.erase(m_files.begin());
@@ -170,8 +170,8 @@ FileFeatureWriter::getOutputFilename(QString trackId,
 {
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
-            cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName.toStdString() << "\" exists and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append flag is specified -- not overwriting" << endl;
-            cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
+            cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName << "\" exists and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append flag is specified -- not overwriting" << endl;
+            cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
             return "";
         }
         return m_singleFileName;
@@ -193,14 +193,14 @@ FileFeatureWriter::getOutputFilename(QString trackId,
         infilename = scheme + ":" + infilename; // DOS drive!
     }
 
-//    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
-//         << infilename.toStdString() << ", basename = " << basename.toStdString() << ", m_baseDir = " << m_baseDir.toStdString() << endl;
+//    cerr << "trackId = " << trackId << ", url = " << url.toString() << ", infilename = "
+//         << infilename << ", basename = " << basename << ", m_baseDir = " << m_baseDir << endl;
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();
     else if (local) dirname = QFileInfo(infilename).absolutePath();
     else dirname = QDir::currentPath();
 
-//    cerr << "dirname = " << dirname.toStdString() << endl;
+//    cerr << "dirname = " << dirname << endl;
 
     QString filename;
 
@@ -215,8 +215,8 @@ FileFeatureWriter::getOutputFilename(QString trackId,
     filename = QDir(dirname).filePath(filename);
 
     if (QFileInfo(filename).exists() && !(m_force || m_append)) {
-        cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename.toStdString() << "\" exists (for input file or URL \"" << trackId.toStdString() << "\" and transform \"" << transformId.toStdString() << "\") and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append is specified -- not overwriting" << endl;
-        cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
+        cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename << "\" exists (for input file or URL \"" << trackId << "\" and transform \"" << transformId << "\") and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append is specified -- not overwriting" << endl;
+        cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
         return "";
     }
     
@@ -264,7 +264,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
         }
 
         cerr << "FileFeatureWriter: NOTE: Using output filename \""
-             << filename.toStdString() << "\"" << endl;
+             << filename << "\"" << endl;
 
         if (m_append) {
             cerr << "FileFeatureWriter: NOTE: Calling reviewFileForAppending" << endl;
@@ -341,7 +341,7 @@ FileFeatureWriter::finish()
     while (!m_files.empty()) {
         if (m_files.begin()->second) {
             cerr << "FileFeatureWriter::finish: NOTE: Closing feature file \""
-                 << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
+                 << m_files.begin()->second->fileName() << "\"" << endl;
             delete m_files.begin()->second;
         }
         m_files.erase(m_files.begin());

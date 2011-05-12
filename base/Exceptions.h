@@ -20,6 +20,8 @@
 
 #include <QString>
 
+#include "Debug.h"
+
 class FileNotFound : virtual public std::exception
 {
 public:
