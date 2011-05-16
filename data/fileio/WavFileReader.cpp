@@ -85,7 +85,7 @@ WavFileReader::updateFrameCount()
         }
     }
 
-//    std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
+//    DEBUG << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << endl;
 
     m_frameCount = m_fileInfo.frames;
 
@@ -122,8 +122,8 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
     }
 
     if ((long)start >= m_fileInfo.frames) {
-//        std::cerr << "WavFileReader::getInterleavedFrames: " << start
-//                  << " > " << m_fileInfo.frames << std::endl;
+//        DEBUG << "WavFileReader::getInterleavedFrames: " << start
+//                  << " > " << m_fileInfo.frames << endl;
 	return;
     }
 

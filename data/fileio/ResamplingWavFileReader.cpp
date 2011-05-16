@@ -39,8 +39,8 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-    std::cerr << "ResamplingWavFileReader::ResamplingWavFileReader(\""
-              << m_path << "\"): rate " << targetRate << std::endl;
+    DEBUG << "ResamplingWavFileReader::ResamplingWavFileReader(\""
+              << m_path << "\"): rate " << targetRate << endl;
 
     Profiler profiler("ResamplingWavFileReader::ResamplingWavFileReader", true);
 

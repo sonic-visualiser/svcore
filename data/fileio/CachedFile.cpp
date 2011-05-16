@@ -78,8 +78,8 @@ CachedFile::CachedFile(QString origin,
 {
     Profiler p("CachedFile::CachedFile[1]");
 
-    std::cerr << "CachedFile::CachedFile: origin is \""
-              << origin << "\"" << std::endl;
+    DEBUG << "CachedFile::CachedFile: origin is \""
+              << origin << "\"" << endl;
     check();
 }
 
@@ -93,8 +93,8 @@ CachedFile::CachedFile(QUrl url,
 {
     Profiler p("CachedFile::CachedFile[2]");
 
-    std::cerr << "CachedFile::CachedFile: url is \""
-              << url.toString() << "\"" << std::endl;
+    DEBUG << "CachedFile::CachedFile: url is \""
+              << url.toString() << "\"" << endl;
     check();
 }
 
@@ -132,20 +132,20 @@ CachedFile::check()
     m_localFilename = getLocalFilenameFor(m_origin);
 
     if (!QFileInfo(m_localFilename).exists()) {
-        std::cerr << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << std::endl;
+        DEBUG << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << endl;
         updateLastRetrieval(false); // empirically!
     }
 
     QDateTime lastRetrieval = getLastRetrieval();
 
     if (lastRetrieval.isValid()) {
-        std::cerr << "CachedFile::check: Valid last retrieval at "
-                  << lastRetrieval.toString() << std::endl;
+        DEBUG << "CachedFile::check: Valid last retrieval at "
+                  << lastRetrieval.toString() << endl;
         // this will not be the case if the file is missing, after
         // updateLastRetrieval(false) was called above
         m_ok = true;
         if (lastRetrieval.addDays(2) < QDateTime::currentDateTime()) { //!!!
-            std::cerr << "CachedFile::check: Out of date; trying to retrieve again" << std::endl;
+            DEBUG << "CachedFile::check: Out of date; trying to retrieve again" << endl;
             // doesn't matter if retrieval fails -- we just don't
             // update the last retrieval time
 
@@ -154,17 +154,17 @@ CachedFile::check()
             // retrieval every single time if it isn't working
 
             if (retrieve()) {
-                std::cerr << "CachedFile::check: Retrieval succeeded" << std::endl;
+                DEBUG << "CachedFile::check: Retrieval succeeded" << endl;
                 updateLastRetrieval(true);
             } else {
                 std::cerr << "CachedFile::check: Retrieval failed, will try again later (using existing file for now)" << std::endl;
             }                
         }
     } else {
-        std::cerr << "CachedFile::check: No valid last retrieval" << std::endl;
+        DEBUG << "CachedFile::check: No valid last retrieval" << endl;
         // there is no acceptable file
         if (retrieve()) {
-            std::cerr << "CachedFile::check: Retrieval succeeded" << std::endl;
+            DEBUG << "CachedFile::check: Retrieval succeeded" << endl;
             m_ok = true;
             updateLastRetrieval(true);
         } else {
@@ -191,21 +191,21 @@ CachedFile::retrieve()
     FileSource fs(m_origin, m_reporter, m_preferredContentType);
 
     if (!fs.isOK() || !fs.isAvailable()) {
-        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << std::endl;
+        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << endl;
         return false;
     }
 
     fs.waitForData();
 
     if (!fs.isOK()) {
-        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported failure during receive" << std::endl;
+        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported failure during receive" << endl;
         return false;
     }
 
     QString tempName = fs.getLocalFilename();
     QFile tempFile(tempName);
     if (!tempFile.exists()) {
-        std::cerr << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName << "\" does not exist" << std::endl;
+        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName << "\" does not exist" << endl;
         return false;
     }
 
@@ -226,7 +226,7 @@ CachedFile::retrieve()
         return false;
     }
 
-    std::cerr << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName << "\" to its home at \"" << m_localFilename << "\"" << std::endl;
+    DEBUG << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName << "\" to its home at \"" << m_localFilename << "\"" << endl;
 
     return true;
 }

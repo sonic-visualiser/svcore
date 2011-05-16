@@ -195,8 +195,8 @@ ModelDataTableModel::findText(QString text) const
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
-//    std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
-//              << ")" << std::endl;
+//    DEBUG << "ModelDataTableModel::sort(" << column << ", " << sortOrder
+//              << ")" << endl;
     int prevCurrent = getCurrentRow();
     if (m_sortColumn != column) {
         clearSort();

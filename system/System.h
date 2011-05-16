@@ -16,6 +16,8 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include "base/Debug.h"
+
 #ifdef _WIN32
 
 #include <windows.h>

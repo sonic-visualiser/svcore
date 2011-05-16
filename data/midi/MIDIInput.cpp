@@ -50,7 +50,7 @@ MIDIInput::staticCallback(double timestamp, std::vector<unsigned char> *message,
 void
 MIDIInput::callback(double timestamp, std::vector<unsigned char> *message)
 {
-    std::cerr << "MIDIInput::callback(" << timestamp << ")" << std::endl;
+    DEBUG << "MIDIInput::callback(" << timestamp << ")" << endl;
     // In my experience so far, the timings passed to this function
     // are not reliable enough to use.  We request instead an audio
     // frame time from whatever FrameTimer we have been given, and use
@@ -84,7 +84,7 @@ MIDIInput::postEvent(MIDIEvent e)
             return;
         }
         std::cerr << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << std::endl;
-        std::cerr << "Waiting for something to be processed" << std::endl;
+        DEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
 #else

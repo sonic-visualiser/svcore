@@ -305,7 +305,7 @@ PluginRDFDescription::indexOutputs()
     }
 
     if (results.empty()) {
-        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
+        DEBUG << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
              << m_pluginUri << ">" << endl;
         return false;
     }

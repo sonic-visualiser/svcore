@@ -29,7 +29,7 @@ AggregateWaveModel::AggregateWaveModel(ChannelSpecList channelSpecs) :
          i != channelSpecs.end(); ++i) {
         if (i->model->getSampleRate() !=
             channelSpecs.begin()->model->getSampleRate()) {
-            std::cerr << "AggregateWaveModel::AggregateWaveModel: WARNING: Component models do not all have the same sample rate" << std::endl;
+            DEBUG << "AggregateWaveModel::AggregateWaveModel: WARNING: Component models do not all have the same sample rate" << endl;
             break;
         }
     }

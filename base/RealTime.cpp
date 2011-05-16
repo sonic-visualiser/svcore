@@ -242,8 +242,8 @@ RealTime::fromString(std::string s)
     int nsec = atoi(snsec.c_str());
     if (negative) sec = -sec;
 
-//    std::cerr << "RealTime::fromString: string " << s << " -> "
-//              << sec << " sec, " << nsec << " nsec" << std::endl;
+//    DEBUG << "RealTime::fromString: string " << s << " -> "
+//              << sec << " sec, " << nsec << " nsec" << endl;
 
     return RealTime(sec, nsec);
 }
