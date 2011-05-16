@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <QString>
+#include "base/Debug.h"
 
 class QFile;
 class Model;

@@ -59,10 +59,10 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
 
 CSVFileReader::~CSVFileReader()
 {
-    std::cerr << "CSVFileReader::~CSVFileReader: file is " << m_file << std::endl;
+    DEBUG << "CSVFileReader::~CSVFileReader: file is " << m_file << endl;
 
     if (m_file) {
-        std::cerr << "CSVFileReader::CSVFileReader: Closing file" << std::endl;
+        DEBUG << "CSVFileReader::CSVFileReader: Closing file" << endl;
         m_file->close();
     }
     delete m_file;
@@ -345,8 +345,8 @@ CSVFileReader::load() const
                     }
                 }
 	
-//                std::cerr << "Setting bin values for count " << lineno << ", frame "
-//                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << std::endl;
+//                DEBUG << "Setting bin values for count " << lineno << ", frame "
+//                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << endl;
 
                 model3->setColumn(lineno, values);
             }

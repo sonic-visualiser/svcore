@@ -68,7 +68,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     Profiler profiler("MatrixFile::MatrixFile", true);
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile::MatrixFile(" << fileBase << ", " << int(mode) << ", " << cellSize << ", " << width << ", " << height << ")" << std::endl;
+    DEBUG << "MatrixFile::MatrixFile(" << fileBase << ", " << int(mode) << ", " << cellSize << ", " << width << ", " << height << ")" << endl;
 #endif
 
     m_createMutex.lock();
@@ -248,7 +248,7 @@ void
 MatrixFile::close()
 {
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile::close()" << std::endl;
+    DEBUG << "MatrixFile::close()" << endl;
 #endif
     if (m_fd >= 0) {
         if (::close(m_fd) < 0) {

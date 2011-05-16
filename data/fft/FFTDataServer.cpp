@@ -191,7 +191,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                 if (server->getFillCompletion() < 50) distance += 100;
 
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer::getFuzzyInstance: Distance for server " << server << " is " << distance << ", best is " << bestdist << std::endl;
+                DEBUG << "FFTDataServer::getFuzzyInstance: Distance for server " << server << " is " << distance << ", best is " << bestdist << endl;
 #endif
                 
                 if (bestdist == -1 || distance < bestdist) {
@@ -204,7 +204,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
         if (bestdist >= 0) {
             FFTDataServer *server = best->second.first;
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::getFuzzyInstance: We like server " << server << " (with distance " << bestdist << ")" << std::endl;
+            DEBUG << "FFTDataServer::getFuzzyInstance: We like server " << server << " (with distance " << bestdist << ")" << endl;
 #endif
             claimInstance(server, false);
             return server;
@@ -228,7 +228,7 @@ FFTDataServer *
 FFTDataServer::findServer(QString n)
 {    
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::findServer(\"" << n << "\")" << std::endl;
+    DEBUG << "FFTDataServer::findServer(\"" << n << "\")" << endl;
 #endif
 
     if (m_servers.find(n) != m_servers.end()) {
@@ -236,7 +236,7 @@ FFTDataServer::findServer(QString n)
         FFTDataServer *server = m_servers[n].first;
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n << "\"): found " << server << std::endl;
+        DEBUG << "FFTDataServer::findServer(\"" << n << "\"): found " << server << endl;
 #endif
 
         claimInstance(server, false);
@@ -245,7 +245,7 @@ FFTDataServer::findServer(QString n)
     }
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n << "\"): not found" << std::endl;
+        DEBUG << "FFTDataServer::findServer(\"" << n << "\"): not found" << endl;
 #endif
 
     return 0;
@@ -264,7 +264,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
                        "FFTDataServer::claimInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::claimInstance(" << server << ")" << std::endl;
+    DEBUG << "FFTDataServer::claimInstance(" << server << ")" << endl;
 #endif
 
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -275,7 +275,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
 
                 if (*j == server) {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::claimInstance: found in released server list, removing from it" << std::endl;
+    DEBUG << "FFTDataServer::claimInstance: found in released server list, removing from it" << endl;
 #endif
                     m_releasedServers.erase(j);
                     break;
@@ -285,7 +285,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
             ++i->second.second;
 
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::claimInstance: new refcount is " << i->second.second << std::endl;
+            DEBUG << "FFTDataServer::claimInstance: new refcount is " << i->second.second << endl;
 #endif
 
             return;
@@ -309,7 +309,7 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
                        "FFTDataServer::releaseInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::releaseInstance(" << server << ")" << std::endl;
+    DEBUG << "FFTDataServer::releaseInstance(" << server << ")" << endl;
 #endif
 
     // -- if ref count > 0, decrement and return
@@ -332,18 +332,18 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 /*!!!
                 if (server->m_lastUsedCache == -1) { // never used
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    DEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " has never been used, erasing"
-                              << std::endl;
+                              << endl;
 #endif
                     delete server;
                     m_servers.erase(i);
                 } else {
 */
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    DEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " no longer in use, marking for possible collection"
-                              << std::endl;
+                              << endl;
 #endif
                     bool found = false;
                     for (ServerQueue::iterator j = m_releasedServers.begin();
@@ -361,9 +361,9 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 //!!!                }
             } else {
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    DEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " now has refcount " << i->second.second
-                              << std::endl;
+                              << endl;
 #endif
             }
             return;
@@ -378,8 +378,8 @@ void
 FFTDataServer::purgeLimbo(int maxSize)
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::purgeLimbo(" << maxSize << "): "
-              << m_releasedServers.size() << " candidates" << std::endl;
+    DEBUG << "FFTDataServer::purgeLimbo(" << maxSize << "): "
+              << m_releasedServers.size() << " candidates" << endl;
 #endif
 
     while (int(m_releasedServers.size()) > maxSize) {
@@ -389,8 +389,8 @@ FFTDataServer::purgeLimbo(int maxSize)
         bool found = false;
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::purgeLimbo: considering candidate "
-                  << server << std::endl;
+        DEBUG << "FFTDataServer::purgeLimbo: considering candidate "
+                  << server << endl;
 #endif
 
         for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -405,8 +405,8 @@ FFTDataServer::purgeLimbo(int maxSize)
                     break;
                 }
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer::purgeLimbo: looks OK, erasing it"
-                          << std::endl;
+                DEBUG << "FFTDataServer::purgeLimbo: looks OK, erasing it"
+                          << endl;
 #endif
 
                 m_servers.erase(i);
@@ -426,8 +426,8 @@ FFTDataServer::purgeLimbo(int maxSize)
     }
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::purgeLimbo(" << maxSize << "): "
-              << m_releasedServers.size() << " remain" << std::endl;
+    DEBUG << "FFTDataServer::purgeLimbo(" << maxSize << "): "
+              << m_releasedServers.size() << " remain" << endl;
 #endif
 
 }
@@ -439,8 +439,8 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
                        "FFTDataServer::modelAboutToBeDeleted::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
-              << std::endl;
+    DEBUG << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
+              << endl;
 #endif
 
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -450,8 +450,8 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
         if (server->getModel() == model) {
 
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::modelAboutToBeDeleted: server is "
-                      << server << std::endl;
+            DEBUG << "FFTDataServer::modelAboutToBeDeleted: server is "
+                      << server << endl;
 #endif
 
             if (i->second.second > 0) {
@@ -463,14 +463,14 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
                  j != m_releasedServers.end(); ++j) {
                 if (*j == server) {
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::modelAboutToBeDeleted: erasing from released servers" << std::endl;
+                    DEBUG << "FFTDataServer::modelAboutToBeDeleted: erasing from released servers" << endl;
 #endif
                     m_releasedServers.erase(j);
                     break;
                 }
             }
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::modelAboutToBeDeleted: erasing server" << std::endl;
+            DEBUG << "FFTDataServer::modelAboutToBeDeleted: erasing server" << endl;
 #endif
             m_servers.erase(i);
             delete server;
@@ -841,7 +841,7 @@ FFTDataServer::makeCacheReader(int c)
     // preconditions: m_caches[c] exists and contains a file writer;
     // m_cacheVectorLock is not locked by this thread
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::makeCacheReader(" << c << ")" << std::endl;
+    DEBUG << "FFTDataServer::makeCacheReader(" << c << ")" << endl;
 #endif
 
     QThread *me = QThread::currentThread();
@@ -875,7 +875,7 @@ FFTDataServer::makeCacheReader(int c)
     cb = m_caches.at(deleteCandidate);
     if (cb && cb->fileCacheReader.find(me) != cb->fileCacheReader.end()) {
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::makeCacheReader: Deleting probably unpopular reader " << deleteCandidate << " for this thread (as I create reader " << c << ")" << std::endl;
+        DEBUG << "FFTDataServer::makeCacheReader: Deleting probably unpopular reader " << deleteCandidate << " for this thread (as I create reader " << c << ")" << endl;
 #endif
         delete cb->fileCacheReader[me];
         cb->fileCacheReader.erase(me);
@@ -901,8 +901,8 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
         if (!cache->haveSetColumnAt(col)) {
             Profiler profiler("FFTDataServer::getMagnitudeAt: filling");
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
-                  << x << ")" << std::endl;
+            DEBUG << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
+                  << x << ")" << endl;
 #endif
             fillColumn(x);
         }
@@ -1130,7 +1130,7 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
         if (!cache->haveSetColumnAt(col)) {
             Profiler profiler("FFTDataServer::getValuesAt: filling");
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << std::endl;
+            DEBUG << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << endl;
 #endif
             fillColumn(x);
         }        
@@ -1189,7 +1189,7 @@ FFTDataServer::isColumnReady(size_t x)
 /*!!!
         if (m_lastUsedCache == -1) {
             if (m_suspended) {
-                std::cerr << "FFTDataServer::isColumnReady(" << x << "): no cache, calling resume" << std::endl;
+                DEBUG << "FFTDataServer::isColumnReady(" << x << "): no cache, calling resume" << endl;
                 resume();
             }
             m_fillThread->start();
@@ -1258,12 +1258,12 @@ FFTDataServer::fillColumn(size_t x)
     endFrame   -= winsize / 2;
 
 #ifdef DEBUG_FFT_SERVER_FILL
-    std::cerr << "FFTDataServer::fillColumn: requesting frames "
+    DEBUG << "FFTDataServer::fillColumn: requesting frames "
               << startFrame + pfx << " -> " << endFrame << " ( = "
               << endFrame - (startFrame + pfx) << ") at index "
               << off + pfx << " in buffer of size " << m_fftSize
               << " with window size " << m_windowSize 
-              << " from channel " << m_channel << std::endl;
+              << " from channel " << m_channel << endl;
 #endif
 
     QMutexLocker locker(&m_fftBuffersLock);
@@ -1370,7 +1370,7 @@ FFTDataServer::fillColumn(size_t x)
     }
 
     if (m_suspended) {
-//        std::cerr << "FFTDataServer::fillColumn(" << x << "): calling resume" << std::endl;
+//        DEBUG << "FFTDataServer::fillColumn(" << x << "): calling resume" << endl;
 //        resume();
     }
 }    
@@ -1446,7 +1446,7 @@ void
 FFTDataServer::FillThread::run()
 {
 #ifdef DEBUG_FFT_SERVER_FILL
-    std::cerr << "FFTDataServer::FillThread::run()" << std::endl;
+    DEBUG << "FFTDataServer::FillThread::run()" << endl;
 #endif
     
     m_extent = 0;
@@ -1454,7 +1454,7 @@ FFTDataServer::FillThread::run()
     
     while (!m_server.m_model->isReady() && !m_server.m_exiting) {
 #ifdef DEBUG_FFT_SERVER_FILL
-        std::cerr << "FFTDataServer::FillThread::run(): waiting for model " << m_server.m_model << " to be ready" << std::endl;
+        DEBUG << "FFTDataServer::FillThread::run(): waiting for model " << m_server.m_model << " to be ready" << endl;
 #endif
         sleep(1);
     }
@@ -1476,7 +1476,7 @@ FFTDataServer::FillThread::run()
             try {
                 m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
             } catch (std::exception &e) {
-                std::cerr << "FFTDataServer::FillThread::run: exception: " << e.what() << std::endl;
+                DEBUG << "FFTDataServer::FillThread::run: exception: " << e.what() << endl;
                 m_error = e.what();
                 m_server.fillComplete();
                 m_completion = 100;
@@ -1525,7 +1525,7 @@ FFTDataServer::FillThread::run()
         try {
             m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
         } catch (std::exception &e) {
-            std::cerr << "FFTDataServer::FillThread::run: exception: " << e.what() << std::endl;
+            DEBUG << "FFTDataServer::FillThread::run: exception: " << e.what() << endl;
             m_error = e.what();
             m_server.fillComplete();
             m_completion = 100;
@@ -1567,7 +1567,7 @@ FFTDataServer::FillThread::run()
     m_extent = end;
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::FillThread::run exiting" << std::endl;
+    DEBUG << "FFTDataServer::FillThread::run exiting" << endl;
 #endif
 }
 

@@ -25,6 +25,7 @@
 #include <QString>
 #include <string>
 #include <iostream>
+#include "base/Debug.h"
 
 typedef unsigned char MIDIByte;
 

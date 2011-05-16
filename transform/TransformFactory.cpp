@@ -52,7 +52,7 @@ TransformFactory::getInstance()
 void
 TransformFactory::deleteInstance()
 {
-    std::cerr << "TransformFactory::deleteInstance called" << std::endl;
+    DEBUG << "TransformFactory::deleteInstance called" << endl;
     delete m_instance;
     m_instance = 0;
 }
@@ -70,12 +70,12 @@ TransformFactory::~TransformFactory()
     m_exiting = true;
     if (m_thread) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        std::cerr << "TransformFactory::~TransformFactory: waiting on thread" << std::endl;
+        DEBUG << "TransformFactory::~TransformFactory: waiting on thread" << endl;
 #endif
         m_thread->wait();
         delete m_thread;
 #ifdef DEBUG_TRANSFORM_FACTORY
-        std::cerr << "TransformFactory::~TransformFactory: waited and done" << std::endl;
+        DEBUG << "TransformFactory::~TransformFactory: waited and done" << endl;
 #endif
     }
 }
@@ -113,7 +113,7 @@ TransformFactory::getAllTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
+        DEBUG << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -122,7 +122,7 @@ TransformFactory::getAllTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into list: id = " << i->identifier << endl;
+        DEBUG << "inserting transform into list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -159,7 +159,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
 	 i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
+        DEBUG << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -168,7 +168,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
+        DEBUG << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -659,9 +659,8 @@ TransformFactory::populateUninstalledTransforms()
         QString name = desc.getPluginName();
 #ifdef DEBUG_TRANSFORM_FACTORY
         if (name == "") {
-            std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                      << "No name available for plugin " << i->toStdString()
-                      << ", skipping" << std::endl;
+            DEBUG << "TransformFactory::populateUninstalledTransforms: "
+                      << "No name available for plugin " << i-                      << ", skipping" << endl;
             continue;
         }
 #endif
@@ -678,8 +677,8 @@ TransformFactory::populateUninstalledTransforms()
             
             if (m_transforms.find(tid) != m_transforms.end()) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-                std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                          << tid << " is installed; adding info url if appropriate, skipping rest" << std::endl;
+                DEBUG << "TransformFactory::populateUninstalledTransforms: "
+                          << tid << " is installed; adding info url if appropriate, skipping rest" << endl;
 #endif
                 if (infoUrl != "") {
                     if (m_transforms[tid].infoUrl == "") {
@@ -690,8 +689,8 @@ TransformFactory::populateUninstalledTransforms()
             }
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-            std::cerr << "TransformFactory::populateUninstalledTransforms: "
-                      << "adding " << tid << std::endl;
+            DEBUG << "TransformFactory::populateUninstalledTransforms: "
+                      << "adding " << tid << endl;
 #endif
 
             QString oname = desc.getOutputName(*j);
@@ -953,9 +952,9 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
         pmap[i->identifier.c_str()] = plugin->getParameter(i->identifier);
-//        std::cerr << "TransformFactory::setParametersFromPlugin: parameter "
+//        DEBUG << "TransformFactory::setParametersFromPlugin: parameter "
 //                  << i->identifier << " -> value " <<
-//            pmap[i->identifier.c_str()] << std::endl;
+//            pmap[i->identifier.c_str()] << endl;
     }
 
     transform.setParameters(pmap);
@@ -1068,7 +1067,7 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::getPluginConfigurationXml: "
+        DEBUG << "TransformFactory::getPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
                   << t.getIdentifier() << "\"" << endl;
         return xml;
@@ -1090,7 +1089,7 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
+        DEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
                   << t.getIdentifier() << "\"" << endl;
         return;
@@ -1146,7 +1145,7 @@ TransformFactory::search(QStringList keywords)
     if (!m_uninstalledTransformsMutex.tryLock()) {
         // uninstalled transforms are being populated; this may take some time,
         // and they aren't critical, but we will speed them up if necessary
-        std::cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << std::endl;
+        DEBUG << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
         m_populatingSlowly = false;
         return results;
     }

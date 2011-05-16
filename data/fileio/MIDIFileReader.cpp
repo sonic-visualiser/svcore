@@ -278,7 +278,7 @@ MIDIFileReader::parseFile()
     m_error = "";
 
 #ifdef MIDI_DEBUG
-    cerr << "MIDIFileReader::open() : fileName = " << m_fileName.c_str() << endl;
+    DEBUG << "MIDIFileReader::open() : fileName = " << m_fileName.c_str() << endl;
 #endif
 
     // Open the file
@@ -315,7 +315,7 @@ MIDIFileReader::parseFile()
 	for (unsigned int j = 0; j < m_numberOfTracks; ++j) {
 
 #ifdef MIDI_DEBUG
-	    cerr << "Parsing Track " << j << endl;
+	    DEBUG << "Parsing Track " << j << endl;
 #endif
 
 	    if (!skipToNextTrack()) {
@@ -350,7 +350,7 @@ MIDIFileReader::parseFile()
 
     } catch (MIDIException e) {
 
-        cerr << "MIDIFileReader::open() - caught exception - " << e.what() << endl;
+        DEBUG << "MIDIFileReader::open() - caught exception - " << e.what() << endl;
 	m_error = e.what();
     }
     
@@ -392,14 +392,14 @@ MIDIFileReader::parseHeader(const string &midiHeader)
 {
     if (midiHeader.size() < 14) {
 #ifdef MIDI_DEBUG
-        cerr << "MIDIFileReader::parseHeader() - file header undersized" << endl;
+        DEBUG << "MIDIFileReader::parseHeader() - file header undersized" << endl;
 #endif
         return false;
     }
 
     if (midiHeader.compare(0, 4, MIDI_FILE_HEADER) != 0) {
 #ifdef MIDI_DEBUG
-	cerr << "MIDIFileReader::parseHeader()"
+	DEBUG << "MIDIFileReader::parseHeader()"
 	     << "- file header not found or malformed"
 	     << endl;
 #endif
@@ -408,7 +408,7 @@ MIDIFileReader::parseHeader(const string &midiHeader)
 
     if (midiBytesToLong(midiHeader.substr(4,4)) != 6L) {
 #ifdef MIDI_DEBUG
-        cerr << "MIDIFileReader::parseHeader()"
+        DEBUG << "MIDIFileReader::parseHeader()"
 	     << " - header length incorrect"
 	     << endl;
 #endif
@@ -498,7 +498,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 	    data1 = midiByte;
 
 #ifdef MIDI_DEBUG
-	    cerr << "using running status (byte " << int(midiByte) << " found)" << endl;
+	    DEBUG << "using running status (byte " << int(midiByte) << " found)" << endl;
 #endif
         } else {
 #ifdef MIDI_DEBUG
@@ -611,7 +611,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                         MIDI_END_OF_EXCLUSIVE)
                 {
 #ifdef MIDI_DEBUG
-                    cerr << "MIDIFileReader::parseTrack() - "
+                    DEBUG << "MIDIFileReader::parseTrack() - "
                               << "malformed or unsupported SysEx type"
                               << endl;
 #endif
@@ -631,14 +631,14 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 
             case MIDI_END_OF_EXCLUSIVE:
 #ifdef MIDI_DEBUG
-                cerr << "MIDIFileReader::parseTrack() - "
+                DEBUG << "MIDIFileReader::parseTrack() - "
                           << "Found a stray MIDI_END_OF_EXCLUSIVE" << endl;
 #endif
                 break;
 
             default:
 #ifdef MIDI_DEBUG
-                cerr << "MIDIFileReader::parseTrack()" 
+                DEBUG << "MIDIFileReader::parseTrack()" 
                           << " - Unsupported MIDI Event Code:  "
                           << (int)eventCode << endl;
 #endif
@@ -787,15 +787,15 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
     double seconds = (60.0 * quarters) / tempo;
 
 /*
-    std::cerr << "MIDIFileReader::getTimeForMIDITime(" << midiTime << ")"
-	      << std::endl;
-    std::cerr << "timing division = " << td << std::endl;
+    DEBUG << "MIDIFileReader::getTimeForMIDITime(" << midiTime << ")"
+	      << endl;
+    DEBUG << "timing division = " << td << endl;
     std::cerr << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
 	      << tempoRealTime << ")" << std::endl;
     std::cerr << "quarters since then = " << quarters << std::endl;
     std::cerr << "tempo = " << tempo << " quarters per minute" << std::endl;
     std::cerr << "seconds since then = " << seconds << std::endl;
-    std::cerr << "resulting time = " << (tempoRealTime + RealTime::fromSeconds(seconds)) << std::endl;
+    DEBUG << "resulting time = " << (tempoRealTime + RealTime::fromSeconds(seconds)) << endl;
 */
 
     return tempoRealTime + RealTime::fromSeconds(seconds);
@@ -1033,7 +1033,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 		    Note note(startFrame, (*i)->getPitch(),
 			      endFrame - startFrame, level, noteLabel);
 
-//		    std::cerr << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << std::endl;
+//		    DEBUG << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << endl;
 
 		    model->addPoint(note);
 		    break;

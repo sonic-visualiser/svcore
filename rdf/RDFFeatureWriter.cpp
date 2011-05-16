@@ -141,10 +141,10 @@ RDFFeatureWriter::write(QString trackId,
         m_rdfDescriptions[pluginId] = PluginRDFDescription(pluginId);
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
-            cerr << "NOTE: Have RDF description for plugin ID \""
+            DEBUG << "NOTE: Have RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
         } else {
-            cerr << "NOTE: No RDF description for plugin ID \""
+            DEBUG << "NOTE: No RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
             if (!m_network) {
                 cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
@@ -292,7 +292,7 @@ void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
-//    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
+//    DEBUG << "RDFFeatureWriter::writeSignalDescription" << endl;
 
     QTextStream &stream = *sptr;
 
@@ -520,7 +520,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
                                  PluginRDFDescription &desc,
                                  QString timelineURI)
 {
-//    std::cerr << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << std::endl;
+//    DEBUG << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << endl;
 
     if (featureList.empty()) return;
     QTextStream &stream = *sptr;
@@ -621,7 +621,7 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
     QString featureUri = desc.getOutputFeatureAttributeURI(outputId);
 
     if (featureUri == "") {
-        cerr << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
+        DEBUG << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
         return;
     }
 
@@ -765,14 +765,14 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
 void RDFFeatureWriter::finish()
 {
-//    cerr << "RDFFeatureWriter::finish()" << endl;
+//    DEBUG << "RDFFeatureWriter::finish()" << endl;
 
     // close any open dense feature literals
 
     for (map<StringTransformPair, StreamBuffer>::iterator i =
              m_openDenseFeatures.begin();
          i != m_openDenseFeatures.end(); ++i) {
-//        cerr << "closing a stream" << endl;
+//        DEBUG << "closing a stream" << endl;
         StreamBuffer &b = i->second;
         *(b.first) << b.second << "\" ." << endl;
     }

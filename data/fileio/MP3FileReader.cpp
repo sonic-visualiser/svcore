@@ -177,7 +177,7 @@ MP3FileReader::loadTags()
     id3_tag *tag = id3_file_tag(file);
     if (!tag) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No ID3 tag found" << std::endl;
+        DEBUG << "MP3FileReader::loadTags: No ID3 tag found" << endl;
 #endif
         id3_file_close(file);
         return;
@@ -200,8 +200,8 @@ MP3FileReader::loadTags()
 
 #else
 #ifdef DEBUG_ID3TAG
-    std::cerr << "MP3FileReader::loadTags: ID3 tag support not compiled in"
-              << std::endl;
+    DEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in"
+              << endl;
 #endif
 #endif
 }
@@ -215,20 +215,20 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     id3_frame *frame = id3_tag_findframe(tag, name, 0);
     if (!frame) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No \"" << name << "\" in ID3 tag" << std::endl;
+        DEBUG << "MP3FileReader::loadTags: No \"" << name << "\" in ID3 tag" << endl;
 #endif
         return "";
     }
         
     if (frame->nfields < 2) {
-        std::cerr << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << std::endl;
+        DEBUG << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 
     unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
     if (nstrings == 0) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << std::endl;
+        DEBUG << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << endl;
 #endif
         return "";
     }
@@ -236,7 +236,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
     if (!ustr) {
 #ifdef DEBUG_ID3TAG
-        std::cerr << "MP3FileReader::loadTags: Invalid or absent data for \"" << name << "\" in ID3 tag" << std::endl;
+        DEBUG << "MP3FileReader::loadTags: Invalid or absent data for \"" << name << "\" in ID3 tag" << endl;
 #endif
         return "";
     }
@@ -251,8 +251,8 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     free(u8str);
 
 #ifdef DEBUG_ID3TAG
-	std::cerr << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
-	<< rv << "\"" << std::endl;
+	DEBUG << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
+	<< rv << "\"" << endl;
 #endif
 
 
@@ -365,7 +365,7 @@ MP3FileReader::accept(struct mad_header const *header,
         initialiseDecodeCache();
 
         if (m_cacheMode == CacheInTemporaryFile) {
-//            std::cerr << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << std::endl;
+//            DEBUG << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << endl;
             startSerialised("MP3FileReader::Decode");
         }
     }

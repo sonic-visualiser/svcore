@@ -178,17 +178,17 @@ void
 WredlandWorldWrapper::freeModel(QString forUri)
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::freeModel: Model uri = \"" << forUri << "\"" << std::endl;
+    DEBUG << "SimpleSPARQLQuery::freeModel: Model uri = \"" << forUri << "\"" << endl;
 #endif
 
     QMutexLocker locker(&m_mutex);
     if (forUri == "") {
-        std::cerr << "SimpleSPARQLQuery::freeModel: ERROR: Can't free default model" << std::endl;
+        DEBUG << "SimpleSPARQLQuery::freeModel: ERROR: Can't free default model" << endl;
         return;
     }
     if (m_ownModelUris.find(forUri) == m_ownModelUris.end()) {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-        std::cerr << "SimpleSPARQLQuery::freeModel: NOTE: Unknown or already-freed model (uri = \"" << forUri << "\")" << std::endl;
+        DEBUG << "SimpleSPARQLQuery::freeModel: NOTE: Unknown or already-freed model (uri = \"" << forUri << "\")" << endl;
 #endif
         return;
     }
@@ -388,7 +388,7 @@ SimpleSPARQLQuery::ResultList
 SimpleSPARQLQuery::Impl::executeDirectParser()
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::executeDirectParser: Query is: \"" << m_query << "\"" << std::endl;
+    DEBUG << "SimpleSPARQLQuery::executeDirectParser: Query is: \"" << m_query << "\"" << endl;
 #endif
 
     ResultList list;
@@ -399,13 +399,13 @@ SimpleSPARQLQuery::Impl::executeDirectParser()
     QString fromUri;
 
     if (fromRE.indexIn(m_query) < 0) {
-        std::cerr << "SimpleSPARQLQuery::executeDirectParser: Query contains no FROM clause, nothing to parse from" << std::endl;
+        DEBUG << "SimpleSPARQLQuery::executeDirectParser: Query contains no FROM clause, nothing to parse from" << endl;
         return list;
     } else {
         fromUri = fromRE.cap(1);
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-        std::cerr << "SimpleSPARQLQuery::executeDirectParser: FROM URI is <"
-                  << fromUri << ">" << std::endl;
+        DEBUG << "SimpleSPARQLQuery::executeDirectParser: FROM URI is <"
+                  << fromUri << ">" << endl;
 #endif
     }
 
@@ -416,7 +416,7 @@ SimpleSPARQLQuery::ResultList
 SimpleSPARQLQuery::Impl::executeDatastore()
 {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    std::cerr << "SimpleSPARQLQuery::executeDatastore: Query is: \"" << m_query << "\"" << std::endl;
+    DEBUG << "SimpleSPARQLQuery::executeDatastore: Query is: \"" << m_query << "\"" << endl;
 #endif
 
     ResultList list;
@@ -576,7 +576,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     librdf_free_query(query);
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-    cerr << "SimpleSPARQLQuery::executeDatastore: All results retrieved (" << resultCount << " of them)" << endl;
+    DEBUG << "SimpleSPARQLQuery::executeDatastore: All results retrieved (" << resultCount << " of them)" << endl;
 #endif
 
     return list;
@@ -620,7 +620,7 @@ SimpleSPARQLQuery::singleResultQuery(QueryType type,
     SimpleSPARQLQuery q(type, query);
     ResultList results = q.execute();
     if (!q.isOK()) {
-        cerr << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
+        DEBUG << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
              << q.getErrorString() << endl;
         return Value();
     }

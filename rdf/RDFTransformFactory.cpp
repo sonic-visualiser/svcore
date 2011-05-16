@@ -168,7 +168,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     m_isRDF = true;
 
     if (transformResults.empty()) {
-        cerr << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
+        DEBUG << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
         return transforms;
     }
 
@@ -272,7 +272,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
                     } else if (optional == "block_size") {
                         transform.setBlockSize(v.value.toUInt());
                     } else if (optional == "window_type") {
-                        cerr << "NOTE: can't handle window type yet (value is \""
+                        DEBUG << "NOTE: can't handle window type yet (value is \""
                              << v.value << "\")" << endl;
                     } else if (optional == "sample_rate") {
                         transform.setSampleRate(v.value.toFloat());
@@ -289,7 +289,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
             }
         }
 
-        cerr << "RDFTransformFactory: NOTE: Transform is: " << endl;
+        DEBUG << "RDFTransformFactory: NOTE: Transform is: " << endl;
         cerr << transform.toXmlString() << endl;
 
         transforms.push_back(transform);

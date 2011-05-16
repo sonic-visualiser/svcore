@@ -44,7 +44,7 @@ TempDirectory::TempDirectory() :
 
 TempDirectory::~TempDirectory()
 {
-    std::cerr << "TempDirectory::~TempDirectory" << std::endl;
+    DEBUG << "TempDirectory::~TempDirectory" << endl;
 
     cleanup();
 }
