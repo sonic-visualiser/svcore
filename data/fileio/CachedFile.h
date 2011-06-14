@@ -46,7 +46,7 @@ protected:
     ProgressReporter *m_reporter;
     bool m_ok;
 
-    void check();
+    void checkFile();
     bool retrieve();
 
     QDateTime getLastRetrieval();

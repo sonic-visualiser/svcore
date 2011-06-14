@@ -80,7 +80,7 @@ CachedFile::CachedFile(QString origin,
 
     SVDEBUG << "CachedFile::CachedFile: origin is \""
               << origin << "\"" << endl;
-    check();
+    checkFile();
 }
 
 CachedFile::CachedFile(QUrl url,
@@ -95,7 +95,7 @@ CachedFile::CachedFile(QUrl url,
 
     SVDEBUG << "CachedFile::CachedFile: url is \""
               << url.toString() << "\"" << endl;
-    check();
+    checkFile();
 }
 
 CachedFile::~CachedFile()
@@ -115,7 +115,7 @@ CachedFile::getLocalFilename() const
 }
 
 void
-CachedFile::check()
+CachedFile::checkFile()
 {
     //!!! n.b. obvious race condition here if different CachedFile
     // objects for same url used in more than one thread -- need to
