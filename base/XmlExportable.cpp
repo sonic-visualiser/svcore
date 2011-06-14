@@ -25,7 +25,7 @@ QString
 XmlExportable::toXmlString(QString indent,
                            QString extraAttributes) const
 {
-//    DEBUG << "XmlExportable::toXmlString" << endl;
+//    SVDEBUG << "XmlExportable::toXmlString" << endl;
 
     QString s;
 

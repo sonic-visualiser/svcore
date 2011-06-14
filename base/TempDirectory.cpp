@@ -44,7 +44,7 @@ TempDirectory::TempDirectory() :
 
 TempDirectory::~TempDirectory()
 {
-    DEBUG << "TempDirectory::~TempDirectory" << endl;
+    SVDEBUG << "TempDirectory::~TempDirectory" << endl;
 
     cleanup();
 }

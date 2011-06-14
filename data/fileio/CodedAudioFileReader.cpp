@@ -40,7 +40,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_resampler(0),
     m_resampleBuffer(0)
 {
-//    DEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
+//    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -54,7 +54,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
-//    DEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
+//    SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
@@ -72,7 +72,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-//    DEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
+//    SVDEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -92,15 +92,15 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-//    DEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
+//    SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
-        DEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
+        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         m_fileRate = 48000; // got to have something
     }
     if (m_sampleRate == 0) {
         m_sampleRate = m_fileRate;
-        DEBUG << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << endl;
+        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << endl;
     }
     if (m_fileRate != m_sampleRate) {
         std::cerr << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << std::endl;
@@ -354,7 +354,7 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
     // locking)
 
     if (!m_initialised) {
-        DEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
+        SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
         return;
     }
 

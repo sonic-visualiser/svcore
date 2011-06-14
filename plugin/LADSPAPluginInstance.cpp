@@ -207,7 +207,7 @@ LADSPAPluginInstance::setParameter(std::string id, float value)
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (id == m_descriptor->PortNames[m_controlPortsIn[i].first]) {
 #ifdef DEBUG_LADSPA
-            DEBUG << "LADSPAPluginInstance::setParameter: Found id "
+            SVDEBUG << "LADSPAPluginInstance::setParameter: Found id "
                       << id << " at control port " << i << endl;
 #endif
             setParameterValue(i, value);
@@ -220,7 +220,7 @@ void
 LADSPAPluginInstance::init(int idealChannelCount)
 {
 #ifdef DEBUG_LADSPA
-    DEBUG << "LADSPAPluginInstance::init(" << idealChannelCount << "): plugin has "
+    SVDEBUG << "LADSPAPluginInstance::init(" << idealChannelCount << "): plugin has "
 	      << m_descriptor->PortCount << " ports" << endl;
 #endif
 
@@ -232,12 +232,12 @@ LADSPAPluginInstance::init(int idealChannelCount)
 
             if (LADSPA_IS_PORT_INPUT(m_descriptor->PortDescriptors[i])) {
 #ifdef DEBUG_LADSPA
-		DEBUG << "LADSPAPluginInstance::init: port " << i << " is audio in" << endl;
+		SVDEBUG << "LADSPAPluginInstance::init: port " << i << " is audio in" << endl;
 #endif
                 m_audioPortsIn.push_back(i);
 	    } else {
 #ifdef DEBUG_LADSPA
-		DEBUG << "LADSPAPluginInstance::init: port " << i << " is audio out" << endl;
+		SVDEBUG << "LADSPAPluginInstance::init: port " << i << " is audio out" << endl;
 #endif
                 m_audioPortsOut.push_back(i);
 	    }
@@ -247,7 +247,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 	    if (LADSPA_IS_PORT_INPUT(m_descriptor->PortDescriptors[i])) {
 
 #ifdef DEBUG_LADSPA
-		DEBUG << "LADSPAPluginInstance::init: port " << i << " is control in" << endl;
+		SVDEBUG << "LADSPAPluginInstance::init: port " << i << " is control in" << endl;
 #endif
 		LADSPA_Data *data = new LADSPA_Data(0.0);
 		m_controlPortsIn.push_back(
@@ -256,7 +256,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 	    } else {
 
 #ifdef DEBUG_LADSPA
-		DEBUG << "LADSPAPluginInstance::init: port " << i << " is control out" << endl;
+		SVDEBUG << "LADSPAPluginInstance::init: port " << i << " is control out" << endl;
 #endif
 		LADSPA_Data *data = new LADSPA_Data(0.0);
 		m_controlPortsOut.push_back(
@@ -273,7 +273,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
         }
 #ifdef DEBUG_LADSPA
         else
-            DEBUG << "LADSPAPluginInstance::init - "
+            SVDEBUG << "LADSPAPluginInstance::init - "
                       << "unrecognised port type" << endl;
 #endif
     }
@@ -341,7 +341,7 @@ LADSPAPluginInstance::setIdealChannelCount(size_t channels)
 LADSPAPluginInstance::~LADSPAPluginInstance()
 {
 #ifdef DEBUG_LADSPA
-    DEBUG << "LADSPAPluginInstance::~LADSPAPluginInstance" << endl;
+    SVDEBUG << "LADSPAPluginInstance::~LADSPAPluginInstance" << endl;
 #endif
 
     if (m_instanceHandles.size() != 0) { // "isOK()"

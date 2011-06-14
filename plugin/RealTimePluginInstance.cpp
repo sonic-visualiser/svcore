@@ -28,10 +28,10 @@
 
 RealTimePluginInstance::~RealTimePluginInstance()
 {
-//    DEBUG << "RealTimePluginInstance::~RealTimePluginInstance" << endl;
+//    SVDEBUG << "RealTimePluginInstance::~RealTimePluginInstance" << endl;
 
     if (m_factory) {
-//	DEBUG << "Asking factory to release " << m_identifier << endl;
+//	SVDEBUG << "Asking factory to release " << m_identifier << endl;
 
 	m_factory->releasePlugin(this, m_identifier);
     }

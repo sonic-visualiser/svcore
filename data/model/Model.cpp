@@ -24,10 +24,10 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-//    DEBUG << "Model::~Model(" << this << ")" << endl;
+//    SVDEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
-        DEBUG << "NOTE: Model::~Model(" << this << ", \""
+        SVDEBUG << "NOTE: Model::~Model(" << this << ", \""
                   << objectName() << "\"): Model deleted "
                   << "with no aboutToDelete notification" << endl;
     }
@@ -134,7 +134,7 @@ Model::alignFromReference(size_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-//    DEBUG << "Model::getAlignmentCompletion" << endl;
+//    SVDEBUG << "Model::getAlignmentCompletion" << endl;
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
         else return 100;

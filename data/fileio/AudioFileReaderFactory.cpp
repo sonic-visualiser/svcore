@@ -73,7 +73,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 {
     QString err;
 
-//    DEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
+//    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
 
     if (!source.isOK()) {
         std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << std::endl;
@@ -81,7 +81,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
     }
 
     if (!source.isAvailable()) {
-        DEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
         return 0;
     }
 
@@ -98,7 +98,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             reader->isOK() &&
             reader->getSampleRate() != targetRate) {
 
-            DEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
 
             delete reader;
             reader = new ResamplingWavFileReader
@@ -189,7 +189,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             reader->isOK() &&
             reader->getSampleRate() != targetRate) {
 
-            DEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
 
             delete reader;
             reader = new ResamplingWavFileReader

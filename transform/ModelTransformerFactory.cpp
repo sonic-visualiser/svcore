@@ -181,7 +181,7 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
             new RealTimeEffectModelTransformer(input, transform);
 
     } else {
-        DEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
+        SVDEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
                   << transform.getIdentifier() << "\"" << endl;
         return transformer;
     }
@@ -195,7 +195,7 @@ ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message)
 {
-    DEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
+    SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
@@ -236,7 +236,7 @@ ModelTransformerFactory::transformerFinished()
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
-//    DEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
+//    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
 	std::cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << std::endl;

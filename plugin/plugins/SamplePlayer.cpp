@@ -152,14 +152,14 @@ LADSPA_Handle
 SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 {
     if (!hostDescriptor || !hostDescriptor->request_non_rt_thread) {
-	DEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
+	SVDEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
 	return 0;
     }
 
     SamplePlayer *player = new SamplePlayer(rate);
 
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
-	DEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
+	SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
 	delete player;
 	return 0;
     }
@@ -321,7 +321,7 @@ SamplePlayer::workThreadCallback(LADSPA_Handle handle)
     if (player->m_pendingProgramChange >= 0) {
 
 #ifdef DEBUG_SAMPLE_PLAYER
-	DEBUG << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << endl;
+	SVDEBUG << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << endl;
 #endif
 
 	player->m_mutex.lock();
@@ -364,7 +364,7 @@ SamplePlayer::searchSamples()
     m_samples.clear();
 
 #ifdef DEBUG_SAMPLE_PLAYER
-    DEBUG << "SamplePlayer::searchSamples: Directory is \""
+    SVDEBUG << "SamplePlayer::searchSamples: Directory is \""
 	      << m_sampleDir.toLocal8Bit().data() << "\"" << endl;
 #endif
 

@@ -32,7 +32,7 @@ std::ostream &operator<<(std::ostream &, const QUrl &);
 
 extern QDebug &getSVDebug();
 
-#define DEBUG getSVDebug()
+#define SVDEBUG getSVDebug()
 
 template <typename T>
 inline QDebug &operator<<(QDebug &d, const T &t) {
@@ -57,7 +57,7 @@ public:
     inline NoDebug &operator<<(QTextStreamFunction) { return *this; }
 };
 
-#define DEBUG NoDebug()
+#define SVDEBUG NoDebug()
 
 #endif /* !NDEBUG */
 

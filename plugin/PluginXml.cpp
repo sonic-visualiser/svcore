@@ -81,7 +81,7 @@ PluginXml::toXml(QTextStream &stream,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
-//        DEBUG << "PluginXml::toXml: parameter name \""
+//        SVDEBUG << "PluginXml::toXml: parameter name \""
 //                  << i->name.c_str() << "\" has value "
 //                  << m_plugin->getParameter(i->name) << endl;
 
@@ -174,14 +174,14 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  (QString(i->identifier.c_str())));
 
         if (attrs.value(pname) == "") {
-//            DEBUG << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name << "\")" << endl;
+//            SVDEBUG << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name << "\")" << endl;
             continue;
         }
 
         bool ok;
         float value = attrs.value(pname).trimmed().toFloat(&ok);
         if (ok) {
-//            DEBUG << "PluginXml::setParameters: setting parameter \""
+//            SVDEBUG << "PluginXml::setParameters: setting parameter \""
 //                      << i->identifier << "\" to value " << value << endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
@@ -199,7 +199,7 @@ PluginXml::setParametersFromXml(QString xml)
     int errorLine;
     int errorColumn;
 
-//    DEBUG << "PluginXml::setParametersFromXml: XML is \""
+//    SVDEBUG << "PluginXml::setParametersFromXml: XML is \""
 //              << xml.toLocal8Bit().data() << "\"" << endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
@@ -217,7 +217,7 @@ PluginXml::setParametersFromXml(QString xml)
     for (unsigned int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
-//        DEBUG << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name()//                  << "\" with value \"" << attr.value() << "\"" << endl;
+//        SVDEBUG << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name()//                  << "\" with value \"" << attr.value() << "\"" << endl;
         attrs.append(attr.name(), "", "", attr.value());
     }
 

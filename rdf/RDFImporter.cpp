@@ -219,11 +219,11 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         QString signal = results[i]["signal"].value;
         QString source = results[i]["source"].value;
 
-        DEBUG << "NOTE: Seeking signal source \"" << source                  << "\"..." << endl;
+        SVDEBUG << "NOTE: Seeking signal source \"" << source                  << "\"..." << endl;
 
         FileSource *fs = new FileSource(source, reporter);
         if (fs->isAvailable()) {
-            DEBUG << "NOTE: Source is available: Local filename is \""
+            SVDEBUG << "NOTE: Source is available: Local filename is \""
                       << fs->getLocalFilename()                      << "\"..." << endl;
         }
             
@@ -235,7 +235,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         }
 #else
         if (!fs->isAvailable()) {
-            DEBUG << "NOTE: Signal source \"" << source                      << "\" is not available, using file finder..." << endl;
+            SVDEBUG << "NOTE: Signal source \"" << source                      << "\" is not available, using file finder..." << endl;
             FileFinder *ff = FileFinder::getInstance();
             if (ff) {
                 QString path = ff->find(FileFinder::AudioFile,
@@ -425,7 +425,7 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
 
     if (v.value != "") {
-        DEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value << "\"" << endl;
+        SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value << "\"" << endl;
         m->setObjectName(v.value);
         return;
     }
@@ -436,12 +436,12 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
     
     if (v.value != "") {
-        DEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value << "\"" << endl;
+        SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value << "\"" << endl;
         m->setObjectName(v.value);
         return;
     }
 
-    DEBUG << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << endl;
+    SVDEBUG << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << endl;
 }
 
 void
@@ -741,7 +741,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         } else {
             QString timestring = SimpleSPARQLQuery::singleResultQuery
                 (s, timeQueryString.arg(thinguri), "time").value;
-//            DEBUG << "timestring = " << timestring << endl;
+//            SVDEBUG << "timestring = " << timestring << endl;
             if (timestring != "") {
                 time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;
@@ -770,7 +770,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
             modelMap[timeline][type][dimensions].end()) {
 
 /*
-            DEBUG << "Creating new model: source = " << source                      << ", type = " << type << ", dimensions = "
+            SVDEBUG << "Creating new model: source = " << source                      << ", type = " << type << ", dimensions = "
                       << dimensions << ", haveDuration = " << haveDuration
                       << ", time = " << time << ", duration = " << duration
                       << endl;
@@ -874,7 +874,7 @@ RDFImporterImpl::fillModel(Model *model,
                            std::vector<float> &values,
                            QString label)
 {
-//    DEBUG << "RDFImporterImpl::fillModel: adding point at frame " << ftime << endl;
+//    SVDEBUG << "RDFImporterImpl::fillModel: adding point at frame " << ftime << endl;
 
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
@@ -1026,7 +1026,7 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
-    DEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
+    SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
               << haveAudio << endl;
 
     value =
@@ -1060,7 +1060,7 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
-    DEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
+    SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
               << haveAnnotations << endl;
 
     SimpleSPARQLQuery::closeSingleSource(url);

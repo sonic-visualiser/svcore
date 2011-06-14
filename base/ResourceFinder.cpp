@@ -152,7 +152,7 @@ ResourceFinder::getResourcePath(QString resourceCat, QString fileName)
         
         QString prefix = *i;
 
-        DEBUG << "ResourceFinder::getResourcePath: Looking up file \"" << fileName << "\" for category \"" << resourceCat << "\" in prefix \"" << prefix << "\"" << endl;
+        SVDEBUG << "ResourceFinder::getResourcePath: Looking up file \"" << fileName << "\" for category \"" << resourceCat << "\" in prefix \"" << prefix << "\"" << endl;
 
         QString path =
             QString("%1%2/%3").arg(prefix).arg(resourceCat).arg(fileName);
@@ -278,7 +278,7 @@ ResourceFinder::unbundleResource(QString resourceCat, QString fileName)
     // This is the lowest-priority alternative path for this
     // resource, so we know that there must be no installed copy.
     // Install one to the user location.
-    DEBUG << "ResourceFinder::unbundleResource: File " << fileName << " is bundled, un-bundling it" << endl;
+    SVDEBUG << "ResourceFinder::unbundleResource: File " << fileName << " is bundled, un-bundling it" << endl;
     QString target = getResourceSavePath(resourceCat, fileName);
     QFile file(path);
     if (!file.copy(target)) {

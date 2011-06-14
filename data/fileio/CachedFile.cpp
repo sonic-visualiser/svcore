@@ -78,7 +78,7 @@ CachedFile::CachedFile(QString origin,
 {
     Profiler p("CachedFile::CachedFile[1]");
 
-    DEBUG << "CachedFile::CachedFile: origin is \""
+    SVDEBUG << "CachedFile::CachedFile: origin is \""
               << origin << "\"" << endl;
     check();
 }
@@ -93,7 +93,7 @@ CachedFile::CachedFile(QUrl url,
 {
     Profiler p("CachedFile::CachedFile[2]");
 
-    DEBUG << "CachedFile::CachedFile: url is \""
+    SVDEBUG << "CachedFile::CachedFile: url is \""
               << url.toString() << "\"" << endl;
     check();
 }
@@ -132,20 +132,20 @@ CachedFile::check()
     m_localFilename = getLocalFilenameFor(m_origin);
 
     if (!QFileInfo(m_localFilename).exists()) {
-        DEBUG << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << endl;
+        SVDEBUG << "CachedFile::check: Local file does not exist, making a note that it hasn't been retrieved" << endl;
         updateLastRetrieval(false); // empirically!
     }
 
     QDateTime lastRetrieval = getLastRetrieval();
 
     if (lastRetrieval.isValid()) {
-        DEBUG << "CachedFile::check: Valid last retrieval at "
+        SVDEBUG << "CachedFile::check: Valid last retrieval at "
                   << lastRetrieval.toString() << endl;
         // this will not be the case if the file is missing, after
         // updateLastRetrieval(false) was called above
         m_ok = true;
         if (lastRetrieval.addDays(2) < QDateTime::currentDateTime()) { //!!!
-            DEBUG << "CachedFile::check: Out of date; trying to retrieve again" << endl;
+            SVDEBUG << "CachedFile::check: Out of date; trying to retrieve again" << endl;
             // doesn't matter if retrieval fails -- we just don't
             // update the last retrieval time
 
@@ -154,17 +154,17 @@ CachedFile::check()
             // retrieval every single time if it isn't working
 
             if (retrieve()) {
-                DEBUG << "CachedFile::check: Retrieval succeeded" << endl;
+                SVDEBUG << "CachedFile::check: Retrieval succeeded" << endl;
                 updateLastRetrieval(true);
             } else {
                 std::cerr << "CachedFile::check: Retrieval failed, will try again later (using existing file for now)" << std::endl;
             }                
         }
     } else {
-        DEBUG << "CachedFile::check: No valid last retrieval" << endl;
+        SVDEBUG << "CachedFile::check: No valid last retrieval" << endl;
         // there is no acceptable file
         if (retrieve()) {
-            DEBUG << "CachedFile::check: Retrieval succeeded" << endl;
+            SVDEBUG << "CachedFile::check: Retrieval succeeded" << endl;
             m_ok = true;
             updateLastRetrieval(true);
         } else {
@@ -191,21 +191,21 @@ CachedFile::retrieve()
     FileSource fs(m_origin, m_reporter, m_preferredContentType);
 
     if (!fs.isOK() || !fs.isAvailable()) {
-        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << endl;
+        SVDEBUG << "CachedFile::retrieve: ERROR: FileSource reported unavailable or failure" << endl;
         return false;
     }
 
     fs.waitForData();
 
     if (!fs.isOK()) {
-        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported failure during receive" << endl;
+        SVDEBUG << "CachedFile::retrieve: ERROR: FileSource reported failure during receive" << endl;
         return false;
     }
 
     QString tempName = fs.getLocalFilename();
     QFile tempFile(tempName);
     if (!tempFile.exists()) {
-        DEBUG << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName << "\" does not exist" << endl;
+        SVDEBUG << "CachedFile::retrieve: ERROR: FileSource reported success, but local temporary file \"" << tempName << "\" does not exist" << endl;
         return false;
     }
 
@@ -226,7 +226,7 @@ CachedFile::retrieve()
         return false;
     }
 
-    DEBUG << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName << "\" to its home at \"" << m_localFilename << "\"" << endl;
+    SVDEBUG << "CachedFile::retrieve: Successfully copied newly retrieved file \"" << tempName << "\" to its home at \"" << m_localFilename << "\"" << endl;
 
     return true;
 }

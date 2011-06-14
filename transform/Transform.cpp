@@ -124,7 +124,7 @@ Transform::operator==(const Transform &t) const
         m_duration == t.m_duration &&
         m_sampleRate == t.m_sampleRate;
 /*
-    DEBUG << "Transform::operator==: identical = " << identical << endl;
+    SVDEBUG << "Transform::operator==: identical = " << identical << endl;
     std::cerr << "A = " << std::endl;
     std::cerr << toXmlString() << std::endl;
     std::cerr << "B = " << std::endl;
@@ -260,7 +260,7 @@ Transform::setParameters(const ParameterMap &pm)
 void
 Transform::setParameter(QString name, float value)
 {
-//    DEBUG << "Transform::setParameter(" << name//              << ") -> " << value << endl;
+//    SVDEBUG << "Transform::setParameter(" << name//              << ") -> " << value << endl;
     m_parameters[name] = value;
 }
 
@@ -279,7 +279,7 @@ Transform::setConfiguration(const ConfigurationMap &cm)
 void
 Transform::setConfigurationValue(QString name, QString value)
 {
-    DEBUG << "Transform::setConfigurationValue(" << name              << ") -> " << value << endl;
+    SVDEBUG << "Transform::setConfigurationValue(" << name              << ") -> " << value << endl;
     m_configuration[name] = value;
 }
 
@@ -461,7 +461,7 @@ Transform::stringToSummaryType(QString str)
         str == "standard deviation" || str == "sd") return StandardDeviation;
     if (str == "count") return Count;
     if (str == "") return NoSummary;
-    DEBUG << "Transform::stringToSummaryType: unknown summary type \""
+    SVDEBUG << "Transform::stringToSummaryType: unknown summary type \""
               << str << "\"" << endl;
     return NoSummary;
 }
@@ -481,7 +481,7 @@ Transform::summaryTypeToString(SummaryType type)
     case Count: return "count";
     case NoSummary: return "";
     default:
-        DEBUG << "Transform::summaryTypeToString: unexpected summary type "
+        SVDEBUG << "Transform::summaryTypeToString: unexpected summary type "
                   << int(type) << endl;
         return "";
     }

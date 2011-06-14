@@ -36,7 +36,7 @@ StorageAdviser::recommend(Criteria criteria,
 			  int maximumSize)
 {
 #ifdef DEBUG_STORAGE_ADVISER
-    DEBUG << "StorageAdviser::recommend: Criteria " << criteria 
+    SVDEBUG << "StorageAdviser::recommend: Criteria " << criteria 
               << ", minimumSize " << minimumSize
               << ", maximumSize " << maximumSize << endl;
 #endif
