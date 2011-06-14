@@ -272,8 +272,9 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
                     } else if (optional == "block_size") {
                         transform.setBlockSize(v.value.toUInt());
                     } else if (optional == "window_type") {
-                        cerr << "NOTE: can't handle window type yet (value is \""
-                             << v.value.toStdString() << "\")" << endl;
+                        transform.setWindowType
+                            (Window<float>::getTypeForName
+                             (v.value.toLower().toStdString()));
                     } else if (optional == "sample_rate") {
                         transform.setSampleRate(v.value.toFloat());
                     } else if (optional == "start") {
