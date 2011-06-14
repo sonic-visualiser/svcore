@@ -20,6 +20,8 @@
 #include <map>
 #include <vector>
 
+#include "base/Debug.h"
+
 class ProgressReporter;
 
 class SimpleSPARQLQuery

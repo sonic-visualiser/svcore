@@ -27,6 +27,8 @@
 #include <vector>
 #include <map>
 
+#include "base/Debug.h"
+
 class OSCMessage
 {
 public:

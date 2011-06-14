@@ -68,7 +68,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     Profiler profiler("MatrixFile::MatrixFile", true);
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile::MatrixFile(" << fileBase.toStdString() << ", " << int(mode) << ", " << cellSize << ", " << width << ", " << height << ")" << std::endl;
+    DEBUG << "MatrixFile::MatrixFile(" << fileBase << ", " << int(mode) << ", " << cellSize << ", " << width << ", " << height << ")" << endl;
 #endif
 
     m_createMutex.lock();
@@ -103,14 +103,14 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
 #endif
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile(" << this << ")::MatrixFile: opening " << fileName.toStdString() << "..." << std::endl;
+    std::cerr << "MatrixFile(" << this << ")::MatrixFile: opening " << fileName << "..." << std::endl;
 #endif
 
     if ((m_fd = ::open(fileName.toLocal8Bit(), m_flags, m_fmode)) < 0) {
         ::perror("Open failed");
         std::cerr << "ERROR: MatrixFile::MatrixFile: "
                   << "Failed to open cache file \""
-                  << fileName.toStdString() << "\"";
+                  << fileName << "\"";
         if (m_mode == WriteOnly) std::cerr << " for writing";
         std::cerr << std::endl;
         throw FailedToOpenFile(fileName);
@@ -130,7 +130,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
             ::perror("MatrixFile::MatrixFile: read failed");
             std::cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Failed to read header (fd " << m_fd << ", file \""
-                      << fileName.toStdString() << "\")" << std::endl;
+                      << fileName << "\")" << std::endl;
             throw FileReadFailed(fileName);
         }
         if (header[0] != m_width || header[1] != m_height) {
@@ -146,7 +146,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     ++m_refcount[fileName];
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::MatrixFile: File " << fileName.toStdString() << ", ref " << m_refcount[fileName] << std::endl;
+    std::cerr << "MatrixFile[" << m_fd << "]::MatrixFile: File " << fileName << ", ref " << m_refcount[fileName] << std::endl;
 
     std::cerr << "MatrixFile[" << m_fd << "]::MatrixFile: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
 #endif
@@ -173,9 +173,9 @@ MatrixFile::~MatrixFile()
         if (--m_refcount[m_fileName] == 0) {
 
             if (::unlink(m_fileName.toLocal8Bit())) {
-                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName.toStdString() << "\"" << std::endl;
+                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName << "\"" << std::endl;
             } else {
-                std::cerr << "deleted " << m_fileName.toStdString() << std::endl;
+                std::cerr << "deleted " << m_fileName << std::endl;
             }
         }
     }
@@ -248,7 +248,7 @@ void
 MatrixFile::close()
 {
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile::close()" << std::endl;
+    DEBUG << "MatrixFile::close()" << endl;
 #endif
     if (m_fd >= 0) {
         if (::close(m_fd) < 0) {

@@ -81,9 +81,9 @@ PluginXml::toXml(QTextStream &stream,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
 
-//        std::cerr << "PluginXml::toXml: parameter name \""
+//        DEBUG << "PluginXml::toXml: parameter name \""
 //                  << i->name.c_str() << "\" has value "
-//                  << m_plugin->getParameter(i->name) << std::endl;
+//                  << m_plugin->getParameter(i->name) << endl;
 
         stream << QString("param-%1=\"%2\" ")
             .arg(stripInvalidParameterNameCharacters(QString(i->identifier.c_str())))
@@ -119,7 +119,7 @@ PluginXml::toXml(QTextStream &stream,
     if (ATTRIBUTE != "" && ATTRIBUTE != ACCESSOR().c_str()) { \
         std::cerr << "WARNING: PluginXml::setParameters: Plugin " \
                   << #ATTRIBUTE << " does not match (attributes have \"" \
-                  << ATTRIBUTE.toStdString() << "\", my " \
+                  << ATTRIBUTE << "\", my " \
                   << #ATTRIBUTE << " is \"" << ACCESSOR() << "\")" << std::endl; \
     }
 
@@ -174,18 +174,18 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  (QString(i->identifier.c_str())));
 
         if (attrs.value(pname) == "") {
-//            std::cerr << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name.toStdString() << "\")" << std::endl;
+//            DEBUG << "PluginXml::setParameters: no parameter \"" << i->name << "\" (attribute \"" << name << "\")" << endl;
             continue;
         }
 
         bool ok;
         float value = attrs.value(pname).trimmed().toFloat(&ok);
         if (ok) {
-//            std::cerr << "PluginXml::setParameters: setting parameter \""
-//                      << i->identifier << "\" to value " << value << std::endl;
+//            DEBUG << "PluginXml::setParameters: setting parameter \""
+//                      << i->identifier << "\" to value " << value << endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
-            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname).toStdString() << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname.toStdString() << "\")" << std::endl;
+            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << std::endl;
         }
     }
 }
@@ -199,13 +199,13 @@ PluginXml::setParametersFromXml(QString xml)
     int errorLine;
     int errorColumn;
 
-//    std::cerr << "PluginXml::setParametersFromXml: XML is \""
-//              << xml.toLocal8Bit().data() << "\"" << std::endl;
+//    DEBUG << "PluginXml::setParametersFromXml: XML is \""
+//              << xml.toLocal8Bit().data() << "\"" << endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error.toStdString() << " at line " << errorLine << ", column " << errorColumn << std::endl;
+        std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << std::endl;
         std::cerr << "Input follows:" << std::endl;
-        std::cerr << xml.toStdString() << std::endl;
+        std::cerr << xml << std::endl;
         std::cerr << "Input ends." << std::endl;
         return;
     }
@@ -217,8 +217,7 @@ PluginXml::setParametersFromXml(QString xml)
     for (unsigned int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
-//        std::cerr << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name().toStdString()
-//                  << "\" with value \"" << attr.value().toStdString() << "\"" << std::endl;
+//        DEBUG << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name()//                  << "\" with value \"" << attr.value() << "\"" << endl;
         attrs.append(attr.name(), "", "", attr.value());
     }
 

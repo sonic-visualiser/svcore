@@ -24,12 +24,12 @@ const int Model::COMPLETION_UNKNOWN = -1;
 
 Model::~Model()
 {
-//    std::cerr << "Model::~Model(" << this << ")" << std::endl;
+//    DEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
-        std::cerr << "NOTE: Model::~Model(" << this << ", \""
-                  << objectName().toStdString() << "\"): Model deleted "
-                  << "with no aboutToDelete notification" << std::endl;
+        DEBUG << "NOTE: Model::~Model(" << this << ", \""
+                  << objectName() << "\"): Model deleted "
+                  << "with no aboutToDelete notification" << endl;
     }
 
     if (m_alignment) {
@@ -63,7 +63,7 @@ Model::aboutToDelete()
 
     if (m_aboutToDelete) {
         std::cerr << "WARNING: Model(" << this << ", \""
-                  << objectName().toStdString() << "\")::aboutToDelete: "
+                  << objectName() << "\")::aboutToDelete: "
                   << "aboutToDelete called more than once for the same model"
                   << std::endl;
     }
@@ -134,7 +134,7 @@ Model::alignFromReference(size_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-//    std::cerr << "Model::getAlignmentCompletion" << std::endl;
+//    DEBUG << "Model::getAlignmentCompletion" << endl;
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
         else return 100;

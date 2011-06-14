@@ -188,7 +188,7 @@ void
 FFTFileCacheWriter::allColumnsWritten()
 {
 #ifdef DEBUG_FFT_FILE_CACHE_WRITER
-    std::cerr << "FFTFileCacheWriter::allColumnsWritten" << std::endl;
+    DEBUG << "FFTFileCacheWriter::allColumnsWritten" << endl;
 #endif
     m_mfc->close();
 }

@@ -30,7 +30,7 @@ BZipFileDevice::BZipFileDevice(QString fileName) :
 
 BZipFileDevice::~BZipFileDevice()
 {
-//    std::cerr << "BZipFileDevice::~BZipFileDevice(" << m_fileName.toStdString() << ")" << std::endl;
+//    DEBUG << "BZipFileDevice::~BZipFileDevice(" << m_fileName << ")" << endl;
     if (m_bzFile) close();
 }
 
@@ -88,7 +88,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName.toStdString() << "\" for writing" << std::endl;
+//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for writing" << std::endl;
 
         setErrorString(QString());
         setOpenMode(mode);
@@ -115,7 +115,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName.toStdString() << "\" for reading" << std::endl;
+//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for reading" << std::endl;
 
         m_atEnd = false;
 
@@ -178,7 +178,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
     int bzError = BZ_OK;
     int read = BZ2_bzRead(&bzError, m_bzFile, data, maxSize);
 
-//    std::cerr << "BZipFileDevice::readData: requested " << maxSize << ", read " << read << std::endl;
+//    DEBUG << "BZipFileDevice::readData: requested " << maxSize << ", read " << read << endl;
 
     if (bzError != BZ_OK) {
         if (bzError != BZ_STREAM_END) {
@@ -187,7 +187,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
             m_ok = false;
             return -1;
         } else {
-//            std::cerr << "BZipFileDevice::readData: reached end of file" << std::endl;
+//            DEBUG << "BZipFileDevice::readData: reached end of file" << endl;
             m_atEnd = true;
         }            
     }
@@ -201,7 +201,7 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
     int bzError = BZ_OK;
     BZ2_bzWrite(&bzError, m_bzFile, (void *)data, maxSize);
 
-//    std::cerr << "BZipFileDevice::writeData: " << maxSize << " to write" << std::endl;
+//    DEBUG << "BZipFileDevice::writeData: " << maxSize << " to write" << endl;
 
     if (bzError != BZ_OK) {
         std::cerr << "BZipFileDevice::writeData: error condition" << std::endl;
@@ -210,7 +210,7 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
         return -1;
     }
 
-//    std::cerr << "BZipFileDevice::writeData: wrote " << maxSize << std::endl;
+//    DEBUG << "BZipFileDevice::writeData: wrote " << maxSize << endl;
 
     return maxSize;
 }

@@ -47,7 +47,7 @@ FileReadThread::run()
     notifyCancelled();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    std::cerr << "FileReadThread::run() exiting" << std::endl;
+    DEBUG << "FileReadThread::run() exiting" << endl;
 #endif
 }
 
@@ -55,7 +55,7 @@ void
 FileReadThread::finish()
 {
 #ifdef DEBUG_FILE_READ_THREAD
-    std::cerr << "FileReadThread::finish()" << std::endl;
+    DEBUG << "FileReadThread::finish()" << endl;
 #endif
 
     {
@@ -73,7 +73,7 @@ FileReadThread::finish()
     m_condition.wakeAll();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    std::cerr << "FileReadThread::finish() exiting" << std::endl;
+    DEBUG << "FileReadThread::finish() exiting" << endl;
 #endif
 }
 
@@ -113,7 +113,7 @@ FileReadThread::cancel(int token)
     }
 
 #ifdef DEBUG_FILE_READ_THREAD
-    std::cerr << "FileReadThread::cancel(" << token << ") waking condition" << std::endl;
+    DEBUG << "FileReadThread::cancel(" << token << ") waking condition" << endl;
 #endif
 
     m_condition.wakeAll();
@@ -216,7 +216,7 @@ FileReadThread::process()
     m_mutex.unlock();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    std::cerr << "FileReadThread::process: reading " << request.start << ", " << request.size << " on " << request.fd << std::endl;
+    DEBUG << "FileReadThread::process: reading " << request.start << ", " << request.size << " on " << request.fd << endl;
 #endif
 
     bool successful = false;
@@ -289,14 +289,14 @@ FileReadThread::process()
         m_queue.erase(token);
         m_readyRequests[token] = request;
 #ifdef DEBUG_FILE_READ_THREAD
-        std::cerr << "FileReadThread::process: done, marking as ready (success = " << m_readyRequests[token].successful << ")" << std::endl;
+        DEBUG << "FileReadThread::process: done, marking as ready (success = " << m_readyRequests[token].successful << ")" << endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_READ_THREAD
         if (m_exiting) {
-            std::cerr << "FileReadThread::process: exiting" << std::endl;
+            DEBUG << "FileReadThread::process: exiting" << endl;
         } else {
-            std::cerr << "FileReadThread::process: request disappeared" << std::endl;
+            DEBUG << "FileReadThread::process: request disappeared" << endl;
         }
 #endif
     }
@@ -312,7 +312,7 @@ FileReadThread::notifyCancelled()
         int token = *m_newlyCancelled.begin();
 
 #ifdef DEBUG_FILE_READ_THREAD
-        std::cerr << "FileReadThread::notifyCancelled: token " << token << std::endl;
+        DEBUG << "FileReadThread::notifyCancelled: token " << token << endl;
 #endif
 
         m_newlyCancelled.erase(token);

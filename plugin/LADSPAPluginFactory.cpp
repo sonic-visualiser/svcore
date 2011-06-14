@@ -227,7 +227,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
         else logmax = log10f(maximum);
     }
 
-//    std::cerr << "LADSPAPluginFactory::getPortDefault: hint = " << d << std::endl;
+//    DEBUG << "LADSPAPluginFactory::getPortDefault: hint = " << d << endl;
 
     if (!LADSPA_IS_HINT_HAS_DEFAULT(d)) {
 	
@@ -349,8 +349,8 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 	m_instances.insert(instance);
 
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-        std::cerr << "LADSPAPluginFactory::instantiatePlugin("
-                  << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
+        DEBUG << "LADSPAPluginFactory::instantiatePlugin("
+                  << identifier << ": now have " << m_instances.size() << " instances" << endl;
 #endif
 
 	return instance;
@@ -384,7 +384,7 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
 	PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
 	if (isoname == soname) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-	    std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " is still in use for plugin " << ilabel.toStdString() << std::endl;
+	    DEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " is still in use for plugin " << ilabel << endl;
 #endif
 	    stillInUse = true;
 	    break;
@@ -394,15 +394,15 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
     if (!stillInUse) {
         if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            std::cerr << "LADSPAPluginFactory::releasePlugin: dll " << soname.toStdString() << " no longer in use, unloading" << std::endl;
+            DEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " no longer in use, unloading" << endl;
 #endif
             unloadLibrary(soname);
         }
     }
 
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-    std::cerr << "LADSPAPluginFactory::releasePlugin("
-                  << identifier.toStdString() << ": now have " << m_instances.size() << " instances" << std::endl;
+    DEBUG << "LADSPAPluginFactory::releasePlugin("
+                  << identifier << ": now have " << m_instances.size() << " instances" << endl;
 #endif
 }
 
@@ -415,7 +415,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
     if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
 	loadLibrary(soname);
 	if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
-	    std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: loadLibrary failed for " << soname.toStdString() << std::endl;
+	    std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: loadLibrary failed for " << soname << std::endl;
 	    return 0;
 	}
     }
@@ -426,7 +426,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
 	DLSYM(libraryHandle, "ladspa_descriptor");
 
     if (!fn) {
-	std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No descriptor function in library " << soname.toStdString() << std::endl;
+	std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No descriptor function in library " << soname << std::endl;
 	return 0;
     }
 
@@ -438,7 +438,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
 	++index;
     }
 
-    std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No such plugin as " << label.toStdString() << " in library " << soname.toStdString() << std::endl;
+    std::cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No such plugin as " << label << " in library " << soname << std::endl;
 
     return 0;
 }
@@ -449,13 +449,13 @@ LADSPAPluginFactory::loadLibrary(QString soName)
     void *libraryHandle = DLOPEN(soName, RTLD_NOW);
     if (libraryHandle) {
         m_libraryHandles[soName] = libraryHandle;
-        std::cerr << "LADSPAPluginFactory::loadLibrary: Loaded library \"" << soName.toStdString() << "\"" << std::endl;
+        DEBUG << "LADSPAPluginFactory::loadLibrary: Loaded library \"" << soName << "\"" << endl;
         return;
     }
 
     if (QFileInfo(soName).exists()) {
         DLERROR();
-        std::cerr << "LADSPAPluginFactory::loadLibrary: Library \"" << soName.toStdString() << "\" exists, but failed to load it" << std::endl;
+        std::cerr << "LADSPAPluginFactory::loadLibrary: Library \"" << soName << "\" exists, but failed to load it" << std::endl;
         return;
     }
 
@@ -468,7 +468,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 	 i != pathList.end(); ++i) {
         
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-        std::cerr << "Looking at: " << (*i).toStdString() << std::endl;
+        DEBUG << "Looking at: " << (*i) << endl;
 #endif
 
         QDir dir(*i, PLUGIN_GLOB,
@@ -477,7 +477,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 
         if (QFileInfo(dir.filePath(fileName)).exists()) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            std::cerr << "Loading: " << fileName.toStdString() << std::endl;
+            std::cerr << "Loading: " << fileName << std::endl;
 #endif
             libraryHandle = DLOPEN(dir.filePath(fileName), RTLD_NOW);
             if (libraryHandle) {
@@ -490,7 +490,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
             QString file = dir.filePath(dir[j]);
             if (QFileInfo(file).baseName() == base) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-                std::cerr << "Loading: " << file.toStdString() << std::endl;
+                std::cerr << "Loading: " << file << std::endl;
 #endif
                 libraryHandle = DLOPEN(file, RTLD_NOW);
                 if (libraryHandle) {
@@ -501,7 +501,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
         }
     }
 
-    std::cerr << "LADSPAPluginFactory::loadLibrary: Failed to locate plugin library \"" << soName.toStdString() << "\"" << std::endl;
+    std::cerr << "LADSPAPluginFactory::loadLibrary: Failed to locate plugin library \"" << soName << "\"" << std::endl;
 }
 
 void
@@ -509,7 +509,7 @@ LADSPAPluginFactory::unloadLibrary(QString soName)
 {
     LibraryHandleMap::iterator li = m_libraryHandles.find(soName);
     if (li != m_libraryHandles.end()) {
-//	std::cerr << "unloading " << soname.toStdString() << std::endl;
+//	DEBUG << "unloading " << soname << endl;
 	DLCLOSE(m_libraryHandles[soName]);
 	m_libraryHandles.erase(li);
     }
@@ -633,13 +633,13 @@ LADSPAPluginFactory::discoverPlugins()
 
     std::vector<QString> pathList = getPluginPath();
 
-//    std::cerr << "LADSPAPluginFactory::discoverPlugins - "
+//    DEBUG << "LADSPAPluginFactory::discoverPlugins - "
 //	      << "discovering plugins; path is ";
 //    for (std::vector<QString>::iterator i = pathList.begin();
 //	 i != pathList.end(); ++i) {
-//	std::cerr << "[" << i->toStdString() << "] ";
+//	DEBUG << "[" << i-<< "] ";
 //    }
-//    std::cerr << std::endl;
+//    DEBUG << endl;
 
 #ifdef HAVE_LRDF
     // read the description files 
@@ -684,7 +684,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 
     if (!libraryHandle) {
         std::cerr << "WARNING: LADSPAPluginFactory::discoverPlugins: couldn't load plugin library "
-                  << soname.toStdString() << " - " << DLERROR() << std::endl;
+                  << soname << " - " << DLERROR() << std::endl;
         return;
     }
 
@@ -692,7 +692,7 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 	DLSYM(libraryHandle, "ladspa_descriptor");
 
     if (!fn) {
-	std::cerr << "WARNING: LADSPAPluginFactory::discoverPlugins: No descriptor function in " << soname.toStdString() << std::endl;
+	std::cerr << "WARNING: LADSPAPluginFactory::discoverPlugins: No descriptor function in " << soname << std::endl;
 	return;
     }
 
@@ -722,8 +722,8 @@ LADSPAPluginFactory::discoverPlugins(QString soname)
 		
         if (m_lrdfTaxonomy[descriptor->UniqueID] != "") {
             m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->UniqueID];
-//            std::cerr << "set id \"" << identifier.toStdString() << "\" to cat \"" << m_taxonomy[identifier].toStdString() << "\" from LRDF" << std::endl;
-//            std::cout << identifier.toStdString() << "::" << m_taxonomy[identifier].toStdString() << std::endl;
+//            std::cerr << "set id \"" << identifier << "\" to cat \"" << m_taxonomy[identifier] << "\" from LRDF" << std::endl;
+//            std::cout << identifier << "::" << m_taxonomy[identifier] << std::endl;
         }
 
 	QString category = m_taxonomy[identifier];
@@ -818,22 +818,22 @@ LADSPAPluginFactory::generateFallbackCategories()
             path.push_back(p);
 	    p.replace("/lib/", "/share/");
 	    path.push_back(p);
-//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << p.toStdString() << std::endl;
+//	    DEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << p << endl;
 	}
 	path.push_back(pluginPath[i]);
-//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i].toStdString() << std::endl;
+//	DEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i] << endl;
     }
 
     for (size_t i = 0; i < path.size(); ++i) {
 
 	QDir dir(path[i], "*.cat");
 
-//	std::cerr << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i].toStdString() << " has " << dir.count() << " .cat files" << std::endl;
+//	DEBUG << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << endl;
 	for (unsigned int j = 0; j < dir.count(); ++j) {
 
 	    QFile file(path[i] + "/" + dir[j]);
 
-//	    std::cerr << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i].toStdString() + "/" + dir[j].toStdString()) << std::endl;
+//	    DEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
 
 	    if (file.open(QIODevice::ReadOnly)) {
 //		    std::cerr << "...opened" << std::endl;
@@ -842,12 +842,12 @@ LADSPAPluginFactory::generateFallbackCategories()
 
 		while (!stream.atEnd()) {
 		    line = stream.readLine();
-//		    std::cerr << "line is: \"" << line.toStdString() << "\"" << std::endl;
+//		    std::cerr << "line is: \"" << line << "\"" << std::endl;
 		    QString id = PluginIdentifier::canonicalise
                         (line.section("::", 0, 0));
 		    QString cat = line.section("::", 1, 1);
 		    m_taxonomy[id] = cat;
-//		    std::cerr << "set id \"" << id.toStdString() << "\" to cat \"" << cat.toStdString() << "\"" << std::endl;
+//		    std::cerr << "set id \"" << id << "\" to cat \"" << cat << "\"" << std::endl;
 		}
 	    }
 	}

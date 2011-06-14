@@ -57,7 +57,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     m_writer = new WavFileWriter(path, sampleRate, channels,
                                  WavFileWriter::WriteToTarget);
     if (!m_writer->isOK()) {
-        std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError().toStdString() << std::endl;
+        std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << std::endl;
         delete m_writer; 
         m_writer = 0;
         return;
@@ -109,11 +109,11 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
     if (!m_writer) return false;
 
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-//    std::cerr << "WritableWaveFileModel::addSamples(" << count << ")" << std::endl;
+//    DEBUG << "WritableWaveFileModel::addSamples(" << count << ")" << endl;
 #endif
 
     if (!m_writer->writeSamples(samples, count)) {
-        std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError().toStdString() << std::endl;
+        std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << std::endl;
         return false;
     }
 
@@ -123,12 +123,12 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 
     if (m_reader && m_reader->getChannelCount() == 0) {
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        std::cerr << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << std::endl;
+        DEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << endl;
 #endif
         m_reader->updateFrameCount();
     } else if (++updateCounter == 100) {
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        std::cerr << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << std::endl;
+        DEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << endl;
 #endif
         if (m_reader) m_reader->updateFrameCount();
         updateCounter = 0;
@@ -141,7 +141,7 @@ bool
 WritableWaveFileModel::isOK() const
 {
     bool ok = (m_writer && m_writer->isOK());
-//    std::cerr << "WritableWaveFileModel::isOK(): ok = " << ok << std::endl;
+//    DEBUG << "WritableWaveFileModel::isOK(): ok = " << ok << endl;
     return ok;
 }
 
@@ -164,7 +164,7 @@ WritableWaveFileModel::setCompletion(int completion)
 size_t
 WritableWaveFileModel::getFrameCount() const
 {
-//    std::cerr << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << std::endl;
+//    DEBUG << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << endl;
     return m_frameCount;
 }
 

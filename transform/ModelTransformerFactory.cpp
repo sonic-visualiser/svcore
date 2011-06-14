@@ -87,7 +87,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+    std::cerr << "last configuration: " << configurationXml << std::endl;
 
     Vamp::PluginBase *plugin = 0;
 
@@ -181,8 +181,8 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
             new RealTimeEffectModelTransformer(input, transform);
 
     } else {
-        std::cerr << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
+        DEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
+                  << transform.getIdentifier() << "\"" << endl;
         return transformer;
     }
 
@@ -195,7 +195,7 @@ ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message)
 {
-    std::cerr << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << std::endl;
+    DEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
@@ -236,7 +236,7 @@ ModelTransformerFactory::transformerFinished()
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
-//    std::cerr << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << std::endl;
+//    DEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
 	std::cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << std::endl;

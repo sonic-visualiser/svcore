@@ -195,8 +195,8 @@ ModelDataTableModel::findText(QString text) const
 void
 ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 {
-//    std::cerr << "ModelDataTableModel::sort(" << column << ", " << sortOrder
-//              << ")" << std::endl;
+//    DEBUG << "ModelDataTableModel::sort(" << column << ", " << sortOrder
+//              << ")" << endl;
     int prevCurrent = getCurrentRow();
     if (m_sortColumn != column) {
         clearSort();
@@ -362,7 +362,7 @@ ModelDataTableModel::resortAlphabetical() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
-//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first.toStdString() << std::endl;
+//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first << std::endl;
         m_rsort.push_back(i->second);
     }
 

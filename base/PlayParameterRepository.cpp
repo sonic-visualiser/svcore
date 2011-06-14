@@ -124,7 +124,7 @@ void
 PlayParameterRepository::playPluginConfigurationChanged(QString config)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-//    std::cerr << "PlayParameterRepository::playPluginConfigurationChanged" << std::endl;
+//    DEBUG << "PlayParameterRepository::playPluginConfigurationChanged" << endl;
     for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {

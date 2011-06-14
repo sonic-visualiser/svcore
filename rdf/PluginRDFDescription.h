@@ -20,6 +20,8 @@
 #include <QStringList>
 #include <map>
 
+#include "base/Debug.h"
+
 class PluginRDFDescription
 {
 public:

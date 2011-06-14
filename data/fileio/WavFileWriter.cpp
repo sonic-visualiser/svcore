@@ -98,9 +98,9 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
                           MultiSelection *selection)
 {
     if (source->getChannelCount() != m_channels) {
-        std::cerr << "WavFileWriter::writeModel: Wrong number of channels ("
+        DEBUG << "WavFileWriter::writeModel: Wrong number of channels ("
                   << source->getChannelCount()  << " != " << m_channels << ")"
-                  << std::endl;
+                  << endl;
         m_error = QString("Failed to write model to audio file '%1'")
             .arg(getWriteFilename());
         return false;

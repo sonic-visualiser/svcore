@@ -34,7 +34,7 @@ PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     m_pluginUri = indexer->getURIForPluginId(pluginId);
     if (m_pluginUri == "") {
         cerr << "PluginRDFDescription: WARNING: No RDF description available for plugin ID \""
-             << pluginId.toStdString() << "\"" << endl;
+             << pluginId << "\"" << endl;
     } else {
         // All the data we need should be in our RDF model already:
         // if it's not there, we don't know where to find it anyway
@@ -299,14 +299,14 @@ PluginRDFDescription::indexOutputs()
 
     if (!query.isOK()) {
         cerr << "ERROR: PluginRDFDescription::index: ERROR: Failed to query outputs for <"
-             << m_pluginUri.toStdString() << ">: "
-             << query.getErrorString().toStdString() << endl;
+             << m_pluginUri << ">: "
+             << query.getErrorString() << endl;
         return false;
     }
 
     if (results.empty()) {
-        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
-             << m_pluginUri.toStdString() << ">" << endl;
+        DEBUG << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
+             << m_pluginUri << ">" << endl;
         return false;
     }
 
