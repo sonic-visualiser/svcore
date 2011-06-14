@@ -47,7 +47,7 @@ FileReadThread::run()
     notifyCancelled();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    DEBUG << "FileReadThread::run() exiting" << endl;
+    SVDEBUG << "FileReadThread::run() exiting" << endl;
 #endif
 }
 
@@ -55,7 +55,7 @@ void
 FileReadThread::finish()
 {
 #ifdef DEBUG_FILE_READ_THREAD
-    DEBUG << "FileReadThread::finish()" << endl;
+    SVDEBUG << "FileReadThread::finish()" << endl;
 #endif
 
     {
@@ -73,7 +73,7 @@ FileReadThread::finish()
     m_condition.wakeAll();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    DEBUG << "FileReadThread::finish() exiting" << endl;
+    SVDEBUG << "FileReadThread::finish() exiting" << endl;
 #endif
 }
 
@@ -113,7 +113,7 @@ FileReadThread::cancel(int token)
     }
 
 #ifdef DEBUG_FILE_READ_THREAD
-    DEBUG << "FileReadThread::cancel(" << token << ") waking condition" << endl;
+    SVDEBUG << "FileReadThread::cancel(" << token << ") waking condition" << endl;
 #endif
 
     m_condition.wakeAll();
@@ -216,7 +216,7 @@ FileReadThread::process()
     m_mutex.unlock();
 
 #ifdef DEBUG_FILE_READ_THREAD
-    DEBUG << "FileReadThread::process: reading " << request.start << ", " << request.size << " on " << request.fd << endl;
+    SVDEBUG << "FileReadThread::process: reading " << request.start << ", " << request.size << " on " << request.fd << endl;
 #endif
 
     bool successful = false;
@@ -289,14 +289,14 @@ FileReadThread::process()
         m_queue.erase(token);
         m_readyRequests[token] = request;
 #ifdef DEBUG_FILE_READ_THREAD
-        DEBUG << "FileReadThread::process: done, marking as ready (success = " << m_readyRequests[token].successful << ")" << endl;
+        SVDEBUG << "FileReadThread::process: done, marking as ready (success = " << m_readyRequests[token].successful << ")" << endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_READ_THREAD
         if (m_exiting) {
-            DEBUG << "FileReadThread::process: exiting" << endl;
+            SVDEBUG << "FileReadThread::process: exiting" << endl;
         } else {
-            DEBUG << "FileReadThread::process: request disappeared" << endl;
+            SVDEBUG << "FileReadThread::process: request disappeared" << endl;
         }
 #endif
     }
@@ -312,7 +312,7 @@ FileReadThread::notifyCancelled()
         int token = *m_newlyCancelled.begin();
 
 #ifdef DEBUG_FILE_READ_THREAD
-        DEBUG << "FileReadThread::notifyCancelled: token " << token << endl;
+        SVDEBUG << "FileReadThread::notifyCancelled: token " << token << endl;
 #endif
 
         m_newlyCancelled.erase(token);

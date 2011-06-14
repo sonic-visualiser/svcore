@@ -168,7 +168,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     m_isRDF = true;
 
     if (transformResults.empty()) {
-        DEBUG << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
+        SVDEBUG << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
         return transforms;
     }
 
@@ -290,7 +290,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
             }
         }
 
-        DEBUG << "RDFTransformFactory: NOTE: Transform is: " << endl;
+        SVDEBUG << "RDFTransformFactory: NOTE: Transform is: " << endl;
         cerr << transform.toXmlString() << endl;
 
         transforms.push_back(transform);

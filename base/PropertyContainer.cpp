@@ -192,7 +192,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
         break;
 
     case InvalidProperty:
-        DEBUG << "PropertyContainer::convertPropertyStrings: Invalid property name \"" << name << "\"" << endl;
+        SVDEBUG << "PropertyContainer::convertPropertyStrings: Invalid property name \"" << name << "\"" << endl;
         return false;
     }
 
@@ -207,7 +207,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
         std::cerr << "PropertyContainer::convertPropertyStrings: Unable to parse value string \"" << valueString << "\"" << std::endl;
         return false;
     } else if (i < min || i > max) {
-        DEBUG << "PropertyContainer::convertPropertyStrings: Property value \"" << i << "\" outside valid range " << min << " to " << max << endl;
+        SVDEBUG << "PropertyContainer::convertPropertyStrings: Property value \"" << i << "\" outside valid range " << min << " to " << max << endl;
         return false;
     }
 

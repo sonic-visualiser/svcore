@@ -43,7 +43,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (!m_transform.getBlockSize()) m_transform.setBlockSize(1024);
 
-//    DEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
+//    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
 
     RealTimePluginFactory *factory =
 	RealTimePluginFactory::instanceFor(pluginId);
@@ -110,7 +110,7 @@ RealTimeEffectModelTransformer::getConformingInput()
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	DEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
+	SVDEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -122,7 +122,7 @@ RealTimeEffectModelTransformer::run()
     if (!input) return;
 
     while (!input->isReady() && !m_abandoned) {
-        DEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
+        SVDEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
     if (m_abandoned) return;

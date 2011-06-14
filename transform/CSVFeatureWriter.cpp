@@ -64,7 +64,7 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
 {
     FileFeatureWriter::setParameters(params);
 
-    DEBUG << "CSVFeatureWriter::setParameters" << endl;
+    SVDEBUG << "CSVFeatureWriter::setParameters" << endl;
     for (map<string, string>::iterator i = params.begin();
          i != params.end(); ++i) {
         cerr << i->first << " -> " << i->second << endl;

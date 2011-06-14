@@ -53,7 +53,7 @@ WaveFileModel::WaveFileModel(FileSource source, size_t targetRate) :
         m_reader = AudioFileReaderFactory::createThreadingReader
             (m_source, targetRate);
         if (m_reader) {
-            DEBUG << "WaveFileModel::WaveFileModel: reader rate: "
+            SVDEBUG << "WaveFileModel::WaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << endl;
         }
     }
@@ -115,7 +115,7 @@ WaveFileModel::isReady(int *completion) const
         prevCompletion = *completion;
     }
 #ifdef DEBUG_WAVE_FILE_MODEL
-    DEBUG << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << endl;
+    SVDEBUG << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << endl;
 #endif
     return ready;
 }
@@ -210,7 +210,7 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-//    DEBUG << "WaveFileModel::getValues(" << channel << ", "
+//    SVDEBUG << "WaveFileModel::getValues(" << channel << ", "
 //              << start << ", " << end << "): calling reader" << endl;
 #endif
 
@@ -534,7 +534,7 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    DEBUG << "returning " << ranges.size() << " ranges" << endl;
+    SVDEBUG << "returning " << ranges.size() << " ranges" << endl;
 #endif
     return;
 }
@@ -607,7 +607,7 @@ WaveFileModel::fillCache()
     m_fillThread->start();
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    DEBUG << "WaveFileModel::fillCache: started fill thread" << endl;
+    SVDEBUG << "WaveFileModel::fillCache: started fill thread" << endl;
 #endif
 }   
 
@@ -617,7 +617,7 @@ WaveFileModel::fillTimerTimedOut()
     if (m_fillThread) {
 	size_t fillExtent = m_fillThread->getFillExtent();
 #ifdef DEBUG_WAVE_FILE_MODEL
-        DEBUG << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+        SVDEBUG << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
 	if (fillExtent > m_lastFillExtent) {
 	    emit modelChanged(m_lastFillExtent, fillExtent);
@@ -625,7 +625,7 @@ WaveFileModel::fillTimerTimedOut()
 	}
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
-        DEBUG << "WaveFileModel::fillTimerTimedOut: no thread" << endl;
+        SVDEBUG << "WaveFileModel::fillTimerTimedOut: no thread" << endl;
 #endif
 	emit modelChanged();
     }
@@ -646,7 +646,7 @@ WaveFileModel::cacheFilled()
     emit modelChanged();
     emit ready();
 #ifdef DEBUG_WAVE_FILE_MODEL
-    DEBUG << "WaveFileModel::cacheFilled" << endl;
+    SVDEBUG << "WaveFileModel::cacheFilled" << endl;
 #endif
 }
 
@@ -669,7 +669,7 @@ WaveFileModel::RangeCacheFillThread::run()
 
     if (updating) {
         while (channels == 0 && !m_model.m_exiting) {
-//            DEBUG << "WaveFileModel::fill: Waiting for channels..." << endl;
+//            SVDEBUG << "WaveFileModel::fill: Waiting for channels..." << endl;
             sleep(1);
             channels = m_model.getChannelCount();
         }
@@ -690,11 +690,11 @@ WaveFileModel::RangeCacheFillThread::run()
         updating = m_model.m_reader->isUpdating();
         m_frameCount = m_model.getFrameCount();
 
-//        DEBUG << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << endl;
+//        SVDEBUG << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << endl;
 
         while (frame < m_frameCount) {
 
-//            DEBUG << "WaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
+//            SVDEBUG << "WaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
 
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 

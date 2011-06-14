@@ -167,7 +167,7 @@ OSCQueue::postMessage(OSCMessage message)
             return;
         }
         std::cerr << "WARNING: OSCQueue::postMessage: OSC message queue (capacity " << m_buffer.getSize() << " is full!" << std::endl;
-        DEBUG << "Waiting for something to be processed" << endl;
+        SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
 #else
@@ -178,7 +178,7 @@ OSCQueue::postMessage(OSCMessage message)
 
     OSCMessage *mp = new OSCMessage(message);
     m_buffer.write(&mp, 1);
-    DEBUG << "OSCQueue::postMessage: Posted OSC message: target "
+    SVDEBUG << "OSCQueue::postMessage: Posted OSC message: target "
               << message.getTarget() << ", target data " << message.getTargetData()
               << ", method " << message.getMethod() << endl;
     emit messagesAvailable();
@@ -219,7 +219,7 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
         return false;
     }
 
-    DEBUG << "OSCQueue::parseOSCPath: good path \"" << path              << "\"" << endl;
+    SVDEBUG << "OSCQueue::parseOSCPath: good path \"" << path              << "\"" << endl;
 
     return true;
 }

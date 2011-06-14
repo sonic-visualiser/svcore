@@ -43,7 +43,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
-//    DEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
     QString pluginId = transform.getPluginIdentifier();
 
@@ -86,7 +86,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	return;
     }
 
-    DEBUG << "Initialising feature extraction plugin with channels = "
+    SVDEBUG << "Initialising feature extraction plugin with channels = "
               << channelCount << ", step = " << m_transform.getStepSize()
               << ", block = " << m_transform.getBlockSize() << endl;
 
@@ -152,7 +152,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     }
     
     for (size_t i = 0; i < outputs.size(); ++i) {
-//        DEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
+//        SVDEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
 	    m_outputFeatureNo = i;
@@ -378,7 +378,7 @@ FeatureExtractionModelTransformer::createOutputModel()
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-//    DEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
     delete m_plugin;
     delete m_descriptor;
 }
@@ -386,12 +386,12 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 DenseTimeValueModel *
 FeatureExtractionModelTransformer::getConformingInput()
 {
-//    DEBUG << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << endl;
 
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	DEBUG << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
+	SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -405,7 +405,7 @@ FeatureExtractionModelTransformer::run()
     if (!m_output) return;
 
     while (!input->isReady() && !m_abandoned) {
-        DEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
     if (m_abandoned) return;
@@ -499,7 +499,7 @@ FeatureExtractionModelTransformer::run()
                 contextStart + contextDuration) break;
         }
 
-//	DEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
+//	SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
 //		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
 //                  << blockSize << endl;
 
@@ -636,7 +636,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
-//    DEBUG << "FeatureExtractionModelTransformer::addFeature("
+//    SVDEBUG << "FeatureExtractionModelTransformer::addFeature("
 //	      << blockFrame << ")" << endl;
 
     int binCount = 1;
@@ -777,7 +777,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	model->setColumn(frame / model->getResolution(), values);
 
     } else {
-        DEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
     }
 }
 
@@ -789,7 +789,7 @@ FeatureExtractionModelTransformer::setCompletion(int completion)
 	binCount = m_descriptor->binCount;
     }
 
-//    DEBUG << "FeatureExtractionModelTransformer::setCompletion("
+//    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
 //              << completion << ")" << endl;
 
     if (isOutput<SparseOneDimensionalModel>()) {

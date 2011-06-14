@@ -109,7 +109,7 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
     if (!m_writer) return false;
 
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-//    DEBUG << "WritableWaveFileModel::addSamples(" << count << ")" << endl;
+//    SVDEBUG << "WritableWaveFileModel::addSamples(" << count << ")" << endl;
 #endif
 
     if (!m_writer->writeSamples(samples, count)) {
@@ -123,12 +123,12 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 
     if (m_reader && m_reader->getChannelCount() == 0) {
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        DEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << endl;
+        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << endl;
 #endif
         m_reader->updateFrameCount();
     } else if (++updateCounter == 100) {
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        DEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << endl;
+        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << endl;
 #endif
         if (m_reader) m_reader->updateFrameCount();
         updateCounter = 0;
@@ -141,7 +141,7 @@ bool
 WritableWaveFileModel::isOK() const
 {
     bool ok = (m_writer && m_writer->isOK());
-//    DEBUG << "WritableWaveFileModel::isOK(): ok = " << ok << endl;
+//    SVDEBUG << "WritableWaveFileModel::isOK(): ok = " << ok << endl;
     return ok;
 }
 
@@ -164,7 +164,7 @@ WritableWaveFileModel::setCompletion(int completion)
 size_t
 WritableWaveFileModel::getFrameCount() const
 {
-//    DEBUG << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << endl;
+//    SVDEBUG << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << endl;
     return m_frameCount;
 }
 

@@ -157,7 +157,7 @@ FFTFileCacheReader::getPhaseAt(size_t x, size_t y) const
 void
 FFTFileCacheReader::getValuesAt(size_t x, size_t y, float &real, float &imag) const
 {
-//    DEBUG << "FFTFileCacheReader::getValuesAt(" << x << "," << y << ")" << endl;
+//    SVDEBUG << "FFTFileCacheReader::getValuesAt(" << x << "," << y << ")" << endl;
 
     switch (m_storageType) {
 
@@ -216,7 +216,7 @@ FFTFileCacheReader::haveSetColumnAt(size_t x) const
 {
     if (m_readbuf && m_readbufGood &&
         (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
-//        DEBUG << "FFTFileCacheReader::haveSetColumnAt: short-circuiting; we know about this one" << endl;
+//        SVDEBUG << "FFTFileCacheReader::haveSetColumnAt: short-circuiting; we know about this one" << endl;
         return true;
     }
     return m_mfc->haveSetColumnAt(x);
@@ -236,7 +236,7 @@ FFTFileCacheReader::populateReadBuf(size_t x) const
 {
     Profiler profiler("FFTFileCacheReader::populateReadBuf", false);
 
-//    DEBUG << "FFTFileCacheReader::populateReadBuf(" << x << ")" << endl;
+//    SVDEBUG << "FFTFileCacheReader::populateReadBuf(" << x << ")" << endl;
 
     if (!m_readbuf) {
         m_readbuf = new char[m_mfc->getHeight() * 2 * m_mfc->getCellSize()];

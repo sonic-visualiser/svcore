@@ -69,7 +69,7 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	const LADSPA_Descriptor *descriptor = ddesc->LADSPA_Plugin;
 	if (!descriptor) continue;
 	
-//	DEBUG << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << endl;
+//	SVDEBUG << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << endl;
 
 	list.push_back(*i);
 	list.push_back(descriptor->Name);

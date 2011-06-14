@@ -26,7 +26,7 @@ LogRange::mapRange(float &min, float &max, float logthresh)
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
 
-//    DEBUG << "LogRange::mapRange: min = " << min << ", max = " << max << endl;
+//    SVDEBUG << "LogRange::mapRange: min = " << min << ", max = " << max << endl;
 
     if (min >= 0.f) {
 
@@ -35,7 +35,7 @@ LogRange::mapRange(float &min, float &max, float logthresh)
         if (min == 0.f) min = std::min(logthresh, max);
         else min = log10f(min);
 
-//        DEBUG << "LogRange::mapRange: positive: min = " << min << ", max = " << max << endl;
+//        SVDEBUG << "LogRange::mapRange: positive: min = " << min << ", max = " << max << endl;
 
     } else if (max <= 0.f) {
         
@@ -46,7 +46,7 @@ LogRange::mapRange(float &min, float &max, float logthresh)
         
         std::swap(min, max);
         
-//        DEBUG << "LogRange::mapRange: negative: min = " << min << ", max = " << max << endl;
+//        SVDEBUG << "LogRange::mapRange: negative: min = " << min << ", max = " << max << endl;
 
     } else {
         
@@ -55,7 +55,7 @@ LogRange::mapRange(float &min, float &max, float logthresh)
         max = log10f(std::max(max, -min));
         min = std::min(logthresh, max);
 
-//        DEBUG << "LogRange::mapRange: spanning: min = " << min << ", max = " << max << endl;
+//        SVDEBUG << "LogRange::mapRange: spanning: min = " << min << ", max = " << max << endl;
     }
 
     if (min == max) min = max - 1;
@@ -104,7 +104,7 @@ LogRange::useLogScale(std::vector<float> values)
     float sd0 = sd(values, 0, mi);
     float sd1 = sd(values, mi, values.size() - mi);
 
-    DEBUG << "LogRange::useLogScale: sd0 = "
+    SVDEBUG << "LogRange::useLogScale: sd0 = "
               << sd0 << ", sd1 = " << sd1 << endl;
 
     if (sd0 == 0 || sd1 == 0) return false;

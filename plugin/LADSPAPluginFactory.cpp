@@ -227,7 +227,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
         else logmax = log10f(maximum);
     }
 
-//    DEBUG << "LADSPAPluginFactory::getPortDefault: hint = " << d << endl;
+//    SVDEBUG << "LADSPAPluginFactory::getPortDefault: hint = " << d << endl;
 
     if (!LADSPA_IS_HINT_HAS_DEFAULT(d)) {
 	
@@ -349,7 +349,7 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 	m_instances.insert(instance);
 
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-        DEBUG << "LADSPAPluginFactory::instantiatePlugin("
+        SVDEBUG << "LADSPAPluginFactory::instantiatePlugin("
                   << identifier << ": now have " << m_instances.size() << " instances" << endl;
 #endif
 
@@ -384,7 +384,7 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
 	PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
 	if (isoname == soname) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-	    DEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " is still in use for plugin " << ilabel << endl;
+	    SVDEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " is still in use for plugin " << ilabel << endl;
 #endif
 	    stillInUse = true;
 	    break;
@@ -394,14 +394,14 @@ LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
     if (!stillInUse) {
         if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            DEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " no longer in use, unloading" << endl;
+            SVDEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " no longer in use, unloading" << endl;
 #endif
             unloadLibrary(soname);
         }
     }
 
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-    DEBUG << "LADSPAPluginFactory::releasePlugin("
+    SVDEBUG << "LADSPAPluginFactory::releasePlugin("
                   << identifier << ": now have " << m_instances.size() << " instances" << endl;
 #endif
 }
@@ -449,7 +449,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
     void *libraryHandle = DLOPEN(soName, RTLD_NOW);
     if (libraryHandle) {
         m_libraryHandles[soName] = libraryHandle;
-        DEBUG << "LADSPAPluginFactory::loadLibrary: Loaded library \"" << soName << "\"" << endl;
+        SVDEBUG << "LADSPAPluginFactory::loadLibrary: Loaded library \"" << soName << "\"" << endl;
         return;
     }
 
@@ -468,7 +468,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 	 i != pathList.end(); ++i) {
         
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-        DEBUG << "Looking at: " << (*i) << endl;
+        SVDEBUG << "Looking at: " << (*i) << endl;
 #endif
 
         QDir dir(*i, PLUGIN_GLOB,
@@ -509,7 +509,7 @@ LADSPAPluginFactory::unloadLibrary(QString soName)
 {
     LibraryHandleMap::iterator li = m_libraryHandles.find(soName);
     if (li != m_libraryHandles.end()) {
-//	DEBUG << "unloading " << soname << endl;
+//	SVDEBUG << "unloading " << soname << endl;
 	DLCLOSE(m_libraryHandles[soName]);
 	m_libraryHandles.erase(li);
     }
@@ -633,13 +633,13 @@ LADSPAPluginFactory::discoverPlugins()
 
     std::vector<QString> pathList = getPluginPath();
 
-//    DEBUG << "LADSPAPluginFactory::discoverPlugins - "
+//    SVDEBUG << "LADSPAPluginFactory::discoverPlugins - "
 //	      << "discovering plugins; path is ";
 //    for (std::vector<QString>::iterator i = pathList.begin();
 //	 i != pathList.end(); ++i) {
-//	DEBUG << "[" << i-<< "] ";
+//	SVDEBUG << "[" << i-<< "] ";
 //    }
-//    DEBUG << endl;
+//    SVDEBUG << endl;
 
 #ifdef HAVE_LRDF
     // read the description files 
@@ -818,22 +818,22 @@ LADSPAPluginFactory::generateFallbackCategories()
             path.push_back(p);
 	    p.replace("/lib/", "/share/");
 	    path.push_back(p);
-//	    DEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << p << endl;
+//	    SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << p << endl;
 	}
 	path.push_back(pluginPath[i]);
-//	DEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i] << endl;
+//	SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: path element " << pluginPath[i] << endl;
     }
 
     for (size_t i = 0; i < path.size(); ++i) {
 
 	QDir dir(path[i], "*.cat");
 
-//	DEBUG << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << endl;
+//	SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << endl;
 	for (unsigned int j = 0; j < dir.count(); ++j) {
 
 	    QFile file(path[i] + "/" + dir[j]);
 
-//	    DEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
+//	    SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
 
 	    if (file.open(QIODevice::ReadOnly)) {
 //		    std::cerr << "...opened" << std::endl;

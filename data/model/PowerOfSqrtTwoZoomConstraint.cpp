@@ -51,7 +51,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 	else if (dir == RoundDown) rval = size_t(prevVal + 0.01);
 	else if (val - blockSize < blockSize - prevVal) rval = size_t(val + 0.01);
 	else rval = size_t(prevVal + 0.01);
-//	DEBUG << "returning " << rval << endl;
+//	SVDEBUG << "returning " << rval << endl;
 	return rval;
     }
 
@@ -74,7 +74,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 		    << (power - minCachePower));
 	}
 
-//	DEBUG << "Testing base " << base << endl;
+//	SVDEBUG << "Testing base " << base << endl;
 
         if (base == blockSize) {
             result = base;
