@@ -66,7 +66,7 @@ QuickTimeFileReader::QuickTimeFileReader(FileSource source,
 
     Profiler profiler("QuickTimeFileReader::QuickTimeFileReader", true);
 
-std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" << std::endl;
+DEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
 
     long QTversion;
 
@@ -265,12 +265,12 @@ std::cerr << "QuickTimeFileReader: path is \"" << m_path.toStdString() << "\"" <
         }
     }
 
-    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error.toStdString() << "\"" << std::endl;
+    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error << "\"" << std::endl;
 }
 
 QuickTimeFileReader::~QuickTimeFileReader()
 {
-    std::cerr << "QuickTimeFileReader::~QuickTimeFileReader" << std::endl;
+    DEBUG << "QuickTimeFileReader::~QuickTimeFileReader" << endl;
 
     if (m_decodeThread) {
         m_cancelled = true;

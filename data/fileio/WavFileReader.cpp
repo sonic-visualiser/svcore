@@ -40,7 +40,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
 	std::cerr << "WavFileReader::initialize: Failed to open file at \""
-                  << m_path.toStdString() << "\" ("
+                  << m_path << "\" ("
 		  << sf_strerror(m_file) << ")" << std::endl;
 
 	if (m_file) {
@@ -80,12 +80,12 @@ WavFileReader::updateFrameCount()
         sf_close(m_file);
         m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
         if (!m_file || m_fileInfo.channels <= 0) {
-            std::cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path.toStdString() << "\" ("
+            std::cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
                       << sf_strerror(m_file) << ")" << std::endl;
         }
     }
 
-//    std::cerr << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << std::endl;
+//    DEBUG << "WavFileReader::updateFrameCount: now " << m_fileInfo.frames << endl;
 
     m_frameCount = m_fileInfo.frames;
 
@@ -122,8 +122,8 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
     }
 
     if ((long)start >= m_fileInfo.frames) {
-//        std::cerr << "WavFileReader::getInterleavedFrames: " << start
-//                  << " > " << m_fileInfo.frames << std::endl;
+//        DEBUG << "WavFileReader::getInterleavedFrames: " << start
+//                  << " > " << m_fileInfo.frames << endl;
 	return;
     }
 

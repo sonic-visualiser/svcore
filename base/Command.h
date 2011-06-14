@@ -20,6 +20,8 @@
 #include <QString>
 #include <vector>
 
+#include "Debug.h"
+
 class Command
 {
 public:

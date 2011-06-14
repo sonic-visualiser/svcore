@@ -25,6 +25,8 @@
 #include <QString>
 #include <vector>
 
+#include "base/Debug.h"
+
 class RealTimePluginInstance;
 
 class RealTimePluginDescriptor

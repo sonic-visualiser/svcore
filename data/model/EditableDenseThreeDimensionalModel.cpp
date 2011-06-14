@@ -492,7 +492,7 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 
     // For historical reasons we read and write "resolution" as "windowSize"
 
-    std::cerr << "EditableDenseThreeDimensionalModel::toXml" << std::endl;
+    DEBUG << "EditableDenseThreeDimensionalModel::toXml" << endl;
 
     Model::toXml
 	(out, indent,

@@ -54,10 +54,10 @@ Transform::Transform(QString xml) :
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
         std::cerr << "Transform::Transform: Error in parsing XML: "
-                  << error.toStdString() << " at line " << errorLine
+                  << error << " at line " << errorLine
                   << ", column " << errorColumn << std::endl;
         std::cerr << "Input follows:" << std::endl;
-        std::cerr << xml.toStdString() << std::endl;
+        std::cerr << xml << std::endl;
         std::cerr << "Input ends." << std::endl;
         return;
     }
@@ -124,11 +124,11 @@ Transform::operator==(const Transform &t) const
         m_duration == t.m_duration &&
         m_sampleRate == t.m_sampleRate;
 /*
-    std::cerr << "Transform::operator==: identical = " << identical << std::endl;
+    DEBUG << "Transform::operator==: identical = " << identical << endl;
     std::cerr << "A = " << std::endl;
-    std::cerr << toXmlString().toStdString() << std::endl;
+    std::cerr << toXmlString() << std::endl;
     std::cerr << "B = " << std::endl;
-    std::cerr << t.toXmlString().toStdString() << std::endl;
+    std::cerr << t.toXmlString() << std::endl;
 */
     return identical;
 }
@@ -260,8 +260,7 @@ Transform::setParameters(const ParameterMap &pm)
 void
 Transform::setParameter(QString name, float value)
 {
-//    std::cerr << "Transform::setParameter(" << name.toStdString()
-//              << ") -> " << value << std::endl;
+//    DEBUG << "Transform::setParameter(" << name//              << ") -> " << value << endl;
     m_parameters[name] = value;
 }
 
@@ -280,8 +279,7 @@ Transform::setConfiguration(const ConfigurationMap &cm)
 void
 Transform::setConfigurationValue(QString name, QString value)
 {
-    std::cerr << "Transform::setConfigurationValue(" << name.toStdString()
-              << ") -> " << value.toStdString() << std::endl;
+    DEBUG << "Transform::setConfigurationValue(" << name              << ") -> " << value << endl;
     m_configuration[name] = value;
 }
 
@@ -463,8 +461,8 @@ Transform::stringToSummaryType(QString str)
         str == "standard deviation" || str == "sd") return StandardDeviation;
     if (str == "count") return Count;
     if (str == "") return NoSummary;
-    std::cerr << "Transform::stringToSummaryType: unknown summary type \""
-              << str.toStdString() << "\"" << std::endl;
+    DEBUG << "Transform::stringToSummaryType: unknown summary type \""
+              << str << "\"" << endl;
     return NoSummary;
 }
 
@@ -483,8 +481,8 @@ Transform::summaryTypeToString(SummaryType type)
     case Count: return "count";
     case NoSummary: return "";
     default:
-        std::cerr << "Transform::summaryTypeToString: unexpected summary type "
-                  << int(type) << std::endl;
+        DEBUG << "Transform::summaryTypeToString: unexpected summary type "
+                  << int(type) << endl;
         return "";
     }
 }

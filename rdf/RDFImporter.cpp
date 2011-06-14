@@ -154,7 +154,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     if (m_sampleRate == 0) {
         m_errorString = QString("Invalid audio data model (is audio file format supported?)");
-        std::cerr << m_errorString.toStdString() << std::endl;
+        std::cerr << m_errorString << std::endl;
         return models;
     }
 
@@ -219,14 +219,12 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         QString signal = results[i]["signal"].value;
         QString source = results[i]["source"].value;
 
-        std::cerr << "NOTE: Seeking signal source \"" << source.toStdString()
-                  << "\"..." << std::endl;
+        DEBUG << "NOTE: Seeking signal source \"" << source                  << "\"..." << endl;
 
         FileSource *fs = new FileSource(source, reporter);
         if (fs->isAvailable()) {
-            std::cerr << "NOTE: Source is available: Local filename is \""
-                      << fs->getLocalFilename().toStdString()
-                      << "\"..." << std::endl;
+            DEBUG << "NOTE: Source is available: Local filename is \""
+                      << fs->getLocalFilename()                      << "\"..." << endl;
         }
             
 #ifdef NO_SV_GUI
@@ -237,8 +235,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         }
 #else
         if (!fs->isAvailable()) {
-            std::cerr << "NOTE: Signal source \"" << source.toStdString()
-                      << "\" is not available, using file finder..." << std::endl;
+            DEBUG << "NOTE: Signal source \"" << source                      << "\" is not available, using file finder..." << endl;
             FileFinder *ff = FileFinder::getInstance();
             if (ff) {
                 QString path = ff->find(FileFinder::AudioFile,
@@ -265,7 +262,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         fs->waitForData();
         WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
         if (newModel->isOK()) {
-            std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+            std::cerr << "Successfully created wave file model from source at \"" << source << "\"" << std::endl;
             models.push_back(newModel);
             m_audioModelMap[signal] = newModel;
             if (m_sampleRate == 0) {
@@ -428,7 +425,7 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
 
     if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value.toStdString() << "\"" << std::endl;
+        DEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value << "\"" << endl;
         m->setObjectName(v.value);
         return;
     }
@@ -439,12 +436,12 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
          "title");
     
     if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value.toStdString() << "\"" << std::endl;
+        DEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value << "\"" << endl;
         m->setObjectName(v.value);
         return;
     }
 
-    std::cerr << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri.toStdString() << ">" << std::endl;
+    DEBUG << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << endl;
 }
 
 void
@@ -473,7 +470,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
         SimpleSPARQLQuery::singleResultQuery
         (s, dimensionsQuery.arg(m_uristring).arg(featureUri), "dimensions");
 
-    cerr << "Dimensions = \"" << dimensionsValue.value.toStdString() << "\""
+    cerr << "Dimensions = \"" << dimensionsValue.value << "\""
          << endl;
 
     if (dimensionsValue.value != "") {
@@ -658,7 +655,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     SimpleSPARQLQuery query(s, queryString);
     query.setProgressReporter(reporter);
 
-//    cerr << "Query will be: " << queryString.toStdString() << endl;
+//    cerr << "Query will be: " << queryString << endl;
 
     SimpleSPARQLQuery::ResultList results = query.execute();
 
@@ -738,13 +735,13 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 (rangeResults[0]["time"].value.toStdString());
             duration = RealTime::fromXsdDuration
                 (rangeResults[0]["duration"].value.toStdString());
-//                std::cerr << "duration string " << rangeResults[0]["duration"].value.toStdString() << std::endl;
+//                std::cerr << "duration string " << rangeResults[0]["duration"].value << std::endl;
             haveTime = true;
             haveDuration = true;
         } else {
             QString timestring = SimpleSPARQLQuery::singleResultQuery
                 (s, timeQueryString.arg(thinguri), "time").value;
-//            std::cerr << "timestring = " << timestring.toStdString() << std::endl;
+//            DEBUG << "timestring = " << timestring << endl;
             if (timestring != "") {
                 time = RealTime::fromXsdDuration(timestring.toStdString());
                 haveTime = true;
@@ -773,11 +770,10 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
             modelMap[timeline][type][dimensions].end()) {
 
 /*
-            std::cerr << "Creating new model: source = " << source.toStdString()
-                      << ", type = " << type.toStdString() << ", dimensions = "
+            DEBUG << "Creating new model: source = " << source                      << ", type = " << type << ", dimensions = "
                       << dimensions << ", haveDuration = " << haveDuration
                       << ", time = " << time << ", duration = " << duration
-                      << std::endl;
+                      << endl;
 */
             
             if (!haveDuration) {
@@ -878,7 +874,7 @@ RDFImporterImpl::fillModel(Model *model,
                            std::vector<float> &values,
                            QString label)
 {
-//    std::cerr << "RDFImporterImpl::fillModel: adding point at frame " << ftime << std::endl;
+//    DEBUG << "RDFImporterImpl::fillModel: adding point at frame " << ftime << endl;
 
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
@@ -1030,8 +1026,8 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
-    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
-              << haveAudio << std::endl;
+    DEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
+              << haveAudio << endl;
 
     value =
         SimpleSPARQLQuery::singleResultQuery
@@ -1064,8 +1060,8 @@ RDFImporter::identifyDocumentType(QString url)
         }
     }
 
-    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
-              << haveAnnotations << std::endl;
+    DEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
+              << haveAnnotations << endl;
 
     SimpleSPARQLQuery::closeSingleSource(url);
 

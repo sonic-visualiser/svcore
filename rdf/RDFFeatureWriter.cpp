@@ -112,7 +112,7 @@ void
 RDFFeatureWriter::setTrackMetadata(QString trackId,
                                    TrackMetadata metadata)
 {
-//    cerr << "setTrackMetadata: title = " << metadata.title.toStdString() << ", maker = " << metadata.maker.toStdString() << endl;
+//    cerr << "setTrackMetadata: title = " << metadata.title << ", maker = " << metadata.maker << endl;
     m_metadata[trackId] = metadata;
 }
 
@@ -141,11 +141,11 @@ RDFFeatureWriter::write(QString trackId,
         m_rdfDescriptions[pluginId] = PluginRDFDescription(pluginId);
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
-            cerr << "NOTE: Have RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+            DEBUG << "NOTE: Have RDF description for plugin ID \""
+                 << pluginId << "\"" << endl;
         } else {
-            cerr << "NOTE: No RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+            DEBUG << "NOTE: No RDF description for plugin ID \""
+                 << pluginId << "\"" << endl;
             if (!m_network) {
                 cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
                 cerr << "      from the network where possible." << endl;
@@ -262,7 +262,7 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
     // dirty grubby low-rent way of doing that.  This function is
     // called by FileFeatureWriter::getOutputFile when in append mode.
 
-//    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
+//    std::cerr << "reviewFileForAppending(" << filename << ")" << std::endl;
 
     QFile file(filename);
 
@@ -292,7 +292,7 @@ void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
-//    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
+//    DEBUG << "RDFFeatureWriter::writeSignalDescription" << endl;
 
     QTextStream &stream = *sptr;
 
@@ -348,7 +348,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                       (m_metadata.find(trackId) != m_metadata.end()));
 
 //    cerr << "wantTrack = " << wantTrack << " (userSpecifiedTrack = "
-//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri.toStdString() << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
+//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
 
     if (wantTrack) {
         // We only write a Track at all if we have some title/artist
@@ -520,7 +520,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
                                  PluginRDFDescription &desc,
                                  QString timelineURI)
 {
-//    std::cerr << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << std::endl;
+//    DEBUG << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << endl;
 
     if (featureList.empty()) return;
     QTextStream &stream = *sptr;
@@ -621,7 +621,7 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
     QString featureUri = desc.getOutputFeatureAttributeURI(outputId);
 
     if (featureUri == "") {
-        cerr << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
+        DEBUG << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
         return;
     }
 
@@ -765,14 +765,14 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
 void RDFFeatureWriter::finish()
 {
-//    cerr << "RDFFeatureWriter::finish()" << endl;
+//    DEBUG << "RDFFeatureWriter::finish()" << endl;
 
     // close any open dense feature literals
 
     for (map<StringTransformPair, StreamBuffer>::iterator i =
              m_openDenseFeatures.begin();
          i != m_openDenseFeatures.end(); ++i) {
-//        cerr << "closing a stream" << endl;
+//        DEBUG << "closing a stream" << endl;
         StreamBuffer &b = i->second;
         *(b.first) << b.second << "\" ." << endl;
     }

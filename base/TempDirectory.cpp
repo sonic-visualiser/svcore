@@ -44,7 +44,7 @@ TempDirectory::TempDirectory() :
 
 TempDirectory::~TempDirectory()
 {
-    std::cerr << "TempDirectory::~TempDirectory" << std::endl;
+    DEBUG << "TempDirectory::~TempDirectory" << endl;
 
     cleanup();
 }
@@ -208,7 +208,7 @@ TempDirectory::cleanupDirectory(QString tmpdir)
             if (!QFile(fi.absoluteFilePath()).remove()) {
                 std::cerr << "WARNING: TempDirectory::cleanup: "
                           << "Failed to unlink file \""
-                          << fi.absoluteFilePath().toStdString() << "\""
+                          << fi.absoluteFilePath() << "\""
                           << std::endl;
             }
         }
@@ -219,13 +219,13 @@ TempDirectory::cleanupDirectory(QString tmpdir)
         if (!dir.cdUp()) {
             std::cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to cd to parent directory of "
-                      << tmpdir.toStdString() << std::endl;
+                      << tmpdir << std::endl;
             return;
         }
         if (!dir.rmdir(dirname)) {
             std::cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to remove directory "
-                      << dirname.toStdString() << std::endl;
+                      << dirname << std::endl;
         } 
     }
 
@@ -248,7 +248,7 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
 
         if (subdir.count() == 0) {
             std::cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
-                      << dirpath.toStdString() << "\").  Removing it..." << std::endl;
+                      << dirpath << "\").  Removing it..." << std::endl;
             cleanupDirectory(dirpath);
             std::cerr << "...done." << std::endl;
             continue;

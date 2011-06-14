@@ -132,7 +132,7 @@ PlayParameters::setPlayPluginConfiguration(QString configuration)
 {
     if (m_playPluginConfiguration != configuration) {
         m_playPluginConfiguration = configuration;
-//        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration.toStdString() << "\"" << std::endl;
+//        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << std::endl;
         emit playPluginConfigurationChanged(configuration);
         emit playParametersChanged();
     }
