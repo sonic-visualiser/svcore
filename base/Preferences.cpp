@@ -47,7 +47,8 @@ Preferences::Preferences() :
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
     m_timeToTextMode(TimeToTextMs),
-    m_showSplash(true)
+    m_showSplash(true),
+    m_startInMiniMode(false)
 {
     QSettings settings;
     settings.beginGroup("Preferences");
@@ -68,6 +69,7 @@ Preferences::Preferences() :
         (settings.value("time-to-text-mode", int(TimeToTextMs)).toInt());
     m_viewFontSize = settings.value("view-font-size", 10).toInt();
     m_showSplash = settings.value("show-splash", true).toBool();
+    m_startInMiniMode = settings.value("start-in-mini-mode", false).toBool();
     settings.endGroup();
 
     settings.beginGroup("TempDirectory");
@@ -96,6 +98,7 @@ Preferences::getProperties() const
     props.push_back("Time To Text Mode");
     props.push_back("View Font Size");
     props.push_back("Show Splash Screen");
+    props.push_back("Start In Minimal Mode");
     return props;
 }
 
@@ -141,6 +144,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     if (name == "Show Splash Screen") {
         return tr("Show splash screen on startup");
     }
+    if (name == "Start In Minimal Mode") {
+        return tr("Start Sonic Visualiser in minimal mode");
+    }
     return name;
 }
 
@@ -185,6 +191,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return RangeProperty;
     }
     if (name == "Show Splash Screen") {
+        return ToggleProperty;
+    }
+    if (name == "Start In Minimal Mode") {
         return ToggleProperty;
     }
     return InvalidProperty;
@@ -257,6 +266,10 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 
     if (name == "Show Splash Screen") {
         if (deflt) *deflt = 1;
+    }
+
+    if (name == "Start In Minimal Mode") {
+        if (deflt) *deflt = 0;
     }
 
     return 0;
@@ -363,6 +376,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setViewFontSize(value);
     } else if (name == "Show Splash Screen") {
         setShowSplash(value ? true : false);
+    } else if (name == "Start In Minimal Mode") {
+        setStartInMiniMode(value ? true : false);
     }
 }
 
@@ -551,6 +566,21 @@ Preferences::setShowSplash(bool show)
         settings.setValue("show-splash", show);
         settings.endGroup();
         emit propertyChanged("Show Splash Screen");
+    }
+}
+
+void
+Preferences::setStartInMiniMode(bool show)
+{
+    if (m_startInMiniMode != show) {
+
+        m_startInMiniMode = show;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("start-in-mini-mode", show);
+        settings.endGroup();
+        emit propertyChanged("Start Sonic Visualiser in minimal mode");
     }
 }
         
