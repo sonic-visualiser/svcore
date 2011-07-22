@@ -88,6 +88,8 @@ public:
 
     bool getShowSplash() const { return m_showSplash; }
 
+    bool getStartInMiniMode() const { return m_startInMiniMode; }
+
 public slots:
     virtual void setProperty(const PropertyName &, int);
 
@@ -104,6 +106,8 @@ public slots:
     void setTimeToTextMode(TimeToTextMode mode);
     void setViewFontSize(int size);
     void setShowSplash(bool);
+
+    void setStartInMiniMode(bool);
 
 private:
     Preferences(); // may throw DirectoryCreationFailed
@@ -124,6 +128,8 @@ private:
     BackgroundMode m_backgroundMode;
     TimeToTextMode m_timeToTextMode;
     bool m_showSplash;
+
+    bool m_startInMiniMode;
 };
 
 #endif
