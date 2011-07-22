@@ -96,6 +96,11 @@ public:
      */
     virtual void setAuditioningEffect(Auditionable *) = 0;
 
+    /**
+     * Request spontaneous playback of a single short note of the
+     * given pitch.
+     */
+    virtual void queueExampleNote(int midiPitch) = 0;
 };
 
 #endif
