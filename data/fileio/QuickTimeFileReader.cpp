@@ -89,10 +89,12 @@ SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
  //       (0, m_path.toLocal8Bit().data(), 0);
 
 
+    QByteArray ba = m_path.toLocal8Bit();
+
     CFURLRef url = CFURLCreateFromFileSystemRepresentation
         (kCFAllocatorDefault,
-         (const UInt8 *)m_path.toLocal8Bit().data(),
-         (CFIndex)m_path.length(),
+         (const UInt8 *)ba.data(),
+         (CFIndex)ba.length(),
          false);
 
 
