@@ -19,6 +19,7 @@
 #include <vector>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 class ResizeableBitset {
 
