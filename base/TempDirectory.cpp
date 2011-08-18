@@ -72,7 +72,7 @@ TempDirectory::getContainingPath()
     }
 
     if (!QFileInfo(svDir).exists()) {
-        if (!QDir(svDirParent).mkdir(svDir)) {
+        if (!QDir(svDirParent).mkpath(svDir)) {
             throw DirectoryCreationFailed(QString("%1 directory in %2")
                                           .arg(svDir).arg(svDirParent));
         }
