@@ -124,6 +124,11 @@ public:
     bool isDone() const;
 
     /**
+     * Return true if this FileSource is referring to a QRC resource.
+     */
+    bool isResource() const;
+
+    /**
      * Return true if this FileSource is referring to a remote URL.
      */
     bool isRemote() const;
@@ -225,6 +230,7 @@ protected:
     QString m_preferredContentType;
     bool m_ok;
     int m_lastStatus;
+    bool m_resource;
     bool m_remote;
     bool m_done;
     bool m_leaveLocalFile;

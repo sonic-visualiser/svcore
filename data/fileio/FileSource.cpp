@@ -77,18 +77,23 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     m_preferredContentType(preferredContentType),
     m_ok(false),
     m_lastStatus(0),
+    m_resource(fileOrUrl.startsWith(':')),
     m_remote(isRemote(fileOrUrl)),
     m_done(false),
     m_leaveLocalFile(false),
     m_reporter(reporter),
     m_refCounted(false)
 {
+    if (m_resource) { // qrc file
+        m_url = QUrl("qrc" + fileOrUrl);
+    }
+
     if (m_url.toString() == "") {
         m_url = QUrl(fileOrUrl, QUrl::TolerantMode);
     }
  
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(" << fileOrUrl << "): url <" << m_url.toString() << ">" << endl;
+    std::cerr << "FileSource::FileSource(" << fileOrUrl << "): url <" << m_url.toString() << ">" << std::endl;
     incCount(m_url.toString());
 #endif
 
@@ -103,7 +108,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     if (!isRemote() &&
         !isAvailable()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString() << "; trying again assuming filename was encoded" << std::endl;
+        std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString() << "\"; trying again assuming filename was encoded" << std::endl;
 #endif
         m_url = QUrl::fromEncoded(fileOrUrl.toAscii());
         init();
@@ -159,6 +164,7 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_localFile(0),
     m_ok(false),
     m_lastStatus(0),
+    m_resource(false),
     m_remote(isRemote(url.toString())),
     m_done(false),
     m_leaveLocalFile(false),
@@ -191,6 +197,7 @@ FileSource::FileSource(const FileSource &rf) :
     m_localFile(0),
     m_ok(rf.m_ok),
     m_lastStatus(rf.m_lastStatus),
+    m_resource(rf.m_resource),
     m_remote(rf.m_remote),
     m_done(false),
     m_leaveLocalFile(false),
@@ -255,9 +262,25 @@ FileSource::~FileSource()
 void
 FileSource::init()
 {
-    if (!isRemote()) {
+    if (isResource()) {
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::init: Not a remote URL" << endl;
+        std::cerr << "FileSource::init: Is a resource" << std::endl;
+#endif
+        QString resourceFile = m_url.toString();
+        resourceFile.replace(QRegExp("^qrc:"), ":");
+        
+        if (!QFileInfo(resourceFile).exists()) {
+#ifdef DEBUG_FILE_SOURCE
+            std::cerr << "FileSource::init: Resource file of this name does not exist, switching to non-resource URL" << std::endl;
+#endif
+            m_url = resourceFile;
+            m_resource = false;
+        }
+    }
+
+    if (!isRemote() && !isResource()) {
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: Not a remote URL" << std::endl;
 #endif
         bool literal = false;
         m_localFilename = m_url.toLocalFile();
@@ -269,8 +292,9 @@ FileSource::init()
         m_localFilename = QFileInfo(m_localFilename).absoluteFilePath();
 
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::init: URL translates to local filename \""
-                  << m_localFilename << "\" (with literal=" << literal << ")" << endl;
+        std::cerr << "FileSource::init: URL translates to local filename \""
+                  << m_localFilename << "\" (with literal=" << literal << ")"
+                  << std::endl;
 #endif
         m_ok = true;
         m_lastStatus = 200;
@@ -280,7 +304,7 @@ FileSource::init()
                 m_lastStatus = 404;
             } else {
 #ifdef DEBUG_FILE_SOURCE
-                SVDEBUG << "FileSource::init: Local file of this name does not exist, trying URL as a literal filename" << endl;
+                std::cerr << "FileSource::init: Local file of this name does not exist, trying URL as a literal filename" << std::endl;
 #endif
                 // Again, QUrl may have been mistreating us --
                 // e.g. dropping a part that looks like query data
@@ -298,7 +322,7 @@ FileSource::init()
 
     if (createCacheFile()) {
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::init: Already have this one" << endl;
+        std::cerr << "FileSource::init: Already have this one" << std::endl;
 #endif
         m_ok = true;
         if (!QFileInfo(m_localFilename).exists()) {
@@ -311,26 +335,62 @@ FileSource::init()
     }
 
     if (m_localFilename == "") return;
+
     m_localFile = new QFile(m_localFilename);
     m_localFile->open(QFile::WriteOnly);
 
-    QString scheme = m_url.scheme().toLower();
+    if (isResource()) {
 
+        // Absent resource file case was dealt with at the top -- this
+        // is the successful case
+
+        QString resourceFileName = m_url.toString();
+        resourceFileName.replace(QRegExp("^qrc:"), ":");
+        QFile resourceFile(resourceFileName);
+        resourceFile.open(QFile::ReadOnly);
+        QByteArray ba(resourceFile.readAll());
+        
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::init: Don't have local copy of \""
-              << m_url.toString() << "\", retrieving" << endl;
+        std::cerr << "Copying " << ba.size() << " bytes from resource file to cache file" << std::endl;
 #endif
 
-    if (scheme == "http") {
-        initHttp();
+        qint64 written = m_localFile->write(ba);
+        m_localFile->close();
+        delete m_localFile;
+        m_localFile = 0;
+
+        if (written != ba.size()) {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource: initHttp succeeded" << std::endl;
+            std::cerr << "Copy failed (wrote " << written << " bytes)" << std::endl;
 #endif
-    } else if (scheme == "ftp") {
-        initFtp();
+            m_ok = false;
+            return;
+        } else {
+            m_ok = true;
+            m_lastStatus = 200;
+            m_done = true;
+        }
+
     } else {
-        m_remote = false;
-        m_ok = false;
+
+        QString scheme = m_url.scheme().toLower();
+
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::init: Don't have local copy of \""
+                  << m_url.toString() << "\", retrieving" << std::endl;
+#endif
+
+        if (scheme == "http") {
+            initHttp();
+#ifdef DEBUG_FILE_SOURCE
+            std::cerr << "FileSource: initHttp succeeded" << std::endl;
+#endif
+        } else if (scheme == "ftp") {
+            initFtp();
+        } else {
+            m_remote = false;
+            m_ok = false;
+        }
     }
 
     if (m_ok) {
@@ -343,7 +403,7 @@ FileSource::init()
             cleanup();
             m_refCountMap[m_url]++;
 #ifdef DEBUG_FILE_SOURCE
-            SVDEBUG << "FileSource::init: Another FileSource has got there first, abandoning our download and using theirs" << endl;
+            std::cerr << "FileSource::init: Another FileSource has got there first, abandoning our download and using theirs" << std::endl;
 #endif
             m_localFilename = m_remoteLocalMap[m_url];
             m_refCounted = true;
@@ -359,7 +419,7 @@ FileSource::init()
         m_refCountMap[m_url]++;
         m_refCounted = true;
 
-        if (m_reporter) {
+        if (m_reporter && !m_done) {
             m_reporter->setMessage
                 (tr("Downloading %1...").arg(m_url.toString()));
             connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
@@ -517,7 +577,8 @@ FileSource::canHandleScheme(QUrl url)
     // Note that a "scheme" with length 1 is probably a DOS drive letter
     QString scheme = url.scheme().toLower();
     return (scheme == "http" || scheme == "ftp" ||
-            scheme == "file" || scheme == "" || scheme.length() == 1);
+            scheme == "file" || scheme == "qrc" ||
+            scheme == "" || scheme.length() == 1);
 }
 
 bool
@@ -569,6 +630,12 @@ bool
 FileSource::isDone() const
 {
     return m_done;
+}
+
+bool
+FileSource::isResource() const
+{
+    return m_resource;
 }
 
 bool
@@ -881,7 +948,7 @@ FileSource::createCacheFile()
     QString filepath(dir.filePath(filename));
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::createCacheFile: URL is \"" << m_url.toString() << "\", dir is \"" << dir.path() << "\", base \"" << base << "\", extension \"" << extension << "\", filebase \"" << filename << "\", filename \"" << filepath << "\"" << endl;
+    std::cerr << "FileSource::createCacheFile: URL is \"" << m_url.toString() << "\", dir is \"" << dir.path() << "\", base \"" << base << "\", extension \"" << extension << "\", filebase \"" << filename << "\", filename \"" << filepath << "\"" << std::endl;
 #endif
 
     QMutexLocker fcLocker(&m_fileCreationMutex);
@@ -918,9 +985,9 @@ FileSource::createCacheFile()
     }
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::createCacheFile: url "
+    std::cerr << "FileSource::createCacheFile: url "
               << m_url.toString() << " -> local filename "
-              << filepath << endl;
+              << filepath << std::endl;
 #endif
     
     m_localFilename = filepath;
