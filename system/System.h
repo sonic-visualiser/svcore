@@ -57,12 +57,12 @@
 #define getpid _getpid
 
 extern "C" {
-void usleep(unsigned long usec);
+//void usleep(unsigned long usec); //uncomment for osx compilation
 int gettimeofday(struct timeval *p, void *tz);
 }
 
 #define ISNAN _isnan
-#define ISINF _isinf
+#define ISINF std::isinf //replace with _isinf for osx compilation
 
 #else
 
