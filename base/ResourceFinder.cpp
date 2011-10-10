@@ -102,7 +102,7 @@ ResourceFinder::getUserResourcePrefix()
         home = QDir::home().absolutePath();
     }
     if (home == "") return "";
-    return QString("%1/.%2").arg(qApp->applicationName()); //!!! wrong
+    return QString("%1/.%2").arg(home).arg(qApp->applicationName()); //!!! wrong
 #else
     char *home = getenv("HOME");
     if (!home || !home[0]) return "";
