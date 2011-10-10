@@ -27,7 +27,6 @@
 // includes <rasqal.h>, while the rasqal header actually gets
 // installed as <rasqal/rasqal.h> which breaks the inclusion all over
 // the place unless a very clever include path is set
-#include <raptor.h>
 #include <rasqal/rasqal.h>
 #include <librdf.h>
 
