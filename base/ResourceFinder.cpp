@@ -102,7 +102,7 @@ ResourceFinder::getUserResourcePrefix()
         home = QDir::home().absolutePath();
     }
     if (home == "") return "";
-    return QString("%1/.%2").arg(qApp->applicationName()); //!!! wrong
+    return QString("%1/.%2").arg(home).arg(qApp->applicationName()); //!!! wrong
 #else
     char *home = getenv("HOME");
     if (!home || !home[0]) return "";
@@ -286,15 +286,6 @@ ResourceFinder::unbundleResource(QString resourceCat, QString fileName)
         return false;
     }
 
-    // Now since the file is in the user's editable space, the user should get
-    // to edit it.  The chords.xml file I unbundled came out 444 instead of 644
-    // which won't do.  Rather than put the chmod code there, I decided to put
-    // it here, because I think it will always be appropriate to make unbundled
-    // files editable.  That's rather the point in many cases, and for the rest,
-    // nobody will likely notice they could have edited their font files or what
-    // have you that were unbundled to improve performance.  (Dissenting
-    // opinions welcome.  We can always shuffle this somewhere else if
-    // necessary.  There are many possibilities.)
     QFile chmod(target);
     chmod.setPermissions(QFile::ReadOwner |
                          QFile::ReadUser  | /* for potential platform-independence */
