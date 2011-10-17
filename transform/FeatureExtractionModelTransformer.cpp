@@ -176,9 +176,8 @@ FeatureExtractionModelTransformer::createOutputModel()
 {
     DenseTimeValueModel *input = getConformingInput();
 
-//    std::cerr << "FeatureExtractionModelTransformer: output sample type "
-//	      << m_descriptor->sampleType << std::endl;
-
+//    std::cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << std::endl;
+    
     PluginRDFDescription description(m_transform.getPluginIdentifier());
     QString outputId = m_transform.getOutput();
 
@@ -201,7 +200,7 @@ FeatureExtractionModelTransformer::createOutputModel()
 
     size_t modelRate = input->getSampleRate();
     size_t modelResolution = 1;
-    
+
     switch (m_descriptor->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
@@ -636,8 +635,11 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
-//    SVDEBUG << "FeatureExtractionModelTransformer::addFeature("
-//	      << blockFrame << ")" << endl;
+//    std::cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
+//              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
+//              << ", timestamp = " << feature.timestamp << ", hasDuration = "
+//              << feature.hasDuration << ", duration = " << feature.duration
+//              << std::endl;
 
     int binCount = 1;
     if (m_descriptor->hasFixedBinCount) {
