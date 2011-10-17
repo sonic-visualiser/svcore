@@ -75,10 +75,11 @@ RDFFeatureWriter::getSupportedParameters() const
     p.hasArg = true;
     pl.push_back(p);
 
-    p.name = "network";
-    p.description = "Attempt to retrieve RDF descriptions of plugins from network, if not available locally";
-    p.hasArg = false;
-    pl.push_back(p);
+    //mathieub: remove this functionality for the library edition
+    //p.name = "network";
+    //p.description = "Attempt to retrieve RDF descriptions of plugins from network, if not available locally";
+    //p.hasArg = false;
+    //pl.push_back(p);
     
     return pl;
 }
@@ -102,9 +103,10 @@ RDFFeatureWriter::setParameters(map<string, string> &params)
         if (i->first == "maker-uri") {
             m_userMakerUri = i->second.c_str();
         }
-        if (i->first == "network") {
-            m_network = true;
-        }
+        //mathieub: remove this functionality for the library edition
+        //if (i->first == "network") {
+        //    m_network = true;
+        //}
     }
 }
 
