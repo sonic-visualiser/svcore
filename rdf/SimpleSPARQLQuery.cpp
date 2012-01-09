@@ -619,7 +619,7 @@ SimpleSPARQLQuery::singleResultQuery(QueryType type,
     SimpleSPARQLQuery q(type, query);
     ResultList results = q.execute();
     if (!q.isOK()) {
-        SVDEBUG << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
+        cerr << "SimpleSPARQLQuery::singleResultQuery: ERROR: "
              << q.getErrorString() << endl;
         return Value();
     }

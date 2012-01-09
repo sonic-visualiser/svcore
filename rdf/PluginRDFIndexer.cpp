@@ -80,7 +80,7 @@ PluginRDFIndexer::indexInstalledURLs()
     // rdf extension.
 
     for (vector<string>::const_iterator i = paths.begin(); i != paths.end(); ++i) {
-        
+
         QDir dir(i->c_str());
         if (!dir.exists()) continue;
 
@@ -89,6 +89,7 @@ PluginRDFIndexer::indexInstalledURLs()
 
         for (QStringList::const_iterator j = entries.begin();
              j != entries.end(); ++j) {
+
             QFileInfo fi(dir.filePath(*j));
             pullFile(fi.absoluteFilePath());
         }
@@ -98,6 +99,7 @@ PluginRDFIndexer::indexInstalledURLs()
 
         for (QStringList::const_iterator j = subdirs.begin();
              j != subdirs.end(); ++j) {
+
             QDir subdir(dir.filePath(*j));
             if (subdir.exists()) {
                 entries = subdir.entryList
@@ -293,7 +295,7 @@ PluginRDFIndexer::reindex()
     }
 
     if (results.empty()) {
-        SVDEBUG << "PluginRDFIndexer::reindex: NOTE: no vamp:Plugin resources found in indexed documents" << endl;
+        cerr << "PluginRDFIndexer::reindex: NOTE: no vamp:Plugin resources found in indexed documents" << endl;
         return false;
     }
 
@@ -308,13 +310,13 @@ PluginRDFIndexer::reindex()
         QString identifier = (*i)["plugin_id"].value;
 
         if (identifier == "") {
-            SVDEBUG << "PluginRDFIndexer::reindex: NOTE: No vamp:identifier for plugin <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No vamp:identifier for plugin <"
                  << pluginUri << ">"
                  << endl;
             continue;
         }
         if (soUri == "") {
-            SVDEBUG << "PluginRDFIndexer::reindex: NOTE: No implementation library for plugin <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No implementation library for plugin <"
                  << pluginUri << ">"
                  << endl;
             continue;
@@ -334,7 +336,7 @@ PluginRDFIndexer::reindex()
             SimpleSPARQLQuery::singleResultQuery(m, sonameQuery, "library_id");
         QString soname = sonameValue.value;
         if (soname == "") {
-            SVDEBUG << "PluginRDFIndexer::reindex: NOTE: No identifier for library <"
+            cerr << "PluginRDFIndexer::reindex: NOTE: No identifier for library <"
                  << soUri << ">"
                  << endl;
             continue;
@@ -355,7 +357,7 @@ PluginRDFIndexer::reindex()
 
         if (pluginUri != "") {
             if (m_uriToIdMap.find(pluginUri) != m_uriToIdMap.end()) {
-                SVDEBUG << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
+                cerr << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
                 cerr << "  1. Plugin id \"" << m_uriToIdMap[pluginUri] << "\"" << endl;
                 cerr << "  2. Plugin id \"" << pluginId << "\"" << endl;
                 cerr << "both claim URI <" << pluginUri << ">" << endl;
@@ -366,7 +368,7 @@ PluginRDFIndexer::reindex()
     }
 
     if (!foundSomething) {
-        SVDEBUG << "PluginRDFIndexer::reindex: NOTE: Plugins found, but none sufficiently described" << endl;
+        cerr << "PluginRDFIndexer::reindex: NOTE: Plugins found, but none sufficiently described" << endl;
     }
     
     return addedSomething;
