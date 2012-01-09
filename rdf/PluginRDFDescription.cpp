@@ -278,19 +278,10 @@ PluginRDFDescription::indexOutputs()
          (
              " PREFIX vamp: <http://purl.org/ontology/vamp/> "
 
-             " SELECT ?output ?output_id ?output_type ?unit "
+             " SELECT ?output "
 
              " WHERE { "
-
              "   <%1> vamp:output ?output . "
-
-             "   ?output vamp:identifier ?output_id ; "
-             "           a ?output_type . "
-
-             "   OPTIONAL { "
-             "     ?output vamp:unit ?unit "
-             "   } . "
-
              " } "
              )
          .arg(m_pluginUri));
@@ -305,7 +296,7 @@ PluginRDFDescription::indexOutputs()
     }
 
     if (results.empty()) {
-        SVDEBUG << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
+        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
              << m_pluginUri << ">" << endl;
         return false;
     }
@@ -316,9 +307,48 @@ PluginRDFDescription::indexOutputs()
 
     for (int i = 0; i < results.size(); ++i) {
 
+        if (results[i]["output"].type != SimpleSPARQLQuery::URIValue ||
+            results[i]["output"].value == "") {
+            cerr << "ERROR: PluginRDFDescription::indexURL: No valid URI for output " << i << " of plugin <" << m_pluginUri << ">" << endl;
+            return false;
+        }
+
         QString outputUri = results[i]["output"].value;
-        QString outputId = results[i]["output_id"].value;
-        QString outputType = results[i]["output_type"].value;
+
+        SimpleSPARQLQuery::Value v;
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (m, 
+             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                     " SELECT ?output_id "
+                     " WHERE { <%1> vamp:identifier ?output_id } ")
+             .arg(outputUri), "output_id");
+
+        if (v.type != SimpleSPARQLQuery::LiteralValue || v.value == "") {
+            cerr << "ERROR: PluginRDFDescription::indexURL: No identifier for output <" << outputUri << ">" << endl;
+            return false;
+        }
+        QString outputId = v.value;
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (m, 
+             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                     " SELECT ?output_type "
+                     " WHERE { <%1> a ?output_type } ")
+             .arg(outputUri), "output_type");
+
+        QString outputType;
+        if (v.type == SimpleSPARQLQuery::URIValue) outputType = v.value;
+
+        v = SimpleSPARQLQuery::singleResultQuery
+            (m, 
+             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
+                     " SELECT ?unit "
+                     " WHERE { <%1> vamp:unit ?unit } ")
+             .arg(outputUri), "unit");
+
+        QString outputUnit;
+        if (v.type == SimpleSPARQLQuery::LiteralValue) outputUnit = v.value;
 
         m_outputUriMap[outputId] = outputUri;
 
@@ -332,23 +362,16 @@ PluginRDFDescription::indexOutputs()
             m_outputDispositions[outputId] = OutputDispositionUnknown;
         }
             
-        if (results[i]["unit"].type == SimpleSPARQLQuery::LiteralValue) {
-
-            QString unit = results[i]["unit"].value;
-            
-            if (unit != "") {
-                m_outputUnitMap[outputId] = unit;
-            }
+        if (outputUnit != "") {
+            m_outputUnitMap[outputId] = outputUnit;
         }
-
-        SimpleSPARQLQuery::Value v;
 
         v = SimpleSPARQLQuery::singleResultQuery
             (m, 
              QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
                      " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
                      " SELECT ?title "
-                     " WHERE { <%2> dc:title ?title } ")
+                     " WHERE { <%1> dc:title ?title } ")
              .arg(outputUri), "title");
 
         if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
@@ -357,8 +380,8 @@ PluginRDFDescription::indexOutputs()
 
         QString queryTemplate = 
             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                    " SELECT ?%3 "
-                    " WHERE { <%2> vamp:computes_%3 ?%3 } ")
+                    " SELECT ?%2 "
+                    " WHERE { <%1> vamp:computes_%2 ?%2 } ")
             .arg(outputUri);
 
         v = SimpleSPARQLQuery::singleResultQuery
