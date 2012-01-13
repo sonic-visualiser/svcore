@@ -141,10 +141,10 @@ RDFFeatureWriter::write(QString trackId,
         m_rdfDescriptions[pluginId] = PluginRDFDescription(pluginId);
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
-            SVDEBUG << "NOTE: Have RDF description for plugin ID \""
+            cerr << "NOTE: Have RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
         } else {
-            SVDEBUG << "NOTE: No RDF description for plugin ID \""
+            cerr << "NOTE: No RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
             if (!m_network) {
                 cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
