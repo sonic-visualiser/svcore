@@ -26,6 +26,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <stdint.h>
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 

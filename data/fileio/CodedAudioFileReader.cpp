@@ -22,6 +22,7 @@
 #include "base/Serialiser.h"
 #include "base/Resampler.h"
 
+#include <stdint.h>
 #include <iostream>
 #include <QDir>
 #include <QMutexLocker>
