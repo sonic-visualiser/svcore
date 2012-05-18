@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2008 QMUL.
+    This file copyright 2008-2012 QMUL.
    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -139,6 +139,8 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
     m_store->addPrefix("tl", Uri("http://purl.org/NET/c4dm/timeline.owl#"));
     m_store->addPrefix("event", Uri("http://purl.org/NET/c4dm/event.owl#"));
     m_store->addPrefix("rdfs", Uri("http://www.w3.org/2000/01/rdf-schema#"));
+
+    //!!! may throw!
     m_store->import(QUrl::fromLocalFile(uri), BasicStore::ImportIgnoreDuplicates);
 }
 
@@ -802,7 +804,7 @@ RDFImporter::identifyDocumentType(QString url)
     // This is not expected to return anything useful, but if it does
     // anything at all then we know we have RDF
     try {
-        //!!! non-local document?
+        //!!! non-local document? + may throw!!!
         store = BasicStore::load(QUrl(url));
         Triple t = store->matchFirst(Triple());
         if (t != Triple()) haveRDF = true;
