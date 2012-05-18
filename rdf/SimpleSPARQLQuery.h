@@ -16,6 +16,8 @@
 #ifndef _SIMPLE_SPARQL_QUERY_H_
 #define _SIMPLE_SPARQL_QUERY_H_
 
+#ifdef NOT_DEFINED
+
 #include <QString>
 #include <map>
 #include <vector>
@@ -109,5 +111,7 @@ private:
     SimpleSPARQLQuery(const SimpleSPARQLQuery &); // not provided
     SimpleSPARQLQuery &operator=(const SimpleSPARQLQuery &); // not provided
 };
+
+#endif
 
 #endif

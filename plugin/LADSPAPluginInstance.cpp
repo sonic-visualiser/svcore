@@ -379,11 +379,12 @@ LADSPAPluginInstance::~LADSPAPluginInstance()
 void
 LADSPAPluginInstance::instantiate(unsigned long sampleRate)
 {
+    if (!m_descriptor) return;
+
 #ifdef DEBUG_LADSPA
     std::cout << "LADSPAPluginInstance::instantiate - plugin unique id = "
               << m_descriptor->UniqueID << std::endl;
 #endif
-    if (!m_descriptor) return;
 
     if (!m_descriptor->instantiate) {
 	std::cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
