@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2008 QMUL.
+    This file copyright 2008-2012 QMUL.
    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -24,7 +24,6 @@
 #include <iostream>
 #include <cmath>
 
-#include "SimpleSPARQLQuery.h"
 #include "PluginRDFIndexer.h"
 #include "PluginRDFDescription.h"
 #include "base/ProgressReporter.h"
@@ -32,10 +31,19 @@
 
 #include "transform/TransformFactory.h"
 
+#include <dataquay/BasicStore.h>
+#include <dataquay/PropertyObject.h>
+
 using std::cerr;
 using std::endl;
 
-typedef const unsigned char *STR; // redland's expected string type
+using Dataquay::Uri;
+using Dataquay::Node;
+using Dataquay::Nodes;
+using Dataquay::Triple;
+using Dataquay::Triples;
+using Dataquay::BasicStore;
+using Dataquay::PropertyObject;
 
 
 class RDFTransformFactoryImpl
@@ -53,6 +61,7 @@ public:
     static QString writeTransformToRDF(const Transform &, QString);
 
 protected:
+    BasicStore *m_store;
     QString m_urlString;
     QString m_errorString;
     bool m_isRDF;
@@ -108,14 +117,21 @@ RDFTransformFactory::writeTransformToRDF(const Transform &t, QString f)
 }
 
 RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
+    m_store(new BasicStore),
     m_urlString(url),
     m_isRDF(false)
 {
+    //!!! retrieve data if remote... then
+    m_store->addPrefix("vamp", Uri("http://purl.org/ontology/vamp/"));
+    try {
+        m_store->import(QUrl::fromLocalFile(url), BasicStore::ImportIgnoreDuplicates);
+        m_isRDF = true;
+    } catch (...) { }
 }
 
 RDFTransformFactoryImpl::~RDFTransformFactoryImpl()
 {
-    SimpleSPARQLQuery::closeSingleSource(m_urlString);
+    delete m_store;
 }
 
 bool
@@ -143,43 +159,25 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 
     std::map<QString, Transform> uriTransformMap;
 
-    QString query = 
-        " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+    Nodes tnodes = m_store->match
+        (Triple(Node(), "a", m_store->expand("vamp:Transform"))).a();
 
-        " SELECT ?transform ?plugin "
-        
-        " FROM <%2> "
+    foreach (Node tnode, tnodes) {
 
-        " WHERE { "
-        "   ?transform a vamp:Transform ; "
-        "              vamp:plugin ?plugin . "
-        " } ";
+        Node pnode = m_store->matchFirst
+            (Triple(tnode, "vamp:plugin", Node())).c;
 
-    SimpleSPARQLQuery transformsQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource, query.arg(m_urlString));
+        // There are various queries we need to make that might
+        // include data from either the transform RDF or the model
+        // accumulated from plugin descriptions.  For example, the
+        // transform RDF may specify the output's true URI, or it
+        // might have a blank node or some other URI with the
+        // appropriate vamp:identifier included in the file.  To cover
+        // both cases, we need to add the file itself into the model
+        // and always query the model using the transform URI rather
+        // than querying the file itself subsequently.
 
-    SimpleSPARQLQuery::ResultList transformResults = transformsQuery.execute();
-
-    if (!transformsQuery.isOK()) {
-        m_errorString = transformsQuery.getErrorString();
-        return transforms;
-    }
-
-    m_isRDF = true;
-
-    if (transformResults.empty()) {
-        SVDEBUG << "RDFTransformFactory: NOTE: No RDF/TTL transform descriptions found in document at <" << m_urlString << ">" << endl;
-        return transforms;
-    }
-
-    // There are various queries we need to make that might include
-    // data from either the transform RDF or the model accumulated
-    // from plugin descriptions.  For example, the transform RDF may
-    // specify the output's true URI, or it might have a blank node or
-    // some other URI with the appropriate vamp:identifier included in
-    // the file.  To cover both cases, we need to add the file itself
-    // into the model and always query the model using the transform
-    // URI rather than querying the file itself subsequently.
+//!!! ^^^ what does this mean for us with Dataquay? do we need to cross-check outputs against the indexer?
 
     SimpleSPARQLQuery::addSourceToModel(m_urlString);
 
