@@ -22,6 +22,10 @@
 #include <map>
 #include <set>
 
+namespace Dataquay {
+    class BasicStore;
+}
+
 class PluginRDFIndexer
 {
 public:
@@ -48,6 +52,8 @@ public:
 
     QStringList getIndexedPluginIds();
 
+    const Dataquay::BasicStore *getIndex();
+
     ~PluginRDFIndexer();
 
 protected:
@@ -64,8 +70,8 @@ protected:
     bool pullURL(QString urlString);
     bool reindex();
 
-    static void loadPrefixes();
-    static bool m_prefixesLoaded;
+    Dataquay::BasicStore *m_index;
+
     static PluginRDFIndexer *m_instance;
 };
 
