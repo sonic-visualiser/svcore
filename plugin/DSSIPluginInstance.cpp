@@ -455,12 +455,12 @@ DSSIPluginInstance::~DSSIPluginInstance()
 void
 DSSIPluginInstance::instantiate(unsigned long sampleRate)
 {
+    if (!m_descriptor) return;
+
 #ifdef DEBUG_DSSI
     std::cout << "DSSIPluginInstance::instantiate - plugin \"unique\" id = "
               << m_descriptor->LADSPA_Plugin->UniqueID << std::endl;
 #endif
-    if (!m_descriptor) return;
-
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
     if (!descriptor->instantiate) {
