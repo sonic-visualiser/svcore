@@ -15,8 +15,6 @@
 
 #include "PluginRDFIndexer.h"
 
-#include "SimpleSPARQLQuery.h"
-
 #include "data/fileio/CachedFile.h"
 #include "data/fileio/FileSource.h"
 #include "data/fileio/PlaylistFileReader.h"
@@ -25,6 +23,9 @@
 #include "base/Profiler.h"
 
 #include <vamp-hostsdk/PluginHostAdapter.h>
+
+#include <dataquay/BasicStore.h>
+#include <dataquay/RDFException.h>
 
 #include <QFileInfo>
 #include <QDir>
@@ -40,11 +41,17 @@ using std::vector;
 using std::string;
 using Vamp::PluginHostAdapter;
 
+using Dataquay::Uri;
+using Dataquay::Node;
+using Dataquay::Nodes;
+using Dataquay::Triple;
+using Dataquay::Triples;
+using Dataquay::BasicStore;
+using Dataquay::RDFException;
+using Dataquay::RDFDuplicateImportException;
+
 PluginRDFIndexer *
 PluginRDFIndexer::m_instance = 0;
-
-bool
-PluginRDFIndexer::m_prefixesLoaded = false;
 
 PluginRDFIndexer *
 PluginRDFIndexer::getInstance() 
@@ -53,9 +60,19 @@ PluginRDFIndexer::getInstance()
     return m_instance;
 }
 
-PluginRDFIndexer::PluginRDFIndexer()
+PluginRDFIndexer::PluginRDFIndexer() :
+    m_index(new Dataquay::BasicStore)
 {
+    m_index->addPrefix("vamp", Uri("http://purl.org/ontology/vamp/"));
+    m_index->addPrefix("foaf", Uri("http://xmlns.com/foaf/0.1/"));
+    m_index->addPrefix("dc", Uri("http://purl.org/dc/elements/1.1/"));
     indexInstalledURLs();
+}
+
+const BasicStore *
+PluginRDFIndexer::getIndex()
+{
+    return m_index;
 }
 
 PluginRDFIndexer::~PluginRDFIndexer()
@@ -241,13 +258,11 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
-    loadPrefixes();
-
 //    SVDEBUG << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
 
     QMutexLocker locker(&m_mutex);
 
-    QString localString = urlString;
+    QUrl local = urlString;
 
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
@@ -257,90 +272,75 @@ PluginRDFIndexer::pullURL(QString urlString)
             return false;
         }
 
-        localString = QUrl::fromLocalFile(cf.getLocalFilename()).toString();
+        local = QUrl::fromLocalFile(cf.getLocalFilename());
+
+    } else {
+
+        local = QUrl::fromLocalFile(urlString);
     }
 
-    return SimpleSPARQLQuery::addSourceToModel(localString);
+    try {
+        m_index->import(local, BasicStore::ImportFailOnDuplicates);
+    } catch (RDFDuplicateImportException &e) {
+        cerr << "PluginRDFIndexer::pullURL: Document at " << urlString
+             << " duplicates triples found in earlier loaded document" << endl;
+        return false;
+    } catch (RDFException &e) {
+        cerr << "PluginRDFIndexer::pullURL: Failed to import document from "
+             << urlString << ": " << e.what() << endl;
+        return false;
+    }
+    return true;
 }
 
 bool
 PluginRDFIndexer::reindex()
 {
-    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
-
-    SimpleSPARQLQuery query
-        (m,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-
-             " SELECT ?plugin ?library ?plugin_id "
-
-             " WHERE { "
-             "   ?plugin a vamp:Plugin . "
-             "   ?plugin vamp:identifier ?plugin_id . "
-
-             "   OPTIONAL { "
-             "     ?library vamp:available_plugin ?plugin "
-             "   } "
-             " } "
-             ));
-
-    SimpleSPARQLQuery::ResultList results = query.execute();
-
-    if (!query.isOK()) {
-        cerr << "ERROR: PluginRDFIndexer::reindex: ERROR: Failed to query plugins from model: "
-             << query.getErrorString() << endl;
-        return false;
-    }
-
-    if (results.empty()) {
-        cerr << "PluginRDFIndexer::reindex: NOTE: no vamp:Plugin resources found in indexed documents" << endl;
-        return false;
-    }
+    Triples tt = m_index->match
+        (Triple(Node(), "a", m_index->expand("vamp:Plugin")));
+    Nodes plugins = tt.a();
 
     bool foundSomething = false;
     bool addedSomething = false;
 
-    for (SimpleSPARQLQuery::ResultList::iterator i = results.begin();
-         i != results.end(); ++i) {
-
-        QString pluginUri = (*i)["plugin"].value;
-        QString soUri = (*i)["library"].value;
-        QString identifier = (*i)["plugin_id"].value;
-
-        if (identifier == "") {
-            cerr << "PluginRDFIndexer::reindex: NOTE: No vamp:identifier for plugin <"
-                 << pluginUri << ">"
-                 << endl;
+    foreach (Node plugin, plugins) {
+        
+        if (plugin.type != Node::URI) {
+            cerr << "PluginRDFIndexer::reindex: Plugin has no URI: node is "
+                 << plugin << endl;
             continue;
         }
-        if (soUri == "") {
-            cerr << "PluginRDFIndexer::reindex: NOTE: No implementation library for plugin <"
-                 << pluginUri << ">"
-                 << endl;
+        
+        Triple idt = m_index->matchFirst
+            (Triple(plugin, "vamp:identifier", Node()));
+        
+        if (idt.c.type != Node::Literal) {
+            cerr << "PluginRDFIndexer::reindex: Plugin " << plugin
+                 << " lacks vamp:identifier literal" << endl;
             continue;
         }
 
-        QString sonameQuery =
-            QString(
-                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                " SELECT ?library_id "
-                " WHERE { "
-                "   <%1> vamp:identifier ?library_id "
-                " } "
-                )
-            .arg(soUri);
+        Triple libt = m_index->matchFirst
+            (Triple(Node(), "vamp:available_plugin", plugin));
 
-        SimpleSPARQLQuery::Value sonameValue = 
-            SimpleSPARQLQuery::singleResultQuery(m, sonameQuery, "library_id");
-        QString soname = sonameValue.value;
-        if (soname == "") {
-            cerr << "PluginRDFIndexer::reindex: NOTE: No identifier for library <"
-                 << soUri << ">"
-                 << endl;
+        if (libt.a.type != Node::URI) {
+            cerr << "PluginRDFIndexer::reindex: Plugin " << plugin 
+                 << " is not vamp:available_plugin in any library" << endl;
             continue;
         }
+
+        Triple sot = m_index->matchFirst
+            (Triple(libt.a, "vamp:identifier", Node()));
+
+        if (sot.c.type != Node::Literal) {
+            cerr << "PluginRDFIndexer::reindex: Library " << libt.a
+                 << " lacks vamp:identifier for soname" << endl;
+            continue;
+        }
+
+        QString pluginUri = plugin.value;
+        QString identifier = idt.c.value;
+        QString soname = sot.c.value;
 
         QString pluginId = PluginIdentifier::createIdentifier
             ("vamp", soname, identifier);
@@ -373,23 +373,3 @@ PluginRDFIndexer::reindex()
     
     return addedSomething;
 }
-
-void
-PluginRDFIndexer::loadPrefixes()
-{
-    return;
-//!!!
-    if (m_prefixesLoaded) return;
-    const char *prefixes[] = {
-        "http://purl.org/ontology/vamp/"
-    };
-    for (size_t i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); ++i) {
-        CachedFile cf(prefixes[i], 0, "application/rdf+xml");
-        if (!cf.isOK()) continue;
-        SimpleSPARQLQuery::addSourceToModel
-            (QUrl::fromLocalFile(cf.getLocalFilename()).toString());
-    }
-    m_prefixesLoaded = true;
-}
-
-

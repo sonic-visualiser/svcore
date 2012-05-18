@@ -16,15 +16,23 @@
 #include "PluginRDFDescription.h"
 
 #include "PluginRDFIndexer.h"
-#include "SimpleSPARQLQuery.h"
 
 #include "base/Profiler.h"
 
 #include "plugin/PluginIdentifier.h"
 
+#include <dataquay/BasicStore.h>
+
 #include <iostream>
 using std::cerr;
 using std::endl;
+
+using Dataquay::Uri;
+using Dataquay::Node;
+using Dataquay::Nodes;
+using Dataquay::Triple;
+using Dataquay::Triples;
+using Dataquay::BasicStore;
 
 PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     m_pluginId(pluginId),
@@ -172,93 +180,42 @@ PluginRDFDescription::indexMetadata()
 {
     Profiler profiler("PluginRDFDescription::index");
 
-    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
+    PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
+    const BasicStore *index = indexer->getIndex();
+    Uri plugin(m_pluginUri);
 
-    QString queryTemplate =
-        QString(
-            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-            " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-            " SELECT ?%3 "
-            " WHERE { "
-            "   <%1> %2 ?%3 . "
-            " }")
-        .arg(m_pluginUri);
-
-    SimpleSPARQLQuery::Value v;
-
-    v = SimpleSPARQLQuery::singleResultQuery
-        (m, queryTemplate.arg("vamp:name").arg("name"), "name");
-    
-    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
-        m_pluginName = v.value;
+    Node n = index->matchFirst(Triple(plugin, "vamp:name", Node())).c;
+    if (n.type == Node::Literal && n.value != "") {
+        m_pluginName = n.value;
     }
 
-    v = SimpleSPARQLQuery::singleResultQuery
-        (m, queryTemplate.arg("dc:description").arg("description"), "description");
-    
-    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
-        m_pluginDescription = v.value;
+    n = index->matchFirst(Triple(plugin, "dc:description", Node())).c;
+    if (n.type == Node::Literal && n.value != "") {
+        m_pluginDescription = n.value;
     }
 
-    v = SimpleSPARQLQuery::singleResultQuery
-        (m,
-         QString(
-            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-            " SELECT ?name "
-            " WHERE { "
-            "   <%1> foaf:maker ?maker . "
-            "   ?maker foaf:name ?name . "
-            " }")
-         .arg(m_pluginUri),
-         "name");
-    
-    if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
-        m_pluginMaker = v.value;
+    n = index->matchFirst(Triple(plugin, "foaf:maker", Node())).c;
+    if (n.type == Node::URI || n.type == Node::Blank) {
+        n = index->matchFirst(Triple(n, "foaf:name", Node())).c;
+        if (n.type == Node::Literal && n.value != "") {
+            m_pluginMaker = n.value;
+        }
     }
 
     // If we have a more-information URL for this plugin, then we take
-    // that.  Otherwise, a more-information URL for the plugin
-    // library would do nicely.  Failing that, we could perhaps use
-    // any foaf:page URL at all that appears in the file -- but
-    // perhaps that would be unwise
+    // that.  Otherwise, a more-information URL for the plugin library
+    // would do nicely.
 
-    v = SimpleSPARQLQuery::singleResultQuery
-        (m,
-         QString(
-            " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-            " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-            " SELECT ?page "
-            " WHERE { "
-            "   <%1> foaf:page ?page . "
-            " }")
-         .arg(m_pluginUri),
-         "page");
+    n = index->matchFirst(Triple(plugin, "foaf:page", Node())).c;
+    if (n.type == Node::URI && n.value != "") {
+        m_pluginInfoURL = n.value;
+    }
 
-    if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
-
-        m_pluginInfoURL = v.value;
-
-    } else {
-
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m,
-             QString(
-                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                " PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-                " SELECT ?page "
-                " WHERE { "
-                "   ?library vamp:available_plugin <%1> ; "
-                "            a vamp:PluginLibrary ; "
-                "            foaf:page ?page . "
-                " }")
-             .arg(m_pluginUri),
-             "page");
-
-        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
-
-            m_pluginInfoURL = v.value;
+    n = index->matchFirst(Triple(Node(), "vamp:available_plugin", plugin)).a;
+    if (n.value != "") {
+        n = index->matchFirst(Triple(n, "foaf:page", Node())).c;
+        if (n.type == Node::URI && n.value != "") {
+            m_pluginInfoURL = n.value;
         }
     }
 
@@ -270,87 +227,42 @@ PluginRDFDescription::indexOutputs()
 {
     Profiler profiler("PluginRDFDescription::indexOutputs");
     
-    SimpleSPARQLQuery::QueryType m = SimpleSPARQLQuery::QueryFromModel;
+    PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
+    const BasicStore *index = indexer->getIndex();
+    Uri plugin(m_pluginUri);
 
-    SimpleSPARQLQuery query
-        (m,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
+    Nodes outputs = index->match(Triple(plugin, "vamp:output", Node())).a();
 
-             " SELECT ?output "
-
-             " WHERE { "
-             "   <%1> vamp:output ?output . "
-             " } "
-             )
-         .arg(m_pluginUri));
-
-    SimpleSPARQLQuery::ResultList results = query.execute();
-
-    if (!query.isOK()) {
-        cerr << "ERROR: PluginRDFDescription::index: ERROR: Failed to query outputs for <"
-             << m_pluginUri << ">: "
-             << query.getErrorString() << endl;
-        return false;
-    }
-
-    if (results.empty()) {
+    if (outputs.empty()) {
         cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
              << m_pluginUri << ">" << endl;
         return false;
     }
 
-    // Note that an output may appear more than once, if it inherits
-    // more than one type (e.g. DenseOutput and QuantizedOutput).  So
-    // these results must accumulate
+    foreach (Node output, outputs) {
 
-    for (int i = 0; i < results.size(); ++i) {
-
-        if (results[i]["output"].type != SimpleSPARQLQuery::URIValue ||
-            results[i]["output"].value == "") {
-            cerr << "ERROR: PluginRDFDescription::indexURL: No valid URI for output " << i << " of plugin <" << m_pluginUri << ">" << endl;
+        if ((output.type != Node::URI && output.type != Node::Blank) ||
+            output.value == "") {
+            cerr << "ERROR: PluginRDFDescription::indexURL: No valid URI for output " << output << " of plugin <" << m_pluginUri << ">" << endl;
             return false;
         }
-
-        QString outputUri = results[i]["output"].value;
-
-        SimpleSPARQLQuery::Value v;
-
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, 
-             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                     " SELECT ?output_id "
-                     " WHERE { <%1> vamp:identifier ?output_id } ")
-             .arg(outputUri), "output_id");
-
-        if (v.type != SimpleSPARQLQuery::LiteralValue || v.value == "") {
-            cerr << "ERROR: PluginRDFDescription::indexURL: No identifier for output <" << outputUri << ">" << endl;
+        
+        Node n = index->matchFirst(Triple(output, "vamp:identifier", Node())).c;
+        if (n.type != Node::Literal || n.value == "") {
+            cerr << "ERROR: PluginRDFDescription::indexURL: No vamp:identifier for output <" << output << ">" << endl;
             return false;
         }
-        QString outputId = v.value;
+        QString outputId = n.value;
 
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, 
-             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                     " SELECT ?output_type "
-                     " WHERE { <%1> a ?output_type } ")
-             .arg(outputUri), "output_type");
-
+        n = index->matchFirst(Triple(output, "a", Node())).c;
         QString outputType;
-        if (v.type == SimpleSPARQLQuery::URIValue) outputType = v.value;
+        if (n.type == Node::URI) outputType = n.value;
 
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, 
-             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                     " SELECT ?unit "
-                     " WHERE { <%1> vamp:unit ?unit } ")
-             .arg(outputUri), "unit");
-
+        n = index->matchFirst(Triple(output, "vamp:unit", Node())).c;
         QString outputUnit;
-        if (v.type == SimpleSPARQLQuery::LiteralValue) outputUnit = v.value;
+        if (n.type == Node::Literal) outputUnit = n.value;
 
-        m_outputUriMap[outputId] = outputUri;
+        m_outputUriMap[outputId] = output.value;
 
         if (outputType.contains("DenseOutput")) {
             m_outputDispositions[outputId] = OutputDense;
@@ -366,43 +278,24 @@ PluginRDFDescription::indexOutputs()
             m_outputUnitMap[outputId] = outputUnit;
         }
 
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, 
-             QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                     " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-                     " SELECT ?title "
-                     " WHERE { <%1> dc:title ?title } ")
-             .arg(outputUri), "title");
-
-        if (v.type == SimpleSPARQLQuery::LiteralValue && v.value != "") {
-            m_outputNames[outputId] = v.value;
+        n = index->matchFirst(Triple(output, "dc:title", Node())).c;
+        if (n.type == Node::Literal && n.value != "") {
+            m_outputNames[outputId] = n.value;
         }
 
-        QString queryTemplate = 
-            QString(" PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                    " SELECT ?%2 "
-                    " WHERE { <%1> vamp:computes_%2 ?%2 } ")
-            .arg(outputUri);
-
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, queryTemplate.arg("event_type"), "event_type");
-
-        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
-            m_outputEventTypeURIMap[outputId] = v.value;
+        n = index->matchFirst(Triple(output, "vamp:computes_event_type", Node())).c;
+        if (n.type == Node::URI && n.value != "") {
+            m_outputEventTypeURIMap[outputId] = n.value;
         }
 
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, queryTemplate.arg("feature"), "feature");
+        n = index->matchFirst(Triple(output, "vamp:computes_feature", Node())).c;
+        if (n.type == Node::URI && n.value != "") {
+            m_outputFeatureAttributeURIMap[outputId] = n.value;
+        }
 
-        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
-            m_outputFeatureAttributeURIMap[outputId] = v.value;
-        }           
-
-        v = SimpleSPARQLQuery::singleResultQuery
-            (m, queryTemplate.arg("signal_type"), "signal_type");
-
-        if (v.type == SimpleSPARQLQuery::URIValue && v.value != "") {
-            m_outputSignalTypeURIMap[outputId] = v.value;
+        n = index->matchFirst(Triple(output, "vamp:computes_signal_type", Node())).c;
+        if (n.type == Node::URI && n.value != "") {
+            m_outputSignalTypeURIMap[outputId] = n.value;
         }
     }
 
