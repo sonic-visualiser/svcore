@@ -299,43 +299,36 @@ bool
 RDFTransformFactoryImpl::setParameters(Transform &transform,
                                        QString transformUri)
 {
-    SimpleSPARQLQuery paramQuery
-        (SimpleSPARQLQuery::QueryFromModel,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-             
-             " SELECT ?param_id ?param_value "
-             
-             " WHERE { "
-             "   <%1> vamp:parameter_binding ?binding . "
-             "   ?binding vamp:parameter ?param ; "
-             "            vamp:value ?param_value . "
-             "   ?param vamp:identifier ?param_id "
-             " } "
-             )
-         .arg(transformUri));
+    Nodes bindings = m_store->match
+        (Triple(Uri(transformUri), "vamp:parameter_binding", Node())).c();
     
-    SimpleSPARQLQuery::ResultList paramResults = paramQuery.execute();
-    
-    if (!paramQuery.isOK()) {
-        m_errorString = paramQuery.getErrorString();
-        return false;
-    }
-    
-    if (paramQuery.wasCancelled()) {
-        m_errorString = "Query cancelled";
-        return false;
-    }
-    
-    for (int j = 0; j < paramResults.size(); ++j) {
+    foreach (Node binding, bindings) {
+
+        Node paramNode = m_store->matchFirst
+            (Triple(binding, "vamp:parameter", Node())).c;
+
+        if (paramNode == Node()) {
+            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:parameter for binding " << binding << endl;
+            continue;
+        }
+
+        Node valueNode = m_store->matchFirst
+            (Triple(binding, "vamp:value", Node())).c;
+
+        if (paramNode == Node()) {
+            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:value for binding " << binding << endl;
+            continue;
+        }
+
+        Node idNode = m_store->matchFirst
+            (Triple(paramNode, "vamp:identifier", Node())).c;
         
-        QString paramId = paramResults[j]["param_id"].value;
-        QString paramValue = paramResults[j]["param_value"].value;
+        if (idNode == Node()) {
+            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:identifier for parameter " << paramNode << endl;
+            continue;
+        }
         
-        if (paramId == "" || paramValue == "") continue;
-        
-        transform.setParameter(paramId, paramValue.toFloat());
+        transform.setParameter(idNode.value, valueNode.value.toFloat());
     }
 
     return true;
