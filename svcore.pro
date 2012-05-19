@@ -235,15 +235,13 @@ HEADERS += rdf/PluginRDFIndexer.h \
            rdf/RDFExporter.h \
            rdf/RDFFeatureWriter.h \
            rdf/RDFImporter.h \
-           rdf/RDFTransformFactory.h \
-           rdf/SimpleSPARQLQuery.h
+           rdf/RDFTransformFactory.h
 SOURCES += rdf/PluginRDFIndexer.cpp \
            rdf/PluginRDFDescription.cpp \
            rdf/RDFExporter.cpp \
            rdf/RDFFeatureWriter.cpp \
            rdf/RDFImporter.cpp \
-           rdf/RDFTransformFactory.cpp \
-           rdf/SimpleSPARQLQuery.cpp
+           rdf/RDFTransformFactory.cpp
 
 HEADERS += system/Init.h \
            system/System.h
