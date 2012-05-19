@@ -162,33 +162,22 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     Nodes tnodes = m_store->match
         (Triple(Node(), "a", m_store->expand("vamp:Transform"))).a();
 
+    PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
+
     foreach (Node tnode, tnodes) {
 
         Node pnode = m_store->matchFirst
             (Triple(tnode, "vamp:plugin", Node())).c;
 
-        // There are various queries we need to make that might
-        // include data from either the transform RDF or the model
-        // accumulated from plugin descriptions.  For example, the
-        // transform RDF may specify the output's true URI, or it
-        // might have a blank node or some other URI with the
-        // appropriate vamp:identifier included in the file.  To cover
-        // both cases, we need to add the file itself into the model
-        // and always query the model using the transform URI rather
-        // than querying the file itself subsequently.
+        if (pnode == Node()) {
+            cerr << "RDFTransformFactory: WARNING: No vamp:plugin for "
+                 << "vamp:Transform node " << tnode
+                 << ", skipping this transform" << endl;
+            continue;
+        }
 
-//!!! ^^^ what does this mean for us with Dataquay? do we need to cross-check outputs against the indexer?
-
-    SimpleSPARQLQuery::addSourceToModel(m_urlString);
-
-    PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
-
-    for (int i = 0; i < transformResults.size(); ++i) {
-
-        SimpleSPARQLQuery::KeyValueMap &result = transformResults[i];
-
-        QString transformUri = result["transform"].value;
-        QString pluginUri = result["plugin"].value;
+        QString transformUri = tnode.value;
+        QString pluginUri = pnode.value;
 
         QString pluginId = indexer->getIdForPluginURI(pluginUri);
         if (pluginId == "") {
@@ -212,12 +201,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 
         uriTransformMap[transformUri] = transform;
 
-        // We have to do this a very long way round, to work around
-        // rasqal's current inability to handle correctly more than one
-        // OPTIONAL graph in a query
-
         static const char *optionals[] = {
-            "output",
             "program",
             "summary_type",
             "step_size",
@@ -232,59 +216,34 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 
             QString optional = optionals[j];
 
-            QString queryTemplate = 
-                " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-                
-                " SELECT ?%1 "
-                
-                " WHERE { "
-                "   <%2> vamp:%1 ?%1 "
-                " } ";
-            
-            SimpleSPARQLQuery query
-                (SimpleSPARQLQuery::QueryFromModel,
-                 queryTemplate.arg(optional).arg(transformUri));
-        
-            SimpleSPARQLQuery::ResultList results = query.execute();
+            Node onode = m_store->matchFirst
+                (Triple(Uri(transformUri), optional, Node())).c;
 
-            if (!query.isOK()) {
-                m_errorString = query.getErrorString();
-                return transforms;
-            }
+            if (onode.type != Node::Literal) continue;
 
-            if (results.empty()) continue;
-
-            for (int k = 0; k < results.size(); ++k) {
-
-                const SimpleSPARQLQuery::Value &v = results[k][optional];
-
-                if (v.type == SimpleSPARQLQuery::LiteralValue) {
-                
-                    if (optional == "program") {
-                        transform.setProgram(v.value);
-                    } else if (optional == "summary_type") {
-                        transform.setSummaryType
-                            (transform.stringToSummaryType(v.value));
-                    } else if (optional == "step_size") {
-                        transform.setStepSize(v.value.toUInt());
-                    } else if (optional == "block_size") {
-                        transform.setBlockSize(v.value.toUInt());
-                    } else if (optional == "window_type") {
-                        transform.setWindowType
-                            (Window<float>::getTypeForName
-                             (v.value.toLower().toStdString()));
-                    } else if (optional == "sample_rate") {
-                        transform.setSampleRate(v.value.toFloat());
-                    } else if (optional == "start") {
-                        transform.setStartTime
-                            (RealTime::fromXsdDuration(v.value.toStdString()));
-                    } else if (optional == "duration") {
-                        transform.setDuration
-                            (RealTime::fromXsdDuration(v.value.toStdString()));
-                    } else {
-                        cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
-                    }
-                }
+            if (optional == "program") {
+                transform.setProgram(onode.value);
+            } else if (optional == "summary_type") {
+                transform.setSummaryType
+                    (transform.stringToSummaryType(onode.value));
+            } else if (optional == "step_size") {
+                transform.setStepSize(onode.value.toUInt());
+            } else if (optional == "block_size") {
+                transform.setBlockSize(onode.value.toUInt());
+            } else if (optional == "window_type") {
+                transform.setWindowType
+                    (Window<float>::getTypeForName
+                     (onode.value.toLower().toStdString()));
+            } else if (optional == "sample_rate") {
+                transform.setSampleRate(onode.value.toFloat());
+            } else if (optional == "start") {
+                transform.setStartTime
+                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+            } else if (optional == "duration") {
+                transform.setDuration
+                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+            } else {
+                cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
             }
         }
 
@@ -301,33 +260,36 @@ bool
 RDFTransformFactoryImpl::setOutput(Transform &transform,
                                    QString transformUri)
 {
-    SimpleSPARQLQuery::Value outputValue =
-        SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromModel,
-         QString
-         (
-             " PREFIX vamp: <http://purl.org/ontology/vamp/> "
-             
-             " SELECT ?output_id "
+    Node outputNode = m_store->matchFirst
+        (Triple(Uri(transformUri), "vamp:output", Node())).c;
+    
+    if (outputNode == Node()) return true;
 
-             " WHERE { "
-             "   <%1> vamp:output ?output . "
-             "   ?output vamp:identifier ?output_id "
-             " } "
-             )
-         .arg(transformUri),
-         "output_id");
-    
-    if (outputValue.type == SimpleSPARQLQuery::NoValue) {
-        return true;
+    if (outputNode.type != Node::URI && outputNode.type != Node::Blank) {
+        m_errorString = QString("vamp:output for output of transform <%1> is not a URI or blank node").arg(transformUri);
+        return false;
     }
-    
-    if (outputValue.type != SimpleSPARQLQuery::LiteralValue) {
+
+    // Now, outputNode might be the subject of a triple within m_store
+    // that tells us the vamp:identifier, or it might be the subject
+    // of a triple within the indexer that tells us it
+
+    Node identNode = m_store->matchFirst
+        (Triple(outputNode, "vamp:identifier", Node())).c;
+
+    if (identNode == Node()) {
+        PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
+        const BasicStore *index = indexer->getIndex();
+        identNode = index->matchFirst
+            (Triple(outputNode, "vamp:identifier", Node())).c;
+    }
+
+    if (identNode == Node() || identNode.type != Node::Literal) {
         m_errorString = QString("No vamp:identifier found for output of transform <%1>, or vamp:identifier is not a literal").arg(transformUri);
         return false;
     }
 
-    transform.setOutput(outputValue.value);
+    transform.setOutput(identNode.value);
 
     return true;
 }
