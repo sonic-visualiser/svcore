@@ -284,8 +284,8 @@ PluginRDFDescription::indexOutputs()
         } else {
             m_outputDispositions[outputId] = OutputDispositionUnknown;
         }
-        cerr << "output " << output << " -> id " << outputId << ", type " << outputType << ", unit " 
-             << outputUnit << ", disposition " << m_outputDispositions[outputId] << endl;
+//        cerr << "output " << output << " -> id " << outputId << ", type " << outputType << ", unit " 
+//             << outputUnit << ", disposition " << m_outputDispositions[outputId] << endl;
             
         if (outputUnit != "") {
             m_outputUnitMap[outputId] = outputUnit;
@@ -297,7 +297,7 @@ PluginRDFDescription::indexOutputs()
         }
 
         n = index->complete(Triple(output, index->expand("vamp:computes_event_type"), Node()));
-        cerr << output << " -> computes_event_type " << n << endl;
+//        cerr << output << " -> computes_event_type " << n << endl;
         if (n.type == Node::URI && n.value != "") {
             m_outputEventTypeURIMap[outputId] = n.value;
         }
