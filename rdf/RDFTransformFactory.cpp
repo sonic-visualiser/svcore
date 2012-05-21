@@ -124,7 +124,13 @@ RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
     //!!! retrieve data if remote... then
     m_store->addPrefix("vamp", Uri("http://purl.org/ontology/vamp/"));
     try {
-        m_store->import(QUrl::fromLocalFile(url), BasicStore::ImportIgnoreDuplicates);
+        QUrl qurl;
+        if (url.startsWith("file:")) {
+            qurl = QUrl(url);
+        } else {
+            qurl = QUrl::fromLocalFile(url);
+        }
+        m_store->import(qurl, BasicStore::ImportIgnoreDuplicates);
         m_isRDF = true;
     } catch (...) { }
 }
@@ -160,14 +166,14 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
     std::map<QString, Transform> uriTransformMap;
 
     Nodes tnodes = m_store->match
-        (Triple(Node(), "a", m_store->expand("vamp:Transform"))).a();
+        (Triple(Node(), Uri("a"), m_store->expand("vamp:Transform"))).subjects();
 
     PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
 
     foreach (Node tnode, tnodes) {
 
-        Node pnode = m_store->matchFirst
-            (Triple(tnode, "vamp:plugin", Node())).c;
+        Node pnode = m_store->complete
+            (Triple(tnode, m_store->expand("vamp:plugin"), Node()));
 
         if (pnode == Node()) {
             cerr << "RDFTransformFactory: WARNING: No vamp:plugin for "
@@ -216,8 +222,9 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
 
             QString optional = optionals[j];
 
-            Node onode = m_store->matchFirst
-                (Triple(Uri(transformUri), optional, Node())).c;
+            Node onode = m_store->complete
+                (Triple(Uri(transformUri),
+                        m_store->expand(QString("vamp:") + optional), Node()));
 
             if (onode.type != Node::Literal) continue;
 
@@ -247,7 +254,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
             }
         }
 
-        SVDEBUG << "RDFTransformFactory: NOTE: Transform is: " << endl;
+        cerr << "RDFTransformFactory: NOTE: Transform is: " << endl;
         cerr << transform.toXmlString() << endl;
 
         transforms.push_back(transform);
@@ -260,8 +267,8 @@ bool
 RDFTransformFactoryImpl::setOutput(Transform &transform,
                                    QString transformUri)
 {
-    Node outputNode = m_store->matchFirst
-        (Triple(Uri(transformUri), "vamp:output", Node())).c;
+    Node outputNode = m_store->complete
+        (Triple(Uri(transformUri), m_store->expand("vamp:output"), Node()));
     
     if (outputNode == Node()) return true;
 
@@ -274,14 +281,14 @@ RDFTransformFactoryImpl::setOutput(Transform &transform,
     // that tells us the vamp:identifier, or it might be the subject
     // of a triple within the indexer that tells us it
 
-    Node identNode = m_store->matchFirst
-        (Triple(outputNode, "vamp:identifier", Node())).c;
+    Node identNode = m_store->complete
+        (Triple(outputNode, m_store->expand("vamp:identifier"), Node()));
 
     if (identNode == Node()) {
         PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
         const BasicStore *index = indexer->getIndex();
-        identNode = index->matchFirst
-            (Triple(outputNode, "vamp:identifier", Node())).c;
+        identNode = index->complete
+            (Triple(outputNode, index->expand("vamp:identifier"), Node()));
     }
 
     if (identNode == Node() || identNode.type != Node::Literal) {
@@ -300,30 +307,42 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
                                        QString transformUri)
 {
     Nodes bindings = m_store->match
-        (Triple(Uri(transformUri), "vamp:parameter_binding", Node())).c();
+        (Triple(Uri(transformUri), m_store->expand("vamp:parameter_binding"), Node())).objects();
     
     foreach (Node binding, bindings) {
 
-        Node paramNode = m_store->matchFirst
-            (Triple(binding, "vamp:parameter", Node())).c;
+        Node paramNode = m_store->complete
+            (Triple(binding, m_store->expand("vamp:parameter"), Node()));
 
         if (paramNode == Node()) {
             cerr << "RDFTransformFactoryImpl::setParameters: No vamp:parameter for binding " << binding << endl;
             continue;
         }
 
-        Node valueNode = m_store->matchFirst
-            (Triple(binding, "vamp:value", Node())).c;
+        Node valueNode = m_store->complete
+            (Triple(binding, m_store->expand("vamp:value"), Node()));
 
         if (paramNode == Node()) {
             cerr << "RDFTransformFactoryImpl::setParameters: No vamp:value for binding " << binding << endl;
             continue;
         }
-
-        Node idNode = m_store->matchFirst
-            (Triple(paramNode, "vamp:identifier", Node())).c;
         
+        // As with output above, paramNode might be the subject of a
+        // triple within m_store that tells us the vamp:identifier, or
+        // it might be the subject of a triple within the indexer that
+        // tells us it
+
+        Node idNode = m_store->complete
+            (Triple(paramNode, m_store->expand("vamp:identifier"), Node()));
+
         if (idNode == Node()) {
+            PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
+            const BasicStore *index = indexer->getIndex();
+            idNode = index->complete
+                (Triple(paramNode, index->expand("vamp:identifier"), Node()));
+        }
+
+        if (idNode == Node() || idNode.type != Node::Literal) {
             cerr << "RDFTransformFactoryImpl::setParameters: No vamp:identifier for parameter " << paramNode << endl;
             continue;
         }

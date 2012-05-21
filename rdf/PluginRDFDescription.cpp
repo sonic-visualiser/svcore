@@ -184,19 +184,25 @@ PluginRDFDescription::indexMetadata()
     const BasicStore *index = indexer->getIndex();
     Uri plugin(m_pluginUri);
 
-    Node n = index->matchFirst(Triple(plugin, "vamp:name", Node())).c;
+    Node n = index->complete
+        (Triple(plugin, index->expand("vamp:name"), Node()));
+
     if (n.type == Node::Literal && n.value != "") {
         m_pluginName = n.value;
     }
 
-    n = index->matchFirst(Triple(plugin, "dc:description", Node())).c;
+    n = index->complete
+        (Triple(plugin, index->expand("dc:description"), Node()));
+
     if (n.type == Node::Literal && n.value != "") {
         m_pluginDescription = n.value;
     }
 
-    n = index->matchFirst(Triple(plugin, "foaf:maker", Node())).c;
+    n = index->complete
+        (Triple(plugin, index->expand("foaf:maker"), Node()));
+
     if (n.type == Node::URI || n.type == Node::Blank) {
-        n = index->matchFirst(Triple(n, "foaf:name", Node())).c;
+        n = index->complete(Triple(n, index->expand("foaf:name"), Node()));
         if (n.type == Node::Literal && n.value != "") {
             m_pluginMaker = n.value;
         }
@@ -206,14 +212,18 @@ PluginRDFDescription::indexMetadata()
     // that.  Otherwise, a more-information URL for the plugin library
     // would do nicely.
 
-    n = index->matchFirst(Triple(plugin, "foaf:page", Node())).c;
+    n = index->complete
+        (Triple(plugin, index->expand("foaf:page"), Node()));
+
     if (n.type == Node::URI && n.value != "") {
         m_pluginInfoURL = n.value;
     }
 
-    n = index->matchFirst(Triple(Node(), "vamp:available_plugin", plugin)).a;
+    n = index->complete
+        (Triple(Node(), index->expand("vamp:available_plugin"), plugin));
+
     if (n.value != "") {
-        n = index->matchFirst(Triple(n, "foaf:page", Node())).c;
+        n = index->complete(Triple(n, index->expand("foaf:page"), Node()));
         if (n.type == Node::URI && n.value != "") {
             m_pluginInfoURL = n.value;
         }
@@ -231,7 +241,8 @@ PluginRDFDescription::indexOutputs()
     const BasicStore *index = indexer->getIndex();
     Uri plugin(m_pluginUri);
 
-    Nodes outputs = index->match(Triple(plugin, "vamp:output", Node())).a();
+    Nodes outputs = index->match
+        (Triple(plugin, index->expand("vamp:output"), Node())).objects();
 
     if (outputs.empty()) {
         cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
@@ -247,22 +258,22 @@ PluginRDFDescription::indexOutputs()
             return false;
         }
         
-        Node n = index->matchFirst(Triple(output, "vamp:identifier", Node())).c;
+        Node n = index->complete(Triple(output, index->expand("vamp:identifier"), Node()));
         if (n.type != Node::Literal || n.value == "") {
             cerr << "ERROR: PluginRDFDescription::indexURL: No vamp:identifier for output <" << output << ">" << endl;
             return false;
         }
         QString outputId = n.value;
 
-        n = index->matchFirst(Triple(output, "a", Node())).c;
+        m_outputUriMap[outputId] = output.value;
+
+        n = index->complete(Triple(output, Uri("a"), Node()));
         QString outputType;
         if (n.type == Node::URI) outputType = n.value;
 
-        n = index->matchFirst(Triple(output, "vamp:unit", Node())).c;
+        n = index->complete(Triple(output, index->expand("vamp:unit"), Node()));
         QString outputUnit;
         if (n.type == Node::Literal) outputUnit = n.value;
-
-        m_outputUriMap[outputId] = output.value;
 
         if (outputType.contains("DenseOutput")) {
             m_outputDispositions[outputId] = OutputDense;
@@ -273,27 +284,30 @@ PluginRDFDescription::indexOutputs()
         } else {
             m_outputDispositions[outputId] = OutputDispositionUnknown;
         }
+        cerr << "output " << output << " -> id " << outputId << ", type " << outputType << ", unit " 
+             << outputUnit << ", disposition " << m_outputDispositions[outputId] << endl;
             
         if (outputUnit != "") {
             m_outputUnitMap[outputId] = outputUnit;
         }
 
-        n = index->matchFirst(Triple(output, "dc:title", Node())).c;
+        n = index->complete(Triple(output, index->expand("dc:title"), Node()));
         if (n.type == Node::Literal && n.value != "") {
             m_outputNames[outputId] = n.value;
         }
 
-        n = index->matchFirst(Triple(output, "vamp:computes_event_type", Node())).c;
+        n = index->complete(Triple(output, index->expand("vamp:computes_event_type"), Node()));
+        cerr << output << " -> computes_event_type " << n << endl;
         if (n.type == Node::URI && n.value != "") {
             m_outputEventTypeURIMap[outputId] = n.value;
         }
 
-        n = index->matchFirst(Triple(output, "vamp:computes_feature", Node())).c;
+        n = index->complete(Triple(output, index->expand("vamp:computes_feature"), Node()));
         if (n.type == Node::URI && n.value != "") {
             m_outputFeatureAttributeURIMap[outputId] = n.value;
         }
 
-        n = index->matchFirst(Triple(output, "vamp:computes_signal_type", Node())).c;
+        n = index->complete(Triple(output, index->expand("vamp:computes_signal_type"), Node()));
         if (n.type == Node::URI && n.value != "") {
             m_outputSignalTypeURIMap[outputId] = n.value;
         }
