@@ -88,15 +88,17 @@ PluginRDFIndexer::indexInstalledURLs()
 //    std::cerr << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << std::endl;
 
     QStringList filters;
+    filters << "*.ttl";
+    filters << "*.TTL";
     filters << "*.n3";
     filters << "*.N3";
     filters << "*.rdf";
     filters << "*.RDF";
 
-    // Search each Vamp plugin path for a .rdf file that either has
+    // Search each Vamp plugin path for an RDF file that either has
     // name "soname", "soname:label" or "soname/label" plus RDF
-    // extension.  Use that order of preference, and prefer n3 over
-    // rdf extension.
+    // extension.  Use that order of preference, and prefer ttl over
+    // n3 over rdf extension.
 
     for (vector<string>::const_iterator i = paths.begin(); i != paths.end(); ++i) {
 
