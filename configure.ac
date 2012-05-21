@@ -82,8 +82,7 @@ SV_MODULE_REQUIRED([samplerate],[samplerate >= 0.1.2],[samplerate.h],[samplerate
 SV_MODULE_REQUIRED([vamp],[vamp >= 2.1],[vamp/vamp.h],[],[])
 SV_MODULE_REQUIRED([vamphostsdk],[vamp-hostsdk >= 2.0],[vamp-hostsdk/PluginLoader.h],[],[])
 SV_MODULE_REQUIRED([rubberband],[rubberband],[rubberband/RubberBandStretcher.h],[rubberband],[rubberband_new])
-SV_MODULE_REQUIRED([rasqal],[rasqal >= 0.9.19],[rasqal/rasqal.h],[rasqal],[rasqal_new_world])
-SV_MODULE_REQUIRED([redland],[redland >= 1.0.10],[librdf.h],[rdf],[librdf_new_world])
+SV_MODULE_REQUIRED([dataquay],[dataquay >= 0.9],[dataquay/Uri.h],[dataquay],[])
 
 SV_MODULE_OPTIONAL([liblo],[],[lo/lo.h],[lo],[lo_address_new])
 SV_MODULE_OPTIONAL([portaudio_2_0],[portaudio-2.0 >= 19],[portaudio.h],[portaudio],[Pa_IsFormatSupported])

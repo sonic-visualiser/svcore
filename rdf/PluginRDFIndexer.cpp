@@ -85,6 +85,8 @@ PluginRDFIndexer::indexInstalledURLs()
 {
     vector<string> paths = PluginHostAdapter::getPluginPath();
 
+//    std::cerr << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << std::endl;
+
     QStringList filters;
     filters << "*.n3";
     filters << "*.N3";
@@ -258,7 +260,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
-//    SVDEBUG << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
+//    std::cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << std::endl;
 
     QMutexLocker locker(&m_mutex);
 
@@ -274,6 +276,10 @@ PluginRDFIndexer::pullURL(QString urlString)
 
         local = QUrl::fromLocalFile(cf.getLocalFilename());
 
+    } else if (urlString.startsWith("file:")) {
+
+        local = QUrl(urlString);
+
     } else {
 
         local = QUrl::fromLocalFile(urlString);
@@ -282,10 +288,12 @@ PluginRDFIndexer::pullURL(QString urlString)
     try {
         m_index->import(local, BasicStore::ImportFailOnDuplicates);
     } catch (RDFDuplicateImportException &e) {
+        cerr << e.what() << endl;
         cerr << "PluginRDFIndexer::pullURL: Document at " << urlString
-             << " duplicates triples found in earlier loaded document" << endl;
+             << " duplicates triples found in earlier loaded document -- skipping it" << endl;
         return false;
     } catch (RDFException &e) {
+        cerr << e.what() << endl;
         cerr << "PluginRDFIndexer::pullURL: Failed to import document from "
              << urlString << ": " << e.what() << endl;
         return false;
@@ -297,8 +305,8 @@ bool
 PluginRDFIndexer::reindex()
 {
     Triples tt = m_index->match
-        (Triple(Node(), "a", m_index->expand("vamp:Plugin")));
-    Nodes plugins = tt.a();
+        (Triple(Node(), Uri("a"), m_index->expand("vamp:Plugin")));
+    Nodes plugins = tt.subjects();
 
     bool foundSomething = false;
     bool addedSomething = false;
@@ -311,36 +319,36 @@ PluginRDFIndexer::reindex()
             continue;
         }
         
-        Triple idt = m_index->matchFirst
-            (Triple(plugin, "vamp:identifier", Node()));
-        
-        if (idt.c.type != Node::Literal) {
+        Node idn = m_index->complete
+            (Triple(plugin, m_index->expand("vamp:identifier"), Node()));
+
+        if (idn.type != Node::Literal) {
             cerr << "PluginRDFIndexer::reindex: Plugin " << plugin
                  << " lacks vamp:identifier literal" << endl;
             continue;
         }
 
-        Triple libt = m_index->matchFirst
-            (Triple(Node(), "vamp:available_plugin", plugin));
+        Node libn = m_index->complete
+            (Triple(Node(), m_index->expand("vamp:available_plugin"), plugin));
 
-        if (libt.a.type != Node::URI) {
+        if (libn.type != Node::URI) {
             cerr << "PluginRDFIndexer::reindex: Plugin " << plugin 
                  << " is not vamp:available_plugin in any library" << endl;
             continue;
         }
 
-        Triple sot = m_index->matchFirst
-            (Triple(libt.a, "vamp:identifier", Node()));
+        Node son = m_index->complete
+            (Triple(libn, m_index->expand("vamp:identifier"), Node()));
 
-        if (sot.c.type != Node::Literal) {
-            cerr << "PluginRDFIndexer::reindex: Library " << libt.a
+        if (son.type != Node::Literal) {
+            cerr << "PluginRDFIndexer::reindex: Library " << libn
                  << " lacks vamp:identifier for soname" << endl;
             continue;
         }
 
         QString pluginUri = plugin.value;
-        QString identifier = idt.c.value;
-        QString soname = sot.c.value;
+        QString identifier = idn.value;
+        QString soname = son.value;
 
         QString pluginId = PluginIdentifier::createIdentifier
             ("vamp", soname, identifier);

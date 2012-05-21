@@ -65,6 +65,7 @@ public:
 
 protected:
     BasicStore *m_store;
+    Uri expand(QString s) { return m_store->expand(s); }
 
     QString m_uristring;
     QString m_errorString;
@@ -202,13 +203,13 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                     ProgressReporter *reporter)
 {
     Nodes sigs = m_store->match
-        (Triple(Node(), "a", m_store->expand("mo:Signal"))).a();
+        (Triple(Node(), Uri("a"), expand("mo:Signal"))).subjects();
 
     foreach (Node sig, sigs) {
         
-        Node file = m_store->matchFirst(Triple(Node(), "mo:encodes", sig)).a;
+        Node file = m_store->complete(Triple(Node(), expand("mo:encodes"), sig));
         if (file == Node()) {
-            file = m_store->matchFirst(Triple(sig, "mo:available_as", Node())).c;
+            file = m_store->complete(Triple(sig, expand("mo:available_as"), Node()));
         }
         if (file == Node()) {
             std::cerr << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << std::endl;
@@ -287,14 +288,14 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
     }
 
     Nodes sigFeatures = m_store->match
-        (Triple(Node(), "af:signal_feature", Node())).c();
+        (Triple(Node(), expand("af:signal_feature"), Node())).objects();
 
     foreach (Node sf, sigFeatures) {
 
         if (sf.type != Node::URI && sf.type != Node::Blank) continue;
         
-        Node t = m_store->matchFirst(Triple(sf, "a", Node())).c;
-        Node v = m_store->matchFirst(Triple(sf, "af:value", Node())).c;
+        Node t = m_store->complete(Triple(sf, expand("a"), Node()));
+        Node v = m_store->complete(Triple(sf, expand("af:value"), Node()));
 
         QString feature = sf.value;
         QString type = t.value;
@@ -386,8 +387,8 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
                                     QString featureUri,
                                     QString featureTypeUri)
 {
-    Node n = m_store->matchFirst
-        (Triple(Uri(featureUri), "dc:title", Node())).c;
+    Node n = m_store->complete
+        (Triple(Uri(featureUri), expand("dc:title"), Node()));
 
     if (n.type == Node::Literal && n.value != "") {
         SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << n.value << "\"" << endl;
@@ -395,8 +396,8 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
         return;
     }
 
-    n = m_store->matchFirst
-        (Triple(Uri(featureTypeUri), "dc:title", Node())).c;
+    n = m_store->complete
+        (Triple(Uri(featureTypeUri), expand("dc:title"), Node()));
 
     if (n.type == Node::Literal && n.value != "") {
         SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << n.value << "\"" << endl;
@@ -412,8 +413,8 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
                                            int &sampleRate, int &windowLength,
                                            int &hopSize, int &width, int &height)
 {
-    Node dim = m_store->matchFirst
-        (Triple(Uri(featureUri), "af:dimensions", Node())).c;
+    Node dim = m_store->complete
+        (Triple(Uri(featureUri), expand("af:dimensions"), Node()));
 
     cerr << "Dimensions = \"" << dim.value << "\"" << endl;
 
@@ -434,15 +435,15 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     // ?map tl:hopSize ?hop .
     // ?map tl:windowLength ?window .
 
-    Node interval = m_store->matchFirst(Triple(Uri(featureUri), "mo:time", Node())).c;
+    Node interval = m_store->complete(Triple(Uri(featureUri), expand("mo:time"), Node()));
 
-    if (!m_store->contains(Triple(interval, "a", m_store->expand("tl:Interval")))) {
+    if (!m_store->contains(Triple(interval, expand("a"), expand("tl:Interval")))) {
         cerr << "RDFImporterImpl::getDenseFeatureProperties: Feature time node "
              << interval << " is not a tl:Interval" << endl;
         return;
     }
 
-    Node tl = m_store->matchFirst(Triple(interval, "tl:onTimeLine", Node())).c;
+    Node tl = m_store->complete(Triple(interval, expand("tl:onTimeLine"), Node()));
     
     if (tl == Node()) {
         cerr << "RDFImporterImpl::getDenseFeatureProperties: Interval node "
@@ -450,7 +451,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
         return;
     }
 
-    Node map = m_store->matchFirst(Triple(Node(), "tl:rangeTimeLine", tl)).a;
+    Node map = m_store->complete(Triple(Node(), expand("tl:rangeTimeLine"), tl));
     
     if (map == Node()) {
         cerr << "RDFImporterImpl::getDenseFeatureProperties: No map for "
@@ -499,7 +500,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     */
 
     Nodes sigs = m_store->match
-        (Triple(Node(), "a", m_store->expand("mo:Signal"))).a();
+        (Triple(Node(), expand("a"), expand("mo:Signal"))).subjects();
 
     // Map from timeline uri to event type to dimensionality to
     // presence of duration to model ptr.  Whee!
@@ -508,24 +509,24 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
     foreach (Node sig, sigs) {
         
-        Node interval = m_store->matchFirst(Triple(sig, "mo:time", Node())).c;
+        Node interval = m_store->complete(Triple(sig, expand("mo:time"), Node()));
         if (interval == Node()) continue;
 
-        Node tl = m_store->matchFirst(Triple(interval, "tl:onTimeLine", Node())).c;
+        Node tl = m_store->complete(Triple(interval, expand("tl:onTimeLine"), Node()));
         if (tl == Node()) continue;
 
-        Nodes times = m_store->match(Triple(Node(), "tl:onTimeLine", tl)).a();
+        Nodes times = m_store->match(Triple(Node(), expand("tl:onTimeLine"), tl)).subjects();
         
         foreach (Node tn, times) {
             
-            Nodes timedThings = m_store->match(Triple(Node(), "event:time", tn)).a();
+            Nodes timedThings = m_store->match(Triple(Node(), expand("event:time"), tn)).subjects();
 
             foreach (Node thing, timedThings) {
                 
-                Node typ = m_store->matchFirst(Triple(thing, "a", Node())).c;
+                Node typ = m_store->complete(Triple(thing, expand("a"), Node()));
                 if (typ == Node()) continue;
 
-                Node valu = m_store->matchFirst(Triple(thing, "af:feature", Node())).c;
+                Node valu = m_store->complete(Triple(thing, expand("af:feature"), Node()));
 
                 QString source = sig.value;
                 QString timeline = tl.value;
@@ -559,11 +560,11 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 bool note = (type.contains("Note") || type.contains("note")); // Guffaw
 
                 if (text) {
-                    label = m_store->matchFirst(Triple(thing, "af:text", Node())).c.value;
+                    label = m_store->complete(Triple(thing, expand("af:text"), Node())).value;
                 }
                 
                 if (label == "") {
-                    label = m_store->matchFirst(Triple(thing, "rdfs:label", Node())).c.value;
+                    label = m_store->complete(Triple(thing, expand("rdfs:label"), Node())).value;
                 }
 
                 RealTime time;
@@ -572,7 +573,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 bool haveTime = false;
                 bool haveDuration = false;
 
-                Node at = m_store->matchFirst(Triple(tn, "tl:at", Node())).c;
+                Node at = m_store->complete(Triple(tn, expand("tl:at"), Node()));
 
                 if (at != Node()) {
                     time = RealTime::fromXsdDuration(at.value.toStdString());
@@ -582,8 +583,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
     // beginsAt -> start
     // onTimeLine -> timeline
 
-                    Node start = m_store->matchFirst(Triple(tn, "tl:beginsAt", Node())).c;
-                    Node dur = m_store->matchFirst(Triple(tn, "tl:duration", Node())).c;
+                    Node start = m_store->complete(Triple(tn, expand("tl:beginsAt"), Node()));
+                    Node dur = m_store->complete(Triple(tn, expand("tl:duration"), Node()));
                     if (start != Node() && dur != Node()) {
                         time = RealTime::fromXsdDuration
                             (start.value.toStdString());
@@ -663,8 +664,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                         model->setSourceModel(m_audioModelMap[source]);
                     }
 
-                    QString title = m_store->matchFirst
-                        (Triple(typ, "dc:title", Node())).a.value;
+                    QString title = m_store->complete
+                        (Triple(typ, expand("dc:title"), Node())).value;
                     if (title == "") {
                         // take it from the end of the event type
                         title = type;
@@ -806,7 +807,7 @@ RDFImporter::identifyDocumentType(QString url)
     try {
         //!!! non-local document? + may throw!!!
         store = BasicStore::load(QUrl(url));
-        Triple t = store->matchFirst(Triple());
+        Triple t = store->matchOnce(Triple());
         if (t != Triple()) haveRDF = true;
     } catch (...) {
     }
@@ -822,7 +823,7 @@ RDFImporter::identifyDocumentType(QString url)
 
     // "MO-conformant" structure for audio files
 
-    Node n = store->matchFirst(Triple(Node(), "a", store->expand("mo:AudioFile"))).a;
+    Node n = store->complete(Triple(Node(), Uri("a"), store->expand("mo:AudioFile")));
     if (n != Node() && n.type == Node::URI) {
 
         haveAudio = true;
@@ -833,9 +834,9 @@ RDFImporter::identifyDocumentType(QString url)
         // (which is not properly in conformance with the Music
         // Ontology)
 
-        Nodes sigs = store->match(Triple(Node(), "a", store->expand("mo:Signal"))).a();
+        Nodes sigs = store->match(Triple(Node(), Uri("a"), store->expand("mo:Signal"))).subjects();
         foreach (Node sig, sigs) {
-            Node aa = store->matchFirst(Triple(sig, "mo:available_as", Node())).c;
+            Node aa = store->complete(Triple(sig, store->expand("mo:available_as"), Node()));
             if (aa != Node()) {
                 haveAudio = true;
                 break;
@@ -846,13 +847,13 @@ RDFImporter::identifyDocumentType(QString url)
     SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
               << haveAudio << endl;
 
-    n = store->matchFirst(Triple(Node(), "event:time", Node())).a;
+    n = store->complete(Triple(Node(), store->expand("event:time"), Node()));
     if (n != Node()) {
         haveAnnotations = true;
     }
 
     if (!haveAnnotations) {
-        n = store->matchFirst(Triple(Node(), "af:signal_feature", Node())).a;
+        n = store->complete(Triple(Node(), store->expand("af:signal_feature"), Node()));
         if (n != Node()) {
             haveAnnotations = true;
         }
