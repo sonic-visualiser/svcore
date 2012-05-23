@@ -75,8 +75,7 @@ ResourceFinder::getSystemResourcePrefixList()
     }
 #else
 #ifdef Q_OS_MAC
-    list << QString("/Library/Application Support/%1/%2")
-        .arg(qApp->organizationName())
+    list << QString("/Library/Application Support/%1")
         .arg(qApp->applicationName());
 #else
     list << QString("/usr/local/share/%1")
@@ -107,9 +106,8 @@ ResourceFinder::getUserResourcePrefix()
     char *home = getenv("HOME");
     if (!home || !home[0]) return "";
 #ifdef Q_OS_MAC
-    return QString("%1/Library/Application Support/%2/%3")
+    return QString("%1/Library/Application Support/%2")
         .arg(home)
-        .arg(qApp->organizationName())
         .arg(qApp->applicationName());
 #else
     return QString("%1/.local/share/%2")
