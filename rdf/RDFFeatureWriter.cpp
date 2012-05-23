@@ -479,7 +479,7 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
     if (needEventType && m_fixedEventTypeURI == "") {
 
         QString uri;
-        if (m_syntheticEventTypeURIs.find(transform) ==
+        if (m_syntheticEventTypeURIs.find(transform) !=
             m_syntheticEventTypeURIs.end()) {
             uri = m_syntheticEventTypeURIs[transform];
         } else {
