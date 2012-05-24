@@ -142,7 +142,13 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
     m_store->addPrefix("rdfs", Uri("http://www.w3.org/2000/01/rdf-schema#"));
 
     //!!! may throw!
-    m_store->import(QUrl::fromLocalFile(uri), BasicStore::ImportIgnoreDuplicates);
+    QUrl url;
+    if (uri.startsWith("file:")) {
+        url = QUrl(uri);
+    } else {
+        url = QUrl::fromLocalFile(uri);
+    }
+    m_store->import(url, BasicStore::ImportIgnoreDuplicates);
 }
 
 RDFImporterImpl::~RDFImporterImpl()
@@ -847,13 +853,15 @@ RDFImporter::identifyDocumentType(QString url)
     SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
               << haveAudio << endl;
 
-    n = store->complete(Triple(Node(), store->expand("event:time"), Node()));
+    // can't call complete() with two Nothing nodes
+    n = store->matchOnce(Triple(Node(), store->expand("event:time"), Node())).c;
     if (n != Node()) {
         haveAnnotations = true;
     }
 
     if (!haveAnnotations) {
-        n = store->complete(Triple(Node(), store->expand("af:signal_feature"), Node()));
+        // can't call complete() with two Nothing nodes
+        n = store->matchOnce(Triple(Node(), store->expand("af:signal_feature"), Node())).c;
         if (n != Node()) {
             haveAnnotations = true;
         }
