@@ -391,7 +391,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
            << "        tl:onTimeLine "
            << timelineURI << "\n    ] .\n\n";
 
-    stream << timelineURI << " a tl:Timeline .\n";
+    stream << timelineURI << " a tl:Timeline .\n\n";
 } 
 
 void

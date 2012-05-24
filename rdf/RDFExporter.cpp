@@ -172,6 +172,6 @@ RDFExporter::write()
 QString
 RDFExporter::getSupportedExtensions()
 {
-    return "*.n3 *.ttl";
+    return "*.ttl *.n3";
 }
 
