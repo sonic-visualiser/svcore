@@ -174,7 +174,8 @@ RDFFeatureWriter::write(QString trackId,
         m_startedStreamTransforms[stream].end()) {
         m_startedStreamTransforms[stream].insert(transform);
         writeLocalFeatureTypes
-            (stream, transform, output, m_rdfDescriptions[pluginId]);
+            (stream, transform, output, m_rdfDescriptions[pluginId],
+             summaryType);
     }
 
     if (m_singleFileName != "" || m_stdout) {
@@ -390,14 +391,15 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
            << "        tl:onTimeLine "
            << timelineURI << "\n    ] .\n\n";
 
-    stream << timelineURI << " a tl:Timeline .\n";
+    stream << timelineURI << " a tl:Timeline .\n\n";
 } 
 
 void
 RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
                                          const Transform &transform,
                                          const Plugin::OutputDescriptor &od,
-                                         PluginRDFDescription &desc)
+                                         PluginRDFDescription &desc, 
+                                         std::string summaryType)
 {
     QString outputId = od.identifier.c_str();
     QTextStream &stream = *sptr;
@@ -412,7 +414,8 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
 
     //!!! bin names, extents and so on can be written out using e.g. vamp:bin_names ( "a" "b" "c" ) 
 
-    if (desc.getOutputDisposition(outputId) == 
+    if (summaryType == "" &&
+        desc.getOutputDisposition(outputId) == 
         PluginRDFDescription::OutputDense) {
 
         // no feature events, so may need signal type but won't need
