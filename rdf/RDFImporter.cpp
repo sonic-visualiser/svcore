@@ -141,14 +141,17 @@ RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
     m_store->addPrefix("event", Uri("http://purl.org/NET/c4dm/event.owl#"));
     m_store->addPrefix("rdfs", Uri("http://www.w3.org/2000/01/rdf-schema#"));
 
-    //!!! may throw!
-    QUrl url;
-    if (uri.startsWith("file:")) {
-        url = QUrl(uri);
-    } else {
-        url = QUrl::fromLocalFile(uri);
+    try {
+        QUrl url;
+        if (uri.startsWith("file:")) {
+            url = QUrl(uri);
+        } else {
+            url = QUrl::fromLocalFile(uri);
+        }
+        m_store->import(url, BasicStore::ImportIgnoreDuplicates);
+    } catch (std::exception &e) {
+        m_errorString = e.what();
     }
-    m_store->import(url, BasicStore::ImportIgnoreDuplicates);
 }
 
 RDFImporterImpl::~RDFImporterImpl()
@@ -811,11 +814,12 @@ RDFImporter::identifyDocumentType(QString url)
     // This is not expected to return anything useful, but if it does
     // anything at all then we know we have RDF
     try {
-        //!!! non-local document? + may throw!!!
+        //!!! non-local document?
         store = BasicStore::load(QUrl(url));
         Triple t = store->matchOnce(Triple());
         if (t != Triple()) haveRDF = true;
-    } catch (...) {
+    } catch (std::exception &e) {
+        // nothing; haveRDF will be false so the next bit catches it
     }
 
     if (!haveRDF) {
