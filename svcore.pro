@@ -230,20 +230,18 @@ SOURCES += plugin/DSSIPluginFactory.cpp \
            plugin/api/dssi_alsa_compat.c \
            plugin/plugins/SamplePlayer.cpp
 
-HEADERS += rdf/PluginRDFDescription.h \
-           rdf/PluginRDFIndexer.h \
+HEADERS += rdf/PluginRDFIndexer.h \
+           rdf/PluginRDFDescription.h \
            rdf/RDFExporter.h \
            rdf/RDFFeatureWriter.h \
            rdf/RDFImporter.h \
-           rdf/RDFTransformFactory.h \
-           rdf/SimpleSPARQLQuery.h
-SOURCES += rdf/PluginRDFDescription.cpp \
-           rdf/PluginRDFIndexer.cpp \
+           rdf/RDFTransformFactory.h
+SOURCES += rdf/PluginRDFIndexer.cpp \
+           rdf/PluginRDFDescription.cpp \
            rdf/RDFExporter.cpp \
            rdf/RDFFeatureWriter.cpp \
            rdf/RDFImporter.cpp \
-           rdf/RDFTransformFactory.cpp \
-           rdf/SimpleSPARQLQuery.cpp
+           rdf/RDFTransformFactory.cpp
 
 HEADERS += system/Init.h \
            system/System.h
