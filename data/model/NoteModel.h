@@ -196,9 +196,9 @@ public:
                 (row, column, value, role);
         }
 
-        if (role != Qt::EditRole) return false;
+        if (role != Qt::EditRole) return 0;
         PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return false;
+        if (i == m_points.end()) return 0;
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
 
         Point point(*i);
