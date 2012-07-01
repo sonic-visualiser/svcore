@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2008 QMUL.
+    This file copyright 2008-2012 QMUL.
    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -21,8 +21,6 @@
 #include <iostream>
 #include <cmath>
 
-#include "SimpleSPARQLQuery.h"
-
 #include "base/ProgressReporter.h"
 #include "base/RealTime.h"
 
@@ -37,6 +35,17 @@
 #include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
 #include "data/fileio/FileFinder.h"
+
+#include <dataquay/BasicStore.h>
+#include <dataquay/PropertyObject.h>
+
+using Dataquay::Uri;
+using Dataquay::Node;
+using Dataquay::Nodes;
+using Dataquay::Triple;
+using Dataquay::Triples;
+using Dataquay::BasicStore;
+using Dataquay::PropertyObject;
 
 using std::cerr;
 using std::endl;
@@ -55,15 +64,15 @@ public:
     std::vector<Model *> getDataModels(ProgressReporter *);
 
 protected:
+    BasicStore *m_store;
+    Uri expand(QString s) { return m_store->expand(s); }
+
     QString m_uristring;
     QString m_errorString;
     std::map<QString, Model *> m_audioModelMap;
     int m_sampleRate;
 
     std::map<Model *, std::map<QString, float> > m_labelValueMap;
-
-    static bool m_prefixesLoaded;
-    static void loadPrefixes(ProgressReporter *reporter);
 
     void getDataModelsAudio(std::vector<Model *> &, ProgressReporter *);
     void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
@@ -77,8 +86,6 @@ protected:
 
     void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
 };
-
-bool RDFImporterImpl::m_prefixesLoaded = false;
 
 QString
 RDFImporter::getKnownExtensions()
@@ -121,14 +128,35 @@ RDFImporter::getDataModels(ProgressReporter *r)
 }
 
 RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
+    m_store(new BasicStore),
     m_uristring(uri),
     m_sampleRate(sampleRate)
 {
+    //!!! retrieve data if remote... then
+
+    m_store->addPrefix("mo", Uri("http://purl.org/ontology/mo/"));
+    m_store->addPrefix("af", Uri("http://purl.org/ontology/af/"));
+    m_store->addPrefix("dc", Uri("http://purl.org/dc/elements/1.1/"));
+    m_store->addPrefix("tl", Uri("http://purl.org/NET/c4dm/timeline.owl#"));
+    m_store->addPrefix("event", Uri("http://purl.org/NET/c4dm/event.owl#"));
+    m_store->addPrefix("rdfs", Uri("http://www.w3.org/2000/01/rdf-schema#"));
+
+    try {
+        QUrl url;
+        if (uri.startsWith("file:")) {
+            url = QUrl(uri);
+        } else {
+            url = QUrl::fromLocalFile(uri);
+        }
+        m_store->import(url, BasicStore::ImportIgnoreDuplicates);
+    } catch (std::exception &e) {
+        m_errorString = e.what();
+    }
 }
 
 RDFImporterImpl::~RDFImporterImpl()
 {
-    SimpleSPARQLQuery::closeSingleSource(m_uristring);
+    delete m_store;
 }
 
 bool
@@ -146,15 +174,13 @@ RDFImporterImpl::getErrorString() const
 std::vector<Model *>
 RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
-    loadPrefixes(reporter);
-
     std::vector<Model *> models;
 
     getDataModelsAudio(models, reporter);
 
     if (m_sampleRate == 0) {
         m_errorString = QString("Invalid audio data model (is audio file format supported?)");
-        std::cerr << m_errorString.toStdString() << std::endl;
+        std::cerr << m_errorString << std::endl;
         return models;
     }
 
@@ -185,48 +211,31 @@ void
 RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                     ProgressReporter *reporter)
 {
-    SimpleSPARQLQuery query
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         QString
-         (
-             " PREFIX mo: <http://purl.org/ontology/mo/> "
-             " SELECT ?signal ?source FROM <%1> "
-             " WHERE { ?source a mo:AudioFile . "
-             "         ?signal a mo:Signal . "
-             "         ?source mo:encodes ?signal } "
-             )
-         .arg(m_uristring));
+    Nodes sigs = m_store->match
+        (Triple(Node(), Uri("a"), expand("mo:Signal"))).subjects();
 
-    SimpleSPARQLQuery::ResultList results = query.execute();
-
-    if (results.empty()) {
-
-        SimpleSPARQLQuery query2
-            (SimpleSPARQLQuery::QueryFromSingleSource,
-             QString
-             (
-                 " PREFIX mo: <http://purl.org/ontology/mo/> "
-                 " SELECT ?signal ?source FROM <%1> "
-                 " WHERE { ?signal a mo:Signal ; mo:available_as ?source } "
-                 )
-             .arg(m_uristring));
+    foreach (Node sig, sigs) {
         
-        results = query.execute();
-    }
+        Node file = m_store->complete(Triple(Node(), expand("mo:encodes"), sig));
+        if (file == Node()) {
+            file = m_store->complete(Triple(sig, expand("mo:available_as"), Node()));
+        }
+        if (file == Node()) {
+            std::cerr << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << std::endl;
+            continue;
+        }
 
-    for (int i = 0; i < results.size(); ++i) {
+        QString signal = sig.value;
+        QString source = file.value;
 
-        QString signal = results[i]["signal"].value;
-        QString source = results[i]["source"].value;
-
-        std::cerr << "NOTE: Seeking signal source \"" << source.toStdString()
-                  << "\"..." << std::endl;
+        SVDEBUG << "NOTE: Seeking signal source \"" << source
+                << "\"..." << endl;
 
         FileSource *fs = new FileSource(source, reporter);
         if (fs->isAvailable()) {
-            std::cerr << "NOTE: Source is available: Local filename is \""
-                      << fs->getLocalFilename().toStdString()
-                      << "\"..." << std::endl;
+            SVDEBUG << "NOTE: Source is available: Local filename is \""
+                    << fs->getLocalFilename()
+                    << "\"..." << endl;
         }
             
 #ifdef NO_SV_GUI
@@ -237,8 +246,8 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         }
 #else
         if (!fs->isAvailable()) {
-            std::cerr << "NOTE: Signal source \"" << source.toStdString()
-                      << "\" is not available, using file finder..." << std::endl;
+            SVDEBUG << "NOTE: Signal source \"" << source
+                    << "\" is not available, using file finder..." << endl;
             FileFinder *ff = FileFinder::getInstance();
             if (ff) {
                 QString path = ff->find(FileFinder::AudioFile,
@@ -265,7 +274,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         fs->waitForData();
         WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
         if (newModel->isOK()) {
-            std::cerr << "Successfully created wave file model from source at \"" << source.toStdString() << "\"" << std::endl;
+            std::cerr << "Successfully created wave file model from source at \"" << source << "\"" << std::endl;
             models.push_back(newModel);
             m_audioModelMap[signal] = newModel;
             if (m_sampleRate == 0) {
@@ -287,44 +296,21 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
         reporter->setMessage(RDFImporter::tr("Importing dense signal data from RDF..."));
     }
 
-    SimpleSPARQLQuery query
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         QString
-         (
-             " PREFIX mo: <http://purl.org/ontology/mo/>"
-             " PREFIX af: <http://purl.org/ontology/af/>"
-             
-             " SELECT ?feature ?feature_signal_type ?value "
-             " FROM <%1> "
-             
-             " WHERE { "
-             
-             "   ?signal af:signal_feature ?feature . "
-             
-             "   ?feature a ?feature_signal_type ; "
-             "            af:value ?value . "
-    
-             " } "
-             )
-         .arg(m_uristring));
+    Nodes sigFeatures = m_store->match
+        (Triple(Node(), expand("af:signal_feature"), Node())).objects();
 
-    SimpleSPARQLQuery::ResultList results = query.execute();
+    foreach (Node sf, sigFeatures) {
 
-    if (!query.isOK()) {
-        m_errorString = query.getErrorString();
-        return;
-    }
+        if (sf.type != Node::URI && sf.type != Node::Blank) continue;
+        
+        Node t = m_store->complete(Triple(sf, expand("a"), Node()));
+        Node v = m_store->complete(Triple(sf, expand("af:value"), Node()));
 
-    if (query.wasCancelled()) {
-        m_errorString = "Query cancelled";
-        return;
-    }        
-
-    for (int i = 0; i < results.size(); ++i) {
-
-        QString feature = results[i]["feature"].value;
-        QString type = results[i]["feature_signal_type"].value;
-        QString value = results[i]["value"].value;
+        QString feature = sf.value;
+        QString type = t.value;
+        QString value = v.value;
+        
+        if (type == "" || value == "") continue;
 
         int sampleRate = 0;
         int windowLength = 0;
@@ -410,41 +396,25 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
                                     QString featureUri,
                                     QString featureTypeUri)
 {
-    QString titleQuery = QString
-        (
-            " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-            " SELECT ?title "
-            " FROM <%1> " 
-            " WHERE { "
-            "   <%2> dc:title ?title . "
-            " } "
-            ).arg(m_uristring);
-    
-    SimpleSPARQLQuery::Value v;
+    Node n = m_store->complete
+        (Triple(Uri(featureUri), expand("dc:title"), Node()));
 
-    v = SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         titleQuery.arg(featureUri),
-         "title");
-
-    if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << v.value.toStdString() << "\"" << std::endl;
-        m->setObjectName(v.value);
+    if (n.type == Node::Literal && n.value != "") {
+        SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << n.value << "\"" << endl;
+        m->setObjectName(n.value);
         return;
     }
 
-    v = SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         titleQuery.arg(featureTypeUri),
-         "title");
-    
-    if (v.value != "") {
-        std::cerr << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << v.value.toStdString() << "\"" << std::endl;
-        m->setObjectName(v.value);
+    n = m_store->complete
+        (Triple(Uri(featureTypeUri), expand("dc:title"), Node()));
+
+    if (n.type == Node::Literal && n.value != "") {
+        SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << n.value << "\"" << endl;
+        m->setObjectName(n.value);
         return;
     }
 
-    std::cerr << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri.toStdString() << ">" << std::endl;
+    SVDEBUG << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << endl;
 }
 
 void
@@ -452,91 +422,61 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
                                            int &sampleRate, int &windowLength,
                                            int &hopSize, int &width, int &height)
 {
-    SimpleSPARQLQuery::QueryType s = SimpleSPARQLQuery::QueryFromSingleSource;
+    Node dim = m_store->complete
+        (Triple(Uri(featureUri), expand("af:dimensions"), Node()));
 
-    QString dimensionsQuery 
-        (
-            " PREFIX mo: <http://purl.org/ontology/mo/>"
-            " PREFIX af: <http://purl.org/ontology/af/>"
-            
-            " SELECT ?dimensions "
-            " FROM <%1> "
+    cerr << "Dimensions = \"" << dim.value << "\"" << endl;
 
-            " WHERE { "
-
-            "   <%2> af:dimensions ?dimensions . "
-            
-            " } "
-            );
-
-    SimpleSPARQLQuery::Value dimensionsValue =
-        SimpleSPARQLQuery::singleResultQuery
-        (s, dimensionsQuery.arg(m_uristring).arg(featureUri), "dimensions");
-
-    cerr << "Dimensions = \"" << dimensionsValue.value.toStdString() << "\""
-         << endl;
-
-    if (dimensionsValue.value != "") {
-        QStringList dl = dimensionsValue.value.split(" ");
-        if (dl.empty()) dl.push_back(dimensionsValue.value);
+    if (dim.type == Node::Literal && dim.value != "") {
+        QStringList dl = dim.value.split(" ");
+        if (dl.empty()) dl.push_back(dim.value);
         if (dl.size() > 0) height = dl[0].toInt();
         if (dl.size() > 1) width = dl[1].toInt();
     }
+    
+    // Looking for rate, hop, window from:
+    //
+    // ?feature mo:time ?time .
+    // ?time a tl:Interval .
+    // ?time tl:onTimeLine ?timeline .
+    // ?map tl:rangeTimeLine ?timeline .
+    // ?map tl:sampleRate ?rate .
+    // ?map tl:hopSize ?hop .
+    // ?map tl:windowLength ?window .
 
-    QString queryTemplate
-        (
-            " PREFIX mo: <http://purl.org/ontology/mo/>"
-            " PREFIX af: <http://purl.org/ontology/af/>"
-            " PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>"
+    Node interval = m_store->complete(Triple(Uri(featureUri), expand("mo:time"), Node()));
 
-            " SELECT ?%3 "
-            " FROM <%1> "
-            
-            " WHERE { "
-            
-            "   <%2> mo:time ?time . "
-            
-            "   ?time a tl:Interval ; "
-            "         tl:onTimeLine ?timeline . "
-
-            "   ?map tl:rangeTimeLine ?timeline . "
-
-            "   ?map tl:%3 ?%3 . "
-            
-            " } "
-            );
-
-    // Another laborious workaround for rasqal's failure to handle
-    // multiple optionals properly
-
-    SimpleSPARQLQuery::Value srValue = 
-        SimpleSPARQLQuery::singleResultQuery(s,
-                                             queryTemplate
-                                             .arg(m_uristring).arg(featureUri)
-                                             .arg("sampleRate"),
-                                             "sampleRate");
-    if (srValue.value != "") {
-        sampleRate = srValue.value.toInt();
+    if (!m_store->contains(Triple(interval, expand("a"), expand("tl:Interval")))) {
+        cerr << "RDFImporterImpl::getDenseFeatureProperties: Feature time node "
+             << interval << " is not a tl:Interval" << endl;
+        return;
     }
 
-    SimpleSPARQLQuery::Value hopValue = 
-        SimpleSPARQLQuery::singleResultQuery(s,
-                                             queryTemplate
-                                             .arg(m_uristring).arg(featureUri)
-                                             .arg("hopSize"),
-                                             "hopSize");
-    if (srValue.value != "") {
-        hopSize = hopValue.value.toInt();
+    Node tl = m_store->complete(Triple(interval, expand("tl:onTimeLine"), Node()));
+    
+    if (tl == Node()) {
+        cerr << "RDFImporterImpl::getDenseFeatureProperties: Interval node "
+             << interval << " lacks tl:onTimeLine property" << endl;
+        return;
     }
 
-    SimpleSPARQLQuery::Value winValue = 
-        SimpleSPARQLQuery::singleResultQuery(s,
-                                             queryTemplate
-                                             .arg(m_uristring).arg(featureUri)
-                                             .arg("windowLength"),
-                                             "windowLength");
-    if (winValue.value != "") {
-        windowLength = winValue.value.toInt();
+    Node map = m_store->complete(Triple(Node(), expand("tl:rangeTimeLine"), tl));
+    
+    if (map == Node()) {
+        cerr << "RDFImporterImpl::getDenseFeatureProperties: No map for "
+             << "timeline node " << tl << endl;
+    }
+
+    PropertyObject po(m_store, "tl:", map);
+
+    if (po.hasProperty("sampleRate")) {
+        sampleRate = po.getProperty("sampleRate").toInt();
+    }
+    if (po.hasProperty("hopSize")) {
+        hopSize = po.getProperty("hopSize").toInt();
+    }
+    if (po.hasProperty("windowLength")) {
+        windowLength = po.getProperty("windowLength").toInt();
     }
 
     cerr << "sr = " << sampleRate << ", hop = " << hopSize << ", win = " << windowLength << endl;
@@ -550,328 +490,210 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         reporter->setMessage(RDFImporter::tr("Importing event data from RDF..."));
     }
 
-    SimpleSPARQLQuery::QueryType s = SimpleSPARQLQuery::QueryFromSingleSource;
-
-    // Our query is intended to retrieve every thing that has a time,
-    // and every feature type and value associated with a thing that
-    // has a time.
-
-    // We will then need to refine this big bag of results into a set
-    // of data models.
-
-    // Results that have different source signals should go into
-    // different models.
-
-    // Results that have different feature types should go into
-    // different models.
-
-    // Results that are sparse should go into different models from
-    // those that are dense (we need to examine the timestamps to
-    // establish this -- if the timestamps are regular, the results
-    // are dense -- so we can't do it as we go along, only after
-    // collecting all results).
-
-    // Timed things that have features associated with them should not
-    // appear directly in any model -- their features should appear
-    // instead -- and these should be different models from those used
-    // for timed things that do not have features.
-
-    // As we load the results, we'll push them into a partially
-    // structured container that maps from source signal (URI as
-    // string) -> feature type (likewise) -> time -> list of values.
-    // If the source signal or feature type is unavailable, the empty
-    // string will do.
-
-    QString prefixes = QString(
-        " PREFIX event: <http://purl.org/NET/c4dm/event.owl#>"
-        " PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>"
-        " PREFIX mo: <http://purl.org/ontology/mo/>"
-        " PREFIX af: <http://purl.org/ontology/af/>"
-        " PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-        );
-
-    QString queryString = prefixes + QString(
-
-        " SELECT ?signal ?timed_thing ?timeline ?event_type ?value"
-        " FROM <%1>"
-
-        " WHERE {"
-
-        "   ?signal a mo:Signal ."
-
-        "   ?signal mo:time ?interval ."
-        "   ?interval tl:onTimeLine ?timeline ."
-        "   ?time tl:onTimeLine ?timeline ."
-        "   ?timed_thing event:time ?time ."
-        "   ?timed_thing a ?event_type ."
-
-        "   OPTIONAL {"
-        "     ?timed_thing af:feature ?value"
-        "   }"
-        " }"
-
-        ).arg(m_uristring);
-
-    //!!! NB we're using rather old terminology for these things, apparently:
-    // beginsAt -> start
-    // onTimeLine -> timeline
-
-    QString timeQueryString = prefixes + QString(
-        
-        " SELECT ?time FROM <%1> "
-        " WHERE { "        
-        "   <%2> event:time ?t . "
-        "   ?t tl:at ?time . "
-        " } "
-
-        ).arg(m_uristring);
-
-    QString rangeQueryString = prefixes + QString(
-        
-        " SELECT ?time ?duration FROM <%1> "
-        " WHERE { "
-        "   <%2> event:time ?t . "
-        "   ?t tl:beginsAt ?time . "
-        "   ?t tl:duration ?duration . "
-        " } "
-
-        ).arg(m_uristring);
-
-    QString labelQueryString = prefixes + QString(
-        
-        " SELECT ?label FROM <%1> "
-        " WHERE { "
-        "   <%2> rdfs:label ?label . "
-        " } "
-
-        ).arg(m_uristring);
-
-    QString textQueryString = prefixes + QString(
-        
-        " SELECT ?label FROM <%1> "
-        " WHERE { "
-        "   <%2> af:text ?label . "
-        " } "
-
-        ).arg(m_uristring);
-
-    SimpleSPARQLQuery query(s, queryString);
-    query.setProgressReporter(reporter);
-
-//    cerr << "Query will be: " << queryString.toStdString() << endl;
-
-    SimpleSPARQLQuery::ResultList results = query.execute();
-
-    if (!query.isOK()) {
-        m_errorString = query.getErrorString();
-        return;
-    }
-
-    if (query.wasCancelled()) {
-        m_errorString = "Query cancelled";
-        return;
-    }        
-
     /*
-      This function is now only used for sparse data (for dense data
-      we would be in getDataModelsDense instead).
+      This function is only used for sparse data (for dense data we
+      would be in getDataModelsDense instead).
 
-      For sparse data, the determining factors in deciding what model
-      to use are: Do the features have values? and Do the features
-      have duration?
+      Our query is intended to retrieve every thing that has a time,
+      and every feature type and value associated with a thing that
+      has a time.
 
-      We can run through the results and check off whether we find
-      values and duration for each of the source+type keys, and then
-      run through the source+type keys pushing each of the results
-      into a suitable model.
+      We will then need to refine this big bag of results into a set
+      of data models.
 
-      Unfortunately, at this point we do not yet have any actual
-      timing data (time/duration) -- just the time URI.
+      Results that have different source signals should go into
+      different models.
 
-      What we _could_ do is to create one of each type of model at the
-      start, for each of the source+type keys, and then push each
-      feature into the relevant model depending on what we find out
-      about it.  Then return only non-empty models.
+      Results that have different feature types should go into
+      different models.
     */
+
+    Nodes sigs = m_store->match
+        (Triple(Node(), expand("a"), expand("mo:Signal"))).subjects();
 
     // Map from timeline uri to event type to dimensionality to
     // presence of duration to model ptr.  Whee!
     std::map<QString, std::map<QString, std::map<int, std::map<bool, Model *> > > >
         modelMap;
 
-    for (int i = 0; i < results.size(); ++i) {
-
-        if (i % 4 == 0) {
-            if (reporter) reporter->setProgress(i/4);
-        }
-
-        QString source = results[i]["signal"].value;
-        QString timeline = results[i]["timeline"].value;
-        QString type = results[i]["event_type"].value;
-        QString thinguri = results[i]["timed_thing"].value;
+    foreach (Node sig, sigs) {
         
-        RealTime time;
-        RealTime duration;
+        Node interval = m_store->complete(Triple(sig, expand("mo:time"), Node()));
+        if (interval == Node()) continue;
 
-        bool haveTime = false;
-        bool haveDuration = false;
+        Node tl = m_store->complete(Triple(interval, expand("tl:onTimeLine"), Node()));
+        if (tl == Node()) continue;
 
-        QString label = "";
-        bool text = (type.contains("Text") || type.contains("text")); // Ha, ha
+        Nodes times = m_store->match(Triple(Node(), expand("tl:onTimeLine"), tl)).subjects();
+        
+        foreach (Node tn, times) {
+            
+            Nodes timedThings = m_store->match(Triple(Node(), expand("event:time"), tn)).subjects();
 
-        if (text) {
-            label = SimpleSPARQLQuery::singleResultQuery
-                (s, textQueryString.arg(thinguri), "label").value;
-        }
+            foreach (Node thing, timedThings) {
+                
+                Node typ = m_store->complete(Triple(thing, expand("a"), Node()));
+                if (typ == Node()) continue;
 
-        if (label == "") {
-            label = SimpleSPARQLQuery::singleResultQuery
-                (s, labelQueryString.arg(thinguri), "label").value;
-        }
+                Node valu = m_store->complete(Triple(thing, expand("af:feature"), Node()));
 
-        SimpleSPARQLQuery rangeQuery(s, rangeQueryString.arg(thinguri));
-        SimpleSPARQLQuery::ResultList rangeResults = rangeQuery.execute();
-        if (!rangeResults.empty()) {
-//                std::cerr << rangeResults.size() << " range results" << std::endl;
-            time = RealTime::fromXsdDuration
-                (rangeResults[0]["time"].value.toStdString());
-            duration = RealTime::fromXsdDuration
-                (rangeResults[0]["duration"].value.toStdString());
-//                std::cerr << "duration string " << rangeResults[0]["duration"].value.toStdString() << std::endl;
-            haveTime = true;
-            haveDuration = true;
-        } else {
-            QString timestring = SimpleSPARQLQuery::singleResultQuery
-                (s, timeQueryString.arg(thinguri), "time").value;
-//            std::cerr << "timestring = " << timestring.toStdString() << std::endl;
-            if (timestring != "") {
-                time = RealTime::fromXsdDuration(timestring.toStdString());
-                haveTime = true;
-            }
-        }
+                QString source = sig.value;
+                QString timeline = tl.value;
+                QString type = typ.value;
+                QString thinguri = thing.value;
 
-        QString valuestring = results[i]["value"].value;
-        std::vector<float> values;
+                /*
+                  For sparse data, the determining factors in deciding
+                  what model to use are: Do the features have values?
+                  and Do the features have duration?
 
-        if (valuestring != "") {
-            QStringList vsl = valuestring.split(" ", QString::SkipEmptyParts);
-            for (int j = 0; j < vsl.size(); ++j) {
-                bool success = false;
-                float v = vsl[j].toFloat(&success);
-                if (success) values.push_back(v);
-            }
-        }
+                  We can run through the results and check off whether
+                  we find values and duration for each of the
+                  source+type keys, and then run through the
+                  source+type keys pushing each of the results into a
+                  suitable model.
 
-        int dimensions = 1;
-        if (values.size() == 1) dimensions = 2;
-        else if (values.size() > 1) dimensions = 3;
+                  Unfortunately, at this point we do not yet have any
+                  actual timing data (time/duration) -- just the time
+                  URI.
 
-        Model *model = 0;
+                  What we _could_ do is to create one of each type of
+                  model at the start, for each of the source+type
+                  keys, and then push each feature into the relevant
+                  model depending on what we find out about it.  Then
+                  return only non-empty models.
+                */
 
-        if (modelMap[timeline][type][dimensions].find(haveDuration) ==
-            modelMap[timeline][type][dimensions].end()) {
+                QString label = "";
+                bool text = (type.contains("Text") || type.contains("text")); // Ha, ha
+                bool note = (type.contains("Note") || type.contains("note")); // Guffaw
+
+                if (text) {
+                    label = m_store->complete(Triple(thing, expand("af:text"), Node())).value;
+                }
+                
+                if (label == "") {
+                    label = m_store->complete(Triple(thing, expand("rdfs:label"), Node())).value;
+                }
+
+                RealTime time;
+                RealTime duration;
+
+                bool haveTime = false;
+                bool haveDuration = false;
+
+                Node at = m_store->complete(Triple(tn, expand("tl:at"), Node()));
+
+                if (at != Node()) {
+                    time = RealTime::fromXsdDuration(at.value.toStdString());
+                    haveTime = true;
+                } else {
+    //!!! NB we're using rather old terminology for these things, apparently:
+    // beginsAt -> start
+    // onTimeLine -> timeline
+
+                    Node start = m_store->complete(Triple(tn, expand("tl:beginsAt"), Node()));
+                    Node dur = m_store->complete(Triple(tn, expand("tl:duration"), Node()));
+                    if (start != Node() && dur != Node()) {
+                        time = RealTime::fromXsdDuration
+                            (start.value.toStdString());
+                        duration = RealTime::fromXsdDuration
+                            (dur.value.toStdString());
+                        haveTime = haveDuration = true;
+                    }
+                }
+
+                QString valuestring = valu.value;
+                std::vector<float> values;
+
+                if (valuestring != "") {
+                    QStringList vsl = valuestring.split(" ", QString::SkipEmptyParts);
+                    for (int j = 0; j < vsl.size(); ++j) {
+                        bool success = false;
+                        float v = vsl[j].toFloat(&success);
+                        if (success) values.push_back(v);
+                    }
+                }
+                
+                int dimensions = 1;
+                if (values.size() == 1) dimensions = 2;
+                else if (values.size() > 1) dimensions = 3;
+
+                Model *model = 0;
+
+                if (modelMap[timeline][type][dimensions].find(haveDuration) ==
+                    modelMap[timeline][type][dimensions].end()) {
 
 /*
-            std::cerr << "Creating new model: source = " << source.toStdString()
-                      << ", type = " << type.toStdString() << ", dimensions = "
+            SVDEBUG << "Creating new model: source = " << source                      << ", type = " << type << ", dimensions = "
                       << dimensions << ", haveDuration = " << haveDuration
                       << ", time = " << time << ", duration = " << duration
-                      << std::endl;
+                      << endl;
 */
             
-            if (!haveDuration) {
+                    if (!haveDuration) {
 
-                if (dimensions == 1) {
+                        if (dimensions == 1) {
+                            if (text) {
+                                model = new TextModel(m_sampleRate, 1, false);
+                            } else {
+                                model = new SparseOneDimensionalModel(m_sampleRate, 1, false);
+                            }
+                        } else if (dimensions == 2) {
+                            if (text) {
+                                model = new TextModel(m_sampleRate, 1, false);
+                            } else {
+                                model = new SparseTimeValueModel(m_sampleRate, 1, false);
+                            }
+                        } else {
+                            // We don't have a three-dimensional sparse model,
+                            // so use a note model.  We do have some logic (in
+                            // extractStructure below) for guessing whether
+                            // this should after all have been a dense model,
+                            // but it's hard to apply it because we don't have
+                            // all the necessary timing data yet... hmm
+                            model = new NoteModel(m_sampleRate, 1, false);
+                        }
 
-                    if (text) {
-                        
-                        model = new TextModel(m_sampleRate, 1, false);
+                    } else { // haveDuration
 
-                    } else {
-
-                        model = new SparseOneDimensionalModel(m_sampleRate, 1, false);
+                        if (note || (dimensions > 2)) {
+                            model = new NoteModel(m_sampleRate, 1, false);
+                        } else {
+                            // If our units are frequency or midi pitch, we
+                            // should be using a note model... hm
+                            model = new RegionModel(m_sampleRate, 1, false);
+                        }
                     }
 
-                } else if (dimensions == 2) {
+                    model->setRDFTypeURI(type);
 
-                    if (text) {
-
-                        model = new TextModel(m_sampleRate, 1, false);
-
-                    } else {
-
-                        model = new SparseTimeValueModel(m_sampleRate, 1, false);
+                    if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
+                        std::cerr << "source model for " << model << " is " << m_audioModelMap[source] << std::endl;
+                        model->setSourceModel(m_audioModelMap[source]);
                     }
 
-                } else {
+                    QString title = m_store->complete
+                        (Triple(typ, expand("dc:title"), Node())).value;
+                    if (title == "") {
+                        // take it from the end of the event type
+                        title = type;
+                        title.replace(QRegExp("^.*[/#]"), "");
+                    }
+                    model->setObjectName(title);
 
-                    // We don't have a three-dimensional sparse model,
-                    // so use a note model.  We do have some logic (in
-                    // extractStructure below) for guessing whether
-                    // this should after all have been a dense model,
-                    // but it's hard to apply it because we don't have
-                    // all the necessary timing data yet... hmm
-
-                    model = new NoteModel(m_sampleRate, 1, false);
+                    modelMap[timeline][type][dimensions][haveDuration] = model;
+                    models.push_back(model);
                 }
 
-            } else { // haveDuration
+                model = modelMap[timeline][type][dimensions][haveDuration];
 
-                if (dimensions == 1 || dimensions == 2) {
-
-                    // If our units are frequency or midi pitch, we
-                    // should be using a note model... hm
-                    
-                    model = new RegionModel(m_sampleRate, 1, false);
-
-                } else {
-
-                    // We don't have a three-dimensional sparse model,
-                    // so use a note model.  We do have some logic (in
-                    // extractStructure below) for guessing whether
-                    // this should after all have been a dense model,
-                    // but it's hard to apply it because we don't have
-                    // all the necessary timing data yet... hmm
-
-                    model = new NoteModel(m_sampleRate, 1, false);
+                if (model) {
+                    long ftime = RealTime::realTime2Frame(time, m_sampleRate);
+                    long fduration = RealTime::realTime2Frame(duration, m_sampleRate);
+                    fillModel(model, ftime, fduration, haveDuration, values, label);
                 }
             }
-
-            model->setRDFTypeURI(type);
-
-            if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
-                std::cerr << "source model for " << model << " is " << m_audioModelMap[source] << std::endl;
-                model->setSourceModel(m_audioModelMap[source]);
-            }
-
-            QString titleQuery = QString
-                (
-                    " PREFIX dc: <http://purl.org/dc/elements/1.1/> "
-                    " SELECT ?title "
-                    " FROM <%1> " 
-                    " WHERE { "
-                    "   <%2> dc:title ?title . "
-                    " } "
-                    ).arg(m_uristring).arg(type);
-            QString title = SimpleSPARQLQuery::singleResultQuery
-                (s, titleQuery, "title").value;
-            if (title == "") {
-                // take it from the end of the event type
-                title = type;
-                title.replace(QRegExp("^.*[/#]"), "");
-            }
-            model->setObjectName(title);
-
-            modelMap[timeline][type][dimensions][haveDuration] = model;
-            models.push_back(model);
-        }
-
-        model = modelMap[timeline][type][dimensions][haveDuration];
-
-        if (model) {
-            long ftime = RealTime::realTime2Frame(time, m_sampleRate);
-            long fduration = RealTime::realTime2Frame(duration, m_sampleRate);
-            fillModel(model, ftime, fduration, haveDuration, values, label);
         }
     }
 }
@@ -884,7 +706,7 @@ RDFImporterImpl::fillModel(Model *model,
                            std::vector<float> &values,
                            QString label)
 {
-//    std::cerr << "RDFImporterImpl::fillModel: adding point at frame " << ftime << std::endl;
+//    SVDEBUG << "RDFImporterImpl::fillModel: adding point at frame " << ftime << endl;
 
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
@@ -985,33 +807,34 @@ RDFImporter::identifyDocumentType(QString url)
 {
     bool haveAudio = false;
     bool haveAnnotations = false;
+    bool haveRDF = false;
 
-    // This query is not expected to return any values, but if it
-    // executes successfully (leaving no error in the error string)
-    // then we know we have RDF
-    SimpleSPARQLQuery q(SimpleSPARQLQuery::QueryFromSingleSource,
-                        QString(" SELECT ?x FROM <%1> WHERE { ?x <y> <z> } ")
-                        .arg(url));
-    
-    SimpleSPARQLQuery::ResultList r = q.execute();
-    if (!q.isOK()) {
-        SimpleSPARQLQuery::closeSingleSource(url);
+    BasicStore *store = 0;
+
+    // This is not expected to return anything useful, but if it does
+    // anything at all then we know we have RDF
+    try {
+        //!!! non-local document?
+        store = BasicStore::load(QUrl(url));
+        Triple t = store->matchOnce(Triple());
+        if (t != Triple()) haveRDF = true;
+    } catch (std::exception &e) {
+        // nothing; haveRDF will be false so the next bit catches it
+    }
+
+    if (!haveRDF) {
+        delete store;
         return NotRDF;
     }
 
+    store->addPrefix("mo", Uri("http://purl.org/ontology/mo/"));
+    store->addPrefix("event", Uri("http://purl.org/NET/c4dm/event.owl#"));
+    store->addPrefix("af", Uri("http://purl.org/ontology/af/"));
+
     // "MO-conformant" structure for audio files
 
-    SimpleSPARQLQuery::Value value =
-        SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         QString
-         (" PREFIX mo: <http://purl.org/ontology/mo/> "
-          " SELECT ?url FROM <%1> "
-          " WHERE { ?url a mo:AudioFile } "
-             ).arg(url),
-         "url");
-
-    if (value.type == SimpleSPARQLQuery::URIValue) {
+    Node n = store->complete(Triple(Node(), Uri("a"), store->expand("mo:AudioFile")));
+    if (n != Node() && n.type == Node::URI) {
 
         haveAudio = true;
 
@@ -1021,59 +844,37 @@ RDFImporter::identifyDocumentType(QString url)
         // (which is not properly in conformance with the Music
         // Ontology)
 
-        value =
-            SimpleSPARQLQuery::singleResultQuery
-            (SimpleSPARQLQuery::QueryFromSingleSource,
-             QString
-             (" PREFIX mo: <http://purl.org/ontology/mo/> "
-              " SELECT ?url FROM <%1> "
-              " WHERE { ?signal a mo:Signal ; mo:available_as ?url } "
-                 ).arg(url),
-             "url");
-
-        if (value.type == SimpleSPARQLQuery::URIValue) {
-            haveAudio = true;
+        Nodes sigs = store->match(Triple(Node(), Uri("a"), store->expand("mo:Signal"))).subjects();
+        foreach (Node sig, sigs) {
+            Node aa = store->complete(Triple(sig, store->expand("mo:available_as"), Node()));
+            if (aa != Node()) {
+                haveAudio = true;
+                break;
+            }
         }
     }
 
-    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
-              << haveAudio << std::endl;
+    SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAudio = "
+              << haveAudio << endl;
 
-    value =
-        SimpleSPARQLQuery::singleResultQuery
-        (SimpleSPARQLQuery::QueryFromSingleSource,
-         QString
-         (" PREFIX event: <http://purl.org/NET/c4dm/event.owl#> "
-          " SELECT ?thing FROM <%1> "
-          " WHERE { ?thing event:time ?time } "
-             ).arg(url),
-         "thing");
-
-    if (value.type == SimpleSPARQLQuery::URIValue) {
+    // can't call complete() with two Nothing nodes
+    n = store->matchOnce(Triple(Node(), store->expand("event:time"), Node())).c;
+    if (n != Node()) {
         haveAnnotations = true;
     }
 
     if (!haveAnnotations) {
-        
-        value =
-            SimpleSPARQLQuery::singleResultQuery
-            (SimpleSPARQLQuery::QueryFromSingleSource,
-             QString
-             (" PREFIX af: <http://purl.org/ontology/af/> "
-              " SELECT ?thing FROM <%1> "
-              " WHERE { ?signal af:signal_feature ?thing } "
-             ).arg(url),
-             "thing");
-        
-        if (value.type == SimpleSPARQLQuery::URIValue) {
+        // can't call complete() with two Nothing nodes
+        n = store->matchOnce(Triple(Node(), store->expand("af:signal_feature"), Node())).c;
+        if (n != Node()) {
             haveAnnotations = true;
         }
     }
 
-    std::cerr << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
-              << haveAnnotations << std::endl;
+    SVDEBUG << "NOTE: RDFImporter::identifyDocumentType: haveAnnotations = "
+              << haveAnnotations << endl;
 
-    SimpleSPARQLQuery::closeSingleSource(url);
+    delete store;
 
     if (haveAudio) {
         if (haveAnnotations) {
@@ -1092,25 +893,3 @@ RDFImporter::identifyDocumentType(QString url)
     return OtherRDFDocument;
 }
 
-void
-RDFImporterImpl::loadPrefixes(ProgressReporter *reporter)
-{
-    return;
-//!!!
-    if (m_prefixesLoaded) return;
-    const char *prefixes[] = {
-        "http://purl.org/NET/c4dm/event.owl",
-        "http://purl.org/NET/c4dm/timeline.owl",
-        "http://purl.org/ontology/mo/",
-        "http://purl.org/ontology/af/",
-        "http://www.w3.org/2000/01/rdf-schema",
-        "http://purl.org/dc/elements/1.1/",
-    };
-    for (size_t i = 0; i < sizeof(prefixes)/sizeof(prefixes[0]); ++i) {
-        CachedFile cf(prefixes[i], reporter, "application/rdf+xml");
-        if (!cf.isOK()) continue;
-        SimpleSPARQLQuery::addSourceToModel
-            (QUrl::fromLocalFile(cf.getLocalFilename()).toString());
-    }
-    m_prefixesLoaded = true;
-}

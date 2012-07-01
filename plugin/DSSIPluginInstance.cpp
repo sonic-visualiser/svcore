@@ -27,7 +27,11 @@
 
 #include <cstdlib>
 
+#ifndef Q_OS_WIN32
 #include <alloca.h>
+#else
+#include <memory.h>
+#endif
 
 //#define DEBUG_DSSI 1
 //#define DEBUG_DSSI_PROCESS 1
@@ -73,8 +77,8 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     m_haveLastEventSendTime(false)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::DSSIPluginInstance(" << identifier << ")"
-	      << std::endl;
+    SVDEBUG << "DSSIPluginInstance::DSSIPluginInstance(" << identifier << ")"
+	      << endl;
 #endif
 
     init();
@@ -173,7 +177,7 @@ float
 DSSIPluginInstance::getParameter(std::string id) const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getParameter(" << id << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getParameter(" << id << ")" << endl;
 #endif
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
@@ -182,7 +186,7 @@ DSSIPluginInstance::getParameter(std::string id) const
 #endif
             float v = getParameterValue(i);
 #ifdef DEBUG_DSSI
-            std::cerr << "Returning " << v << std::endl;
+            SVDEBUG << "Returning " << v << endl;
 #endif
             return v;
         }
@@ -195,7 +199,7 @@ void
 DSSIPluginInstance::setParameter(std::string id, float value)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::setParameter(" << id << ", " << value << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::setParameter(" << id << ", " << value << ")" << endl;
 #endif
 
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
@@ -210,7 +214,7 @@ void
 DSSIPluginInstance::init()
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::init" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::init" << endl;
 #endif
 
     // Discover ports numbers and identities
@@ -254,8 +258,8 @@ DSSIPluginInstance::init()
         }
 #ifdef DEBUG_DSSI
         else
-            std::cerr << "DSSIPluginInstance::DSSIPluginInstance - "
-                      << "unrecognised port type" << std::endl;
+            SVDEBUG << "DSSIPluginInstance::DSSIPluginInstance - "
+                      << "unrecognised port type" << endl;
 #endif
     }
 
@@ -268,7 +272,7 @@ DSSIPluginInstance::getLatency()
     size_t latency = 0;
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::getLatency(): m_latencyPort " << m_latencyPort << ", m_run " << m_run << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getLatency(): m_latencyPort " << m_latencyPort << ", m_run " << m_run << endl;
 #endif
 
     if (m_latencyPort) {
@@ -284,7 +288,7 @@ DSSIPluginInstance::getLatency()
     }
     
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::getLatency(): latency is " << latency << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getLatency(): latency is " << latency << endl;
 #endif
 
     return latency;
@@ -309,8 +313,8 @@ void
 DSSIPluginInstance::setIdealChannelCount(size_t channels)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::setIdealChannelCount: channel count "
-	      << channels << " (was " << m_idealChannelCount << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::setIdealChannelCount: channel count "
+	      << channels << " (was " << m_idealChannelCount << ")" << endl;
 #endif
 
     if (channels == m_idealChannelCount) {
@@ -397,7 +401,7 @@ DSSIPluginInstance::initialiseGroupMembership()
 DSSIPluginInstance::~DSSIPluginInstance()
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::~DSSIPluginInstance" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::~DSSIPluginInstance" << endl;
 #endif
 
     if (m_threads.find(m_instanceHandle) != m_threads.end()) {
@@ -451,12 +455,12 @@ DSSIPluginInstance::~DSSIPluginInstance()
 void
 DSSIPluginInstance::instantiate(unsigned long sampleRate)
 {
+    if (!m_descriptor) return;
+
 #ifdef DEBUG_DSSI
     std::cout << "DSSIPluginInstance::instantiate - plugin \"unique\" id = "
               << m_descriptor->LADSPA_Plugin->UniqueID << std::endl;
 #endif
-    if (!m_descriptor) return;
-
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
     if (!descriptor->instantiate) {
@@ -498,7 +502,7 @@ DSSIPluginInstance::checkProgramCache() const
     m_cachedPrograms.clear();
 
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::checkProgramCache" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::checkProgramCache" << endl;
 #endif
 
     if (!m_descriptor || !m_descriptor->get_program) {
@@ -518,7 +522,7 @@ DSSIPluginInstance::checkProgramCache() const
     }
 
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::checkProgramCache: have " << m_cachedPrograms.size() << " programs" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::checkProgramCache: have " << m_cachedPrograms.size() << " programs" << endl;
 #endif
 
     m_programCacheValid = true;
@@ -528,7 +532,7 @@ DSSIPluginInstance::ProgramList
 DSSIPluginInstance::getPrograms() const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getPrograms" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getPrograms" << endl;
 #endif
 
     if (!m_descriptor) return ProgramList();
@@ -549,7 +553,7 @@ std::string
 DSSIPluginInstance::getProgram(int bank, int program) const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getProgram(" << bank << "," << program << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getProgram(" << bank << "," << program << ")" << endl;
 #endif
 
     if (!m_descriptor) return std::string();
@@ -568,7 +572,7 @@ unsigned long
 DSSIPluginInstance::getProgram(std::string name) const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getProgram(" << name << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getProgram(" << name << ")" << endl;
 #endif
 
     if (!m_descriptor) return 0;
@@ -605,7 +609,7 @@ void
 DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::selectProgram(" << program << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::selectProgram(" << program << ")" << endl;
 #endif
 
     if (!m_descriptor) return;
@@ -627,7 +631,7 @@ DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
 	    found = true;
 
 #ifdef DEBUG_DSSI
-	    std::cerr << "DSSIPluginInstance::selectProgram(" << program << "): found at bank " << bankNo << ", program " << programNo << std::endl;
+	    SVDEBUG << "DSSIPluginInstance::selectProgram(" << program << "): found at bank " << bankNo << ", program " << programNo << endl;
 #endif
 
 	    break;
@@ -643,7 +647,7 @@ DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
     m_processLock.unlock();
 
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::selectProgram(" << program << "): made select_program(" << bankNo << "," << programNo << ") call" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::selectProgram(" << program << "): made select_program(" << bankNo << "," << programNo << ") call" << endl;
 #endif
 
     if (backupPortValues) {
@@ -657,7 +661,7 @@ void
 DSSIPluginInstance::activate()
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::activate" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::activate" << endl;
 #endif
 
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->activate) return;
@@ -665,14 +669,14 @@ DSSIPluginInstance::activate()
 
     if (m_program != "") {
 #ifdef DEBUG_DSSI
-	std::cerr << "DSSIPluginInstance::activate: restoring program " << m_program << std::endl;
+	SVDEBUG << "DSSIPluginInstance::activate: restoring program " << m_program << endl;
 #endif
 	selectProgramAux(m_program, false);
     }
 
     for (size_t i = 0; i < m_backupControlPortsIn.size(); ++i) {
 #ifdef DEBUG_DSSI
-	std::cerr << "DSSIPluginInstance::activate: setting port " << m_controlPortsIn[i].first << " to " << m_backupControlPortsIn[i] << std::endl;
+	SVDEBUG << "DSSIPluginInstance::activate: setting port " << m_controlPortsIn[i].first << " to " << m_backupControlPortsIn[i] << endl;
 #endif
 	*m_controlPortsIn[i].second = m_backupControlPortsIn[i];
     }
@@ -683,9 +687,9 @@ DSSIPluginInstance::connectPorts()
 {
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->connect_port) return;
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::connectPorts: " << m_audioPortsIn.size() 
+    SVDEBUG << "DSSIPluginInstance::connectPorts: " << m_audioPortsIn.size() 
 	      << " audio ports in, " << m_audioPortsOut.size() << " out, "
-	      << m_outputBufferCount << " output buffers" << std::endl;
+	      << m_outputBufferCount << " output buffers" << endl;
 #endif
 
     assert(sizeof(LADSPA_Data) == sizeof(float));
@@ -722,7 +726,7 @@ DSSIPluginInstance::connectPorts()
             *m_controlPortsIn[i].second = defaultValue;
             m_backupControlPortsIn[i] = defaultValue;
 #ifdef DEBUG_DSSI
-            std::cerr << "DSSIPluginInstance::connectPorts: set control port " << i << " to default value " << defaultValue << std::endl;
+            SVDEBUG << "DSSIPluginInstance::connectPorts: set control port " << i << " to default value " << defaultValue << endl;
 #endif
         }
     }
@@ -745,7 +749,7 @@ void
 DSSIPluginInstance::setParameterValue(unsigned int parameter, float value)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::setParameterValue(" << parameter << ") to " << value << std::endl;
+    SVDEBUG << "DSSIPluginInstance::setParameterValue(" << parameter << ") to " << value << endl;
 #endif
     if (parameter >= m_controlPortsIn.size()) return;
 
@@ -769,7 +773,7 @@ void
 DSSIPluginInstance::setPortValueFromController(unsigned int port, int cv)
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::setPortValueFromController(" << port << ") to " << cv << std::endl;
+    SVDEBUG << "DSSIPluginInstance::setPortValueFromController(" << port << ") to " << cv << endl;
 #endif
 
     const LADSPA_Descriptor *p = m_descriptor->LADSPA_Plugin;
@@ -815,7 +819,7 @@ float
 DSSIPluginInstance::getParameterValue(unsigned int parameter) const
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::getParameterValue(" << parameter << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::getParameterValue(" << parameter << ")" << endl;
 #endif
     if (parameter >= m_controlPortsIn.size()) return 0.0;
     return (*m_controlPortsIn[parameter].second);
@@ -865,7 +869,7 @@ DSSIPluginInstance::configure(std::string key,
 	
     
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::configure(" << key << "," << value << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::configure(" << key << "," << value << ")" << endl;
 #endif
 
     char *message = m_descriptor->configure(m_instanceHandle,
@@ -904,7 +908,7 @@ DSSIPluginInstance::sendEvent(const Vamp::RealTime &eventTime,
 			      const void *e)
 {
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::sendEvent: last was " << m_lastEventSendTime << " (valid " << m_haveLastEventSendTime << "), this is " << eventTime << std::endl;
+    SVDEBUG << "DSSIPluginInstance::sendEvent: last was " << m_lastEventSendTime << " (valid " << m_haveLastEventSendTime << "), this is " << eventTime << endl;
 #endif
 
     // The process mechanism only works correctly if the events are
@@ -922,7 +926,7 @@ DSSIPluginInstance::sendEvent(const Vamp::RealTime &eventTime,
 
     snd_seq_event_t *event = (snd_seq_event_t *)e;
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::sendEvent at " << eventTime << std::endl;
+    SVDEBUG << "DSSIPluginInstance::sendEvent at " << eventTime << endl;
 #endif
     snd_seq_event_t ev(*event);
 
@@ -951,7 +955,7 @@ DSSIPluginInstance::handleController(snd_seq_event_t *ev)
     int controller = ev->data.control.param;
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::handleController " << controller << std::endl;
+    SVDEBUG << "DSSIPluginInstance::handleController " << controller << endl;
 #endif
 
     if (controller == 0) { // bank select MSB
@@ -1016,13 +1020,13 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
     }
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::run(" << blockTime << ")" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::run(" << blockTime << ")" << endl;
 #endif
 
 #ifdef DEBUG_DSSI_PROCESS
     if (m_eventBuffer.getReadSpace() > 0) {
-	std::cerr << "DSSIPluginInstance::run: event buffer has "
-		  << m_eventBuffer.getReadSpace() << " event(s) in it" << std::endl;
+	SVDEBUG << "DSSIPluginInstance::run: event buffer has "
+		  << m_eventBuffer.getReadSpace() << " event(s) in it" << endl;
     }
 #endif
 
@@ -1040,8 +1044,8 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 	}
 
 #ifdef DEBUG_DSSI_PROCESS
-	std::cerr << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
-		  << ", blockSize " << m_blockSize << std::endl;
+	SVDEBUG << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
+		  << ", blockSize " << m_blockSize << endl;
 	std::cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << std::endl;
 #endif
 
@@ -1075,20 +1079,20 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 	int bank = m_pending.lsb + 128 * m_pending.msb;
 
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::run: making select_program(" << bank << "," << program << ") call" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::run: making select_program(" << bank << "," << program << ") call" << endl;
 #endif
 
 	m_pending.lsb = m_pending.msb = m_pending.program = -1;
 	m_descriptor->select_program(m_instanceHandle, bank, program);
 
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::run: made select_program(" << bank << "," << program << ") call" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::run: made select_program(" << bank << "," << program << ") call" << endl;
 #endif
     }
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::run: running with " << evCount << " events"
-	      << std::endl;
+    SVDEBUG << "DSSIPluginInstance::run: running with " << evCount << " events"
+	      << endl;
 #endif
 
     m_descriptor->run_synth(m_instanceHandle, count,
@@ -1149,7 +1153,7 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
     PluginSet &s = m_groupMap[m_identifier];
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::runGrouped(" << blockTime << "): this is " << this << "; " << s.size() << " elements in m_groupMap[" << m_identifier << "]" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): this is " << this << "; " << s.size() << " elements in m_groupMap[" << m_identifier << "]" << endl;
 #endif
 
     if (m_lastRunTime != blockTime) {
@@ -1157,7 +1161,7 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 	    DSSIPluginInstance *instance = *i;
 	    if (instance != this && instance->m_lastRunTime == blockTime) {
 #ifdef DEBUG_DSSI_PROCESS
-		std::cerr << "DSSIPluginInstance::runGrouped(" << blockTime << "): plugin " << instance << " has already been run" << std::endl;
+		SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): plugin " << instance << " has already been run" << endl;
 #endif
 		needRun = false;
 	    }
@@ -1166,13 +1170,13 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 
     if (!needRun) {
 #ifdef DEBUG_DSSI_PROCESS
-	std::cerr << "DSSIPluginInstance::runGrouped(" << blockTime << "): already run, returning" << std::endl;
+	SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): already run, returning" << endl;
 #endif
 	return;
     }
 
 #ifdef DEBUG_DSSI_PROCESS
-    std::cerr << "DSSIPluginInstance::runGrouped(" << blockTime << "): I'm the first, running" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): I'm the first, running" << endl;
 #endif
 
     size_t index = 0;
@@ -1190,7 +1194,7 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 	instances[index] = instance->m_instanceHandle;
 
 #ifdef DEBUG_DSSI_PROCESS
-	std::cerr << "DSSIPluginInstance::runGrouped(" << blockTime << "): running " << instance << std::endl;
+	SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): running " << instance << endl;
 #endif
 
 	if (instance->m_pending.program >= 0 &&
@@ -1216,8 +1220,8 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 	    }
 
 #ifdef DEBUG_DSSI_PROCESS
-	    std::cerr << "DSSIPluginInstance::runGrouped: evTime " << evTime << ", frameOffset " << frameOffset
-		      << ", block size " << m_blockSize << std::endl;
+	    SVDEBUG << "DSSIPluginInstance::runGrouped: evTime " << evTime << ", frameOffset " << frameOffset
+		      << ", block size " << m_blockSize << endl;
 #endif
 
 	    if (frameOffset >= int(m_blockSize)) break;
@@ -1255,7 +1259,7 @@ DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
 {
     // This is called from a non-RT context (during instantiate)
 
-    std::cerr << "DSSIPluginInstance::requestMidiSend" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::requestMidiSend" << endl;
     return 1;
 }
 
@@ -1266,7 +1270,7 @@ DSSIPluginInstance::midiSend(LADSPA_Handle /* instance */,
 {
     // This is likely to be called from an RT context
 
-    std::cerr << "DSSIPluginInstance::midiSend" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::midiSend" << endl;
 }
 
 void
@@ -1292,7 +1296,7 @@ void
 DSSIPluginInstance::deactivate()
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::deactivate " << m_identifier << std::endl;
+    SVDEBUG << "DSSIPluginInstance::deactivate " << m_identifier << endl;
 #endif
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->deactivate) return;
 
@@ -1302,7 +1306,7 @@ DSSIPluginInstance::deactivate()
 
     m_descriptor->LADSPA_Plugin->deactivate(m_instanceHandle);
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::deactivate " << m_identifier << " done" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::deactivate " << m_identifier << " done" << endl;
 #endif
 
     m_bufferScavenger.scavenge();
@@ -1312,7 +1316,7 @@ void
 DSSIPluginInstance::cleanup()
 {
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::cleanup " << m_identifier << std::endl;
+    SVDEBUG << "DSSIPluginInstance::cleanup " << m_identifier << endl;
 #endif
     if (!m_descriptor) return;
 
@@ -1327,7 +1331,7 @@ DSSIPluginInstance::cleanup()
     m_descriptor->LADSPA_Plugin->cleanup(m_instanceHandle);
     m_instanceHandle = 0;
 #ifdef DEBUG_DSSI
-    std::cerr << "DSSIPluginInstance::cleanup " << m_identifier << " done" << std::endl;
+    SVDEBUG << "DSSIPluginInstance::cleanup " << m_identifier << " done" << endl;
 #endif
 }
 

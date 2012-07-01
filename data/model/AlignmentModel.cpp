@@ -141,7 +141,7 @@ size_t
 AlignmentModel::toReference(size_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::toReference(" << frame << ")" << std::endl;
+    SVDEBUG << "AlignmentModel::toReference(" << frame << ")" << endl;
 #endif
     if (!m_path) {
         if (!m_rawPath) return frame;
@@ -154,7 +154,7 @@ size_t
 AlignmentModel::fromReference(size_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::fromReference(" << frame << ")" << std::endl;
+    SVDEBUG << "AlignmentModel::fromReference(" << frame << ")" << endl;
 #endif
     if (!m_reversePath) {
         if (!m_rawPath) return frame;
@@ -194,8 +194,8 @@ AlignmentModel::pathCompletionChanged()
         m_rawPath->isReady(&completion);
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-        std::cerr << "AlignmentModel::pathCompletionChanged: completion = "
-                  << completion << std::endl;
+        SVDEBUG << "AlignmentModel::pathCompletionChanged: completion = "
+                  << completion << endl;
 #endif
 
         m_pathComplete = (completion == 100);
@@ -242,7 +242,7 @@ AlignmentModel::constructPath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+    SVDEBUG << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -250,15 +250,6 @@ void
 AlignmentModel::constructReversePath() const
 {
     if (!m_reversePath) {
-/*!!!
-        if (!m_rawPath) {
-            std::cerr << "ERROR: AlignmentModel::constructReversePath: "
-                      << "No raw path available" << std::endl;
-            return;
-        }
-        m_reversePath = new PathModel
-            (m_rawPath->getSampleRate(), m_rawPath->getResolution(), false);
-*/
         if (!m_path) {
             std::cerr << "ERROR: AlignmentModel::constructReversePath: "
                       << "No forward path available" << std::endl;
@@ -267,24 +258,10 @@ AlignmentModel::constructReversePath() const
         m_reversePath = new PathModel
             (m_path->getSampleRate(), m_path->getResolution(), false);
     } else {
-/*!!!
-        if (!m_rawPath) return;
-*/
         if (!m_path) return;
     }
         
     m_reversePath->clear();
-/*!!!
-    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
-        
-    for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-        long frame = i->frame;
-        float value = i->value;
-        long rframe = lrintf(value * m_aligned->getSampleRate());
-        m_reversePath->addPoint(PathPoint(rframe, frame));
-    }
-*/
 
     PathModel::PointList points = m_path->getPoints();
         
@@ -296,7 +273,7 @@ AlignmentModel::constructReversePath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << std::endl;
+    SVDEBUG << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -314,13 +291,13 @@ AlignmentModel::align(PathModel *path, size_t frame) const
 
     if (points.empty()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        std::cerr << "AlignmentModel::align: No points" << std::endl;
+        SVDEBUG << "AlignmentModel::align: No points" << endl;
 #endif
         return frame;
     }        
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::align: frame " << frame << " requested" << std::endl;
+    SVDEBUG << "AlignmentModel::align: frame " << frame << " requested" << endl;
 #endif
 
     PathModel::Point point(frame);
@@ -363,7 +340,7 @@ AlignmentModel::align(PathModel *path, size_t frame) const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    std::cerr << "AlignmentModel::align: resultFrame = " << resultFrame << std::endl;
+    SVDEBUG << "AlignmentModel::align: resultFrame = " << resultFrame << endl;
 #endif
 
     return resultFrame;
@@ -375,7 +352,14 @@ AlignmentModel::setPath(PathModel *path)
     if (m_path) m_path->aboutToDelete();
     delete m_path;
     m_path = path;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    SVDEBUG << "AlignmentModel::setPath: path = " << m_path << endl;
+#endif
     constructReversePath();
+#ifdef DEBUG_ALIGNMENT_MODEL
+    SVDEBUG << "AlignmentModel::setPath: after construction path = "
+              << m_path << ", rpath = " << m_reversePath << endl;
+#endif
 }
     
 void
@@ -384,7 +368,7 @@ AlignmentModel::toXml(QTextStream &stream,
                       QString extraAttributes) const
 {
     if (!m_path) {
-        std::cerr << "AlignmentModel::toXml: no path" << std::endl;
+        SVDEBUG << "AlignmentModel::toXml: no path" << endl;
         return;
     }
 

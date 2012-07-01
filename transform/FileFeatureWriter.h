@@ -42,6 +42,7 @@ public:
     virtual ParameterList getSupportedParameters() const;
     virtual void setParameters(map<string, string> &params);
 
+    virtual void testOutputFile(QString trackId, TransformId transformId);
     virtual void flush();
     virtual void finish();
 

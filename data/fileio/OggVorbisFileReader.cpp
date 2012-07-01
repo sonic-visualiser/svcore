@@ -50,7 +50,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-//    std::cerr << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << std::endl;
+//    SVDEBUG << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << endl;
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
 
@@ -102,7 +102,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
 OggVorbisFileReader::~OggVorbisFileReader()
 {
-//    std::cerr << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << std::endl;
+//    SVDEBUG << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << endl;
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
@@ -171,19 +171,20 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
 
     if (!reader->m_commentsRead) {
-        {
-            const FishSoundComment *comment = fish_sound_comment_first_byname
-                (fs, "TITLE");
-            if (comment && comment->value) {
-                reader->m_title = QString::fromUtf8(comment->value);
-            }
+        const FishSoundComment *comment;
+        comment = fish_sound_comment_first_byname(fs, "TITLE");
+        if (comment && comment->value) {
+            reader->m_title = QString::fromUtf8(comment->value);
         }
-        {
-            const FishSoundComment *comment = fish_sound_comment_first_byname
-                (fs, "ARTIST");
-            if (comment && comment->value) {
-                reader->m_maker = QString::fromUtf8(comment->value);
-            }
+        comment = fish_sound_comment_first_byname(fs, "ARTIST");
+        if (comment && comment->value) {
+            reader->m_maker = QString::fromUtf8(comment->value);
+        }
+        comment = fish_sound_comment_first(fs);
+        while (comment) {
+            reader->m_tags[QString::fromUtf8(comment->name).toUpper()] =
+                QString::fromUtf8(comment->value);
+            comment = fish_sound_comment_next(fs, comment);
         }
         reader->m_commentsRead = true;
     }

@@ -86,7 +86,7 @@ MatchFileReader::MatchFileReader(QString path) :
 MatchFileReader::~MatchFileReader()
 {
     if (m_file) {
-        std::cerr << "MatchFileReader::MatchFileReader: Closing file" << std::endl;
+        SVDEBUG << "MatchFileReader::MatchFileReader: Closing file" << endl;
         m_file->close();
     }
     delete m_file;

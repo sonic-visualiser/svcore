@@ -26,10 +26,6 @@
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/PluginXml.h"
 
-#ifndef NO_SV_GUI
-#include "widgets/PluginParameterDialog.h"
-#endif
-
 #include "data/model/DenseTimeValueModel.h"
 
 #include <vamp-hostsdk/PluginHostAdapter.h>
@@ -52,30 +48,14 @@ ModelTransformerFactory::~ModelTransformerFactory()
 {
 }
 
-bool
-ModelTransformerFactory::getChannelRange(TransformId identifier,
-                                         Vamp::PluginBase *plugin,
-                                         int &minChannels, int &maxChannels)
-{
-    Vamp::Plugin *vp = 0;
-    if ((vp = dynamic_cast<Vamp::Plugin *>(plugin)) ||
-        (vp = dynamic_cast<Vamp::PluginHostAdapter *>(plugin))) {
-        minChannels = vp->getMinChannelCount();
-        maxChannels = vp->getMaxChannelCount();
-        return true;
-    } else {
-        return TransformFactory::getInstance()->
-            getTransformChannelRange(identifier, minChannels, maxChannels);
-    }
-}
-
 ModelTransformer::Input
 ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       const std::vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
                                                       AudioPlaySource *source,
                                                       size_t startFrame,
-                                                      size_t duration)
+                                                      size_t duration,
+                                                      UserConfigurator *configurator)
 {
     ModelTransformer::Input input(0);
 
@@ -87,12 +67,12 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     Model *inputModel = candidateInputModels[0];
     QStringList candidateModelNames;
     QString defaultModelName;
-    std::map<QString, Model *> modelMap;
+    QMap<QString, Model *> modelMap;
     for (size_t i = 0; i < candidateInputModels.size(); ++i) {
         QString modelName = candidateInputModels[i]->objectName();
         QString origModelName = modelName;
         int dupcount = 1;
-        while (modelMap.find(modelName) != modelMap.end()) {
+        while (modelMap.contains(modelName)) {
             modelName = tr("%1 <%2>").arg(origModelName).arg(++dupcount);
         }
         modelMap[modelName] = candidateInputModels[i];
@@ -103,20 +83,13 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     }
 
     QString id = transform.getPluginIdentifier();
-    QString output = transform.getOutput();
-    QString outputLabel = "";
-    QString outputDescription = "";
     
-    bool ok = false;
+    bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    std::cerr << "last configuration: " << configurationXml.toStdString() << std::endl;
+    std::cerr << "last configuration: " << configurationXml << std::endl;
 
     Vamp::PluginBase *plugin = 0;
-
-    bool frequency = false;
-    bool effect = false;
-    bool generator = false;
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
@@ -126,50 +99,17 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
             (id, inputModel->getSampleRate());
 
-        if (vp) {
-
-            plugin = vp;
-            frequency = (vp->getInputDomain() == Vamp::Plugin::FrequencyDomain);
-
-            std::vector<Vamp::Plugin::OutputDescriptor> od =
-                vp->getOutputDescriptors();
-            if (od.size() > 1) {
-                for (size_t i = 0; i < od.size(); ++i) {
-                    if (od[i].identifier == output.toStdString()) {
-                        outputLabel = od[i].name.c_str();
-                        outputDescription = od[i].description.c_str();
-                        break;
-                    }
-                }
-            }
-        }
+        plugin = vp;
 
     } else if (RealTimePluginFactory::instanceFor(id)) {
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
         const RealTimePluginDescriptor *desc = factory->getPluginDescriptor(id);
 
-        if (desc->audioInputPortCount > 0 && 
-            desc->audioOutputPortCount > 0 &&
-            !desc->isSynth) {
-            effect = true;
-        }
-
-        if (desc->audioInputPortCount == 0) {
-            generator = true;
-        }
-
-        if (output != "A") {
-            int outputNo = output.toInt();
-            if (outputNo >= 0 && outputNo < int(desc->controlOutputPortCount)) {
-                outputLabel = desc->controlOutputPortNames[outputNo].c_str();
-            }
-        }
-
         size_t sampleRate = inputModel->getSampleRate();
         size_t blockSize = 1024;
         size_t channels = 1;
-        if (effect && source) {
+        if (source) {
             sampleRate = source->getTargetSampleRate();
             blockSize = source->getTargetBlockSize();
             channels = source->getTargetChannelCount();
@@ -179,10 +119,6 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             (id, 0, 0, sampleRate, blockSize, channels);
 
         plugin = rtp;
-
-        if (effect && source && rtp) {
-            source->setAuditioningEffect(rtp);
-        }
     }
 
     if (plugin) {
@@ -200,111 +136,22 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         // whatever the user chose last time around
         PluginXml(plugin).setParametersFromXml(configurationXml);
 
-#ifndef NO_SV_GUI
-        int sourceChannels = 1;
-        if (dynamic_cast<DenseTimeValueModel *>(inputModel)) {
-            sourceChannels = dynamic_cast<DenseTimeValueModel *>(inputModel)
-                ->getChannelCount();
-        }
-
-        int minChannels = 1, maxChannels = sourceChannels;
-        getChannelRange(transform.getIdentifier(), plugin,
-                        minChannels, maxChannels);
-
-        int targetChannels = sourceChannels;
-        if (!effect) {
-            if (sourceChannels < minChannels) targetChannels = minChannels;
-            if (sourceChannels > maxChannels) targetChannels = maxChannels;
-        }
-
-        int defaultChannel = -1; //!!! no longer saved! [was context.channel]
-
-        PluginParameterDialog *dialog = new PluginParameterDialog(plugin);
-
-        dialog->setMoreInfoUrl(TransformFactory::getInstance()->
-                               getTransformInfoUrl(transform.getIdentifier()));
-
-        if (candidateModelNames.size() > 1 && !generator) {
-            dialog->setCandidateInputModels(candidateModelNames,
-                                            defaultModelName);
-        }
-
-        if (startFrame != 0 || duration != 0) {
-            dialog->setShowSelectionOnlyOption(true);
-        }
-
-        if (targetChannels > 0) {
-            dialog->setChannelArrangement(sourceChannels, targetChannels,
-                                          defaultChannel);
+        if (configurator) {
+            ok = configurator->configure(input, transform, plugin,
+                                         inputModel, source,
+                                         startFrame, duration,
+                                         modelMap,
+                                         candidateModelNames,
+                                         defaultModelName);
         }
         
-        dialog->setOutputLabel(outputLabel, outputDescription);
-        
-        dialog->setShowProcessingOptions(true, frequency);
-
-        if (dialog->exec() == QDialog::Accepted) {
-            ok = true;
-        }
-
-        QString selectedInput = dialog->getInputModel();
-        if (selectedInput != "") {
-            if (modelMap.find(selectedInput) != modelMap.end()) {
-                inputModel = modelMap[selectedInput];
-                std::cerr << "Found selected input \"" << selectedInput.toStdString() << "\" in model map, result is " << inputModel << std::endl;
-            } else {
-                std::cerr << "Failed to find selected input \"" << selectedInput.toStdString() << "\" in model map" << std::endl;
-            }
-        } else {
-            std::cerr << "Selected input empty: \"" << selectedInput.toStdString() << "\"" << std::endl;
-        }
-        
-        // Write parameters back to transform object
-        TransformFactory::getInstance()->
-            setParametersFromPlugin(transform, plugin);
-
-        input.setChannel(dialog->getChannel());
-        
-        //!!! The dialog ought to be taking & returning transform
-        //objects and input objects and stuff rather than passing
-        //around all this misc stuff, but that's for tomorrow
-        //(whenever that may be)
-
-        if (startFrame != 0 || duration != 0) {
-            if (dialog->getSelectionOnly()) {
-                transform.setStartTime(RealTime::frame2RealTime
-                                       (startFrame, inputModel->getSampleRate()));
-                transform.setDuration(RealTime::frame2RealTime
-                                      (duration, inputModel->getSampleRate()));
-            }
-        }
-
-        size_t stepSize = 0, blockSize = 0;
-        WindowType windowType = HanningWindow;
-
-        dialog->getProcessingParameters(stepSize,
-                                        blockSize,
-                                        windowType);
-
-        transform.setStepSize(stepSize);
-        transform.setBlockSize(blockSize);
-        transform.setWindowType(windowType);
-
-#endif
 
         TransformFactory::getInstance()->
             makeContextConsistentWithPlugin(transform, plugin);
 
         configurationXml = PluginXml(plugin).toXmlString();
 
-#ifndef NO_SV_GUI
-        delete dialog;
-#endif
-
-        if (effect && source) {
-            source->setAuditioningEffect(0); // will delete our plugin
-        } else {
-            delete plugin;
-        }
+        delete plugin;
     }
 
     if (ok) {
@@ -334,8 +181,8 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
             new RealTimeEffectModelTransformer(input, transform);
 
     } else {
-        std::cerr << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transform.getIdentifier().toStdString() << "\"" << std::endl;
+        SVDEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
+                  << transform.getIdentifier() << "\"" << endl;
         return transformer;
     }
 
@@ -348,7 +195,7 @@ ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message)
 {
-    std::cerr << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << std::endl;
+    SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
@@ -389,7 +236,7 @@ ModelTransformerFactory::transformerFinished()
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
-//    std::cerr << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << std::endl;
+//    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
 	std::cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << std::endl;

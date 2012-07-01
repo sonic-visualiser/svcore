@@ -43,14 +43,14 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (!m_transform.getBlockSize()) m_transform.setBlockSize(1024);
 
-//    std::cerr << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId.toStdString() << ", output " << output << std::endl;
+//    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
 
     RealTimePluginFactory *factory =
 	RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
 	std::cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+		  << pluginId << "\"" << std::endl;
 	return;
     }
 
@@ -64,7 +64,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (!m_plugin) {
 	std::cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
-		  << pluginId.toStdString() << "\"" << std::endl;
+		  << pluginId << "\"" << std::endl;
 	return;
     }
 
@@ -110,7 +110,7 @@ RealTimeEffectModelTransformer::getConformingInput()
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	SVDEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -122,7 +122,7 @@ RealTimeEffectModelTransformer::run()
     if (!input) return;
 
     while (!input->isReady() && !m_abandoned) {
-        std::cerr << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << std::endl;
+        SVDEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
     if (m_abandoned) return;
@@ -179,7 +179,7 @@ RealTimeEffectModelTransformer::run()
 
 	long completion =
 	    (((blockFrame - contextStart) / blockSize) * 99) /
-	    ((contextDuration) / blockSize);
+	    (1 + ((contextDuration) / blockSize));
 
 	long got = 0;
 

@@ -21,6 +21,7 @@
 #include "FileSource.h"
 
 #include <vector>
+#include <map>
 
 typedef std::vector<float> SampleBlock;
 
@@ -38,7 +39,8 @@ public:
     size_t getFrameCount() const { return m_frameCount; }
     size_t getChannelCount() const { return m_channelCount; }
     size_t getSampleRate() const { return m_sampleRate; }
-    size_t getNativeRate() const { return m_sampleRate; } // if resampled
+
+    virtual size_t getNativeRate() const { return m_sampleRate; } // if resampled
 
     /**
      * Return the location of the audio data in the reader (as passed
@@ -59,6 +61,9 @@ public:
      * conductor, artist etc).
      */
     virtual QString getMaker() const { return ""; }
+
+    typedef std::map<QString, QString> TagMap;
+    virtual TagMap getTags() const { return TagMap(); }
 
     /** 
      * Return interleaved samples for count frames from index start.

@@ -15,29 +15,14 @@
 
 #include <iostream>
 
-#ifdef Q_WS_X11
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/SM/SMlib.h>
-
-static int handle_x11_error(Display *dpy, XErrorEvent *err)
-{
-    char errstr[256];
-    XGetErrorText(dpy, err->error_code, errstr, 256);
-    if (err->error_code != BadWindow) {
-	std::cerr << "Sonic Visualiser: X Error: "
-		  << errstr << " " << int(err->error_code)
-		  << "\nin major opcode:  "
-		  << int(err->request_code) << std::endl;
-    }
-    return 0;
-}
-#endif
+#include <qglobal.h>
 
 #ifdef Q_WS_WIN32
 
 #include <fcntl.h>
+
+// required for SetDllDirectory
+#define _WIN32_WINNT 0x0502
 #include <windows.h>
 
 // Set default file open mode to binary
@@ -46,6 +31,7 @@ static int handle_x11_error(Display *dpy, XErrorEvent *err)
 
 void redirectStderr()
 {
+#ifdef NO_PROBABLY_NOT
     HANDLE stderrHandle = GetStdHandle(STD_ERROR_HANDLE);
     if (!stderrHandle) return;
 
@@ -64,18 +50,19 @@ void redirectStderr()
             setvbuf(stderr, NULL, _IONBF, 0);
         }
     }
+#endif
 }
 
 #endif
 
 extern void svSystemSpecificInitialisation()
 {
-#ifdef Q_WS_X11
-    XSetErrorHandler(handle_x11_error);
-#endif
-
 #ifdef Q_WS_WIN32
     redirectStderr();
+
+    // Remove the CWD from the DLL search path, just in case
+    SetDllDirectory(L"");
+    putenv("PATH=");
 #else
 #endif
 }

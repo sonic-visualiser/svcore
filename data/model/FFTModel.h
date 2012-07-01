@@ -177,6 +177,7 @@ public:
                                        size_t ymin = 0, size_t ymax = 0);
 
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
+    virtual QString getError() const { return m_server->getError(); }
 
     virtual Model *clone() const;
 

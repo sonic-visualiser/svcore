@@ -43,7 +43,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     m_descriptor(0),
     m_outputFeatureNo(0)
 {
-//    std::cerr << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId.toStdString() << ", outputName " << m_transform.getOutput().toStdString() << std::endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
     QString pluginId = transform.getPluginIdentifier();
 
@@ -86,9 +86,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 	return;
     }
 
-    std::cerr << "Initialising feature extraction plugin with channels = "
+    SVDEBUG << "Initialising feature extraction plugin with channels = "
               << channelCount << ", step = " << m_transform.getStepSize()
-              << ", block = " << m_transform.getBlockSize() << std::endl;
+              << ", block = " << m_transform.getBlockSize() << endl;
 
     if (!m_plugin->initialise(channelCount,
                               m_transform.getStepSize(),
@@ -152,7 +152,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     }
     
     for (size_t i = 0; i < outputs.size(); ++i) {
-//        std::cerr << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput().toStdString() << "\"" << std::endl;
+//        SVDEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
 	    m_outputFeatureNo = i;
@@ -176,9 +176,8 @@ FeatureExtractionModelTransformer::createOutputModel()
 {
     DenseTimeValueModel *input = getConformingInput();
 
-//    std::cerr << "FeatureExtractionModelTransformer: output sample type "
-//	      << m_descriptor->sampleType << std::endl;
-
+//    std::cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << std::endl;
+    
     PluginRDFDescription description(m_transform.getPluginIdentifier());
     QString outputId = m_transform.getOutput();
 
@@ -201,7 +200,7 @@ FeatureExtractionModelTransformer::createOutputModel()
 
     size_t modelRate = input->getSampleRate();
     size_t modelResolution = 1;
-    
+
     switch (m_descriptor->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
@@ -378,7 +377,7 @@ FeatureExtractionModelTransformer::createOutputModel()
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-//    std::cerr << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << std::endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
     delete m_plugin;
     delete m_descriptor;
 }
@@ -386,12 +385,12 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 DenseTimeValueModel *
 FeatureExtractionModelTransformer::getConformingInput()
 {
-//    std::cerr << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << std::endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << endl;
 
     DenseTimeValueModel *dtvm =
 	dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	std::cerr << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << std::endl;
+	SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -405,7 +404,7 @@ FeatureExtractionModelTransformer::run()
     if (!m_output) return;
 
     while (!input->isReady() && !m_abandoned) {
-        std::cerr << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << std::endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
     if (m_abandoned) return;
@@ -487,6 +486,8 @@ FeatureExtractionModelTransformer::run()
         imaginaries = new float[blockSize/2 + 1];
     }
 
+    QString error = "";
+
     while (!m_abandoned) {
 
         if (frequencyDomain) {
@@ -497,9 +498,9 @@ FeatureExtractionModelTransformer::run()
                 contextStart + contextDuration) break;
         }
 
-//	std::cerr << "FeatureExtractionModelTransformer::run: blockFrame "
+//	SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
 //		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
-//                  << blockSize << std::endl;
+//                  << blockSize << endl;
 
 	long completion =
 	    (((blockFrame - contextStart) / stepSize) * 99) /
@@ -514,6 +515,12 @@ FeatureExtractionModelTransformer::run()
                 for (size_t i = 0; i <= blockSize/2; ++i) {
                     buffers[ch][i*2] = reals[i];
                     buffers[ch][i*2+1] = imaginaries[i];
+                }
+                error = fftModels[ch]->getError();
+                if (error != "") {
+                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << std::endl;
+                    m_abandoned = true;
+                    m_message = error;
                 }
             }
         } else {
@@ -628,8 +635,11 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
-//    std::cerr << "FeatureExtractionModelTransformer::addFeature("
-//	      << blockFrame << ")" << std::endl;
+//    std::cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
+//              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
+//              << ", timestamp = " << feature.timestamp << ", hasDuration = "
+//              << feature.hasDuration << ", duration = " << feature.duration
+//              << std::endl;
 
     int binCount = 1;
     if (m_descriptor->hasFixedBinCount) {
@@ -769,7 +779,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	model->setColumn(frame / model->getResolution(), values);
 
     } else {
-        std::cerr << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << std::endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
     }
 }
 
@@ -781,8 +791,8 @@ FeatureExtractionModelTransformer::setCompletion(int completion)
 	binCount = m_descriptor->binCount;
     }
 
-//    std::cerr << "FeatureExtractionModelTransformer::setCompletion("
-//              << completion << ")" << std::endl;
+//    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
+//              << completion << ")" << endl;
 
     if (isOutput<SparseOneDimensionalModel>()) {
 

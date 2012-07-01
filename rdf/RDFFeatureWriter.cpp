@@ -112,7 +112,7 @@ void
 RDFFeatureWriter::setTrackMetadata(QString trackId,
                                    TrackMetadata metadata)
 {
-//    cerr << "setTrackMetadata: title = " << metadata.title.toStdString() << ", maker = " << metadata.maker.toStdString() << endl;
+//    cerr << "setTrackMetadata: title = " << metadata.title << ", maker = " << metadata.maker << endl;
     m_metadata[trackId] = metadata;
 }
 
@@ -142,10 +142,10 @@ RDFFeatureWriter::write(QString trackId,
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
             cerr << "NOTE: Have RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+                 << pluginId << "\"" << endl;
         } else {
             cerr << "NOTE: No RDF description for plugin ID \""
-                 << pluginId.toStdString() << "\"" << endl;
+                 << pluginId << "\"" << endl;
             if (!m_network) {
                 cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
                 cerr << "      from the network where possible." << endl;
@@ -174,7 +174,8 @@ RDFFeatureWriter::write(QString trackId,
         m_startedStreamTransforms[stream].end()) {
         m_startedStreamTransforms[stream].insert(transform);
         writeLocalFeatureTypes
-            (stream, transform, output, m_rdfDescriptions[pluginId]);
+            (stream, transform, output, m_rdfDescriptions[pluginId],
+             summaryType);
     }
 
     if (m_singleFileName != "" || m_stdout) {
@@ -262,7 +263,7 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
     // dirty grubby low-rent way of doing that.  This function is
     // called by FileFeatureWriter::getOutputFile when in append mode.
 
-//    std::cerr << "reviewFileForAppending(" << filename.toStdString() << ")" << std::endl;
+//    std::cerr << "reviewFileForAppending(" << filename << ")" << std::endl;
 
     QFile file(filename);
 
@@ -292,7 +293,7 @@ void
 RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                                          QString trackId)
 {
-//    std::cerr << "RDFFeatureWriter::writeSignalDescription" << std::endl;
+//    SVDEBUG << "RDFFeatureWriter::writeSignalDescription" << endl;
 
     QTextStream &stream = *sptr;
 
@@ -348,7 +349,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
                       (m_metadata.find(trackId) != m_metadata.end()));
 
 //    cerr << "wantTrack = " << wantTrack << " (userSpecifiedTrack = "
-//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri.toStdString() << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
+//         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
 
     if (wantTrack) {
         // We only write a Track at all if we have some title/artist
@@ -390,14 +391,15 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
            << "        tl:onTimeLine "
            << timelineURI << "\n    ] .\n\n";
 
-    stream << timelineURI << " a tl:Timeline .\n";
+    stream << timelineURI << " a tl:Timeline .\n\n";
 } 
 
 void
 RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
                                          const Transform &transform,
                                          const Plugin::OutputDescriptor &od,
-                                         PluginRDFDescription &desc)
+                                         PluginRDFDescription &desc, 
+                                         std::string summaryType)
 {
     QString outputId = od.identifier.c_str();
     QTextStream &stream = *sptr;
@@ -412,7 +414,8 @@ RDFFeatureWriter::writeLocalFeatureTypes(QTextStream *sptr,
 
     //!!! bin names, extents and so on can be written out using e.g. vamp:bin_names ( "a" "b" "c" ) 
 
-    if (desc.getOutputDisposition(outputId) == 
+    if (summaryType == "" &&
+        desc.getOutputDisposition(outputId) == 
         PluginRDFDescription::OutputDense) {
 
         // no feature events, so may need signal type but won't need
@@ -520,7 +523,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
                                  PluginRDFDescription &desc,
                                  QString timelineURI)
 {
-//    std::cerr << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << std::endl;
+//    SVDEBUG << "RDFFeatureWriter::writeSparseRDF: have " << featureList.size() << " features" << endl;
 
     if (featureList.empty()) return;
     QTextStream &stream = *sptr;
@@ -621,7 +624,7 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
     QString featureUri = desc.getOutputFeatureAttributeURI(outputId);
 
     if (featureUri == "") {
-        cerr << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
+        SVDEBUG << "RDFFeatureWriter::writeTrackLevelRDF: ERROR: No feature URI available -- this function should not have been called!" << endl;
         return;
     }
 
@@ -765,14 +768,14 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
 void RDFFeatureWriter::finish()
 {
-//    cerr << "RDFFeatureWriter::finish()" << endl;
+//    SVDEBUG << "RDFFeatureWriter::finish()" << endl;
 
     // close any open dense feature literals
 
     for (map<StringTransformPair, StreamBuffer>::iterator i =
              m_openDenseFeatures.begin();
          i != m_openDenseFeatures.end(); ++i) {
-//        cerr << "closing a stream" << endl;
+//        SVDEBUG << "closing a stream" << endl;
         StreamBuffer &b = i->second;
         *(b.first) << b.second << "\" ." << endl;
     }

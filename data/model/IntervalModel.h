@@ -95,10 +95,10 @@ public:
                 (row, column, value, role);
         }
 
-        if (role != Qt::EditRole) return false;
+        if (role != Qt::EditRole) return 0;
         typename I::PointList::const_iterator i
             = I::getPointListIteratorForRow(row);
-        if (i == I::m_points.end()) return false;
+        if (i == I::m_points.end()) return 0;
         typename I::EditCommand *command = new typename I::EditCommand
             (this, I::tr("Edit Data"));
 

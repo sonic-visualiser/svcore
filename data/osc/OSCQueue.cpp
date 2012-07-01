@@ -167,7 +167,7 @@ OSCQueue::postMessage(OSCMessage message)
             return;
         }
         std::cerr << "WARNING: OSCQueue::postMessage: OSC message queue (capacity " << m_buffer.getSize() << " is full!" << std::endl;
-        std::cerr << "Waiting for something to be processed" << std::endl;
+        SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
 #else
@@ -178,9 +178,9 @@ OSCQueue::postMessage(OSCMessage message)
 
     OSCMessage *mp = new OSCMessage(message);
     m_buffer.write(&mp, 1);
-    std::cerr << "OSCQueue::postMessage: Posted OSC message: target "
+    SVDEBUG << "OSCQueue::postMessage: Posted OSC message: target "
               << message.getTarget() << ", target data " << message.getTargetData()
-              << ", method " << message.getMethod().toStdString() << std::endl;
+              << ", method " << message.getMethod() << endl;
     emit messagesAvailable();
 }
 
@@ -213,14 +213,13 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
 
     if (method.contains('/')) {
         std::cerr << "ERROR: OSCQueue::parseOSCPath: malformed path \""
-                  << path.toStdString() << "\" (should be target/data/method or "
+                  << path << "\" (should be target/data/method or "
                   << "target/method or method, where target and data "
                   << "are numeric)" << std::endl;
         return false;
     }
 
-    std::cerr << "OSCQueue::parseOSCPath: good path \"" << path.toStdString()
-              << "\"" << std::endl;
+    SVDEBUG << "OSCQueue::parseOSCPath: good path \"" << path              << "\"" << endl;
 
     return true;
 }

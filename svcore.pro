@@ -27,6 +27,7 @@ HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
            base/Clipboard.h \
            base/Command.h \
+           base/Debug.h \
            base/Exceptions.h \
            base/LogRange.h \
            base/Pitch.h \
@@ -43,6 +44,7 @@ HEADERS += base/AudioLevel.h \
            base/RecentFiles.h \
            base/Resampler.h \
            base/ResizeableBitset.h \
+           base/ResourceFinder.h \
            base/RingBuffer.h \
            base/Scavenger.h \
            base/Selection.h \
@@ -50,6 +52,7 @@ HEADERS += base/AudioLevel.h \
            base/StorageAdviser.h \
            base/StringBits.h \
            base/TempDirectory.h \
+           base/TempWriteFile.h \
            base/TextMatcher.h \
            base/Thread.h \
            base/UnitDatabase.h \
@@ -60,6 +63,7 @@ HEADERS += base/AudioLevel.h \
 SOURCES += base/AudioLevel.cpp \
            base/Clipboard.cpp \
            base/Command.cpp \
+           base/Debug.cpp \
            base/Exceptions.cpp \
            base/LogRange.cpp \
            base/Pitch.cpp \
@@ -74,11 +78,13 @@ SOURCES += base/AudioLevel.cpp \
            base/RealTime.cpp \
            base/RecentFiles.cpp \
            base/Resampler.cpp \
+           base/ResourceFinder.cpp \
            base/Selection.cpp \
            base/Serialiser.cpp \
            base/StorageAdviser.cpp \
            base/StringBits.cpp \
            base/TempDirectory.cpp \
+           base/TempWriteFile.cpp \
            base/TextMatcher.cpp \
            base/Thread.cpp \
            base/UnitDatabase.cpp \
@@ -226,20 +232,18 @@ SOURCES += plugin/DSSIPluginFactory.cpp \
            plugin/api/dssi_alsa_compat.c \
            plugin/plugins/SamplePlayer.cpp
 
-HEADERS += rdf/PluginRDFDescription.h \
-           rdf/PluginRDFIndexer.h \
+HEADERS += rdf/PluginRDFIndexer.h \
+           rdf/PluginRDFDescription.h \
            rdf/RDFExporter.h \
            rdf/RDFFeatureWriter.h \
            rdf/RDFImporter.h \
-           rdf/RDFTransformFactory.h \
-           rdf/SimpleSPARQLQuery.h
-SOURCES += rdf/PluginRDFDescription.cpp \
-           rdf/PluginRDFIndexer.cpp \
+           rdf/RDFTransformFactory.h
+SOURCES += rdf/PluginRDFIndexer.cpp \
+           rdf/PluginRDFDescription.cpp \
            rdf/RDFExporter.cpp \
            rdf/RDFFeatureWriter.cpp \
            rdf/RDFImporter.cpp \
-           rdf/RDFTransformFactory.cpp \
-           rdf/SimpleSPARQLQuery.cpp
+           rdf/RDFTransformFactory.cpp
 
 HEADERS += system/Init.h \
            system/System.h

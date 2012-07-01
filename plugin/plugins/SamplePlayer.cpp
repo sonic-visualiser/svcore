@@ -20,7 +20,8 @@
 #include "SamplePlayer.h"
 #include "system/System.h"
 
-#include <dssi.h>
+#include "../api/dssi.h"
+
 #include <cmath>
 #include <cstdlib>
 
@@ -151,14 +152,14 @@ LADSPA_Handle
 SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 {
     if (!hostDescriptor || !hostDescriptor->request_non_rt_thread) {
-	std::cerr << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << std::endl;
+	SVDEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
 	return 0;
     }
 
     SamplePlayer *player = new SamplePlayer(rate);
 
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
-	std::cerr << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << std::endl;
+	SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
 	delete player;
 	return 0;
     }
@@ -320,7 +321,7 @@ SamplePlayer::workThreadCallback(LADSPA_Handle handle)
     if (player->m_pendingProgramChange >= 0) {
 
 #ifdef DEBUG_SAMPLE_PLAYER
-	std::cerr << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << std::endl;
+	SVDEBUG << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << endl;
 #endif
 
 	player->m_mutex.lock();
@@ -363,8 +364,8 @@ SamplePlayer::searchSamples()
     m_samples.clear();
 
 #ifdef DEBUG_SAMPLE_PLAYER
-    std::cerr << "SamplePlayer::searchSamples: Directory is \""
-	      << m_sampleDir.toLocal8Bit().data() << "\"" << std::endl;
+    SVDEBUG << "SamplePlayer::searchSamples: Directory is \""
+	      << m_sampleDir.toLocal8Bit().data() << "\"" << endl;
 #endif
 
     QDir dir(m_sampleDir, "*.wav");
