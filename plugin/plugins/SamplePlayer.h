@@ -18,8 +18,9 @@
 
 #define DSSI_API_LEVEL 2
 
-#include <ladspa.h>
-#include <dssi.h>
+#include "../api/ladspa.h"
+#include "../api/dssi.h"
+
 #include <seq_event.h>
 
 #include <QMutex>

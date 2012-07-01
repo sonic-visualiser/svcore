@@ -14,6 +14,7 @@
 */
 
 #include "TempDirectory.h"
+#include "ResourceFinder.h"
 #include "system/System.h"
 #include "Exceptions.h"
 
@@ -25,6 +26,7 @@
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
+#include <time.h>
 
 TempDirectory *
 TempDirectory::m_instance = new TempDirectory;
@@ -42,7 +44,7 @@ TempDirectory::TempDirectory() :
 
 TempDirectory::~TempDirectory()
 {
-    std::cerr << "TempDirectory::~TempDirectory" << std::endl;
+    SVDEBUG << "TempDirectory::~TempDirectory" << endl;
 
     cleanup();
 }
@@ -57,34 +59,26 @@ QString
 TempDirectory::getContainingPath()
 {
     QMutexLocker locker(&m_mutex);
-    
+
     QSettings settings;
     settings.beginGroup("TempDirectory");
     QString svDirParent = settings.value("create-in", "$HOME").toString();
     settings.endGroup();
 
-#ifdef Q_OS_WIN32
-    char *homedrive = getenv("HOMEDRIVE");
-    char *homepath = getenv("HOMEPATH");
-    if (homedrive && homepath) {
-        svDirParent.replace("$HOME", QString("%1%2").arg(homedrive).arg(homepath));
-    } else {
-        svDirParent.replace("$HOME", QDir::home().absolutePath());
+    QString svDir = ResourceFinder().getUserResourcePrefix();
+    if (svDirParent != "$HOME") {
+        //!!! iffy
+        svDir.replace(QDir::home().absolutePath(), svDirParent);
     }
-#else
-    svDirParent.replace("$HOME", QDir::home().absolutePath());
-#endif
 
-    QString svDirBase = ".sv1";
-    QString svDir = QDir(svDirParent).filePath(svDirBase);
     if (!QFileInfo(svDir).exists()) {
-        if (!QDir(svDirParent).mkdir(svDirBase)) {
+        if (!QDir(svDirParent).mkpath(svDir)) {
             throw DirectoryCreationFailed(QString("%1 directory in %2")
-                                          .arg(svDirBase).arg(svDirParent));
+                                          .arg(svDir).arg(svDirParent));
         }
     } else if (!QFileInfo(svDir).isDir()) {
-        throw DirectoryCreationFailed(QString("%1/%2 is not a directory")
-                                      .arg(svDirParent).arg(svDirBase));
+        throw DirectoryCreationFailed(QString("%1 is not a directory")
+                                      .arg(svDir));
     }
 
     cleanupAbandonedDirectories(svDir);
@@ -214,7 +208,7 @@ TempDirectory::cleanupDirectory(QString tmpdir)
             if (!QFile(fi.absoluteFilePath()).remove()) {
                 std::cerr << "WARNING: TempDirectory::cleanup: "
                           << "Failed to unlink file \""
-                          << fi.absoluteFilePath().toStdString() << "\""
+                          << fi.absoluteFilePath() << "\""
                           << std::endl;
             }
         }
@@ -225,13 +219,13 @@ TempDirectory::cleanupDirectory(QString tmpdir)
         if (!dir.cdUp()) {
             std::cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to cd to parent directory of "
-                      << tmpdir.toStdString() << std::endl;
+                      << tmpdir << std::endl;
             return;
         }
         if (!dir.rmdir(dirname)) {
             std::cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to remove directory "
-                      << dirname.toStdString() << std::endl;
+                      << dirname << std::endl;
         } 
     }
 
@@ -254,7 +248,7 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
 
         if (subdir.count() == 0) {
             std::cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
-                      << dirpath.toStdString() << "\").  Removing it..." << std::endl;
+                      << dirpath << "\").  Removing it..." << std::endl;
             cleanupDirectory(dirpath);
             std::cerr << "...done." << std::endl;
             continue;

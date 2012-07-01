@@ -21,6 +21,9 @@
 #include "model/NoteModel.h"
 #include "model/TextModel.h"
 
+#include "base/TempWriteFile.h"
+#include "base/Exceptions.h"
+
 #include <QFile>
 #include <QTextStream>
 
@@ -51,16 +54,25 @@ CSVFileWriter::getError() const
 void
 CSVFileWriter::write()
 {
-    QFile file(m_path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        m_error = tr("Failed to open file %1 for writing").arg(m_path);
-        return;
-    }
-    
-    QTextStream out(&file);
-    out << m_model->toDelimitedDataString(m_delimiter);
+    try {
+        TempWriteFile temp(m_path);
 
-    file.close();
+        QFile file(temp.getTemporaryFilename());
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            m_error = tr("Failed to open file %1 for writing")
+                .arg(temp.getTemporaryFilename());
+            return;
+        }
+    
+        QTextStream out(&file);
+        out << m_model->toDelimitedDataString(m_delimiter);
+
+        file.close();
+        temp.moveToTarget();
+
+    } catch (FileOperationFailed &f) {
+        m_error = f.what();
+    }
 }
 
 

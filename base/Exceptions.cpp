@@ -21,7 +21,7 @@ FileNotFound::FileNotFound(QString file) throw() :
     m_file(file)
 {
     std::cerr << "ERROR: File not found: "
-              << file.toStdString() << std::endl;
+              << file << std::endl;
 }
 
 const char *
@@ -35,7 +35,7 @@ FailedToOpenFile::FailedToOpenFile(QString file) throw() :
     m_file(file)
 {
     std::cerr << "ERROR: Failed to open file: "
-              << file.toStdString() << std::endl;
+              << file << std::endl;
 }
 
 const char *
@@ -49,7 +49,7 @@ DirectoryCreationFailed::DirectoryCreationFailed(QString directory) throw() :
     m_directory(directory)
 {
     std::cerr << "ERROR: Directory creation failed for directory: "
-              << directory.toStdString() << std::endl;
+              << directory << std::endl;
 }
 
 const char *
@@ -63,7 +63,7 @@ FileReadFailed::FileReadFailed(QString file) throw() :
     m_file(file)
 {
     std::cerr << "ERROR: File read failed for file: "
-              << file.toStdString() << std::endl;
+              << file << std::endl;
 }
 
 const char *
@@ -77,8 +77,8 @@ FileOperationFailed::FileOperationFailed(QString file, QString op) throw() :
     m_file(file),
     m_operation(op)
 {
-    std::cerr << "ERROR: File " << op.toStdString() << " failed for file: "
-              << file.toStdString() << std::endl;
+    std::cerr << "ERROR: File " << op << " failed for file: "
+              << file << std::endl;
 }
 
 const char *
@@ -96,7 +96,7 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
     m_available(available)
 {
     std::cerr << "ERROR: Not enough disc space available in "
-              << directory.toStdString() << ": need " << required
+              << directory << ": need " << required
               << ", only have " << available << std::endl;
 }
 
@@ -106,7 +106,7 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
     m_available(0)
 {
     std::cerr << "ERROR: Not enough disc space available in "
-              << directory.toStdString() << std::endl;
+              << directory << std::endl;
 }
 
 const char *

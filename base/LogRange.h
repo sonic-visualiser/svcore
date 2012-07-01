@@ -17,6 +17,7 @@
 #define _LOG_RANGE_H_
 
 #include <vector>
+#include "Debug.h"
 
 class LogRange
 {

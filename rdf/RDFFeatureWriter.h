@@ -77,7 +77,8 @@ private:
     void writeLocalFeatureTypes(QTextStream *,
                                 const Transform &,
                                 const Vamp::Plugin::OutputDescriptor &,
-                                PluginRDFDescription &);
+                                PluginRDFDescription &,
+                                std::string summaryType);
 
     void writeSparseRDF(QTextStream *stream,
                         const Transform &transform,

@@ -77,10 +77,15 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 {
     QString err;
 
-    std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\"): Requested rate: " << targetRate << std::endl;
+    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
 
-    if (!source.isOK() || !source.isAvailable()) {
-        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation().toStdString() << "\": Source unavailable" << std::endl;
+    if (!source.isOK()) {
+        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << std::endl;
+        return 0;
+    }
+
+    if (!source.isAvailable()) {
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
         return 0;
     }
 
@@ -97,7 +102,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             reader->isOK() &&
             reader->getSampleRate() != targetRate) {
 
-            std::cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << std::endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
 
             delete reader;
             reader = new ResamplingWavFileReader
@@ -208,7 +213,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             reader->isOK() &&
             reader->getSampleRate() != targetRate) {
 
-            std::cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << std::endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
 
             delete reader;
             reader = new ResamplingWavFileReader
@@ -312,10 +317,10 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
         std::cerr << "AudioFileReaderFactory: Preferred reader for "
                   << "url \"" << source.getLocation().toStdString()
                   << "\" (content type \""
-                  << source.getContentType().toStdString() << "\") failed";
+                  << source.getContentType() << "\") failed";
 
         if (reader->getError() != "") {
-            std::cerr << ": \"" << reader->getError().toStdString() << "\"";
+            std::cerr << ": \"" << reader->getError() << "\"";
         }
         std::cerr << std::endl;
         delete reader;

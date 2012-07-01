@@ -191,7 +191,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                 if (server->getFillCompletion() < 50) distance += 100;
 
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer::getFuzzyInstance: Distance for server " << server << " is " << distance << ", best is " << bestdist << std::endl;
+                SVDEBUG << "FFTDataServer::getFuzzyInstance: Distance for server " << server << " is " << distance << ", best is " << bestdist << endl;
 #endif
                 
                 if (bestdist == -1 || distance < bestdist) {
@@ -204,7 +204,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
         if (bestdist >= 0) {
             FFTDataServer *server = best->second.first;
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::getFuzzyInstance: We like server " << server << " (with distance " << bestdist << ")" << std::endl;
+            SVDEBUG << "FFTDataServer::getFuzzyInstance: We like server " << server << " (with distance " << bestdist << ")" << endl;
 #endif
             claimInstance(server, false);
             return server;
@@ -228,7 +228,7 @@ FFTDataServer *
 FFTDataServer::findServer(QString n)
 {    
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\")" << std::endl;
+    SVDEBUG << "FFTDataServer::findServer(\"" << n << "\")" << endl;
 #endif
 
     if (m_servers.find(n) != m_servers.end()) {
@@ -236,7 +236,7 @@ FFTDataServer::findServer(QString n)
         FFTDataServer *server = m_servers[n].first;
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\"): found " << server << std::endl;
+        SVDEBUG << "FFTDataServer::findServer(\"" << n << "\"): found " << server << endl;
 #endif
 
         claimInstance(server, false);
@@ -245,7 +245,7 @@ FFTDataServer::findServer(QString n)
     }
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::findServer(\"" << n.toStdString() << "\"): not found" << std::endl;
+        SVDEBUG << "FFTDataServer::findServer(\"" << n << "\"): not found" << endl;
 #endif
 
     return 0;
@@ -264,7 +264,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
                        "FFTDataServer::claimInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::claimInstance(" << server << ")" << std::endl;
+    SVDEBUG << "FFTDataServer::claimInstance(" << server << ")" << endl;
 #endif
 
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -275,7 +275,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
 
                 if (*j == server) {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::claimInstance: found in released server list, removing from it" << std::endl;
+    SVDEBUG << "FFTDataServer::claimInstance: found in released server list, removing from it" << endl;
 #endif
                     m_releasedServers.erase(j);
                     break;
@@ -285,7 +285,7 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
             ++i->second.second;
 
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::claimInstance: new refcount is " << i->second.second << std::endl;
+            SVDEBUG << "FFTDataServer::claimInstance: new refcount is " << i->second.second << endl;
 #endif
 
             return;
@@ -309,7 +309,7 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
                        "FFTDataServer::releaseInstance::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::releaseInstance(" << server << ")" << std::endl;
+    SVDEBUG << "FFTDataServer::releaseInstance(" << server << ")" << endl;
 #endif
 
     // -- if ref count > 0, decrement and return
@@ -332,18 +332,18 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 /*!!!
                 if (server->m_lastUsedCache == -1) { // never used
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    SVDEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " has never been used, erasing"
-                              << std::endl;
+                              << endl;
 #endif
                     delete server;
                     m_servers.erase(i);
                 } else {
 */
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    SVDEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " no longer in use, marking for possible collection"
-                              << std::endl;
+                              << endl;
 #endif
                     bool found = false;
                     for (ServerQueue::iterator j = m_releasedServers.begin();
@@ -361,9 +361,9 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
 //!!!                }
             } else {
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::releaseInstance: instance "
+                    SVDEBUG << "FFTDataServer::releaseInstance: instance "
                               << server << " now has refcount " << i->second.second
-                              << std::endl;
+                              << endl;
 #endif
             }
             return;
@@ -378,8 +378,8 @@ void
 FFTDataServer::purgeLimbo(int maxSize)
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::purgeLimbo(" << maxSize << "): "
-              << m_releasedServers.size() << " candidates" << std::endl;
+    SVDEBUG << "FFTDataServer::purgeLimbo(" << maxSize << "): "
+              << m_releasedServers.size() << " candidates" << endl;
 #endif
 
     while (int(m_releasedServers.size()) > maxSize) {
@@ -389,8 +389,8 @@ FFTDataServer::purgeLimbo(int maxSize)
         bool found = false;
 
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::purgeLimbo: considering candidate "
-                  << server << std::endl;
+        SVDEBUG << "FFTDataServer::purgeLimbo: considering candidate "
+                  << server << endl;
 #endif
 
         for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -405,8 +405,8 @@ FFTDataServer::purgeLimbo(int maxSize)
                     break;
                 }
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer::purgeLimbo: looks OK, erasing it"
-                          << std::endl;
+                SVDEBUG << "FFTDataServer::purgeLimbo: looks OK, erasing it"
+                          << endl;
 #endif
 
                 m_servers.erase(i);
@@ -426,8 +426,8 @@ FFTDataServer::purgeLimbo(int maxSize)
     }
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::purgeLimbo(" << maxSize << "): "
-              << m_releasedServers.size() << " remain" << std::endl;
+    SVDEBUG << "FFTDataServer::purgeLimbo(" << maxSize << "): "
+              << m_releasedServers.size() << " remain" << endl;
 #endif
 
 }
@@ -439,8 +439,8 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
                        "FFTDataServer::modelAboutToBeDeleted::m_serverMapMutex");
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
-              << std::endl;
+    SVDEBUG << "FFTDataServer::modelAboutToBeDeleted(" << model << ")"
+              << endl;
 #endif
 
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
@@ -450,12 +450,12 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
         if (server->getModel() == model) {
 
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::modelAboutToBeDeleted: server is "
-                      << server << std::endl;
+            SVDEBUG << "FFTDataServer::modelAboutToBeDeleted: server is "
+                      << server << endl;
 #endif
 
             if (i->second.second > 0) {
-                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName().toStdString() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
                 server->suspendWrites();
                 return;
             }
@@ -463,14 +463,14 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
                  j != m_releasedServers.end(); ++j) {
                 if (*j == server) {
 #ifdef DEBUG_FFT_SERVER
-                    std::cerr << "FFTDataServer::modelAboutToBeDeleted: erasing from released servers" << std::endl;
+                    SVDEBUG << "FFTDataServer::modelAboutToBeDeleted: erasing from released servers" << endl;
 #endif
                     m_releasedServers.erase(j);
                     break;
                 }
             }
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer::modelAboutToBeDeleted: erasing server" << std::endl;
+            SVDEBUG << "FFTDataServer::modelAboutToBeDeleted: erasing server" << endl;
 #endif
             m_servers.erase(i);
             delete server;
@@ -814,13 +814,15 @@ FFTDataServer::makeCache(int c)
 
             success = true;
 
-        } catch (std::exception e) {
+        } catch (std::exception &e) {
 
             delete cb->fileCacheWriter;
             cb->fileCacheWriter = 0;
             
             std::cerr << "ERROR: Failed to construct disc cache for FFT data: "
                       << e.what() << std::endl;
+
+            throw;
         }
     }
 
@@ -839,7 +841,7 @@ FFTDataServer::makeCacheReader(int c)
     // preconditions: m_caches[c] exists and contains a file writer;
     // m_cacheVectorLock is not locked by this thread
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::makeCacheReader(" << c << ")" << std::endl;
+    SVDEBUG << "FFTDataServer::makeCacheReader(" << c << ")" << endl;
 #endif
 
     QThread *me = QThread::currentThread();
@@ -851,7 +853,7 @@ FFTDataServer::makeCacheReader(int c)
         
         cb->fileCacheReader[me] = new FFTFileCacheReader(cb->fileCacheWriter);
 
-    } catch (std::exception e) {
+    } catch (std::exception &e) {
 
         delete cb->fileCacheReader[me];
         cb->fileCacheReader.erase(me);
@@ -873,7 +875,7 @@ FFTDataServer::makeCacheReader(int c)
     cb = m_caches.at(deleteCandidate);
     if (cb && cb->fileCacheReader.find(me) != cb->fileCacheReader.end()) {
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::makeCacheReader: Deleting probably unpopular reader " << deleteCandidate << " for this thread (as I create reader " << c << ")" << std::endl;
+        SVDEBUG << "FFTDataServer::makeCacheReader: Deleting probably unpopular reader " << deleteCandidate << " for this thread (as I create reader " << c << ")" << endl;
 #endif
         delete cb->fileCacheReader[me];
         cb->fileCacheReader.erase(me);
@@ -889,20 +891,29 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 
     if (x >= m_width || y >= m_height) return 0;
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return 0;
+    float val = 0;
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getMagnitudeAt: filling");
+    try {
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return 0;
+
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getMagnitudeAt: filling");
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
-                  << x << ")" << std::endl;
+            SVDEBUG << "FFTDataServer::getMagnitudeAt: calling fillColumn(" 
+                  << x << ")" << endl;
 #endif
-        fillColumn(x);
+            fillColumn(x);
+        }
+
+        val = cache->getMagnitudeAt(col, y);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
     }
-    return cache->getMagnitudeAt(col, y);
+
+    return val;
 }
 
 bool
@@ -918,17 +929,22 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
         count = (m_height - minbin) / step;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return false;
+    try {
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return false;
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getMagnitudesAt: filling");
-        fillColumn(x);
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getMagnitudesAt: filling");
+            fillColumn(x);
+        }
+
+        cache->getMagnitudesAt(col, values, minbin, count, step);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
+        return false;
     }
-
-    cache->getMagnitudesAt(col, values, minbin, count, step);
 
     return true;
 }
@@ -940,16 +956,25 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 
     if (x >= m_width || y >= m_height) return 0;
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return 0;
+    float val = 0;
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt: filling");
-        fillColumn(x);
+    try {
+
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return 0;
+
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt: filling");
+            fillColumn(x);
+        }
+        val = cache->getNormalizedMagnitudeAt(col, y);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
     }
-    return cache->getNormalizedMagnitudeAt(col, y);
+
+    return val;
 }
 
 bool
@@ -965,18 +990,24 @@ FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin,
         count = (m_height - minbin) / step;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return false;
+    try {
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt: filling");
-        fillColumn(x);
-    }
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return false;
 
-    for (size_t i = 0; i < count; ++i) {
-        values[i] = cache->getNormalizedMagnitudeAt(col, i * step + minbin);
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt: filling");
+            fillColumn(x);
+        }
+        
+        for (size_t i = 0; i < count; ++i) {
+            values[i] = cache->getNormalizedMagnitudeAt(col, i * step + minbin);
+        }
+        
+    } catch (std::exception &e) {
+        m_error = e.what();
+        return false;
     }
 
     return true;
@@ -989,16 +1020,25 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 
     if (x >= m_width) return 0;
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return 0;
+    float val = 0;
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getMaximumMagnitudeAt: filling");
-        fillColumn(x);
+    try {
+
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return 0;
+
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getMaximumMagnitudeAt: filling");
+            fillColumn(x);
+        }
+        val = cache->getMaximumMagnitudeAt(col);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
     }
-    return cache->getMaximumMagnitudeAt(col);
+
+    return val;
 }
 
 float
@@ -1008,16 +1048,25 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
 
     if (x >= m_width || y >= m_height) return 0;
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return 0;
+    float val = 0;
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getPhaseAt: filling");
-        fillColumn(x);
+    try {
+
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return 0;
+
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getPhaseAt: filling");
+            fillColumn(x);
+        }
+        val = cache->getPhaseAt(col, y);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
     }
-    return cache->getPhaseAt(col, y);
+
+    return val;
 }
 
 bool
@@ -1033,18 +1082,24 @@ FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count,
         count = (m_height - minbin) / step;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return false;
+    try {
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getPhasesAt: filling");
-        fillColumn(x);
-    }
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return false;
 
-    for (size_t i = 0; i < count; ++i) {
-        values[i] = cache->getPhaseAt(col, i * step + minbin);
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getPhasesAt: filling");
+            fillColumn(x);
+        }
+        
+        for (size_t i = 0; i < count; ++i) {
+            values[i] = cache->getPhaseAt(col, i * step + minbin);
+        }
+
+    } catch (std::exception &e) {
+        m_error = e.what();
+        return false;
     }
 
     return true;
@@ -1061,25 +1116,30 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
         return;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
+    try {
 
-    if (!cache) {
-        real = 0;
-        imaginary = 0;
-        return;
-    }
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getValuesAt: filling");
+        if (!cache) {
+            real = 0;
+            imaginary = 0;
+            return;
+        }
+
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getValuesAt: filling");
 #ifdef DEBUG_FFT_SERVER
-        std::cerr << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << std::endl;
+            SVDEBUG << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << endl;
 #endif
-        fillColumn(x);
-    }        
+            fillColumn(x);
+        }        
 
-    cache->getValuesAt(col, y, real, imaginary);
+        cache->getValuesAt(col, y, real, imaginary);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
+    }
 }
 
 bool
@@ -1095,18 +1155,24 @@ FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t mi
         count = (m_height - minbin) / step;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return false;
+    try {
 
-    //!!! n.b. can throw
-    if (!cache->haveSetColumnAt(col)) {
-        Profiler profiler("FFTDataServer::getValuesAt: filling");
-        fillColumn(x);
-    }
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return false;
 
-    for (size_t i = 0; i < count; ++i) {
-        cache->getValuesAt(col, i * step + minbin, reals[i], imaginaries[i]);
+        if (!cache->haveSetColumnAt(col)) {
+            Profiler profiler("FFTDataServer::getValuesAt: filling");
+            fillColumn(x);
+        }
+
+        for (size_t i = 0; i < count; ++i) {
+            cache->getValuesAt(col, i * step + minbin, reals[i], imaginaries[i]);
+        }
+
+    } catch (std::exception &e) {
+        m_error = e.what();
+        return false;
     }
 
     return true;
@@ -1123,7 +1189,7 @@ FFTDataServer::isColumnReady(size_t x)
 /*!!!
         if (m_lastUsedCache == -1) {
             if (m_suspended) {
-                std::cerr << "FFTDataServer::isColumnReady(" << x << "): no cache, calling resume" << std::endl;
+                SVDEBUG << "FFTDataServer::isColumnReady(" << x << "): no cache, calling resume" << endl;
                 resume();
             }
             m_fillThread->start();
@@ -1132,12 +1198,18 @@ FFTDataServer::isColumnReady(size_t x)
         return false;
     }
 
-    size_t col;
-    FFTCacheReader *cache = getCacheReader(x, col);
-    if (!cache) return true;
+    try {
 
-    //!!! n.b. can throw
-    return cache->haveSetColumnAt(col);
+        size_t col;
+        FFTCacheReader *cache = getCacheReader(x, col);
+        if (!cache) return true;
+
+        return cache->haveSetColumnAt(col);
+
+    } catch (std::exception &e) {
+        m_error = e.what();
+        return false;
+    }
 }    
 
 void
@@ -1186,12 +1258,12 @@ FFTDataServer::fillColumn(size_t x)
     endFrame   -= winsize / 2;
 
 #ifdef DEBUG_FFT_SERVER_FILL
-    std::cerr << "FFTDataServer::fillColumn: requesting frames "
+    SVDEBUG << "FFTDataServer::fillColumn: requesting frames "
               << startFrame + pfx << " -> " << endFrame << " ( = "
               << endFrame - (startFrame + pfx) << ") at index "
               << off + pfx << " in buffer of size " << m_fftSize
               << " with window size " << m_windowSize 
-              << " from channel " << m_channel << std::endl;
+              << " from channel " << m_channel << endl;
 #endif
 
     QMutexLocker locker(&m_fftBuffersLock);
@@ -1298,7 +1370,7 @@ FFTDataServer::fillColumn(size_t x)
     }
 
     if (m_suspended) {
-//        std::cerr << "FFTDataServer::fillColumn(" << x << "): calling resume" << std::endl;
+//        SVDEBUG << "FFTDataServer::fillColumn(" << x << "): calling resume" << endl;
 //        resume();
     }
 }    
@@ -1307,6 +1379,7 @@ void
 FFTDataServer::fillComplete()
 {
     for (int i = 0; i < int(m_caches.size()); ++i) {
+        if (!m_caches[i]) continue;
         if (m_caches[i]->memoryCache) {
             m_caches[i]->memoryCache->allColumnsWritten();
         }
@@ -1314,6 +1387,14 @@ FFTDataServer::fillComplete()
             m_caches[i]->fileCacheWriter->allColumnsWritten();
         }
     }
+}
+
+QString
+FFTDataServer::getError() const
+{
+    if (m_error != "") return m_error;
+    else if (m_fillThread) return m_fillThread->getError();
+    else return "";
 }
 
 size_t
@@ -1365,7 +1446,7 @@ void
 FFTDataServer::FillThread::run()
 {
 #ifdef DEBUG_FFT_SERVER_FILL
-    std::cerr << "FFTDataServer::FillThread::run()" << std::endl;
+    SVDEBUG << "FFTDataServer::FillThread::run()" << endl;
 #endif
     
     m_extent = 0;
@@ -1373,7 +1454,7 @@ FFTDataServer::FillThread::run()
     
     while (!m_server.m_model->isReady() && !m_server.m_exiting) {
 #ifdef DEBUG_FFT_SERVER_FILL
-        std::cerr << "FFTDataServer::FillThread::run(): waiting for model " << m_server.m_model << " to be ready" << std::endl;
+        SVDEBUG << "FFTDataServer::FillThread::run(): waiting for model " << m_server.m_model << " to be ready" << endl;
 #endif
         sleep(1);
     }
@@ -1392,7 +1473,16 @@ FFTDataServer::FillThread::run()
 
         for (size_t f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
 	    
-            m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+            try {
+                m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+            } catch (std::exception &e) {
+                SVDEBUG << "FFTDataServer::FillThread::run: exception: " << e.what() << endl;
+                m_error = e.what();
+                m_server.fillComplete();
+                m_completion = 100;
+                m_extent = end;
+                return;
+            }
 
             if (m_server.m_exiting) return;
 
@@ -1432,7 +1522,16 @@ FFTDataServer::FillThread::run()
 
     for (size_t f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
 
-        m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+        try {
+            m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
+        } catch (std::exception &e) {
+            SVDEBUG << "FFTDataServer::FillThread::run: exception: " << e.what() << endl;
+            m_error = e.what();
+            m_server.fillComplete();
+            m_completion = 100;
+            m_extent = end;
+            return;
+        }
 
         if (m_server.m_exiting) return;
 
@@ -1468,7 +1567,7 @@ FFTDataServer::FillThread::run()
     m_extent = end;
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer::FillThread::run exiting" << std::endl;
+    SVDEBUG << "FFTDataServer::FillThread::run exiting" << endl;
 #endif
 }
 

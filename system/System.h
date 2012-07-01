@@ -16,6 +16,8 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include "base/Debug.h"
+
 #ifdef _WIN32
 
 #include <windows.h>
@@ -59,8 +61,8 @@ void usleep(unsigned long usec);
 int gettimeofday(struct timeval *p, void *tz);
 }
 
-#define ISNAN isnan
-#define ISINF isinf
+#define ISNAN _isnan
+#define ISINF _isinf
 
 #else
 

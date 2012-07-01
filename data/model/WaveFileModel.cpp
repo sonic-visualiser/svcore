@@ -53,8 +53,8 @@ WaveFileModel::WaveFileModel(FileSource source, size_t targetRate) :
         m_reader = AudioFileReaderFactory::createThreadingReader
             (m_source, targetRate);
         if (m_reader) {
-            std::cerr << "WaveFileModel::WaveFileModel: reader rate: "
-                      << m_reader->getSampleRate() << std::endl;
+            SVDEBUG << "WaveFileModel::WaveFileModel: reader rate: "
+                      << m_reader->getSampleRate() << endl;
         }
     }
     if (m_reader) setObjectName(m_reader->getTitle());
@@ -115,7 +115,7 @@ WaveFileModel::isReady(int *completion) const
         prevCompletion = *completion;
     }
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cerr << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << std::endl;
+    SVDEBUG << "WaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << endl;
 #endif
     return ready;
 }
@@ -210,8 +210,8 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-//    std::cerr << "WaveFileModel::getValues(" << channel << ", "
-//              << start << ", " << end << "): calling reader" << std::endl;
+//    SVDEBUG << "WaveFileModel::getValues(" << channel << ", "
+//              << start << ", " << end << "): calling reader" << endl;
 #endif
 
     int channels = getChannelCount();
@@ -534,7 +534,7 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    cerr << "returning " << ranges.size() << " ranges" << endl;
+    SVDEBUG << "returning " << ranges.size() << " ranges" << endl;
 #endif
     return;
 }
@@ -607,7 +607,7 @@ WaveFileModel::fillCache()
     m_fillThread->start();
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cerr << "WaveFileModel::fillCache: started fill thread" << std::endl;
+    SVDEBUG << "WaveFileModel::fillCache: started fill thread" << endl;
 #endif
 }   
 
@@ -617,7 +617,7 @@ WaveFileModel::fillTimerTimedOut()
     if (m_fillThread) {
 	size_t fillExtent = m_fillThread->getFillExtent();
 #ifdef DEBUG_WAVE_FILE_MODEL
-        cerr << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+        SVDEBUG << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
 	if (fillExtent > m_lastFillExtent) {
 	    emit modelChanged(m_lastFillExtent, fillExtent);
@@ -625,7 +625,7 @@ WaveFileModel::fillTimerTimedOut()
 	}
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
-        cerr << "WaveFileModel::fillTimerTimedOut: no thread" << std::endl;
+        SVDEBUG << "WaveFileModel::fillTimerTimedOut: no thread" << endl;
 #endif
 	emit modelChanged();
     }
@@ -646,7 +646,7 @@ WaveFileModel::cacheFilled()
     emit modelChanged();
     emit ready();
 #ifdef DEBUG_WAVE_FILE_MODEL
-    cerr << "WaveFileModel::cacheFilled" << endl;
+    SVDEBUG << "WaveFileModel::cacheFilled" << endl;
 #endif
 }
 
@@ -669,7 +669,7 @@ WaveFileModel::RangeCacheFillThread::run()
 
     if (updating) {
         while (channels == 0 && !m_model.m_exiting) {
-//            std::cerr << "WaveFileModel::fill: Waiting for channels..." << std::endl;
+//            SVDEBUG << "WaveFileModel::fill: Waiting for channels..." << endl;
             sleep(1);
             channels = m_model.getChannelCount();
         }
@@ -690,11 +690,11 @@ WaveFileModel::RangeCacheFillThread::run()
         updating = m_model.m_reader->isUpdating();
         m_frameCount = m_model.getFrameCount();
 
-//        std::cerr << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << std::endl;
+//        SVDEBUG << "WaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << endl;
 
         while (frame < m_frameCount) {
 
-//            std::cerr << "WaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << std::endl;
+//            SVDEBUG << "WaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
 
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 

@@ -28,10 +28,10 @@
 
 RealTimePluginInstance::~RealTimePluginInstance()
 {
-//    std::cerr << "RealTimePluginInstance::~RealTimePluginInstance" << std::endl;
+//    SVDEBUG << "RealTimePluginInstance::~RealTimePluginInstance" << endl;
 
     if (m_factory) {
-//	std::cerr << "Asking factory to release " << m_identifier.toStdString() << std::endl;
+//	SVDEBUG << "Asking factory to release " << m_identifier << endl;
 
 	m_factory->releasePlugin(this, m_identifier);
     }

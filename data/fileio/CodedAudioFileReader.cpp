@@ -22,6 +22,7 @@
 #include "base/Serialiser.h"
 #include "base/Resampler.h"
 
+#include <stdint.h>
 #include <iostream>
 #include <QDir>
 #include <QMutexLocker>
@@ -40,7 +41,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_resampler(0),
     m_resampleBuffer(0)
 {
-    std::cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << std::endl;
+    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -54,14 +55,14 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
-    std::cerr << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << std::endl;
+    SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
 
     if (m_cacheFileName != "") {
         if (!QFile(m_cacheFileName).remove()) {
-            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName.toStdString() << "\"" << std::endl;
+            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << std::endl;
         }
     }
 
@@ -72,7 +73,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-    std::cerr << "CodedAudioFileReader::startSerialised(" << id.toStdString() << ")" << std::endl;
+    SVDEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -92,15 +93,15 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-    std::cerr << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << std::endl;
+    SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
-        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;
+        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         m_fileRate = 48000; // got to have something
     }
     if (m_sampleRate == 0) {
         m_sampleRate = m_fileRate;
-        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << std::endl;
+        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << endl;
     }
     if (m_fileRate != m_sampleRate) {
         std::cerr << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << std::endl;
@@ -144,7 +145,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
                 if (!m_cacheFileReader->isOK()) {
-                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError().toStdString() << std::endl;
+                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << std::endl;
                     delete m_cacheFileReader;
                     m_cacheFileReader = 0;
                     m_cacheMode = CacheInMemory;
@@ -152,7 +153,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 }
 
             } else {
-                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName.toStdString() << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
+                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
                 m_cacheMode = CacheInMemory;
             }
 
@@ -354,7 +355,7 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
     // locking)
 
     if (!m_initialised) {
-        std::cerr << "CodedAudioFileReader::getInterleavedFrames: not initialised" << std::endl;
+        SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
         return;
     }
 

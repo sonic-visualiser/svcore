@@ -36,6 +36,7 @@
 struct RegionRec
 {
 public:
+    RegionRec() : frame(0), value(0.f), duration(0) { }
     RegionRec(long _frame) : frame(_frame), value(0.0f), duration(0) { }
     RegionRec(long _frame, float _value, size_t _duration, QString _label) :
 	frame(_frame), value(_value), duration(_duration), label(_label) { }
@@ -55,7 +56,8 @@ public:
     {
 	stream <<
             QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(label).arg(extraAttributes);
+	    .arg(indent).arg(frame).arg(value).arg(duration)
+            .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
@@ -179,9 +181,9 @@ public:
                 (row, column, value, role);
         }
 
-        if (role != Qt::EditRole) return false;
+        if (role != Qt::EditRole) return 0;
         PointListIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return false;
+        if (i == m_points.end()) return 0;
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
 
         Point point(*i);

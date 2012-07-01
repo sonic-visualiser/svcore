@@ -22,6 +22,8 @@
 
 #include <vamp-hostsdk/Plugin.h>
 
+#include "base/Debug.h"
+
 class FeatureExtractionPluginFactory
 {
 public:

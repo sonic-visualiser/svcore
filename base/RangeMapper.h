@@ -18,6 +18,8 @@
 
 #include <QString>
 
+#include "Debug.h"
+
 
 class RangeMapper 
 {

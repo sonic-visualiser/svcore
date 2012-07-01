@@ -39,7 +39,11 @@ protected:
     CSVFormat m_format;
     QFile *m_file;
     QString m_error;
+    mutable int m_warnings;
     size_t m_mainModelSampleRate;
+
+    size_t convertTimeValue(QString, int lineno, size_t sampleRate,
+                            size_t windowSize) const;
 };
 
 

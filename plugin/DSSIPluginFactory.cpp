@@ -69,7 +69,7 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	const LADSPA_Descriptor *descriptor = ddesc->LADSPA_Plugin;
 	if (!descriptor) continue;
 	
-//	std::cerr << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << std::endl;
+//	SVDEBUG << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << endl;
 
 	list.push_back(*i);
 	list.push_back(descriptor->Name);
@@ -159,7 +159,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
     if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
 	loadLibrary(soname);
 	if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
-	    std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: loadLibrary failed for " << soname.toStdString() << std::endl;
+	    std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: loadLibrary failed for " << soname << std::endl;
 	    return 0;
 	}
 	firstInLibrary = true;
@@ -171,7 +171,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
 	DLSYM(libraryHandle, "dssi_descriptor");
 
     if (!fn) {
-	std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No descriptor function in library " << soname.toStdString() << std::endl;
+	std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No descriptor function in library " << soname << std::endl;
 	return 0;
     }
 
@@ -188,7 +188,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
 	++index;
     }
 
-    std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No such plugin as " << label.toStdString() << " in library " << soname.toStdString() << std::endl;
+    std::cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No such plugin as " << label << " in library " << soname << std::endl;
 
     return 0;
 }
@@ -292,7 +292,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 
     if (!libraryHandle) {
         std::cerr << "WARNING: DSSIPluginFactory::discoverPlugins: couldn't load plugin library "
-                  << soname.toStdString() << " - " << DLERROR() << std::endl;
+                  << soname << " - " << DLERROR() << std::endl;
         return;
     }
 
@@ -300,7 +300,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 	DLSYM(libraryHandle, "dssi_descriptor");
 
     if (!fn) {
-	std::cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No descriptor function in " << soname.toStdString() << std::endl;
+	std::cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No descriptor function in " << soname << std::endl;
 	return;
     }
 
@@ -311,7 +311,7 @@ DSSIPluginFactory::discoverPlugins(QString soname)
 
 	const LADSPA_Descriptor *ladspaDescriptor = descriptor->LADSPA_Plugin;
 	if (!ladspaDescriptor) {
-	    std::cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No LADSPA descriptor for plugin " << index << " in " << soname.toStdString() << std::endl;
+	    std::cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No LADSPA descriptor for plugin " << index << " in " << soname << std::endl;
 	    ++index;
 	    continue;
 	}

@@ -23,6 +23,7 @@
 
 #include <vamp-hostsdk/PluginBase.h>
 
+#include <QMap>
 #include <map>
 #include <set>
 
@@ -37,12 +38,27 @@ public:
 
     static ModelTransformerFactory *getInstance();
 
+    class UserConfigurator {
+    public:
+        virtual bool configure(ModelTransformer::Input &input,
+                               Transform &transform,
+                               Vamp::PluginBase *plugin,
+                               Model *&inputModel,
+                               AudioPlaySource *source,
+                               size_t startFrame,
+                               size_t duration,
+                               const QMap<QString, Model *> &modelMap,
+                               QStringList candidateModelNames,
+                               QString defaultModelName) = 0;
+    };
+
     /**
-     * Fill out the configuration for the given transform (by asking
-     * the user, most likely).  Returns the selected input model and
-     * channel if the transform is acceptable, or an input with a null
-     * model if the operation should be cancelled.  Audio play source
-     * may be used to audition effects plugins, if provided.
+     * Fill out the configuration for the given transform (may include
+     * asking the user by calling back on the UserConfigurator).
+     * Returns the selected input model and channel if the transform
+     * is acceptable, or an input with a null model if the operation
+     * should be cancelled.  Audio play source may be used to audition
+     * effects plugins, if provided.
      */
     ModelTransformer::Input
     getConfigurationForTransform(Transform &transform,
@@ -50,7 +66,8 @@ public:
                                  Model *defaultInputModel,
                                  AudioPlaySource *source = 0,
                                  size_t startFrame = 0,
-                                 size_t duration = 0);
+                                 size_t duration = 0,
+                                 UserConfigurator *configurator = 0);
     
     /**
      * Return the output model resulting from applying the named
@@ -84,9 +101,6 @@ protected:
 
     typedef std::set<ModelTransformer *> TransformerSet;
     TransformerSet m_runningTransformers;
-
-    bool getChannelRange(TransformId identifier,
-                         Vamp::PluginBase *plugin, int &min, int &max);
 
     static ModelTransformerFactory *m_instance;
 };

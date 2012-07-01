@@ -46,7 +46,7 @@ FileFeatureWriter::FileFeatureWriter(int support,
         } else if (m_support & SupportOneFileTotal) {
             m_singleFileName = QString("output.%1").arg(m_extension);
         } else {
-            cerr << "FileFeatureWriter::FileFeatureWriter: ERROR: Invalid support specification " << support << endl;
+            SVDEBUG << "FileFeatureWriter::FileFeatureWriter: ERROR: Invalid support specification " << support << endl;
         }
     }
 }
@@ -59,9 +59,11 @@ FileFeatureWriter::~FileFeatureWriter()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
-        cerr << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
-             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
-        delete m_files.begin()->second;
+        if (m_files.begin()->second) {
+            SVDEBUG << "FileFeatureWriter::~FileFeatureWriter: NOTE: Closing feature file \""
+                 << m_files.begin()->second->fileName() << "\"" << endl;
+            delete m_files.begin()->second;
+        }
         m_files.erase(m_files.begin());
     }
 }
@@ -88,7 +90,11 @@ FileFeatureWriter::getSupportedParameters() const
     if (m_support & SupportOneFileTotal) {
         if (m_support & ~SupportOneFileTotal) { // not only option
             p.name = "one-file";
-            p.description = "Write all transform results for all input files into the single named output file.";
+            if (m_support & SupportOneFilePerTrack) {
+                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
+            } else {
+                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create a separate output file for each combination of input audio file and transform.)";
+            }                
             p.hasArg = true;
             pl.push_back(p);
         }
@@ -122,7 +128,7 @@ FileFeatureWriter::setParameters(map<string, string> &params)
             if (m_support & SupportOneFilePerTrackTransform &&
                 m_support & SupportOneFilePerTrack) {
                 if (m_singleFileName != "") {
-                    cerr << "FileFeatureWriter::setParameters: WARNING: Both one-file and many-files parameters provided, ignoring many-files" << endl;
+                    SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both one-file and many-files parameters provided, ignoring many-files" << endl;
                 } else {
                     m_manyFiles = true;
                 }
@@ -130,17 +136,22 @@ FileFeatureWriter::setParameters(map<string, string> &params)
         } else if (i->first == "one-file") {
             if (m_support & SupportOneFileTotal) {
                 if (m_support & ~SupportOneFileTotal) { // not only option
-                    if (m_manyFiles) {
-                        cerr << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
-                    } else {
+                    // No, we cannot do this test because m_manyFiles
+                    // may be on by default (for any FileFeatureWriter
+                    // that supports OneFilePerTrackTransform but not
+                    // OneFilePerTrack), so we need to be able to
+                    // override it
+//                    if (m_manyFiles) {
+//                        SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
+//                    } else {
                         m_singleFileName = i->second.c_str();
-                    }
+//                    }
                 }
             }
         } else if (i->first == "stdout") {
             if (m_support & SupportOneFileTotal) {
                 if (m_singleFileName != "") {
-                    cerr << "FileFeatureWriter::setParameters: WARNING: Both stdout and one-file provided, ignoring stdout" << endl;
+                    SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both stdout and one-file provided, ignoring stdout" << endl;
                 } else {
                     m_stdout = true;
                 }
@@ -153,13 +164,14 @@ FileFeatureWriter::setParameters(map<string, string> &params)
     }
 }
 
-QString FileFeatureWriter::getOutputFilename(QString trackId,
-                                             TransformId transformId)
+QString
+FileFeatureWriter::getOutputFilename(QString trackId,
+                                     TransformId transformId)
 {
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
-            cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName.toStdString() << "\" exists and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append flag is specified -- not overwriting" << endl;
-            cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
+            cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName << "\" exists and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append flag is specified -- not overwriting" << endl;
+            SVDEBUG << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
             return "";
         }
         return m_singleFileName;
@@ -181,14 +193,14 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
         infilename = scheme + ":" + infilename; // DOS drive!
     }
 
-    cerr << "trackId = " << trackId.toStdString() << ", url = " << url.toString().toStdString() << ", infilename = "
-         << infilename.toStdString() << ", basename = " << basename.toStdString() << ", m_baseDir = " << m_baseDir.toStdString() << endl;
+//    cerr << "trackId = " << trackId << ", url = " << url.toString() << ", infilename = "
+//         << infilename << ", basename = " << basename << ", m_baseDir = " << m_baseDir << endl;
 
     if (m_baseDir != "") dirname = QFileInfo(m_baseDir).absoluteFilePath();
     else if (local) dirname = QFileInfo(infilename).absolutePath();
     else dirname = QDir::currentPath();
 
-    cerr << "dirname = " << dirname.toStdString() << endl;
+//    cerr << "dirname = " << dirname << endl;
 
     QString filename;
 
@@ -203,17 +215,35 @@ QString FileFeatureWriter::getOutputFilename(QString trackId,
     filename = QDir(dirname).filePath(filename);
 
     if (QFileInfo(filename).exists() && !(m_force || m_append)) {
-        cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename.toStdString() << "\" exists (for input file or URL \"" << trackId.toStdString() << "\" and transform \"" << transformId.toStdString() << "\") and neither --" << getWriterTag().toStdString() << "-force nor --" << getWriterTag().toStdString() << "-append is specified -- not overwriting" << endl;
-        cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag().toStdString() << "-force" << endl << "and --" << getWriterTag().toStdString() << "-append options" << endl;
+        cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename << "\" exists (for input file or URL \"" << trackId << "\" and transform \"" << transformId << "\") and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append is specified -- not overwriting" << endl;
+        SVDEBUG << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
         return "";
     }
     
     return filename;
 }
 
+void
+FileFeatureWriter::testOutputFile(QString trackId,
+                                  TransformId transformId)
+{
+    // Obviously, if we're writing to stdout we can't test for an
+    // openable output file. But when writing a single file we don't
+    // want to either, because this test would fail on the second and
+    // subsequent input files (because the file would already exist).
+    // getOutputFile does the right thing in this case, so we just
+    // leave it to it
+    if (m_stdout || m_singleFileName != "") return;
 
-QFile *FileFeatureWriter::getOutputFile(QString trackId,
-                                        TransformId transformId)
+    QString filename = getOutputFilename(trackId, transformId);
+    if (filename == "") {
+        throw FailedToOpenOutputStream(trackId, transformId);
+    }
+}
+
+QFile *
+FileFeatureWriter::getOutputFile(QString trackId,
+                                 TransformId transformId)
 {
     pair<QString, TransformId> key;
 
@@ -229,15 +259,15 @@ QFile *FileFeatureWriter::getOutputFile(QString trackId,
 
         QString filename = getOutputFilename(trackId, transformId);
 
-        if (filename == "") { // stdout
+        if (filename == "") { // stdout or failure
             return 0;
         }
 
-        cerr << "FileFeatureWriter: NOTE: Using output filename \""
-             << filename.toStdString() << "\"" << endl;
+        SVDEBUG << "FileFeatureWriter: NOTE: Using output filename \""
+             << filename << "\"" << endl;
 
         if (m_append) {
-            cerr << "FileFeatureWriter: NOTE: Calling reviewFileForAppending" << endl;
+            SVDEBUG << "FileFeatureWriter: NOTE: Calling reviewFileForAppending" << endl;
             reviewFileForAppending(filename);
         }
         
@@ -252,7 +282,7 @@ QFile *FileFeatureWriter::getOutputFile(QString trackId,
             m_files[key] = 0;
             throw FailedToOpenFile(filename);
         }
-
+        
         m_files[key] = file;
     }
 
@@ -267,7 +297,7 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
     if (!file && !m_stdout) {
         return 0;
     }
-
+    
     if (m_streams.find(file) == m_streams.end()) {
         if (m_stdout) {
             m_streams[file] = new QTextStream(stdout);
@@ -299,7 +329,7 @@ FileFeatureWriter::flush()
 void
 FileFeatureWriter::finish()
 {
-//    cerr << "FileFeatureWriter::finish()" << endl;
+//    SVDEBUG << "FileFeatureWriter::finish()" << endl;
 
     if (m_singleFileName != "" || m_stdout) return;
 
@@ -309,9 +339,11 @@ FileFeatureWriter::finish()
         m_streams.erase(m_streams.begin());
     }
     while (!m_files.empty()) {
-        cerr << "FileFeatureWriter::finish: NOTE: Closing feature file \""
-             << m_files.begin()->second->fileName().toStdString() << "\"" << endl;
-        delete m_files.begin()->second;
+        if (m_files.begin()->second) {
+            SVDEBUG << "FileFeatureWriter::finish: NOTE: Closing feature file \""
+                 << m_files.begin()->second->fileName() << "\"" << endl;
+            delete m_files.begin()->second;
+        }
         m_files.erase(m_files.begin());
     }
     m_prevstream = 0;

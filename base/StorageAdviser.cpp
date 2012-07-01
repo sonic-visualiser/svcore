@@ -36,9 +36,9 @@ StorageAdviser::recommend(Criteria criteria,
 			  int maximumSize)
 {
 #ifdef DEBUG_STORAGE_ADVISER
-    std::cerr << "StorageAdviser::recommend: Criteria " << criteria 
+    SVDEBUG << "StorageAdviser::recommend: Criteria " << criteria 
               << ", minimumSize " << minimumSize
-              << ", maximumSize " << maximumSize << std::endl;
+              << ", maximumSize " << maximumSize << endl;
 #endif
 
     if (m_baseRecommendation != NoRecommendation) {

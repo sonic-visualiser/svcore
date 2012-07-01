@@ -23,6 +23,8 @@
 
 #include <map>
 
+#include "base/Debug.h"
+
 class QFtp;
 class QHttp;
 class QFile;
@@ -122,6 +124,11 @@ public:
     bool isDone() const;
 
     /**
+     * Return true if this FileSource is referring to a QRC resource.
+     */
+    bool isResource() const;
+
+    /**
      * Return true if this FileSource is referring to a remote URL.
      */
     bool isRemote() const;
@@ -141,6 +148,12 @@ public:
      * FileSource.
      */
     QString getLocalFilename() const;
+
+    /**
+     * Return the base name, i.e. the final path element (including
+     * extension, if any) of the location.
+     */
+    QString getBasename() const;
 
     /**
      * Return the MIME content type of this file, if known.
@@ -217,6 +230,7 @@ protected:
     QString m_preferredContentType;
     bool m_ok;
     int m_lastStatus;
+    bool m_resource;
     bool m_remote;
     bool m_done;
     bool m_leaveLocalFile;

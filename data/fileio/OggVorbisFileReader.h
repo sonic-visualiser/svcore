@@ -51,6 +51,7 @@ public:
     virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getTitle() const { return m_title; }
     virtual QString getMaker() const { return m_maker; }
+    virtual TagMap getTags() const { return m_tags; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
@@ -72,6 +73,7 @@ protected:
     QString m_error;
     QString m_title;
     QString m_maker;
+    TagMap m_tags;
 
     OGGZ *m_oggz;
     FishSound *m_fishSound;

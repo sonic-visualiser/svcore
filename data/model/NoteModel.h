@@ -56,7 +56,8 @@ public:
     {
 	stream <<
             QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level).arg(label).arg(extraAttributes);
+	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level)
+            .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
     QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
@@ -195,9 +196,9 @@ public:
                 (row, column, value, role);
         }
 
-        if (role != Qt::EditRole) return false;
+        if (role != Qt::EditRole) return 0;
         PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return false;
+        if (i == m_points.end()) return 0;
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
 
         Point point(*i);

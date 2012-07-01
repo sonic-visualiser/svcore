@@ -22,11 +22,30 @@
 
 class DenseTimeValueModel;
 class MultiSelection;
+class TempWriteFile;
 
 class WavFileWriter
 {
 public:
-    WavFileWriter(QString path, size_t sampleRate, size_t channels);
+    /**
+     * Specify the method used to open the destination file.
+     * 
+     * If WriteToTemporary, the destination will be opened as a
+     * temporary file which is moved to the target location when the
+     * WavFileWriter is closed or deleted (to avoid clobbering an
+     * existing file with a partially written replacement).
+     * 
+     * If WriteToTarget, the target file will be opened directly
+     * (necessary when e.g. doing a series of incremental writes to a
+     * file while keeping it open for reading).
+     */
+    enum FileWriteMode {
+        WriteToTemporary,
+        WriteToTarget
+    };
+
+    WavFileWriter(QString path, size_t sampleRate, size_t channels,
+                  FileWriteMode mode);
     virtual ~WavFileWriter();
 
     bool isOK() const;
@@ -46,8 +65,11 @@ protected:
     QString m_path;
     size_t m_sampleRate;
     size_t m_channels;
+    TempWriteFile *m_temp;
     SNDFILE *m_file;
     QString m_error;
+
+    QString getWriteFilename() const;
 };
 
 
