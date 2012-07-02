@@ -25,50 +25,44 @@
 
 #include <QFileInfo>
 
-
-// TODO: implement for windows
-#ifdef _WIN32
-#include <QTML.h>
-#include <Movies.h>
-#else
-
-
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 #include <AudioToolbox/AudioToolbox.h>
+#include <AudioToolbox/ExtendedAudioFile.h>
 #else
 #include "AudioToolbox.h"
 #include "ExtendedAudioFile.h"
 #endif
 
-#include "CAStreamBasicDescription.h"
-#include "CAXException.h"
-
-
-
-
-#endif
-
 class CoreAudioFileReader::D
 {
 public:
-  D() : data(0), blockSize(1024) { }
+    D() : blockSize(1024) { }
 
-  AudioBufferList              buffer;
-  float                        *data;
-  OSErr                        err;
-  AudioStreamBasicDescription  asbd;
-  // file reference
-
-  ExtAudioFileRef              *infile;
-  size_t                       blockSize;
+    ExtAudioFileRef file;
+    AudioBufferList buffer;
+    OSStatus err;
+    AudioStreamBasicDescription asbd;
+    int blockSize;
 };
 
+static QString
+codestr(OSStatus err)
+{
+    char text[5];
+    UInt32 uerr = err;
+    text[0] = (uerr >> 24) & 0xff;
+    text[1] = (uerr >> 16) & 0xff;
+    text[2] = (uerr >> 8) & 0xff;
+    text[3] = (uerr) & 0xff;
+    text[4] = '\0';
+    return QString("%1 (%2)").arg(err).arg(QString::fromAscii(text));
+}
 
 CoreAudioFileReader::CoreAudioFileReader(FileSource source,
-    DecodeMode decodeMode,
-    CacheMode mode,
-    size_t targetRate,
-    ProgressReporter *reporter) :
+                                         DecodeMode decodeMode,
+                                         CacheMode mode,
+                                         size_t targetRate,
+                                         ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
     m_path(source.getLocalFilename()),
@@ -78,184 +72,128 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_completion(0),
     m_decodeThread(0)
 {
-  m_channelCount = 0;
-  m_fileRate = 0;
+    m_channelCount = 0;
+    m_fileRate = 0;
 
-  Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
+    Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
 
-  std::cerr << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << std::endl;
+    std::cerr << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << std::endl;
 
-  // TODO: check QT version
+    QByteArray ba = m_path.toLocal8Bit();
 
-  Handle dataRef;
-  OSType dataRefType;
+    CFURLRef url = CFURLCreateFromFileSystemRepresentation
+        (kCFAllocatorDefault,
+         (const UInt8 *)ba.data(),
+         (CFIndex)ba.length(),
+         false);
 
-  //    CFStringRef URLString = CFStringCreateWithCString
-  //       (0, m_path.toLocal8Bit().data(), 0);
+    //!!! how do we find out if the file open fails because of DRM protection?
 
-  // what are these used for???
-  // ExtAudioFileRef *infile, outfile;
+#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
+    FSRef fsref;
+    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
+        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
+        return;
+    }
+    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
+#else
+    m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
+#endif
 
-  // Creates a new CFURL object for a file system entity using the native representation.
-  CFURLRef url = CFURLCreateFromFileSystemRepresentation
-      (kCFAllocatorDefault,
-          (const UInt8 *)m_path.toLocal8Bit().data(),
-          (CFIndex)m_path.length(),
-          false);
+    CFRelease(url);
 
-  // first open the input file
-  m_d->err = ExtAudioFileOpenURL (url, m_d->infile);
+    if (m_d->err) { 
+        m_error = "CoreAudioReadStream: Error opening file: code " + codestr(m_d->err);
+        return;
+    }
+    if (!m_d->file) { 
+        m_error = "CoreAudioReadStream: Failed to open file, but no error reported!";
+        return;
+    }
+    
+    UInt32 propsize = sizeof(AudioStreamBasicDescription);
+    m_d->err = ExtAudioFileGetProperty
+	(m_d->file, kExtAudioFileProperty_FileDataFormat, &propsize, &m_d->asbd);
+    
+    if (m_d->err) {
+        m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
+        return;
+    }
+	
+    m_channelCount = m_d->asbd.mChannelsPerFrame;
+    m_sampleRate = m_d->asbd.mSampleRate;
 
-  if (m_d->err) {
-      m_error = QString("Error opening Audio File for CoreAudio decoder: code %1").arg(m_d->err);
-      return;
-  }
-  else {
-      std::cerr << "CoreAudio: opened URL" << std::endl;
-  }
+    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
+    m_d->asbd.mSampleRate = getSampleRate();
 
-  // Get the audio data format
-  // the audio format gets stored in the &m_d->asbd
-  UInt32 thePropertySize = sizeof(m_d->asbd);
+    m_d->asbd.mFormatID = kAudioFormatLinearPCM;
+    m_d->asbd.mFormatFlags =
+        kAudioFormatFlagIsFloat |
+        kAudioFormatFlagIsPacked |
+        kAudioFormatFlagsNativeEndian;
+    m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
+    m_d->asbd.mBytesPerFrame = sizeof(float) * m_channelCount;
+    m_d->asbd.mBytesPerPacket = sizeof(float) * m_channelCount;
+    m_d->asbd.mFramesPerPacket = 1;
+    m_d->asbd.mReserved = 0;
+	
+    m_d->err = ExtAudioFileSetProperty
+	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
+    
+    if (m_d->err) {
+        m_error = "CoreAudioReadStream: Error in setting client format: code " + codestr(m_d->err);
+        return;
+    }
 
+    m_d->buffer.mNumberBuffers = 1;
+    m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
+    m_d->buffer.mBuffers[0].mDataByteSize = sizeof(float) * m_channelCount * m_d->blockSize;
+    m_d->buffer.mBuffers[0].mData = new float[m_channelCount * m_d->blockSize];
 
-  std::cerr << "CoreAudio: thePropertySize: " << thePropertySize << std::endl;
+    initialiseDecodeCache();
 
-  m_d->err = ExtAudioFileGetProperty(*m_d->infile, kAudioFilePropertyDataFormat, &thePropertySize, &m_d->asbd);
+    if (m_reporter) {
+        connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
+        m_reporter->setMessage
+            (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
+    }
 
-  std::cerr << "CoreAudio: ExtAudioFileGetProperty res: " << &m_d->asbd << std::endl;
+    while (1) {
 
-  // CAStreamBasicDescription clientFormat = (inputFormat.mFormatID == kAudioFormatLinearPCM ? inputFormat : outputFormat);
-  // UInt32 size = sizeof(clientFormat);
+        UInt32 framesRead = m_d->blockSize;
+        m_d->err = ExtAudioFileRead(m_d->file, &framesRead, &m_d->buffer);
 
-  // TODO: test input file's DRM rights
+        if (m_d->err) {
+            m_error = QString("Error in CoreAudio decoding: code %1")
+                .arg(m_d->err);
+            break;
+        }
 
-  // are these already set?
-  m_channelCount = m_d->asbd.mChannelsPerFrame;
-  m_fileRate = m_d->asbd.mSampleRate;
+        //!!! progress?
 
-  std::cerr << "CoreAudio: Format ID: " << m_d->asbd.mFormatID << std::endl;
-  std::cerr << "CoreAudio: " << m_d->asbd.mChannelsPerFrame << " channels, " << m_fileRate << " kHz" << std::endl;
+        //    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
 
+        // buffers are interleaved unless specified otherwise
+        addSamplesToDecodeCache((float *)m_d->buffer.mBuffers[0].mData, framesRead);
 
+        if (framesRead < m_d->blockSize) break;
+    }
 
-  m_d->asbd.mFormatFlags =
-      kAudioFormatFlagIsFloat |
-      kAudioFormatFlagIsPacked |
-      kAudioFormatFlagsNativeEndian;
-  m_d->asbd.mBitsPerChannel = sizeof(float) * 8;
-  m_d->asbd.mBytesPerFrame = sizeof(float) * m_d->asbd.mChannelsPerFrame;
-  m_d->asbd.mBytesPerPacket = m_d->asbd.mBytesPerFrame;
+    finishDecodeCache();
+    endSerialised();
 
+    m_completion = 100;
 
-
-  /*
-
-  !!! what does this do exactly ?????
-
-  m_d->err = MovieAudioExtractionSetProperty
-      (m_d->extractionSessionRef,
-          kQTPropertyClass_MovieAudioExtraction_Audio,
-          kQTMovieAudioExtractionAudioPropertyID_AudioStreamBasicDescription,
-          sizeof(m_d->asbd),
-          &m_d->asbd);
-
-
-
-  if (m_d->err) {
-      m_error = QString("Error in QuickTime decoder property set: code %1").arg(m_d->err);
-      m_channelCount = 0;
-      return;
-  }
-
-   */
-
-  m_d->buffer.mNumberBuffers = 1;
-  m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
-  m_d->buffer.mBuffers[0].mDataByteSize =
-      sizeof(float) * m_channelCount * m_d->blockSize;
-  m_d->data = new float[m_channelCount * m_d->blockSize];
-  m_d->buffer.mBuffers[0].mData = m_d->data;
-
-  initialiseDecodeCache();
-
-  // only decode at once for now
-  // if (decodeMode == DecodeAtOnce) {
-
-  if (m_reporter) {
-      connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
-      m_reporter->setMessage
-      (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
-  }
-
-  while (1) {
-
-      UInt32 framesRead = m_d->blockSize;
-
-      m_d->err = ExtAudioFileRead (*m_d->infile, &framesRead, &m_d->buffer);
-
-      if (m_d->err) {
-          m_error = QString("Error in CoreAudio decoding: code %1")
-                                        .arg(m_d->err);
-          break;
-      }
-
-      //!!! progress?
-
-      //    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
-
-      // QuickTime buffers are interleaved unless specified otherwise
-      addSamplesToDecodeCache(m_d->data, framesRead);
-
-      if (framesRead < m_d->blockSize) break;
-  }
-
-  finishDecodeCache();
-  endSerialised();
-
-  /*
- TODO - close session
- m_d->err = MovieAudioExtractionEnd(m_d->extractionSessionRef);
-  if (m_d->err) {
-      m_error = QString("Error ending QuickTime extraction session: code %1").arg(m_d->err);
-  }
-   */
-  m_completion = 100;
-
-
-
-  // } else {
-  //      if (m_reporter) m_reporter->setProgress(100);
-  //
-  //      if (m_channelCount > 0) {
-  //          m_decodeThread = new DecodeThread(this);
-  //          m_decodeThread->start();
-  //      }
-  //  }
-
-  std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error.toStdString() << "\"" << std::endl;
+    ExtAudioFileDispose(m_d->file);
 }
-
-
-
 
 
 CoreAudioFileReader::~CoreAudioFileReader()
 {
-  std::cerr << "CoreAudioFileReader::~CoreAudioFileReader" << std::endl;
-
-  if (m_decodeThread) {
-      m_cancelled = true;
-      m_decodeThread->wait();
-      delete m_decodeThread;
-  }
-
-  // SetMovieActive(m_d->movie, FALSE);
-  // DisposeMovie(m_d->movie);
-
-  delete[] m_d->data;
-  delete m_d;
+    std::cerr << "CoreAudioFileReader::~CoreAudioFileReader" << std::endl;
+    delete[] m_d->buffer.mBuffers[0].mData;
+    delete m_d;
 }
 
 void
@@ -308,45 +246,45 @@ CoreAudioFileReader::DecodeThread::run()
 void
 CoreAudioFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
-  extensions.insert("aiff");
-  extensions.insert("aif");
-  extensions.insert("au");
-  extensions.insert("avi");
-  extensions.insert("m4a");
-  extensions.insert("m4b");
-  extensions.insert("m4p");
-  extensions.insert("m4v");
-  extensions.insert("mov");
-  extensions.insert("mp3");
-  extensions.insert("mp4");
-  extensions.insert("wav");
+    extensions.insert("aiff");
+    extensions.insert("aif");
+    extensions.insert("au");
+    extensions.insert("avi");
+    extensions.insert("m4a");
+    extensions.insert("m4b");
+    extensions.insert("m4p");
+    extensions.insert("m4v");
+    extensions.insert("mov");
+    extensions.insert("mp3");
+    extensions.insert("mp4");
+    extensions.insert("wav");
 }
 
 bool
 CoreAudioFileReader::supportsExtension(QString extension)
 {
-  std::set<QString> extensions;
-  getSupportedExtensions(extensions);
-  return (extensions.find(extension.toLower()) != extensions.end());
+    std::set<QString> extensions;
+    getSupportedExtensions(extensions);
+    return (extensions.find(extension.toLower()) != extensions.end());
 }
 
 bool
 CoreAudioFileReader::supportsContentType(QString type)
 {
-  return (type == "audio/x-aiff" ||
-      type == "audio/x-wav" ||
-      type == "audio/mpeg" ||
-      type == "audio/basic" ||
-      type == "audio/x-aac" ||
-      type == "video/mp4" ||
-      type == "video/quicktime");
+    return (type == "audio/x-aiff" ||
+            type == "audio/x-wav" ||
+            type == "audio/mpeg" ||
+            type == "audio/basic" ||
+            type == "audio/x-aac" ||
+            type == "video/mp4" ||
+            type == "video/quicktime");
 }
 
 bool
 CoreAudioFileReader::supports(FileSource &source)
 {
-  return (supportsExtension(source.getExtension()) ||
-      supportsContentType(source.getContentType()));
+    return (supportsExtension(source.getExtension()) ||
+            supportsContentType(source.getContentType()));
 }
 
 #endif
