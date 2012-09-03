@@ -20,6 +20,7 @@
 #include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
 #include "QuickTimeFileReader.h"
+#include "CoreAudioFileReader.h"
 
 #include <QString>
 #include <QFileInfo>
@@ -41,6 +42,9 @@ AudioFileReaderFactory::getKnownExtensions()
 #endif
 #ifdef HAVE_QUICKTIME
     QuickTimeFileReader::getSupportedExtensions(extensions);
+#endif
+#ifdef HAVE_COREAUDIO
+    CoreAudioFileReader::getSupportedExtensions(extensions);
 #endif
 
     QString rv;
@@ -73,7 +77,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 {
     QString err;
 
-//    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
+    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
 
     if (!source.isOK()) {
         std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << std::endl;
@@ -175,6 +179,26 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
     }
 #endif
 
+#ifdef HAVE_COREAUDIO
+    if (!reader) {
+        if (CoreAudioFileReader::supports(source)) {
+            reader = new CoreAudioFileReader
+                (source,
+                 threading ?
+                 CoreAudioFileReader::DecodeThreaded :
+                 CoreAudioFileReader::DecodeAtOnce,
+                 CoreAudioFileReader::CacheInTemporaryFile,
+                 targetRate,
+                 reporter);
+            if (!reader->isOK()) {
+                delete reader;
+                reader = 0;
+            }
+        }
+    }
+#endif
+
+
     // If none of the readers claimed to support this file extension,
     // perhaps the extension is missing or misleading.  Try again,
     // ignoring it.  We have to be confident that the reader won't
@@ -264,9 +288,30 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
     }
 #endif
 
+#ifdef HAVE_COREAUDIO
+
+    std::cerr << "AudioFileReaderFactory: HAVE_COREAUDIO" << std::endl;
+
+    if (!reader) {
+        reader = new CoreAudioFileReader
+            (source,
+             threading ?
+             CoreAudioFileReader::DecodeThreaded :
+             CoreAudioFileReader::DecodeAtOnce,
+             CoreAudioFileReader::CacheInTemporaryFile,
+             targetRate,
+             reporter);
+
+        if (!reader->isOK()) {
+            delete reader;
+            reader = 0;
+        }
+    }
+#endif
+
     if (reader) {
         if (reader->isOK()) {
-//            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
+            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
             return reader;
         }
         std::cerr << "AudioFileReaderFactory: Preferred reader for "
