@@ -199,59 +199,15 @@ CoreAudioFileReader::cancelled()
   m_cancelled = true;
 }
 
-/*
-void
-CoreAudioFileReader::DecodeThread::run()
-{
-  if (m_reader->m_cacheMode == CacheInTemporaryFile) {
-      m_reader->m_completion = 1;
-      m_reader->startSerialised("QuickTimeFileReader::Decode");
-  }
-
-  while (1) {
-
-      UInt32 framesRead = m_reader->m_d->blockSize;
-      UInt32 extractionFlags = 0;
-      m_reader->m_d->err = MovieAudioExtractionFillBuffer
-          (m_reader->m_d->extractionSessionRef, &framesRead,
-              &m_reader->m_d->buffer, &extractionFlags);
-      if (m_reader->m_d->err) {
-          m_reader->m_error = QString("Error in QuickTime decoding: code %1")
-                                    .arg(m_reader->m_d->err);
-          break;
-      }
-
-      // QuickTime buffers are interleaved unless specified otherwise
-      m_reader->addSamplesToDecodeCache(m_reader->m_d->data, framesRead);
-
-      if (framesRead < m_reader->m_d->blockSize) break;
-  }
-
-  m_reader->finishDecodeCache();
-
-  m_reader->m_d->err = MovieAudioExtractionEnd(m_reader->m_d->extractionSessionRef);
-  if (m_reader->m_d->err) {
-      m_reader->m_error = QString("Error ending QuickTime extraction session: code %1").arg(m_reader->m_d->err);
-  }
-
-  m_reader->m_completion = 100;
-  m_reader->endSerialised();
-} 
-*/
-
-
 void
 CoreAudioFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("aiff");
     extensions.insert("aif");
     extensions.insert("au");
-    extensions.insert("avi");
     extensions.insert("m4a");
     extensions.insert("m4b");
     extensions.insert("m4p");
-    extensions.insert("m4v");
-    extensions.insert("mov");
     extensions.insert("mp3");
     extensions.insert("mp4");
     extensions.insert("wav");
@@ -272,9 +228,7 @@ CoreAudioFileReader::supportsContentType(QString type)
             type == "audio/x-wav" ||
             type == "audio/mpeg" ||
             type == "audio/basic" ||
-            type == "audio/x-aac" ||
-            type == "video/mp4" ||
-            type == "video/quicktime");
+            type == "audio/x-aac");
 }
 
 bool
