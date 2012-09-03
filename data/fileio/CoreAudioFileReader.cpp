@@ -4,10 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006-2007 Chris Cannam and QMUL.
-
-    Based on QTAudioFile.cpp from SoundBite, copyright 2006
-    Chris Sutton and Mark Levy.
+    This file copyright 2006-2012 Chris Cannam and QMUL.
 
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
