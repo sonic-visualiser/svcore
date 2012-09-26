@@ -41,7 +41,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_resampler(0),
     m_resampleBuffer(0)
 {
-//    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
+    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -55,7 +55,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
-//    SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
+    SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
@@ -73,7 +73,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-//    SVDEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
+    SVDEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -82,7 +82,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-//    std::cerr << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << std::endl;
+    std::cerr << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << std::endl;
 
     delete m_serialiser;
     m_serialiser = 0;
@@ -93,7 +93,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-//    SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
+    SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
         SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
