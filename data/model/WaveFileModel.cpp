@@ -46,7 +46,9 @@ WaveFileModel::WaveFileModel(FileSource source, size_t targetRate) :
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
-    m_exiting(false)
+    m_exiting(false),
+    m_lastDirectReadStart(0),
+    m_lastDirectReadCount(0)
 {
     m_source.waitForData();
     if (m_source.isOK()) {
