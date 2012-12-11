@@ -34,7 +34,8 @@ RDFExporter::canExportModel(Model *m)
     if (dynamic_cast<SparseTimeValueModel *>(m)) return true;
     if (dynamic_cast<SparseOneDimensionalModel *>(m)) return true;
     if (dynamic_cast<TextModel *>(m)) return true;
-    if (dynamic_cast<EditableDenseThreeDimensionalModel *>(m)) return true;
+    // no, looks like we never implemented this one
+//    if (dynamic_cast<EditableDenseThreeDimensionalModel *>(m)) return true;
     return false;
 }
 
