@@ -118,7 +118,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     }
 	
     m_channelCount = m_d->asbd.mChannelsPerFrame;
-    m_sampleRate = m_d->asbd.mSampleRate;
+    m_fileRate = m_d->asbd.mSampleRate;
 
     std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
 
