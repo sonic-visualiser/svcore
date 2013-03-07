@@ -96,8 +96,8 @@ CodedAudioFileReader::initialiseDecodeCache()
     SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
-        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
-        m_fileRate = 48000; // got to have something
+        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;
+        throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
     }
     if (m_sampleRate == 0) {
         m_sampleRate = m_fileRate;
