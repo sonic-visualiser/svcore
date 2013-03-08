@@ -74,7 +74,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
 
-    std::cerr << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << std::endl;
+    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << endl;
 
     QByteArray ba = m_path.toLocal8Bit();
 
@@ -120,9 +120,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_fileRate = m_d->asbd.mSampleRate;
 
-    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_sampleRate << " Hz" << std::endl;
-
-    m_d->asbd.mSampleRate = getSampleRate();
+    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_fileRate << " Hz" << std::endl;
 
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
