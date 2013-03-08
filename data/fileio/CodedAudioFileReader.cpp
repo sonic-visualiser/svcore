@@ -270,11 +270,11 @@ CodedAudioFileReader::finishDecodeCache()
         return;
     }
 
-    if (m_cacheWriteBufferIndex > 0) {
+//    if (m_cacheWriteBufferIndex > 0) {
         pushBuffer(m_cacheWriteBuffer,
                    m_cacheWriteBufferIndex / m_channelCount,
                    true);
-    }        
+//    }        
 
     delete[] m_cacheWriteBuffer;
     m_cacheWriteBuffer = 0;
@@ -349,14 +349,19 @@ void
 CodedAudioFileReader::pushBufferResampling(float *buffer, size_t sz,
                                            float ratio, bool final)
 {
-    size_t out = m_resampler->resampleInterleaved
-        (buffer,
-         m_resampleBuffer,
-         sz,
-         ratio,
-         false);
+    SVDEBUG << "pushBufferResampling: ratio = " << ratio << ", sz = " << sz << ", final = " << final << endl;
 
-    pushBufferNonResampling(m_resampleBuffer, out);
+    if (sz > 0) {
+
+        size_t out = m_resampler->resampleInterleaved
+            (buffer,
+             m_resampleBuffer,
+             sz,
+             ratio,
+             false);
+
+        pushBufferNonResampling(m_resampleBuffer, out);
+    }
 
     if (final) {
 
@@ -367,17 +372,21 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, size_t sz,
 
         size_t padSamples = padFrames * m_channelCount;
 
-        std::cerr << "frameCount = " << m_frameCount << ", equivFileFrames = " << m_frameCount / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << std::endl;
+        SVDEBUG << "frameCount = " << m_frameCount << ", equivFileFrames = " << m_frameCount / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << endl;
 
         float *padding = new float[padSamples];
         for (int i = 0; i < padSamples; ++i) padding[i] = 0.f;
 
-        out = m_resampler->resampleInterleaved
+        size_t out = m_resampler->resampleInterleaved
             (padding,
              m_resampleBuffer,
              padFrames,
              ratio,
              true);
+
+        if (m_frameCount + out > int(m_fileFrameCount * ratio)) {
+            out = int(m_fileFrameCount * ratio) - m_frameCount;
+        }
 
         pushBufferNonResampling(m_resampleBuffer, out);
         delete[] padding;
