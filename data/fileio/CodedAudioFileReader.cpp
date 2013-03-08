@@ -295,31 +295,25 @@ CodedAudioFileReader::finishDecodeCache()
 void
 CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 {
-    float max = 1.0;
-    size_t count = sz * m_channelCount;
-
     m_fileFrameCount += sz;
 
     float ratio = 1.f;
-
     if (m_resampler && m_fileRate != 0) {
-        
         ratio = float(m_sampleRate) / float(m_fileRate);
-        
-        if (ratio != 1.f) {
-
-            size_t out = m_resampler->resampleInterleaved
-                (buffer,
-                 m_resampleBuffer,
-                 sz,
-                 ratio,
-                 final);
-
-            buffer = m_resampleBuffer;
-            sz = out;
-            count = sz * m_channelCount;
-        }
     }
+        
+    if (ratio != 1.f) {
+        pushBufferResampling(buffer, sz, ratio, final);
+    } else {
+        pushBufferNonResampling(buffer, sz);
+    }
+}
+
+void
+CodedAudioFileReader::pushBufferNonResampling(float *buffer, size_t sz)
+{
+    float max = 1.0;
+    size_t count = sz * m_channelCount;
 
     for (size_t i = 0; i < count; ++i) {
         if (buffer[i] >  max) buffer[i] =  max;
@@ -349,22 +343,44 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
         m_dataLock.unlock();
         break;
     }
+}
 
-    if (final && m_resampler && ratio != 1.f) {
-        size_t equivFileFrames = m_frameCount / ratio;
-        if (equivFileFrames < m_fileFrameCount) {
-            size_t padFrames = m_fileFrameCount - equivFileFrames + 32;
-            size_t padSamples = padFrames * m_channelCount;
-            std::cerr << "frameCount = " << m_frameCount << ", equivFileFrames = " << equivFileFrames << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << std::endl;
-            float *padding = new float[padSamples];
-            for (int i = 0; i < padSamples; ++i) padding[i] = 0.f;
+void
+CodedAudioFileReader::pushBufferResampling(float *buffer, size_t sz,
+                                           float ratio, bool final)
+{
+    size_t out = m_resampler->resampleInterleaved
+        (buffer,
+         m_resampleBuffer,
+         sz,
+         ratio,
+         false);
 
-            //!!! these are not file frames (ugh this is horrible)
-            m_fileFrameCount -= padFrames;
+    pushBufferNonResampling(m_resampleBuffer, out);
 
-            pushBuffer(padding, padFrames, true);
-            delete[] padding;
+    if (final) {
+
+        size_t padFrames = 1;
+        if (m_frameCount / ratio < m_fileFrameCount) {
+            padFrames = m_fileFrameCount - (m_frameCount / ratio) + 1;
         }
+
+        size_t padSamples = padFrames * m_channelCount;
+
+        std::cerr << "frameCount = " << m_frameCount << ", equivFileFrames = " << m_frameCount / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << std::endl;
+
+        float *padding = new float[padSamples];
+        for (int i = 0; i < padSamples; ++i) padding[i] = 0.f;
+
+        out = m_resampler->resampleInterleaved
+            (padding,
+             m_resampleBuffer,
+             padFrames,
+             ratio,
+             true);
+
+        pushBufferNonResampling(m_resampleBuffer, out);
+        delete[] padding;
     }
 }
 
