@@ -63,16 +63,30 @@ private slots:
     {
         QFETCH(QString, audiofile);
 
+        int readRate = 48000;
+
 	AudioFileReader *reader =
 	    AudioFileReaderFactory::createReader
-	    (audioDir + "/" + audiofile, 48000);
+	    (audioDir + "/" + audiofile, readRate);
+
+        QStringList fileAndExt = audiofile.split(".");
+        QStringList bits = fileAndExt[0].split("-");
+        QString extension = fileAndExt[1];
+        int nominalRate = bits[0].toInt();
+        int nominalChannels = bits[1].toInt();
+        int nominalDepth = 16;
+        if (bits.length() > 2) nominalDepth = bits[2].toInt();
 
 	if (!reader) {
-	    QSKIP(strOf(QString("File format for \"%1\" not supported, skipping").arg(audiofile)), SkipSingle);
+	    QSKIP("Unsupported file, skipping", SkipSingle);
 	}
 
+        QCOMPARE((int)reader->getChannelCount(), nominalChannels);
+        QCOMPARE((int)reader->getNativeRate(), nominalRate);
+        QCOMPARE((int)reader->getSampleRate(), readRate);
+
 	int channels = reader->getChannelCount();
-	AudioTestData tdata(48000, channels);
+	AudioTestData tdata(readRate, channels);
 	
 	float *reference = tdata.getInterleavedData();
 	int refsize = tdata.getFrameCount() * channels;
@@ -80,17 +94,33 @@ private slots:
 	vector<float> test;
 	
 	// The reader should give us exactly the expected number of
-	// frames -- so we ask for one more, just to check we don't
-	// get it!
+	// frames, except for mp3 files -- so we ask for one more,
+	// just to check we don't get it!
 	reader->getInterleavedFrames
 	    (0, tdata.getFrameCount() + 1, test);
 	int read = test.size() / channels;
-     
-	// need to resolve questions about frame count at end of
-	// resampled file before we can do this
-//!!!	QCOMPARE(read, tdata.getFrameCount());
 
-	float limit = 0.011;
+        if (extension == "mp3") {
+            // mp3s round up
+            QVERIFY(read >= tdata.getFrameCount());
+        } else {
+            QCOMPARE(read, tdata.getFrameCount());
+        }
+
+        // Our limits are pretty relaxed -- we're not testing decoder
+        // or resampler quality here, just whether the results are
+        // plainly wrong (e.g. at wrong samplerate or with an offset)
+
+	float limit = 0.01;
+        if (nominalDepth < 16) {
+            limit = 0.02;
+        }
+        if (extension == "ogg" || extension == "mp3" || extension == "aac") {
+            limit = 0.04;
+        }
+
+        int edgeSize = 100; 
+        float edgeLimit = limit * 10; // in first or final edgeSize frames
 
 	for (int c = 0; c < channels; ++c) {
 	    float maxdiff = 0.f;
@@ -100,9 +130,17 @@ private slots:
 		float diff = fabsf(test[i * channels + c] -
 				   reference[i * channels + c]);
 		totdiff += diff;
-		if (diff > maxdiff) {
-		    maxdiff = diff;
-		    maxAt = i;
+                // in edge areas, record this only if it exceeds edgeLimit
+                if (i < edgeSize || i + edgeSize >= read) {
+                    if (diff > edgeLimit) {
+                        maxdiff = diff;
+                        maxAt = i;
+                    }
+                } else {
+                    if (diff > maxdiff) {
+                        maxdiff = diff;
+                        maxAt = i;
+                    }
 		}
 	    }
 	    float meandiff = totdiff / read;
