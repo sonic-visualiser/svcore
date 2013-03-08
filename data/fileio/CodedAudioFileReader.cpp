@@ -82,7 +82,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-    std::cerr << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << std::endl;
+    SVDEBUG << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << endl;
 
     delete m_serialiser;
     m_serialiser = 0;
