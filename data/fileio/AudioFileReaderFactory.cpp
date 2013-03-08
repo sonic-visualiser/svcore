@@ -311,7 +311,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
     if (reader) {
         if (reader->isOK()) {
-            std::cerr << "AudioFileReaderFactory: Reader is OK" << std::endl;
+            SVDEBUG << "AudioFileReaderFactory: Reader is OK" << endl;
             return reader;
         }
         std::cerr << "AudioFileReaderFactory: Preferred reader for "
