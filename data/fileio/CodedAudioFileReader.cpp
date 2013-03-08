@@ -39,7 +39,8 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_cacheWriteBufferIndex(0),
     m_cacheWriteBufferSize(16384),
     m_resampler(0),
-    m_resampleBuffer(0)
+    m_resampleBuffer(0),
+    m_fileFrameCount(0)
 {
     SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
 
@@ -104,7 +105,7 @@ CodedAudioFileReader::initialiseDecodeCache()
         SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: rate (from file) = " << m_fileRate << endl;
     }
     if (m_fileRate != m_sampleRate) {
-        std::cerr << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << std::endl;
+        SVDEBUG << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << endl;
         m_resampler = new Resampler(Resampler::FastestTolerable,
                                     m_channelCount,
                                     m_cacheWriteBufferSize);
@@ -297,10 +298,14 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
     float max = 1.0;
     size_t count = sz * m_channelCount;
 
+    m_fileFrameCount += sz;
+
+    float ratio = 1.f;
+
     if (m_resampler && m_fileRate != 0) {
         
-        float ratio = float(m_sampleRate) / float(m_fileRate);
-
+        ratio = float(m_sampleRate) / float(m_fileRate);
+        
         if (ratio != 1.f) {
 
             size_t out = m_resampler->resampleInterleaved
@@ -343,6 +348,23 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 	MUNLOCK_SAMPLEBLOCK(m_data);
         m_dataLock.unlock();
         break;
+    }
+
+    if (final && m_resampler && ratio != 1.f) {
+        size_t equivFileFrames = m_frameCount / ratio;
+        if (equivFileFrames < m_fileFrameCount) {
+            size_t padFrames = m_fileFrameCount - equivFileFrames + 32;
+            size_t padSamples = padFrames * m_channelCount;
+            std::cerr << "frameCount = " << m_frameCount << ", equivFileFrames = " << equivFileFrames << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << std::endl;
+            float *padding = new float[padSamples];
+            for (int i = 0; i < padSamples; ++i) padding[i] = 0.f;
+
+            //!!! these are not file frames (ugh this is horrible)
+            m_fileFrameCount -= padFrames;
+
+            pushBuffer(padding, padFrames, true);
+            delete[] padding;
+        }
     }
 }
 

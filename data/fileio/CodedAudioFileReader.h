@@ -85,6 +85,7 @@ protected:
 
     Resampler *m_resampler;
     float *m_resampleBuffer;
+    size_t m_fileFrameCount;
 };
 
 #endif
