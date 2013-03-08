@@ -66,6 +66,8 @@ protected:
 
 private:
     void pushBuffer(float *interleaved, size_t sz, bool final);
+    void pushBufferResampling(float *interleaved, size_t sz, float ratio, bool final);
+    void pushBufferNonResampling(float *interleaved, size_t sz);
 
 protected:
     QMutex m_cacheMutex;

@@ -289,9 +289,6 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 #endif
 
 #ifdef HAVE_COREAUDIO
-
-    std::cerr << "AudioFileReaderFactory: HAVE_COREAUDIO" << std::endl;
-
     if (!reader) {
         reader = new CoreAudioFileReader
             (source,
