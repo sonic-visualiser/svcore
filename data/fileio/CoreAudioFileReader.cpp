@@ -72,6 +72,8 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
+    m_d->buffer.mBuffers[0].mData = 0;
+
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
 
     SVDEBUG << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << endl;
