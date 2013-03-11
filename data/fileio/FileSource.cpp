@@ -31,7 +31,7 @@
 
 #include <unistd.h>
 
-#define DEBUG_FILE_SOURCE 1
+//#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -721,6 +721,17 @@ FileSource::replyFinished()
     m_ok = !error;
     if (m_localFile) m_localFile->flush();
     m_done = true;
+    emit ready();
+}
+
+void
+FileSource::replyFailed(QNetworkReply::NetworkError)
+{
+    emit progress(100);
+    m_errorString = m_reply->errorString();
+    m_ok = false;
+    m_done = true;
+    cleanup();
     emit ready();
 }
 
