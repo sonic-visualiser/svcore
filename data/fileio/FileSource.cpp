@@ -20,19 +20,18 @@
 #include "base/ProgressReporter.h"
 #include "system/System.h"
 
-#include <QHttp>
-#include <QFtp>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
-#include <QHttpResponseHeader>
 
 #include <iostream>
 #include <cstdlib>
 
 #include <unistd.h>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -68,12 +67,13 @@ static void decCount(QString url) {
 }
 #endif
 
+static QNetworkAccessManager nm;
+
 FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
     m_url(fileOrUrl, QUrl::StrictMode),
-    m_ftp(0),
-    m_http(0),
     m_localFile(0),
+    m_reply(0),
     m_preferredContentType(preferredContentType),
     m_ok(false),
     m_lastStatus(0),
@@ -98,7 +98,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
 #endif
 
     if (!canHandleScheme(m_url)) {
-        SVDEBUG << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -110,7 +110,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString() << "\"; trying again assuming filename was encoded" << std::endl;
 #endif
-        m_url = QUrl::fromEncoded(fileOrUrl.toAscii());
+        m_url = QUrl::fromEncoded(fileOrUrl.toLatin1());
         init();
     }
 
@@ -138,7 +138,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
             // already done all the work and no request will be sent
             deleteCacheFile();
 
-            m_url.setEncodedUrl(fileOrUrl.toAscii());
+            m_url = QUrl::fromEncoded(fileOrUrl.toLatin1());
 
             m_ok = false;
             m_done = false;
@@ -153,15 +153,14 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     }
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(string) exiting" << endl;
+    std::cerr << "FileSource::FileSource(string) exiting" << std::endl;
 #endif
 }
 
 FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_url(url),
-    m_ftp(0),
-    m_http(0),
     m_localFile(0),
+    m_reply(0),
     m_ok(false),
     m_lastStatus(0),
     m_resource(false),
@@ -172,12 +171,12 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(" << url.toString() << ") [as url]" << endl;
+    std::cerr << "FileSource::FileSource(" << url.toString() << ") [as url]" << std::endl;
     incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
-        SVDEBUG << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -185,16 +184,15 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     init();
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(url) exiting" << endl;
+    std::cerr << "FileSource::FileSource(url) exiting" << std::endl;
 #endif
 }
 
 FileSource::FileSource(const FileSource &rf) :
     QObject(),
     m_url(rf.m_url),
-    m_ftp(0),
-    m_http(0),
     m_localFile(0),
+    m_reply(0),
     m_ok(rf.m_ok),
     m_lastStatus(rf.m_lastStatus),
     m_resource(rf.m_resource),
@@ -205,12 +203,12 @@ FileSource::FileSource(const FileSource &rf) :
     m_refCounted(false)
 {
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]" << endl;
+    std::cerr << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]" << std::endl;
     incCount(m_url.toString());
 #endif
 
     if (!canHandleScheme(m_url)) {
-        SVDEBUG << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << endl;
+        std::cerr << "FileSource::FileSource: ERROR: Unsupported scheme in URL \"" << m_url.toString() << "\"" << std::endl;
         m_errorString = tr("Unsupported scheme in URL");
         return;
     }
@@ -220,8 +218,8 @@ FileSource::FileSource(const FileSource &rf) :
     } else {
         QMutexLocker locker(&m_mapMutex);
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::FileSource(copy ctor): ref count is "
-                  << m_refCountMap[m_url] << endl;
+        std::cerr << "FileSource::FileSource(copy ctor): ref count is "
+                  << m_refCountMap[m_url] << std::endl;
 #endif
         if (m_refCountMap[m_url] > 0) {
             m_refCountMap[m_url]++;
@@ -239,11 +237,11 @@ FileSource::FileSource(const FileSource &rf) :
     m_done = true;
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]: note: local filename is \"" << m_localFilename << "\"" << endl;
+    std::cerr << "FileSource::FileSource(" << m_url.toString() << ") [copy ctor]: note: local filename is \"" << m_localFilename << "\"" << std::endl;
 #endif
 
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::FileSource(copy ctor) exiting" << endl;
+    std::cerr << "FileSource::FileSource(copy ctor) exiting" << std::endl;
 #endif
 }
 
@@ -380,13 +378,11 @@ FileSource::init()
                   << m_url.toString() << "\", retrieving" << std::endl;
 #endif
 
-        if (scheme == "http") {
-            initHttp();
+        if (scheme == "http" || scheme == "https" || scheme == "ftp") {
+            initRemote();
 #ifdef DEBUG_FILE_SOURCE
-            std::cerr << "FileSource: initHttp succeeded" << std::endl;
+            std::cerr << "FileSource: initRemote returned" << std::endl;
 #endif
-        } else if (scheme == "ftp") {
-            initFtp();
         } else {
             m_remote = false;
             m_ok = false;
@@ -430,110 +426,35 @@ FileSource::init()
 }
 
 void
-FileSource::initHttp()
+FileSource::initRemote()
 {
     m_ok = true;
-    int port = m_url.port();
-    m_http = new QHttp(m_url.host(), port < 0 ? 80 : port);
-    connect(m_http, SIGNAL(done(bool)), this, SLOT(done(bool)));
-    connect(m_http, SIGNAL(dataReadProgress(int, int)),
-            this, SLOT(dataReadProgress(int, int)));
-    connect(m_http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)),
-            this, SLOT(httpResponseHeaderReceived(const QHttpResponseHeader &)));
 
-    // I don't quite understand this.  url.path() returns a path
-    // without percent encoding; for example, spaces appear as
-    // literal spaces.  This generally won't work if sent to the
-    // server directly.  You can retrieve a correctly encoded URL
-    // from QUrl using url.toEncoded(), but that gives you the
-    // whole URL; there doesn't seem to be any way to retrieve
-    // only an encoded path.  Furthermore there doesn't seem to be
-    // any way to convert a retrieved path into an encoded path
-    // without explicitly specifying that you don't want the path
-    // separators ("/") to be encoded.  (Besides being painful to
-    // manage, I don't see how this can work correctly in any case
-    // where a percent-encoded "/" is supposed to appear within a
-    // path element?)  There also seems to be no way to retrieve
-    // the path plus query string, i.e. everything that I need to
-    // send to the HTTP server.  And no way for QHttp to take a
-    // QUrl argument.  I'm obviously missing something.
-
-    // So, two ways to do this: query the bits from the URL,
-    // encode them individually, and glue them back together
-    // again...
-/*
-    QString path = QUrl::toPercentEncoding(m_url.path(), "/");
-    QList<QPair<QString, QString> > query = m_url.queryItems();
-    if (!query.empty()) {
-        QStringList q2;
-        for (QList<QPair<QString, QString> >::iterator i = query.begin();
-             i != query.end(); ++i) {
-            q2.push_back(QString("%1=%3")
-                         .arg(QString(QUrl::toPercentEncoding(i->first)))
-                         .arg(QString(QUrl::toPercentEncoding(i->second))));
-        }
-        path = QString("%1%2%3")
-            .arg(path).arg("?")
-            .arg(q2.join("&"));
-    }
-*/
-
-    // ...or, much simpler but relying on knowledge about the
-    // scheme://host/path/path/query etc format of the URL, we can
-    // get the whole URL ready-encoded and then split it on "/" as
-    // appropriate...
-        
-    QString path = "/" + QString(m_url.toEncoded()).section('/', 3);
-
-#ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource: path is \""
-              << path << "\"" << endl;
-#endif
-        
-    if (m_preferredContentType == "") {
-        m_http->get(path, m_localFile);
-    } else {
+    QNetworkRequest req;
+    req.setUrl(m_url);
+    
+    if (m_preferredContentType != "") {
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource: indicating preferred content type of \""
                   << m_preferredContentType << "\"" << std::endl;
 #endif
-        QHttpRequestHeader header("GET", path);
-        header.setValue("Host", m_url.host());
-        header.setValue("Accept", QString("%1, */*").arg(m_preferredContentType));
-        m_http->request(header, 0, m_localFile);
+        req.setRawHeader
+            ("Accept",
+             QString("%1, */*").arg(m_preferredContentType).toLatin1());
     }
-}
 
-void
-FileSource::initFtp()
-{
-    m_ok = true;
-    m_ftp = new QFtp;
-    connect(m_ftp, SIGNAL(done(bool)), this, SLOT(done(bool)));
-    connect(m_ftp, SIGNAL(commandFinished(int, bool)),
-            this, SLOT(ftpCommandFinished(int, bool)));
-    connect(m_ftp, SIGNAL(dataTransferProgress(qint64, qint64)),
-            this, SLOT(dataTransferProgress(qint64, qint64)));
-    m_ftp->connectToHost(m_url.host(), m_url.port(21));
-    
-    QString username = m_url.userName();
-    if (username == "") {
-        username = "anonymous";
-    }
-    
-    QString password = m_url.password();
-    if (password == "") {
-        password = QString("%1@%2").arg(getenv("USER")).arg(getenv("HOST"));
-    }
-    
-    m_ftp->login(username, password);
-    
-    QString dirpath = m_url.path().section('/', 0, -2);
-    QString filename = m_url.path().section('/', -1);
-    
-    if (dirpath == "") dirpath = "/";
-    m_ftp->cd(dirpath);
-    m_ftp->get(filename, m_localFile);
+    m_reply = nm.get(req);
+
+    connect(m_reply, SIGNAL(readyRead()),
+            this, SLOT(readyRead()));
+    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
+            this, SLOT(replyFailed(QNetworkReply::NetworkError)));
+    connect(m_reply, SIGNAL(finished()),
+            this, SLOT(replyFinished()));
+    connect(m_reply, SIGNAL(metadataChanged()),
+            this, SLOT(metadataChanged()));
+    connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)),
+            this, SLOT(downloadProgress(qint64, qint64)));
 }
 
 void
@@ -544,17 +465,11 @@ FileSource::cleanup()
         m_localFile = 0;
     }
     m_done = true;
-    if (m_http) {
-        QHttp *h = m_http;
-        m_http = 0;
-        h->abort();
-        h->deleteLater();
-    }
-    if (m_ftp) {
-        QFtp *f = m_ftp;
-        m_ftp = 0;
-        f->abort();
-        f->deleteLater();
+    if (m_reply) {
+        QNetworkReply *r = m_reply;
+        m_reply = 0;
+        r->abort();
+        r->deleteLater();
     }
     if (m_localFile) {
         delete m_localFile; // does not actually delete the file
@@ -576,8 +491,8 @@ FileSource::canHandleScheme(QUrl url)
 {
     // Note that a "scheme" with length 1 is probably a DOS drive letter
     QString scheme = url.scheme().toLower();
-    return (scheme == "http" || scheme == "ftp" ||
-            scheme == "file" || scheme == "qrc" ||
+    return (scheme == "http" || scheme == "https" ||
+            scheme == "ftp" || scheme == "file" || scheme == "qrc" ||
             scheme == "" || scheme.length() == 1);
 }
 
@@ -589,8 +504,8 @@ FileSource::isAvailable()
     if (!m_ok) available = false;
     else available = (m_lastStatus / 100 == 2);
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::isAvailable: " << (available ? "yes" : "no")
-              << endl;
+    std::cerr << "FileSource::isAvailable: " << (available ? "yes" : "no")
+              << std::endl;
 #endif
     return available;
 }
@@ -608,7 +523,7 @@ void
 FileSource::waitForData()
 {
     while (m_ok && !m_done) {
-//        SVDEBUG << "FileSource::waitForData: calling QApplication::processEvents" << endl;
+//        std::cerr << "FileSource::waitForData: calling QApplication::processEvents" << std::endl;
         QCoreApplication::processEvents();
         usleep(10000);
     }
@@ -685,23 +600,32 @@ FileSource::getErrorString() const
 }
 
 void
-FileSource::dataReadProgress(int done, int total)
+FileSource::readyRead()
 {
-    dataTransferProgress(done, total);
+    m_localFile->write(m_reply->readAll());
 }
 
 void
-FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
+FileSource::metadataChanged()
 {
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::httpResponseHeaderReceived" << endl;
+    std::cerr << "FileSource::metadataChanged" << std::endl;
 #endif
 
-    if (resp.statusCode() / 100 == 3) {
-        QString location = resp.value("Location");
+    if (!m_reply) {
+        std::cerr << "WARNING: FileSource::metadataChanged() called without a reply object being known to us" << std::endl;
+        return;
+    }
+
+    int status =
+        m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    if (status / 100 == 3) {
+        QString location = m_reply->header
+            (QNetworkRequest::LocationHeader).toString();
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::responseHeaderReceived: redirect to \""
-                  << location << "\" received" << endl;
+        std::cerr << "FileSource::metadataChanged: redirect to \""
+                  << location << "\" received" << std::endl;
 #endif
         if (location != "") {
             QUrl newUrl(location);
@@ -723,58 +647,29 @@ FileSource::httpResponseHeaderReceived(const QHttpResponseHeader &resp)
         }
     }
 
-    m_lastStatus = resp.statusCode();
+    m_lastStatus = status;
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
-            .arg(resp.statusCode()).arg(resp.reasonPhrase());
+            .arg(status)
+            .arg(m_reply->attribute
+                 (QNetworkRequest::HttpReasonPhraseAttribute).toString());
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::responseHeaderReceived: "
-                  << m_errorString << endl;
+        std::cerr << "FileSource::metadataChanged: "
+                  << m_errorString << std::endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::responseHeaderReceived: "
-                  << m_lastStatus << endl;
+        std::cerr << "FileSource::metadataChanged: "
+                  << m_lastStatus << std::endl;
 #endif
-        if (resp.hasContentType()) m_contentType = resp.contentType();
+        m_contentType =
+            m_reply->header(QNetworkRequest::ContentTypeHeader).toString();
     }
     emit statusAvailable();
 }
 
 void
-FileSource::ftpCommandFinished(int id, bool error)
-{
-#ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::ftpCommandFinished(" << id << ", " << error << ")" << std::endl;
-#endif
-
-    if (!m_ftp) return;
-
-    QFtp::Command command = m_ftp->currentCommand();
-
-    if (!error) {
-#ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::ftpCommandFinished: success for command "
-                  << command << endl;
-#endif
-        return;
-    }
-
-    if (command == QFtp::ConnectToHost) {
-        m_errorString = tr("Failed to connect to FTP server");
-    } else if (command == QFtp::Login) {
-        m_errorString = tr("Login failed");
-    } else if (command == QFtp::Cd) {
-        m_errorString = tr("Failed to change to correct directory");
-    } else if (command == QFtp::Get) {
-        m_errorString = tr("FTP download aborted");
-    }
-
-    m_lastStatus = 400; // for done()
-}
-
-void
-FileSource::dataTransferProgress(qint64 done, qint64 total)
+FileSource::downloadProgress(qint64 done, qint64 total)
 {
     int percent = int((double(done) / double(total)) * 100.0 - 0.1);
     emit progress(percent);
@@ -791,27 +686,17 @@ FileSource::cancelled()
 }
 
 void
-FileSource::done(bool error)
+FileSource::replyFinished()
 {
     emit progress(100);
 
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::done(" << error << ")" << std::endl;
+    std::cerr << "FileSource::replyFinished()" << std::endl;
 #endif
 
     if (m_done) return;
 
-    if (error) {
-        if (m_http) {
-            m_errorString = m_http->errorString();
-        } else if (m_ftp) {
-            m_errorString = m_ftp->errorString();
-        }
-    }
-
-    if (m_lastStatus / 100 >= 4) {
-        error = true;
-    }
+    bool error = (m_lastStatus / 100 >= 4);
 
     cleanup();
 
@@ -843,7 +728,7 @@ void
 FileSource::deleteCacheFile()
 {
 #ifdef DEBUG_FILE_SOURCE
-    SVDEBUG << "FileSource::deleteCacheFile(\"" << m_localFilename << "\")" << endl;
+    std::cerr << "FileSource::deleteCacheFile(\"" << m_localFilename << "\")" << std::endl;
 #endif
 
     cleanup();
@@ -884,7 +769,7 @@ FileSource::deleteCacheFile()
 #endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename << "\"" << endl;
+        std::cerr << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename << "\"" << std::endl;
 #endif
         m_localFilename = "";
     }
@@ -901,7 +786,7 @@ FileSource::createCacheFile()
         QMutexLocker locker(&m_mapMutex);
 
 #ifdef DEBUG_FILE_SOURCE
-        SVDEBUG << "FileSource::createCacheFile: refcount is " << m_refCountMap[m_url] << endl;
+        std::cerr << "FileSource::createCacheFile: refcount is " << m_refCountMap[m_url] << std::endl;
 #endif
 
         if (m_refCountMap[m_url] > 0) {
