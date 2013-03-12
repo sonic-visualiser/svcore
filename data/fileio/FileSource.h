@@ -208,7 +208,7 @@ signals:
     void ready();
 
 protected slots:
-    void metadataChanged();
+    void metaDataChanged();
     void readyRead();
     void replyFailed(QNetworkReply::NetworkError);
     void replyFinished();
