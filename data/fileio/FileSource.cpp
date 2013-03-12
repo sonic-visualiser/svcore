@@ -451,8 +451,8 @@ FileSource::initRemote()
             this, SLOT(replyFailed(QNetworkReply::NetworkError)));
     connect(m_reply, SIGNAL(finished()),
             this, SLOT(replyFinished()));
-    connect(m_reply, SIGNAL(metadataChanged()),
-            this, SLOT(metadataChanged()));
+    connect(m_reply, SIGNAL(metaDataChanged()),
+            this, SLOT(metaDataChanged()));
     connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)),
             this, SLOT(downloadProgress(qint64, qint64)));
 }
@@ -606,14 +606,14 @@ FileSource::readyRead()
 }
 
 void
-FileSource::metadataChanged()
+FileSource::metaDataChanged()
 {
 #ifdef DEBUG_FILE_SOURCE
-    std::cerr << "FileSource::metadataChanged" << std::endl;
+    std::cerr << "FileSource::metaDataChanged" << std::endl;
 #endif
 
     if (!m_reply) {
-        std::cerr << "WARNING: FileSource::metadataChanged() called without a reply object being known to us" << std::endl;
+        std::cerr << "WARNING: FileSource::metaDataChanged() called without a reply object being known to us" << std::endl;
         return;
     }
 
@@ -624,7 +624,7 @@ FileSource::metadataChanged()
         QString location = m_reply->header
             (QNetworkRequest::LocationHeader).toString();
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::metadataChanged: redirect to \""
+        std::cerr << "FileSource::metaDataChanged: redirect to \""
                   << location << "\" received" << std::endl;
 #endif
         if (location != "") {
@@ -654,12 +654,12 @@ FileSource::metadataChanged()
             .arg(m_reply->attribute
                  (QNetworkRequest::HttpReasonPhraseAttribute).toString());
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::metadataChanged: "
+        std::cerr << "FileSource::metaDataChanged: "
                   << m_errorString << std::endl;
 #endif
     } else {
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::metadataChanged: "
+        std::cerr << "FileSource::metaDataChanged: "
                   << m_lastStatus << std::endl;
 #endif
         m_contentType =
