@@ -56,10 +56,12 @@ rpl_realloc (void *p, size_t n)
 
 extern "C" {
 
+/* usleep is now in mingw
 void usleep(unsigned long usec)
 {
     ::Sleep(usec / 1000);
 }
+*/
 
 int gettimeofday(struct timeval *tv, void *tz)
 {

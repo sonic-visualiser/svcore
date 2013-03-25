@@ -36,5 +36,5 @@ PRE_TARGETDEPS += ../../../libsvcore.a
     }
 }
 
-win32:QMAKE_POST_LINK=.$${TARGET}.exe
+win32:QMAKE_POST_LINK=./release/$${TARGET}.exe
 
