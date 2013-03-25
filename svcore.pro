@@ -14,6 +14,13 @@ INCLUDEPATH += . data plugin plugin/api/alsa
 OBJECTS_DIR = o
 MOC_DIR = o
 
+win32-g++ {
+    INCLUDEPATH += ../sv-dependency-builds/win32-mingw/include
+}
+win32-msvc* {
+    INCLUDEPATH += ../sv-dependency-builds/win32-msvc/include
+}
+
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
 
