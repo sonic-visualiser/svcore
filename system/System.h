@@ -57,12 +57,14 @@
 #define getpid _getpid
 
 extern "C" {
+/* usleep is now in mingw
 void usleep(unsigned long usec);
+*/
 int gettimeofday(struct timeval *p, void *tz);
 }
 
-#define ISNAN _isnan
-#define ISINF _isinf
+#define ISNAN std::isnan
+#define ISINF std::isinf
 
 #else
 
