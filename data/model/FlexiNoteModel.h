@@ -13,18 +13,22 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _NOTE_MODEL_H_
-#define _NOTE_MODEL_H_
+#ifndef _FLEXINOTE_MODEL_H_
+#define _FLEXINOTE_MODEL_H_
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
 
 /**
- * NoteModel -- a concrete IntervalModel for notes.
+ * FlexiNoteModel -- a concrete IntervalModel for notes.
  */
 
 /**
+ * Extension of the NoteModel for more flexible note interaction. 
+ * The original NoteModel rationale is given below, will need to be
+ * updated for FlexiNoteModel:
+ *
  * Note type for use in a sparse model.  All we mean by a "note" is
  * something that has an onset time, a single value, a duration, and a
  * level.  Like other points, it can also have a label.  With this
@@ -33,11 +37,11 @@
  * have to be discrete integers.
  */
 
-struct Note
+struct FlexiNote
 {
 public:
-    Note(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
-    Note(long _frame, float _value, size_t _duration, float _level, QString _label) :
+    FlexiNote(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
+    FlexiNote(long _frame, float _value, size_t _duration, float _level, QString _label) :
 	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
 
     int getDimensions() const { return 3; }
@@ -72,8 +76,8 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const Note &p1,
-			const Note &p2) const {
+	bool operator()(const FlexiNote &p1,
+			const FlexiNote &p2) const {
 	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
 	    if (p1.value != p2.value) return p1.value < p2.value;
 	    if (p1.duration != p2.duration) return p1.duration < p2.duration;
@@ -83,31 +87,31 @@ public:
     };
     
     struct OrderComparator {
-	bool operator()(const Note &p1,
-			const Note &p2) const {
+	bool operator()(const FlexiNote &p1,
+			const FlexiNote &p2) const {
 	    return p1.frame < p2.frame;
 	}
     };
 };
 
 
-class NoteModel : public IntervalModel<Note>
+class FlexiNoteModel : public IntervalModel<FlexiNote>
 {
     Q_OBJECT
     
 public:
-    NoteModel(size_t sampleRate, size_t resolution,
+    FlexiNoteModel(size_t sampleRate, size_t resolution,
 	      bool notifyOnAdd = true) :
-	IntervalModel<Note>(sampleRate, resolution, notifyOnAdd),
+	IntervalModel<FlexiNote>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
     {
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    NoteModel(size_t sampleRate, size_t resolution,
+    FlexiNoteModel(size_t sampleRate, size_t resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
-	IntervalModel<Note>(sampleRate, resolution,
+	IntervalModel<FlexiNote>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
 	m_valueQuantization(0)
@@ -115,7 +119,7 @@ public:
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    virtual ~NoteModel()
+    virtual ~FlexiNoteModel()
     {
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
@@ -123,7 +127,7 @@ public:
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
 
-    QString getTypeName() const { return tr("Note"); }
+    QString getTypeName() const { return tr("FlexiNote"); }
 
     virtual bool canPlay() const { return true; }
 
@@ -141,10 +145,10 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const
     {
-        std::cerr << "NoteModel::toXml: extraAttributes = \"" 
+        std::cerr << "FlexiNoteModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
 
-        IntervalModel<Note>::toXml
+        IntervalModel<FlexiNote>::toXml
 	    (out,
              indent,
 	     QString("%1 subtype=\"note\" valueQuantization=\"%2\"")
@@ -176,7 +180,7 @@ public:
     virtual QVariant getData(int row, int column, int role) const
     {
         if (column < 4) {
-            return IntervalModel<Note>::getData(row, column, role);
+            return IntervalModel<FlexiNote>::getData(row, column, role);
         }
 
         PointListConstIterator i = getPointListIteratorForRow(row);
@@ -192,7 +196,7 @@ public:
     virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
     {
         if (column < 4) {
-            return IntervalModel<Note>::getSetDataCommand
+            return IntervalModel<FlexiNote>::getSetDataCommand
                 (row, column, value, role);
         }
 
