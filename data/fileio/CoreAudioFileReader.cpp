@@ -88,16 +88,16 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
     //!!! how do we find out if the file open fails because of DRM protection?
 
-#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
-    FSRef fsref;
-    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
-        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
-        return;
-    }
-    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
-#else
+//#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
+//    FSRef fsref;
+//    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
+//        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
+//        return;
+//    }
+//    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
+//#else
     m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
-#endif
+//#endif
 
     CFRelease(url);
 
