@@ -138,7 +138,7 @@ public:
 
     virtual QString getDefaultPlayPluginConfiguration() const
     {
-        return "<plugin program=\"organ\"/>";
+        return "<plugin program=\"piano\"/>";
     }
 
     virtual void toXml(QTextStream &out,
