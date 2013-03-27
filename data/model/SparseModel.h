@@ -386,6 +386,7 @@ protected:
     {
         m_rows.clear();
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
+//            std::cerr << "rebuildRowVector: row " << m_rows.size() << " -> " << i->frame << std::endl;
             m_rows.push_back(i->frame);
         }
     }
@@ -406,6 +407,7 @@ protected:
         PointListIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
+            if (i->frame < (int)frame) { continue; }
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
@@ -427,11 +429,14 @@ protected:
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
         int initialIndexAtFrame = indexAtFrame;
 
+//        std::cerr << "getPointListIteratorForRow " << row << ": initialIndexAtFrame = " << initialIndexAtFrame << std::endl;
+
         PointListConstIterator i0, i1;
         getPointIterators(frame, i0, i1);
         PointListConstIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
+            if (i->frame < (int)frame) { continue; }
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
@@ -579,7 +584,7 @@ SparseModel<PointType>::getPointIterators(long frame,
     long end = start + m_resolution;
 
     PointType startPoint(start), endPoint(end);
-    
+
     startItr = m_points.lower_bound(startPoint);
       endItr = m_points.upper_bound(endPoint);
 }
@@ -602,6 +607,8 @@ SparseModel<PointType>::getPointIterators(long frame,
     long end = start + m_resolution;
 
     PointType startPoint(start), endPoint(end);
+    
+//    std::cerr << "getPointIterators: start frame " << start << ", end frame " << end << ", m_resolution " << m_resolution << std::endl;
     
     startItr = m_points.lower_bound(startPoint);
       endItr = m_points.upper_bound(endPoint);
@@ -775,8 +782,8 @@ SparseModel<PointType>::toXml(QTextStream &out,
                               QString indent,
                               QString extraAttributes) const
 {
-    std::cerr << "SparseModel::toXml: extraAttributes = \"" 
-              << extraAttributes.toStdString() << std::endl;
+//    std::cerr << "SparseModel::toXml: extraAttributes = \"" 
+//              << extraAttributes.toStdString() << std::endl;
 
     QString type = getXmlOutputType();
 

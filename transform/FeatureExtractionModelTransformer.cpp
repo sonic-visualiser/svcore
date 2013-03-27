@@ -41,7 +41,8 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transform),
     m_plugin(0),
     m_descriptor(0),
-    m_outputFeatureNo(0)
+    m_outputNo(0),
+    m_fixedRateFeatureNo(-1) // we increment before use
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -155,7 +156,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 //        SVDEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
-	    m_outputFeatureNo = i;
+	    m_outputNo = i;
 	    m_descriptor = new Vamp::Plugin::OutputDescriptor(outputs[i]);
 	    break;
 	}
@@ -339,7 +340,7 @@ FeatureExtractionModelTransformer::createOutputModel()
         }
 
         Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
-        model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
+        model->setScaleUnits(outputs[m_outputNo].unit.c_str());
 
         m_output = model;
 
@@ -534,9 +535,8 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
-	for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-	    Vamp::Plugin::Feature feature =
-		features[m_outputFeatureNo][fi];
+	for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
+	    Vamp::Plugin::Feature feature = features[m_outputNo][fi];
 	    addFeature(blockFrame, feature);
 	}
 
@@ -551,9 +551,8 @@ FeatureExtractionModelTransformer::run()
     if (!m_abandoned) {
         Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
-        for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-            Vamp::Plugin::Feature feature =
-                features[m_outputFeatureNo][fi];
+        for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
+            Vamp::Plugin::Feature feature = features[m_outputNo][fi];
             addFeature(blockFrame, feature);
         }
     }
@@ -664,15 +663,19 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
     } else if (m_descriptor->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
-	if (feature.hasTimestamp) {
-	    //!!! warning: sampleRate may be non-integral
-	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp,
-//!!! see comment above when setting up modelResolution and modelRate
-//                                                   lrintf(m_descriptor->sampleRate));
-                                                   inputRate);
-	} else {
-	    frame = m_output->getEndFrame();
-	}
+        if (!feature.hasTimestamp) {
+            ++m_fixedRateFeatureNo;
+        } else {
+            RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
+            m_fixedRateFeatureNo =
+                lrint(ts.toDouble() * m_descriptor->sampleRate);
+        }
+ 
+        frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
+                       * inputRate);
+
+        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
+
     }
 	
     // Rather than repeat the complicated tests from the constructor
@@ -703,6 +706,8 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             if (feature.values.size() > 1) {
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
+
+            std::cerr << "Adding point at " << frame << " with value " << value << " and label " << label << std::endl;
 
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
