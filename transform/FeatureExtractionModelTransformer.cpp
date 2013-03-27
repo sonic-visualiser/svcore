@@ -41,7 +41,8 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transform),
     m_plugin(0),
     m_descriptor(0),
-    m_outputNo(0)
+    m_outputNo(0),
+    m_fixedRateFeatureNo(-1) // we increment before use
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -662,6 +663,17 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
     } else if (m_descriptor->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
+        if (!feature.hasTimestamp) {
+            ++m_fixedRateFeatureNo;
+        } else {
+            RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
+            m_fixedRateFeatureNo =
+                lrint(ts.toDouble() * m_descriptor->sampleRate);
+        }
+ 
+        frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
+                       * inputRate);
+/*
 	if (feature.hasTimestamp) {
 	    //!!! warning: sampleRate may be non-integral
 	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp,
@@ -671,8 +683,8 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	} else {
 	    frame = m_output->getEndFrame();
 	}
-
-//        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
+*/
+        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
 
     }
 	
