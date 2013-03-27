@@ -673,17 +673,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
  
         frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
                        * inputRate);
-/*
-	if (feature.hasTimestamp) {
-	    //!!! warning: sampleRate may be non-integral
-	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp,
-//!!! see comment above when setting up modelResolution and modelRate
-//                                                   lrintf(m_descriptor->sampleRate));
-                                                   inputRate);
-	} else {
-	    frame = m_output->getEndFrame();
-	}
-*/
+
         std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
 
     }
