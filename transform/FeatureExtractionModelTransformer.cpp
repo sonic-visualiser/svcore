@@ -673,6 +673,9 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	} else {
 	    frame = m_output->getEndFrame();
 	}
+
+//        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
+
     }
 	
     // Rather than repeat the complicated tests from the constructor
@@ -703,6 +706,8 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             if (feature.values.size() > 1) {
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
+
+            std::cerr << "Adding point at " << frame << " with value " << value << " and label " << label << std::endl;
 
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
