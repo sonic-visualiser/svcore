@@ -40,6 +40,7 @@ protected:
 
     Vamp::Plugin *m_plugin;
     Vamp::Plugin::OutputDescriptor *m_descriptor;
+    int m_fixedRateFeatureNo; // to assign times to FixedSampleRate features
     int m_outputNo;
 
     void createOutputModel();
