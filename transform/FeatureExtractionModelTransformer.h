@@ -40,7 +40,7 @@ protected:
 
     Vamp::Plugin *m_plugin;
     Vamp::Plugin::OutputDescriptor *m_descriptor;
-    int m_outputFeatureNo;
+    int m_outputNo;
 
     void createOutputModel();
 

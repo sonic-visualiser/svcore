@@ -41,7 +41,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transform),
     m_plugin(0),
     m_descriptor(0),
-    m_outputFeatureNo(0)
+    m_outputNo(0)
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -155,7 +155,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 //        SVDEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
 	if (m_transform.getOutput() == "" ||
             outputs[i].identifier == m_transform.getOutput().toStdString()) {
-	    m_outputFeatureNo = i;
+	    m_outputNo = i;
 	    m_descriptor = new Vamp::Plugin::OutputDescriptor(outputs[i]);
 	    break;
 	}
@@ -339,7 +339,7 @@ FeatureExtractionModelTransformer::createOutputModel()
         }
 
         Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
-        model->setScaleUnits(outputs[m_outputFeatureNo].unit.c_str());
+        model->setScaleUnits(outputs[m_outputNo].unit.c_str());
 
         m_output = model;
 
@@ -534,9 +534,8 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
-	for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-	    Vamp::Plugin::Feature feature =
-		features[m_outputFeatureNo][fi];
+	for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
+	    Vamp::Plugin::Feature feature = features[m_outputNo][fi];
 	    addFeature(blockFrame, feature);
 	}
 
@@ -551,9 +550,8 @@ FeatureExtractionModelTransformer::run()
     if (!m_abandoned) {
         Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
-        for (size_t fi = 0; fi < features[m_outputFeatureNo].size(); ++fi) {
-            Vamp::Plugin::Feature feature =
-                features[m_outputFeatureNo][fi];
+        for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
+            Vamp::Plugin::Feature feature = features[m_outputNo][fi];
             addFeature(blockFrame, feature);
         }
     }

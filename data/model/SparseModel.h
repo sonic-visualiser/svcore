@@ -407,7 +407,7 @@ protected:
         PointListIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
-            if (i->frame < frame) { continue; }
+            if (i->frame < (int)frame) { continue; }
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
@@ -436,7 +436,7 @@ protected:
         PointListConstIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
-            if (i->frame < frame) { continue; }
+            if (i->frame < (int)frame) { continue; }
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
