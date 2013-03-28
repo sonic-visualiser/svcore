@@ -202,6 +202,14 @@ FeatureExtractionModelTransformer::createOutputModel()
     size_t modelRate = input->getSampleRate();
     size_t modelResolution = 1;
 
+    if (m_descriptor->sampleType != 
+        Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
+        if (m_descriptor->sampleRate > input->getSampleRate()) {
+            std::cerr << "WARNING: plugin reports output sample rate as "
+                      << m_descriptor->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << std::endl;
+        }
+    }
+
     switch (m_descriptor->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
