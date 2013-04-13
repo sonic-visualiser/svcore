@@ -157,6 +157,7 @@ SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
     }
 
     SamplePlayer *player = new SamplePlayer(rate);
+	// std::cerr << "Instantiated sample player " << std::endl;
 
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
 	SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
