@@ -35,14 +35,14 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addPlayable(const Playable *playable)
 {
-//    std::cerr << "PlayParameterRepository:addPlayable " << playable <<  std::endl;
+   std::cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  std::endl;
 
     if (!getPlayParameters(playable)) {
 
 	// Give all playables the same type of play parameters for the
 	// moment
 
-//	    std::cerr << "PlayParameterRepository: Adding play parameters for " << playable << std::endl;
+	    std::cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << std::endl;
 
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
@@ -62,8 +62,8 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
                 this, SLOT(playPluginConfigurationChanged(QString)));
         
-//            std::cerr << "Connected play parameters " << params << " for playable "
-//                      << playable << " to this " << this << std::endl;
+           std::cerr << "Connected play parameters " << params << " for playable "
+                     << playable << " to this " << this << std::endl;
 
     }
 }    
