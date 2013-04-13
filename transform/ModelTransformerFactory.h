@@ -105,6 +105,10 @@ protected:
     TransformerSet m_runningTransformers;
 
     static ModelTransformerFactory *m_instance;
+	/** 
+	* allows the  FeatureExtractionModelTransformer output model to be selected externally, 
+	* but only in case of the need for NoteModel or FlexiNoteModel 
+	*/
 	FeatureExtractionModelTransformer::PreferredOutputModel m_preferredOutputModel ;
 };
 

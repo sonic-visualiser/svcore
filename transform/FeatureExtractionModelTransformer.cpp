@@ -292,28 +292,21 @@ FeatureExtractionModelTransformer::createOutputModel()
 		if (isNoteModel && m_preferredOutputModel == NoteOutputModel) {
 
             NoteModel *model;
-            // FlexiNoteModel *model;
             if (haveExtents) {
-				// GF: hard coding FlexiNoteModel
 	            model = new NoteModel (modelRate, modelResolution, minValue, maxValue, false);
-                // model = new FlexiNoteModel (modelRate, modelResolution, minValue, maxValue, false);
             } else {
 	            model = new NoteModel (modelRate, modelResolution, false);
-                // model = new FlexiNoteModel (modelRate, modelResolution, false);
             }
             model->setScaleUnits(m_descriptor->unit.c_str());
             m_output = model;
 
+		// GF: FlexiNoteModel is selected if the m_preferredOutputModel is set
         } else if (isNoteModel && m_preferredOutputModel == FlexiNoteOutputModel) {
 
-            // NoteModel *model;
             FlexiNoteModel *model;
             if (haveExtents) {
-				// GF: hard coding FlexiNoteModel
-	            // model = new NoteModel (modelRate, modelResolution, minValue, maxValue, false);
                 model = new FlexiNoteModel (modelRate, modelResolution, minValue, maxValue, false);
             } else {
-	            // model = new NoteModel (modelRate, modelResolution, false);
                 model = new FlexiNoteModel (modelRate, modelResolution, false);
             }
             model->setScaleUnits(m_descriptor->unit.c_str());
