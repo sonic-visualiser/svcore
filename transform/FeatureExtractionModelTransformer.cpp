@@ -27,6 +27,7 @@
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 #include "data/model/DenseTimeValueModel.h"
 #include "data/model/NoteModel.h"
+#include "data/model/FlexiNoteModel.h"
 #include "data/model/RegionModel.h"
 #include "data/model/FFTModel.h"
 #include "data/model/WaveFileModel.h"
@@ -37,11 +38,13 @@
 #include <iostream>
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
-                                                                     const Transform &transform) :
+                                                                     const Transform &transform,
+																	 const PreferredOutputModel outputmodel) :
     ModelTransformer(in, transform),
     m_plugin(0),
     m_descriptor(0),
-    m_outputFeatureNo(0)
+    m_outputFeatureNo(0),
+	m_preferredOutputModel(outputmodel)
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -286,15 +289,32 @@ FeatureExtractionModelTransformer::createOutputModel()
         // problem of determining whether to use that here (if bin
         // count > 1).  But we don't.
 
-        if (isNoteModel) {
+		if (isNoteModel && m_preferredOutputModel == NoteOutputModel) {
 
             NoteModel *model;
+            // FlexiNoteModel *model;
             if (haveExtents) {
-                model = new NoteModel
-                    (modelRate, modelResolution, minValue, maxValue, false);
+				// GF: hard coding FlexiNoteModel
+	            model = new NoteModel (modelRate, modelResolution, minValue, maxValue, false);
+                // model = new FlexiNoteModel (modelRate, modelResolution, minValue, maxValue, false);
             } else {
-                model = new NoteModel
-                    (modelRate, modelResolution, false);
+	            model = new NoteModel (modelRate, modelResolution, false);
+                // model = new FlexiNoteModel (modelRate, modelResolution, false);
+            }
+            model->setScaleUnits(m_descriptor->unit.c_str());
+            m_output = model;
+
+        } else if (isNoteModel && m_preferredOutputModel == FlexiNoteOutputModel) {
+
+            // NoteModel *model;
+            FlexiNoteModel *model;
+            if (haveExtents) {
+				// GF: hard coding FlexiNoteModel
+	            // model = new NoteModel (modelRate, modelResolution, minValue, maxValue, false);
+                model = new FlexiNoteModel (modelRate, modelResolution, minValue, maxValue, false);
+            } else {
+	            // model = new NoteModel (modelRate, modelResolution, false);
+                model = new FlexiNoteModel (modelRate, modelResolution, false);
             }
             model->setScaleUnits(m_descriptor->unit.c_str());
             m_output = model;
@@ -707,7 +727,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
 
-    } else if (isOutput<NoteModel>() || isOutput<RegionModel>()) {
+    } else if (isOutput<FlexiNoteModel>() || isOutput<NoteModel>() || isOutput<RegionModel>()) { //GF: Added Note Model
 
         int index = 0;
 
@@ -724,8 +744,24 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
                 duration = feature.values[index++];
             }
         }
-        
-        if (isOutput<NoteModel>()) {
+
+		if (isOutput<FlexiNoteModel>()) { // GF: added for flexi note model
+
+            float velocity = 100;
+            if (feature.values.size() > index) {
+                velocity = feature.values[index++];
+            }
+            if (velocity < 0) velocity = 127;
+            if (velocity > 127) velocity = 127;
+
+            FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>();
+            if (!model) return;
+            model->addPoint(FlexiNoteModel::Point(frame, value, // value is pitch
+                                             lrintf(duration),
+                                             velocity / 127.f,
+                                             feature.label.c_str()));
+			// GF: end -- added for flexi note model
+        } else  if (isOutput<NoteModel>()) {
 
             float velocity = 100;
             if (feature.values.size() > index) {
@@ -741,6 +777,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
                                              velocity / 127.f,
                                              feature.label.c_str()));
         } else {
+
             RegionModel *model = getConformingOutput<RegionModel>();
             if (!model) return;
 
@@ -811,6 +848,12 @@ FeatureExtractionModelTransformer::setCompletion(int completion)
     } else if (isOutput<NoteModel>()) {
 
 	NoteModel *model = getConformingOutput<NoteModel>();
+	if (!model) return;
+	model->setCompletion(completion, true);
+	
+	} else if (isOutput<FlexiNoteModel>()) {
+
+	FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>();
 	if (!model) return;
 	model->setCompletion(completion, true);
 

@@ -18,6 +18,7 @@
 
 #include "Transform.h"
 #include "TransformDescription.h"
+#include "FeatureExtractionModelTransformer.h"
 
 #include "ModelTransformer.h"
 
@@ -83,9 +84,10 @@ public:
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
-    Model *transform(const Transform &transform,
-                     const ModelTransformer::Input &input,
-                     QString &message);
+	Model *transform(const Transform &transform,
+	                 const ModelTransformer::Input &input,
+					 QString &message,
+					 const FeatureExtractionModelTransformer::PreferredOutputModel outputmodel = FeatureExtractionModelTransformer::NoteOutputModel);
 
 protected slots:
     void transformerFinished();
@@ -103,6 +105,7 @@ protected:
     TransformerSet m_runningTransformers;
 
     static ModelTransformerFactory *m_instance;
+	FeatureExtractionModelTransformer::PreferredOutputModel m_preferredOutputModel ;
 };
 
 

@@ -31,8 +31,16 @@ class FeatureExtractionModelTransformer : public ModelTransformer
     Q_OBJECT
 
 public:
+	enum PreferredOutputModel {
+		NoteOutputModel,
+		FlexiNoteOutputModel,
+		UndefinedOutputModel = 255
+	    };
+	    
     FeatureExtractionModelTransformer(Input input,
-                                      const Transform &transform);
+                                      const Transform &transform,
+									  const PreferredOutputModel outputmodel);
+
     virtual ~FeatureExtractionModelTransformer();
 
 protected:
@@ -41,6 +49,7 @@ protected:
     Vamp::Plugin *m_plugin;
     Vamp::Plugin::OutputDescriptor *m_descriptor;
     int m_outputFeatureNo;
+	PreferredOutputModel m_preferredOutputModel;
 
     void createOutputModel();
 
