@@ -173,7 +173,8 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
         transformer =
-            new FeatureExtractionModelTransformer(input, transform);
+            // new FeatureExtractionModelTransformer(input, transform, FeatureExtractionModelTransformer::NoteOutputModel);
+        	new FeatureExtractionModelTransformer(input, transform, m_preferredOutputModel);
 
     } else if (RealTimePluginFactory::instanceFor(id)) {
 
@@ -193,10 +194,13 @@ ModelTransformerFactory::createTransformer(const Transform &transform,
 Model *
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
-                                   QString &message)
+                                   QString &message,
+								   // outputmodel default value = FeatureExtractionModelTransformer::NoteOutputModel
+								   FeatureExtractionModelTransformer::PreferredOutputModel outputmodel) 
 {
     SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
+	m_preferredOutputModel = outputmodel;
     ModelTransformer *t = createTransformer(transform, input);
     if (!t) return 0;
 
