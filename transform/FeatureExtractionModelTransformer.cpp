@@ -715,8 +715,6 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
 
-            std::cerr << "Adding point at " << frame << " with value " << value << " and label " << label << std::endl;
-
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
 
