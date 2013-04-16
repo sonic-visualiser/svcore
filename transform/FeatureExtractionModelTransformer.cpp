@@ -682,8 +682,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
         frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
                        * inputRate);
 
-        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
-
+//        std::cerr << "Feature hasTimestamp = " << feature.hasTimestamp << ", timestamp = " << feature.timestamp << ", frame works out to " << frame << std::endl;
     }
 	
     // Rather than repeat the complicated tests from the constructor
