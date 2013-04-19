@@ -126,6 +126,8 @@ public:
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
+    float getValueMinimum() const { return 33; }
+    float getValueMaximum() const { return 88; }
 
     QString getTypeName() const { return tr("FlexiNote"); }
 
@@ -138,7 +140,7 @@ public:
 
     virtual QString getDefaultPlayPluginConfiguration() const
     {
-        return "<plugin program=\"piano\"/>";
+        return "<plugin program=\"organ\"/>";
     }
 
     virtual void toXml(QTextStream &out,
