@@ -436,10 +436,14 @@ protected:
         PointListConstIterator i = i0;
 
         for (i = i0; i != i1; ++i) {
+//            std::cerr << "i->frame is " << i->frame << ", wanting " << frame << std::endl;
+
             if (i->frame < (int)frame) { continue; }
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
+
+//        std::cerr << "returning i with i->frame = " << i->frame << std::endl;
 
         if (indexAtFrame > 0) {
             std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
@@ -598,6 +602,7 @@ SparseModel<PointType>::getPointIterators(long frame,
     QMutexLocker locker(&m_mutex);
 
     if (m_resolution == 0) {
+//        std::cerr << "getPointIterators: resolution == 0, returning end()" << std::endl;
         startItr = m_points.end();
         endItr = m_points.end();
         return;
@@ -609,7 +614,7 @@ SparseModel<PointType>::getPointIterators(long frame,
     PointType startPoint(start), endPoint(end);
     
 //    std::cerr << "getPointIterators: start frame " << start << ", end frame " << end << ", m_resolution " << m_resolution << std::endl;
-    
+
     startItr = m_points.lower_bound(startPoint);
       endItr = m_points.upper_bound(endPoint);
 }
