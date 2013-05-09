@@ -202,6 +202,14 @@ FeatureExtractionModelTransformer::createOutputModel()
     size_t modelRate = input->getSampleRate();
     size_t modelResolution = 1;
 
+    if (m_descriptor->sampleType != 
+        Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
+        if (m_descriptor->sampleRate > input->getSampleRate()) {
+            std::cerr << "WARNING: plugin reports output sample rate as "
+                      << m_descriptor->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << std::endl;
+        }
+    }
+
     switch (m_descriptor->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
@@ -703,8 +711,6 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             if (feature.values.size() > 1) {
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
-
-            std::cerr << "Adding point at " << frame << " with value " << value << " and label " << label << std::endl;
 
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
