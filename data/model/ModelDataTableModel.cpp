@@ -129,7 +129,7 @@ ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int ro
 QModelIndex
 ModelDataTableModel::index(int row, int column, const QModelIndex &parent) const
 {
-    return createIndex(row, column, 0);
+    return createIndex(row, column, (void *)0);
 }
 
 QModelIndex
@@ -159,7 +159,7 @@ ModelDataTableModel::getModelIndexForFrame(size_t frame) const
 {
     if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
-    return createIndex(getSorted(row), 0, 0);
+    return createIndex(getSorted(row), 0, (void *)0);
 }
 
 size_t 
@@ -206,7 +206,7 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
     int current = getCurrentRow();
     if (current != prevCurrent) {
 //         std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
-         emit currentChanged(createIndex(current, 0, 0));
+        emit currentChanged(createIndex(current, 0, (void *)0));
     }
     emit layoutChanged();
 }

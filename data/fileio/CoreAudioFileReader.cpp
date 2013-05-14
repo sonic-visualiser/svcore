@@ -52,7 +52,7 @@ codestr(OSStatus err)
     text[2] = (uerr >> 8) & 0xff;
     text[3] = (uerr) & 0xff;
     text[4] = '\0';
-    return QString("%1 (%2)").arg(err).arg(QString::fromAscii(text));
+    return QString("%1 (%2)").arg(err).arg(QString::fromLocal8Bit(text));
 }
 
 CoreAudioFileReader::CoreAudioFileReader(FileSource source,
