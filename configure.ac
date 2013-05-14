@@ -1,5 +1,5 @@
 
-AC_INIT(SVcore, 1.8, cannam@all-day-breakfast.com)
+AC_INIT([SVcore], [2.1], cannam@all-day-breakfast.com)
 
 AC_CONFIG_SRCDIR(base/Pitch.h)
 
@@ -114,7 +114,7 @@ AC_CONFIG_FILES([config.pri])
 
 AC_OUTPUT
 
-if ! $QMAKE -r; then
+if ! $QMAKE -r svcore.pro; then
    AC_MSG_ERROR([qmake failed: Command was "$QMAKE -r"])
 fi
 
@@ -126,5 +126,5 @@ might care about, and then run "make".
 
 The file config.pri contains the configuration settings for
 qmake.  If you want to adjust these by hand, edit config.pri
-and run "qmake -r" again to regenerate the Makefile.
+and run "$QMAKE -r" again to regenerate the Makefile.
 ])
