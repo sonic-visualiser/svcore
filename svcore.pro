@@ -1,7 +1,14 @@
 
 TEMPLATE = lib
 
-include(config.pri)
+exists(config.pri) {
+    include(config.pri)
+}
+win* {
+    !exists(config.pri) {
+        DEFINES += HAVE_BZ2 HAVE_FFTW3 HAVE_FFTW3F HAVE_SNDFILE HAVE_SAMPLERATE HAVE_VAMP HAVE_VAMPHOSTSDK HAVE_RUBBERBAND HAVE_DATAQUAY HAVE_LIBLO HAVE_MAD HAVE_ID3TAG
+    }
+}
 
 CONFIG += staticlib qt thread warn_on stl rtti exceptions
 QT += network xml
@@ -10,9 +17,16 @@ QT -= gui
 TARGET = svcore
 
 DEPENDPATH += . data plugin plugin/api/alsa
-INCLUDEPATH += . data plugin plugin/api/alsa
+INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay
 OBJECTS_DIR = o
 MOC_DIR = o
+
+win32-g++ {
+    INCLUDEPATH += ../sv-dependency-builds/win32-mingw/include
+}
+win32-msvc* {
+    INCLUDEPATH += ../sv-dependency-builds/win32-msvc/include
+}
 
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
