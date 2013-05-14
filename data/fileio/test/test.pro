@@ -1,7 +1,7 @@
 
 TEMPLATE = app
 
-LIBS += -L../../.. -L../../../debug -L../../../../dataquay -lsvcore -ldataquay
+LIBS += -L../../.. -L../../../release -L../../../../dataquay/release -lsvcore -ldataquay
 
 win32-g++ {
     INCLUDEPATH += ../../../../sv-dependency-builds/win32-mingw/include
