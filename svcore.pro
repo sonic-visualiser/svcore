@@ -234,6 +234,8 @@ HEADERS += plugin/DSSIPluginFactory.h \
            plugin/api/alsa/seq_event.h \
            plugin/api/alsa/seq_midi_event.h \
            plugin/api/alsa/sound/asequencer.h
+
+
 SOURCES += plugin/DSSIPluginFactory.cpp \
            plugin/DSSIPluginInstance.cpp \
            plugin/FeatureExtractionPluginFactory.cpp \
@@ -243,8 +245,11 @@ SOURCES += plugin/DSSIPluginFactory.cpp \
            plugin/PluginXml.cpp \
            plugin/RealTimePluginFactory.cpp \
            plugin/RealTimePluginInstance.cpp \
-           plugin/api/dssi_alsa_compat.c \
            plugin/plugins/SamplePlayer.cpp
+
+!linux* {
+SOURCES += plugin/api/dssi_alsa_compat.c 
+}
 
 HEADERS += rdf/PluginRDFIndexer.h \
            rdf/PluginRDFDescription.h \
