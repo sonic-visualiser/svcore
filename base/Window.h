@@ -41,7 +41,11 @@ class Window
 {
 public:
     /**
-     * Construct a windower of the given type.
+     * Construct a windower of the given type and size. 
+     *
+     * Note that the cosine windows are periodic by design, rather
+     * than symmetrical. (A window of size N is equivalent to a
+     * symmetrical window of size N+1 with the final element missing.)
      */
     Window(WindowType type, size_t size) : m_type(type), m_size(size) { encache(); }
     Window(const Window &w) : m_type(w.m_type), m_size(w.m_size) { encache(); }
