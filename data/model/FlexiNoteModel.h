@@ -16,6 +16,8 @@
 #ifndef _FLEXINOTE_MODEL_H_
 #define _FLEXINOTE_MODEL_H_
 
+#include "NotelikeModel.h"
+
 #include "IntervalModel.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
