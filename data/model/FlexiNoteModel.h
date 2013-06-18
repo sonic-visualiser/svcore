@@ -16,7 +16,7 @@
 #ifndef _FLEXINOTE_MODEL_H_
 #define _FLEXINOTE_MODEL_H_
 
-#include "NotelikeModel.h"
+// #include "NotelikeModel.h"
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"
