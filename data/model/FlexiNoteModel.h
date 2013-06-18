@@ -16,7 +16,7 @@
 #ifndef _FLEXINOTE_MODEL_H_
 #define _FLEXINOTE_MODEL_H_
 
-// #include "NotelikeModel.h"
+// #include "NotelikeModel.h" // GF: reomved as this is an uncommitted experiment for now
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"
