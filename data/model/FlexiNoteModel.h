@@ -142,7 +142,7 @@ public:
 
     virtual QString getDefaultPlayPluginConfiguration() const
     {
-        return "<plugin program=\"organ\"/>";
+        return "<plugin program=\"stick\"/>";
     }
 
     virtual void toXml(QTextStream &out,
