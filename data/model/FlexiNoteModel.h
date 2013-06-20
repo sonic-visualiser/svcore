@@ -142,7 +142,7 @@ public:
 
     virtual QString getDefaultPlayPluginConfiguration() const
     {
-        return "<plugin program=\"stick\"/>";
+        return "<plugin program=\"click\"/>";
     }
 
     virtual void toXml(QTextStream &out,
