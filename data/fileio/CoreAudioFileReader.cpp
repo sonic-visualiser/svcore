@@ -33,13 +33,14 @@
 class CoreAudioFileReader::D
 {
 public:
-    D() : blockSize(1024) { }
+    D() : blockSize(1024), valid(false) { }
 
     ExtAudioFileRef file;
     AudioBufferList buffer;
     OSStatus err;
     AudioStreamBasicDescription asbd;
     int blockSize;
+    bool valid;
 };
 
 static QString
@@ -116,6 +117,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
+        ExtAudioFileDispose(m_d->file);
         return;
     }
 	
@@ -140,6 +142,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in setting client format: code " + codestr(m_d->err);
+        ExtAudioFileDispose(m_d->file);
         return;
     }
 
@@ -147,6 +150,8 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_d->buffer.mBuffers[0].mNumberChannels = m_channelCount;
     m_d->buffer.mBuffers[0].mDataByteSize = sizeof(float) * m_channelCount * m_d->blockSize;
     m_d->buffer.mBuffers[0].mData = new float[m_channelCount * m_d->blockSize];
+
+    m_d->valid = true;
 
     initialiseDecodeCache();
 
@@ -181,15 +186,18 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     endSerialised();
 
     m_completion = 100;
-
-    ExtAudioFileDispose(m_d->file);
 }
 
 
 CoreAudioFileReader::~CoreAudioFileReader()
 {
     std::cerr << "CoreAudioFileReader::~CoreAudioFileReader" << std::endl;
-    delete[] m_d->buffer.mBuffers[0].mData;
+
+    if (m_d->valid) {
+        ExtAudioFileDispose(m_d->file);
+        delete[] m_d->buffer.mBuffers[0].mData;
+    }
+
     delete m_d;
 }
 
