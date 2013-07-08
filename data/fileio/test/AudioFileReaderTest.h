@@ -78,7 +78,11 @@ private slots:
         if (bits.length() > 2) nominalDepth = bits[2].toInt();
 
 	if (!reader) {
+#if ( QT_VERSION >= 0x050000 )
 	    QSKIP("Unsupported file, skipping");
+#else
+	    QSKIP("Unsupported file, skipping", SkipSingle);
+#endif
 	}
 
         QCOMPARE((int)reader->getChannelCount(), nominalChannels);
