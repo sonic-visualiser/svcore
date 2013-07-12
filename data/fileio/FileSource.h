@@ -20,15 +20,13 @@
 #include <QMutex>
 #include <QString>
 #include <QTimer>
+#include <QNetworkReply>
 
 #include <map>
 
 #include "base/Debug.h"
 
-class QFtp;
-class QHttp;
 class QFile;
-class QHttpResponseHeader;
 class ProgressReporter;
 
 /**
@@ -210,20 +208,19 @@ signals:
     void ready();
 
 protected slots:
-    void dataReadProgress(int done, int total);
-    void httpResponseHeaderReceived(const QHttpResponseHeader &resp);
-    void ftpCommandFinished(int, bool);
-    void dataTransferProgress(qint64 done, qint64 total);
-    void done(bool error);
+    void metaDataChanged();
+    void readyRead();
+    void replyFailed(QNetworkReply::NetworkError);
+    void replyFinished();
+    void downloadProgress(qint64 done, qint64 total);
     void cancelled();
 
 protected:
     FileSource &operator=(const FileSource &); // not provided
 
     QUrl m_url;
-    QFtp *m_ftp;
-    QHttp *m_http;
     QFile *m_localFile;
+    QNetworkReply *m_reply;
     QString m_localFilename;
     QString m_errorString;
     QString m_contentType;
@@ -244,8 +241,7 @@ protected:
     bool m_refCounted;
 
     void init();
-    void initHttp();
-    void initFtp();
+    void initRemote();
 
     void cleanup();
 

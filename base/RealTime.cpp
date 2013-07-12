@@ -341,7 +341,7 @@ RealTime::toFrameText(int fps) const
 
     out << ":";
 
-    std::cerr << "div = " << div << ", f =  "<< f << std::endl;
+//    std::cerr << "div = " << div << ", f =  "<< f << std::endl;
 
     while (div) {
         int d = (f / div) % 10;
@@ -351,7 +351,7 @@ RealTime::toFrameText(int fps) const
 	
     std::string s = out.str();
 
-    std::cerr << "converted " << toString() << " to " << s << std::endl;
+//    std::cerr << "converted " << toString() << " to " << s << std::endl;
 
     return s;
 }

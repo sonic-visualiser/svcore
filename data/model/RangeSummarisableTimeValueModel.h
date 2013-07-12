@@ -21,6 +21,8 @@
 #include "DenseTimeValueModel.h"
 #include "base/ZoomConstraint.h"
 
+#include <stdint.h>
+
 /**
  * Base class for models containing dense two-dimensional data (value
  * against time) that may be meaningfully represented in a zoomed view

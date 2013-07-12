@@ -185,7 +185,14 @@ WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
     for (int i = 0; i < count; ++i) {
         info.format = i;
         if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
-            extensions.insert(QString(info.extension).toLower());
+            QString ext = QString(info.extension).toLower();
+            extensions.insert(ext);
+            if (ext == "oga") {
+                // libsndfile is awfully proper, it says it only
+                // supports .oga but lots of Ogg audio files in the
+                // wild are .ogg and it will accept that
+                extensions.insert("ogg");
+            }
         }
     }
 }

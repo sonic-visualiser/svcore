@@ -37,6 +37,8 @@
 
 #include "base/Thread.h"
 
+//#define DEBUG_TRANSFORM_FACTORY 1
+
 using std::cerr;
 using std::endl;
 
@@ -113,7 +115,7 @@ TransformFactory::getAllTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
 	 i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        SVDEBUG << "inserting transform into set: id = " << i->second.identifier << endl;
+        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -122,7 +124,7 @@ TransformFactory::getAllTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        SVDEBUG << "inserting transform into list: id = " << i->identifier << endl;
+        cerr << "inserting transform into list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -159,7 +161,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
 	 i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        SVDEBUG << "inserting transform into set: id = " << i->second.identifier << endl;
+        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
 	dset.insert(i->second);
     }
@@ -168,7 +170,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
 	 i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        SVDEBUG << "inserting transform into uninstalled list: id = " << i->identifier << endl;
+        cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
 	list.push_back(*i);
     }
@@ -659,8 +661,9 @@ TransformFactory::populateUninstalledTransforms()
         QString name = desc.getPluginName();
 #ifdef DEBUG_TRANSFORM_FACTORY
         if (name == "") {
-            SVDEBUG << "TransformFactory::populateUninstalledTransforms: "
-                      << "No name available for plugin " << i-                      << ", skipping" << endl;
+            cerr << "TransformFactory::populateUninstalledTransforms: "
+                 << "No name available for plugin " << *i
+                 << ", skipping" << endl;
             continue;
         }
 #endif
@@ -677,7 +680,7 @@ TransformFactory::populateUninstalledTransforms()
             
             if (m_transforms.find(tid) != m_transforms.end()) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-                SVDEBUG << "TransformFactory::populateUninstalledTransforms: "
+                cerr << "TransformFactory::populateUninstalledTransforms: "
                           << tid << " is installed; adding info url if appropriate, skipping rest" << endl;
 #endif
                 if (infoUrl != "") {
@@ -689,7 +692,7 @@ TransformFactory::populateUninstalledTransforms()
             }
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-            SVDEBUG << "TransformFactory::populateUninstalledTransforms: "
+            cerr << "TransformFactory::populateUninstalledTransforms: "
                       << "adding " << tid << endl;
 #endif
 
@@ -952,7 +955,7 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
         pmap[i->identifier.c_str()] = plugin->getParameter(i->identifier);
-//        SVDEBUG << "TransformFactory::setParametersFromPlugin: parameter "
+//        cerr << "TransformFactory::setParametersFromPlugin: parameter "
 //                  << i->identifier << " -> value " <<
 //            pmap[i->identifier.c_str()] << endl;
     }
@@ -1067,7 +1070,7 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        SVDEBUG << "TransformFactory::getPluginConfigurationXml: "
+        cerr << "TransformFactory::getPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
                   << t.getIdentifier() << "\"" << endl;
         return xml;
@@ -1089,7 +1092,7 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: "
+        cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
                   << "Unable to instantiate plugin for transform \""
                   << t.getIdentifier() << "\"" << endl;
         return;
@@ -1145,7 +1148,7 @@ TransformFactory::search(QStringList keywords)
     if (!m_uninstalledTransformsMutex.tryLock()) {
         // uninstalled transforms are being populated; this may take some time,
         // and they aren't critical, but we will speed them up if necessary
-        SVDEBUG << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
+        cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
         m_populatingSlowly = false;
         return results;
     }
