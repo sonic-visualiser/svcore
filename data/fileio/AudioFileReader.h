@@ -65,6 +65,13 @@ public:
     typedef std::map<QString, QString> TagMap;
     virtual TagMap getTags() const { return TagMap(); }
 
+    /**
+     * Return true if this file supports fast seek and random
+     * access. Typically this will be true for uncompressed formats
+     * and false for compressed ones.
+     */
+    virtual bool isQuicklySeekable() const = 0;
+
     /** 
      * Return interleaved samples for count frames from index start.
      * The resulting sample block will contain count *

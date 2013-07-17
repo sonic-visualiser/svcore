@@ -23,6 +23,16 @@
 
 #include <set>
 
+/**
+ * Reader for audio files using libsndfile.
+ *
+ * This is typically intended for seekable file types that can be read
+ * directly (e.g. WAV, AIFF etc).
+ *
+ * Compressed files supported by libsndfile (e.g. Ogg, FLAC) should
+ * normally be read using DecodingWavFileReader instead (which decodes
+ * to an intermediate cached file).
+ */
 class WavFileReader : public AudioFileReader
 {
 public:
@@ -32,6 +42,8 @@ public:
     virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getError() const { return m_error; }
 
+    virtual bool isQuicklySeekable() const { return m_seekable; }
+    
     /** 
      * Must be safe to call from multiple threads with different
      * arguments on the same object at the same time.
@@ -58,6 +70,8 @@ protected:
     FileSource m_source;
     QString m_path;
     QString m_error;
+
+    bool m_seekable;
 
     mutable QMutex m_mutex;
     mutable float *m_buffer;
