@@ -43,6 +43,9 @@ public:
 
     virtual size_t getNativeRate() const { return m_fileRate; }
 
+    /// Intermediate cache means all CodedAudioFileReaders are quickly seekable
+    virtual bool isQuicklySeekable() const { return true; }
+
 signals:
     void progress(int);
 
