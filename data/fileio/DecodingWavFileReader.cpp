@@ -13,7 +13,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "ResamplingWavFileReader.h"
+#include "DecodingWavFileReader.h"
 
 #include "WavFileReader.h"
 #include "base/Profiler.h"
@@ -21,7 +21,7 @@
 
 #include <QFileInfo>
 
-ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
+DecodingWavFileReader::DecodingWavFileReader(FileSource source,
 						 ResampleMode resampleMode,
 						 CacheMode mode,
 						 size_t targetRate,
@@ -39,10 +39,10 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-    SVDEBUG << "ResamplingWavFileReader::ResamplingWavFileReader(\""
+    SVDEBUG << "DecodingWavFileReader::DecodingWavFileReader(\""
               << m_path << "\"): rate " << targetRate << endl;
 
-    Profiler profiler("ResamplingWavFileReader::ResamplingWavFileReader", true);
+    Profiler profiler("DecodingWavFileReader::DecodingWavFileReader", true);
 
     m_original = new WavFileReader(m_path);
     if (!m_original->isOK()) {
@@ -60,7 +60,7 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
         if (m_reporter) {
             connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
             m_reporter->setMessage
-                (tr("Resampling %1...").arg(QFileInfo(m_path).fileName()));
+                (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
         size_t blockSize = 16384;
@@ -96,7 +96,7 @@ ResamplingWavFileReader::ResamplingWavFileReader(FileSource source,
     }
 }
 
-ResamplingWavFileReader::~ResamplingWavFileReader()
+DecodingWavFileReader::~DecodingWavFileReader()
 {
     if (m_decodeThread) {
         m_cancelled = true;
@@ -108,16 +108,16 @@ ResamplingWavFileReader::~ResamplingWavFileReader()
 }
 
 void
-ResamplingWavFileReader::cancelled()
+DecodingWavFileReader::cancelled()
 {
     m_cancelled = true;
 }
 
 void
-ResamplingWavFileReader::DecodeThread::run()
+DecodingWavFileReader::DecodeThread::run()
 {
     if (m_reader->m_cacheMode == CacheInTemporaryFile) {
-        m_reader->startSerialised("ResamplingWavFileReader::Decode");
+        m_reader->startSerialised("DecodingWavFileReader::Decode");
     }
 
     size_t blockSize = 16384;
@@ -146,7 +146,7 @@ ResamplingWavFileReader::DecodeThread::run()
 } 
 
 void
-ResamplingWavFileReader::addBlock(const SampleBlock &frames)
+DecodingWavFileReader::addBlock(const SampleBlock &frames)
 {
     addSamplesToDecodeCache(frames);
 
@@ -166,25 +166,25 @@ ResamplingWavFileReader::addBlock(const SampleBlock &frames)
 }
 
 void
-ResamplingWavFileReader::getSupportedExtensions(std::set<QString> &extensions)
+DecodingWavFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     WavFileReader::getSupportedExtensions(extensions);
 }
 
 bool
-ResamplingWavFileReader::supportsExtension(QString extension)
+DecodingWavFileReader::supportsExtension(QString extension)
 {
     return WavFileReader::supportsExtension(extension);
 }
 
 bool
-ResamplingWavFileReader::supportsContentType(QString type)
+DecodingWavFileReader::supportsContentType(QString type)
 {
     return WavFileReader::supportsContentType(type);
 }
 
 bool
-ResamplingWavFileReader::supports(FileSource &source)
+DecodingWavFileReader::supports(FileSource &source)
 {
     return WavFileReader::supports(source);
 }

@@ -16,7 +16,7 @@
 #include "AudioFileReaderFactory.h"
 
 #include "WavFileReader.h"
-#include "ResamplingWavFileReader.h"
+#include "DecodingWavFileReader.h"
 #include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
 #include "QuickTimeFileReader.h"
@@ -98,20 +98,22 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
         reader = new WavFileReader(source);
 
-        if (targetRate != 0 &&
-            reader->isOK() &&
-            reader->getSampleRate() != targetRate) {
+        int fileRate = reader->getSampleRate();
 
-            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
+        if (reader->isOK() &&
+            (!reader->isQuicklySeekable() ||
+             (targetRate != 0 && fileRate != targetRate))) {
+
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
             delete reader;
-            reader = new ResamplingWavFileReader
+            reader = new DecodingWavFileReader
                 (source,
                  threading ?
-                 ResamplingWavFileReader::ResampleThreaded :
-                 ResamplingWavFileReader::ResampleAtOnce,
-                 ResamplingWavFileReader::CacheInTemporaryFile,
-                 targetRate,
+                 DecodingWavFileReader::ResampleThreaded :
+                 DecodingWavFileReader::ResampleAtOnce,
+                 DecodingWavFileReader::CacheInTemporaryFile,
+                 targetRate ? targetRate : fileRate,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -209,20 +211,22 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
         reader = new WavFileReader(source);
 
-        if (targetRate != 0 &&
-            reader->isOK() &&
-            reader->getSampleRate() != targetRate) {
+        int fileRate = reader->getSampleRate();
 
-            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", creating resampling reader" << endl;
+        if (reader->isOK() &&
+            (!reader->isQuicklySeekable() ||
+             (targetRate != 0 && fileRate != targetRate))) {
+
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
             delete reader;
-            reader = new ResamplingWavFileReader
+            reader = new DecodingWavFileReader
                 (source,
                  threading ?
-                 ResamplingWavFileReader::ResampleThreaded :
-                 ResamplingWavFileReader::ResampleAtOnce,
-                 ResamplingWavFileReader::CacheInTemporaryFile,
-                 targetRate,
+                 DecodingWavFileReader::ResampleThreaded :
+                 DecodingWavFileReader::ResampleAtOnce,
+                 DecodingWavFileReader::CacheInTemporaryFile,
+                 targetRate ? targetRate : fileRate,
                  reporter);
         }
 

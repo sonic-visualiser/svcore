@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RESAMPLING_WAV_FILE_READER_H_
-#define _RESAMPLING_WAV_FILE_READER_H_
+#ifndef _DECODING_WAV_FILE_READER_H_
+#define _DECODING_WAV_FILE_READER_H_
 
 #include "CodedAudioFileReader.h"
 
@@ -25,7 +25,7 @@
 class WavFileReader;
 class ProgressReporter;
 
-class ResamplingWavFileReader : public CodedAudioFileReader
+class DecodingWavFileReader : public CodedAudioFileReader
 {
     Q_OBJECT
 public:
@@ -34,12 +34,12 @@ public:
         ResampleThreaded // resample in a background thread after construction
     };
 
-    ResamplingWavFileReader(FileSource source,
+    DecodingWavFileReader(FileSource source,
                             ResampleMode resampleMode,
                             CacheMode cacheMode,
                             size_t targetRate = 0,
                             ProgressReporter *reporter = 0);
-    virtual ~ResamplingWavFileReader();
+    virtual ~DecodingWavFileReader();
 
     virtual QString getError() const { return m_error; }
     virtual QString getLocation() const { return m_source.getLocation(); }
@@ -73,11 +73,11 @@ protected:
     class DecodeThread : public Thread
     {
     public:
-        DecodeThread(ResamplingWavFileReader *reader) : m_reader(reader) { }
+        DecodeThread(DecodingWavFileReader *reader) : m_reader(reader) { }
         virtual void run();
 
     protected:
-        ResamplingWavFileReader *m_reader;
+        DecodingWavFileReader *m_reader;
     };
 
     DecodeThread *m_decodeThread;
