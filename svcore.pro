@@ -135,7 +135,7 @@ HEADERS += data/fft/FFTapi.h \
            data/fileio/PlaylistFileReader.h \
            data/fileio/QuickTimeFileReader.h \
            data/fileio/CoreAudioFileReader.h \
-           data/fileio/ResamplingWavFileReader.h \
+           data/fileio/DecodingWavFileReader.h \
            data/fileio/WavFileReader.h \
            data/fileio/WavFileWriter.h \
            data/midi/MIDIEvent.h \
@@ -195,7 +195,7 @@ SOURCES += data/fft/FFTapi.cpp \
            data/fileio/PlaylistFileReader.cpp \
            data/fileio/QuickTimeFileReader.cpp \
            data/fileio/CoreAudioFileReader.cpp \
-           data/fileio/ResamplingWavFileReader.cpp \
+           data/fileio/DecodingWavFileReader.cpp \
            data/fileio/WavFileReader.cpp \
            data/fileio/WavFileWriter.cpp \
            data/midi/MIDIInput.cpp \
