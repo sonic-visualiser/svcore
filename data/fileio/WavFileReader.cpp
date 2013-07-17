@@ -24,6 +24,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file(0),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_seekable(false),
     m_buffer(0),
     m_bufsiz(0),
     m_lastStart(0),
@@ -54,12 +55,26 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     }
 
     if (m_fileInfo.channels > 0) {
+
         m_frameCount = m_fileInfo.frames;
         m_channelCount = m_fileInfo.channels;
         m_sampleRate = m_fileInfo.samplerate;
+
+        m_seekable = (m_fileInfo.seekable != 0);
+
+        // Our m_seekable reports whether a file is rapidly seekable,
+        // so things like Ogg don't qualify. We cautiously report
+        // every file type of "at least" the historical period of Ogg
+        // or FLAC as non-seekable.
+        int type = m_fileInfo.format & SF_FORMAT_TYPEMASK;
+//        std::cerr << "WavFileReader: format type is " << type << " (flac, ogg are " << SF_FORMAT_FLAC << ", " << SF_FORMAT_OGG << ")" << std::endl;
+        if (type >= SF_FORMAT_FLAC || type >= SF_FORMAT_OGG) {
+//            std::cerr << "WavFileReader: Recording as non-seekable" << std::endl;
+            m_seekable = false;
+        }
     }
 
-//    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << std::endl;
+//    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", seekable " << m_seekable << std::endl;
 
 }
 
