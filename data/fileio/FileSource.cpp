@@ -25,6 +25,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
+#include <QThreadStorage>
 
 #include <iostream>
 #include <cstdlib>
@@ -67,7 +68,7 @@ static void decCount(QString url) {
 }
 #endif
 
-static QNetworkAccessManager nm;
+static QThreadStorage<QNetworkAccessManager *> nms;
 
 FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
@@ -260,6 +261,13 @@ FileSource::~FileSource()
 void
 FileSource::init()
 {
+    { // check we have a QNetworkAccessManager
+        QMutexLocker locker(&m_mapMutex);
+        if (!nms.hasLocalData()) {
+            nms.setLocalData(new QNetworkAccessManager());
+        }
+    }
+
     if (isResource()) {
 #ifdef DEBUG_FILE_SOURCE
         std::cerr << "FileSource::init: Is a resource" << std::endl;
@@ -443,7 +451,7 @@ FileSource::initRemote()
              QString("%1, */*").arg(m_preferredContentType).toLatin1());
     }
 
-    m_reply = nm.get(req);
+    m_reply = nms.localData()->get(req);
 
     connect(m_reply, SIGNAL(readyRead()),
             this, SLOT(readyRead()));
