@@ -134,6 +134,12 @@ public:
 
     void setSampleRate(float rate) { m_rate = rate; }
 
+    void resetCounters() {
+        m_counter = 1;
+        m_counter2 = 1;
+        m_cycle = 4;
+    }
+
     void incrementCounter() {
         m_counter++;
         if (m_type == ValueFromCyclicalCounter ||
