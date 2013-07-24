@@ -71,6 +71,7 @@ static QNetworkAccessManager nm;
 
 FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
+    m_rawFileOrUrl(fileOrUrl),
     m_url(fileOrUrl, QUrl::StrictMode),
     m_localFile(0),
     m_reply(0),
@@ -111,6 +112,9 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
         std::cerr << "FileSource::FileSource: Failed to open local file with URL \"" << m_url.toString() << "\"; trying again assuming filename was encoded" << std::endl;
 #endif
         m_url = QUrl::fromEncoded(fileOrUrl.toLatin1());
+#ifdef DEBUG_FILE_SOURCE
+        std::cerr << "FileSource::FileSource: URL is now \"" << m_url.toString() << "\"" << std::endl;
+#endif
         init();
     }
 
@@ -282,15 +286,20 @@ FileSource::init()
 #endif
         bool literal = false;
         m_localFilename = m_url.toLocalFile();
+
         if (m_localFilename == "") {
             // QUrl may have mishandled the scheme (e.g. in a DOS path)
-            m_localFilename = m_url.toString();
+            m_localFilename = m_rawFileOrUrl;
+#ifdef DEBUG_FILE_SOURCE
+            std::cerr << "FileSource::init: Trying literal local filename \""
+                      << m_localFilename << "\"" << std::endl;
+#endif
             literal = true;
         }
         m_localFilename = QFileInfo(m_localFilename).absoluteFilePath();
 
 #ifdef DEBUG_FILE_SOURCE
-        std::cerr << "FileSource::init: URL translates to local filename \""
+        std::cerr << "FileSource::init: URL translates to absolute filename \""
                   << m_localFilename << "\" (with literal=" << literal << ")"
                   << std::endl;
 #endif
@@ -306,7 +315,7 @@ FileSource::init()
 #endif
                 // Again, QUrl may have been mistreating us --
                 // e.g. dropping a part that looks like query data
-                m_localFilename = m_url.toString();
+                m_localFilename = m_rawFileOrUrl;
                 literal = true;
                 if (!QFileInfo(m_localFilename).exists()) {
                     m_lastStatus = 404;
