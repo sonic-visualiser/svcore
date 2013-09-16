@@ -30,6 +30,9 @@
 #define MUNLOCK_SAMPLEBLOCK(a) 1
 #define MUNLOCKALL() 1
 
+extern void SystemMemoryBarrier();
+#define MBARRIER()   SystemMemoryBarrier()
+
 #define DLOPEN(a,b)  LoadLibrary((a).toStdWString().c_str())
 #define DLSYM(a,b)   GetProcAddress((HINSTANCE)(a),(b))
 #define DLCLOSE(a)   (!FreeLibrary((HINSTANCE)(a)))
@@ -99,6 +102,9 @@ int gettimeofday(struct timeval *p, void *tz);
 
 #define MUNLOCKALL() 1
 
+#include <libkern/OSAtomic.h>
+#define MBARRIER() OSMemoryBarrier()
+
 #else 
 
 #ifdef sun
@@ -122,7 +128,14 @@ int gettimeofday(struct timeval *p, void *tz);
 
 #define MUNLOCKALL() ::munlockall()
 
-#endif /* __APPLE__ */
+#if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
+#define MBARRIER() __sync_synchronize()
+#else
+extern void SystemMemoryBarrier();
+#define MBARRIER() SystemMemoryBarrier()
+#endif
+
+#endif /* ! __APPLE__ */
 
 #endif /* ! _WIN32 */
 
