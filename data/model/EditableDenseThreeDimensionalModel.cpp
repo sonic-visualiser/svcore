@@ -483,6 +483,24 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
     return s;
 }
 
+QString
+EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const
+{
+    QReadLocker locker(&m_lock);
+    QString s;
+    for (size_t i = 0; i < m_data.size(); ++i) {
+        size_t fr = m_startFrame + i * m_resolution;
+        if (fr >= f0 && fr < f1) {
+            QStringList list;
+            for (size_t j = 0; j < m_data.at(i).size(); ++j) {
+                list << QString("%1").arg(m_data.at(i).at(j));
+            }
+            s += list.join(delimiter) + "\n";
+        }
+    }
+    return s;
+}
+
 void
 EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
                                           QString indent,
