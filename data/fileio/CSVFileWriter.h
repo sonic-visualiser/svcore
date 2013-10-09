@@ -20,6 +20,7 @@
 #include <QString>
 
 class Model;
+class MultiSelection;
 
 class CSVFileWriter : public QObject
 {
@@ -33,6 +34,7 @@ public:
     virtual QString getError() const;
 
     virtual void write();
+    virtual void writeSelection(MultiSelection *selection);
 
 protected:
     QString m_path;

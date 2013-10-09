@@ -23,6 +23,7 @@
 
 #include "base/TempWriteFile.h"
 #include "base/Exceptions.h"
+#include "base/Selection.h"
 
 #include <QFile>
 #include <QTextStream>
@@ -74,5 +75,37 @@ CSVFileWriter::write()
         m_error = f.what();
     }
 }
+
+void
+CSVFileWriter::writeSelection(MultiSelection *selection)
+{
+    try {
+        TempWriteFile temp(m_path);
+
+        QFile file(temp.getTemporaryFilename());
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            m_error = tr("Failed to open file %1 for writing")
+                .arg(temp.getTemporaryFilename());
+            return;
+        }
+    
+        QTextStream out(&file);
+
+        for (MultiSelection::SelectionList::iterator i =
+                 selection->getSelections().begin();
+             i != selection->getSelections().end(); ++i) {
+	
+            size_t f0(i->getStartFrame()), f1(i->getEndFrame());
+            out << m_model->toDelimitedDataString(m_delimiter, f0, f1);
+        }
+
+        file.close();
+        temp.moveToTarget();
+
+    } catch (FileOperationFailed &f) {
+        m_error = f.what();
+    }
+}
+
 
 
