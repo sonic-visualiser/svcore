@@ -213,7 +213,12 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toDelimitedDataString(QString) const { return ""; }
+    virtual QString toDelimitedDataString(QString delimiter) const {
+        return toDelimitedDataString(delimiter, getStartFrame(), getEndFrame());
+    }
+    virtual QString toDelimitedDataString(QString, size_t f0, size_t f1) const {
+        return "";
+    }
 
 public slots:
     void aboutToDelete();

@@ -463,7 +463,7 @@ WaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
             if (sample > max || got == 0) max = sample;
 	    if (sample < min || got == 0) min = sample;
             total += fabsf(sample);
-	    
+
 	    ++i;
             ++got;
             
