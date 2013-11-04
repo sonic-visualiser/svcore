@@ -73,8 +73,10 @@ CSVFormat::guessFormatFor(QString path)
 
             guessQualities(line, lineno);
 
-            if (++lineno == 50) break;
+            ++lineno;
         }
+
+        if (lineno >= 50) break;
     }
 
     guessPurposes();
