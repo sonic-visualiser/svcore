@@ -218,6 +218,7 @@ protected slots:
 protected:
     FileSource &operator=(const FileSource &); // not provided
 
+    QString m_rawFileOrUrl;
     QUrl m_url;
     QFile *m_localFile;
     QNetworkReply *m_reply;
