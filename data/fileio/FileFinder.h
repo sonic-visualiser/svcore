@@ -28,7 +28,8 @@ public:
         LayerFileNoMidi,
         SessionOrAudioFile,
         ImageFile,
-        AnyFile
+        AnyFile,
+        CSVFile,
     };
 
     virtual QString getOpenFileName(FileType type, QString fallbackLocation = "") = 0;

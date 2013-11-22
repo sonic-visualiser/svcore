@@ -274,6 +274,30 @@ GetDiscSpaceMBAvailable(const char *path)
 #endif
 }
 
+#ifdef _WIN32
+extern void SystemMemoryBarrier()
+{
+#ifdef __MSVC__
+    MemoryBarrier();
+#else /* mingw */
+    LONG Barrier = 0;
+    __asm__ __volatile__("xchgl %%eax,%0 "
+                         : "=r" (Barrier));
+#endif
+}
+#else /* !_WIN32 */
+#if !defined(__APPLE__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
+void
+SystemMemoryBarrier()
+{
+    pthread_mutex_t dummy = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&dummy);
+    pthread_mutex_unlock(&dummy);
+}
+#endif /* !defined(__APPLE__) etc */
+#endif /* !_WIN32 */
+
+
 static char *startupLocale = 0;
 
 void

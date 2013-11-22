@@ -86,6 +86,8 @@ public:
     virtual QString getDefaultPlayPluginId() const { return ""; }
     virtual QString getDefaultPlayPluginConfiguration() const { return ""; }
 
+    virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const;
+
     QString getTypeName() const { return tr("Dense Time-Value"); }
 };
 

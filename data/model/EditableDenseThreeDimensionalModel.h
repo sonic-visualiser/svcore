@@ -139,6 +139,7 @@ public:
     QString getTypeName() const { return tr("Editable Dense 3-D"); }
 
     virtual QString toDelimitedDataString(QString delimiter) const;
+    virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",

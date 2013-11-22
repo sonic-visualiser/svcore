@@ -24,7 +24,6 @@
 #include <sys/types.h>
 
 #include "system/System.h"
-#include "Scavenger.h"
 
 #include <cstring> // memcpy, memset &c
 
@@ -67,11 +66,15 @@ public:
     size_t getSize() const;
 
     /**
-     * Resize the ring buffer.  This also empties it.  Actually swaps
-     * in a new, larger buffer; the old buffer is scavenged after a
-     * seemly delay.  Should be called from the write thread.
+     * Return a new ring buffer (allocated with "new" -- caller must
+     * delete when no longer needed) of the given size, containing the
+     * same data as this one as perceived by reader 0 of this buffer.
+     * If another thread reads from or writes to this buffer during
+     * the call, the contents of the new buffer may be incomplete or
+     * inconsistent.  If this buffer's data will not fit in the new
+     * size, the contents are undefined.
      */
-    void resize(size_t newSize);
+    RingBuffer<T, N> *resized(size_t newSize) const;
 
     /**
      * Lock the ring buffer into physical memory.  Returns true
@@ -167,15 +170,10 @@ protected:
     size_t  m_size;
     size_t  m_spare;
 
-    static Scavenger<ScavengerArrayWrapper<T> > m_scavenger;
-
 private:
     RingBuffer(const RingBuffer &); // not provided
     RingBuffer &operator=(const RingBuffer &); // not provided
 };
-
-template <typename T, int N>
-Scavenger<ScavengerArrayWrapper<T> > RingBuffer<T, N>::m_scavenger;
 
 template <typename T, int N>
 RingBuffer<T, N>::RingBuffer(size_t n) :
@@ -200,8 +198,6 @@ RingBuffer<T, N>::RingBuffer(size_t n) :
 */
     
     for (int i = 0; i < N; ++i) m_readers[i] = 0;
-
-    m_scavenger.scavenge();
 }
 
 template <typename T, int N>
@@ -217,8 +213,6 @@ RingBuffer<T, N>::~RingBuffer()
 	MUNLOCK((void *)m_buffer, m_size * sizeof(T));
     }
     delete[] m_buffer;
-
-    m_scavenger.scavenge();
 }
 
 template <typename T, int N>
@@ -233,30 +227,25 @@ RingBuffer<T, N>::getSize() const
 }
 
 template <typename T, int N>
-void
-RingBuffer<T, N>::resize(size_t newSize)
+RingBuffer<T, N> *
+RingBuffer<T, N>::resized(size_t newSize) const
 {
 #ifdef DEBUG_RINGBUFFER
-    std::cerr << "RingBuffer<T," << N << ">[" << this << "]::resize(" << newSize << ")" << std::endl;
+    std::cerr << "RingBuffer<T," << N << ">[" << this << "]::resized(" << newSize << ")" << std::endl;
 #endif
 
-    m_scavenger.scavenge();
+    RingBuffer<T, N> *newBuffer = new RingBuffer<T, N>(newSize);
 
-    if (m_mlocked) {
-	MUNLOCK((void *)m_buffer, m_size * sizeof(T));
+    int w = m_writer;
+    int r = m_readers[0];
+
+    while (r != w) {
+        T value = m_buffer[r];
+        newBuffer->write(&value, 1);
+        if (++r == m_size) r = 0;
     }
 
-    m_scavenger.claim(new ScavengerArrayWrapper<T>(m_buffer));
-
-    reset();
-    m_buffer = new T[newSize + 1];
-    m_size = newSize + 1;
-
-    if (m_mlocked) {
-	if (MLOCK((void *)m_buffer, m_size * sizeof(T))) {
-	    m_mlocked = false;
-	}
-    }
+    return newBuffer;
 }
 
 template <typename T, int N>
@@ -350,6 +339,7 @@ RingBuffer<T, N>::read(T *destination, size_t n, int R)
 	memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
     }
 
+    MBARRIER();
     m_readers[R] = (m_readers[R] + n) % m_size;
 
 #ifdef DEBUG_RINGBUFFER
@@ -392,6 +382,7 @@ RingBuffer<T, N>::readAdding(T *destination, size_t n, int R)
 	}
     }
 
+    MBARRIER();
     m_readers[R] = (m_readers[R] + n) % m_size;
     return n;
 }
@@ -414,6 +405,7 @@ RingBuffer<T, N>::readOne(int R)
 	return t;
     }
     T value = m_buffer[m_readers[R]];
+    MBARRIER();
     if (++m_readers[R] == m_size) m_readers[R] = 0;
     return value;
 }
@@ -520,6 +512,7 @@ RingBuffer<T, N>::write(const T *source, size_t n)
 	memcpy(m_buffer, source + here, (n - here) * sizeof(T));
     }
 
+    MBARRIER();
     m_writer = (m_writer + n) % m_size;
 
 #ifdef DEBUG_RINGBUFFER
@@ -554,7 +547,8 @@ RingBuffer<T, N>::zero(size_t n)
 	memset(m_buffer + m_writer, 0, here * sizeof(T));
 	memset(m_buffer, 0, (n - here) * sizeof(T));
     }
-
+    
+    MBARRIER();
     m_writer = (m_writer + n) % m_size;
     return n;
 }

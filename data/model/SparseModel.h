@@ -157,6 +157,17 @@ public:
         return s;
     }
 
+    virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const
+    { 
+        QString s;
+        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
+            if (i->frame >= f0 && i->frame < f1) {
+                s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
+            }
+        }
+        return s;
+    }
+
     /**
      * Command to add a point, with undo.
      */
