@@ -87,13 +87,13 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    std::cerr << "last configuration: " << configurationXml << std::endl;
+    cerr << "last configuration: " << configurationXml << endl;
 
     Vamp::PluginBase *plugin = 0;
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
-        std::cerr << "getConfigurationForTransform: instantiating Vamp plugin" << std::endl;
+        cerr << "getConfigurationForTransform: instantiating Vamp plugin" << endl;
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
@@ -239,15 +239,15 @@ ModelTransformerFactory::transformerFinished()
 //    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
-	std::cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << std::endl;
+	cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
 	return;
     }
 
     if (m_runningTransformers.find(transformer) == m_runningTransformers.end()) {
-        std::cerr << "WARNING: ModelTransformerFactory::transformerFinished(" 
+        cerr << "WARNING: ModelTransformerFactory::transformerFinished(" 
                   << transformer
                   << "): I have no record of this transformer running!"
-                  << std::endl;
+                  << endl;
     }
 
     m_runningTransformers.erase(transformer);

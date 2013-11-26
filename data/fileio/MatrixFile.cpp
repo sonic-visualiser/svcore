@@ -78,14 +78,14 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     bool newFile = !QFileInfo(fileName).exists();
 
     if (newFile && m_mode == ReadOnly) {
-        std::cerr << "ERROR: MatrixFile::MatrixFile: Read-only mode "
-                  << "specified, but cache file does not exist" << std::endl;
+        cerr << "ERROR: MatrixFile::MatrixFile: Read-only mode "
+                  << "specified, but cache file does not exist" << endl;
         throw FileNotFound(fileName);
     }
 
     if (!newFile && m_mode == WriteOnly) {
-        std::cerr << "ERROR: MatrixFile::MatrixFile: Write-only mode "
-                  << "specified, but file already exists" << std::endl;
+        cerr << "ERROR: MatrixFile::MatrixFile: Write-only mode "
+                  << "specified, but file already exists" << endl;
         throw FileOperationFailed(fileName, "create");
     }
 
@@ -103,23 +103,23 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
 #endif
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile(" << this << ")::MatrixFile: opening " << fileName << "..." << std::endl;
+    cerr << "MatrixFile(" << this << ")::MatrixFile: opening " << fileName << "..." << endl;
 #endif
 
     if ((m_fd = ::open(fileName.toLocal8Bit(), m_flags, m_fmode)) < 0) {
         ::perror("Open failed");
-        std::cerr << "ERROR: MatrixFile::MatrixFile: "
+        cerr << "ERROR: MatrixFile::MatrixFile: "
                   << "Failed to open cache file \""
                   << fileName << "\"";
-        if (m_mode == WriteOnly) std::cerr << " for writing";
-        std::cerr << std::endl;
+        if (m_mode == WriteOnly) cerr << " for writing";
+        cerr << endl;
         throw FailedToOpenFile(fileName);
     }
 
     m_createMutex.unlock();
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile(" << this << ")::MatrixFile: fd is " << m_fd << std::endl;
+    cerr << "MatrixFile(" << this << ")::MatrixFile: fd is " << m_fd << endl;
 #endif
 
     if (newFile) {
@@ -128,16 +128,16 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
         size_t header[2];
         if (::read(m_fd, header, 2 * sizeof(size_t)) < 0) {
             ::perror("MatrixFile::MatrixFile: read failed");
-            std::cerr << "ERROR: MatrixFile::MatrixFile: "
+            cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Failed to read header (fd " << m_fd << ", file \""
-                      << fileName << "\")" << std::endl;
+                      << fileName << "\")" << endl;
             throw FileReadFailed(fileName);
         }
         if (header[0] != m_width || header[1] != m_height) {
-            std::cerr << "ERROR: MatrixFile::MatrixFile: "
+            cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Dimensions in file header (" << header[0] << "x"
                       << header[1] << ") differ from expected dimensions "
-                      << m_width << "x" << m_height << std::endl;
+                      << m_width << "x" << m_height << endl;
             throw FailedToOpenFile(fileName);
         }
     }
@@ -146,9 +146,9 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     ++m_refcount[fileName];
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::MatrixFile: File " << fileName << ", ref " << m_refcount[fileName] << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::MatrixFile: File " << fileName << ", ref " << m_refcount[fileName] << endl;
 
-    std::cerr << "MatrixFile[" << m_fd << "]::MatrixFile: Done, size is " << "(" << m_width << ", " << m_height << ")" << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::MatrixFile: Done, size is " << "(" << m_width << ", " << m_height << ")" << endl;
 #endif
 
     ++totalCount;
@@ -173,9 +173,9 @@ MatrixFile::~MatrixFile()
         if (--m_refcount[m_fileName] == 0) {
 
             if (::unlink(m_fileName.toLocal8Bit())) {
-                std::cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName << "\"" << std::endl;
+                cerr << "WARNING: MatrixFile::~MatrixFile: reference count reached 0, but failed to unlink file \"" << m_fileName << "\"" << endl;
             } else {
-                std::cerr << "deleted " << m_fileName << std::endl;
+                cerr << "deleted " << m_fileName << endl;
             }
         }
     }
@@ -186,8 +186,8 @@ MatrixFile::~MatrixFile()
     totalCount --;
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::~MatrixFile: " << std::endl;
-    std::cerr << "MatrixFile: Total storage now " << totalStorage/1024 << "K in " << totalCount << " instances (" << openCount << " open)" << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::~MatrixFile: " << endl;
+    cerr << "MatrixFile: Total storage now " << totalStorage/1024 << "K in " << totalCount << " instances (" << openCount << " open)" << endl;
 #endif
 }
 
@@ -203,7 +203,7 @@ MatrixFile::initialise()
     off_t off = m_headerSize + (m_width * m_height * m_cellSize) + m_width;
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): cell size " << m_cellSize << ", header size " << m_headerSize << ", resizing file" << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): cell size " << m_cellSize << ", header size " << m_headerSize << ", resizing file" << endl;
 #endif
 
     if (::lseek(m_fd, off - 1, SEEK_SET) < 0) {
@@ -235,10 +235,10 @@ MatrixFile::initialise()
     }
 
 #ifdef DEBUG_MATRIX_FILE
-    std::cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): storage "
-              << (m_headerSize + m_width * m_height * m_cellSize + m_width) << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): storage "
+              << (m_headerSize + m_width * m_height * m_cellSize + m_width) << endl;
 
-    std::cerr << "MatrixFile: Total storage " << totalStorage/1024 << "K" << std::endl;
+    cerr << "MatrixFile: Total storage " << totalStorage/1024 << "K" << endl;
 #endif
 
     seekTo(0);
@@ -257,7 +257,7 @@ MatrixFile::close()
         m_fd = -1;
         -- openCount;
 #ifdef DEBUG_MATRIX_FILE
-        std::cerr << "MatrixFile: Now " << openCount << " open instances" << std::endl;
+        cerr << "MatrixFile: Now " << openCount << " open instances" << endl;
 #endif
     }
 }
@@ -268,7 +268,7 @@ MatrixFile::getColumnAt(size_t x, void *data)
     assert(m_mode == ReadOnly);
     
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-    std::cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << ")" << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << ")" << endl;
 #endif
 
     Profiler profiler("MatrixFile::getColumnAt");
@@ -280,7 +280,7 @@ MatrixFile::getColumnAt(size_t x, void *data)
 
         unsigned char set = 0;
         if (!seekTo(x)) {
-            std::cerr << "ERROR: MatrixFile::getColumnAt(" << x << "): Seek failed" << std::endl;
+            cerr << "ERROR: MatrixFile::getColumnAt(" << x << "): Seek failed" << endl;
             throw FileOperationFailed(m_fileName, "seek");
         }
 
@@ -290,7 +290,7 @@ MatrixFile::getColumnAt(size_t x, void *data)
             throw FileReadFailed(m_fileName);
         }
         if (!set) {
-            std::cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << "): Column has not been set" << std::endl;
+            cerr << "MatrixFile[" << m_fd << "]::getColumnAt(" << x << "): Column has not been set" << endl;
             return;
         }
     }
@@ -315,13 +315,13 @@ MatrixFile::haveSetColumnAt(size_t x) const
     Profiler profiler("MatrixFile::haveSetColumnAt");
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-    std::cerr << "MatrixFile[" << m_fd << "]::haveSetColumnAt(" << x << ")" << std::endl;
-//    std::cerr << ".";
+    cerr << "MatrixFile[" << m_fd << "]::haveSetColumnAt(" << x << ")" << endl;
+//    cerr << ".";
 #endif
 
     unsigned char set = 0;
     if (!seekTo(x)) {
-        std::cerr << "ERROR: MatrixFile::haveSetColumnAt(" << x << "): Seek failed" << std::endl;
+        cerr << "ERROR: MatrixFile::haveSetColumnAt(" << x << "): Seek failed" << endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
 
@@ -344,14 +344,14 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     if (m_fd < 0) return; // closed
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-    std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << ")" << std::endl;
-//    std::cerr << ".";
+    cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << ")" << endl;
+//    cerr << ".";
 #endif
 
     ssize_t w = 0;
 
     if (!seekTo(x)) {
-        std::cerr << "ERROR: MatrixFile::setColumnAt(" << x << "): Seek failed" << std::endl;
+        cerr << "ERROR: MatrixFile::setColumnAt(" << x << "): Seek failed" << endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
 
@@ -369,15 +369,15 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     }
 /*
     if (x == 0) {
-        std::cerr << "Wrote " << m_height * m_cellSize << " bytes, as follows:" << std::endl;
+        cerr << "Wrote " << m_height * m_cellSize << " bytes, as follows:" << endl;
         for (int i = 0; i < m_height * m_cellSize; ++i) {
-            std::cerr << (int)(((char *)data)[i]) << " ";
+            cerr << (int)(((char *)data)[i]) << " ";
         }
-        std::cerr << std::endl;
+        cerr << endl;
     }
 */
     if (!seekTo(x)) {
-        std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Seek failed" << std::endl;
+        cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Seek failed" << endl;
         throw FileOperationFailed(m_fileName, "seek");
     }
 
@@ -392,7 +392,7 @@ MatrixFile::setColumnAt(size_t x, const void *data)
     if (m_autoClose) {
         if (m_setColumns->isAllOn()) {
 #ifdef DEBUG_MATRIX_FILE
-            std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): All columns set: auto-closing" << std::endl;
+            cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): All columns set: auto-closing" << endl;
 #endif
             close();
 /*
@@ -401,7 +401,7 @@ MatrixFile::setColumnAt(size_t x, const void *data)
             for (int i = 0; i < m_width; ++i) {
                 if (m_setColumns->get(i)) ++set;
             }
-            std::cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Auto-close on, but not all columns set yet (" << set << " of " << m_width << ")" << std::endl;
+            cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): Auto-close on, but not all columns set yet (" << set << " of " << m_width << ")" << endl;
 */
         }
     }
@@ -411,7 +411,7 @@ bool
 MatrixFile::seekTo(size_t x) const
 {
     if (m_fd < 0) {
-        std::cerr << "ERROR: MatrixFile::seekTo: File not open" << std::endl;
+        cerr << "ERROR: MatrixFile::seekTo: File not open" << endl;
         return false;
     }
 
@@ -421,18 +421,18 @@ MatrixFile::seekTo(size_t x) const
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
     if (m_mode == ReadOnly) {
-        std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
+        cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << endl;
     }
 #endif
 
 #ifdef DEBUG_MATRIX_FILE_READ_SET
-    std::cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << std::endl;
+    cerr << "MatrixFile[" << m_fd << "]::seekTo(" << x << "): off = " << off << endl;
 #endif
 
     if (::lseek(m_fd, off, SEEK_SET) == (off_t)-1) {
         ::perror("Seek failed");
-        std::cerr << "ERROR: MatrixFile::seekTo(" << x 
-                  << ") = " << off << " failed" << std::endl;
+        cerr << "ERROR: MatrixFile::seekTo(" << x 
+                  << ") = " << off << " failed" << endl;
         return false;
     }
 

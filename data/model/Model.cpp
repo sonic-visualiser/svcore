@@ -59,13 +59,13 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-//    std::cerr << "Model(" << this << ")::aboutToDelete()" << std::endl;
+//    cerr << "Model(" << this << ")::aboutToDelete()" << endl;
 
     if (m_aboutToDelete) {
-        std::cerr << "WARNING: Model(" << this << ", \""
+        cerr << "WARNING: Model(" << this << ", \""
                   << objectName() << "\")::aboutToDelete: "
                   << "aboutToDelete called more than once for the same model"
-                  << std::endl;
+                  << endl;
     }
 
     emit aboutToBeDeleted();
@@ -141,7 +141,7 @@ Model::getAlignmentCompletion() const
     }
     int completion = 0;
     (void)m_alignment->isReady(&completion);
-//    std::cerr << " -> " << completion << std::endl;
+//    cerr << " -> " << completion << endl;
     return completion;
 }
 

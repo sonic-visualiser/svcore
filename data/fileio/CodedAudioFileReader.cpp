@@ -63,7 +63,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     if (m_cacheFileName != "") {
         if (!QFile(m_cacheFileName).remove()) {
-            std::cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << std::endl;
+            cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << endl;
         }
     }
 
@@ -97,7 +97,7 @@ CodedAudioFileReader::initialiseDecodeCache()
     SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
-        std::cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << std::endl;
+        cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
     }
     if (m_sampleRate == 0) {
@@ -146,7 +146,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
                 if (!m_cacheFileReader->isOK()) {
-                    std::cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << std::endl;
+                    cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << endl;
                     delete m_cacheFileReader;
                     m_cacheFileReader = 0;
                     m_cacheMode = CacheInMemory;
@@ -154,12 +154,12 @@ CodedAudioFileReader::initialiseDecodeCache()
                 }
 
             } else {
-                std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << std::endl;
+                cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << endl;
                 m_cacheMode = CacheInMemory;
             }
 
         } catch (DirectoryCreationFailed f) {
-            std::cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << std::endl;
+            cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
             m_cacheMode = CacheInMemory;
         }
     }
@@ -266,7 +266,7 @@ CodedAudioFileReader::finishDecodeCache()
     Profiler profiler("CodedAudioFileReader::finishDecodeCache", true);
 
     if (!m_initialised) {
-        std::cerr << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << std::endl;
+        cerr << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << endl;
         return;
     }
 

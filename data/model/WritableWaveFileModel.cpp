@@ -48,7 +48,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
             path = dir.filePath(QString("written_%1.wav")
                                 .arg((intptr_t)this));
         } catch (DirectoryCreationFailed f) {
-            std::cerr << "WritableWaveFileModel: Failed to create temporary directory" << std::endl;
+            cerr << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }
     }
@@ -58,7 +58,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     m_writer = new WavFileWriter(path, sampleRate, channels,
                                  WavFileWriter::WriteToTarget);
     if (!m_writer->isOK()) {
-        std::cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << std::endl;
+        cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << endl;
         delete m_writer; 
         m_writer = 0;
         return;
@@ -68,7 +68,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
 
     m_reader = new WavFileReader(source, true);
     if (!m_reader->getError().isEmpty()) {
-        std::cerr << "WritableWaveFileModel: Error in creating wave file reader" << std::endl;
+        cerr << "WritableWaveFileModel: Error in creating wave file reader" << endl;
         delete m_reader;
         m_reader = 0;
         return;
@@ -76,7 +76,7 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     
     m_model = new WaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
-        std::cerr << "WritableWaveFileModel: Error in creating wave file model" << std::endl;
+        cerr << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
         m_model = 0;
         delete m_reader;
@@ -114,7 +114,7 @@ WritableWaveFileModel::addSamples(float **samples, size_t count)
 #endif
 
     if (!m_writer->writeSamples(samples, count)) {
-        std::cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << std::endl;
+        cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << endl;
         return false;
     }
 

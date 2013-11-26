@@ -376,7 +376,7 @@ SamplePlayer::searchSamples()
             m_samples.push_back(std::pair<QString, QString>
                                 (file.baseName(), file.filePath()));
 #ifdef DEBUG_SAMPLE_PLAYER
-            std::cerr << "Found: " << dir[i].toLocal8Bit().data() << std::endl;
+            cerr << "Found: " << dir[i].toLocal8Bit().data() << endl;
 #endif
         }
     }
@@ -396,9 +396,9 @@ SamplePlayer::loadSampleData(QString path)
     info.format = 0;
     file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
     if (!file) {
-	std::cerr << "SamplePlayer::loadSampleData: Failed to open file "
+	cerr << "SamplePlayer::loadSampleData: Failed to open file "
 		  << path.toLocal8Bit().data() << ": "
-		  << sf_strerror(file) << std::endl;
+		  << sf_strerror(file) << endl;
 	return;
     }
     
@@ -504,8 +504,8 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 
 	    if (events[event_pos].type == SND_SEQ_EVENT_NOTEON) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                std::cerr << "SamplePlayer: found NOTEON at time " 
-                          << events[event_pos].time.tick << std::endl;
+                cerr << "SamplePlayer: found NOTEON at time " 
+                          << events[event_pos].time.tick << endl;
 #endif
 		snd_seq_ev_note_t n = events[event_pos].data.note;
 		if (n.velocity > 0) {
@@ -522,8 +522,8 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 	    } else if (events[event_pos].type == SND_SEQ_EVENT_NOTEOFF &&
 		       (!m_sustain || (*m_sustain < 0.001))) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                std::cerr << "SamplePlayer: found NOTEOFF at time " 
-                          << events[event_pos].time.tick << std::endl;
+                cerr << "SamplePlayer: found NOTEOFF at time " 
+                          << events[event_pos].time.tick << endl;
 #endif
 		snd_seq_ev_note_t n = events[event_pos].data.note;
 		m_offs[n.note] = 
@@ -549,7 +549,7 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 	}
 
 #ifdef DEBUG_SAMPLE_PLAYER
-        std::cerr << "SamplePlayer: have " << notecount << " note(s) sounding currently" << std::endl;
+        cerr << "SamplePlayer: have " << notecount << " note(s) sounding currently" << endl;
 #endif
 
 	pos += count;
@@ -589,7 +589,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 
 	if (rsi >= m_sampleCount) {
 #ifdef DEBUG_SAMPLE_PLAYER
-            std::cerr << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << std::endl;
+            cerr << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << endl;
 #endif
 	    m_ons[n] = -1;
 	    break;
@@ -608,7 +608,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 
 	    if (dist > releaseFrames) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                std::cerr << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << std::endl;
+                cerr << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << endl;
 #endif
 		m_ons[n] = -1;
 		break;

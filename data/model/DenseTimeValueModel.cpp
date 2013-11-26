@@ -33,7 +33,7 @@ DenseTimeValueModel::toDelimitedDataString(QString delimiter, size_t f0, size_t 
 {
     size_t ch = getChannelCount();
 
-    std::cerr << "f0 = " << f0 << ", f1 = " << f1 << std::endl;
+    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
 
     if (f1 <= f0) return "";
 

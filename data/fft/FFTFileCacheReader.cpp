@@ -44,7 +44,7 @@ FFTFileCacheReader::FFTFileCacheReader(FFTFileCacheWriter *writer) :
            writer->getWidth(),
            writer->getHeight() * 2 + m_factorSize))
 {
-//    std::cerr << "FFTFileCacheReader: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << std::endl;
+//    cerr << "FFTFileCacheReader: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << endl;
 }
 
 FFTFileCacheReader::~FFTFileCacheReader()
@@ -267,8 +267,8 @@ FFTFileCacheReader::populateReadBuf(size_t x) const
         }
         m_readbufGood = good;
     } catch (FileReadFailed f) {
-        std::cerr << "ERROR: FFTFileCacheReader::populateReadBuf: File read failed: "
-                  << f.what() << std::endl;
+        cerr << "ERROR: FFTFileCacheReader::populateReadBuf: File read failed: "
+                  << f.what() << endl;
         memset(m_readbuf, 0, m_mfc->getHeight() * 2 * m_mfc->getCellSize());
     }
     m_readbufCol = x;

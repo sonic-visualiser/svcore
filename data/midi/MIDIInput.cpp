@@ -80,10 +80,10 @@ MIDIInput::postEvent(MIDIEvent e)
     int count = 0, max = 5;
     while (m_buffer.getWriteSpace() == 0) {
         if (count == max) {
-            std::cerr << "ERROR: MIDIInput::postEvent: MIDI event queue is full and not clearing -- abandoning incoming event" << std::endl;
+            cerr << "ERROR: MIDIInput::postEvent: MIDI event queue is full and not clearing -- abandoning incoming event" << endl;
             return;
         }
-        std::cerr << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << std::endl;
+        cerr << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << endl;
         SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);

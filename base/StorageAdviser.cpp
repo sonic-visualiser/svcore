@@ -49,7 +49,7 @@ StorageAdviser::recommend(Criteria criteria,
     try {
         path = TempDirectory::getInstance()->getPath();
     } catch (std::exception e) {
-        std::cerr << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << std::endl;
+        cerr << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
         return Recommendation(UseMemory | ConserveSpace);
     }
     int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
@@ -69,7 +69,7 @@ StorageAdviser::recommend(Criteria criteria,
     }
 
 #ifdef DEBUG_STORAGE_ADVISER
-    std::cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << ", min " << minimumSize << ", max " << maximumSize << std::endl;
+    cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << ", min " << minimumSize << ", max " << maximumSize << endl;
 #endif
 
     //!!! We have a potentially serious problem here if multiple
@@ -106,8 +106,8 @@ StorageAdviser::recommend(Criteria criteria,
     else discStatus = Sufficient;
 
 #ifdef DEBUG_STORAGE_ADVISER
-    std::cerr << "Memory status: " << memoryStatus << ", disc status "
-              << discStatus << std::endl;
+    cerr << "Memory status: " << memoryStatus << ", disc status "
+              << discStatus << endl;
 #endif
 
     int recommendation = NoRecommendation;
@@ -189,8 +189,8 @@ StorageAdviser::notifyPlannedAllocation(AllocationArea area, int size)
 {
     if (area == MemoryAllocation) m_memoryPlanned += size;
     else if (area == DiscAllocation) m_discPlanned += size;
-//    std::cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
-//              << m_discPlanned << std::endl;
+//    cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
+//              << m_discPlanned << endl;
 }
 
 void
@@ -203,8 +203,8 @@ StorageAdviser::notifyDoneAllocation(AllocationArea area, int size)
         if (m_discPlanned > size) m_discPlanned -= size; 
         else m_discPlanned = 0;
     }
-//    std::cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
-//              << m_discPlanned << std::endl;
+//    cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
+//              << m_discPlanned << endl;
 }
 
 void

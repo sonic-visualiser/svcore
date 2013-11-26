@@ -43,10 +43,10 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
 
     while (xratio > 1) {
         if (xratio & 0x1) {
-            std::cerr << "ERROR: FFTFuzzyAdapter: Window increment ratio "
+            cerr << "ERROR: FFTFuzzyAdapter: Window increment ratio "
                       << windowIncrement << " / "
                       << m_server->getWindowIncrement()
-                      << " must be a power of two" << std::endl;
+                      << " must be a power of two" << endl;
             assert(!(xratio & 0x1));
         }
         ++m_xshift;
@@ -55,9 +55,9 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
 
     while (yratio > 1) {
         if (yratio & 0x1) {
-            std::cerr << "ERROR: FFTFuzzyAdapter: FFT size ratio "
+            cerr << "ERROR: FFTFuzzyAdapter: FFT size ratio "
                       << m_server->getFFTSize() << " / " << fftSize
-                      << " must be a power of two" << std::endl;
+                      << " must be a power of two" << endl;
             assert(!(yratio & 0x1));
         }
         ++m_yshift;

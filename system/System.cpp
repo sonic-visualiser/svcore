@@ -155,8 +155,8 @@ GetRealMemoryMBAvailable(int &available, int &total)
         lMEMORYSTATUSEX lms;
 	lms.dwLength = sizeof(lms);
 	if (!ex(&lms)) {
-            std::cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                      << GetLastError() << std::endl;
+            cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
+                      << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -220,8 +220,8 @@ GetRealMemoryMBAvailable(int &available, int &total)
             QString unit = "kB";
             if (elements.size() > 2) unit = elements[2];
             int size = elements[1].toInt();
-//            std::cerr << "have size \"" << size << "\", unit \""
-//                      << unit << "\"" << std::endl;
+//            cerr << "have size \"" << size << "\", unit \""
+//                      << unit << "\"" << endl;
             if (unit.toLower() == "gb") size = size * 1024;
             else if (unit.toLower() == "mb") size = size;
             else if (unit.toLower() == "kb") size = size / 1024;
@@ -254,8 +254,8 @@ GetDiscSpaceMBAvailable(const char *path)
         if (a > INT_MAX) a = INT_MAX;
         return int(a);
     } else {
-        std::cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-                  << GetLastError() << std::endl;
+        cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
+                  << GetLastError() << endl;
         return -1;
     }
 #else
@@ -263,7 +263,7 @@ GetDiscSpaceMBAvailable(const char *path)
     if (!statvfs(path, &buf)) {
         // do the multiplies and divides in this order to reduce the
         // likelihood of arithmetic overflow
-//        std::cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << std::endl;
+//        cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << endl;
         uint64_t available = ((buf.f_bavail / 1024) * buf.f_bsize) / 1024;
         if (available > INT_MAX) available = INT_MAX;
         return int(available);

@@ -95,7 +95,7 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
     if (factory) {
 	std::vector<QString> tmp = factory->getPluginIdentifiers();
 	for (size_t i = 0; i < tmp.size(); ++i) {
-//            std::cerr << "identifier: " << tmp[i] << std::endl;
+//            cerr << "identifier: " << tmp[i] << endl;
 	    rv.push_back(tmp[i]);
 	}
     }
@@ -135,7 +135,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
             if (!libraryHandle) {
-                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << std::endl;
+                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
                 continue;
             }
 
@@ -147,9 +147,9 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                 DLSYM(libraryHandle, "vampGetPluginDescriptor");
 
             if (!fn) {
-                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << std::endl;
+                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
                 if (DLCLOSE(libraryHandle) != 0) {
-                    std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << std::endl;
+                    cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
                 }
                 continue;
             }
@@ -167,12 +167,12 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             while ((descriptor = fn(VAMP_API_VERSION, index))) {
 
                 if (known.find(descriptor->identifier) != known.end()) {
-                    std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
+                    cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
                               << soname.toStdString()
                               << " returns the same plugin identifier \""
                               << descriptor->identifier << "\" at indices "
                               << known[descriptor->identifier] << " and "
-                              << index << std::endl;
+                              << index << endl;
                     SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
                     ok = false;
                     break;
@@ -200,7 +200,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
             }
             
             if (DLCLOSE(libraryHandle) != 0) {
-                std::cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << std::endl;
+                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
             }
 	}
     }
@@ -317,13 +317,13 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     QString found = findPluginFile(soname);
 
     if (found == "") {
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find library file " << soname << std::endl;
+        cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find library file " << soname << endl;
         return 0;
     } else if (found != soname) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
         SVDEBUG << "FeatureExtractionPluginFactory::instantiatePlugin: Given library name was " << soname << ", found at " << found << endl;
-        std::cerr << soname << " -> " << found << std::endl;
+        cerr << soname << " -> " << found << endl;
 #endif
 
     }        
@@ -333,7 +333,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
     if (!libraryHandle) {
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname << ": " << DLERROR() << std::endl;
+        cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to load library " << soname << ": " << DLERROR() << endl;
         return 0;
     }
 
@@ -351,7 +351,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     }
 
     if (!descriptor) {
-        std::cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find plugin \"" << label << "\" in library " << soname << std::endl;
+        cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Failed to find plugin \"" << label << "\" in library " << soname << endl;
         goto done;
     }
 
@@ -369,7 +369,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 done:
     if (!rv) {
         if (DLCLOSE(libraryHandle) != 0) {
-            std::cerr << "WARNING: FeatureExtractionPluginFactory::instantiatePlugin: Failed to unload library " << soname << std::endl;
+            cerr << "WARNING: FeatureExtractionPluginFactory::instantiatePlugin: Failed to unload library " << soname << endl;
         }
     }
 
@@ -423,18 +423,18 @@ FeatureExtractionPluginFactory::generateTaxonomy()
 //	    SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
 
 	    if (file.open(QIODevice::ReadOnly)) {
-//		    std::cerr << "...opened" << std::endl;
+//		    cerr << "...opened" << endl;
 		QTextStream stream(&file);
 		QString line;
 
 		while (!stream.atEnd()) {
 		    line = stream.readLine();
-//		    std::cerr << "line is: \"" << line << "\"" << std::endl;
+//		    cerr << "line is: \"" << line << "\"" << endl;
 		    QString id = PluginIdentifier::canonicalise
                         (line.section("::", 0, 0));
 		    QString cat = line.section("::", 1, 1);
 		    m_taxonomy[id] = cat;
-//		    std::cerr << "FeatureExtractionPluginFactory: set id \"" << id << "\" to cat \"" << cat << "\"" << std::endl;
+//		    cerr << "FeatureExtractionPluginFactory: set id \"" << id << "\" to cat \"" << cat << "\"" << endl;
 		}
 	    }
 	}

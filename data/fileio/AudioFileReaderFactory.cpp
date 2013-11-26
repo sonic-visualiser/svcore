@@ -80,7 +80,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
     SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
 
     if (!source.isOK()) {
-        std::cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << std::endl;
+        cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
         return 0;
     }
 
@@ -315,20 +315,20 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             SVDEBUG << "AudioFileReaderFactory: Reader is OK" << endl;
             return reader;
         }
-        std::cerr << "AudioFileReaderFactory: Preferred reader for "
+        cerr << "AudioFileReaderFactory: Preferred reader for "
                   << "url \"" << source.getLocation().toStdString()
                   << "\" (content type \""
                   << source.getContentType() << "\") failed";
 
         if (reader->getError() != "") {
-            std::cerr << ": \"" << reader->getError() << "\"";
+            cerr << ": \"" << reader->getError() << "\"";
         }
-        std::cerr << std::endl;
+        cerr << endl;
         delete reader;
         reader = 0;
     }
 
-    std::cerr << "AudioFileReaderFactory: No reader" << std::endl;
+    cerr << "AudioFileReaderFactory: No reader" << endl;
     return reader;
 }
 

@@ -29,9 +29,6 @@
 #include <set>
 #include <map>
 
-using std::cerr;
-using std::endl;
-
 Profiles* Profiles::m_instance = 0;
 
 Profiles* Profiles::getInstance()

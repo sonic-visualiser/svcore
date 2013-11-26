@@ -34,9 +34,6 @@
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
 
-using std::cerr;
-using std::endl;
-
 using Dataquay::Uri;
 using Dataquay::Node;
 using Dataquay::Nodes;
@@ -371,7 +368,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
         s << uri << " a vamp:Transform ;" << endl;
         s << "    vamp:plugin <" << QUrl(pluginUri).toEncoded().data() << "> ;" << endl;
     } else {
-        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId << "\", writing synthetic plugin and library resources" << std::endl;
+        cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId << "\", writing synthetic plugin and library resources" << endl;
         QString type, soname, label;
         PluginIdentifier::parseIdentifier(pluginId, type, soname, label);
         s << uri << "_plugin a vamp:Plugin ;" << endl;
@@ -388,7 +385,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     QString outputUri = description.getOutputUri(outputId);
 
     if (transform.getOutput() != "" && outputUri == "") {
-        std::cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput() << "\", writing a synthetic output resource" << std::endl;
+        cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput() << "\", writing a synthetic output resource" << endl;
     }
 
     if (transform.getStepSize() != 0) {
