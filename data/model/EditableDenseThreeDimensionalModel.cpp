@@ -177,7 +177,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 {
     assert(index < m_data.size());
 
-    //std::cout << "truncateAndStore(" << index << ", " << values.size() << ")" << std::endl;
+    //cout << "truncateAndStore(" << index << ", " << values.size() << ")" << endl;
 
     // The default case is to store the entire column at m_data[index]
     // and place 0 at m_trunc[index] to indicate that it has not been
@@ -274,8 +274,8 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 
 //    given += values.size();
 //    stored += values.size();
-//    std::cout << "given: " << given << ", stored: " << stored << " (" 
-//              << ((float(stored) / float(given)) * 100.f) << "%)" << std::endl;
+//    cout << "given: " << given << ", stored: " << stored << " (" 
+//              << ((float(stored) / float(given)) * 100.f) << "%)" << endl;
 
     // default case if nothing wacky worked out
     m_data[index] = values;
@@ -302,7 +302,7 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
     Column p = expandAndRetrieve(index - tdist);
     int psize = p.size(), csize = c.size();
     if (psize != m_yBinCount) {
-        std::cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << std::endl;
+        cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
     if (top) {
         for (int i = csize; i < psize; ++i) {

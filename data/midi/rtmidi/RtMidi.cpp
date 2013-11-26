@@ -40,6 +40,9 @@
 #include "RtMidi.h"
 #include <sstream>
 
+using std::cerr;
+using std::endl;
+
 //*********************************************************************//
 //  Common RtMidi Definitions
 //*********************************************************************//
@@ -52,15 +55,15 @@ RtMidi :: RtMidi()
 void RtMidi :: error( RtError::Type type )
 {
   if (type == RtError::WARNING) {
-    std::cerr << '\n' << errorString_ << "\n\n";
+    cerr << '\n' << errorString_ << "\n\n";
   }
   else if (type == RtError::DEBUG_WARNING) {
 #if defined(__RTMIDI_DEBUG__)
-    std::cerr << '\n' << errorString_ << "\n\n";
+    cerr << '\n' << errorString_ << "\n\n";
 #endif
   }
   else {
-    std::cerr << '\n' << errorString_ << "\n\n";
+    cerr << '\n' << errorString_ << "\n\n";
     throw RtError( errorString_, type );
   }
 }
@@ -242,7 +245,7 @@ void midiInputCallback( const MIDIPacketList *list, void *procRef, void *srcRef 
           if ( data->queueLimit > data->queue.size() )
             data->queue.push( message );
           else
-            std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+            cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
         }
         message.bytes.clear();
       }
@@ -304,7 +307,7 @@ void midiInputCallback( const MIDIPacketList *list, void *procRef, void *srcRef 
               if ( data->queueLimit > data->queue.size() )
                 data->queue.push( message );
               else
-                std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+                cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
             }
             message.bytes.clear();
           }
@@ -715,13 +718,13 @@ extern "C" void *alsaMidiHandler( void *ptr )
   result = snd_midi_event_new( 0, &apiData->coder );
   if ( result < 0 ) {
     data->doInput = false;
-    std::cerr << "\nRtMidiIn::alsaMidiHandler: error initializing MIDI event parser!\n\n";
+    cerr << "\nRtMidiIn::alsaMidiHandler: error initializing MIDI event parser!\n\n";
     return 0;
   }
   unsigned char *buffer = (unsigned char *) malloc( apiData->bufferSize );
   if ( buffer == NULL ) {
     data->doInput = false;
-    std::cerr << "\nRtMidiIn::alsaMidiHandler: error initializing buffer memory!\n\n";
+    cerr << "\nRtMidiIn::alsaMidiHandler: error initializing buffer memory!\n\n";
     return 0;
   }
   snd_midi_event_init( apiData->coder );
@@ -738,11 +741,11 @@ extern "C" void *alsaMidiHandler( void *ptr )
     // If here, there should be data.
     result = snd_seq_event_input( apiData->seq, &ev );
     if ( result == -ENOSPC ) {
-      std::cerr << "\nRtMidiIn::alsaMidiHandler: MIDI input buffer overrun!\n\n";
+      cerr << "\nRtMidiIn::alsaMidiHandler: MIDI input buffer overrun!\n\n";
       continue;
     }
     else if ( result <= 0 ) {
-      std::cerr << "RtMidiIn::alsaMidiHandler: unknown MIDI input error!\n";
+      cerr << "RtMidiIn::alsaMidiHandler: unknown MIDI input error!\n";
       continue;
     }
 
@@ -755,7 +758,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
 
 		case SND_SEQ_EVENT_PORT_SUBSCRIBED:
 #if defined(__RTMIDI_DEBUG__)
-      std::cout << "RtMidiIn::alsaMidiHandler: port connection made!\n";
+      cout << "RtMidiIn::alsaMidiHandler: port connection made!\n";
 #endif
       break;
 
@@ -766,7 +769,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
       //not related to this particular connection.  As it stands, I
       //see no data provided in the "source" and "dest" fields so
       //there is nothing we can do about this at this time.
-      // std::cout << "sender = " << ev->source.client << ", dest = " << ev->dest.port << endl;
+      // cout << "sender = " << ev->source.client << ", dest = " << ev->dest.port << endl;
 #endif
       //data->doInput = false;
       break;
@@ -788,7 +791,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
         buffer = (unsigned char *) malloc( apiData->bufferSize );
         if ( buffer == NULL ) {
           data->doInput = false;
-          std::cerr << "\nRtMidiIn::alsaMidiHandler: error resizing buffer memory!\n\n";
+          cerr << "\nRtMidiIn::alsaMidiHandler: error resizing buffer memory!\n\n";
           break;
         }
       }
@@ -797,7 +800,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
       nBytes = snd_midi_event_decode( apiData->coder, buffer, apiData->bufferSize, ev );
       if ( nBytes <= 0 ) {
 #if defined(__RTMIDI_DEBUG__)
-        std::cerr << "\nRtMidiIn::alsaMidiHandler: event parsing error or not a MIDI event!\n\n";
+        cerr << "\nRtMidiIn::alsaMidiHandler: event parsing error or not a MIDI event!\n\n";
 #endif
         break;
       }
@@ -847,7 +850,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
       if ( data->queueLimit > data->queue.size() )
         data->queue.push( message );
       else
-        std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+        cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
     }
   }
 
@@ -1379,7 +1382,7 @@ extern "C" void *irixMidiHandler( void *ptr )
   int fd = mdGetFd( apiData->port );
   if ( fd < 0 ) {
     data->doInput = false;
-    std::cerr << "\nRtMidiIn::irixMidiHandler: error getting port descriptor!\n\n";
+    cerr << "\nRtMidiIn::irixMidiHandler: error getting port descriptor!\n\n";
     return 0;
   }
 
@@ -1404,7 +1407,7 @@ extern "C" void *irixMidiHandler( void *ptr )
     // If here, there should be data.
     result = mdReceive( apiData->port, &event, 1);
     if ( result <= 0 ) {
-      std::cerr << "\nRtMidiIn::irixMidiHandler: MIDI input read error!\n\n";
+      cerr << "\nRtMidiIn::irixMidiHandler: MIDI input read error!\n\n";
       continue;
     }
 
@@ -1433,7 +1436,7 @@ extern "C" void *irixMidiHandler( void *ptr )
               if ( data->queueLimit > data->queue.size() )
                 data->queue.push( message );
               else
-                std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+                cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
             }
             message.bytes.clear();
           }
@@ -1477,7 +1480,7 @@ extern "C" void *irixMidiHandler( void *ptr )
         if ( data->queueLimit > data->queue.size() )
           data->queue.push( message );
         else
-          std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+          cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
       }
       message.bytes.clear();
     }
@@ -1837,7 +1840,7 @@ static void CALLBACK midiInputCallback( HMIDIOUT hmin,
       //if ( sysex->dwBytesRecorded > 0 ) {
       MMRESULT result = midiInAddBuffer( apiData->inHandle, apiData->sysexBuffer, sizeof(MIDIHDR) );
       if ( result != MMSYSERR_NOERROR )
-        std::cerr << "\nRtMidiIn::midiInputCallback: error sending sysex to Midi device!!\n\n";
+        cerr << "\nRtMidiIn::midiInputCallback: error sending sysex to Midi device!!\n\n";
 
       if ( data->ignoreFlags & 0x01 ) return;
     }
@@ -1853,7 +1856,7 @@ static void CALLBACK midiInputCallback( HMIDIOUT hmin,
     if ( data->queueLimit > data->queue.size() )
       data->queue.push( apiData->message );
     else
-      std::cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
+      cerr << "\nRtMidiIn: message queue limit reached!!\n\n";
   }
 
   // Clear the vector for the next input message.

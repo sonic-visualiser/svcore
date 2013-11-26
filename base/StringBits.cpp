@@ -144,7 +144,7 @@ void testSplit()
 	QStringList l = splitQuoted(tests[j], ' ');
 	for (int i = 0; i < l.size(); ++i) {
 	    if (i > 0) cout << ";";
-	    cout << l[i].toStdString();
+	    cout << l[i];
 	}
 	cout << ")" << endl;
     }

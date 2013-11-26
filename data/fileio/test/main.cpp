@@ -22,10 +22,10 @@ int main(int argc, char *argv[])
     }
 
     if (bad > 0) {
-	std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
+	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
 	return 1;
     } else {
-	std::cerr << "All tests passed" << std::endl;
+	cerr << "All tests passed" << endl;
 	return 0;
     }
 }

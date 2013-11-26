@@ -77,7 +77,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
 
-    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << endl;
+    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path << "\"" << endl;
 
     QByteArray ba = m_path.toLocal8Bit();
 
@@ -124,7 +124,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_fileRate = m_d->asbd.mSampleRate;
 
-    std::cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_fileRate << " Hz" << std::endl;
+    cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_fileRate << " Hz" << endl;
 
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
@@ -174,7 +174,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
         //!!! progress?
 
-        //    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
+        //    cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << endl;
 
         // buffers are interleaved unless specified otherwise
         addSamplesToDecodeCache((float *)m_d->buffer.mBuffers[0].mData, framesRead);
@@ -191,7 +191,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
 CoreAudioFileReader::~CoreAudioFileReader()
 {
-    std::cerr << "CoreAudioFileReader::~CoreAudioFileReader" << std::endl;
+    cerr << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
 
     if (m_d->valid) {
         ExtAudioFileDispose(m_d->file);

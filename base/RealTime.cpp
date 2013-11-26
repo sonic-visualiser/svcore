@@ -23,11 +23,10 @@
 #include <cstdlib>
 #include <sstream>
 
-using std::cerr;
-using std::endl;
-
 #include "RealTime.h"
 #include "sys/time.h"
+
+#include "Debug.h"
 
 #include "Preferences.h"
 
@@ -129,12 +128,12 @@ RealTime::fromXsdDuration(std::string xsdd)
     }
 
     if (year > 0) {
-        std::cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero year.\nWith no origin and a limited data size, I will treat a year as exactly 31556952\nseconds and you should expect overflow and/or poor results." << std::endl;
+        cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero year.\nWith no origin and a limited data size, I will treat a year as exactly 31556952\nseconds and you should expect overflow and/or poor results." << endl;
         t = t + RealTime(year * 31556952, 0);
     }
 
     if (month > 0) {
-        std::cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero month.\nWith no origin and a limited data size, I will treat a month as exactly 2629746\nseconds and you should expect overflow and/or poor results." << std::endl;
+        cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero month.\nWith no origin and a limited data size, I will treat a month as exactly 2629746\nseconds and you should expect overflow and/or poor results." << endl;
         t = t + RealTime(month * 2629746, 0);
     }
 
@@ -341,7 +340,7 @@ RealTime::toFrameText(int fps) const
 
     out << ":";
 
-//    std::cerr << "div = " << div << ", f =  "<< f << std::endl;
+//    cerr << "div = " << div << ", f =  "<< f << endl;
 
     while (div) {
         int d = (f / div) % 10;
@@ -351,7 +350,7 @@ RealTime::toFrameText(int fps) const
 	
     std::string s = out.str();
 
-//    std::cerr << "converted " << toString() << " to " << s << std::endl;
+//    cerr << "converted " << toString() << " to " << s << endl;
 
     return s;
 }

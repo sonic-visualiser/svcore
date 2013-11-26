@@ -26,6 +26,8 @@
 
 #include <samplerate.h>
 
+#include "Debug.h"
+
 class Resampler::D
 {
 public:
@@ -144,7 +146,7 @@ Resampler::D::resampleInterleaved(float *in, float *out,
     //!!! check err, respond appropriately
 
     if (data.input_frames_used != incount) {
-        std::cerr << "Resampler: NOTE: input_frames_used == " << data.input_frames_used << " (while incount = " << incount << ")" << std::endl;
+        cerr << "Resampler: NOTE: input_frames_used == " << data.input_frames_used << " (while incount = " << incount << ")" << endl;
     }
 
     return data.output_frames_gen;

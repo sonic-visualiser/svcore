@@ -17,7 +17,7 @@
 
 #include <qglobal.h>
 
-#ifdef Q_WS_WIN32
+#ifdef Q_OS_WIN32
 
 #include <fcntl.h>
 
@@ -57,7 +57,7 @@ void redirectStderr()
 
 extern void svSystemSpecificInitialisation()
 {
-#ifdef Q_WS_WIN32
+#ifdef Q_OS_WIN32
     redirectStderr();
 
     // Remove the CWD from the DLL search path, just in case

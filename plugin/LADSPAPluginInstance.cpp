@@ -264,7 +264,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 		if (!strcmp(m_descriptor->PortNames[i], "latency") ||
 		    !strcmp(m_descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_LADSPA
-		    std::cerr << "Wooo! We have a latency port!" << std::endl;
+		    cerr << "Wooo! We have a latency port!" << endl;
 #endif
 		    m_latencyPort = data;
 		}
@@ -382,14 +382,14 @@ LADSPAPluginInstance::instantiate(unsigned long sampleRate)
     if (!m_descriptor) return;
 
 #ifdef DEBUG_LADSPA
-    std::cout << "LADSPAPluginInstance::instantiate - plugin unique id = "
-              << m_descriptor->UniqueID << std::endl;
+    cout << "LADSPAPluginInstance::instantiate - plugin unique id = "
+              << m_descriptor->UniqueID << endl;
 #endif
 
     if (!m_descriptor->instantiate) {
-	std::cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+	cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
 		  << ":" << m_descriptor->Label
-		  << " has no instantiate method!" << std::endl;
+		  << " has no instantiate method!" << endl;
 	return;
     }
 
@@ -562,9 +562,9 @@ LADSPAPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->cleanup) {
-	std::cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+	cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
 		  << ":" << m_descriptor->Label
-		  << " has no cleanup method!" << std::endl;
+		  << " has no cleanup method!" << endl;
 	return;
     }
 

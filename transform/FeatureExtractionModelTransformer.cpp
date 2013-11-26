@@ -180,7 +180,7 @@ FeatureExtractionModelTransformer::createOutputModel()
 {
     DenseTimeValueModel *input = getConformingInput();
 
-//    std::cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << std::endl;
+//    cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << endl;
     
     PluginRDFDescription description(m_transform.getPluginIdentifier());
     QString outputId = m_transform.getOutput();
@@ -193,8 +193,8 @@ FeatureExtractionModelTransformer::createOutputModel()
 	binCount = m_descriptor->binCount;
     }
 
-//    std::cerr << "FeatureExtractionModelTransformer: output bin count "
-//	      << binCount << std::endl;
+//    cerr << "FeatureExtractionModelTransformer: output bin count "
+//	      << binCount << endl;
 
     if (binCount > 0 && m_descriptor->hasKnownExtents) {
 	minValue = m_descriptor->minValue;
@@ -208,8 +208,8 @@ FeatureExtractionModelTransformer::createOutputModel()
     if (m_descriptor->sampleType != 
         Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
         if (m_descriptor->sampleRate > input->getSampleRate()) {
-            std::cerr << "WARNING: plugin reports output sample rate as "
-                      << m_descriptor->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << std::endl;
+            cerr << "WARNING: plugin reports output sample rate as "
+                      << m_descriptor->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << endl;
         }
     }
 
@@ -540,7 +540,7 @@ FeatureExtractionModelTransformer::run()
                 }
                 error = fftModels[ch]->getError();
                 if (error != "") {
-                    std::cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << std::endl;
+                    cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
                     m_abandoned = true;
                     m_message = error;
                 }
@@ -655,11 +655,11 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
-//    std::cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
+//    cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
 //              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
 //              << ", timestamp = " << feature.timestamp << ", hasDuration = "
 //              << feature.hasDuration << ", duration = " << feature.duration
-//              << std::endl;
+//              << endl;
 
     int binCount = 1;
     if (m_descriptor->hasFixedBinCount) {
@@ -672,10 +672,10 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	if (!feature.hasTimestamp) {
-	    std::cerr
+	    cerr
 		<< "WARNING: FeatureExtractionModelTransformer::addFeature: "
 		<< "Feature has variable sample rate but no timestamp!"
-		<< std::endl;
+		<< endl;
 	    return;
 	} else {
 	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp, inputRate);

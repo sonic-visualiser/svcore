@@ -17,11 +17,13 @@
 
 #include <iostream>
 
+#include "Debug.h"
+
 FileNotFound::FileNotFound(QString file) throw() :
     m_file(file)
 {
-    std::cerr << "ERROR: File not found: "
-              << file << std::endl;
+    cerr << "ERROR: File not found: "
+              << file << endl;
 }
 
 const char *
@@ -34,8 +36,8 @@ FileNotFound::what() const throw()
 FailedToOpenFile::FailedToOpenFile(QString file) throw() :
     m_file(file)
 {
-    std::cerr << "ERROR: Failed to open file: "
-              << file << std::endl;
+    cerr << "ERROR: Failed to open file: "
+              << file << endl;
 }
 
 const char *
@@ -48,8 +50,8 @@ FailedToOpenFile::what() const throw()
 DirectoryCreationFailed::DirectoryCreationFailed(QString directory) throw() :
     m_directory(directory)
 {
-    std::cerr << "ERROR: Directory creation failed for directory: "
-              << directory << std::endl;
+    cerr << "ERROR: Directory creation failed for directory: "
+              << directory << endl;
 }
 
 const char *
@@ -62,8 +64,8 @@ DirectoryCreationFailed::what() const throw()
 FileReadFailed::FileReadFailed(QString file) throw() :
     m_file(file)
 {
-    std::cerr << "ERROR: File read failed for file: "
-              << file << std::endl;
+    cerr << "ERROR: File read failed for file: "
+              << file << endl;
 }
 
 const char *
@@ -77,8 +79,8 @@ FileOperationFailed::FileOperationFailed(QString file, QString op) throw() :
     m_file(file),
     m_operation(op)
 {
-    std::cerr << "ERROR: File " << op << " failed for file: "
-              << file << std::endl;
+    cerr << "ERROR: File " << op << " failed for file: "
+              << file << endl;
 }
 
 const char *
@@ -95,9 +97,9 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
     m_required(required),
     m_available(available)
 {
-    std::cerr << "ERROR: Not enough disc space available in "
+    cerr << "ERROR: Not enough disc space available in "
               << directory << ": need " << required
-              << ", only have " << available << std::endl;
+              << ", only have " << available << endl;
 }
 
 InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
@@ -105,8 +107,8 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
     m_required(0),
     m_available(0)
 {
-    std::cerr << "ERROR: Not enough disc space available in "
-              << directory << std::endl;
+    cerr << "ERROR: Not enough disc space available in "
+              << directory << endl;
 }
 
 const char *
@@ -124,8 +126,8 @@ InsufficientDiscSpace::what() const throw()
 AllocationFailed::AllocationFailed(QString purpose) throw() :
     m_purpose(purpose)
 {
-    std::cerr << "ERROR: Allocation failed: " << purpose.toStdString()
-              << std::endl;
+    cerr << "ERROR: Allocation failed: " << purpose
+              << endl;
 }
 
 const char *

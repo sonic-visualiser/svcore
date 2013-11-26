@@ -81,7 +81,7 @@ PlayParameters::toXml(QTextStream &stream,
 void
 PlayParameters::setPlayMuted(bool muted)
 {
-//    std::cerr << "PlayParameters: setPlayMuted(" << muted << ")" << std::endl;
+//    cerr << "PlayParameters: setPlayMuted(" << muted << ")" << endl;
     if (m_playMuted != muted) {
         m_playMuted = muted;
         emit playMutedChanged(muted);
@@ -93,7 +93,7 @@ PlayParameters::setPlayMuted(bool muted)
 void
 PlayParameters::setPlayAudible(bool audible)
 {
-//    std::cerr << "PlayParameters(" << this << "): setPlayAudible(" << audible << ")" << std::endl;
+//    cerr << "PlayParameters(" << this << "): setPlayAudible(" << audible << ")" << endl;
     setPlayMuted(!audible);
 }
 
@@ -132,7 +132,7 @@ PlayParameters::setPlayPluginConfiguration(QString configuration)
 {
     if (m_playPluginConfiguration != configuration) {
         m_playPluginConfiguration = configuration;
-//        std::cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << std::endl;
+//        cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << endl;
         emit playPluginConfigurationChanged(configuration);
         emit playParametersChanged();
     }

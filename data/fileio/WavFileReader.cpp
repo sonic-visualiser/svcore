@@ -40,9 +40,9 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
-	std::cerr << "WavFileReader::initialize: Failed to open file at \""
+	cerr << "WavFileReader::initialize: Failed to open file at \""
                   << m_path << "\" ("
-		  << sf_strerror(m_file) << ")" << std::endl;
+		  << sf_strerror(m_file) << ")" << endl;
 
 	if (m_file) {
 	    m_error = QString("Couldn't load audio file '%1':\n%2")
@@ -67,14 +67,14 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
         // every file type of "at least" the historical period of Ogg
         // or FLAC as non-seekable.
         int type = m_fileInfo.format & SF_FORMAT_TYPEMASK;
-//        std::cerr << "WavFileReader: format type is " << type << " (flac, ogg are " << SF_FORMAT_FLAC << ", " << SF_FORMAT_OGG << ")" << std::endl;
+//        cerr << "WavFileReader: format type is " << type << " (flac, ogg are " << SF_FORMAT_FLAC << ", " << SF_FORMAT_OGG << ")" << endl;
         if (type >= SF_FORMAT_FLAC || type >= SF_FORMAT_OGG) {
-//            std::cerr << "WavFileReader: Recording as non-seekable" << std::endl;
+//            cerr << "WavFileReader: Recording as non-seekable" << endl;
             m_seekable = false;
         }
     }
 
-//    std::cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", seekable " << m_seekable << std::endl;
+//    cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", seekable " << m_seekable << endl;
 
 }
 
@@ -95,8 +95,8 @@ WavFileReader::updateFrameCount()
         sf_close(m_file);
         m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
         if (!m_file || m_fileInfo.channels <= 0) {
-            std::cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
-                      << sf_strerror(m_file) << ")" << std::endl;
+            cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
+                      << sf_strerror(m_file) << ")" << endl;
         }
     }
 
@@ -110,7 +110,7 @@ WavFileReader::updateFrameCount()
     }
 
     if (m_frameCount != prevCount) {
-//        std::cerr << "frameCountChanged" << std::endl;
+//        cerr << "frameCountChanged" << endl;
         emit frameCountChanged();
     }
 }
@@ -151,21 +151,21 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
     if (start != m_lastStart || count != m_lastCount) {
 
 	if (sf_seek(m_file, start, SEEK_SET) < 0) {
-//            std::cerr << "sf_seek failed" << std::endl;
+//            cerr << "sf_seek failed" << endl;
 	    return;
 	}
 	
 	if (count * m_fileInfo.channels > m_bufsiz) {
-//	    std::cerr << "WavFileReader: Reallocating buffer for " << count
+//	    cerr << "WavFileReader: Reallocating buffer for " << count
 //		      << " frames, " << m_fileInfo.channels << " channels: "
-//		      << m_bufsiz << " floats" << std::endl;
+//		      << m_bufsiz << " floats" << endl;
 	    m_bufsiz = count * m_fileInfo.channels;
 	    delete[] m_buffer;
 	    m_buffer = new float[m_bufsiz];
 	}
 	
 	if ((readCount = sf_readf_float(m_file, m_buffer, count)) < 0) {
-//            std::cerr << "sf_readf_float failed" << std::endl;
+//            cerr << "sf_readf_float failed" << endl;
 	    return;
 	}
 
@@ -175,7 +175,7 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 
     for (size_t i = 0; i < count * m_fileInfo.channels; ++i) {
         if (i >= m_bufsiz) {
-            std::cerr << "INTERNAL ERROR: WavFileReader::getInterleavedFrames: " << i << " >= " << m_bufsiz << std::endl;
+            cerr << "INTERNAL ERROR: WavFileReader::getInterleavedFrames: " << i << " >= " << m_bufsiz << endl;
         }
 	results.push_back(m_buffer[i]);
     }

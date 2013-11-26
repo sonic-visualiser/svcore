@@ -113,12 +113,12 @@ CSVFileReader::convertTimeValue(QString s, int lineno, size_t sampleRate,
     
     if (!ok) {
         if (m_warnings < warnLimit) {
-            std::cerr << "WARNING: CSVFileReader::load: "
-                      << "Bad time format (\"" << s.toStdString()
+            cerr << "WARNING: CSVFileReader::load: "
+                      << "Bad time format (\"" << s
                       << "\") in data line "
-                      << lineno+1 << std::endl;
+                      << lineno+1 << endl;
         } else if (m_warnings == warnLimit) {
-            std::cerr << "WARNING: Too many warnings" << std::endl;
+            cerr << "WARNING: Too many warnings" << endl;
         }
         ++m_warnings;
     }
@@ -332,15 +332,15 @@ CSVFileReader::load() const
 
                     if (!ok) {
                         if (warnings < warnLimit) {
-                            std::cerr << "WARNING: CSVFileReader::load: "
+                            cerr << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
-                                      << list[i].toStdString()
+                                      << list[i]
                                       << "\" in data line " << lineno+1
-                                      << ":" << std::endl;
-                            std::cerr << line << std::endl;
+                                      << ":" << endl;
+                            cerr << line << endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
-//                            std::cerr << "WARNING: Too many warnings" << std::endl;
+//                            cerr << "WARNING: Too many warnings" << endl;
                         }
                     }
                 }

@@ -35,8 +35,7 @@
 #include <QFile>
 
 #include <iostream>
-using std::cerr;
-using std::endl;
+
 using std::vector;
 using std::string;
 using Vamp::PluginHostAdapter;
@@ -85,7 +84,7 @@ PluginRDFIndexer::indexInstalledURLs()
 {
     vector<string> paths = PluginHostAdapter::getPluginPath();
 
-//    std::cerr << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << std::endl;
+//    cerr << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << endl;
 
     QStringList filters;
     filters << "*.ttl";
@@ -167,7 +166,7 @@ PluginRDFIndexer::indexConfiguredURLs()
         for (PlaylistFileReader::Playlist::const_iterator j = list.begin();
              j != list.end(); ++j) {
             SVDEBUG << "PluginRDFIndexer::indexConfiguredURLs: url is "
-                  << j->toStdString() << endl;
+                  << *j << endl;
             pullURL(*j);
         }
     }
@@ -262,7 +261,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
-//    std::cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << std::endl;
+//    cerr << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
 
     QMutexLocker locker(&m_mutex);
 

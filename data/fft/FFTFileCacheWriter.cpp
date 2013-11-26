@@ -44,7 +44,7 @@ FFTFileCacheWriter::FFTFileCacheWriter(QString fileBase,
            width, height * 2 + m_factorSize))
 {
 #ifdef DEBUG_FFT_FILE_CACHE_WRITER
-    std::cerr << "FFTFileCacheWriter: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == FFTCache::Polar ? "Polar" : "Rectangular") << ", size " << width << "x" << height << std::endl;
+    cerr << "FFTFileCacheWriter: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == FFTCache::Polar ? "Polar" : "Rectangular") << ", size " << width << "x" << height << endl;
 #endif
     m_mfc->setAutoClose(true);
     m_writebuf = new char[(height * 2 + m_factorSize) * m_mfc->getCellSize()];
@@ -114,7 +114,7 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *mags, float *phases, float fact
     static float maxFactor = 0;
     if (factor > maxFactor) maxFactor = factor;
 #ifdef DEBUG_FFT_FILE_CACHE_WRITER
-    std::cerr << "Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
+    cerr << "Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << endl;
 #endif
 
     setNormalizationFactorToWritebuf(factor);
@@ -167,7 +167,7 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *real, float *imag)
     static float maxFactor = 0;
     if (factor > maxFactor) maxFactor = factor;
 #ifdef DEBUG_FFT_FILE_CACHE_WRITER
-    std::cerr << "[RI] Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << std::endl;
+    cerr << "[RI] Column " << x << ": normalization factor: " << factor << ", max " << maxFactor << " (height " << getHeight() << ")" << endl;
 #endif
 
     setNormalizationFactorToWritebuf(factor);

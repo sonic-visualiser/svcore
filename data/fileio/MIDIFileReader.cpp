@@ -39,11 +39,11 @@
 
 #include <sstream>
 
+#include "base/Debug.h"
+
 using std::string;
 using std::ifstream;
 using std::stringstream;
-using std::cerr;
-using std::endl;
 using std::ends;
 using std::ios;
 using std::vector;
@@ -713,7 +713,7 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
 void
 MIDIFileReader::updateTempoMap(unsigned int track)
 {
-    std::cerr << "updateTempoMap for track " << track << " (" << m_midiComposition[track].size() << " events)" << std::endl;
+    cerr << "updateTempoMap for track " << track << " (" << m_midiComposition[track].size() << " events)" << endl;
 
     for (MIDITrack::iterator i = m_midiComposition[track].begin();
 	 i != m_midiComposition[track].end(); ++i) {
@@ -727,7 +727,7 @@ MIDIFileReader::updateTempoMap(unsigned int track)
 	    
 	    long tempo = (((m0 << 8) + m1) << 8) + m2;
 
-	    std::cerr << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << std::endl;
+	    cerr << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << endl;
 
 	    if (tempo != 0) {
 		double qpm = 60000000.0 / double(tempo);
@@ -790,11 +790,11 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
     SVDEBUG << "MIDIFileReader::getTimeForMIDITime(" << midiTime << ")"
 	      << endl;
     SVDEBUG << "timing division = " << td << endl;
-    std::cerr << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
-	      << tempoRealTime << ")" << std::endl;
-    std::cerr << "quarters since then = " << quarters << std::endl;
-    std::cerr << "tempo = " << tempo << " quarters per minute" << std::endl;
-    std::cerr << "seconds since then = " << seconds << std::endl;
+    cerr << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
+	      << tempoRealTime << ")" << endl;
+    cerr << "quarters since then = " << quarters << endl;
+    cerr << "tempo = " << tempo << " quarters per minute" << endl;
+    cerr << "seconds since then = " << seconds << endl;
     SVDEBUG << "resulting time = " << (tempoRealTime + RealTime::fromSeconds(seconds)) << endl;
 */
 
@@ -932,7 +932,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
     if (existingModel) {
 	model = dynamic_cast<NoteModel *>(existingModel);
 	if (!model) {
-	    std::cerr << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << std::endl;
+	    cerr << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << endl;
 	}
     }
 
