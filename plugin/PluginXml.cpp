@@ -200,7 +200,7 @@ PluginXml::setParametersFromXml(QString xml)
     int errorColumn;
 
 //    SVDEBUG << "PluginXml::setParametersFromXml: XML is \""
-//              << xml.toLocal8Bit().data() << "\"" << endl;
+//              << xml << "\"" << endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
         cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;

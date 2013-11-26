@@ -365,7 +365,7 @@ SamplePlayer::searchSamples()
 
 #ifdef DEBUG_SAMPLE_PLAYER
     SVDEBUG << "SamplePlayer::searchSamples: Directory is \""
-	      << m_sampleDir.toLocal8Bit().data() << "\"" << endl;
+	      << m_sampleDir << "\"" << endl;
 #endif
 
     QDir dir(m_sampleDir, "*.wav");
@@ -376,7 +376,7 @@ SamplePlayer::searchSamples()
             m_samples.push_back(std::pair<QString, QString>
                                 (file.baseName(), file.filePath()));
 #ifdef DEBUG_SAMPLE_PLAYER
-            cerr << "Found: " << dir[i].toLocal8Bit().data() << endl;
+            cerr << "Found: " << dir[i] << endl;
 #endif
         }
     }
@@ -397,7 +397,7 @@ SamplePlayer::loadSampleData(QString path)
     file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
     if (!file) {
 	cerr << "SamplePlayer::loadSampleData: Failed to open file "
-		  << path.toLocal8Bit().data() << ": "
+		  << path << ": "
 		  << sf_strerror(file) << endl;
 	return;
     }

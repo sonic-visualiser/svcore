@@ -50,7 +50,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-//    SVDEBUG << "OggVorbisFileReader::OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (++instances) << " instances" << endl;
+//    SVDEBUG << "OggVorbisFileReader::OggVorbisFileReader(" << m_path << "): now have " << (++instances) << " instances" << endl;
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
 
@@ -102,7 +102,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
 OggVorbisFileReader::~OggVorbisFileReader()
 {
-//    SVDEBUG << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path.toLocal8Bit().data() << "): now have " << (--instances) << " instances" << endl;
+//    SVDEBUG << "OggVorbisFileReader::~OggVorbisFileReader(" << m_path << "): now have " << (--instances) << " instances" << endl;
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();

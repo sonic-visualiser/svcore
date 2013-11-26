@@ -41,7 +41,7 @@
 #ifdef DEBUG_DSSI
 static std::ostream &operator<<(std::ostream& o, const QString &s)
 {
-    o << s.toLocal8Bit().data();
+    o << s;
     return o;
 }
 #endif
