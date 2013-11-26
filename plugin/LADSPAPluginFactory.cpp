@@ -80,7 +80,7 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	const LADSPA_Descriptor *descriptor = getLADSPADescriptor(*i);
 
 	if (!descriptor) {
-	    cerr << "WARNING: LADSPAPluginFactory::enumeratePlugins: couldn't get descriptor for identifier " << i->toStdString() << endl;
+	    cerr << "WARNING: LADSPAPluginFactory::enumeratePlugins: couldn't get descriptor for identifier " << *i << endl;
 	    continue;
 	}
 	
@@ -94,11 +94,11 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	list.push_back("false"); // is grouped
 
 	if (m_taxonomy.find(*i) != m_taxonomy.end() && m_taxonomy[*i] != "") {
-//		cerr << "LADSPAPluginFactory: cat for " << i->toStdString()<< " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << endl;
+//		cerr << "LADSPAPluginFactory: cat for " << *i << " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << endl;
 	    list.push_back(m_taxonomy[*i]);
 	} else {
 	    list.push_back("");
-//		cerr << "LADSPAPluginFactory: cat for " << i->toStdString() << " not found (despite having " << m_fallbackCategories.size() << " fallbacks)" << endl;
+//		cerr << "LADSPAPluginFactory: cat for " << *i << " not found (despite having " << m_fallbackCategories.size() << " fallbacks)" << endl;
 	    
 	}
 

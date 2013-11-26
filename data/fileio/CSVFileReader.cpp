@@ -114,7 +114,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno, size_t sampleRate,
     if (!ok) {
         if (m_warnings < warnLimit) {
             cerr << "WARNING: CSVFileReader::load: "
-                      << "Bad time format (\"" << s.toStdString()
+                      << "Bad time format (\"" << s
                       << "\") in data line "
                       << lineno+1 << endl;
         } else if (m_warnings == warnLimit) {
@@ -334,7 +334,7 @@ CSVFileReader::load() const
                         if (warnings < warnLimit) {
                             cerr << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
-                                      << list[i].toStdString()
+                                      << list[i]
                                       << "\" in data line " << lineno+1
                                       << ":" << endl;
                             cerr << line << endl;

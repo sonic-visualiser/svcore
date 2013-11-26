@@ -316,7 +316,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
             return reader;
         }
         cerr << "AudioFileReaderFactory: Preferred reader for "
-                  << "url \"" << source.getLocation().toStdString()
+                  << "url \"" << source.getLocation()
                   << "\" (content type \""
                   << source.getContentType() << "\") failed";
 

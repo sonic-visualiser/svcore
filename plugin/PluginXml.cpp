@@ -148,7 +148,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  i != configList.end(); ++i) {
                 QStringList kv = i->split("=");
                 if (kv.count() < 2) {
-                    cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << i->toStdString() << "\"" << endl;
+                    cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << *i << "\"" << endl;
                     continue;
                 }
                 QString key(kv[0]), value(kv[1]);

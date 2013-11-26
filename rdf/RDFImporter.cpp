@@ -251,7 +251,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                         fs->getLocation(),
                                         m_uristring);
                 if (path != "") {
-                    cerr << "File finder returns: \"" << path.toStdString()
+                    cerr << "File finder returns: \"" << path
                               << "\"" << endl;
                     delete fs;
                     fs = new FileSource(path, reporter);

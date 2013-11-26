@@ -166,7 +166,7 @@ PluginRDFIndexer::indexConfiguredURLs()
         for (PlaylistFileReader::Playlist::const_iterator j = list.begin();
              j != list.end(); ++j) {
             SVDEBUG << "PluginRDFIndexer::indexConfiguredURLs: url is "
-                  << j->toStdString() << endl;
+                  << *j << endl;
             pullURL(*j);
         }
     }
@@ -261,7 +261,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
-//    cerr << "PluginRDFIndexer::indexURL(" << urlString.toStdString() << ")" << endl;
+//    cerr << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
 
     QMutexLocker locker(&m_mutex);
 

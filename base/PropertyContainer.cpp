@@ -87,7 +87,7 @@ PropertyContainer::setPropertyFuzzy(QString nameString, QString valueString)
     if (!convertPropertyStrings(nameString, valueString, name, value)) {
         cerr << "WARNING: PropertyContainer::setProperty(\""
                   << nameString << "\", \""
-                  << valueString.toStdString()
+                  << valueString
                   << "\"): Name and value conversion failed" << endl;
         return;
     }
@@ -102,7 +102,7 @@ PropertyContainer::getSetPropertyCommand(QString nameString, QString valueString
     if (!convertPropertyStrings(nameString, valueString, name, value)) {
         cerr << "WARNING: PropertyContainer::getSetPropertyCommand(\""
                   << nameString << "\", \""
-                  << valueString.toStdString()
+                  << valueString
                   << "\"): Name and value conversion failed" << endl;
         return 0;
     }

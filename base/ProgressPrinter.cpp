@@ -63,7 +63,7 @@ void
 ProgressPrinter::done()
 {
     cerr << "\r"
-              << m_prefix.toStdString() 
+              << m_prefix 
               << (m_prefix == "" ? "" : " ")
               << "Done" << endl;
 }
@@ -73,7 +73,7 @@ ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;
     cerr << "\r"
-              << m_prefix.toStdString() 
+              << m_prefix 
               << (m_prefix == "" ? "" : " ");
     if (m_definite) {
         cerr << progress << "%";
