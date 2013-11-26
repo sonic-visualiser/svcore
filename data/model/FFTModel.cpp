@@ -61,10 +61,10 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 
     while (xratio > 1) {
         if (xratio & 0x1) {
-            std::cerr << "ERROR: FFTModel: Window increment ratio "
+            cerr << "ERROR: FFTModel: Window increment ratio "
                       << windowIncrement << " / "
                       << m_server->getWindowIncrement()
-                      << " must be a power of two" << std::endl;
+                      << " must be a power of two" << endl;
             assert(!(xratio & 0x1));
         }
         ++m_xshift;
@@ -73,9 +73,9 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 
     while (yratio > 1) {
         if (yratio & 0x1) {
-            std::cerr << "ERROR: FFTModel: FFT size ratio "
+            cerr << "ERROR: FFTModel: FFT size ratio "
                       << m_server->getFFTSize() << " / " << fftSize
-                      << " must be a power of two" << std::endl;
+                      << " must be a power of two" << endl;
             assert(!(yratio & 0x1));
         }
         ++m_yshift;
@@ -92,7 +92,7 @@ void
 FFTModel::sourceModelAboutToBeDeleted()
 {
     if (m_sourceModel) {
-        std::cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_sourceModel << ")" << std::endl;
+        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_sourceModel << ")" << endl;
         if (m_server) {
             FFTDataServer::releaseInstance(m_server);
             m_server = 0;

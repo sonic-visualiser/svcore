@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+#include "base/Debug.h"
+
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
     m_file(0),
@@ -88,7 +90,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for writing" << std::endl;
+//        cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for writing" << endl;
 
         setErrorString(QString());
         setOpenMode(mode);
@@ -115,7 +117,7 @@ BZipFileDevice::open(OpenMode mode)
             return false;
         }
 
-//        std::cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for reading" << std::endl;
+//        cerr << "BZipFileDevice: opened \"" << m_fileName << "\" for reading" << endl;
 
         m_atEnd = false;
 
@@ -143,7 +145,7 @@ BZipFileDevice::close()
     if (openMode() & WriteOnly) {
         unsigned int in = 0, out = 0;
         BZ2_bzWriteClose(&bzError, m_bzFile, 0, &in, &out);
-//	std::cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << std::endl;
+//	cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << endl;
 	if (bzError != BZ_OK) {
 	    setErrorString(tr("bzip2 stream write close error"));
 	}
@@ -182,7 +184,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
 
     if (bzError != BZ_OK) {
         if (bzError != BZ_STREAM_END) {
-            std::cerr << "BZipFileDevice::readData: error condition" << std::endl;
+            cerr << "BZipFileDevice::readData: error condition" << endl;
             setErrorString(tr("bzip2 stream read error"));
             m_ok = false;
             return -1;
@@ -204,7 +206,7 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
 //    SVDEBUG << "BZipFileDevice::writeData: " << maxSize << " to write" << endl;
 
     if (bzError != BZ_OK) {
-        std::cerr << "BZipFileDevice::writeData: error condition" << std::endl;
+        cerr << "BZipFileDevice::writeData: error condition" << endl;
         setErrorString("bzip2 stream write error");
         m_ok = false;
         return -1;

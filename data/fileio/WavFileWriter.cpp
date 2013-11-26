@@ -45,16 +45,16 @@ WavFileWriter::WavFileWriter(QString path,
             m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
                              SFM_WRITE, &fileInfo);
             if (!m_file) {
-                std::cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << std::endl;
+                cerr << "WavFileWriter: Failed to open file ("
+                          << sf_strerror(m_file) << ")" << endl;
                 m_error = QString("Failed to open audio file '%1' for writing")
                     .arg(m_temp->getTemporaryFilename());
             }
         } else {
             m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
             if (!m_file) {
-                std::cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << std::endl;
+                cerr << "WavFileWriter: Failed to open file ("
+                          << sf_strerror(m_file) << ")" << endl;
                 m_error = QString("Failed to open audio file '%1' for writing")
                     .arg(m_path);
             }

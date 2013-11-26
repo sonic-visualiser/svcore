@@ -149,7 +149,7 @@ SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
         m_error = QString("File is protected with DRM");
         return;
     } else if (m_d->err == kQTPropertyNotSupportedErr && !isProtected) {
-        std::cerr << "QuickTime: File is not protected with DRM" << std::endl;
+        cerr << "QuickTime: File is not protected with DRM" << endl;
     }
 
     if (m_d->movie) {
@@ -186,7 +186,7 @@ SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_fileRate = m_d->asbd.mSampleRate;
 
-    std::cerr << "QuickTime: " << m_channelCount << " channels, " << m_fileRate << " kHz" << std::endl;
+    cerr << "QuickTime: " << m_channelCount << " channels, " << m_fileRate << " kHz" << endl;
 
     m_d->asbd.mFormatFlags =
         kAudioFormatFlagIsFloat |
@@ -240,7 +240,7 @@ SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
 
             //!!! progress?
 
-//    std::cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << std::endl;
+//    cerr << "Read " << framesRead << " frames (block size " << m_d->blockSize << ")" << endl;
 
             // QuickTime buffers are interleaved unless specified otherwise
             addSamplesToDecodeCache(m_d->data, framesRead);
@@ -267,7 +267,7 @@ SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
         }
     }
 
-    std::cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error << "\"" << std::endl;
+    cerr << "QuickTimeFileReader::QuickTimeFileReader: frame count is now " << getFrameCount() << ", error is \"\"" << m_error << "\"" << endl;
 }
 
 QuickTimeFileReader::~QuickTimeFileReader()

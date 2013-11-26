@@ -292,8 +292,8 @@ FFTDataServer::claimInstance(FFTDataServer *server, bool needLock)
         }
     }
     
-    std::cerr << "ERROR: FFTDataServer::claimInstance: instance "
-              << server << " unknown!" << std::endl;
+    cerr << "ERROR: FFTDataServer::claimInstance: instance "
+              << server << " unknown!" << endl;
 }
 
 void
@@ -326,8 +326,8 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
     for (ServerMap::iterator i = m_servers.begin(); i != m_servers.end(); ++i) {
         if (i->second.first == server) {
             if (i->second.second == 0) {
-                std::cerr << "ERROR: FFTDataServer::releaseInstance("
-                          << server << "): instance not allocated" << std::endl;
+                cerr << "ERROR: FFTDataServer::releaseInstance("
+                          << server << "): instance not allocated" << endl;
             } else if (--i->second.second == 0) {
 /*!!!
                 if (server->m_lastUsedCache == -1) { // never used
@@ -349,9 +349,9 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
                     for (ServerQueue::iterator j = m_releasedServers.begin();
                          j != m_releasedServers.end(); ++j) {
                         if (*j == server) {
-                            std::cerr << "ERROR: FFTDataServer::releaseInstance("
+                            cerr << "ERROR: FFTDataServer::releaseInstance("
                                       << server << "): server is already in "
-                                      << "released servers list" << std::endl;
+                                      << "released servers list" << endl;
                             found = true;
                         }
                     }
@@ -370,8 +370,8 @@ FFTDataServer::releaseInstance(FFTDataServer *server, bool needLock)
         }
     }
 
-    std::cerr << "ERROR: FFTDataServer::releaseInstance(" << server << "): "
-              << "instance not found" << std::endl;
+    cerr << "ERROR: FFTDataServer::releaseInstance(" << server << "): "
+              << "instance not found" << endl;
 }
 
 void
@@ -398,9 +398,9 @@ FFTDataServer::purgeLimbo(int maxSize)
             if (i->second.first == server) {
                 found = true;
                 if (i->second.second > 0) {
-                    std::cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
+                    cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
                               << server << " is in released queue, but still has non-zero refcount "
-                              << i->second.second << std::endl;
+                              << i->second.second << endl;
                     // ... so don't delete it
                     break;
                 }
@@ -416,9 +416,9 @@ FFTDataServer::purgeLimbo(int maxSize)
         }
 
         if (!found) {
-            std::cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
+            cerr << "ERROR: FFTDataServer::purgeLimbo: Server "
                       << server << " is in released queue, but not in server map!"
-                      << std::endl;
+                      << endl;
             delete server;
         }
 
@@ -455,7 +455,7 @@ FFTDataServer::modelAboutToBeDeleted(Model *model)
 #endif
 
             if (i->second.second > 0) {
-                std::cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << std::endl;
+                cerr << "WARNING: FFTDataServer::modelAboutToBeDeleted: Model " << model << " (\"" << model->objectName() << "\") is about to be deleted, but is still being referred to by FFT server " << server << " with non-zero refcount " << i->second.second << endl;
                 server->suspendWrites();
                 return;
             }
@@ -509,7 +509,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_fillThread(0)
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::FFTDataServer" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::FFTDataServer" << endl;
 #endif
 
     //!!! end is not correct until model finished reading -- what to do???
@@ -521,8 +521,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_height = m_fftSize / 2 + 1; // DC == 0, Nyquist == fftsize/2
 
 #ifdef DEBUG_FFT_SERVER 
-    std::cerr << "FFTDataServer(" << this << "): dimensions are "
-              << m_width << "x" << m_height << std::endl;
+    cerr << "FFTDataServer(" << this << "): dimensions are "
+              << m_width << "x" << m_height << endl;
 #endif
 
     size_t maxCacheSize = 20 * 1024 * 1024;
@@ -531,7 +531,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     else m_cacheWidth = maxCacheSize / columnSize;
     
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << "): cache width nominal "
+    cerr << "FFTDataServer(" << this << "): cache width nominal "
               << m_cacheWidth << ", actual ";
 #endif
     
@@ -543,8 +543,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
     m_cacheWidthMask = m_cacheWidth - 1;
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << m_cacheWidth << " (power " << m_cacheWidthPower << ", mask "
-              << m_cacheWidthMask << ")" << std::endl;
+    cerr << m_cacheWidth << " (power " << m_cacheWidthPower << ", mask "
+              << m_cacheWidthMask << ")" << endl;
 #endif
 
     if (m_criteria == StorageAdviser::NoCriteria) {
@@ -581,7 +581,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
                                      FFTW_MEASURE);
 
     if (!m_fftPlan) {
-        std::cerr << "ERROR: fftf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << std::endl;
+        cerr << "ERROR: fftf_plan_dft_r2c_1d(" << m_windowSize << ") failed!" << endl;
         throw(0);
     }
 
@@ -591,7 +591,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 FFTDataServer::~FFTDataServer()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::~FFTDataServer()" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "])::~FFTDataServer()" << endl;
 #endif
 
     m_suspended = false;
@@ -621,7 +621,7 @@ void
 FFTDataServer::deleteProcessingData()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): deleteProcessingData" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): deleteProcessingData" << endl;
 #endif
     if (m_fftInput) {
         fftf_destroy_plan(m_fftPlan);
@@ -636,7 +636,7 @@ void
 FFTDataServer::suspend()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspend" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspend" << endl;
 #endif
     Profiler profiler("FFTDataServer::suspend", false);
 
@@ -648,7 +648,7 @@ void
 FFTDataServer::suspendWrites()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspendWrites" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspendWrites" << endl;
 #endif
     Profiler profiler("FFTDataServer::suspendWrites", false);
 
@@ -659,7 +659,7 @@ void
 FFTDataServer::resume()
 {
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): resume" << std::endl;
+    cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): resume" << endl;
 #endif
     Profiler profiler("FFTDataServer::resume", false);
 
@@ -717,7 +717,7 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
             StorageAdviser::recommend(m_criteria, minimumSize, maximumSize);
     }
 
-//    std::cerr << "Recommendation was: " << recommendation << std::endl;
+//    cerr << "Recommendation was: " << recommendation << endl;
 
     memoryCache = false;
 
@@ -730,9 +730,9 @@ FFTDataServer::getStorageAdvice(size_t w, size_t h,
         (recommendation & StorageAdviser::ConserveSpace);
 
 #ifdef DEBUG_FFT_SERVER
-    std::cerr << "FFTDataServer: memory cache = " << memoryCache << ", compact cache = " << compactCache << std::endl;
+    cerr << "FFTDataServer: memory cache = " << memoryCache << ", compact cache = " << compactCache << endl;
     
-    std::cerr << "Width " << w << " of " << m_width << ", height " << h << ", size " << w * h << std::endl;
+    cerr << "Width " << w << " of " << m_width << ", height " << h << ", size " << w * h << endl;
 #endif
 }
 
@@ -792,10 +792,10 @@ FFTDataServer::makeCache(int c)
             delete cb->memoryCache;
             cb->memoryCache = 0;
             
-            std::cerr << "WARNING: Memory allocation failed when creating"
+            cerr << "WARNING: Memory allocation failed when creating"
                       << " FFT memory cache no. " << c << " of " << width 
                       << "x" << m_height << " (of total width " << m_width
-                      << "): falling back to disc cache" << std::endl;
+                      << "): falling back to disc cache" << endl;
 
             memoryCache = false;
         }
@@ -819,8 +819,8 @@ FFTDataServer::makeCache(int c)
             delete cb->fileCacheWriter;
             cb->fileCacheWriter = 0;
             
-            std::cerr << "ERROR: Failed to construct disc cache for FFT data: "
-                      << e.what() << std::endl;
+            cerr << "ERROR: Failed to construct disc cache for FFT data: "
+                      << e.what() << endl;
 
             throw;
         }
@@ -858,8 +858,8 @@ FFTDataServer::makeCacheReader(int c)
         delete cb->fileCacheReader[me];
         cb->fileCacheReader.erase(me);
             
-        std::cerr << "ERROR: Failed to construct disc cache reader for FFT data: "
-                  << e.what() << std::endl;
+        cerr << "ERROR: Failed to construct disc cache reader for FFT data: "
+                  << e.what() << endl;
         return false;
     }
 
@@ -1218,28 +1218,28 @@ FFTDataServer::fillColumn(size_t x)
     Profiler profiler("FFTDataServer::fillColumn", false);
 
     if (!m_model->isReady()) {
-        std::cerr << "WARNING: FFTDataServer::fillColumn(" 
-                  << x << "): model not yet ready" << std::endl;
+        cerr << "WARNING: FFTDataServer::fillColumn(" 
+                  << x << "): model not yet ready" << endl;
         return;
     }
 /*
     if (!m_fftInput) {
-        std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
+        cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
                   << "input has already been completed and discarded?"
-                  << std::endl;
+                  << endl;
         return;
     }
 */
     if (x >= m_width) {
-        std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
+        cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
                   << "x > width (" << x << " > " << m_width << ")"
-                  << std::endl;
+                  << endl;
         return;
     }
 
     size_t col;
 #ifdef DEBUG_FFT_SERVER_FILL
-    std::cout << "FFTDataServer::fillColumn(" << x << ")" << std::endl;
+    cout << "FFTDataServer::fillColumn(" << x << ")" << endl;
 #endif
     FFTCacheWriter *cache = getCacheWriter(x, col);
     if (!cache) return;
@@ -1279,9 +1279,9 @@ FFTDataServer::fillColumn(size_t x)
     }
 
     if (!m_fftInput) {
-        std::cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
+        cerr << "WARNING: FFTDataServer::fillColumn(" << x << "): "
                   << "input has already been completed and discarded?"
-                  << std::endl;
+                  << endl;
         return;
     }
 
@@ -1488,7 +1488,7 @@ FFTDataServer::FillThread::run()
 
             while (m_server.m_suspended) {
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
+                cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << endl;
 #endif
                 MutexLocker locker(&m_server.m_fftBuffersLock,
                                    "FFTDataServer::run::m_fftBuffersLock [1]");
@@ -1496,7 +1496,7 @@ FFTDataServer::FillThread::run()
                     m_server.m_condition.wait(&m_server.m_fftBuffersLock, 10000);
                 }
 #ifdef DEBUG_FFT_SERVER
-                std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): waited" << std::endl;
+                cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): waited" << endl;
 #endif
                 if (m_server.m_exiting) return;
             }
@@ -1537,7 +1537,7 @@ FFTDataServer::FillThread::run()
 
         while (m_server.m_suspended) {
 #ifdef DEBUG_FFT_SERVER
-            std::cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << std::endl;
+            cerr << "FFTDataServer(" << this << " [" << (void *)QThread::currentThreadId() << "]): suspended, waiting..." << endl;
 #endif
             {
                 MutexLocker locker(&m_server.m_fftBuffersLock,

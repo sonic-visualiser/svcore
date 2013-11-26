@@ -49,8 +49,8 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 	RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	std::cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
-		  << pluginId << "\"" << std::endl;
+	cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
+		  << pluginId << "\"" << endl;
 	return;
     }
 
@@ -63,8 +63,8 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
                                           input->getChannelCount());
 
     if (!m_plugin) {
-	std::cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
-		  << pluginId << "\"" << std::endl;
+	cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
+		  << pluginId << "\"" << endl;
 	return;
     }
 
@@ -72,7 +72,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
-        std::cerr << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << std::endl;
+        cerr << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << endl;
         return;
     }
 
@@ -216,14 +216,14 @@ RealTimeEffectModelTransformer::run()
 	}
 
 /*
-        std::cerr << "Input for plugin: " << m_plugin->getAudioInputCount() << " channels "<< std::endl;
+        cerr << "Input for plugin: " << m_plugin->getAudioInputCount() << " channels "<< endl;
 
         for (size_t ch = 0; ch < m_plugin->getAudioInputCount(); ++ch) {
-            std::cerr << "Input channel " << ch << std::endl;
+            cerr << "Input channel " << ch << endl;
             for (size_t i = 0; i < 100; ++i) {
-                std::cerr << inbufs[ch][i] << " ";
+                cerr << inbufs[ch][i] << " ";
                 if (isnan(inbufs[ch][i])) {
-                    std::cerr << "\n\nWARNING: NaN in audio input" << std::endl;
+                    cerr << "\n\nWARNING: NaN in audio input" << endl;
                 }
             }
         }

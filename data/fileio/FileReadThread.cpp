@@ -108,7 +108,7 @@ FileReadThread::cancel(int token)
             m_cancelledRequests[token] = m_readyRequests[token];
             m_readyRequests.erase(token);
         } else {
-            std::cerr << "WARNING: FileReadThread::cancel: token " << token << " not found" << std::endl;
+            cerr << "WARNING: FileReadThread::cancel: token " << token << " not found" << endl;
         }
     }
 
@@ -195,11 +195,11 @@ FileReadThread::done(int token)
         m_readyRequests.erase(token);
         found = true;
     } else if (m_queue.find(token) != m_queue.end()) {
-        std::cerr << "WARNING: FileReadThread::done(" << token << "): request is still in queue (wait or cancel it)" << std::endl;
+        cerr << "WARNING: FileReadThread::done(" << token << "): request is still in queue (wait or cancel it)" << endl;
     }
 
     if (!found) {
-        std::cerr << "WARNING: FileReadThread::done(" << token << "): request not found" << std::endl;
+        cerr << "WARNING: FileReadThread::done(" << token << "): request not found" << endl;
     }
 }
 
@@ -257,20 +257,20 @@ FileReadThread::process()
 
     if (seekFailed) {
         ::perror("Seek failed");
-        std::cerr << "ERROR: FileReadThread::process: seek to "
-                  << request.start << " failed" << std::endl;
+        cerr << "ERROR: FileReadThread::process: seek to "
+                  << request.start << " failed" << endl;
         request.size = 0;
     } else {
         if (r < 0) {
             ::perror("ERROR: FileReadThread::process: Read failed");
-            std::cerr << "ERROR: FileReadThread::process: read of "
+            cerr << "ERROR: FileReadThread::process: read of "
                       << request.size << " at "
-                      << request.start << " failed" << std::endl;
+                      << request.start << " failed" << endl;
             request.size = 0;
         } else if (r < ssize_t(request.size)) {
-            std::cerr << "WARNING: FileReadThread::process: read "
+            cerr << "WARNING: FileReadThread::process: read "
                       << request.size << " returned only " << r << " bytes"
-                      << std::endl;
+                      << endl;
             request.size = r;
             usleep(100000);
         } else {

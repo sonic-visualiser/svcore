@@ -117,10 +117,10 @@ PluginXml::toXml(QTextStream &stream,
 #define CHECK_ATTRIBUTE(ATTRIBUTE, ACCESSOR) \
     QString ATTRIBUTE = attrs.value(#ATTRIBUTE); \
     if (ATTRIBUTE != "" && ATTRIBUTE != ACCESSOR().c_str()) { \
-        std::cerr << "WARNING: PluginXml::setParameters: Plugin " \
+        cerr << "WARNING: PluginXml::setParameters: Plugin " \
                   << #ATTRIBUTE << " does not match (attributes have \"" \
                   << ATTRIBUTE << "\", my " \
-                  << #ATTRIBUTE << " is \"" << ACCESSOR() << "\")" << std::endl; \
+                  << #ATTRIBUTE << " is \"" << ACCESSOR() << "\")" << endl; \
     }
 
 void
@@ -135,7 +135,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
     bool ok;
     int version = attrs.value("version").trimmed().toInt(&ok);
     if (ok && version != m_plugin->getPluginVersion()) {
-        std::cerr << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << std::endl;
+        cerr << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << endl;
     }
 
     RealTimePluginInstance *rtpi =
@@ -148,7 +148,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  i != configList.end(); ++i) {
                 QStringList kv = i->split("=");
                 if (kv.count() < 2) {
-                    std::cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << i->toStdString() << "\"" << std::endl;
+                    cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << i->toStdString() << "\"" << endl;
                     continue;
                 }
                 QString key(kv[0]), value(kv[1]);
@@ -185,7 +185,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
 //                      << i->identifier << "\" to value " << value << endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
-            std::cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << std::endl;
+            cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << endl;
         }
     }
 }
@@ -203,10 +203,10 @@ PluginXml::setParametersFromXml(QString xml)
 //              << xml.toLocal8Bit().data() << "\"" << endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        std::cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << std::endl;
-        std::cerr << "Input follows:" << std::endl;
-        std::cerr << xml << std::endl;
-        std::cerr << "Input ends." << std::endl;
+        cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;
+        cerr << "Input follows:" << endl;
+        cerr << xml << endl;
+        cerr << "Input ends." << endl;
         return;
     }
 

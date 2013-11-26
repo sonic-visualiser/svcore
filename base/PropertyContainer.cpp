@@ -68,7 +68,7 @@ PropertyContainer::getNewPropertyRangeMapper(const PropertyName &) const
 void
 PropertyContainer::setProperty(const PropertyName &name, int) 
 {
-    std::cerr << "WARNING: PropertyContainer[" << getPropertyContainerName() << "]::setProperty(" << name << "): no implementation in subclass!" << std::endl;
+    cerr << "WARNING: PropertyContainer[" << getPropertyContainerName() << "]::setProperty(" << name << "): no implementation in subclass!" << endl;
 }
 
 Command *
@@ -85,10 +85,10 @@ PropertyContainer::setPropertyFuzzy(QString nameString, QString valueString)
     PropertyName name;
     int value;
     if (!convertPropertyStrings(nameString, valueString, name, value)) {
-        std::cerr << "WARNING: PropertyContainer::setProperty(\""
+        cerr << "WARNING: PropertyContainer::setProperty(\""
                   << nameString << "\", \""
                   << valueString.toStdString()
-                  << "\"): Name and value conversion failed" << std::endl;
+                  << "\"): Name and value conversion failed" << endl;
         return;
     }
     setProperty(name, value);
@@ -100,10 +100,10 @@ PropertyContainer::getSetPropertyCommand(QString nameString, QString valueString
     PropertyName name;
     int value;
     if (!convertPropertyStrings(nameString, valueString, name, value)) {
-        std::cerr << "WARNING: PropertyContainer::getSetPropertyCommand(\""
+        cerr << "WARNING: PropertyContainer::getSetPropertyCommand(\""
                   << nameString << "\", \""
                   << valueString.toStdString()
-                  << "\"): Name and value conversion failed" << std::endl;
+                  << "\"): Name and value conversion failed" << endl;
         return 0;
     }
     return getSetPropertyCommand(name, value);
@@ -135,7 +135,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     }
 
     if (name == "") {
-        std::cerr << "PropertyContainer::convertPropertyStrings: Unable to match name string \"" << nameString << "\"" << std::endl;
+        cerr << "PropertyContainer::convertPropertyStrings: Unable to match name string \"" << nameString << "\"" << endl;
         return false;
     }
 
@@ -204,7 +204,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     bool ok = false;
     int i = valueString.toInt(&ok);
     if (!ok) {
-        std::cerr << "PropertyContainer::convertPropertyStrings: Unable to parse value string \"" << valueString << "\"" << std::endl;
+        cerr << "PropertyContainer::convertPropertyStrings: Unable to parse value string \"" << valueString << "\"" << endl;
         return false;
     } else if (i < min || i > max) {
         SVDEBUG << "PropertyContainer::convertPropertyStrings: Property value \"" << i << "\" outside valid range " << min << " to " << max << endl;

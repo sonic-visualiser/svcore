@@ -168,16 +168,16 @@ FixedPoints: true 0
     }
 
     if (alignment.thisHopTime == 0.0) {
-        std::cerr << "ERROR in Match file: this hop time == 0, using 0.01 instead" << std::endl;
+        cerr << "ERROR in Match file: this hop time == 0, using 0.01 instead" << endl;
         alignment.thisHopTime = 0.01;
     }
 
     if (alignment.refHopTime == 0.0) {
-        std::cerr << "ERROR in Match file: ref hop time == 0, using 0.01 instead" << std::endl;
+        cerr << "ERROR in Match file: ref hop time == 0, using 0.01 instead" << endl;
         alignment.refHopTime = 0.01;
     }
 
-    std::cerr << "MatchFileReader: this hop = " << alignment.thisHopTime << ", ref hop = " << alignment.refHopTime << ", this index count = " << alignment.thisIndex.size() << ", ref index count = " << alignment.refIndex.size() << std::endl;
+    cerr << "MatchFileReader: this hop = " << alignment.thisHopTime << ", ref hop = " << alignment.refHopTime << ", this index count = " << alignment.thisIndex.size() << ", ref index count = " << alignment.refIndex.size() << endl;
 
     return alignment;
 }

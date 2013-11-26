@@ -32,9 +32,6 @@
 
 //#define DEBUG_WAVE_FILE_MODEL 1
 
-using std::cerr;
-using std::endl;
-
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
@@ -191,7 +188,7 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
     // Could be much more efficient (although compiler optimisation will help)
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cout << "WaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << std::endl;
+    cout << "WaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
 
     if (start >= m_startFrame) {
@@ -253,7 +250,7 @@ WaveFileModel::getData(int channel, size_t start, size_t count,
                        double *buffer) const
 {
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cout << "WaveFileModel::getData(double)[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << std::endl;
+    cout << "WaveFileModel::getData(double)[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
 
     if (start > m_startFrame) {
@@ -311,22 +308,22 @@ WaveFileModel::getData(size_t fromchannel, size_t tochannel,
                        float **buffer) const
 {
 #ifdef DEBUG_WAVE_FILE_MODEL
-    std::cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << std::endl;
+    cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
 
     size_t channels = getChannelCount();
 
     if (fromchannel > tochannel) {
-        std::cerr << "ERROR: WaveFileModel::getData: fromchannel ("
+        cerr << "ERROR: WaveFileModel::getData: fromchannel ("
                   << fromchannel << ") > tochannel (" << tochannel << ")"
-                  << std::endl;
+                  << endl;
         return 0;
     }
 
     if (tochannel >= channels) {
-        std::cerr << "ERROR: WaveFileModel::getData: tochannel ("
+        cerr << "ERROR: WaveFileModel::getData: tochannel ("
                   << tochannel << ") >= channel count (" << channels << ")"
-                  << std::endl;
+                  << endl;
         return 0;
     }
 
@@ -702,7 +699,7 @@ WaveFileModel::RangeCacheFillThread::run()
 
             m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
 
-//            std::cerr << "block is " << block.size() << std::endl;
+//            cerr << "block is " << block.size() << endl;
 
             for (int i = 0; i < readBlockSize; ++i) {
 		
@@ -755,12 +752,12 @@ WaveFileModel::RangeCacheFillThread::run()
             m_fillExtent = frame;
         }
 
-//        std::cerr << "WaveFileModel: inner loop ended" << std::endl;
+//        cerr << "WaveFileModel: inner loop ended" << endl;
 
         first = false;
         if (m_model.m_exiting) break;
         if (updating) {
-//            std::cerr << "sleeping..." << std::endl;
+//            cerr << "sleeping..." << endl;
             sleep(1);
         }
     }

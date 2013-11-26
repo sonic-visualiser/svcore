@@ -34,7 +34,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 						  int &power,
 						  RoundingDirection dir) const
 {
-//    std::cerr << "given " << blockSize << std::endl;
+//    cerr << "given " << blockSize << endl;
 
     size_t minCachePower = getMinCachePower();
 

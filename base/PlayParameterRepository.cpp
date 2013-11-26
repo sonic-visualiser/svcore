@@ -35,14 +35,14 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addPlayable(const Playable *playable)
 {
-//    std::cerr << "PlayParameterRepository:addPlayable " << playable <<  std::endl;
+//    cerr << "PlayParameterRepository:addPlayable " << playable <<  endl;
 
     if (!getPlayParameters(playable)) {
 
 	// Give all playables the same type of play parameters for the
 	// moment
 
-//	    std::cerr << "PlayParameterRepository: Adding play parameters for " << playable << std::endl;
+//	    cerr << "PlayParameterRepository: Adding play parameters for " << playable << endl;
 
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
@@ -62,8 +62,8 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
                 this, SLOT(playPluginConfigurationChanged(QString)));
         
-//            std::cerr << "Connected play parameters " << params << " for playable "
-//                      << playable << " to this " << this << std::endl;
+//            cerr << "Connected play parameters " << params << " for playable "
+//                      << playable << " to this " << this << endl;
 
     }
 }    
@@ -72,7 +72,7 @@ void
 PlayParameterRepository::removePlayable(const Playable *playable)
 {
     if (m_playParameters.find(playable) == m_playParameters.end()) {
-        std::cerr << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playable << std::endl;
+        cerr << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playable << endl;
         return;
     }
     delete m_playParameters[playable];
@@ -83,11 +83,11 @@ void
 PlayParameterRepository::copyParameters(const Playable *from, const Playable *to)
 {
     if (!getPlayParameters(from)) {
-        std::cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << std::endl;
+        cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << endl;
         return;
     }
     if (!getPlayParameters(to)) {
-        std::cerr << "WARNING: PlayParameterRepository::copyParameters: target playable unknown, adding it now" << std::endl;
+        cerr << "WARNING: PlayParameterRepository::copyParameters: target playable unknown, adding it now" << endl;
         addPlayable(to);
     }
     getPlayParameters(to)->copyFrom(getPlayParameters(from));
@@ -137,7 +137,7 @@ PlayParameterRepository::playPluginConfigurationChanged(QString config)
 void
 PlayParameterRepository::clear()
 {
-//    std::cerr << "PlayParameterRepository: PlayParameterRepository::clear" << std::endl;
+//    cerr << "PlayParameterRepository: PlayParameterRepository::clear" << endl;
     while (!m_playParameters.empty()) {
 	delete m_playParameters.begin()->second;
 	m_playParameters.erase(m_playParameters.begin());

@@ -155,7 +155,7 @@ ResourceFinder::getResourcePath(QString resourceCat, QString fileName)
         QString path =
             QString("%1%2/%3").arg(prefix).arg(resourceCat).arg(fileName);
         if (QFileInfo(path).exists() && QFileInfo(path).isReadable()) {
-            std::cerr << "Found it!" << std::endl;
+            cerr << "Found it!" << endl;
             return path;
         }
     }
@@ -209,7 +209,7 @@ ResourceFinder::getResourceSaveDir(QString resourceCat)
     QDir userDir(user);
     if (!userDir.exists()) {
         if (!userDir.mkpath(user)) {
-            std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << user << "\"" << std::endl;
+            cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << user << "\"" << endl;
             return "";
         }
     }
@@ -219,7 +219,7 @@ ResourceFinder::getResourceSaveDir(QString resourceCat)
         QDir saveDir(save);
         if (!saveDir.exists()) {
             if (!userDir.mkpath(save)) {
-                std::cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << save << "\"" << std::endl;
+                cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << save << "\"" << endl;
                 return "";
             }
         }
@@ -280,7 +280,7 @@ ResourceFinder::unbundleResource(QString resourceCat, QString fileName)
     QString target = getResourceSavePath(resourceCat, fileName);
     QFile file(path);
     if (!file.copy(target)) {
-        std::cerr << "ResourceFinder::unbundleResource: ERROR: Failed to un-bundle resource file \"" << fileName << "\" to user location \"" << target << "\"" << std::endl;
+        cerr << "ResourceFinder::unbundleResource: ERROR: Failed to un-bundle resource file \"" << fileName << "\" to user location \"" << target << "\"" << endl;
         return false;
     }
 

@@ -205,7 +205,7 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
     m_sortOrdering = sortOrder;
     int current = getCurrentRow();
     if (current != prevCurrent) {
-//         std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
+//         cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << endl;
         emit currentChanged(createIndex(current, 0, (void *)0));
     }
     emit layoutChanged();
@@ -297,7 +297,7 @@ ModelDataTableModel::resort() const
     bool numeric = (m_model->getSortType(m_sortColumn) ==
                     TabularModel::SortNumeric);
 
-//    std::cerr << "resort: numeric == " << numeric << std::endl;
+//    cerr << "resort: numeric == " << numeric << endl;
 
     m_sort.clear();
     m_rsort.clear();
@@ -338,7 +338,7 @@ ModelDataTableModel::resortNumeric() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
-//        std::cerr << "resortNumeric: " << i->second << ": " << i->first << std::endl;
+//        cerr << "resortNumeric: " << i->second << ": " << i->first << endl;
         m_rsort.push_back(i->second);
     }
 
@@ -362,7 +362,7 @@ ModelDataTableModel::resortAlphabetical() const
     }
 
     for (MapType::iterator i = rowMap.begin(); i != rowMap.end(); ++i) {
-//        std::cerr << "resortAlphabetical: " << i->second << ": " << i->first << std::endl;
+//        cerr << "resortAlphabetical: " << i->second << ": " << i->first << endl;
         m_rsort.push_back(i->second);
     }
 
@@ -388,7 +388,7 @@ ModelDataTableModel::clearSort()
     m_sort.clear();
 //    int current = getCurrentRow(); //!!! no --  not until the sort criteria have changed
 //    if (current != prevCurrent) {
-//        std::cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << std::endl;
+//        cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << endl;
 //        emit currentRowChanged(createIndex(current, 0, 0));
 //    }
 }

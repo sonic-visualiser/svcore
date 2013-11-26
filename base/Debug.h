@@ -18,6 +18,7 @@
 
 #include <QDebug>
 #include <QTextStream>
+
 #include <string>
 #include <iostream>
 
@@ -27,6 +28,10 @@ class QUrl;
 QDebug &operator<<(QDebug &, const std::string &);
 std::ostream &operator<<(std::ostream &, const QString &);
 std::ostream &operator<<(std::ostream &, const QUrl &);
+
+using std::cout;
+using std::cerr;
+using std::endl;
 
 #ifndef NDEBUG
 

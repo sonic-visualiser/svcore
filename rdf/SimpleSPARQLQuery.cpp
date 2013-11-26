@@ -34,8 +34,8 @@
 
 #include <iostream>
 
-using std::cerr;
-using std::endl;
+using cerr;
+using endl;
 
 class WredlandWorldWrapper
 {
@@ -83,16 +83,16 @@ WredlandWorldWrapper::WredlandWorldWrapper() :
 
     m_defaultStorage = librdf_new_storage(m_world, "trees", NULL, NULL);
     if (!m_defaultStorage) {
-        std::cerr << "SimpleSPARQLQuery: WARNING: Failed to initialise Redland trees datastore, falling back to memory store" << std::endl;
+        cerr << "SimpleSPARQLQuery: WARNING: Failed to initialise Redland trees datastore, falling back to memory store" << endl;
         m_defaultStorage = librdf_new_storage(m_world, NULL, NULL, NULL);
         if (!m_defaultStorage) {
-            std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland memory datastore" << std::endl;
+            cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland memory datastore" << endl;
             return;
         }                
     }
     m_defaultModel = librdf_new_model(m_world, m_defaultStorage, NULL);
     if (!m_defaultModel) {
-        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland data model" << std::endl;
+        cerr << "SimpleSPARQLQuery: ERROR: Failed to initialise Redland data model" << endl;
         return;
     }
 }
@@ -156,13 +156,13 @@ WredlandWorldWrapper::getModel(QString fromUri)
     }
     librdf_model *model = librdf_new_model(m_world, storage, NULL);
     if (!model) {
-        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to create new model" << std::endl;
+        cerr << "SimpleSPARQLQuery: ERROR: Failed to create new model" << endl;
         librdf_free_storage(storage);
         return 0;
     }
     QString err;
     if (!loadUri(model, fromUri, err)) {
-        std::cerr << "SimpleSPARQLQuery: ERROR: Failed to parse into new model: " << err << std::endl;
+        cerr << "SimpleSPARQLQuery: ERROR: Failed to parse into new model: " << err << endl;
         librdf_free_model(model);
         librdf_free_storage(storage);
         m_ownModelUris[fromUri] = 0;
@@ -220,7 +220,7 @@ WredlandWorldWrapper::loadUri(librdf_model *model, QString uri, QString &errorSt
     }
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY    
-    std::cerr << "About to parse \"" << uri << "\"" << std::endl;
+    cerr << "About to parse \"" << uri << "\"" << endl;
 #endif
     
     Profiler p("SimpleSPARQLQuery: Parse URI into LIBRDF model");
@@ -377,8 +377,8 @@ SimpleSPARQLQuery::Impl::execute()
 
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
     if (m_errorString != "") {
-        std::cerr << "SimpleSPARQLQuery::execute: error returned: \""
-                  << m_errorString << "\"" << std::endl;
+        cerr << "SimpleSPARQLQuery::execute: error returned: \""
+                  << m_errorString << "\"" << endl;
     }
 #endif
 }
@@ -435,8 +435,8 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
     static std::map<QString, int> counter;
     if (counter.find(m_query) == counter.end()) counter[m_query] = 1;
     else ++counter[m_query];
-    std::cerr << "Counter for this query: " << counter[m_query] << std::endl;
-    std::cerr << "Base URI is: \"" << modelUri << "\"" << std::endl;
+    cerr << "Counter for this query: " << counter[m_query] << endl;
+    cerr << "Base URI is: \"" << modelUri << "\"" << endl;
 #endif
 
     {
@@ -486,7 +486,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
                 librdf_query_results_get_binding_name(results, i);
 
             if (!name) {
-                std::cerr << "WARNING: Result " << i << " of query has no name" << std::endl;
+                cerr << "WARNING: Result " << i << " of query has no name" << endl;
                 continue;
             }
 
@@ -497,7 +497,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
 
             if (!node) {
 #ifdef DEBUG_SIMPLE_SPARQL_QUERY
-                std::cerr << i << ". " << key << " -> (nil)" << std::endl;
+                cerr << i << ". " << key << " -> (nil)" << endl;
 #endif
                 resultmap[key] = Value();
                 continue;
@@ -513,7 +513,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
                 const char *us = (const char *)librdf_uri_as_string(uri);
 
                 if (!us) {
-                    std::cerr << "WARNING: Result " << i << " of query claims URI type, but has null URI" << std::endl;
+                    cerr << "WARNING: Result " << i << " of query claims URI type, but has null URI" << endl;
                 } else {
                     text = us;
                 }
@@ -524,7 +524,7 @@ SimpleSPARQLQuery::Impl::executeFor(QString modelUri)
 
                 const char *lit = (const char *)librdf_node_get_literal_value(node);
                 if (!lit) {
-                    std::cerr << "WARNING: Result " << i << " of query claims literal type, but has no literal" << std::endl;
+                    cerr << "WARNING: Result " << i << " of query claims literal type, but has no literal" << endl;
                 } else {
                     text = lit;
                 }
@@ -593,12 +593,12 @@ SimpleSPARQLQuery::Impl::addSourceToModel(QString sourceUri)
     }
 
     if (!m_redland->isOK()) {
-        std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << std::endl;
+        cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to initialise Redland datastore" << endl;
         return false;
     }
 
     if (!m_redland->loadUriIntoDefaultModel(sourceUri, err)) {
-        std::cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri << ": " << err << std::endl;
+        cerr << "SimpleSPARQLQuery::addSourceToModel: Failed to add source URI \"" << sourceUri << ": " << err << endl;
         return false;
     }
     return true;

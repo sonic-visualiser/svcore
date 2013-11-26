@@ -39,9 +39,6 @@
 
 //#define DEBUG_TRANSFORM_FACTORY 1
 
-using std::cerr;
-using std::endl;
-
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
 
@@ -532,7 +529,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 //!!!        if (descriptor->controlOutputPortCount == 0 ||
 //            descriptor->audioInputPortCount == 0) continue;
 
-//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
+//        cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
 	
 	QString pluginName = descriptor->name.c_str();
         QString category = factory->getPluginCategory(pluginId);
@@ -747,7 +744,7 @@ TransformFactory::populateUninstalledTransforms()
     m_uninstalledTransformsPopulated = true;
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-    std::cerr << "populateUninstalledTransforms exiting" << std::endl;
+    cerr << "populateUninstalledTransforms exiting" << endl;
 #endif
 }
 
@@ -1154,7 +1151,7 @@ TransformFactory::search(QStringList keywords)
     }
 
     if (!m_uninstalledTransformsPopulated) {
-        std::cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
+        cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
                   << "and are not being populated either -- was the thread not started correctly?" << endl;
         m_uninstalledTransformsMutex.unlock();
         return results;
