@@ -126,7 +126,7 @@ InsufficientDiscSpace::what() const throw()
 AllocationFailed::AllocationFailed(QString purpose) throw() :
     m_purpose(purpose)
 {
-    cerr << "ERROR: Allocation failed: " << purpose.toStdString()
+    cerr << "ERROR: Allocation failed: " << purpose
               << endl;
 }
 

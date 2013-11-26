@@ -77,7 +77,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
 
-    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path.toStdString() << "\"" << endl;
+    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path << "\"" << endl;
 
     QByteArray ba = m_path.toLocal8Bit();
 

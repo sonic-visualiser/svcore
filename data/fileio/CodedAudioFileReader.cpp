@@ -83,7 +83,7 @@ CodedAudioFileReader::startSerialised(QString id)
 void
 CodedAudioFileReader::endSerialised()
 {
-    SVDEBUG << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId().toStdString() : "(none)") << endl;
+    SVDEBUG << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId() : "(none)") << endl;
 
     delete m_serialiser;
     m_serialiser = 0;

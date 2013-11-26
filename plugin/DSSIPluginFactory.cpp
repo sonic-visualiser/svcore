@@ -359,8 +359,8 @@ DSSIPluginFactory::discoverPlugins(QString soname)
         rtd->category = category.toStdString();
 	
 //	cerr << "Plugin id is " << ladspaDescriptor->UniqueID
-//                  << ", identifier is \"" << identifier.toStdString()
-//		  << "\", category is \"" << category.toStdString()
+//                  << ", identifier is \"" << identifier
+//		  << "\", category is \"" << category
 //		  << "\", name is " << ladspaDescriptor->Name
 //		  << ", label is " << ladspaDescriptor->Label
 //		  << endl;

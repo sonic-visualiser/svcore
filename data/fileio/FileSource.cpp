@@ -131,7 +131,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
             // was human-readable.  Let's try again, this time
             // assuming it was already encoded.
             cerr << "FileSource::FileSource: Failed to retrieve URL \""
-                      << fileOrUrl.toStdString() 
+                      << fileOrUrl 
                       << "\" as human-readable URL; "
                       << "trying again treating it as encoded URL"
                       << endl;

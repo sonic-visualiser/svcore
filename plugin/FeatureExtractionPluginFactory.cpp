@@ -168,7 +168,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 
                 if (known.find(descriptor->identifier) != known.end()) {
                     cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
-                              << soname.toStdString()
+                              << soname
                               << " returns the same plugin identifier \""
                               << descriptor->identifier << "\" at indices "
                               << known[descriptor->identifier] << " and "

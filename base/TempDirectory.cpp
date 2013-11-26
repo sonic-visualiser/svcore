@@ -264,7 +264,7 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
                 cerr << "INFO: Found abandoned temporary directory from "
                           << "a previous, defunct process\n(pid=" << pid
                           << ", directory=\""
-                          << dirpath.toStdString()
+                          << dirpath
                           << "\").  Removing it..." << endl;
                 cleanupDirectory(dirpath);
                 cerr << "...done." << endl;

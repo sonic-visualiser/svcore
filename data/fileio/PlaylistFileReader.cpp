@@ -133,7 +133,7 @@ PlaylistFileReader::load() const
                     QString testpath = QDir(m_basedir).filePath(line);
                     if (QFileInfo(testpath).exists() &&
                         QFileInfo(testpath).isFile()) {
-                        cerr << "Path \"" << line.toStdString()
+                        cerr << "Path \"" << line
                                   << "\" is relative, resolving to \""
                                   << testpath << "\""
                                   << endl;
