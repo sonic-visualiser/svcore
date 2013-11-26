@@ -75,7 +75,7 @@ operator<<(QDebug &dbg, const std::string &s)
 std::ostream &
 operator<<(std::ostream &target, const QString &str)
 {
-    return target << str.toLocal8Bit().data();
+    return target << str;
 }
 
 std::ostream &

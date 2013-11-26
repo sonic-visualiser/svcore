@@ -413,7 +413,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId << endl;
 	    continue;
 	}
 
@@ -421,7 +421,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    factory->instantiatePlugin(pluginId, 44100);
 
 	if (!plugin) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId << endl;
 	    continue;
 	}
 		
@@ -514,7 +514,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             RealTimePluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId << endl;
 	    continue;
 	}
 
@@ -522,7 +522,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             factory->getPluginDescriptor(pluginId);
 
         if (!descriptor) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId << endl;
 	    continue;
 	}
 	
