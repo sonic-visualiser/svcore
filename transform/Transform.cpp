@@ -53,12 +53,12 @@ Transform::Transform(QString xml) :
     int errorColumn;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        std::cerr << "Transform::Transform: Error in parsing XML: "
+        cerr << "Transform::Transform: Error in parsing XML: "
                   << error << " at line " << errorLine
-                  << ", column " << errorColumn << std::endl;
-        std::cerr << "Input follows:" << std::endl;
-        std::cerr << xml << std::endl;
-        std::cerr << "Input ends." << std::endl;
+                  << ", column " << errorColumn << endl;
+        cerr << "Input follows:" << endl;
+        cerr << xml << endl;
+        cerr << "Input ends." << endl;
         return;
     }
     
@@ -125,10 +125,10 @@ Transform::operator==(const Transform &t) const
         m_sampleRate == t.m_sampleRate;
 /*
     SVDEBUG << "Transform::operator==: identical = " << identical << endl;
-    std::cerr << "A = " << std::endl;
-    std::cerr << toXmlString() << std::endl;
-    std::cerr << "B = " << std::endl;
-    std::cerr << t.toXmlString() << std::endl;
+    cerr << "A = " << endl;
+    cerr << toXmlString() << endl;
+    cerr << "B = " << endl;
+    cerr << t.toXmlString() << endl;
 */
     return identical;
 }

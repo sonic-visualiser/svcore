@@ -263,7 +263,7 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
     // dirty grubby low-rent way of doing that.  This function is
     // called by FileFeatureWriter::getOutputFile when in append mode.
 
-//    std::cerr << "reviewFileForAppending(" << filename << ")" << std::endl;
+//    cerr << "reviewFileForAppending(" << filename << ")" << endl;
 
     QFile file(filename);
 

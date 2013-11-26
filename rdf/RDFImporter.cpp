@@ -47,9 +47,6 @@ using Dataquay::Triples;
 using Dataquay::BasicStore;
 using Dataquay::PropertyObject;
 
-using std::cerr;
-using std::endl;
-
 class RDFImporterImpl
 {
 public:
@@ -180,7 +177,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     if (m_sampleRate == 0) {
         m_errorString = QString("Invalid audio data model (is audio file format supported?)");
-        std::cerr << m_errorString << std::endl;
+        cerr << m_errorString << endl;
         return models;
     }
 
@@ -221,7 +218,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
             file = m_store->complete(Triple(sig, expand("mo:available_as"), Node()));
         }
         if (file == Node()) {
-            std::cerr << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << std::endl;
+            cerr << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << endl;
             continue;
         }
 
@@ -254,8 +251,8 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
                                         fs->getLocation(),
                                         m_uristring);
                 if (path != "") {
-                    std::cerr << "File finder returns: \"" << path.toStdString()
-                              << "\"" << std::endl;
+                    cerr << "File finder returns: \"" << path
+                              << "\"" << endl;
                     delete fs;
                     fs = new FileSource(path, reporter);
                     if (!fs->isAvailable()) {
@@ -274,7 +271,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
         fs->waitForData();
         WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
         if (newModel->isOK()) {
-            std::cerr << "Successfully created wave file model from source at \"" << source << "\"" << std::endl;
+            cerr << "Successfully created wave file model from source at \"" << source << "\"" << endl;
             models.push_back(newModel);
             m_audioModelMap[signal] = newModel;
             if (m_sampleRate == 0) {
@@ -669,7 +666,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     model->setRDFTypeURI(type);
 
                     if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
-                        std::cerr << "source model for " << model << " is " << m_audioModelMap[source] << std::endl;
+                        cerr << "source model for " << model << " is " << m_audioModelMap[source] << endl;
                         model->setSourceModel(m_audioModelMap[source]);
                     }
 
@@ -798,7 +795,7 @@ RDFImporterImpl::fillModel(Model *model,
         return;
     }
             
-    std::cerr << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << std::endl;
+    cerr << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << endl;
     return;
 }
 

@@ -35,8 +35,8 @@ FFTMemoryCache::FFTMemoryCache(FFTCache::StorageType storageType,
     m_storageType(storageType)
 {
 #ifdef DEBUG_FFT_MEMORY_CACHE
-    std::cerr << "FFTMemoryCache[" << this << "]::FFTMemoryCache (type "
-              << m_storageType << "), size " << m_width << "x" << m_height << std::endl;
+    cerr << "FFTMemoryCache[" << this << "]::FFTMemoryCache (type "
+              << m_storageType << "), size " << m_width << "x" << m_height << endl;
 #endif
 
     initialise();
@@ -45,7 +45,7 @@ FFTMemoryCache::FFTMemoryCache(FFTCache::StorageType storageType,
 FFTMemoryCache::~FFTMemoryCache()
 {
 #ifdef DEBUG_FFT_MEMORY_CACHE
-    std::cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << std::endl;
+    cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << endl;
 #endif
 
     for (size_t i = 0; i < m_width; ++i) {
@@ -74,7 +74,7 @@ FFTMemoryCache::initialise()
     size_t width = m_width, height = m_height;
 
 #ifdef DEBUG_FFT_MEMORY_CACHE
-    std::cerr << "FFTMemoryCache[" << this << "]::initialise(" << width << "x" << height << " = " << width*height << ")" << std::endl;
+    cerr << "FFTMemoryCache[" << this << "]::initialise(" << width << "x" << height << " = " << width*height << ")" << endl;
 #endif
 
     if (m_storageType == FFTCache::Compact) {
@@ -96,7 +96,7 @@ FFTMemoryCache::initialise()
     m_height = height;
 
 #ifdef DEBUG_FFT_MEMORY_CACHE
-    std::cerr << "done, width = " << m_width << " height = " << m_height << std::endl;
+    cerr << "done, width = " << m_width << " height = " << m_height << endl;
 #endif
 }
 

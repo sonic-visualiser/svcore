@@ -39,9 +39,6 @@
 
 //#define DEBUG_TRANSFORM_FACTORY 1
 
-using std::cerr;
-using std::endl;
-
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
 
@@ -416,7 +413,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    FeatureExtractionPluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId << endl;
 	    continue;
 	}
 
@@ -424,7 +421,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    factory->instantiatePlugin(pluginId, 44100);
 
 	if (!plugin) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId << endl;
 	    continue;
 	}
 		
@@ -517,7 +514,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             RealTimePluginFactory::instanceFor(pluginId);
 
 	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId << endl;
 	    continue;
 	}
 
@@ -525,14 +522,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             factory->getPluginDescriptor(pluginId);
 
         if (!descriptor) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId.toLocal8Bit().data() << endl;
+	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId << endl;
 	    continue;
 	}
 	
 //!!!        if (descriptor->controlOutputPortCount == 0 ||
 //            descriptor->audioInputPortCount == 0) continue;
 
-//        std::cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
+//        cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
 	
 	QString pluginName = descriptor->name.c_str();
         QString category = factory->getPluginCategory(pluginId);
@@ -747,7 +744,7 @@ TransformFactory::populateUninstalledTransforms()
     m_uninstalledTransformsPopulated = true;
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-    std::cerr << "populateUninstalledTransforms exiting" << std::endl;
+    cerr << "populateUninstalledTransforms exiting" << endl;
 #endif
 }
 
@@ -1154,7 +1151,7 @@ TransformFactory::search(QStringList keywords)
     }
 
     if (!m_uninstalledTransformsPopulated) {
-        std::cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
+        cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
                   << "and are not being populated either -- was the thread not started correctly?" << endl;
         m_uninstalledTransformsMutex.unlock();
         return results;

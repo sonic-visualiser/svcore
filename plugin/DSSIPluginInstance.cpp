@@ -41,7 +41,7 @@
 #ifdef DEBUG_DSSI
 static std::ostream &operator<<(std::ostream& o, const QString &s)
 {
-    o << s.toLocal8Bit().data();
+    o << s;
     return o;
 }
 #endif
@@ -182,7 +182,7 @@ DSSIPluginInstance::getParameter(std::string id) const
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
 #ifdef DEBUG_DSSI
-            std::cerr << "Matches port " << i << std::endl;
+            cerr << "Matches port " << i << endl;
 #endif
             float v = getParameterValue(i);
 #ifdef DEBUG_DSSI
@@ -250,7 +250,7 @@ DSSIPluginInstance::init()
 		if (!strcmp(descriptor->PortNames[i], "latency") ||
 		    !strcmp(descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_DSSI
-		    std::cerr << "Wooo! We have a latency port!" << std::endl;
+		    cerr << "Wooo! We have a latency port!" << endl;
 #endif
 		    m_latencyPort = data;
 		}
@@ -458,15 +458,15 @@ DSSIPluginInstance::instantiate(unsigned long sampleRate)
     if (!m_descriptor) return;
 
 #ifdef DEBUG_DSSI
-    std::cout << "DSSIPluginInstance::instantiate - plugin \"unique\" id = "
-              << m_descriptor->LADSPA_Plugin->UniqueID << std::endl;
+    cout << "DSSIPluginInstance::instantiate - plugin \"unique\" id = "
+              << m_descriptor->LADSPA_Plugin->UniqueID << endl;
 #endif
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
     if (!descriptor->instantiate) {
-	std::cerr << "Bad plugin: plugin id " << descriptor->UniqueID
+	cerr << "Bad plugin: plugin id " << descriptor->UniqueID
 		  << ":" << descriptor->Label
-		  << " has no instantiate method!" << std::endl;
+		  << " has no instantiate method!" << endl;
 	return;
     }
 
@@ -897,7 +897,7 @@ DSSIPluginInstance::configure(std::string key,
 	qm = qm + message;
 	free(message);
 
-        std::cerr << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm << "\"" << std::endl;
+        cerr << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm << "\"" << endl;
     }
 
     return qm;
@@ -918,7 +918,7 @@ DSSIPluginInstance::sendEvent(const Vamp::RealTime &eventTime,
     if (m_haveLastEventSendTime &&
 	m_lastEventSendTime > eventTime) {
 #ifdef DEBUG_DSSI_PROCESS
-	std::cerr << "... clearing down" << std::endl;
+	cerr << "... clearing down" << endl;
 #endif
 	m_haveLastEventSendTime = false;
 	clearEvents();
@@ -1046,7 +1046,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 #ifdef DEBUG_DSSI_PROCESS
 	SVDEBUG << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
 		  << ", blockSize " << m_blockSize << endl;
-	std::cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << std::endl;
+	cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
 #endif
 
 	if (frameOffset >= int(count)) break;
@@ -1100,8 +1100,8 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 
 #ifdef DEBUG_DSSI_PROCESS
 //    for (int i = 0; i < count; ++i) {
-//	std::cout << m_outputBuffers[0][i] << " ";
-//	if (i % 8 == 0) std::cout << std::endl;
+//	cout << m_outputBuffers[0][i] << " ";
+//	if (i % 8 == 0) cout << endl;
 //    }
 #endif
 
@@ -1321,10 +1321,10 @@ DSSIPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->LADSPA_Plugin->cleanup) {
-	std::cerr << "Bad plugin: plugin id "
+	cerr << "Bad plugin: plugin id "
 		  << m_descriptor->LADSPA_Plugin->UniqueID
 		  << ":" << m_descriptor->LADSPA_Plugin->Label
-		  << " has no cleanup method!" << std::endl;
+		  << " has no cleanup method!" << endl;
 	return;
     }
 

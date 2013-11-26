@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include "Debug.h"
+
 ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
     ProgressReporter(parent),
     m_prefix(message),
@@ -31,9 +33,9 @@ ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
 ProgressPrinter::~ProgressPrinter()
 {
     if (m_lastProgress > 0 && m_lastProgress != 100) {
-        std::cerr << "\r\n";
+        cerr << "\r\n";
     }
-//    std::cerr << "(progress printer dtor)" << std::endl;
+//    cerr << "(progress printer dtor)" << endl;
 }
 
 bool
@@ -60,23 +62,23 @@ ProgressPrinter::setMessage(QString message)
 void
 ProgressPrinter::done()
 {
-    std::cerr << "\r"
-              << m_prefix.toStdString() 
+    cerr << "\r"
+              << m_prefix 
               << (m_prefix == "" ? "" : " ")
-              << "Done" << std::endl;
+              << "Done" << endl;
 }
 
 void
 ProgressPrinter::setProgress(int progress)
 {
     if (progress == m_lastProgress) return;
-    std::cerr << "\r"
-              << m_prefix.toStdString() 
+    cerr << "\r"
+              << m_prefix 
               << (m_prefix == "" ? "" : " ");
     if (m_definite) {
-        std::cerr << progress << "%";
+        cerr << progress << "%";
     } else {
-        std::cerr << "|/-\\"[progress % 4];
+        cerr << "|/-\\"[progress % 4];
     }
     m_lastProgress = progress;
 }

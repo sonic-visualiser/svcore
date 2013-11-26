@@ -276,7 +276,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
         if (m_append) mode |= QIODevice::Append;
                        
         if (!file->open(mode)) {
-            cerr << "FileFeatureWriter: ERROR: Failed to open output file \"" << filename.toStdString()
+            cerr << "FileFeatureWriter: ERROR: Failed to open output file \"" << filename
                  << "\" for writing" << endl;
             delete file;
             m_files[key] = 0;

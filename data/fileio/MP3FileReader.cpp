@@ -95,8 +95,8 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             ::close(fd);
             return;
         } else if (sz == 0) {
-            std::cerr << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
-                .arg(offset).arg(m_fileSize) << std::endl;
+            cerr << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
+                .arg(offset).arg(m_fileSize) << endl;
             m_fileSize = offset;
             break;
         }
@@ -137,11 +137,11 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             usleep(10);
         }
         
-        std::cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << std::endl;
+        cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << endl;
     }
 
     if (m_error != "") {
-        std::cerr << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << std::endl;
+        cerr << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << endl;
     }
 }
 
@@ -243,7 +243,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
         
     id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
     if (!u8str) {
-        std::cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << std::endl;
+        cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << endl;
         return "";
     }
         
@@ -321,7 +321,7 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
     if (length > ID3_TAG_QUERYSIZE) {
         int taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
         if (taglen > 0) {
-//            std::cerr << "ID3 tag length to skip: " << taglen << std::endl;
+//            cerr << "ID3 tag length to skip: " << taglen << endl;
             start += taglen;
             length -= taglen;
         }

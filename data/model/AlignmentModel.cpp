@@ -167,7 +167,7 @@ void
 AlignmentModel::pathChanged()
 {
     if (m_pathComplete) {
-        std::cerr << "AlignmentModel: deleting raw path model" << std::endl;
+        cerr << "AlignmentModel: deleting raw path model" << endl;
         if (m_rawPath) m_rawPath->aboutToDelete();
         delete m_rawPath;
         m_rawPath = 0;
@@ -219,8 +219,8 @@ AlignmentModel::constructPath() const
 {
     if (!m_path) {
         if (!m_rawPath) {
-            std::cerr << "ERROR: AlignmentModel::constructPath: "
-                      << "No raw path available" << std::endl;
+            cerr << "ERROR: AlignmentModel::constructPath: "
+                      << "No raw path available" << endl;
             return;
         }
         m_path = new PathModel
@@ -251,8 +251,8 @@ AlignmentModel::constructReversePath() const
 {
     if (!m_reversePath) {
         if (!m_path) {
-            std::cerr << "ERROR: AlignmentModel::constructReversePath: "
-                      << "No forward path available" << std::endl;
+            cerr << "ERROR: AlignmentModel::constructReversePath: "
+                      << "No forward path available" << endl;
             return;
         }
         m_reversePath = new PathModel
@@ -304,7 +304,7 @@ AlignmentModel::align(PathModel *path, size_t frame) const
     PathModel::PointList::const_iterator i = points.lower_bound(point);
     if (i == points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        std::cerr << "Note: i == points.end()" << std::endl;
+        cerr << "Note: i == points.end()" << endl;
 #endif
         --i;
     }
@@ -318,13 +318,13 @@ AlignmentModel::align(PathModel *path, size_t frame) const
 
     if (++i != points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        std::cerr << "another point available" << std::endl;
+        cerr << "another point available" << endl;
 #endif
         followingFrame = i->frame;
         followingMapFrame = i->mapframe;
     } else {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        std::cerr << "no other point available" << std::endl;
+        cerr << "no other point available" << endl;
 #endif
     }        
 

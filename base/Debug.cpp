@@ -75,12 +75,12 @@ operator<<(QDebug &dbg, const std::string &s)
 std::ostream &
 operator<<(std::ostream &target, const QString &str)
 {
-    return target << str.toLocal8Bit().data();
+    return target << str.toStdString();
 }
 
 std::ostream &
 operator<<(std::ostream &target, const QUrl &u)
 {
-    return target << "<" << u.toString() << ">";
+    return target << "<" << u.toString().toStdString() << ">";
 }
 

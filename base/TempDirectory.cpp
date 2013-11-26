@@ -206,10 +206,10 @@ TempDirectory::cleanupDirectory(QString tmpdir)
             cleanupDirectory(fi.absoluteFilePath());
         } else {
             if (!QFile(fi.absoluteFilePath()).remove()) {
-                std::cerr << "WARNING: TempDirectory::cleanup: "
+                cerr << "WARNING: TempDirectory::cleanup: "
                           << "Failed to unlink file \""
                           << fi.absoluteFilePath() << "\""
-                          << std::endl;
+                          << endl;
             }
         }
     }
@@ -217,15 +217,15 @@ TempDirectory::cleanupDirectory(QString tmpdir)
     QString dirname = dir.dirName();
     if (dirname != "") {
         if (!dir.cdUp()) {
-            std::cerr << "WARNING: TempDirectory::cleanup: "
+            cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to cd to parent directory of "
-                      << tmpdir << std::endl;
+                      << tmpdir << endl;
             return;
         }
         if (!dir.rmdir(dirname)) {
-            std::cerr << "WARNING: TempDirectory::cleanup: "
+            cerr << "WARNING: TempDirectory::cleanup: "
                       << "Failed to remove directory "
-                      << dirname << std::endl;
+                      << dirname << endl;
         } 
     }
 
@@ -247,10 +247,10 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
         QDir subdir(dirpath, "*.pid", QDir::Name, QDir::Files);
 
         if (subdir.count() == 0) {
-            std::cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
-                      << dirpath << "\").  Removing it..." << std::endl;
+            cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
+                      << dirpath << "\").  Removing it..." << endl;
             cleanupDirectory(dirpath);
-            std::cerr << "...done." << std::endl;
+            cerr << "...done." << endl;
             continue;
         }
 
@@ -261,13 +261,13 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
             if (!ok) continue;
 
             if (GetProcessStatus(pid) == ProcessNotRunning) {
-                std::cerr << "INFO: Found abandoned temporary directory from "
+                cerr << "INFO: Found abandoned temporary directory from "
                           << "a previous, defunct process\n(pid=" << pid
                           << ", directory=\""
-                          << dirpath.toStdString()
-                          << "\").  Removing it..." << std::endl;
+                          << dirpath
+                          << "\").  Removing it..." << endl;
                 cleanupDirectory(dirpath);
-                std::cerr << "...done." << std::endl;
+                cerr << "...done." << endl;
                 break;
             }
         }

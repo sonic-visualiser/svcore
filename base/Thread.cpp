@@ -63,7 +63,7 @@ MutexLocker::MutexLocker(QMutex *mutex, const char *name) :
     m_locker(mutex)
 {
 #ifdef DEBUG_MUTEX_LOCKER
-    std::cerr << "... locked mutex " << mutex << std::endl;
+    cerr << "... locked mutex " << mutex << endl;
 #endif
     m_profiler.end();
 }
@@ -76,16 +76,16 @@ MutexLocker::Printer::Printer(const char *name) :
     m_name(name)
 {
 #ifdef DEBUG_MUTEX_LOCKER
-    std::cerr << "MutexLocker: Locking   \"" << m_name << "\" in "
-              << (void *)QThread::currentThreadId() << std::endl;
+    cerr << "MutexLocker: Locking   \"" << m_name << "\" in "
+              << (void *)QThread::currentThreadId() << endl;
 #endif
 }
 
 MutexLocker::Printer::~Printer()
 {
 #ifdef DEBUG_MUTEX_LOCKER
-    std::cerr << "MutexLocker: Unlocking \"" << m_name
-              << "\" in " << (void *)QThread::currentThreadId() << std::endl;
+    cerr << "MutexLocker: Unlocking \"" << m_name
+              << "\" in " << (void *)QThread::currentThreadId() << endl;
 #endif
 }
 
