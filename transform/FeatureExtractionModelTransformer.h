@@ -31,15 +31,22 @@ class FeatureExtractionModelTransformer : public ModelTransformer
     Q_OBJECT
 
 public:
-	enum PreferredOutputModel {
-		NoteOutputModel,
-		FlexiNoteOutputModel,
-		UndefinedOutputModel = 255
-	    };
+    enum PreferredOutputModel {
+        NoteOutputModel,
+        FlexiNoteOutputModel,
+        UndefinedOutputModel = 255
+    };
 	    
     FeatureExtractionModelTransformer(Input input,
                                       const Transform &transform,
-									  const PreferredOutputModel outputmodel);
+                                      const PreferredOutputModel outputmodel);
+
+    // Obtain outputs for a set of transforms that all use the same
+    // plugin and input (but with different outputs). i.e. run the
+    // plugin once only and collect more than one output from it.
+    FeatureExtractionModelTransformer(Input input,
+                                      const Transforms &relatedTransforms,
+                                      const PreferredOutputModel outputmodel);
 
     virtual ~FeatureExtractionModelTransformer();
 
