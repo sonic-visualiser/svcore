@@ -63,10 +63,11 @@ protected:
 
     void createOutputModel(int n);
 
-    void addFeature(size_t blockFrame,
+    void addFeature(int n,
+                    size_t blockFrame,
 		    const Vamp::Plugin::Feature &feature);
 
-    void setCompletion(int);
+    void setCompletion(int, int);
 
     void getFrames(int channelCount, long startFrame, long size,
                    float **buffer);

@@ -138,6 +138,7 @@ FeatureExtractionModelTransformer::initialise()
         size_t pstep = primaryTransform.getStepSize();
         size_t pblock = primaryTransform.getBlockSize();
 
+///!!! hang on, this isn't right -- we're modifying a copy
         primaryTransform.setStepSize(0);
         primaryTransform.setBlockSize(0);
         TransformFactory::getInstance()->makeContextConsistentWithPlugin
@@ -449,7 +450,9 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
     delete m_plugin;
-    delete m_descriptors[n];
+    for (int j = 0; j < m_descriptors.size(); ++j) {
+        delete m_descriptors[j];
+    }
 }
 
 DenseTimeValueModel *
@@ -473,6 +476,8 @@ FeatureExtractionModelTransformer::run()
 
     if (m_outputs.empty()) return;
 
+    Transform primaryTransform = m_transforms[0];
+
     while (!input->isReady() && !m_abandoned) {
         SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
@@ -488,11 +493,11 @@ FeatureExtractionModelTransformer::run()
 
     float **buffers = new float*[channelCount];
     for (size_t ch = 0; ch < channelCount; ++ch) {
-	buffers[ch] = new float[m_transforms[n].getBlockSize() + 2];
+	buffers[ch] = new float[primaryTransform.getBlockSize() + 2];
     }
 
-    size_t stepSize = m_transforms[n].getStepSize();
-    size_t blockSize = m_transforms[n].getBlockSize();
+    size_t stepSize = primaryTransform.getStepSize();
+    size_t blockSize = primaryTransform.getBlockSize();
 
     bool frequencyDomain = (m_plugin->getInputDomain() ==
                             Vamp::Plugin::FrequencyDomain);
@@ -503,7 +508,7 @@ FeatureExtractionModelTransformer::run()
             FFTModel *model = new FFTModel
                                   (getConformingInput(),
                                    channelCount == 1 ? m_input.getChannel() : ch,
-                                   m_transforms[n].getWindowType(),
+                                   primaryTransform.getWindowType(),
                                    blockSize,
                                    stepSize,
                                    blockSize,
@@ -511,7 +516,9 @@ FeatureExtractionModelTransformer::run()
                                    StorageAdviser::PrecisionCritical);
             if (!model->isOK()) {
                 delete model;
-                setCompletion(100);
+                for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                    setCompletion(j, 100);
+                }
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
                 throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer");
             }
@@ -523,8 +530,8 @@ FeatureExtractionModelTransformer::run()
     long startFrame = m_input.getModel()->getStartFrame();
     long   endFrame = m_input.getModel()->getEndFrame();
 
-    RealTime contextStartRT = m_transforms[n].getStartTime();
-    RealTime contextDurationRT = m_transforms[n].getDuration();
+    RealTime contextStartRT = primaryTransform.getStartTime();
+    RealTime contextDurationRT = primaryTransform.getDuration();
 
     long contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
@@ -547,7 +554,9 @@ FeatureExtractionModelTransformer::run()
 
     long prevCompletion = 0;
 
-    setCompletion(0);
+    for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+        setCompletion(j, 0);
+    }
 
     float *reals = 0;
     float *imaginaries = 0;
@@ -604,13 +613,17 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
-	for (size_t fi = 0; fi < features[m_outputNos[n]].size(); ++fi) {
-	    Vamp::Plugin::Feature feature = features[m_outputNos[n]][fi];
-	    addFeature(blockFrame, feature);
-	}
+        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                addFeature(j, blockFrame, feature);
+            }
+        }
 
 	if (blockFrame == contextStart || completion > prevCompletion) {
-	    setCompletion(completion);
+            for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                setCompletion(j, completion);
+            }
 	    prevCompletion = completion;
 	}
 
@@ -620,13 +633,17 @@ FeatureExtractionModelTransformer::run()
     if (!m_abandoned) {
         Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
-        for (size_t fi = 0; fi < features[m_outputNos[n]].size(); ++fi) {
-            Vamp::Plugin::Feature feature = features[m_outputNos[n]][fi];
-            addFeature(blockFrame, feature);
+        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                addFeature(j, blockFrame, feature);
+            }
         }
     }
 
-    setCompletion(100);
+    for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+        setCompletion(j, 100);
+    }
 
     if (frequencyDomain) {
         for (size_t ch = 0; ch < channelCount; ++ch) {
@@ -698,8 +715,9 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 }
 
 void
-FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
-					     const Vamp::Plugin::Feature &feature)
+FeatureExtractionModelTransformer::addFeature(int n,
+                                              size_t blockFrame,
+                                              const Vamp::Plugin::Feature &feature)
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
@@ -748,8 +766,6 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
     // to determine what sort of model we must be adding the features
     // to, we instead test what sort of model the constructor decided
     // to create.
-
-    //!!! currently hardcoding model 0
 
     if (isOutput<SparseOneDimensionalModel>(n)) {
 
@@ -872,7 +888,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 }
 
 void
-FeatureExtractionModelTransformer::setCompletion(int completion)
+FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 {
     int binCount = 1;
     if (m_descriptors[n]->hasFixedBinCount) {

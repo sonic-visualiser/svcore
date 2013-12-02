@@ -119,7 +119,7 @@ protected slots:
     void modelAboutToBeDeleted(Model *);
 
 protected:
-    ModelTransformer *createTransformer(const Transform &transform,
+    ModelTransformer *createTransformer(const Transforms &transforms,
                                         const ModelTransformer::Input &input);
 
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
