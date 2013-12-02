@@ -16,10 +16,10 @@
 #ifndef _FLEXINOTE_MODEL_H_
 #define _FLEXINOTE_MODEL_H_
 
-// #include "NotelikeModel.h" // GF: reomved as this is an uncommitted experiment for now
-
 #include "IntervalModel.h"
+#include "NoteData.h"
 #include "base/RealTime.h"
+#include "base/Pitch.h"
 #include "base/PlayParameterRepository.h"
 
 /**
@@ -97,7 +97,7 @@ public:
 };
 
 
-class FlexiNoteModel : public IntervalModel<FlexiNote>
+class FlexiNoteModel : public IntervalModel<FlexiNote>, public NoteExportable
 {
     Q_OBJECT
     
@@ -225,6 +225,48 @@ public:
     {
         if (column == 5) return SortAlphabetical;
         return SortNumeric;
+    }
+
+    /**
+     * NoteExportable methods.
+     */
+
+    NoteList getNotes() const {
+        return getNotes(getStartFrame(), getEndFrame());
+    }
+
+    NoteList getNotes(size_t startFrame, size_t endFrame) const {
+        
+	PointList points = getPoints(startFrame, endFrame);
+        NoteList notes;
+
+        for (PointList::iterator pli =
+		 points.begin(); pli != points.end(); ++pli) {
+
+	    size_t duration = pli->duration;
+            if (duration == 0 || duration == 1) {
+                duration = getSampleRate() / 20;
+            }
+
+            int pitch = lrintf(pli->value);
+            
+            int velocity = 100;
+            if (pli->level > 0.f && pli->level <= 1.f) {
+                velocity = lrintf(pli->level * 127);
+            }
+
+            NoteData note(pli->frame, duration, pitch, velocity);
+
+            if (getScaleUnits() == "Hz") {
+                note.frequency = pli->value;
+                note.midiPitch = Pitch::getPitchForFrequency(note.frequency);
+                note.isMidiPitchQuantized = false;
+            }
+        
+            notes.push_back(note);
+        }
+        
+        return notes;
     }
 
 protected:
