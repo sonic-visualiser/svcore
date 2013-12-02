@@ -86,7 +86,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
         WritableWaveFileModel *model = new WritableWaveFileModel
             (input->getSampleRate(), outputChannels);
 
-        m_output = model;
+        m_outputs.push_back(model);
 
     } else {
 	
@@ -95,7 +95,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
         if (m_units != "") model->setScaleUnits(m_units);
 
-        m_output = model;
+        m_outputs.push_back(model);
     }
 }
 
@@ -127,8 +127,8 @@ RealTimeEffectModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_output);
-    WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_output);
+    SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_outputs[0]);
+    WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_outputs[0]);
     if (!stvm && !wwfm) return;
 
     if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;

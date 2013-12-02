@@ -230,6 +230,46 @@ ModelTransformerFactory::transform(const Transform &transform,
     return model;
 }
 
+vector<Model *>
+ModelTransformerFactory::transformMultiple(const Transforms &transforms,
+                                           const ModelTransformer::Input &input,
+                                           QString &message) 
+{
+    SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
+    
+    ModelTransformer *t = createTransformer(transforms, input);
+    if (!t) return 0;
+
+    connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
+
+    m_runningTransformers.insert(t);
+
+    t->start();
+    Model *model = t->detachOutputModel();
+
+    if (model) {
+        QString imn = input.getModel()->objectName();
+        QString trn =
+            TransformFactory::getInstance()->getTransformFriendlyName
+            (transform.getIdentifier());
+        if (imn != "") {
+            if (trn != "") {
+                model->setObjectName(tr("%1: %2").arg(imn).arg(trn));
+            } else {
+                model->setObjectName(imn);
+            }
+        } else if (trn != "") {
+            model->setObjectName(trn);
+        }
+    } else {
+        t->wait();
+    }
+
+    message = t->getMessage();
+
+    return model;
+}
+
 void
 ModelTransformerFactory::transformerFinished()
 {
