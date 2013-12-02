@@ -40,6 +40,8 @@ class ModelTransformer : public Thread
 public:
     virtual ~ModelTransformer();
 
+    typedef std::vector<Model *> Models;
+
     class Input {
     public:
         Input(Model *m) : m_model(m), m_channel(-1) { }
@@ -76,18 +78,19 @@ public:
     int getInputChannel() { return m_input.getChannel(); }
 
     /**
-     * Return the output model created by the transform.  Returns a
-     * null model if the transform could not be initialised; an error
-     * message may be available via getMessage() in this situation.
+     * Return the set of output models created by the transform or
+     * transforms.  Returns an empty list if any transform could not
+     * be initialised; an error message may be available via
+     * getMessage() in this situation.
      */
-    Model *getOutputModel() { return m_output; }
+    Models getOutputModels() { return m_outputs; }
 
     /**
-     * Return the output model, also detaching it from the transformer
-     * so that it will not be deleted when the transformer is.  The
-     * caller takes ownership of the model.
+     * Return the set of output models, also detaching them from the
+     * transformer so that they will not be deleted when the
+     * transformer is.  The caller takes ownership of the models.
      */
-    Model *detachOutputModel() { m_detached = true; return m_output; }
+    Models detachOutputModels() { m_detached = true; return m_outputs; }
 
     /**
      * Return a warning or error message.  If getOutputModel returned
@@ -99,10 +102,11 @@ public:
 
 protected:
     ModelTransformer(Input input, const Transform &transform);
+    ModelTransformer(Input input, const Transforms &transforms);
 
-    Transform m_transform;
+    Transforms m_transforms;
     Input m_input; // I don't own the model in this
-    Model *m_output; // I own this, unless...
+    Models m_outputs; // I own this, unless...
     bool m_detached; // ... this is true.
     bool m_abandoned;
     QString m_message;

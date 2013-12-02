@@ -39,43 +39,80 @@
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform,
-																	 const PreferredOutputModel outputmodel) :
+                                                                     const PreferredOutputModel outputmodel) :
     ModelTransformer(in, transform),
     m_plugin(0),
-    m_descriptor(0),
-    m_outputNo(0),
-    m_fixedRateFeatureNo(-1), // we increment before use
     m_preferredOutputModel(outputmodel)
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
-    QString pluginId = transform.getPluginIdentifier();
+    initialise();
+}
+
+FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
+                                                                     const Transforms &transforms,
+                                                                     const PreferredOutputModel outputmodel) :
+    ModelTransformer(in, transforms),
+    m_plugin(0),
+    m_preferredOutputModel(outputmodel)
+{
+//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
+
+    initialise();
+}
+
+static bool
+areTransformsSimilar(const Transform &t1, const Transform &t2)
+{
+    Transform t2o(t2);
+    t2o.setOutput(t1.getOutput());
+    return t1 == t2o;
+}
+
+bool
+FeatureExtractionModelTransformer::initialise()
+{
+    // All transforms must use the same plugin, parameters, and
+    // inputs: they can differ only in choice of plugin output. So we
+    // initialise based purely on the first transform in the list (but
+    // first check that they are actually similar as promised)
+
+    for (int j = 1; j < (int)m_transforms.size(); ++j) {
+        if (!areTransformsSimilar(m_transforms[0], m_transforms[j])) {
+            m_message = tr("Transforms supplied to a single FeatureExtractionModelTransformer instance must be similar in every respect except plugin output");
+            return false;
+        }
+    }
+
+    Transform primaryTransform = m_transforms[0];
+
+    QString pluginId = primaryTransform.getPluginIdentifier();
 
     FeatureExtractionPluginFactory *factory =
 	FeatureExtractionPluginFactory::instanceFor(pluginId);
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
-	return;
+	return false;
     }
 
     DenseTimeValueModel *input = getConformingInput();
     if (!input) {
         m_message = tr("Input model for feature extraction plugin \"%1\" is of wrong type (internal error?)").arg(pluginId);
-        return;
+        return false;
     }
 
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
-	return;
+	return false;
     }
 
     TransformFactory::getInstance()->makeContextConsistentWithPlugin
-        (m_transform, m_plugin);
+        (primaryTransform, m_plugin);
 
     TransformFactory::getInstance()->setPluginParameters
-        (m_transform, m_plugin);
+        (primaryTransform, m_plugin);
 
     size_t channelCount = input->getChannelCount();
     if (m_plugin->getMaxChannelCount() < channelCount) {
@@ -87,34 +124,35 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
             .arg(m_plugin->getMinChannelCount())
             .arg(m_plugin->getMaxChannelCount())
             .arg(input->getChannelCount());
-	return;
+	return false;
     }
 
     SVDEBUG << "Initialising feature extraction plugin with channels = "
-              << channelCount << ", step = " << m_transform.getStepSize()
-              << ", block = " << m_transform.getBlockSize() << endl;
+              << channelCount << ", step = " << primaryTransform.getStepSize()
+              << ", block = " << primaryTransform.getBlockSize() << endl;
 
     if (!m_plugin->initialise(channelCount,
-                              m_transform.getStepSize(),
-                              m_transform.getBlockSize())) {
+                              primaryTransform.getStepSize(),
+                              primaryTransform.getBlockSize())) {
 
-        size_t pstep = m_transform.getStepSize();
-        size_t pblock = m_transform.getBlockSize();
+        size_t pstep = primaryTransform.getStepSize();
+        size_t pblock = primaryTransform.getBlockSize();
 
-        m_transform.setStepSize(0);
-        m_transform.setBlockSize(0);
+///!!! hang on, this isn't right -- we're modifying a copy
+        primaryTransform.setStepSize(0);
+        primaryTransform.setBlockSize(0);
         TransformFactory::getInstance()->makeContextConsistentWithPlugin
-            (m_transform, m_plugin);
+            (primaryTransform, m_plugin);
 
-        if (m_transform.getStepSize() != pstep ||
-            m_transform.getBlockSize() != pblock) {
+        if (primaryTransform.getStepSize() != pstep ||
+            primaryTransform.getBlockSize() != pblock) {
             
             if (!m_plugin->initialise(channelCount,
-                                      m_transform.getStepSize(),
-                                      m_transform.getBlockSize())) {
+                                      primaryTransform.getStepSize(),
+                                      primaryTransform.getBlockSize())) {
 
                 m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
-                return;
+                return false;
 
             } else {
 
@@ -122,22 +160,22 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                     .arg(pluginId)
                     .arg(pstep)
                     .arg(pblock)
-                    .arg(m_transform.getStepSize())
-                    .arg(m_transform.getBlockSize());
+                    .arg(primaryTransform.getStepSize())
+                    .arg(primaryTransform.getBlockSize());
             }
 
         } else {
 
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
-            return;
+            return false;
         }
     }
 
-    if (m_transform.getPluginVersion() != "") {
+    if (primaryTransform.getPluginVersion() != "") {
         QString pv = QString("%1").arg(m_plugin->getPluginVersion());
-        if (pv != m_transform.getPluginVersion()) {
+        if (pv != primaryTransform.getPluginVersion()) {
             QString vm = tr("Transform was configured for version %1 of plugin \"%2\", but the plugin being used is version %3")
-                .arg(m_transform.getPluginVersion())
+                .arg(primaryTransform.getPluginVersion())
                 .arg(pluginId)
                 .arg(pv);
             if (m_message != "") {
@@ -152,77 +190,85 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 
     if (outputs.empty()) {
         m_message = tr("Plugin \"%1\" has no outputs").arg(pluginId);
-	return;
+	return false;
     }
-    
-    for (size_t i = 0; i < outputs.size(); ++i) {
+
+    for (int j = 0; j < (int)m_transforms.size(); ++j) {
+
+        for (int i = 0; i < (int)outputs.size(); ++i) {
 //        SVDEBUG << "comparing output " << i << " name \"" << outputs[i].identifier << "\" with expected \"" << m_transform.getOutput() << "\"" << endl;
-	if (m_transform.getOutput() == "" ||
-            outputs[i].identifier == m_transform.getOutput().toStdString()) {
-	    m_outputNo = i;
-	    m_descriptor = new Vamp::Plugin::OutputDescriptor(outputs[i]);
-	    break;
-	}
+            if (m_transforms[j].getOutput() == "" ||
+                outputs[i].identifier == m_transforms[j].getOutput().toStdString()) {
+                m_outputNos.push_back(i);
+                m_descriptors.push_back(new Vamp::Plugin::OutputDescriptor(outputs[i]));
+                m_fixedRateFeatureNos.push_back(-1); // we increment before use
+                break;
+            }
+        }
+
+        if (m_descriptors.size() <= j) {
+            m_message = tr("Plugin \"%1\" has no output named \"%2\"")
+                .arg(pluginId)
+                .arg(m_transforms[j].getOutput());
+            return false;
+        }
     }
 
-    if (!m_descriptor) {
-        m_message = tr("Plugin \"%1\" has no output named \"%2\"")
-            .arg(pluginId)
-            .arg(m_transform.getOutput());
-	return;
+    for (int j = 0; j < (int)m_transforms.size(); ++j) {
+        createOutputModel(j);
     }
 
-    createOutputModel();
+    return true;
 }
 
 void
-FeatureExtractionModelTransformer::createOutputModel()
+FeatureExtractionModelTransformer::createOutputModel(int n)
 {
     DenseTimeValueModel *input = getConformingInput();
 
 //    cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << endl;
     
-    PluginRDFDescription description(m_transform.getPluginIdentifier());
-    QString outputId = m_transform.getOutput();
+    PluginRDFDescription description(m_transforms[n].getPluginIdentifier());
+    QString outputId = m_transforms[n].getOutput();
 
     int binCount = 1;
     float minValue = 0.0, maxValue = 0.0;
     bool haveExtents = false;
     
-    if (m_descriptor->hasFixedBinCount) {
-	binCount = m_descriptor->binCount;
+    if (m_descriptors[n]->hasFixedBinCount) {
+	binCount = m_descriptors[n]->binCount;
     }
 
 //    cerr << "FeatureExtractionModelTransformer: output bin count "
 //	      << binCount << endl;
 
-    if (binCount > 0 && m_descriptor->hasKnownExtents) {
-	minValue = m_descriptor->minValue;
-	maxValue = m_descriptor->maxValue;
+    if (binCount > 0 && m_descriptors[n]->hasKnownExtents) {
+	minValue = m_descriptors[n]->minValue;
+	maxValue = m_descriptors[n]->maxValue;
         haveExtents = true;
     }
 
     size_t modelRate = input->getSampleRate();
     size_t modelResolution = 1;
 
-    if (m_descriptor->sampleType != 
+    if (m_descriptors[n]->sampleType != 
         Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
-        if (m_descriptor->sampleRate > input->getSampleRate()) {
+        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             cerr << "WARNING: plugin reports output sample rate as "
-                      << m_descriptor->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << endl;
+                      << m_descriptors[n]->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << endl;
         }
     }
 
-    switch (m_descriptor->sampleType) {
+    switch (m_descriptors[n]->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
-	if (m_descriptor->sampleRate != 0.0) {
-	    modelResolution = size_t(modelRate / m_descriptor->sampleRate + 0.001);
+	if (m_descriptors[n]->sampleRate != 0.0) {
+	    modelResolution = size_t(modelRate / m_descriptors[n]->sampleRate + 0.001);
 	}
 	break;
 
     case Vamp::Plugin::OutputDescriptor::OneSamplePerStep:
-	modelResolution = m_transform.getStepSize();
+	modelResolution = m_transforms[n].getStepSize();
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
@@ -231,33 +277,33 @@ FeatureExtractionModelTransformer::createOutputModel()
         //!!! the model rate to be the input model's rate, and adjust
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
-//	modelRate = size_t(m_descriptor->sampleRate + 0.001);
-        if (m_descriptor->sampleRate > input->getSampleRate()) {
+//	modelRate = size_t(m_descriptors[n]->sampleRate + 0.001);
+        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
             modelResolution = size_t(input->getSampleRate() /
-                                     m_descriptor->sampleRate);
+                                     m_descriptors[n]->sampleRate);
         }
 	break;
     }
 
     bool preDurationPlugin = (m_plugin->getVampApiVersion() < 2);
 
+    Model *out = 0;
+
     if (binCount == 0 &&
-        (preDurationPlugin || !m_descriptor->hasDuration)) {
+        (preDurationPlugin || !m_descriptors[n]->hasDuration)) {
 
         // Anything with no value and no duration is an instant
 
-	m_output = new SparseOneDimensionalModel(modelRate, modelResolution,
-						 false);
-
+        out = new SparseOneDimensionalModel(modelRate, modelResolution, false);
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
-        m_output->setRDFTypeURI(outputEventTypeURI);
+        out->setRDFTypeURI(outputEventTypeURI);
 
     } else if ((preDurationPlugin && binCount > 1 &&
-                (m_descriptor->sampleType ==
+                (m_descriptors[n]->sampleType ==
                  Vamp::Plugin::OutputDescriptor::VariableSampleRate)) ||
-               (!preDurationPlugin && m_descriptor->hasDuration)) {
+               (!preDurationPlugin && m_descriptors[n]->hasDuration)) {
 
         // For plugins using the old v1 API without explicit duration,
         // we treat anything that has multiple bins (i.e. that has the
@@ -288,9 +334,9 @@ FeatureExtractionModelTransformer::createOutputModel()
 
         // Regions do not have units of Hz or MIDI things (a sweeping
         // assumption!)
-        if (m_descriptor->unit == "Hz" ||
-            m_descriptor->unit.find("MIDI") != std::string::npos ||
-            m_descriptor->unit.find("midi") != std::string::npos) {
+        if (m_descriptors[n]->unit == "Hz" ||
+            m_descriptors[n]->unit.find("MIDI") != std::string::npos ||
+            m_descriptors[n]->unit.find("midi") != std::string::npos) {
             isNoteModel = true;
         }
 
@@ -306,8 +352,8 @@ FeatureExtractionModelTransformer::createOutputModel()
             } else {
 	            model = new NoteModel (modelRate, modelResolution, false);
             }
-            model->setScaleUnits(m_descriptor->unit.c_str());
-            m_output = model;
+            model->setScaleUnits(m_descriptors[n]->unit.c_str());
+            out = model;
 
 		// GF: FlexiNoteModel is selected if the m_preferredOutputModel is set
         } else if (isNoteModel && m_preferredOutputModel == FlexiNoteOutputModel) {
@@ -318,8 +364,8 @@ FeatureExtractionModelTransformer::createOutputModel()
             } else {
                 model = new FlexiNoteModel (modelRate, modelResolution, false);
             }
-            model->setScaleUnits(m_descriptor->unit.c_str());
-            m_output = model;
+            model->setScaleUnits(m_descriptors[n]->unit.c_str());
+            out = model;
 
         } else {
 
@@ -331,15 +377,15 @@ FeatureExtractionModelTransformer::createOutputModel()
                 model = new RegionModel
                     (modelRate, modelResolution, false);
             }
-            model->setScaleUnits(m_descriptor->unit.c_str());
-            m_output = model;
+            model->setScaleUnits(m_descriptors[n]->unit.c_str());
+            out = model;
         }
 
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
-        m_output->setRDFTypeURI(outputEventTypeURI);
+        out->setRDFTypeURI(outputEventTypeURI);
 
     } else if (binCount == 1 ||
-               (m_descriptor->sampleType == 
+               (m_descriptors[n]->sampleType == 
                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
 
         // Anything that is not a 1D, note, or interval model and that
@@ -361,12 +407,12 @@ FeatureExtractionModelTransformer::createOutputModel()
         }
 
         Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
-        model->setScaleUnits(outputs[m_outputNo].unit.c_str());
+        model->setScaleUnits(outputs[m_outputNos[n]].unit.c_str());
 
-        m_output = model;
+        out = model;
 
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
-        m_output->setRDFTypeURI(outputEventTypeURI);
+        out->setRDFTypeURI(outputEventTypeURI);
 
     } else {
 
@@ -380,28 +426,33 @@ FeatureExtractionModelTransformer::createOutputModel()
              EditableDenseThreeDimensionalModel::BasicMultirateCompression,
              false);
 
-	if (!m_descriptor->binNames.empty()) {
+	if (!m_descriptors[n]->binNames.empty()) {
 	    std::vector<QString> names;
-	    for (size_t i = 0; i < m_descriptor->binNames.size(); ++i) {
-		names.push_back(m_descriptor->binNames[i].c_str());
+	    for (size_t i = 0; i < m_descriptors[n]->binNames.size(); ++i) {
+		names.push_back(m_descriptors[n]->binNames[i].c_str());
 	    }
 	    model->setBinNames(names);
 	}
         
-        m_output = model;
+        out = model;
 
         QString outputSignalTypeURI = description.getOutputSignalTypeURI(outputId);
-        m_output->setRDFTypeURI(outputSignalTypeURI);
+        out->setRDFTypeURI(outputSignalTypeURI);
     }
 
-    if (m_output) m_output->setSourceModel(input);
+    if (out) {
+        out->setSourceModel(input);
+        m_outputs.push_back(out);
+    }
 }
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
     delete m_plugin;
-    delete m_descriptor;
+    for (int j = 0; j < m_descriptors.size(); ++j) {
+        delete m_descriptors[j];
+    }
 }
 
 DenseTimeValueModel *
@@ -423,7 +474,9 @@ FeatureExtractionModelTransformer::run()
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
-    if (!m_output) return;
+    if (m_outputs.empty()) return;
+
+    Transform primaryTransform = m_transforms[0];
 
     while (!input->isReady() && !m_abandoned) {
         SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
@@ -440,11 +493,11 @@ FeatureExtractionModelTransformer::run()
 
     float **buffers = new float*[channelCount];
     for (size_t ch = 0; ch < channelCount; ++ch) {
-	buffers[ch] = new float[m_transform.getBlockSize() + 2];
+	buffers[ch] = new float[primaryTransform.getBlockSize() + 2];
     }
 
-    size_t stepSize = m_transform.getStepSize();
-    size_t blockSize = m_transform.getBlockSize();
+    size_t stepSize = primaryTransform.getStepSize();
+    size_t blockSize = primaryTransform.getBlockSize();
 
     bool frequencyDomain = (m_plugin->getInputDomain() ==
                             Vamp::Plugin::FrequencyDomain);
@@ -455,7 +508,7 @@ FeatureExtractionModelTransformer::run()
             FFTModel *model = new FFTModel
                                   (getConformingInput(),
                                    channelCount == 1 ? m_input.getChannel() : ch,
-                                   m_transform.getWindowType(),
+                                   primaryTransform.getWindowType(),
                                    blockSize,
                                    stepSize,
                                    blockSize,
@@ -463,7 +516,9 @@ FeatureExtractionModelTransformer::run()
                                    StorageAdviser::PrecisionCritical);
             if (!model->isOK()) {
                 delete model;
-                setCompletion(100);
+                for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                    setCompletion(j, 100);
+                }
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
                 throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer");
             }
@@ -475,8 +530,8 @@ FeatureExtractionModelTransformer::run()
     long startFrame = m_input.getModel()->getStartFrame();
     long   endFrame = m_input.getModel()->getEndFrame();
 
-    RealTime contextStartRT = m_transform.getStartTime();
-    RealTime contextDurationRT = m_transform.getDuration();
+    RealTime contextStartRT = primaryTransform.getStartTime();
+    RealTime contextDurationRT = primaryTransform.getDuration();
 
     long contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
@@ -499,7 +554,9 @@ FeatureExtractionModelTransformer::run()
 
     long prevCompletion = 0;
 
-    setCompletion(0);
+    for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+        setCompletion(j, 0);
+    }
 
     float *reals = 0;
     float *imaginaries = 0;
@@ -556,13 +613,17 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
-	for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
-	    Vamp::Plugin::Feature feature = features[m_outputNo][fi];
-	    addFeature(blockFrame, feature);
-	}
+        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                addFeature(j, blockFrame, feature);
+            }
+        }
 
 	if (blockFrame == contextStart || completion > prevCompletion) {
-	    setCompletion(completion);
+            for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                setCompletion(j, completion);
+            }
 	    prevCompletion = completion;
 	}
 
@@ -572,13 +633,17 @@ FeatureExtractionModelTransformer::run()
     if (!m_abandoned) {
         Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
-        for (size_t fi = 0; fi < features[m_outputNo].size(); ++fi) {
-            Vamp::Plugin::Feature feature = features[m_outputNo][fi];
-            addFeature(blockFrame, feature);
+        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                addFeature(j, blockFrame, feature);
+            }
         }
     }
 
-    setCompletion(100);
+    for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+        setCompletion(j, 100);
+    }
 
     if (frequencyDomain) {
         for (size_t ch = 0; ch < channelCount; ++ch) {
@@ -650,8 +715,9 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 }
 
 void
-FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
-					     const Vamp::Plugin::Feature &feature)
+FeatureExtractionModelTransformer::addFeature(int n,
+                                              size_t blockFrame,
+                                              const Vamp::Plugin::Feature &feature)
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
@@ -662,13 +728,13 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 //              << endl;
 
     int binCount = 1;
-    if (m_descriptor->hasFixedBinCount) {
-	binCount = m_descriptor->binCount;
+    if (m_descriptors[n]->hasFixedBinCount) {
+	binCount = m_descriptors[n]->binCount;
     }
 
     size_t frame = blockFrame;
 
-    if (m_descriptor->sampleType ==
+    if (m_descriptors[n]->sampleType ==
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	if (!feature.hasTimestamp) {
@@ -681,18 +747,18 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
-    } else if (m_descriptor->sampleType ==
+    } else if (m_descriptors[n]->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
         if (!feature.hasTimestamp) {
-            ++m_fixedRateFeatureNo;
+            ++m_fixedRateFeatureNos[n];
         } else {
             RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
-            m_fixedRateFeatureNo =
-                lrint(ts.toDouble() * m_descriptor->sampleRate);
+            m_fixedRateFeatureNos[n] =
+                lrint(ts.toDouble() * m_descriptors[n]->sampleRate);
         }
  
-        frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
+        frame = lrintf((m_fixedRateFeatureNos[n] / m_descriptors[n]->sampleRate)
                        * inputRate);
     }
 	
@@ -701,19 +767,19 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
     // to, we instead test what sort of model the constructor decided
     // to create.
 
-    if (isOutput<SparseOneDimensionalModel>()) {
+    if (isOutput<SparseOneDimensionalModel>(n)) {
 
         SparseOneDimensionalModel *model =
-            getConformingOutput<SparseOneDimensionalModel>();
+            getConformingOutput<SparseOneDimensionalModel>(n);
 	if (!model) return;
 
         model->addPoint(SparseOneDimensionalModel::Point
                        (frame, feature.label.c_str()));
 	
-    } else if (isOutput<SparseTimeValueModel>()) {
+    } else if (isOutput<SparseTimeValueModel>(n)) {
 
 	SparseTimeValueModel *model =
-            getConformingOutput<SparseTimeValueModel>();
+            getConformingOutput<SparseTimeValueModel>(n);
 	if (!model) return;
 
         for (int i = 0; i < feature.values.size(); ++i) {
@@ -728,7 +794,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             model->addPoint(SparseTimeValueModel::Point(frame, value, label));
         }
 
-    } else if (isOutput<FlexiNoteModel>() || isOutput<NoteModel>() || isOutput<RegionModel>()) { //GF: Added Note Model
+    } else if (isOutput<FlexiNoteModel>(n) || isOutput<NoteModel>(n) || isOutput<RegionModel>(n)) { //GF: Added Note Model
 
         int index = 0;
 
@@ -746,7 +812,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             }
         }
 
-		if (isOutput<FlexiNoteModel>()) { // GF: added for flexi note model
+		if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
 
             float velocity = 100;
             if (feature.values.size() > index) {
@@ -755,14 +821,14 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             if (velocity < 0) velocity = 127;
             if (velocity > 127) velocity = 127;
 
-            FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>();
+            FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
             if (!model) return;
             model->addPoint(FlexiNoteModel::Point(frame, value, // value is pitch
                                              lrintf(duration),
                                              velocity / 127.f,
                                              feature.label.c_str()));
 			// GF: end -- added for flexi note model
-        } else  if (isOutput<NoteModel>()) {
+        } else  if (isOutput<NoteModel>(n)) {
 
             float velocity = 100;
             if (feature.values.size() > index) {
@@ -771,7 +837,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             if (velocity < 0) velocity = 127;
             if (velocity > 127) velocity = 127;
 
-            NoteModel *model = getConformingOutput<NoteModel>();
+            NoteModel *model = getConformingOutput<NoteModel>(n);
             if (!model) return;
             model->addPoint(NoteModel::Point(frame, value, // value is pitch
                                              lrintf(duration),
@@ -779,7 +845,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
                                              feature.label.c_str()));
         } else {
 
-            RegionModel *model = getConformingOutput<RegionModel>();
+            RegionModel *model = getConformingOutput<RegionModel>(n);
             if (!model) return;
 
             if (feature.hasDuration && !feature.values.empty()) {
@@ -805,13 +871,13 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             }
         }
 	
-    } else if (isOutput<EditableDenseThreeDimensionalModel>()) {
+    } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
 	
 	DenseThreeDimensionalModel::Column values =
             DenseThreeDimensionalModel::Column::fromStdVector(feature.values);
 	
 	EditableDenseThreeDimensionalModel *model =
-            getConformingOutput<EditableDenseThreeDimensionalModel>();
+            getConformingOutput<EditableDenseThreeDimensionalModel>(n);
 	if (!model) return;
 
 	model->setColumn(frame / model->getResolution(), values);
@@ -822,52 +888,52 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 }
 
 void
-FeatureExtractionModelTransformer::setCompletion(int completion)
+FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 {
     int binCount = 1;
-    if (m_descriptor->hasFixedBinCount) {
-	binCount = m_descriptor->binCount;
+    if (m_descriptors[n]->hasFixedBinCount) {
+	binCount = m_descriptors[n]->binCount;
     }
 
 //    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
 //              << completion << ")" << endl;
 
-    if (isOutput<SparseOneDimensionalModel>()) {
+    if (isOutput<SparseOneDimensionalModel>(n)) {
 
 	SparseOneDimensionalModel *model =
-            getConformingOutput<SparseOneDimensionalModel>();
+            getConformingOutput<SparseOneDimensionalModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true);
 
-    } else if (isOutput<SparseTimeValueModel>()) {
+    } else if (isOutput<SparseTimeValueModel>(n)) {
 
 	SparseTimeValueModel *model =
-            getConformingOutput<SparseTimeValueModel>();
+            getConformingOutput<SparseTimeValueModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true);
 
-    } else if (isOutput<NoteModel>()) {
+    } else if (isOutput<NoteModel>(n)) {
 
-	NoteModel *model = getConformingOutput<NoteModel>();
+	NoteModel *model = getConformingOutput<NoteModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true);
 	
-	} else if (isOutput<FlexiNoteModel>()) {
+	} else if (isOutput<FlexiNoteModel>(n)) {
 
-	FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>();
+	FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true);
 
-    } else if (isOutput<RegionModel>()) {
+    } else if (isOutput<RegionModel>(n)) {
 
-	RegionModel *model = getConformingOutput<RegionModel>();
+	RegionModel *model = getConformingOutput<RegionModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true);
 
-    } else if (isOutput<EditableDenseThreeDimensionalModel>()) {
+    } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
 
 	EditableDenseThreeDimensionalModel *model =
-            getConformingOutput<EditableDenseThreeDimensionalModel>();
+            getConformingOutput<EditableDenseThreeDimensionalModel>(n);
 	if (!model) return;
 	model->setCompletion(completion, true); //!!!m_context.updates);
     }
