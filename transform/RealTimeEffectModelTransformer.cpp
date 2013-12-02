@@ -30,18 +30,22 @@
 #include <iostream>
 
 RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
-                                                               const Transform &transform) :
-    ModelTransformer(in, transform),
+                                                               const Transform &t) :
+    ModelTransformer(in, t),
     m_plugin(0)
 {
+    Transform transform(t);
+    if (!transform.getBlockSize()) {
+        transform.setBlockSize(1024);
+        m_transforms[0] = transform;
+    }
+
     m_units = TransformFactory::getInstance()->getTransformUnits
         (transform.getIdentifier());
     m_outputNo =
         (transform.getOutput() == "A") ? -1 : transform.getOutput().toInt();
 
     QString pluginId = transform.getPluginIdentifier();
-
-    if (!m_transform.getBlockSize()) m_transform.setBlockSize(1024);
 
 //    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
 
@@ -59,16 +63,16 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     m_plugin = factory->instantiatePlugin(pluginId, 0, 0,
                                           input->getSampleRate(),
-                                          m_transform.getBlockSize(),
+                                          transform.getBlockSize(),
                                           input->getChannelCount());
 
     if (!m_plugin) {
 	cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
-		  << pluginId << "\"" << endl;
+             << pluginId << "\"" << endl;
 	return;
     }
 
-    TransformFactory::getInstance()->setPluginParameters(m_transform, m_plugin);
+    TransformFactory::getInstance()->setPluginParameters(transform, m_plugin);
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
@@ -86,16 +90,16 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
         WritableWaveFileModel *model = new WritableWaveFileModel
             (input->getSampleRate(), outputChannels);
 
-        m_output = model;
+        m_outputs.push_back(model);
 
     } else {
 	
         SparseTimeValueModel *model = new SparseTimeValueModel
-            (input->getSampleRate(), m_transform.getBlockSize(), 0.0, 0.0, false);
+            (input->getSampleRate(), transform.getBlockSize(), 0.0, 0.0, false);
 
         if (m_units != "") model->setScaleUnits(m_units);
 
-        m_output = model;
+        m_outputs.push_back(model);
     }
 }
 
@@ -127,8 +131,8 @@ RealTimeEffectModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_output);
-    WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_output);
+    SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_outputs[0]);
+    WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_outputs[0]);
     if (!stvm && !wwfm) return;
 
     if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;
@@ -143,9 +147,11 @@ RealTimeEffectModelTransformer::run()
 
     long startFrame = m_input.getModel()->getStartFrame();
     long   endFrame = m_input.getModel()->getEndFrame();
+
+    Transform transform = m_transforms[0];
     
-    RealTime contextStartRT = m_transform.getStartTime();
-    RealTime contextDurationRT = m_transform.getDuration();
+    RealTime contextStartRT = transform.getStartTime();
+    RealTime contextDurationRT = transform.getDuration();
 
     long contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
