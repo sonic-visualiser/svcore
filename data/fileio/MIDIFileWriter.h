@@ -32,7 +32,7 @@
 #include <fstream>
 
 class MIDIEvent;
-class NoteModel;
+class NoteExportable;
 
 /**
  * Write a MIDI file.  This includes file write code for generic
@@ -43,7 +43,10 @@ class NoteModel;
 class MIDIFileWriter 
 {
 public:
-    MIDIFileWriter(QString path, NoteModel *model, float tempo = 120.f);
+    MIDIFileWriter(QString path, 
+                   const NoteExportable *exportable, 
+                   int sampleRate, // used to convert exportable sample timings
+                   float tempo = 120.f);
     virtual ~MIDIFileWriter();
 
     virtual bool isOK() const;
@@ -74,18 +77,18 @@ protected:
     
     bool convert();
 
-    QString             m_path;
-    NoteModel          *m_model;
-    bool                m_modelUsesHz;
-    float               m_tempo;
-    int                 m_timingDivision;   // pulses per quarter note
-    MIDIFileFormatType  m_format;
-    unsigned int        m_numberOfTracks;
+    QString               m_path;
+    const NoteExportable *m_exportable;
+    int                   m_sampleRate;
+    float                 m_tempo;
+    int                   m_timingDivision;   // pulses per quarter note
+    MIDIFileFormatType    m_format;
+    unsigned int          m_numberOfTracks;
 
-    MIDIComposition     m_midiComposition;
+    MIDIComposition       m_midiComposition;
 
-    std::ofstream      *m_midiFile;
-    QString             m_error;
+    std::ofstream        *m_midiFile;
+    QString               m_error;
 };
 
 #endif

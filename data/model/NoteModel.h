@@ -17,8 +17,10 @@
 #define _NOTE_MODEL_H_
 
 #include "IntervalModel.h"
+#include "NoteData.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
+#include "base/Pitch.h"
 
 /**
  * NoteModel -- a concrete IntervalModel for notes.
@@ -91,7 +93,7 @@ public:
 };
 
 
-class NoteModel : public IntervalModel<Note>
+class NoteModel : public IntervalModel<Note>, public NoteExportable
 {
     Q_OBJECT
     
@@ -217,6 +219,48 @@ public:
     {
         if (column == 5) return SortAlphabetical;
         return SortNumeric;
+    }
+
+    /**
+     * NoteExportable methods.
+     */
+
+    NoteList getNotes() const {
+        return getNotes(getStartFrame(), getEndFrame());
+    }
+
+    NoteList getNotes(size_t startFrame, size_t endFrame) const {
+        
+	PointList points = getPoints(startFrame, endFrame);
+        NoteList notes;
+
+        for (PointList::iterator pli =
+		 points.begin(); pli != points.end(); ++pli) {
+
+	    size_t duration = pli->duration;
+            if (duration == 0 || duration == 1) {
+                duration = getSampleRate() / 20;
+            }
+
+            int pitch = lrintf(pli->value);
+            
+            int velocity = 100;
+            if (pli->level > 0.f && pli->level <= 1.f) {
+                velocity = lrintf(pli->level * 127);
+            }
+
+            NoteData note(pli->frame, duration, pitch, velocity);
+
+            if (getScaleUnits() == "Hz") {
+                note.frequency = pli->value;
+                note.midiPitch = Pitch::getPitchForFrequency(note.frequency);
+                note.isMidiPitchQuantized = false;
+            }
+        
+            notes.push_back(note);
+        }
+        
+        return notes;
     }
 
 protected:
