@@ -31,22 +31,14 @@ class FeatureExtractionModelTransformer : public ModelTransformer
     Q_OBJECT
 
 public:
-    enum PreferredOutputModel {
-        NoteOutputModel,
-        FlexiNoteOutputModel,
-        UndefinedOutputModel = 255
-    };
-	    
     FeatureExtractionModelTransformer(Input input,
-                                      const Transform &transform,
-                                      const PreferredOutputModel outputmodel);
+                                      const Transform &transform);
 
     // Obtain outputs for a set of transforms that all use the same
     // plugin and input (but with different outputs). i.e. run the
     // plugin once only and collect more than one output from it.
     FeatureExtractionModelTransformer(Input input,
-                                      const Transforms &relatedTransforms,
-                                      const PreferredOutputModel outputmodel);
+                                      const Transforms &relatedTransforms);
 
     virtual ~FeatureExtractionModelTransformer();
 
@@ -59,7 +51,6 @@ protected:
     std::vector<Vamp::Plugin::OutputDescriptor *> m_descriptors; // per transform
     std::vector<int> m_fixedRateFeatureNos; // to assign times to FixedSampleRate features
     std::vector<int> m_outputNos;
-    PreferredOutputModel m_preferredOutputModel;
 
     void createOutputModel(int n);
 

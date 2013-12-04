@@ -37,12 +37,12 @@
 
 #include <iostream>
 
+#include <QSettings>
+
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
-                                                                     const Transform &transform,
-                                                                     const PreferredOutputModel outputmodel) :
+                                                                     const Transform &transform) :
     ModelTransformer(in, transform),
-    m_plugin(0),
-    m_preferredOutputModel(outputmodel)
+    m_plugin(0)
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -50,11 +50,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
-                                                                     const Transforms &transforms,
-                                                                     const PreferredOutputModel outputmodel) :
+                                                                     const Transforms &transforms) :
     ModelTransformer(in, transforms),
-    m_plugin(0),
-    m_preferredOutputModel(outputmodel)
+    m_plugin(0)
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
 
@@ -344,25 +342,35 @@ FeatureExtractionModelTransformer::createOutputModel(int n)
         // problem of determining whether to use that here (if bin
         // count > 1).  But we don't.
 
-		if (isNoteModel && m_preferredOutputModel == NoteOutputModel) {
+        QSettings settings;
+        settings.beginGroup("Transformer");
+        bool flexi = settings.value("use-flexi-note-model", false).toBool();
+        settings.endGroup();
+
+        cerr << "flexi = " << flexi << endl;
+
+        if (isNoteModel && !flexi) {
 
             NoteModel *model;
             if (haveExtents) {
-	            model = new NoteModel (modelRate, modelResolution, minValue, maxValue, false);
+                model = new NoteModel
+                    (modelRate, modelResolution, minValue, maxValue, false);
             } else {
-	            model = new NoteModel (modelRate, modelResolution, false);
+                model = new NoteModel
+                    (modelRate, modelResolution, false);
             }
             model->setScaleUnits(m_descriptors[n]->unit.c_str());
             out = model;
 
-		// GF: FlexiNoteModel is selected if the m_preferredOutputModel is set
-        } else if (isNoteModel && m_preferredOutputModel == FlexiNoteOutputModel) {
+        } else if (isNoteModel && flexi) {
 
             FlexiNoteModel *model;
             if (haveExtents) {
-                model = new FlexiNoteModel (modelRate, modelResolution, minValue, maxValue, false);
+                model = new FlexiNoteModel
+                    (modelRate, modelResolution, minValue, maxValue, false);
             } else {
-                model = new FlexiNoteModel (modelRate, modelResolution, false);
+                model = new FlexiNoteModel
+                    (modelRate, modelResolution, false);
             }
             model->setScaleUnits(m_descriptors[n]->unit.c_str());
             out = model;
