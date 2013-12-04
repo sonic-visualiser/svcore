@@ -161,7 +161,7 @@ public:
     { 
         QString s;
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            if (i->frame >= f0 && i->frame < f1) {
+            if (i->frame >= (long)f0 && i->frame < (long)f1) {
                 s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
             }
         }
