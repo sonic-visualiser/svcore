@@ -30,6 +30,8 @@ public:
         ImageFile,
         AnyFile,
         CSVFile,
+        LayerFileNonSV,
+        LayerFileNoMidiNonSV,
     };
 
     virtual QString getOpenFileName(FileType type, QString fallbackLocation = "") = 0;
