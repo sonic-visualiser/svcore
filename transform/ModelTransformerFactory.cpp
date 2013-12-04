@@ -175,7 +175,7 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
         transformer =
-            new FeatureExtractionModelTransformer(input, transforms, FeatureExtractionModelTransformer::FlexiNoteOutputModel); //!!! gross
+            new FeatureExtractionModelTransformer(input, transforms);
 
     } else if (RealTimePluginFactory::instanceFor(id)) {
 
