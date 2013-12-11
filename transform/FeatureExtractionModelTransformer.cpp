@@ -638,7 +638,7 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 
 void
 FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
-					     const Vamp::Plugin::Feature &feature)
+                                              const Vamp::Plugin::Feature &feature)
 {
     size_t inputRate = m_input.getModel()->getSampleRate();
 
@@ -653,7 +653,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 	binCount = m_descriptor->binCount;
     }
 
-    size_t frame = blockFrame;
+    int frame = blockFrame;
 
     if (m_descriptor->sampleType ==
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
@@ -678,11 +678,28 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             m_fixedRateFeatureNo =
                 lrint(ts.toDouble() * m_descriptor->sampleRate);
         }
+
+//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNo 
+//             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
+//             << ", inputRate = " << inputRate
+//             << " giving frame = ";
  
         frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
-                       * inputRate);
+                       * int(inputRate));
+
+//        cerr << frame << endl;
     }
-	
+
+    if (frame < 0) {
+        cerr
+            << "WARNING: FeatureExtractionModelTransformer::addFeature: "
+            << "Negative frame counts are not supported (frame = " << frame
+            << " from timestamp " << feature.timestamp
+            << "), dropping feature" 
+            << endl;
+        return;
+    }
+
     // Rather than repeat the complicated tests from the constructor
     // to determine what sort of model we must be adding the features
     // to, we instead test what sort of model the constructor decided
