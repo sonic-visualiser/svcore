@@ -442,7 +442,7 @@ RealTime::realTime2Frame(const RealTime &time, unsigned int sampleRate)
 {
     if (time < zeroTime) return -realTime2Frame(-time, sampleRate);
     double s = time.sec + double(time.nsec + 1) / 1000000000.0;
-    return long(s * sampleRate);
+    return long(s * double(sampleRate));
 }
 
 RealTime
