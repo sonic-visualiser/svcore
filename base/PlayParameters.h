@@ -46,9 +46,6 @@ public slots:
     virtual void setPlayPan(float pan);
     virtual void setPlayGain(float gain);
     virtual void setPlaySampleId(QString id);
-    
-    // Obsolete but retained for file load compatibility
-    virtual void setPlayPluginConfiguration(QString config);
 
 signals:
     void playParametersChanged();

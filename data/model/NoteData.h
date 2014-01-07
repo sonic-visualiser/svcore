@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include "base/Pitch.h"
+
 struct NoteData
 {
     NoteData(size_t _start, size_t _dur, int _mp, int _vel) :
@@ -26,10 +28,17 @@ struct NoteData
     size_t start;     // audio sample frame
     size_t duration;  // in audio sample frames
     int midiPitch; // 0-127
-//!!! float: -> what else would this change?
-    int frequency; // Hz, to be used if isMidiPitchQuantized false
+    float frequency; // Hz, to be used if isMidiPitchQuantized false
     bool isMidiPitchQuantized;
     int velocity;  // MIDI-style 0-127
+
+    float getFrequency() const {
+        if (isMidiPitchQuantized) {
+            return Pitch::getFrequencyForPitch(midiPitch);
+        } else {
+            return frequency;
+        }
+    }
 };
 
 typedef std::vector<NoteData> NoteList;

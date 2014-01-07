@@ -64,7 +64,18 @@ PlayParameters::toXml(QTextStream &stream,
         .arg(m_playGain)
         .arg(m_playSampleId)
         .arg(extraAttributes);
-    stream << "/>\n";
+
+    stream << ">\n";
+
+    if (m_playSampleId != "") {
+        // for backward compatibility
+        stream << indent << "  ";
+        stream << QString("<plugin identifier=\"%1\" program=\"%2\"/>\n")
+            .arg("sample_player")
+            .arg(m_playSampleId);
+    }
+
+    stream << indent << "</playparameters>\n";
 }
 
 void
@@ -115,20 +126,3 @@ PlayParameters::setPlaySampleId(QString id)
         emit playParametersChanged();
     }
 }
-
-void
-PlayParameters::setPlayPluginConfiguration(QString configuration)
-{
-    //!!! need to parse out sample id from e.g. configuration ==
-    //!!! <plugin program="piano"/>
-/*
-    if (m_playPluginConfiguration != configuration) {
-        m_playPluginConfiguration = configuration;
-//        cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << endl;
-        emit playPluginConfigurationChanged(configuration);
-        emit playParametersChanged();
-    }
-*/
-}
-
-
