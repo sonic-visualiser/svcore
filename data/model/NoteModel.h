@@ -129,7 +129,7 @@ public:
 
     virtual bool canPlay() const { return true; }
 
-    virtual QString getDefaultPlaySampleId() const
+    virtual QString getDefaultPlayClipId() const
     {
         return "piano";
     }

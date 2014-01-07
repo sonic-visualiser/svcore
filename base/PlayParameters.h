@@ -32,7 +32,7 @@ public:
     virtual float getPlayPan() const { return m_playPan; } // -1.0 -> 1.0
     virtual float getPlayGain() const { return m_playGain; }
 
-    virtual QString getPlaySampleId() const { return m_playSampleId; }
+    virtual QString getPlayClipId() const { return m_playClipId; }
 
     virtual void copyFrom(const PlayParameters *);
 
@@ -45,7 +45,7 @@ public slots:
     virtual void setPlayAudible(bool nonMuted);
     virtual void setPlayPan(float pan);
     virtual void setPlayGain(float gain);
-    virtual void setPlaySampleId(QString id);
+    virtual void setPlayClipId(QString id);
 
 signals:
     void playParametersChanged();
@@ -53,13 +53,13 @@ signals:
     void playAudibleChanged(bool);
     void playPanChanged(float);
     void playGainChanged(float);
-    void playSampleIdChanged(QString);
+    void playClipIdChanged(QString);
 
 protected:
     bool m_playMuted;
     float m_playPan;
     float m_playGain;
-    QString m_playSampleId;
+    QString m_playClipId;
 
 private:
     PlayParameters(const PlayParameters &);

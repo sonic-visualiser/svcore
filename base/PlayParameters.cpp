@@ -43,9 +43,9 @@ PlayParameters::copyFrom(const PlayParameters *pp)
         changed = true;
     }
 
-    if (m_playSampleId != pp->getPlaySampleId()) {
-        m_playSampleId = pp->getPlaySampleId();
-        emit playSampleIdChanged(m_playSampleId);
+    if (m_playClipId != pp->getPlayClipId()) {
+        m_playClipId = pp->getPlayClipId();
+        emit playClipIdChanged(m_playClipId);
         changed = true;
     }
 
@@ -58,21 +58,21 @@ PlayParameters::toXml(QTextStream &stream,
                       QString extraAttributes) const
 {
     stream << indent;
-    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" sampleId=\"%4\" %6")
+    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" clipId=\"%4\" %6")
         .arg(m_playMuted ? "true" : "false")
         .arg(m_playPan)
         .arg(m_playGain)
-        .arg(m_playSampleId)
+        .arg(m_playClipId)
         .arg(extraAttributes);
 
     stream << ">\n";
 
-    if (m_playSampleId != "") {
+    if (m_playClipId != "") {
         // for backward compatibility
         stream << indent << "  ";
         stream << QString("<plugin identifier=\"%1\" program=\"%2\"/>\n")
             .arg("sample_player")
-            .arg(m_playSampleId);
+            .arg(m_playClipId);
     }
 
     stream << indent << "</playparameters>\n";
@@ -118,11 +118,11 @@ PlayParameters::setPlayGain(float gain)
 }
 
 void
-PlayParameters::setPlaySampleId(QString id)
+PlayParameters::setPlayClipId(QString id)
 {
-    if (m_playSampleId != id) {
-        m_playSampleId = id;
-        emit playSampleIdChanged(id);
+    if (m_playClipId != id) {
+        m_playClipId = id;
+        emit playClipIdChanged(id);
         emit playParametersChanged();
     }
 }
