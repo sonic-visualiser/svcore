@@ -129,14 +129,9 @@ public:
 
     virtual bool canPlay() const { return true; }
 
-    virtual QString getDefaultPlayPluginId() const
+    virtual QString getDefaultPlaySampleId() const
     {
-        return "dssi:_builtin:sample_player";
-    }
-
-    virtual QString getDefaultPlayPluginConfiguration() const
-    {
-        return "<plugin program=\"piano\"/>";
+        return "piano";
     }
 
     virtual void toXml(QTextStream &out,
