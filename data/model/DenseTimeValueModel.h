@@ -85,7 +85,7 @@ public:
                            float **buffers) const = 0;
 
     virtual bool canPlay() const { return true; }
-    virtual QString getDefaultPlaySampleId() const { return ""; }
+    virtual QString getDefaultPlayClipId() const { return ""; }
 
     virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const;
 

@@ -47,14 +47,14 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
 
-        params->setPlaySampleId
-            (playable->getDefaultPlaySampleId());
+        params->setPlayClipId
+            (playable->getDefaultPlayClipId());
         
         connect(params, SIGNAL(playParametersChanged()),
                 this, SLOT(playParametersChanged()));
         
-        connect(params, SIGNAL(playSampleIdChanged(QString)),
-                this, SLOT(playSampleIdChanged(QString)));
+        connect(params, SIGNAL(playClipIdChanged(QString)),
+                this, SLOT(playClipIdChanged(QString)));
 
         cerr << "Connected play parameters " << params << " for playable "
                      << playable << " to this " << this << endl;
@@ -101,13 +101,13 @@ PlayParameterRepository::playParametersChanged()
 }
 
 void
-PlayParameterRepository::playSampleIdChanged(QString id)
+PlayParameterRepository::playClipIdChanged(QString id)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
     for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
-            emit playSampleIdChanged(i->first, id);
+            emit playClipIdChanged(i->first, id);
             return;
         }
     }
@@ -155,9 +155,9 @@ PlayParameterRepository::EditCommand::setPlayGain(float gain)
 }
 
 void
-PlayParameterRepository::EditCommand::setPlaySampleId(QString id)
+PlayParameterRepository::EditCommand::setPlayClipId(QString id)
 {
-    m_to.setPlaySampleId(id);
+    m_to.setPlayClipId(id);
 }
 
 void
@@ -195,7 +195,7 @@ PlayParameterRepository::EditCommand::getName() const
         if (++changed > 1) return multiname;
     }
 
-    if (m_to.getPlaySampleId() != m_from.getPlaySampleId()) {
+    if (m_to.getPlayClipId() != m_from.getPlayClipId()) {
         name = tr("Change Playback Sample");
         if (++changed > 1) return multiname;
     }
