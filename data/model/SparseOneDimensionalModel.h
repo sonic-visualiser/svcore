@@ -90,14 +90,9 @@ public:
 
     virtual bool canPlay() const { return true; }
 
-    virtual QString getDefaultPlayPluginId() const
+    virtual QString getDefaultPlaySampleId() const
     {
-        return "dssi:_builtin:sample_player";
-    }
-
-    virtual QString getDefaultPlayPluginConfiguration() const
-    {
-        return "<plugin program=\"tap\"/>";
+        return "tap";
     }
 
     int getIndexOf(const Point &point)
