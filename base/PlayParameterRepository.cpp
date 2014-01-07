@@ -47,21 +47,15 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
 
-        params->setPlayPluginId
-            (playable->getDefaultPlayPluginId());
-        
-        params->setPlayPluginConfiguration
-            (playable->getDefaultPlayPluginConfiguration());
+        params->setPlaySampleId
+            (playable->getDefaultPlaySampleId());
         
         connect(params, SIGNAL(playParametersChanged()),
                 this, SLOT(playParametersChanged()));
         
-        connect(params, SIGNAL(playPluginIdChanged(QString)),
-                this, SLOT(playPluginIdChanged(QString)));
+        connect(params, SIGNAL(playSampleIdChanged(QString)),
+                this, SLOT(playSampleIdChanged(QString)));
 
-        connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
-                this, SLOT(playPluginConfigurationChanged(QString)));
-        
         cerr << "Connected play parameters " << params << " for playable "
                      << playable << " to this " << this << endl;
     }
@@ -107,27 +101,13 @@ PlayParameterRepository::playParametersChanged()
 }
 
 void
-PlayParameterRepository::playPluginIdChanged(QString id)
+PlayParameterRepository::playSampleIdChanged(QString id)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
     for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
-            emit playPluginIdChanged(i->first, id);
-            return;
-        }
-    }
-}
-
-void
-PlayParameterRepository::playPluginConfigurationChanged(QString config)
-{
-    PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-//    SVDEBUG << "PlayParameterRepository::playPluginConfigurationChanged" << endl;
-    for (PlayableParameterMap::iterator i = m_playParameters.begin();
-         i != m_playParameters.end(); ++i) {
-        if (i->second == params) {
-            emit playPluginConfigurationChanged(i->first, config);
+            emit playSampleIdChanged(i->first, id);
             return;
         }
     }
@@ -175,15 +155,9 @@ PlayParameterRepository::EditCommand::setPlayGain(float gain)
 }
 
 void
-PlayParameterRepository::EditCommand::setPlayPluginId(QString id)
+PlayParameterRepository::EditCommand::setPlaySampleId(QString id)
 {
-    m_to.setPlayPluginId(id);
-}
-
-void
-PlayParameterRepository::EditCommand::setPlayPluginConfiguration(QString conf)
-{
-    m_to.setPlayPluginConfiguration(conf);
+    m_to.setPlaySampleId(id);
 }
 
 void
@@ -221,13 +195,8 @@ PlayParameterRepository::EditCommand::getName() const
         if (++changed > 1) return multiname;
     }
 
-    if (m_to.getPlayPluginId() != m_from.getPlayPluginId()) {
-        name = tr("Change Playback Plugin");
-        if (++changed > 1) return multiname;
-    }
-
-    if (m_to.getPlayPluginConfiguration() != m_from.getPlayPluginConfiguration()) {
-        name = tr("Configure Playback Plugin");
+    if (m_to.getPlaySampleId() != m_from.getPlaySampleId()) {
+        name = tr("Change Playback Sample");
         if (++changed > 1) return multiname;
     }
 

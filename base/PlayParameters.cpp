@@ -43,15 +43,9 @@ PlayParameters::copyFrom(const PlayParameters *pp)
         changed = true;
     }
 
-    if (m_playPluginId != pp->getPlayPluginId()) {
-        m_playPluginId = pp->getPlayPluginId();
-        emit playPluginIdChanged(m_playPluginId);
-        changed = true;
-    }
-    
-    if (m_playPluginConfiguration != pp->getPlayPluginConfiguration()) {
-        m_playPluginConfiguration = pp->getPlayPluginConfiguration();
-        emit playPluginConfigurationChanged(m_playPluginConfiguration);
+    if (m_playSampleId != pp->getPlaySampleId()) {
+        m_playSampleId = pp->getPlaySampleId();
+        emit playSampleIdChanged(m_playSampleId);
         changed = true;
     }
 
@@ -64,18 +58,13 @@ PlayParameters::toXml(QTextStream &stream,
                       QString extraAttributes) const
 {
     stream << indent;
-    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
+    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" sampleId=\"%4\" %6")
         .arg(m_playMuted ? "true" : "false")
         .arg(m_playPan)
         .arg(m_playGain)
-        .arg(m_playPluginId)
+        .arg(m_playSampleId)
         .arg(extraAttributes);
-    if (m_playPluginConfiguration != "") {
-        stream << ">\n  " << indent << m_playPluginConfiguration
-               << "\n" << indent << "</playparameters>\n";
-    } else {
-        stream << "/>\n";
-    }
+    stream << "/>\n";
 }
 
 void
@@ -118,11 +107,11 @@ PlayParameters::setPlayGain(float gain)
 }
 
 void
-PlayParameters::setPlayPluginId(QString id)
+PlayParameters::setPlaySampleId(QString id)
 {
-    if (m_playPluginId != id) {
-        m_playPluginId = id;
-        emit playPluginIdChanged(id);
+    if (m_playSampleId != id) {
+        m_playSampleId = id;
+        emit playSampleIdChanged(id);
         emit playParametersChanged();
     }
 }
@@ -130,12 +119,16 @@ PlayParameters::setPlayPluginId(QString id)
 void
 PlayParameters::setPlayPluginConfiguration(QString configuration)
 {
+    //!!! need to parse out sample id from e.g. configuration ==
+    //!!! <plugin program="piano"/>
+/*
     if (m_playPluginConfiguration != configuration) {
         m_playPluginConfiguration = configuration;
 //        cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << endl;
         emit playPluginConfigurationChanged(configuration);
         emit playParametersChanged();
     }
+*/
 }
 
 

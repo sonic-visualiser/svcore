@@ -22,7 +22,9 @@
 
 /**
  * Base class for models containing dense two-dimensional data (value
- * against time).  For example, audio waveform data.
+ * against time).  For example, audio waveform data.  Other time-value
+ * plot data, especially if editable, will normally go into a
+ * SparseTimeValueModel instead even if regularly sampled.
  */
 
 class DenseTimeValueModel : public Model

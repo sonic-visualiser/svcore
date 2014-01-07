@@ -51,8 +51,7 @@ public:
         void setPlayAudible(bool);
         void setPlayPan(float);
         void setPlayGain(float);
-        void setPlayPluginId(QString);
-        void setPlayPluginConfiguration(QString);
+        void setPlaySampleId(QString);
         void execute();
         void unexecute();
         QString getName() const;
@@ -65,13 +64,11 @@ public:
 
 signals:
     void playParametersChanged(PlayParameters *);
-    void playPluginIdChanged(const Playable *, QString);
-    void playPluginConfigurationChanged(const Playable *, QString);
+    void playSampleIdChanged(const Playable *, QString);
 
 protected slots:
     void playParametersChanged();
-    void playPluginIdChanged(QString);
-    void playPluginConfigurationChanged(QString);
+    void playSampleIdChanged(QString);
 
 protected:
     typedef std::map<const Playable *, PlayParameters *> PlayableParameterMap;
