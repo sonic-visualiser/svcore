@@ -137,7 +137,7 @@ public:
 
     virtual QString getDefaultPlayClipId() const
     {
-        return "click";
+        return "piano";
     }
 
     virtual void toXml(QTextStream &out,
