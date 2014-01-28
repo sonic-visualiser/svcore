@@ -392,7 +392,7 @@ FeatureExtractionModelTransformer::createOutputModel(int n)
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
         out->setRDFTypeURI(outputEventTypeURI);
 
-    } else if (binCount == 1 ||
+    } else if ((binCount == 1 && m_descriptors[n]->hasFixedBinCount) ||
                (m_descriptors[n]->sampleType == 
                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
 
