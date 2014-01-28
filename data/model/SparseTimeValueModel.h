@@ -86,7 +86,9 @@ public:
 	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
 					 notifyOnAdd)
     {
-        // not yet playable
+        // Model is playable, but may not sound (if units not Hz or
+        // range unsuitable)
+	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     SparseTimeValueModel(size_t sampleRate, size_t resolution,
@@ -96,10 +98,19 @@ public:
 					 valueMinimum, valueMaximum,
 					 notifyOnAdd)
     {
-        // not yet playable
+        // Model is playable, but may not sound (if units not Hz or
+        // range unsuitable)
+	PlayParameterRepository::getInstance()->addPlayable(this);
+    }
+
+    virtual ~SparseTimeValueModel()
+    {
+	PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
     QString getTypeName() const { return tr("Sparse Time-Value"); }
+
+    virtual bool canPlay() const { return true; }
 
     /**
      * TabularModel methods.  

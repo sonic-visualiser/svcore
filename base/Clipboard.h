@@ -34,18 +34,23 @@ public:
 
         bool haveFrame() const;
         long getFrame() const;
+        Point withFrame(long frame) const;
 
         bool haveValue() const;
         float getValue() const;
+        Point withValue(float value) const;
         
         bool haveDuration() const;
         size_t getDuration() const;
+        Point withDuration(size_t duration) const;
         
         bool haveLabel() const;
         QString getLabel() const;
+        Point withLabel(QString label) const;
 
         bool haveLevel() const;
         float getLevel() const;
+        Point withLevel(float level) const;
 
         bool haveReferenceFrame() const;
         bool referenceFrameDiffers() const; // from point frame

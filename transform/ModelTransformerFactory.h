@@ -18,6 +18,7 @@
 
 #include "Transform.h"
 #include "TransformDescription.h"
+#include "FeatureExtractionModelTransformer.h"
 
 #include "ModelTransformer.h"
 
@@ -26,6 +27,7 @@
 #include <QMap>
 #include <map>
 #include <set>
+#include <vector>
 
 class AudioPlaySource;
 
@@ -87,13 +89,37 @@ public:
                      const ModelTransformer::Input &input,
                      QString &message);
 
+    /**
+     * Return the multiple output models resulting from applying the
+     * named transforms to the given input model.  The transforms may
+     * differ only in output identifier for the plugin: they must all
+     * use the same plugin, parameters, and programs. The plugin will
+     * be run once only, but more than one output will be harvested
+     * (as appropriate). Models will be returned in the same order as
+     * the transforms were given. The plugin may still be working in
+     * the background when the model is returned; check the output
+     * models' isReady completion statuses for more details.
+     *
+     * If a transform is unknown or the transforms are insufficiently
+     * closely related or the input model is not an appropriate type
+     * for the given transform, or if some other problem occurs,
+     * return 0.  Set message if there is any error or warning to
+     * report.
+     * 
+     * The returned models are owned by the caller and must be deleted
+     * when no longer needed.
+     */
+    std::vector<Model *> transformMultiple(const Transforms &transform,
+                                           const ModelTransformer::Input &input,
+                                           QString &message);
+
 protected slots:
     void transformerFinished();
 
     void modelAboutToBeDeleted(Model *);
 
 protected:
-    ModelTransformer *createTransformer(const Transform &transform,
+    ModelTransformer *createTransformer(const Transforms &transforms,
                                         const ModelTransformer::Input &input);
 
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
