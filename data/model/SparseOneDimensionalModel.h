@@ -17,6 +17,7 @@
 #define _SPARSE_ONE_DIMENSIONAL_MODEL_H_
 
 #include "SparseModel.h"
+#include "NoteData.h"
 #include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
@@ -69,7 +70,8 @@ public:
 };
 
 
-class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>
+class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>,
+                                  public NoteExportable
 {
     Q_OBJECT
     
@@ -88,14 +90,9 @@ public:
 
     virtual bool canPlay() const { return true; }
 
-    virtual QString getDefaultPlayPluginId() const
+    virtual QString getDefaultPlayClipId() const
     {
-        return "dssi:_builtin:sample_player";
-    }
-
-    virtual QString getDefaultPlayPluginConfiguration() const
-    {
-        return "<plugin program=\"tap\"/>";
+        return "tap";
     }
 
     int getIndexOf(const Point &point)
@@ -180,6 +177,32 @@ public:
     {
         if (column == 2) return SortAlphabetical;
         return SortNumeric;
+    }
+
+    /**
+     * NoteExportable methods.
+     */
+
+    NoteList getNotes() const {
+        return getNotes(getStartFrame(), getEndFrame());
+    }
+
+    NoteList getNotes(size_t startFrame, size_t endFrame) const {
+        
+	PointList points = getPoints(startFrame, endFrame);
+        NoteList notes;
+
+	for (PointList::iterator pli =
+		 points.begin(); pli != points.end(); ++pli) {
+
+            notes.push_back
+                (NoteData(pli->frame,
+                          getSampleRate() / 6, // arbitrary short duration
+                          64,   // default pitch
+                          100)); // default velocity
+        }
+
+        return notes;
     }
 };
 
