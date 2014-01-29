@@ -83,14 +83,14 @@ public:
      * be initialised; an error message may be available via
      * getMessage() in this situation.
      */
-    Models getOutputModels() { return m_outputs; }
+    Models getOutputModels();        
 
     /**
      * Return the set of output models, also detaching them from the
      * transformer so that they will not be deleted when the
      * transformer is.  The caller takes ownership of the models.
      */
-    Models detachOutputModels() { m_detached = true; return m_outputs; }
+    Models detachOutputModels() { m_detached = true; return getOutputModels(); }
 
     /**
      * Return a warning or error message.  If getOutputModel returned
@@ -103,6 +103,14 @@ public:
 protected:
     ModelTransformer(Input input, const Transform &transform);
     ModelTransformer(Input input, const Transforms &transforms);
+
+    /**
+     * Return any additional models that were created during
+     * processing. This might happen if, for example, a transform was
+     * configured to split a multi-bin output into separate single-bin
+     * models as it processed.
+     */
+    virtual Models getAdditionalOutputModels() { return Models(); }
 
     Transforms m_transforms;
     Input m_input; // I don't own the model in this
