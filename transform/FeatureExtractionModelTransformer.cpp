@@ -418,8 +418,8 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // descriptor to a list of models indexed by bin-1). But we
         // don't create the additional models yet, as this case has to
         // work even if the number of bins is unknown at this point --
-        // we just create an additional model (copying its parameters
-        // from the default one) each time a new bin is encountered.
+        // we create an additional model (copying its parameters from
+        // the default one) each time a new bin is encountered.
 
         if (!haveBinCount || binCount > 1) {
             m_needAdditionalModels[n] = true;
@@ -499,6 +499,17 @@ FeatureExtractionModelTransformer::getAdditionalOutputModels()
     return mm;
 }
 
+bool
+FeatureExtractionModelTransformer::willHaveAdditionalOutputModels()
+{
+    for (std::map<int, bool>::const_iterator i =
+             m_needAdditionalModels.begin(); 
+         i != m_needAdditionalModels.end(); ++i) {
+        if (i->second) return true;
+    }
+    return false;
+}
+
 SparseTimeValueModel *
 FeatureExtractionModelTransformer::getAdditionalModel(int n, int binNo)
 {
@@ -558,7 +569,7 @@ FeatureExtractionModelTransformer::run()
     Transform primaryTransform = m_transforms[0];
 
     while (!input->isReady() && !m_abandoned) {
-        SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
+        cerr << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
     if (m_abandoned) return;

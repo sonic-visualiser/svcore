@@ -70,6 +70,11 @@ public:
                                  size_t startFrame = 0,
                                  size_t duration = 0,
                                  UserConfigurator *configurator = 0);
+
+    class AdditionalModelHandler {
+    public:
+        virtual void moreModelsAvailable(std::vector<Model *> models) = 0;
+    };
     
     /**
      * Return the output model resulting from applying the named
@@ -82,12 +87,21 @@ public:
      * problem occurs, return 0.  Set message if there is any error or
      * warning to report.
      * 
+     * Some transforms may return additional models at the end of
+     * processing. (For example, a transform that splits an output
+     * into multiple one-per-bin models.) If an additionalModelHandler
+     * is provided here, its moreModelsAvailable method will be called
+     * when those models become available, and ownership of those
+     * models will be transferred to the handler. Otherwise (if the
+     * handler is null) any such models will be discarded.
+     *
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
     Model *transform(const Transform &transform,
                      const ModelTransformer::Input &input,
-                     QString &message);
+                     QString &message,
+                     AdditionalModelHandler *handler = 0);
 
     /**
      * Return the multiple output models resulting from applying the
@@ -105,13 +119,22 @@ public:
      * for the given transform, or if some other problem occurs,
      * return 0.  Set message if there is any error or warning to
      * report.
-     * 
+     *
+     * Some transforms may return additional models at the end of
+     * processing. (For example, a transform that splits an output
+     * into multiple one-per-bin models.) If an additionalModelHandler
+     * is provided here, its moreModelsAvailable method will be called
+     * when those models become available, and ownership of those
+     * models will be transferred to the handler. Otherwise (if the
+     * handler is null) any such models will be discarded.
+     *
      * The returned models are owned by the caller and must be deleted
      * when no longer needed.
      */
     std::vector<Model *> transformMultiple(const Transforms &transform,
                                            const ModelTransformer::Input &input,
-                                           QString &message);
+                                           QString &message,
+                                           AdditionalModelHandler *handler = 0);
 
 protected slots:
     void transformerFinished();
@@ -127,6 +150,9 @@ protected:
 
     typedef std::set<ModelTransformer *> TransformerSet;
     TransformerSet m_runningTransformers;
+
+    typedef std::map<ModelTransformer *, AdditionalModelHandler *> HandlerMap;
+    HandlerMap m_handlers;
 
     static ModelTransformerFactory *m_instance;
 };

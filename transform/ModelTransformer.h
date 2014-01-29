@@ -83,14 +83,42 @@ public:
      * be initialised; an error message may be available via
      * getMessage() in this situation.
      */
-    Models getOutputModels();        
+    Models getOutputModels() { return m_outputs; }
 
     /**
      * Return the set of output models, also detaching them from the
      * transformer so that they will not be deleted when the
      * transformer is.  The caller takes ownership of the models.
      */
-    Models detachOutputModels() { m_detached = true; return getOutputModels(); }
+    Models detachOutputModels() { 
+        m_detached = true; 
+        return getOutputModels(); 
+    }
+
+    /**
+     * Return any additional models that were created during
+     * processing. This might happen if, for example, a transform was
+     * configured to split a multi-bin output into separate single-bin
+     * models as it processed. These should not be queried until after
+     * the transform has completed.
+     */
+    virtual Models getAdditionalOutputModels() { return Models(); }
+
+    /**
+     * Return true if the current transform is one that may produce
+     * additional models (to be retrieved through
+     * getAdditionalOutputModels above).
+     */
+    virtual bool willHaveAdditionalOutputModels() { return false; }
+
+    /**
+     * Return the set of additional models, also detaching them from
+     * the transformer.  The caller takes ownership of the models.
+     */
+    virtual Models detachAdditionalOutputModels() { 
+        m_detachedAdd = true;
+        return getAdditionalOutputModels();
+    }
 
     /**
      * Return a warning or error message.  If getOutputModel returned
@@ -104,18 +132,11 @@ protected:
     ModelTransformer(Input input, const Transform &transform);
     ModelTransformer(Input input, const Transforms &transforms);
 
-    /**
-     * Return any additional models that were created during
-     * processing. This might happen if, for example, a transform was
-     * configured to split a multi-bin output into separate single-bin
-     * models as it processed.
-     */
-    virtual Models getAdditionalOutputModels() { return Models(); }
-
     Transforms m_transforms;
     Input m_input; // I don't own the model in this
     Models m_outputs; // I own this, unless...
     bool m_detached; // ... this is true.
+    bool m_detachedAdd;
     bool m_abandoned;
     QString m_message;
 };
