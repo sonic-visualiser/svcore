@@ -18,6 +18,7 @@
 ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
     m_input(input),
     m_detached(false),
+    m_detachedAdd(false),
     m_abandoned(false)
 {
     m_transforms.push_back(transform);
@@ -27,6 +28,7 @@ ModelTransformer::ModelTransformer(Input input, const Transforms &transforms) :
     m_transforms(transforms),
     m_input(input),
     m_detached(false),
+    m_detachedAdd(false),
     m_abandoned(false)
 {
 }
@@ -36,19 +38,12 @@ ModelTransformer::~ModelTransformer()
     m_abandoned = true;
     wait();
     if (!m_detached) {
-        Models mine = getOutputModels(); // including any additional ones
-        foreach (Model *m, mine) {
-            delete m;
-        }
+        Models mine = getOutputModels();
+        foreach (Model *m, mine) delete m;
     }
-}
-
-ModelTransformer::Models
-ModelTransformer::getOutputModels()
-{
-    Models out(m_outputs);
-    Models add(getAdditionalOutputModels());
-    foreach (Model *m, add) out.push_back(m);
-    return out;
+    if (!m_detachedAdd) {
+        Models mine = getAdditionalOutputModels();
+        foreach (Model *m, mine) delete m;
+    }
 }
 

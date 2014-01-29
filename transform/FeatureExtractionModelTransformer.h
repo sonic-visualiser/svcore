@@ -44,6 +44,10 @@ public:
 
     virtual ~FeatureExtractionModelTransformer();
 
+    // ModelTransformer method, retrieve the additional models
+    Models getAdditionalOutputModels();
+    bool willHaveAdditionalOutputModels();
+
 protected:
     bool initialise();
 
@@ -60,9 +64,6 @@ protected:
     typedef std::map<int, std::map<int, SparseTimeValueModel *> > AdditionalModelMap;
     AdditionalModelMap m_additionalModels;
     SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
-
-    // ModelTransformer method, retrieve the additional models
-    Models getAdditionalOutputModels();
 
     void addFeature(int n,
                     size_t blockFrame,
