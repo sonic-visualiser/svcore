@@ -213,14 +213,14 @@ FeatureExtractionModelTransformer::initialise()
     }
 
     for (int j = 0; j < (int)m_transforms.size(); ++j) {
-        createOutputModel(j);
+        createOutputModels(j);
     }
 
     return true;
 }
 
 void
-FeatureExtractionModelTransformer::createOutputModel(int n)
+FeatureExtractionModelTransformer::createOutputModels(int n)
 {
     DenseTimeValueModel *input = getConformingInput();
 
@@ -232,10 +232,13 @@ FeatureExtractionModelTransformer::createOutputModel(int n)
     int binCount = 1;
     float minValue = 0.0, maxValue = 0.0;
     bool haveExtents = false;
-    
-    if (m_descriptors[n]->hasFixedBinCount) {
+    bool haveBinCount = m_descriptors[n]->hasFixedBinCount;
+
+    if (haveBinCount) {
 	binCount = m_descriptors[n]->binCount;
     }
+
+    m_needAdditionalModels[n] = false;
 
 //    cerr << "FeatureExtractionModelTransformer: output bin count "
 //	      << binCount << endl;
@@ -392,7 +395,7 @@ FeatureExtractionModelTransformer::createOutputModel(int n)
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
         out->setRDFTypeURI(outputEventTypeURI);
 
-    } else if ((binCount == 1 && m_descriptors[n]->hasFixedBinCount) ||
+    } else if (binCount == 1 ||
                (m_descriptors[n]->sampleType == 
                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
 
@@ -401,9 +404,26 @@ FeatureExtractionModelTransformer::createOutputModel(int n)
         // model.
 
         // Anything that is not a 1D, note, or interval model and that
-        // has a variable sample rate is also treated as a sparse time
-        // value model regardless of its bin count, because we lack a
+        // has a variable sample rate is treated as a set of sparse
+        // time value models, one per output bin, because we lack a
         // sparse 3D model.
+
+        // Anything that is not a 1D, note, or interval model and that
+        // has a fixed sample rate but an unknown number of values per
+        // result is also treated as a set of sparse time value models.
+
+        // For sets of sparse time value models, we create a single
+        // model first as the "standard" output and then create models
+        // for bins 1+ in the additional model map (mapping the output
+        // descriptor to a list of models indexed by bin-1). But we
+        // don't create the additional models yet, as this case has to
+        // work even if the number of bins is unknown at this point --
+        // we just create an additional model (copying its parameters
+        // from the default one) each time a new bin is encountered.
+
+        if (!haveBinCount || binCount > 1) {
+            m_needAdditionalModels[n] = true;
+        }
 
         SparseTimeValueModel *model;
         if (haveExtents) {
@@ -461,6 +481,57 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
     for (int j = 0; j < m_descriptors.size(); ++j) {
         delete m_descriptors[j];
     }
+}
+
+FeatureExtractionModelTransformer::Models
+FeatureExtractionModelTransformer::getAdditionalOutputModels()
+{
+    Models mm;
+    for (AdditionalModelMap::iterator i = m_additionalModels.begin();
+         i != m_additionalModels.end(); ++i) {
+        for (std::map<int, SparseTimeValueModel *>::iterator j =
+                 i->second.begin();
+             j != i->second.end(); ++j) {
+            SparseTimeValueModel *m = j->second;
+            if (m) mm.push_back(m);
+        }
+    }
+    return mm;
+}
+
+SparseTimeValueModel *
+FeatureExtractionModelTransformer::getAdditionalModel(int n, int binNo)
+{
+    std::cerr << "getAdditionalModel(" << n << ", " << binNo << ")" << std::endl;
+
+    if (binNo == 0) {
+        std::cerr << "Internal error: binNo == 0 in getAdditionalModel (should be using primary model)" << std::endl;
+        return 0;
+    }
+
+    if (!m_needAdditionalModels[n]) return 0;
+    if (!isOutput<SparseTimeValueModel>(n)) return 0;
+    if (m_additionalModels[n][binNo]) return m_additionalModels[n][binNo];
+
+    std::cerr << "getAdditionalModel(" << n << ", " << binNo << "): creating" << std::endl;
+
+    SparseTimeValueModel *baseModel = getConformingOutput<SparseTimeValueModel>(n);
+    if (!baseModel) return 0;
+
+    std::cerr << "getAdditionalModel(" << n << ", " << binNo << "): (from " << baseModel << ")" << std::endl;
+
+    SparseTimeValueModel *additional =
+        new SparseTimeValueModel(baseModel->getSampleRate(),
+                                 baseModel->getResolution(),
+                                 baseModel->getValueMinimum(),
+                                 baseModel->getValueMaximum(),
+                                 false);
+
+    additional->setScaleUnits(baseModel->getScaleUnits());
+    additional->setRDFTypeURI(baseModel->getRDFTypeURI());
+
+    m_additionalModels[n][binNo] = additional;
+    return additional;
 }
 
 DenseTimeValueModel *
@@ -799,7 +870,17 @@ FeatureExtractionModelTransformer::addFeature(int n,
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
 
-            model->addPoint(SparseTimeValueModel::Point(frame, value, label));
+            SparseTimeValueModel *targetModel = model;
+
+            if (m_needAdditionalModels[n] && i > 0) {
+                targetModel = getAdditionalModel(n, i);
+                if (!targetModel) targetModel = model;
+                std::cerr << "adding point to model " << targetModel
+                          << " for output " << n << " bin " << i << std::endl;
+            }
+
+            targetModel->addPoint
+                (SparseTimeValueModel::Point(frame, value, label));
         }
 
     } else if (isOutput<FlexiNoteModel>(n) || isOutput<NoteModel>(n) || isOutput<RegionModel>(n)) { //GF: Added Note Model
@@ -898,11 +979,6 @@ FeatureExtractionModelTransformer::addFeature(int n,
 void
 FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 {
-    int binCount = 1;
-    if (m_descriptors[n]->hasFixedBinCount) {
-	binCount = m_descriptors[n]->binCount;
-    }
-
 //    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
 //              << completion << ")" << endl;
 

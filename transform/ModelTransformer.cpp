@@ -36,9 +36,19 @@ ModelTransformer::~ModelTransformer()
     m_abandoned = true;
     wait();
     if (!m_detached) {
-        foreach (Model *m, m_outputs) {
+        Models mine = getOutputModels(); // including any additional ones
+        foreach (Model *m, mine) {
             delete m;
         }
     }
+}
+
+ModelTransformer::Models
+ModelTransformer::getOutputModels()
+{
+    Models out(m_outputs);
+    Models add(getAdditionalOutputModels());
+    foreach (Model *m, add) out.push_back(m);
+    return out;
 }
 
