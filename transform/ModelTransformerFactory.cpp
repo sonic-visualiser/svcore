@@ -280,6 +280,8 @@ ModelTransformerFactory::transformerFinished()
         if (transformer->willHaveAdditionalOutputModels()) {
             vector<Model *> mm = transformer->detachAdditionalOutputModels();
             m_handlers[transformer]->moreModelsAvailable(mm);
+        } else {
+            m_handlers[transformer]->noMoreModelsAvailable();
         }
         m_handlers.erase(transformer);
     }

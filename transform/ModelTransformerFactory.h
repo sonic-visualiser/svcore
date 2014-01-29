@@ -73,7 +73,11 @@ public:
 
     class AdditionalModelHandler {
     public:
+        virtual ~AdditionalModelHandler() { }
+
+        // Exactly one of these functions will be called
         virtual void moreModelsAvailable(std::vector<Model *> models) = 0;
+        virtual void noMoreModelsAvailable() = 0;
     };
     
     /**
