@@ -131,6 +131,110 @@ private slots:
 	QCOMPARE(rm.getValueForPosition(0), rm.getValueForPosition(3));
 	QCOMPARE(rm.getValueForPosition(9), rm.getValueForPosition(7));
     }
+
+    void interpolatingForward()
+    {
+	InterpolatingRangeMapper::CoordMap mappings;
+	mappings[1] = 10;
+	mappings[3] = 30;
+	mappings[5] = 70;
+	InterpolatingRangeMapper rm(mappings, "x");
+	QCOMPARE(rm.getUnit(), QString("x"));
+	QCOMPARE(rm.getPositionForValue(1.0), 10);
+	QCOMPARE(rm.getPositionForValue(0.0), 10);
+	QCOMPARE(rm.getPositionForValue(5.0), 70);
+	QCOMPARE(rm.getPositionForValue(6.0), 70);
+	QCOMPARE(rm.getPositionForValue(3.0), 30);
+	QCOMPARE(rm.getPositionForValue(2.5), 25);
+	QCOMPARE(rm.getPositionForValue(4.5), 60);
+    }
+
+    void interpolatingBackward()
+    {
+	InterpolatingRangeMapper::CoordMap mappings;
+	mappings[1] = 10;
+	mappings[3] = 30;
+	mappings[5] = 70;
+	InterpolatingRangeMapper rm(mappings, "x");
+	QCOMPARE(rm.getUnit(), QString("x"));
+	QCOMPARE(rm.getValueForPosition(10), 1.0);
+	QCOMPARE(rm.getValueForPosition(9), 1.0);
+	QCOMPARE(rm.getValueForPosition(70), 5.0);
+	QCOMPARE(rm.getValueForPosition(80), 5.0);
+	QCOMPARE(rm.getValueForPosition(30), 3.0);
+	QCOMPARE(rm.getValueForPosition(25), 2.5);
+	QCOMPARE(rm.getValueForPosition(60), 4.5);
+    }
+
+    void autoLinearForward()
+    {
+	AutoRangeMapper::CoordMap mappings;
+	mappings[0.5] = 1;
+	mappings[4.0] = 8;
+	AutoRangeMapper rm1(mappings, "x");
+	QCOMPARE(rm1.getUnit(), QString("x"));
+	QCOMPARE(rm1.getType(), AutoRangeMapper::StraightLine);
+	QCOMPARE(rm1.getPositionForValue(0.5), 1);
+	QCOMPARE(rm1.getPositionForValue(4.0), 8);
+	QCOMPARE(rm1.getPositionForValue(3.0), 6);
+	QCOMPARE(rm1.getPositionForValue(3.1), 6);
+	mappings[3.0] = 6;
+	mappings[3.5] = 7;
+	AutoRangeMapper rm2(mappings, "x");
+	QCOMPARE(rm2.getUnit(), QString("x"));
+	QCOMPARE(rm2.getType(), AutoRangeMapper::StraightLine);
+	QCOMPARE(rm2.getPositionForValue(0.5), 1);
+	QCOMPARE(rm2.getPositionForValue(4.0), 8);
+	QCOMPARE(rm2.getPositionForValue(3.0), 6);
+	QCOMPARE(rm2.getPositionForValue(3.1), 6);
+    }
+
+    void autoLogForward()
+    {
+	AutoRangeMapper::CoordMap mappings;
+	mappings[10] = 3;
+	mappings[1000] = 5;
+	mappings[100000] = 7;
+	AutoRangeMapper rm1(mappings, "x");
+	QCOMPARE(rm1.getUnit(), QString("x"));
+	QCOMPARE(rm1.getType(), AutoRangeMapper::Logarithmic);
+	QCOMPARE(rm1.getPositionForValue(10.0), 3);
+	QCOMPARE(rm1.getPositionForValue(100000.0), 7);
+	QCOMPARE(rm1.getPositionForValue(1.0), 3);
+	QCOMPARE(rm1.getPositionForValue(1000000.0), 7);
+	QCOMPARE(rm1.getPositionForValue(1000.0), 5);
+	QCOMPARE(rm1.getPositionForValue(900.0), 5);
+	QCOMPARE(rm1.getPositionForValue(20000), 6);
+	mappings[100] = 4;
+	AutoRangeMapper rm2(mappings, "x");
+	QCOMPARE(rm2.getUnit(), QString("x"));
+	QCOMPARE(rm2.getType(), AutoRangeMapper::Logarithmic);
+	QCOMPARE(rm2.getPositionForValue(10.0), 3);
+	QCOMPARE(rm2.getPositionForValue(100000.0), 7);
+	QCOMPARE(rm2.getPositionForValue(1.0), 3);
+	QCOMPARE(rm2.getPositionForValue(1000000.0), 7);
+	QCOMPARE(rm2.getPositionForValue(1000.0), 5);
+	QCOMPARE(rm2.getPositionForValue(900.0), 5);
+	QCOMPARE(rm2.getPositionForValue(20000), 6);
+    }
+
+    void autoInterpolatingForward()
+    {
+	AutoRangeMapper::CoordMap mappings;
+	mappings[1] = 10;
+	mappings[3] = 30;
+	mappings[5] = 70;
+	AutoRangeMapper rm(mappings, "x");
+	QCOMPARE(rm.getUnit(), QString("x"));
+	QCOMPARE(rm.getType(), AutoRangeMapper::Interpolating);
+	QCOMPARE(rm.getPositionForValue(1.0), 10);
+	QCOMPARE(rm.getPositionForValue(0.0), 10);
+	QCOMPARE(rm.getPositionForValue(5.0), 70);
+	QCOMPARE(rm.getPositionForValue(6.0), 70);
+	QCOMPARE(rm.getPositionForValue(3.0), 30);
+	QCOMPARE(rm.getPositionForValue(2.5), 25);
+	QCOMPARE(rm.getPositionForValue(4.5), 60);
+    }
 };
 
 #endif

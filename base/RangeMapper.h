@@ -19,7 +19,7 @@
 #include <QString>
 
 #include "Debug.h"
-
+#include <map>
 
 class RangeMapper 
 {
@@ -58,10 +58,16 @@ protected:
     bool m_inverted;
 };
 
-
 class LogRangeMapper : public RangeMapper
 {
 public:
+    /**
+     * Map values in range minval->maxval into integer range
+     * minpos->maxpos such that logs of the values are mapped
+     * linearly. minval and minpos must be less than maxval and maxpos
+     * respectively. If inverted is true, the range will be mapped
+     * "backwards" (minval to maxpos and maxval to minpos).
+     */
     LogRangeMapper(int minpos, int maxpos,
                    float minval, float maxval,
                    QString m_unit = "", bool inverted = false);
@@ -89,5 +95,111 @@ protected:
     bool m_inverted;
 };
 
+class InterpolatingRangeMapper : public RangeMapper
+{
+public:
+    typedef std::map<float, int> CoordMap;
+
+    /**
+     * Given a series of (value, position) coordinate mappings,
+     * construct a range mapper that maps arbitrary values, in the
+     * range between minimum and maximum of the provided values, onto
+     * coordinates using linear interpolation between the supplied
+     * points.
+     *
+     *!!! todo: Cubic -- more generally useful than linear interpolation
+     *!!! todo: inverted flag
+     *
+     * The set of provided mappings must contain at least two
+     * coordinates.
+     *
+     * It is expected that the values and positions in the coordinate
+     * mappings will both be monotonically increasing (i.e. no
+     * inflections in the mapping curve). Behaviour is undefined if
+     * this is not the case.
+     */
+    InterpolatingRangeMapper(CoordMap pointMappings,
+                             QString unit);
+
+    virtual int getPositionForValue(float value) const;
+    virtual float getValueForPosition(int position) const;
+
+    virtual QString getUnit() const { return m_unit; }
+
+protected:
+    CoordMap m_mappings;
+    std::map<int, float> m_reverse;
+    QString m_unit;
+};
+
+class AutoRangeMapper : public RangeMapper
+{
+public:
+    enum MappingType {
+        Interpolating,
+        StraightLine,
+        Logarithmic,
+    };
+
+    typedef std::map<float, int> CoordMap;
+
+    /**
+     * Given a series of (value, position) coordinate mappings,
+     * construct a range mapper that maps arbitrary values, in the
+     * range between minimum and maximum of the provided values, onto
+     * coordinates. 
+     *
+     * The mapping used may be
+     * 
+     *    Interpolating -- an InterpolatingRangeMapper will be used
+     * 
+     *    StraightLine -- a LinearRangeMapper from the minimum to
+     *    maximum value coordinates will be used, ignoring all other
+     *    supplied coordinate mappings
+     * 
+     *    Logarithmic -- a LogRangeMapper from the minimum to
+     *    maximum value coordinates will be used, ignoring all other
+     *    supplied coordinate mappings
+     *
+     * The mapping will be chosen automatically by looking at the
+     * supplied coordinates. If the supplied coordinates fall on a
+     * straight line, a StraightLine mapping will be used; if they
+     * fall on a log curve, a Logarithmic mapping will be used;
+     * otherwise an Interpolating mapping will be used.
+     *
+     *!!! todo: inverted flag
+     *
+     * The set of provided mappings must contain at least two
+     * coordinates, or at least three if the points are not supposed
+     * to be in a straight line.
+     *
+     * It is expected that the values and positions in the coordinate
+     * mappings will both be monotonically increasing (i.e. no
+     * inflections in the mapping curve). Behaviour is undefined if
+     * this is not the case.
+     */
+    AutoRangeMapper(CoordMap pointMappings,
+                    QString unit);
+
+    ~AutoRangeMapper();
+
+    /**
+     * Return the mapping type in use.
+     */
+    MappingType getType() const { return m_type; }
+
+    virtual int getPositionForValue(float value) const;
+    virtual float getValueForPosition(int position) const;
+
+    virtual QString getUnit() const { return m_unit; }
+
+protected:
+    MappingType m_type;
+    CoordMap m_mappings;
+    QString m_unit;
+    RangeMapper *m_mapper;
+
+    MappingType chooseMappingTypeFor(const CoordMap &);
+};
 
 #endif
