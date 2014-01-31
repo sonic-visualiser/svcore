@@ -125,3 +125,146 @@ LogRangeMapper::getValueForPosition(int position) const
     return value;
 }
 
+InterpolatingRangeMapper::InterpolatingRangeMapper(CoordMap pointMappings,
+                                                   QString unit) :
+    m_mappings(pointMappings),
+    m_unit(unit)
+{
+    for (CoordMap::const_iterator i = m_mappings.begin(); 
+         i != m_mappings.end(); ++i) {
+        m_reverse[i->second] = i->first;
+    }
+}
+
+int
+InterpolatingRangeMapper::getPositionForValue(float value) const
+{
+    CoordMap::const_iterator i = m_mappings.lower_bound(value);
+    CoordMap::const_iterator j = i;
+    --j;
+
+    if (i == m_mappings.end()) return j->second;
+    if (i == m_mappings.begin()) return i->second;
+    if (i->first == value) return i->second;
+
+    return lrintf(((value - j->first) / (i->first - j->first)) *
+                  float(i->second - j->second) + j->second);
+}
+
+float
+InterpolatingRangeMapper::getValueForPosition(int position) const
+{
+    std::map<int, float>::const_iterator i = m_reverse.lower_bound(position);
+    std::map<int, float>::const_iterator j = i;
+    --j;
+
+    if (i == m_reverse.end()) return j->second;
+    if (i == m_reverse.begin()) return i->second;
+    if (i->first == position) return i->second;
+
+    return ((float(position) - j->first) / (i->first - j->first)) *
+        (i->second - j->second) + j->second;
+}
+
+AutoRangeMapper::AutoRangeMapper(CoordMap pointMappings,
+                                 QString unit) :
+    m_mappings(pointMappings),
+    m_unit(unit)
+{
+    m_type = chooseMappingTypeFor(m_mappings);
+
+    CoordMap::const_iterator first = m_mappings.begin();
+    CoordMap::const_iterator last = m_mappings.end();
+    --last;
+
+    switch (m_type) {
+    case StraightLine:
+        m_mapper = new LinearRangeMapper(first->second, last->second,
+                                         first->first, last->first,
+                                         unit, false);
+        break;
+    case Logarithmic:
+        m_mapper = new LogRangeMapper(first->second, last->second,
+                                      first->first, last->first,
+                                      unit, false);
+        break;
+    case Interpolating:
+        m_mapper = new InterpolatingRangeMapper(m_mappings, unit);
+        break;
+    }
+}
+
+AutoRangeMapper::~AutoRangeMapper()
+{
+    delete m_mapper;
+}
+
+AutoRangeMapper::MappingType
+AutoRangeMapper::chooseMappingTypeFor(const CoordMap &mappings)
+{
+    // how do we work out whether a linear/log mapping is "close enough"?
+
+    CoordMap::const_iterator first = mappings.begin();
+    CoordMap::const_iterator last = mappings.end();
+    --last;
+
+    LinearRangeMapper linm(first->second, last->second,
+                           first->first, last->first,
+                           "", false);
+
+    bool inadequate = false;
+
+    for (CoordMap::const_iterator i = mappings.begin();
+         i != mappings.end(); ++i) {
+        int candidate = linm.getPositionForValue(i->first);
+        int diff = candidate - i->second;
+        if (diff < 0) diff = -diff;
+        if (diff > 1) {
+            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
+                 << ", straight-line mapping inadequate" << endl;
+            inadequate = true;
+            break;
+        }
+    }
+
+    if (!inadequate) {
+        return StraightLine;
+    }
+
+    LogRangeMapper logm(first->second, last->second,
+                        first->first, last->first,
+                        "", false);
+
+    inadequate = false;
+
+    for (CoordMap::const_iterator i = mappings.begin();
+         i != mappings.end(); ++i) {
+        int candidate = logm.getPositionForValue(i->first);
+        int diff = candidate - i->second;
+        if (diff < 0) diff = -diff;
+        if (diff > 1) {
+            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
+                 << ", log mapping inadequate" << endl;
+            inadequate = true;
+            break;
+        }
+    }
+
+    if (!inadequate) {
+        return Logarithmic;
+    }
+
+    return Interpolating;
+}
+
+int
+AutoRangeMapper::getPositionForValue(float value) const
+{
+    return m_mapper->getPositionForValue(value);
+}
+
+float
+AutoRangeMapper::getValueForPosition(int position) const
+{
+    return m_mapper->getValueForPosition(position);
+}
