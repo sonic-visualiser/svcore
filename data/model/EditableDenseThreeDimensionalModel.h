@@ -127,10 +127,27 @@ public:
      */
     virtual void setColumn(size_t x, const Column &values);
 
+    /**
+     * Return the name of bin n. This is a single label per bin that
+     * does not vary from one column to the next.
+     */
     virtual QString getBinName(size_t n) const;
+
+    /**
+     * Set the name of bin n.
+     */
     virtual void setBinName(size_t n, QString);
+
+    /**
+     * Set the names of all bins.
+     */
     virtual void setBinNames(std::vector<QString> names);
 
+    /**
+     * Return true if the distribution of values in the bins is such
+     * as to suggest a log scale (mapping to colour etc) may be better
+     * than a linear one.
+     */
     bool shouldUseLogValueScale() const;
 
     virtual void setCompletion(int completion, bool update = true);
