@@ -34,6 +34,12 @@ public:
 class LinearRangeMapper : public RangeMapper
 {
 public:
+    /**
+     * Map values in range minval->maxval linearly into integer range
+     * minpos->maxpos. minval and minpos must be less than maxval and
+     * maxpos respectively. If inverted is true, the range will be
+     * mapped "backwards" (minval to maxpos and maxval to minpos).
+     */
     LinearRangeMapper(int minpos, int maxpos,
                       float minval, float maxval,
                       QString unit = "", bool inverted = false);

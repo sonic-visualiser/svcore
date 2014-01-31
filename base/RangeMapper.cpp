@@ -43,23 +43,19 @@ LinearRangeMapper::getPositionForValue(float value) const
                * (m_maxpos - m_minpos));
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
-//    SVDEBUG << "LinearRangeMapper::getPositionForValue: " << value << " -> "
-//              << position << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", minval " << m_minval << ", maxval " << m_maxval << ")" << endl;
-    if (m_inverted) return m_maxpos - position;
+    if (m_inverted) return m_maxpos - (position - m_minpos);
     else return position;
 }
 
 float
 LinearRangeMapper::getValueForPosition(int position) const
 {
-    if (m_inverted) position = m_maxpos - position;
+    if (m_inverted) position = m_maxpos - (position - m_minpos);
+    if (position < m_minpos) position = m_minpos;
+    if (position > m_maxpos) position = m_maxpos;
     float value = m_minval +
         ((float(position - m_minpos) / float(m_maxpos - m_minpos))
          * (m_maxval - m_minval));
-    if (value < m_minval) value = m_minval;
-    if (value > m_maxval) value = m_maxval;
-//    SVDEBUG << "LinearRangeMapper::getValueForPosition: " << position << " -> "
-//              << value << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", minval " << m_minval << ", maxval " << m_maxval << ")" << endl;
     return value;
 }
 
@@ -73,14 +69,16 @@ LogRangeMapper::LogRangeMapper(int minpos, int maxpos,
 {
     convertMinMax(minpos, maxpos, minval, maxval, m_minlog, m_ratio);
 
-    cerr << "LogRangeMapper: minpos " << minpos << ", maxpos "
-              << maxpos << ", minval " << minval << ", maxval "
-              << maxval << ", minlog " << m_minlog << ", ratio " << m_ratio
-              << ", unit " << unit << endl;
+//    cerr << "LogRangeMapper: minpos " << minpos << ", maxpos "
+//              << maxpos << ", minval " << minval << ", maxval "
+//              << maxval << ", minlog " << m_minlog << ", ratio " << m_ratio
+//              << ", unit " << unit << endl;
 
     assert(m_maxpos != m_minpos);
 
     m_maxlog = (m_maxpos - m_minpos) / m_ratio + m_minlog;
+
+//    cerr << "LogRangeMapper: maxlog = " << m_maxlog << endl;
 }
 
 void
@@ -106,21 +104,23 @@ LogRangeMapper::convertRatioMinLog(float ratio, float minlog,
 int
 LogRangeMapper::getPositionForValue(float value) const
 {
-    int position = (log10(value) - m_minlog) * m_ratio + m_minpos;
+    int position = lrintf((log10(value) - m_minlog) * m_ratio) + m_minpos;
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
-//    SVDEBUG << "LogRangeMapper::getPositionForValue: " << value << " -> "
+//    cerr << "LogRangeMapper::getPositionForValue: " << value << " -> "
 //              << position << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << endl;
-    if (m_inverted) return m_maxpos - position;
+    if (m_inverted) return m_maxpos - (position - m_minpos);
     else return position;
 }
 
 float
 LogRangeMapper::getValueForPosition(int position) const
 {
-    if (m_inverted) position = m_maxpos - position;
+    if (m_inverted) position = m_maxpos - (position - m_minpos);
+    if (position < m_minpos) position = m_minpos;
+    if (position > m_maxpos) position = m_maxpos;
     float value = powf(10, (position - m_minpos) / m_ratio + m_minlog);
-//    SVDEBUG << "LogRangeMapper::getValueForPosition: " << position << " -> "
+//    cerr << "LogRangeMapper::getValueForPosition: " << position << " -> "
 //              << value << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << endl;
     return value;
 }
