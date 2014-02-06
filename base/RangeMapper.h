@@ -25,8 +25,42 @@ class RangeMapper
 {
 public:
     virtual ~RangeMapper() { }
+
+    /**
+     * Return the position that maps to the given value, rounding to
+     * the nearest position and clamping to the minimum and maximum
+     * extents of the mapper's positional range.
+     */
     virtual int getPositionForValue(float value) const = 0;
+
+    /**
+     * Return the position that maps to the given value, rounding to
+     * the nearest position, without clamping. That is, whatever
+     * mapping function is in use will be projected even outside the
+     * minimum and maximum extents of the mapper's positional
+     * range. (The mapping outside that range is not guaranteed to be
+     * exact, except if the mapper is a linear one.)
+     */
+    virtual int getPositionForValueUnclamped(float value) const = 0;
+
+    /**
+     * Return the value mapped from the given position, clamping to
+     * the minimum and maximum extents of the mapper's value range.
+     */
     virtual float getValueForPosition(int position) const = 0;
+
+    /**
+     * Return the value mapped from the given positionq, without
+     * clamping. That is, whatever mapping function is in use will be
+     * projected even outside the minimum and maximum extents of the
+     * mapper's value range. (The mapping outside that range is not
+     * guaranteed to be exact, except if the mapper is a linear one.)
+     */
+    virtual float getValueForPositionUnclamped(int position) const = 0;
+
+    /**
+     * Get the unit of the mapper's value range.
+     */
     virtual QString getUnit() const { return ""; }
 };
 
@@ -45,7 +79,10 @@ public:
                       QString unit = "", bool inverted = false);
     
     virtual int getPositionForValue(float value) const;
+    virtual int getPositionForValueUnclamped(float value) const;
+
     virtual float getValueForPosition(int position) const;
+    virtual float getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
@@ -64,9 +101,10 @@ public:
     /**
      * Map values in range minval->maxval into integer range
      * minpos->maxpos such that logs of the values are mapped
-     * linearly. minval and minpos must be less than maxval and maxpos
-     * respectively. If inverted is true, the range will be mapped
-     * "backwards" (minval to maxpos and maxval to minpos).
+     * linearly. minval must be greater than zero, and minval and
+     * minpos must be less than maxval and maxpos respectively. If
+     * inverted is true, the range will be mapped "backwards" (minval
+     * to maxpos and maxval to minpos).
      */
     LogRangeMapper(int minpos, int maxpos,
                    float minval, float maxval,
@@ -81,7 +119,10 @@ public:
                               float &ratio, float &minlog);
 
     virtual int getPositionForValue(float value) const;
+    virtual int getPositionForValueUnclamped(float value) const;
+
     virtual float getValueForPosition(int position) const;
+    virtual float getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
@@ -122,7 +163,10 @@ public:
                              QString unit);
 
     virtual int getPositionForValue(float value) const;
+    virtual int getPositionForValueUnclamped(float value) const;
+
     virtual float getValueForPosition(int position) const;
+    virtual float getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
@@ -130,6 +174,9 @@ protected:
     CoordMap m_mappings;
     std::map<int, float> m_reverse;
     QString m_unit;
+
+    template <typename T>
+    float interpolate(T *mapping, float v) const;
 };
 
 class AutoRangeMapper : public RangeMapper
@@ -189,7 +236,10 @@ public:
     MappingType getType() const { return m_type; }
 
     virtual int getPositionForValue(float value) const;
+    virtual int getPositionForValueUnclamped(float value) const;
+
     virtual float getValueForPosition(int position) const;
+    virtual float getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
