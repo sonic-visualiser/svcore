@@ -38,11 +38,18 @@ LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
 int
 LinearRangeMapper::getPositionForValue(float value) const
 {
+    int position = getPositionForValueUnclamped(value);
+    if (position < m_minpos) position = m_minpos;
+    if (position > m_maxpos) position = m_maxpos;
+    return position;
+}
+
+int
+LinearRangeMapper::getPositionForValueUnclamped(float value) const
+{
     int position = m_minpos +
         lrintf(((value - m_minval) / (m_maxval - m_minval))
                * (m_maxpos - m_minpos));
-    if (position < m_minpos) position = m_minpos;
-    if (position > m_maxpos) position = m_maxpos;
     if (m_inverted) return m_maxpos - (position - m_minpos);
     else return position;
 }
@@ -50,9 +57,16 @@ LinearRangeMapper::getPositionForValue(float value) const
 float
 LinearRangeMapper::getValueForPosition(int position) const
 {
-    if (m_inverted) position = m_maxpos - (position - m_minpos);
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
+    float value = getValueForPositionUnclamped(position);
+    return value;
+}
+
+float
+LinearRangeMapper::getValueForPositionUnclamped(int position) const
+{
+    if (m_inverted) position = m_maxpos - (position - m_minpos);
     float value = m_minval +
         ((float(position - m_minpos) / float(m_maxpos - m_minpos))
          * (m_maxval - m_minval));
@@ -104,11 +118,18 @@ LogRangeMapper::convertRatioMinLog(float ratio, float minlog,
 int
 LogRangeMapper::getPositionForValue(float value) const
 {
-    int position = lrintf((log10(value) - m_minlog) * m_ratio) + m_minpos;
+    int position = getPositionForValueUnclamped(value);
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
-//    cerr << "LogRangeMapper::getPositionForValue: " << value << " -> "
-//              << position << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << endl;
+    return position;
+}
+
+int
+LogRangeMapper::getPositionForValueUnclamped(float value) const
+{
+    static float thresh = powf(10, -10);
+    if (value < thresh) value = thresh;
+    int position = lrintf((log10(value) - m_minlog) * m_ratio) + m_minpos;
     if (m_inverted) return m_maxpos - (position - m_minpos);
     else return position;
 }
@@ -116,12 +137,17 @@ LogRangeMapper::getPositionForValue(float value) const
 float
 LogRangeMapper::getValueForPosition(int position) const
 {
-    if (m_inverted) position = m_maxpos - (position - m_minpos);
     if (position < m_minpos) position = m_minpos;
     if (position > m_maxpos) position = m_maxpos;
+    float value = getValueForPositionUnclamped(position);
+    return value;
+}
+
+float
+LogRangeMapper::getValueForPositionUnclamped(int position) const
+{
+    if (m_inverted) position = m_maxpos - (position - m_minpos);
     float value = powf(10, (position - m_minpos) / m_ratio + m_minlog);
-//    cerr << "LogRangeMapper::getValueForPosition: " << position << " -> "
-//              << value << " (minpos " << m_minpos << ", maxpos " << m_maxpos << ", ratio " << m_ratio << ", minlog " << m_minlog << ")" << endl;
     return value;
 }
 
@@ -139,31 +165,63 @@ InterpolatingRangeMapper::InterpolatingRangeMapper(CoordMap pointMappings,
 int
 InterpolatingRangeMapper::getPositionForValue(float value) const
 {
-    CoordMap::const_iterator i = m_mappings.lower_bound(value);
-    CoordMap::const_iterator j = i;
-    --j;
+    int pos = getPositionForValueUnclamped(value);
+    CoordMap::const_iterator i = m_mappings.begin();
+    if (pos < i->second) pos = i->second;
+    i = m_mappings.end(); --i;
+    if (pos > i->second) pos = i->second;
+    return pos;
+}
 
-    if (i == m_mappings.end()) return j->second;
-    if (i == m_mappings.begin()) return i->second;
-    if (i->first == value) return i->second;
-
-    return lrintf(((value - j->first) / (i->first - j->first)) *
-                  float(i->second - j->second) + j->second);
+int
+InterpolatingRangeMapper::getPositionForValueUnclamped(float value) const
+{
+    float p = interpolate(&m_mappings, value);
+    return lrintf(p);
 }
 
 float
 InterpolatingRangeMapper::getValueForPosition(int position) const
 {
-    std::map<int, float>::const_iterator i = m_reverse.lower_bound(position);
-    std::map<int, float>::const_iterator j = i;
+    float val = getValueForPositionUnclamped(position);
+    CoordMap::const_iterator i = m_mappings.begin();
+    if (val < i->first) val = i->first;
+    i = m_mappings.end(); --i;
+    if (val > i->first) val = i->first;
+    return val;
+}
+
+float
+InterpolatingRangeMapper::getValueForPositionUnclamped(int position) const
+{
+    return interpolate(&m_reverse, position);
+}
+
+template <typename T>
+float
+InterpolatingRangeMapper::interpolate(T *mapping, float value) const
+{
+    // lower_bound: first element which does not compare less than value
+    typename T::const_iterator i = mapping->lower_bound(value);
+
+    if (i == mapping->begin()) {
+        // value is less than or equal to first element, so use the
+        // gradient from first to second and extend it
+        ++i;
+    }
+
+    if (i == mapping->end()) {
+        // value is off the end, so use the gradient from penultimate
+        // to ultimate and extend it
+        --i;
+    }
+
+    typename T::const_iterator j = i;
     --j;
 
-    if (i == m_reverse.end()) return j->second;
-    if (i == m_reverse.begin()) return i->second;
-    if (i->first == position) return i->second;
+    float gradient = float(i->second - j->second) / float(i->first - j->first);
 
-    return ((float(position) - j->first) / (i->first - j->first)) *
-        (i->second - j->second) + j->second;
+    return j->second + (value - j->first) * gradient;
 }
 
 AutoRangeMapper::AutoRangeMapper(CoordMap pointMappings,
@@ -220,8 +278,8 @@ AutoRangeMapper::chooseMappingTypeFor(const CoordMap &mappings)
         int diff = candidate - i->second;
         if (diff < 0) diff = -diff;
         if (diff > 1) {
-            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
-                 << ", straight-line mapping inadequate" << endl;
+//            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
+//                 << ", straight-line mapping inadequate" << endl;
             inadequate = true;
             break;
         }
@@ -243,8 +301,8 @@ AutoRangeMapper::chooseMappingTypeFor(const CoordMap &mappings)
         int diff = candidate - i->second;
         if (diff < 0) diff = -diff;
         if (diff > 1) {
-            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
-                 << ", log mapping inadequate" << endl;
+//            cerr << "AutoRangeMapper::chooseMappingTypeFor: diff = " << diff
+//                 << ", log mapping inadequate" << endl;
             inadequate = true;
             break;
         }
@@ -267,4 +325,16 @@ float
 AutoRangeMapper::getValueForPosition(int position) const
 {
     return m_mapper->getValueForPosition(position);
+}
+
+int
+AutoRangeMapper::getPositionForValueUnclamped(float value) const
+{
+    return m_mapper->getPositionForValueUnclamped(value);
+}
+
+float
+AutoRangeMapper::getValueForPositionUnclamped(int position) const
+{
+    return m_mapper->getValueForPositionUnclamped(position);
 }
