@@ -30,7 +30,7 @@ INCLUDEPATH += ../..
 OBJECTS_DIR = o
 MOC_DIR = o
 
-HEADERS += RangeMapperTest.h
+HEADERS += TestRangeMapper.h
 SOURCES += main.cpp
 
 win* {
