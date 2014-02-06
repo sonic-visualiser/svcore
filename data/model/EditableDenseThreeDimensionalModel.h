@@ -144,6 +144,40 @@ public:
     virtual void setBinNames(std::vector<QString> names);
 
     /**
+     * Return true if the bins have values as well as names. (The
+     * values may have been derived from the names, e.g. by parsing
+     * numbers from them.) If this returns true, getBinValue() may be
+     * used to retrieve the values.
+     */
+    virtual bool hasBinValues() const;
+
+    /**
+     * Return the value of bin n, if any. This is a "vertical scale"
+     * value which does not vary from one column to the next. This is
+     * only meaningful if hasBinValues() returns true.
+     */
+    virtual float getBinValue(size_t n) const;
+
+    /**
+     * Set the values of all bins (separate from their labels). These
+     * are "vertical scale" values which do not vary from one column
+     * to the next.
+     */
+    virtual void setBinValues(std::vector<float> values);
+
+    /**
+     * Obtain the name of the unit of the values returned from
+     * getBinValue(), if any.
+     */
+    virtual QString getBinValueUnit() const;
+
+    /**
+     * Set the name of the unit of the values return from
+     * getBinValue() if any.
+     */
+    virtual void setBinValueUnit(QString unit);
+
+    /**
      * Return true if the distribution of values in the bins is such
      * as to suggest a log scale (mapping to colour etc) may be better
      * than a linear one.
@@ -179,6 +213,8 @@ protected:
     Column expandAndRetrieve(size_t index) const;
 
     std::vector<QString> m_binNames;
+    std::vector<float> m_binValues;
+    QString m_binValueUnit;
 
     size_t m_startFrame;
     size_t m_sampleRate;
