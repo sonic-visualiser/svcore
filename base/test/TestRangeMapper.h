@@ -25,7 +25,7 @@
 
 using namespace std;
 
-class RangeMapperTest : public QObject
+class TestRangeMapper : public QObject
 {
     Q_OBJECT
 
