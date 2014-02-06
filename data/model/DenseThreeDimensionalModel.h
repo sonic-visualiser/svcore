@@ -83,6 +83,25 @@ public:
     virtual QString getBinName(size_t n) const = 0;
 
     /**
+     * Return true if the bins have values as well as names. If this
+     * returns true, getBinValue() may be used to retrieve the values.
+     */
+    virtual bool hasBinValues() const { return false; }
+
+    /**
+     * Return the value of bin n, if any. This is a "vertical scale"
+     * value which does not vary from one column to the next. This is
+     * only meaningful if hasBinValues() returns true.
+     */
+    virtual float getBinValue(size_t n) const { return n; }
+
+    /**
+     * Obtain the name of the unit of the values returned from
+     * getBinValue(), if any.
+     */
+    virtual QString getBinValueUnit() const { return ""; }
+
+    /**
      * Estimate whether a logarithmic scale might be appropriate for
      * the value scale.
      */
