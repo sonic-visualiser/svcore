@@ -11,7 +11,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "RangeMapperTest.h"
+#include "TestRangeMapper.h"
 
 #include <QtTest>
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("test-svcore-base");
 
     {
-	RangeMapperTest t;
+	TestRangeMapper t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
