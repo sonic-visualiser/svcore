@@ -228,12 +228,11 @@ FeatureExtractionModelTransformer::createOutputModel()
         //!!! the model rate to be the input model's rate, and adjust
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
-//	modelRate = size_t(m_descriptor->sampleRate + 0.001);
         if (m_descriptor->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = size_t(input->getSampleRate() /
-                                     m_descriptor->sampleRate);
+            modelResolution = size_t(round(input->getSampleRate() /
+                                           m_descriptor->sampleRate));
         }
 	break;
     }
@@ -683,7 +682,7 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
 //             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
 //             << ", inputRate = " << inputRate
 //             << " giving frame = ";
- 
+
         frame = lrintf((m_fixedRateFeatureNo / m_descriptor->sampleRate)
                        * int(inputRate));
 
@@ -801,7 +800,14 @@ FeatureExtractionModelTransformer::addFeature(size_t blockFrame,
             getConformingOutput<EditableDenseThreeDimensionalModel>();
 	if (!model) return;
 
-	model->setColumn(frame / model->getResolution(), values);
+//        cerr << "(note: model resolution = " << model->getResolution() << ")"
+//             << endl;
+
+        if (!feature.hasTimestamp && m_fixedRateFeatureNo >= 0) {
+            model->setColumn(m_fixedRateFeatureNo, values);
+        } else {
+            model->setColumn(frame / model->getResolution(), values);
+        }
 
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
