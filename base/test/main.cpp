@@ -3,7 +3,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2013 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -12,7 +11,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "AudioFileReaderTest.h"
+#include "TestRangeMapper.h"
 
 #include <QtTest>
 
@@ -24,10 +23,10 @@ int main(int argc, char *argv[])
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("Sonic Visualiser");
-    app.setApplicationName("test-fileio");
+    app.setApplicationName("test-svcore-base");
 
     {
-	AudioFileReaderTest t;
+	TestRangeMapper t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
@@ -40,4 +39,3 @@ int main(int argc, char *argv[])
 	return 0;
     }
 }
-

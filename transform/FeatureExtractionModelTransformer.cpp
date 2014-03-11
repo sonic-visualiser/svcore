@@ -278,12 +278,11 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         //!!! the model rate to be the input model's rate, and adjust
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
-//	modelRate = size_t(m_descriptors[n]->sampleRate + 0.001);
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = size_t(input->getSampleRate() /
-                                     m_descriptors[n]->sampleRate);
+            modelResolution = size_t(round(input->getSampleRate() /
+                                           m_descriptors[n]->sampleRate));
         }
 	break;
     }
@@ -852,7 +851,6 @@ FeatureExtractionModelTransformer::addFeature(int n,
 //             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
 //             << ", inputRate = " << inputRate
 //             << " giving frame = ";
- 
         frame = lrintf((m_fixedRateFeatureNos[n] / m_descriptors[n]->sampleRate)
                        * int(inputRate));
     }
@@ -927,7 +925,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             }
         }
 
-		if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
+        if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
 
             float velocity = 100;
             if (feature.values.size() > index) {
@@ -995,7 +993,14 @@ FeatureExtractionModelTransformer::addFeature(int n,
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);
 	if (!model) return;
 
-	model->setColumn(frame / model->getResolution(), values);
+//        cerr << "(note: model resolution = " << model->getResolution() << ")"
+//             << endl;
+
+        if (!feature.hasTimestamp && m_fixedRateFeatureNos[n] >= 0) {
+            model->setColumn(m_fixedRateFeatureNos[n], values);
+        } else {
+            model->setColumn(frame / model->getResolution(), values);
+        }
 
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
