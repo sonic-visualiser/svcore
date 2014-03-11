@@ -195,13 +195,14 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
 Model *
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
-                                   QString &message) 
+                                   QString &message,
+                                   AdditionalModelHandler *handler) 
 {
     SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     Transforms transforms;
     transforms.push_back(transform);
-    vector<Model *> mm = transformMultiple(transforms, input, message);
+    vector<Model *> mm = transformMultiple(transforms, input, message, handler);
     if (mm.empty()) return 0;
     else return mm[0];
 }
@@ -209,16 +210,21 @@ ModelTransformerFactory::transform(const Transform &transform,
 vector<Model *>
 ModelTransformerFactory::transformMultiple(const Transforms &transforms,
                                            const ModelTransformer::Input &input,
-                                           QString &message) 
+                                           QString &message,
+                                           AdditionalModelHandler *handler) 
 {
     SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
     
     ModelTransformer *t = createTransformer(transforms, input);
     if (!t) return vector<Model *>();
 
-    connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
+    if (handler) {
+        m_handlers[t] = handler;
+    }
 
     m_runningTransformers.insert(t);
+
+    connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
 
     t->start();
     vector<Model *> models = t->detachOutputModels();
@@ -269,6 +275,16 @@ ModelTransformerFactory::transformerFinished()
     }
 
     m_runningTransformers.erase(transformer);
+
+    if (m_handlers.find(transformer) != m_handlers.end()) {
+        if (transformer->willHaveAdditionalOutputModels()) {
+            vector<Model *> mm = transformer->detachAdditionalOutputModels();
+            m_handlers[transformer]->moreModelsAvailable(mm);
+        } else {
+            m_handlers[transformer]->noMoreModelsAvailable();
+        }
+        m_handlers.erase(transformer);
+    }
 
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
