@@ -23,8 +23,10 @@
 #include <vamp-hostsdk/Plugin.h>
 
 #include <iostream>
+#include <map>
 
 class DenseTimeValueModel;
+class SparseTimeValueModel;
 
 class FeatureExtractionModelTransformer : public ModelTransformer
 {
@@ -42,6 +44,10 @@ public:
 
     virtual ~FeatureExtractionModelTransformer();
 
+    // ModelTransformer method, retrieve the additional models
+    Models getAdditionalOutputModels();
+    bool willHaveAdditionalOutputModels();
+
 protected:
     bool initialise();
 
@@ -50,9 +56,14 @@ protected:
     Vamp::Plugin *m_plugin;
     std::vector<Vamp::Plugin::OutputDescriptor *> m_descriptors; // per transform
     std::vector<int> m_fixedRateFeatureNos; // to assign times to FixedSampleRate features
-    std::vector<int> m_outputNos;
+    std::vector<int> m_outputNos; // list of plugin output indexes required for this group of transforms
 
-    void createOutputModel(int n);
+    void createOutputModels(int n);
+
+    std::map<int, bool> m_needAdditionalModels; // transformNo -> necessity
+    typedef std::map<int, std::map<int, SparseTimeValueModel *> > AdditionalModelMap;
+    AdditionalModelMap m_additionalModels;
+    SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
 
     void addFeature(int n,
                     size_t blockFrame,
