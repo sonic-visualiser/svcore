@@ -101,7 +101,13 @@ Pitch::getPitchLabel(int midiPitch,
 		     float centsOffset,
 		     bool useFlats)
 {
-    int octave = -2;
+    int baseOctave = Preferences::getInstance()->getOctaveOfLowestMIDINote();
+    int octave = baseOctave;
+
+    // Note, this only gets the right octave number at octave
+    // boundaries because Cb is enharmonic with B (not B#) and B# is
+    // enharmonic with C (not Cb). So neither B# nor Cb will be
+    // spelled from a MIDI pitch + flats flag in isolation.
 
     if (midiPitch < 0) {
 	while (midiPitch < 0) {
@@ -109,7 +115,7 @@ Pitch::getPitchLabel(int midiPitch,
 	    --octave;
 	}
     } else {
-	octave = midiPitch / 12 - 2;
+	octave = midiPitch / 12 + baseOctave;
     }
 
     QString plain = (useFlats ? flatNotes : notes)[midiPitch % 12].arg(octave);

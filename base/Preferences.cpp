@@ -47,6 +47,7 @@ Preferences::Preferences() :
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
     m_timeToTextMode(TimeToTextMs),
+    m_octave(4),
     m_showSplash(true)
 {
     QSettings settings;
@@ -66,6 +67,7 @@ Preferences::Preferences() :
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     m_timeToTextMode = TimeToTextMode
         (settings.value("time-to-text-mode", int(TimeToTextMs)).toInt());
+    m_octave = (settings.value("octave-of-middle-c", 4)).toInt();
     m_viewFontSize = settings.value("view-font-size", 10).toInt();
     m_showSplash = settings.value("show-splash", true).toBool();
     settings.endGroup();
@@ -94,6 +96,7 @@ Preferences::getProperties() const
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
     props.push_back("Time To Text Mode");
+    props.push_back("Octave Numbering System");
     props.push_back("View Font Size");
     props.push_back("Show Splash Screen");
     return props;
@@ -134,6 +137,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Time To Text Mode") {
         return tr("Time display format");
+    }
+    if (name == "Octave Numbering System") {
+        return tr("Label middle C as");
     }
     if (name == "View Font Size") {
         return tr("Font size for text overlays");
@@ -179,6 +185,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ValueProperty;
     }
     if (name == "Time To Text Mode") {
+        return ValueProperty;
+    }
+    if (name == "Octave Numbering System") {
         return ValueProperty;
     }
     if (name == "View Font Size") {
@@ -247,6 +256,16 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         if (deflt) *deflt = 0;
         return int(m_timeToTextMode);
     }        
+
+    if (name == "Octave Numbering System") {
+        // we don't support arbitrary octaves in the gui, because we
+        // want to be able to label what the octave system comes
+        // from. so we support 0, 3, 4 and 5.
+        if (min) *min = 0;
+        if (max) *max = 3;
+        if (deflt) *deflt = 2;
+        return int(getSystemWithMiddleCInOctave(m_octave));
+    }
 
     if (name == "View Font Size") {
         if (min) *min = 3;
@@ -322,6 +341,14 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case TimeToText60Frame: return tr("60 FPS");
         }
     }
+    if (name == "Octave Numbering System") {
+        switch (value) {
+        case C0_Centre: return tr("C0 - middle of octave scale");
+        case C3_Logic: return tr("C3 - common MIDI sequencer convention");
+        case C4_ASA: return tr("C4 - ASA American standard");
+        case C5_Sonar: return tr("C5 - used in Cakewalk and others");
+        }
+    }
             
     return "";
 }
@@ -359,6 +386,9 @@ Preferences::setProperty(const PropertyName &name, int value)
         setBackgroundMode(BackgroundMode(value));
     } else if (name == "Time To Text Mode") {
         setTimeToTextMode(TimeToTextMode(value));
+    } else if (name == "Octave Numbering System") {
+        setOctaveOfMiddleC(getOctaveOfMiddleCInSystem
+                           (OctaveNumberingSystem(value)));
     } else if (name == "View Font Size") {
         setViewFontSize(value);
     } else if (name == "Show Splash Screen") {
@@ -521,6 +551,45 @@ Preferences::setTimeToTextMode(TimeToTextMode mode)
         settings.setValue("time-to-text-mode", int(mode));
         settings.endGroup();
         emit propertyChanged("Time To Text Mode");
+    }
+}
+
+void
+Preferences::setOctaveOfMiddleC(int oct)
+{
+    if (m_octave != oct) {
+
+        m_octave = oct;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("octave-of-middle-c", int(oct));
+        settings.endGroup();
+        emit propertyChanged("Octave Numbering System");
+    }
+}
+
+int
+Preferences::getOctaveOfMiddleCInSystem(OctaveNumberingSystem s)
+{
+    switch (s) {
+    case C0_Centre: return 0;
+    case C3_Logic: return 3;
+    case C4_ASA: return 4;
+    case C5_Sonar: return 5;
+    default: return 4;
+    }
+}
+
+Preferences::OctaveNumberingSystem
+Preferences::getSystemWithMiddleCInOctave(int o)
+{
+    switch (o) {
+    case 0: return C0_Centre;
+    case 3: return C3_Logic;
+    case 4: return C4_ASA;
+    case 5: return C5_Sonar;
+    default: return C4_ASA;
     }
 }
 
