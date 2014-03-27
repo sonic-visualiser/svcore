@@ -86,6 +86,14 @@ public:
     };
     TimeToTextMode getTimeToTextMode() const { return m_timeToTextMode; }
 
+    int getOctaveOfMiddleC() const {
+        // weed out unsupported octaves
+        return getOctaveOfMiddleCInSystem(getSystemWithMiddleCInOctave(m_octave));
+    }
+    int getOctaveOfLowestMIDINote() const {
+        return getOctaveOfMiddleC() - 5;
+    }
+    
     bool getShowSplash() const { return m_showSplash; }
 
 public slots:
@@ -102,6 +110,7 @@ public slots:
     void setResampleOnLoad(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
+    void setOctaveOfMiddleC(int oct);
     void setViewFontSize(int size);
     void setShowSplash(bool);
 
@@ -110,6 +119,19 @@ private:
     virtual ~Preferences();
 
     static Preferences *m_instance;
+
+    // We don't support arbitrary octaves in the gui, because we want
+    // to be able to label what the octave system comes from. These
+    // are the ones we support. (But we save and load as octave
+    // numbers, so as not to make the prefs format really confusing)
+    enum OctaveNumberingSystem {
+        C0_Centre,
+        C3_Logic,
+        C4_ASA,
+        C5_Sonar
+    };
+    static int getOctaveOfMiddleCInSystem(OctaveNumberingSystem s);
+    static OctaveNumberingSystem getSystemWithMiddleCInOctave(int o);
 
     SpectrogramSmoothing m_spectrogramSmoothing;
     SpectrogramXSmoothing m_spectrogramXSmoothing;
@@ -123,6 +145,7 @@ private:
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
     TimeToTextMode m_timeToTextMode;
+    int m_octave;
     bool m_showSplash;
 };
 
