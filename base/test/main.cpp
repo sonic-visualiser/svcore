@@ -12,6 +12,7 @@
 */
 
 #include "TestRangeMapper.h"
+#include "TestPitch.h"
 
 #include <QtTest>
 
@@ -27,6 +28,11 @@ int main(int argc, char *argv[])
 
     {
 	TestRangeMapper t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+    {
+	TestPitch t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
