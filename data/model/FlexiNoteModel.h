@@ -150,7 +150,7 @@ public:
         IntervalModel<FlexiNote>::toXml
 	    (out,
              indent,
-	     QString("%1 subtype=\"note\" valueQuantization=\"%2\"")
+	     QString("%1 subtype=\"flexinote\" valueQuantization=\"%2\"")
 	     .arg(extraAttributes).arg(m_valueQuantization));
     }
 
