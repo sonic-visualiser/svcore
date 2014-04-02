@@ -512,7 +512,7 @@ FeatureExtractionModelTransformer::willHaveAdditionalOutputModels()
 SparseTimeValueModel *
 FeatureExtractionModelTransformer::getAdditionalModel(int n, int binNo)
 {
-    std::cerr << "getAdditionalModel(" << n << ", " << binNo << ")" << std::endl;
+//    std::cerr << "getAdditionalModel(" << n << ", " << binNo << ")" << std::endl;
 
     if (binNo == 0) {
         std::cerr << "Internal error: binNo == 0 in getAdditionalModel (should be using primary model)" << std::endl;
@@ -899,8 +899,8 @@ FeatureExtractionModelTransformer::addFeature(int n,
             if (m_needAdditionalModels[n] && i > 0) {
                 targetModel = getAdditionalModel(n, i);
                 if (!targetModel) targetModel = model;
-                std::cerr << "adding point to model " << targetModel
-                          << " for output " << n << " bin " << i << std::endl;
+//                std::cerr << "adding point to model " << targetModel
+//                          << " for output " << n << " bin " << i << std::endl;
             }
 
             targetModel->addPoint
