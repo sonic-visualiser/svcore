@@ -868,7 +868,7 @@ FFTDataServer::makeCacheReader(int c)
     // and previous cache readers)
     int deleteCandidate = c - 2;
     if (deleteCandidate < 0) deleteCandidate = c + 2;
-    if (deleteCandidate >= m_caches.size()) {
+    if (deleteCandidate >= (int)m_caches.size()) {
         return true;
     }
 

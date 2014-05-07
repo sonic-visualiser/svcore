@@ -22,6 +22,7 @@
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
 #include "model/RegionModel.h"
+#include "model/NoteModel.h"
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
@@ -85,7 +86,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno, size_t sampleRate,
                                 size_t windowSize) const
 {
     QRegExp nonNumericRx("[^0-9eE.,+-]");
-    unsigned int warnLimit = 10;
+    int warnLimit = 10;
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
 
@@ -156,6 +157,7 @@ CSVFileReader::load() const
     SparseOneDimensionalModel *model1 = 0;
     SparseTimeValueModel *model2 = 0;
     RegionModel *model2a = 0;
+    NoteModel *model2b = 0;
     EditableDenseThreeDimensionalModel *model3 = 0;
     Model *model = 0;
 
@@ -173,6 +175,7 @@ CSVFileReader::load() const
 
     bool haveAnyValue = false;
     bool haveEndTime = false;
+    bool pitchLooksLikeMIDI = true;
 
     size_t startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
@@ -202,7 +205,7 @@ CSVFileReader::load() const
         QString chunk = in.readLine();
         QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
         
-        for (size_t li = 0; li < lines.size(); ++li) {
+        for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
 
@@ -228,6 +231,11 @@ CSVFileReader::load() const
                     model = model2a;
                     break;
 		
+                case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
+                    model2b = new NoteModel(sampleRate, windowSize, false);
+                    model = model2b;
+                    break;
+		
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate,
@@ -240,6 +248,7 @@ CSVFileReader::load() const
             }
 
             float value = 0.f;
+            float pitch = 0.f;
             QString label = "";
 
             duration = 0.f;
@@ -274,6 +283,13 @@ CSVFileReader::load() const
                     haveAnyValue = true;
                     break;
 
+                case CSVFormat::ColumnPitch:
+                    pitch = s.toFloat();
+                    if (pitch < 0.f || pitch > 127.f) {
+                        pitchLooksLikeMIDI = false;
+                    }
+                    break;
+
                 case CSVFormat::ColumnLabel:
                     label = s;
                     ++labelCountMap[label];
@@ -301,6 +317,12 @@ CSVFileReader::load() const
 
                 RegionModel::Point point(frameNo, value, duration, label);
                 model2a->addPoint(point);
+
+            } else if (modelType == CSVFormat::TwoDimensionalModelWithDurationAndPitch) {
+
+                float level = ((value >= 0.f && value <= 1.f) ? value : 1.f);
+                NoteModel::Point point(frameNo, pitch, duration, level, label);
+                model2b->addPoint(point);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 
@@ -400,6 +422,14 @@ CSVFileReader::load() const
         }
     }
                 
+    if (model2b) {
+        if (pitchLooksLikeMIDI) {
+            model2b->setScaleUnits("MIDI Pitch");
+        } else {
+            model2b->setScaleUnits("Hz");
+        }
+    }
+
     if (modelType == CSVFormat::ThreeDimensionalModel) {
 	model3->setMinimumLevel(min);
 	model3->setMaximumLevel(max);
