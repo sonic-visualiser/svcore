@@ -131,7 +131,7 @@ public:
 
     virtual QString getDefaultPlayClipId() const
     {
-        return "piano";
+        return "elecpiano";
     }
 
     virtual void toXml(QTextStream &out,
