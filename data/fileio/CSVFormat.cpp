@@ -66,7 +66,7 @@ CSVFormat::guessFormatFor(QString path)
         QString chunk = in.readLine();
         QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
 
-        for (size_t li = 0; li < lines.size(); ++li) {
+        for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
             if (line.startsWith("#") || line == "") continue;
@@ -86,7 +86,7 @@ void
 CSVFormat::guessSeparator(QString line)
 {
     char candidates[] = { ',', '\t', ' ', '|', '/', ':' };
-    for (int i = 0; i < sizeof(candidates)/sizeof(candidates[0]); ++i) {
+    for (int i = 0; i < int(sizeof(candidates)/sizeof(candidates[0])); ++i) {
         if (StringBits::split(line, candidates[i], m_allowQuoting).size() >= 2) {
             m_separator = candidates[i];
             return;

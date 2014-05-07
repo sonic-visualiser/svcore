@@ -216,7 +216,7 @@ public:
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataString(delimiter, getStartFrame(), getEndFrame());
     }
-    virtual QString toDelimitedDataString(QString, size_t f0, size_t f1) const {
+    virtual QString toDelimitedDataString(QString, size_t /* f0 */, size_t /* f1 */) const {
         return "";
     }
 
