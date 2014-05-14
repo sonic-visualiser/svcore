@@ -43,15 +43,9 @@ PlayParameters::copyFrom(const PlayParameters *pp)
         changed = true;
     }
 
-    if (m_playPluginId != pp->getPlayPluginId()) {
-        m_playPluginId = pp->getPlayPluginId();
-        emit playPluginIdChanged(m_playPluginId);
-        changed = true;
-    }
-    
-    if (m_playPluginConfiguration != pp->getPlayPluginConfiguration()) {
-        m_playPluginConfiguration = pp->getPlayPluginConfiguration();
-        emit playPluginConfigurationChanged(m_playPluginConfiguration);
+    if (m_playClipId != pp->getPlayClipId()) {
+        m_playClipId = pp->getPlayClipId();
+        emit playClipIdChanged(m_playClipId);
         changed = true;
     }
 
@@ -64,18 +58,24 @@ PlayParameters::toXml(QTextStream &stream,
                       QString extraAttributes) const
 {
     stream << indent;
-    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" pluginId=\"%4\" %6")
+    stream << QString("<playparameters mute=\"%1\" pan=\"%2\" gain=\"%3\" clipId=\"%4\" %6")
         .arg(m_playMuted ? "true" : "false")
         .arg(m_playPan)
         .arg(m_playGain)
-        .arg(m_playPluginId)
+        .arg(m_playClipId)
         .arg(extraAttributes);
-    if (m_playPluginConfiguration != "") {
-        stream << ">\n  " << indent << m_playPluginConfiguration
-               << "\n" << indent << "</playparameters>\n";
-    } else {
-        stream << "/>\n";
+
+    stream << ">\n";
+
+    if (m_playClipId != "") {
+        // for backward compatibility
+        stream << indent << "  ";
+        stream << QString("<plugin identifier=\"%1\" program=\"%2\"/>\n")
+            .arg("sample_player")
+            .arg(m_playClipId);
     }
+
+    stream << indent << "</playparameters>\n";
 }
 
 void
@@ -118,24 +118,11 @@ PlayParameters::setPlayGain(float gain)
 }
 
 void
-PlayParameters::setPlayPluginId(QString id)
+PlayParameters::setPlayClipId(QString id)
 {
-    if (m_playPluginId != id) {
-        m_playPluginId = id;
-        emit playPluginIdChanged(id);
+    if (m_playClipId != id) {
+        m_playClipId = id;
+        emit playClipIdChanged(id);
         emit playParametersChanged();
     }
 }
-
-void
-PlayParameters::setPlayPluginConfiguration(QString configuration)
-{
-    if (m_playPluginConfiguration != configuration) {
-        m_playPluginConfiguration = configuration;
-//        cerr << "PlayParameters(" << this << "): setPlayPluginConfiguration to \"" << configuration << "\"" << endl;
-        emit playPluginConfigurationChanged(configuration);
-        emit playParametersChanged();
-    }
-}
-
-

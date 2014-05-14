@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FEATURE_EXTRACTION_PLUGIN_TRANSFORMER_H_
-#define _FEATURE_EXTRACTION_PLUGIN_TRANSFORMER_H_
+#ifndef _FEATURE_EXTRACTION_MODEL_TRANSFORMER_H_
+#define _FEATURE_EXTRACTION_MODEL_TRANSFORMER_H_
 
 #include "ModelTransformer.h"
 
@@ -23,8 +23,10 @@
 #include <vamp-hostsdk/Plugin.h>
 
 #include <iostream>
+#include <map>
 
 class DenseTimeValueModel;
+class SparseTimeValueModel;
 
 class FeatureExtractionModelTransformer : public ModelTransformer
 {
@@ -33,22 +35,41 @@ class FeatureExtractionModelTransformer : public ModelTransformer
 public:
     FeatureExtractionModelTransformer(Input input,
                                       const Transform &transform);
+
+    // Obtain outputs for a set of transforms that all use the same
+    // plugin and input (but with different outputs). i.e. run the
+    // plugin once only and collect more than one output from it.
+    FeatureExtractionModelTransformer(Input input,
+                                      const Transforms &relatedTransforms);
+
     virtual ~FeatureExtractionModelTransformer();
 
+    // ModelTransformer method, retrieve the additional models
+    Models getAdditionalOutputModels();
+    bool willHaveAdditionalOutputModels();
+
 protected:
+    bool initialise();
+
     virtual void run();
 
     Vamp::Plugin *m_plugin;
-    Vamp::Plugin::OutputDescriptor *m_descriptor;
-    int m_fixedRateFeatureNo; // to assign times to FixedSampleRate features
-    int m_outputNo;
+    std::vector<Vamp::Plugin::OutputDescriptor *> m_descriptors; // per transform
+    std::vector<int> m_fixedRateFeatureNos; // to assign times to FixedSampleRate features
+    std::vector<int> m_outputNos; // list of plugin output indexes required for this group of transforms
 
-    void createOutputModel();
+    void createOutputModels(int n);
 
-    void addFeature(size_t blockFrame,
+    std::map<int, bool> m_needAdditionalModels; // transformNo -> necessity
+    typedef std::map<int, std::map<int, SparseTimeValueModel *> > AdditionalModelMap;
+    AdditionalModelMap m_additionalModels;
+    SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
+
+    void addFeature(int n,
+                    size_t blockFrame,
 		    const Vamp::Plugin::Feature &feature);
 
-    void setCompletion(int);
+    void setCompletion(int, int);
 
     void getFrames(int channelCount, long startFrame, long size,
                    float **buffer);
@@ -57,16 +78,21 @@ protected:
 
     DenseTimeValueModel *getConformingInput();
 
-    template <typename ModelClass> bool isOutput() {
-        return dynamic_cast<ModelClass *>(m_output) != 0;
+    template <typename ModelClass> bool isOutput(int n) {
+        return dynamic_cast<ModelClass *>(m_outputs[n]) != 0;
     }
 
-    template <typename ModelClass> ModelClass *getConformingOutput() {
-	ModelClass *mc = dynamic_cast<ModelClass *>(m_output);
-	if (!mc) {
-	    std::cerr << "FeatureExtractionModelTransformer::getOutput: Output model not conformable" << std::endl;
-	}
-	return mc;
+    template <typename ModelClass> ModelClass *getConformingOutput(int n) {
+        if ((int)m_outputs.size() > n) {
+            ModelClass *mc = dynamic_cast<ModelClass *>(m_outputs[n]);
+            if (!mc) {
+                std::cerr << "FeatureExtractionModelTransformer::getOutput: Output model not conformable" << std::endl;
+            }
+            return mc;
+        } else {
+            std::cerr << "FeatureExtractionModelTransformer::getOutput: No such output number " << n << std::endl;
+            return 0;
+        }
     }
 };
 

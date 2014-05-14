@@ -24,8 +24,7 @@ public:
     virtual ~Playable() { }
     
     virtual bool canPlay() const { return false; }
-    virtual QString getDefaultPlayPluginId() const { return ""; }
-    virtual QString getDefaultPlayPluginConfiguration() const { return ""; }
+    virtual QString getDefaultPlayClipId() const { return ""; }
 };
 
 #endif

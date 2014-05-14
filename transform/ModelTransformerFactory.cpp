@@ -35,6 +35,8 @@
 
 #include <QRegExp>
 
+using std::vector;
+
 ModelTransformerFactory *
 ModelTransformerFactory::m_instance = new ModelTransformerFactory;
 
@@ -163,63 +165,85 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 }
 
 ModelTransformer *
-ModelTransformerFactory::createTransformer(const Transform &transform,
+ModelTransformerFactory::createTransformer(const Transforms &transforms,
                                            const ModelTransformer::Input &input)
 {
     ModelTransformer *transformer = 0;
 
-    QString id = transform.getPluginIdentifier();
+    QString id = transforms[0].getPluginIdentifier();
 
     if (FeatureExtractionPluginFactory::instanceFor(id)) {
 
         transformer =
-            new FeatureExtractionModelTransformer(input, transform);
+            new FeatureExtractionModelTransformer(input, transforms);
 
     } else if (RealTimePluginFactory::instanceFor(id)) {
 
         transformer =
-            new RealTimeEffectModelTransformer(input, transform);
+            new RealTimeEffectModelTransformer(input, transforms[0]);
 
     } else {
         SVDEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transform.getIdentifier() << "\"" << endl;
+                  << transforms[0].getIdentifier() << "\"" << endl;
         return transformer;
     }
 
-    if (transformer) transformer->setObjectName(transform.getIdentifier());
+    if (transformer) transformer->setObjectName(transforms[0].getIdentifier());
     return transformer;
 }
 
 Model *
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
-                                   QString &message)
+                                   QString &message,
+                                   AdditionalModelHandler *handler) 
 {
     SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
-    ModelTransformer *t = createTransformer(transform, input);
-    if (!t) return 0;
+    Transforms transforms;
+    transforms.push_back(transform);
+    vector<Model *> mm = transformMultiple(transforms, input, message, handler);
+    if (mm.empty()) return 0;
+    else return mm[0];
+}
 
-    connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
+vector<Model *>
+ModelTransformerFactory::transformMultiple(const Transforms &transforms,
+                                           const ModelTransformer::Input &input,
+                                           QString &message,
+                                           AdditionalModelHandler *handler) 
+{
+    SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
+    
+    ModelTransformer *t = createTransformer(transforms, input);
+    if (!t) return vector<Model *>();
+
+    if (handler) {
+        m_handlers[t] = handler;
+    }
 
     m_runningTransformers.insert(t);
 
-    t->start();
-    Model *model = t->detachOutputModel();
+    connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
 
-    if (model) {
+    t->start();
+    vector<Model *> models = t->detachOutputModels();
+
+    if (!models.empty()) {
         QString imn = input.getModel()->objectName();
         QString trn =
             TransformFactory::getInstance()->getTransformFriendlyName
-            (transform.getIdentifier());
-        if (imn != "") {
-            if (trn != "") {
-                model->setObjectName(tr("%1: %2").arg(imn).arg(trn));
-            } else {
-                model->setObjectName(imn);
+            (transforms[0].getIdentifier());
+        for (int i = 0; i < models.size(); ++i) {
+            if (imn != "") {
+                if (trn != "") {
+                    models[i]->setObjectName(tr("%1: %2").arg(imn).arg(trn));
+                } else {
+                    models[i]->setObjectName(imn);
+                }
+            } else if (trn != "") {
+                models[i]->setObjectName(trn);
             }
-        } else if (trn != "") {
-            model->setObjectName(trn);
         }
     } else {
         t->wait();
@@ -227,7 +251,7 @@ ModelTransformerFactory::transform(const Transform &transform,
 
     message = t->getMessage();
 
-    return model;
+    return models;
 }
 
 void
@@ -252,6 +276,16 @@ ModelTransformerFactory::transformerFinished()
 
     m_runningTransformers.erase(transformer);
 
+    if (m_handlers.find(transformer) != m_handlers.end()) {
+        if (transformer->willHaveAdditionalOutputModels()) {
+            vector<Model *> mm = transformer->detachAdditionalOutputModels();
+            m_handlers[transformer]->moreModelsAvailable(mm);
+        } else {
+            m_handlers[transformer]->noMoreModelsAvailable();
+        }
+        m_handlers.erase(transformer);
+    }
+
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
 }
@@ -266,8 +300,13 @@ ModelTransformerFactory::modelAboutToBeDeleted(Model *m)
 
         ModelTransformer *t = *i;
 
-        if (t->getInputModel() == m || t->getOutputModel() == m) {
+        if (t->getInputModel() == m) {
             affected.insert(t);
+        } else {
+            vector<Model *> mm = t->getOutputModels();
+            for (int i = 0; i < (int)mm.size(); ++i) {
+                if (mm[i] == m) affected.insert(t);
+            }
         }
     }
 

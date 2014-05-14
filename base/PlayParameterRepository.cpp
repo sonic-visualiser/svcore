@@ -35,36 +35,29 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addPlayable(const Playable *playable)
 {
-//    cerr << "PlayParameterRepository:addPlayable " << playable <<  endl;
+    cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  endl;
 
     if (!getPlayParameters(playable)) {
 
 	// Give all playables the same type of play parameters for the
 	// moment
 
-//	    cerr << "PlayParameterRepository: Adding play parameters for " << playable << endl;
+        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
 
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
 
-        params->setPlayPluginId
-            (playable->getDefaultPlayPluginId());
-        
-        params->setPlayPluginConfiguration
-            (playable->getDefaultPlayPluginConfiguration());
+        params->setPlayClipId
+            (playable->getDefaultPlayClipId());
         
         connect(params, SIGNAL(playParametersChanged()),
                 this, SLOT(playParametersChanged()));
         
-        connect(params, SIGNAL(playPluginIdChanged(QString)),
-                this, SLOT(playPluginIdChanged(QString)));
+        connect(params, SIGNAL(playClipIdChanged(QString)),
+                this, SLOT(playClipIdChanged(QString)));
 
-        connect(params, SIGNAL(playPluginConfigurationChanged(QString)),
-                this, SLOT(playPluginConfigurationChanged(QString)));
-        
-//            cerr << "Connected play parameters " << params << " for playable "
-//                      << playable << " to this " << this << endl;
-
+        cerr << "Connected play parameters " << params << " for playable "
+                     << playable << " to this " << this << endl;
     }
 }    
 
@@ -108,27 +101,13 @@ PlayParameterRepository::playParametersChanged()
 }
 
 void
-PlayParameterRepository::playPluginIdChanged(QString id)
+PlayParameterRepository::playClipIdChanged(QString id)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
     for (PlayableParameterMap::iterator i = m_playParameters.begin();
          i != m_playParameters.end(); ++i) {
         if (i->second == params) {
-            emit playPluginIdChanged(i->first, id);
-            return;
-        }
-    }
-}
-
-void
-PlayParameterRepository::playPluginConfigurationChanged(QString config)
-{
-    PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-//    SVDEBUG << "PlayParameterRepository::playPluginConfigurationChanged" << endl;
-    for (PlayableParameterMap::iterator i = m_playParameters.begin();
-         i != m_playParameters.end(); ++i) {
-        if (i->second == params) {
-            emit playPluginConfigurationChanged(i->first, config);
+            emit playClipIdChanged(i->first, id);
             return;
         }
     }
@@ -176,15 +155,9 @@ PlayParameterRepository::EditCommand::setPlayGain(float gain)
 }
 
 void
-PlayParameterRepository::EditCommand::setPlayPluginId(QString id)
+PlayParameterRepository::EditCommand::setPlayClipId(QString id)
 {
-    m_to.setPlayPluginId(id);
-}
-
-void
-PlayParameterRepository::EditCommand::setPlayPluginConfiguration(QString conf)
-{
-    m_to.setPlayPluginConfiguration(conf);
+    m_to.setPlayClipId(id);
 }
 
 void
@@ -222,13 +195,8 @@ PlayParameterRepository::EditCommand::getName() const
         if (++changed > 1) return multiname;
     }
 
-    if (m_to.getPlayPluginId() != m_from.getPlayPluginId()) {
-        name = tr("Change Playback Plugin");
-        if (++changed > 1) return multiname;
-    }
-
-    if (m_to.getPlayPluginConfiguration() != m_from.getPlayPluginConfiguration()) {
-        name = tr("Configure Playback Plugin");
+    if (m_to.getPlayClipId() != m_from.getPlayClipId()) {
+        name = tr("Change Playback Sample");
         if (++changed > 1) return multiname;
     }
 

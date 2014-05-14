@@ -16,10 +16,19 @@
 #include "ModelTransformer.h"
 
 ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
-    m_transform(transform),
     m_input(input),
-    m_output(0),
     m_detached(false),
+    m_detachedAdd(false),
+    m_abandoned(false)
+{
+    m_transforms.push_back(transform);
+}
+
+ModelTransformer::ModelTransformer(Input input, const Transforms &transforms) :
+    m_transforms(transforms),
+    m_input(input),
+    m_detached(false),
+    m_detachedAdd(false),
     m_abandoned(false)
 {
 }
@@ -28,6 +37,13 @@ ModelTransformer::~ModelTransformer()
 {
     m_abandoned = true;
     wait();
-    if (!m_detached) delete m_output;
+    if (!m_detached) {
+        Models mine = getOutputModels();
+        foreach (Model *m, mine) delete m;
+    }
+    if (!m_detachedAdd) {
+        Models mine = getAdditionalOutputModels();
+        foreach (Model *m, mine) delete m;
+    }
 }
 

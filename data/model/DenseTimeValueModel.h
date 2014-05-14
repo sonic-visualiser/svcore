@@ -22,7 +22,9 @@
 
 /**
  * Base class for models containing dense two-dimensional data (value
- * against time).  For example, audio waveform data.
+ * against time).  For example, audio waveform data.  Other time-value
+ * plot data, especially if editable, will normally go into a
+ * SparseTimeValueModel instead even if regularly sampled.
  */
 
 class DenseTimeValueModel : public Model
@@ -83,8 +85,7 @@ public:
                            float **buffers) const = 0;
 
     virtual bool canPlay() const { return true; }
-    virtual QString getDefaultPlayPluginId() const { return ""; }
-    virtual QString getDefaultPlayPluginConfiguration() const { return ""; }
+    virtual QString getDefaultPlayClipId() const { return ""; }
 
     virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const;
 
