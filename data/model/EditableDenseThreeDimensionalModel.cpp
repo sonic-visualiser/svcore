@@ -410,6 +410,37 @@ EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 }
 
 bool
+EditableDenseThreeDimensionalModel::hasBinValues() const
+{
+    return !m_binValues.empty();
+}
+
+float
+EditableDenseThreeDimensionalModel::getBinValue(size_t n) const
+{
+    if (n < m_binValues.size()) return m_binValues[n];
+    else return 0.f;
+}
+
+void
+EditableDenseThreeDimensionalModel::setBinValues(std::vector<float> values)
+{
+    m_binValues = values;
+}
+
+QString
+EditableDenseThreeDimensionalModel::getBinValueUnit() const
+{
+    return m_binValueUnit;
+}
+
+void
+EditableDenseThreeDimensionalModel::setBinValueUnit(QString unit)
+{
+    m_binValueUnit = unit;
+}
+
+bool
 EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
     QReadLocker locker(&m_lock);

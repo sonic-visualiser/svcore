@@ -745,7 +745,11 @@ void
 FileSource::replyFailed(QNetworkReply::NetworkError)
 {
     emit progress(100);
-    m_errorString = m_reply->errorString();
+    if (!m_reply) {
+        cerr << "WARNING: FileSource::replyFailed() called without a reply object being known to us" << endl;
+    } else {
+        m_errorString = m_reply->errorString();
+    }
     m_ok = false;
     m_done = true;
     cleanup();

@@ -26,6 +26,7 @@ public:
 	OneDimensionalModel,
 	TwoDimensionalModel,
         TwoDimensionalModelWithDuration,
+        TwoDimensionalModelWithDurationAndPitch,
 	ThreeDimensionalModel
     };
     
@@ -46,6 +47,7 @@ public:
         ColumnEndTime,
         ColumnDuration,
         ColumnValue,
+        ColumnPitch,
         ColumnLabel
     };
 
