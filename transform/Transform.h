@@ -25,6 +25,7 @@
 #include <QString>
 
 #include <map>
+#include <vector>
 
 typedef QString TransformId;
 
@@ -195,6 +196,8 @@ protected:
     RealTime m_duration;
     float m_sampleRate;
 };
+
+typedef std::vector<Transform> Transforms;
 
 #endif
 

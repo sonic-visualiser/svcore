@@ -23,8 +23,7 @@
 #include "MIDIFileWriter.h"
 
 #include "data/midi/MIDIEvent.h"
-
-#include "model/NoteModel.h"
+#include "model/NoteData.h"
 
 #include "base/Pitch.h"
 
@@ -37,14 +36,13 @@ using std::ios;
 
 using namespace MIDIConstants;
 
-MIDIFileWriter::MIDIFileWriter(QString path, NoteModel *model, float tempo) :
+MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
+                               int sampleRate, float tempo) :
     m_path(path),
-    m_model(model),
-    m_modelUsesHz(false),
+    m_exportable(exportable),
+    m_sampleRate(sampleRate),
     m_tempo(tempo)
 {
-    if (model->getScaleUnits().toLower() == "hz") m_modelUsesHz = true;
-
     if (!convert()) {
         m_error = "Conversion from model to internal MIDI format failed";
     }
@@ -342,42 +340,28 @@ MIDIFileWriter::convert()
 
     // Omit time signature
 
-    const NoteModel::PointList &notes =
-        static_cast<SparseModel<Note> *>(m_model)->getPoints();
+    NoteList notes = m_exportable->getNotes();
 
-    for (NoteModel::PointList::const_iterator i = notes.begin();
-         i != notes.end(); ++i) {
+    for (NoteList::const_iterator i = notes.begin(); i != notes.end(); ++i) {
 
-        long frame = i->frame;
-        float value = i->value;
+        size_t frame = i->start;
         size_t duration = i->duration;
-
-        int pitch;
-
-        if (m_modelUsesHz) {
-            pitch = Pitch::getPitchForFrequency(value);
-        } else {
-            pitch = lrintf(value);
-        }
+        int pitch = i->midiPitch;
+        int velocity = i->velocity;
 
         if (pitch < 0) pitch = 0;
         if (pitch > 127) pitch = 127;
 
         // Convert frame to MIDI time
 
-        double seconds = double(frame) / double(m_model->getSampleRate());
+        double seconds = double(frame) / double(m_sampleRate);
         double quarters = (seconds * m_tempo) / 60.0;
-        unsigned long midiTime = lrint(quarters * m_timingDivision);
-
-        int velocity = 100;
-        if (i->level > 0.f && i->level <= 1.f) {
-            velocity = lrintf(i->level * 127.f);
-        }
+        unsigned long midiTime = int(quarters * m_timingDivision + 0.5);
 
         // Get the sounding time for the matching NOTE_OFF
-        seconds = double(frame + duration) / double(m_model->getSampleRate());
+        seconds = double(frame + duration) / double(m_sampleRate);
         quarters = (seconds * m_tempo) / 60.0;
-        unsigned long endTime = lrint(quarters * m_timingDivision);
+        unsigned long endTime = int(quarters * m_timingDivision + 0.5);
 
         // At this point all the notes we insert have absolute times
         // in the delta time fields.  We resolve these into delta

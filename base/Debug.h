@@ -19,6 +19,8 @@
 #include <QDebug>
 #include <QTextStream>
 
+#include <vamp-hostsdk/RealTime.h>
+
 #include <string>
 #include <iostream>
 
@@ -38,6 +40,11 @@ using std::endl;
 extern QDebug &getSVDebug();
 
 #define SVDEBUG getSVDebug()
+
+inline QDebug &operator<<(QDebug &d, const Vamp::RealTime &rt) {
+    d << rt.toString();
+    return d;
+}
 
 template <typename T>
 inline QDebug &operator<<(QDebug &d, const T &t) {

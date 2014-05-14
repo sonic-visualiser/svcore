@@ -123,6 +123,15 @@ Clipboard::Point::getFrame() const
     return m_frame;
 }
 
+Clipboard::Point
+Clipboard::Point::withFrame(long frame) const
+{
+    Point p(*this);
+    p.m_haveFrame = true;
+    p.m_frame = frame;
+    return p;
+}
+
 bool
 Clipboard::Point::haveValue() const
 {
@@ -133,6 +142,15 @@ float
 Clipboard::Point::getValue() const
 {
     return m_value;
+}
+
+Clipboard::Point
+Clipboard::Point::withValue(float value) const
+{
+    Point p(*this);
+    p.m_haveValue = true;
+    p.m_value = value;
+    return p;
 }
 
 bool
@@ -147,6 +165,15 @@ Clipboard::Point::getDuration() const
     return m_duration;
 }
 
+Clipboard::Point
+Clipboard::Point::withDuration(size_t duration) const
+{
+    Point p(*this);
+    p.m_haveDuration = true;
+    p.m_duration = duration;
+    return p;
+}
+
 bool
 Clipboard::Point::haveLabel() const
 {
@@ -159,6 +186,15 @@ Clipboard::Point::getLabel() const
     return m_label;
 }
 
+Clipboard::Point
+Clipboard::Point::withLabel(QString label) const
+{
+    Point p(*this);
+    p.m_haveLabel = true;
+    p.m_label = label;
+    return p;
+}
+
 bool
 Clipboard::Point::haveLevel() const
 {
@@ -169,6 +205,15 @@ float
 Clipboard::Point::getLevel() const
 {
     return m_level;
+}
+
+Clipboard::Point
+Clipboard::Point::withLevel(float level) const
+{
+    Point p(*this);
+    p.m_haveLevel = true;
+    p.m_level = level;
+    return p;
 }
 
 bool

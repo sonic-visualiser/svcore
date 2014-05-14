@@ -4,9 +4,28 @@ TEMPLATE = lib
 exists(config.pri) {
     include(config.pri)
 }
-win* {
-    !exists(config.pri) {
-        DEFINES += HAVE_BZ2 HAVE_FFTW3 HAVE_FFTW3F HAVE_SNDFILE HAVE_SAMPLERATE HAVE_VAMP HAVE_VAMPHOSTSDK HAVE_RUBBERBAND HAVE_DATAQUAY HAVE_LIBLO HAVE_MAD HAVE_ID3TAG
+!exists(config.pri) {
+
+    CONFIG += release
+    DEFINES += NDEBUG BUILD_RELEASE NO_TIMING
+
+    win32-g++ {
+        INCLUDEPATH += ../sv-dependency-builds/win32-mingw/include
+        LIBS += -L../sv-dependency-builds/win32-mingw/lib
+    }
+    win32-msvc* {
+        INCLUDEPATH += ../sv-dependency-builds/win32-msvc/include
+        LIBS += -L../sv-dependency-builds/win32-msvc/lib
+    }
+    macx* {
+        INCLUDEPATH += ../sv-dependency-builds/osx/include
+        LIBS += -L../sv-dependency-builds/osx/lib
+    }
+
+    DEFINES += HAVE_BZ2 HAVE_FFTW3 HAVE_FFTW3F HAVE_SNDFILE HAVE_SAMPLERATE HAVE_VAMP HAVE_VAMPHOSTSDK HAVE_RUBBERBAND HAVE_LIBLO HAVE_MAD HAVE_ID3TAG 
+
+    macx* {
+        DEFINES += HAVE_COREAUDIO
     }
 }
 
@@ -20,13 +39,6 @@ DEPENDPATH += . data plugin plugin/api/alsa
 INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay
 OBJECTS_DIR = o
 MOC_DIR = o
-
-win32-g++ {
-    INCLUDEPATH += ../sv-dependency-builds/win32-mingw/include
-}
-win32-msvc* {
-    INCLUDEPATH += ../sv-dependency-builds/win32-msvc/include
-}
 
 # Doesn't work with this library, which contains C99 as well as C++
 PRECOMPILED_HEADER =
@@ -155,6 +167,7 @@ HEADERS += data/fft/FFTapi.h \
            data/model/Model.h \
            data/model/ModelDataTableModel.h \
            data/model/NoteModel.h \
+           data/model/FlexiNoteModel.h \
            data/model/PathModel.h \
            data/model/PowerOfSqrtTwoZoomConstraint.h \
            data/model/PowerOfTwoZoomConstraint.h \
