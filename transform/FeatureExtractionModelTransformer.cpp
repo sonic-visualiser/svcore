@@ -278,12 +278,11 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         //!!! the model rate to be the input model's rate, and adjust
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
-//	modelRate = size_t(m_descriptors[n]->sampleRate + 0.001);
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = size_t(input->getSampleRate() /
-                                     m_descriptors[n]->sampleRate);
+            modelResolution = size_t(round(input->getSampleRate() /
+                                           m_descriptors[n]->sampleRate));
         }
 	break;
     }
@@ -822,7 +821,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	binCount = m_descriptors[n]->binCount;
     }
 
-    size_t frame = blockFrame;
+    int frame = blockFrame;
 
     if (m_descriptors[n]->sampleType ==
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
@@ -847,11 +846,25 @@ FeatureExtractionModelTransformer::addFeature(int n,
             m_fixedRateFeatureNos[n] =
                 lrint(ts.toDouble() * m_descriptors[n]->sampleRate);
         }
- 
+
+//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNo 
+//             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
+//             << ", inputRate = " << inputRate
+//             << " giving frame = ";
         frame = lrintf((m_fixedRateFeatureNos[n] / m_descriptors[n]->sampleRate)
-                       * inputRate);
+                       * int(inputRate));
     }
-	
+
+    if (frame < 0) {
+        cerr
+            << "WARNING: FeatureExtractionModelTransformer::addFeature: "
+            << "Negative frame counts are not supported (frame = " << frame
+            << " from timestamp " << feature.timestamp
+            << "), dropping feature" 
+            << endl;
+        return;
+    }
+
     // Rather than repeat the complicated tests from the constructor
     // to determine what sort of model we must be adding the features
     // to, we instead test what sort of model the constructor decided
@@ -912,7 +925,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             }
         }
 
-		if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
+        if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
 
             float velocity = 100;
             if (feature.values.size() > index) {
@@ -980,7 +993,14 @@ FeatureExtractionModelTransformer::addFeature(int n,
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);
 	if (!model) return;
 
-	model->setColumn(frame / model->getResolution(), values);
+//        cerr << "(note: model resolution = " << model->getResolution() << ")"
+//             << endl;
+
+        if (!feature.hasTimestamp && m_fixedRateFeatureNos[n] >= 0) {
+            model->setColumn(m_fixedRateFeatureNos[n], values);
+        } else {
+            model->setColumn(frame / model->getResolution(), values);
+        }
 
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;

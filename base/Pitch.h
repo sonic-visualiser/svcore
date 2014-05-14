@@ -71,9 +71,10 @@ public:
 
     /**
      * Return a string describing the given MIDI pitch, with optional
-     * cents offset.  This consists of the note name, octave number
-     * (with MIDI pitch 0 having octave number -2), and optional
-     * cents.
+     * cents offset.  This consists of the note name, octave number,
+     * and optional cents. The octave numbering system is based on the
+     * application preferences (default is C4 = middle C, though in
+     * previous SV releases that was C3).
      *
      * For example, "A#3" (A# in octave 3) or "C2-12c" (C in octave 2,
      * minus 12 cents).
