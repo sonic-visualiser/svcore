@@ -485,7 +485,10 @@ FileSource::cleanup()
     if (m_reply) {
         QNetworkReply *r = m_reply;
         m_reply = 0;
-        r->abort();
+        // Can only call abort() when there are no errors.
+        if (r->error() == QNetworkReply::NoError) {
+            r->abort();
+        }
         r->deleteLater();
     }
     if (m_localFile) {
@@ -518,11 +521,14 @@ FileSource::isAvailable()
 {
     waitForStatus();
     bool available = true;
-    if (!m_ok) available = false;
-    else available = (m_lastStatus / 100 == 2);
+    if (!m_ok) {
+        available = false;
+    } else {
+        // http 2xx status codes mean success
+        available = (m_lastStatus / 100 == 2);
+    }
 #ifdef DEBUG_FILE_SOURCE
-    cerr << "FileSource::isAvailable: " << (available ? "yes" : "no")
-              << endl;
+    cerr << "FileSource::isAvailable: " << (available ? "yes" : "no") << endl;
 #endif
     return available;
 }
@@ -634,9 +640,12 @@ FileSource::metaDataChanged()
         return;
     }
 
+    // Handle http transfer status codes.
+
     int status =
         m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
+    // If this is a redirection (3xx) code, do the redirect
     if (status / 100 == 3) {
         QString location = m_reply->header
             (QNetworkRequest::LocationHeader).toString();
@@ -665,6 +674,8 @@ FileSource::metaDataChanged()
     }
 
     m_lastStatus = status;
+
+    // 400 and up are failures, get the error string
     if (m_lastStatus / 100 >= 4) {
         m_errorString = QString("%1 %2")
             .arg(status)
@@ -712,6 +723,13 @@ FileSource::replyFinished()
 #endif
 
     if (m_done) return;
+
+    QString scheme = m_url.scheme().toLower();
+    // For ftp transfers, replyFinished() will be called on success.
+    // metaDataChanged() is never called for ftp transfers.
+    if (scheme == "ftp") {
+        m_lastStatus = 200;  // http ok
+    }
 
     bool error = (m_lastStatus / 100 >= 4);
 
