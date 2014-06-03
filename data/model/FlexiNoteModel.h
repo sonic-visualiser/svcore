@@ -235,8 +235,7 @@ public:
     {    
     	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
-        for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) 
-        {
+        for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
     	    size_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
                 duration = getSampleRate() / 20;
@@ -244,8 +243,7 @@ public:
             int pitch = lrintf(pli->value);
 
             int velocity = 100;
-            if (pli->level > 0.f && pli->level <= 1.f) 
-            {
+            if (pli->level > 0.f && pli->level <= 1.f) {
                 velocity = lrintf(pli->level * 127);
             }
 
