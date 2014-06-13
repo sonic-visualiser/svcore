@@ -46,7 +46,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_max(0.f),
     m_gain(1.f)
 {
-    cerr << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << ", normalised = " << normalised << endl;
+    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << ", normalised = " << normalised << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -446,7 +446,6 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
     }
 
     if (m_normalised) {
-        cerr << "CodedAudioFileReader::getInterleavedFrames: normalised, gain = " << m_gain << endl;
         for (int i = 0; i < (int)(count * m_channelCount); ++i) {
             frames[i] *= m_gain;
         }
