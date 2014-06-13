@@ -45,6 +45,7 @@ Preferences::Preferences() :
     m_tempDirRoot(""),
     m_fixedSampleRate(0),
     m_resampleOnLoad(false),
+    m_normaliseAudio(false),
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
     m_timeToTextMode(TimeToTextMs),
@@ -65,6 +66,7 @@ Preferences::Preferences() :
     m_resampleQuality = settings.value("resample-quality", 1).toInt();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toInt();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
+    m_normaliseAudio = settings.value("normalise-audio", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     m_timeToTextMode = TimeToTextMode
@@ -95,6 +97,7 @@ Preferences::getProperties() const
     props.push_back("Resample Quality");
     props.push_back("Omit Temporaries from Recent Files");
     props.push_back("Resample On Load");
+    props.push_back("Normalise Audio");
     props.push_back("Fixed Sample Rate");
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
@@ -125,6 +128,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Resample Quality") {
         return tr("Playback resampler type");
+    }
+    if (name == "Normalise Audio") {
+        return tr("Normalise audio signal when reading from audio file");
     }
     if (name == "Omit Temporaries from Recent Files") {
         return tr("Omit temporaries from Recent Files menu");
@@ -176,6 +182,9 @@ Preferences::getPropertyType(const PropertyName &name) const
     }
     if (name == "Resample Quality") {
         return ValueProperty;
+    }
+    if (name == "Normalise Audio") {
+        return ToggleProperty;
     }
     if (name == "Omit Temporaries from Recent Files") {
         return ToggleProperty;
@@ -543,6 +552,19 @@ Preferences::setFixedSampleRate(int rate)
         settings.setValue("fixed-sample-rate", rate);
         settings.endGroup();
         emit propertyChanged("Fixed Sample Rate");
+    }
+}
+
+void
+Preferences::setNormaliseAudio(bool norm)
+{
+    if (m_normaliseAudio != norm) {
+        m_normaliseAudio = norm;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("normalise-audio", norm);
+        settings.endGroup();
+        emit propertyChanged("Normalise Audio");
     }
 }
 
