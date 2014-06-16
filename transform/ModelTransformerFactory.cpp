@@ -106,7 +106,6 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     } else if (RealTimePluginFactory::instanceFor(id)) {
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
-        const RealTimePluginDescriptor *desc = factory->getPluginDescriptor(id);
 
         size_t sampleRate = inputModel->getSampleRate();
         size_t blockSize = 1024;
@@ -234,7 +233,7 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
         QString trn =
             TransformFactory::getInstance()->getTransformFriendlyName
             (transforms[0].getIdentifier());
-        for (int i = 0; i < models.size(); ++i) {
+        for (int i = 0; i < (int)models.size(); ++i) {
             if (imn != "") {
                 if (trn != "") {
                     models[i]->setObjectName(tr("%1: %2").arg(imn).arg(trn));
