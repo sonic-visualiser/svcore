@@ -226,25 +226,22 @@ public:
      * NoteExportable methods.
      */
 
-    NoteList getNotes() const {
+    NoteList getNotes() const 
+    {
         return getNotes(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotes(size_t startFrame, size_t endFrame) const {
-        
-	PointList points = getPoints(startFrame, endFrame);
+    NoteList getNotes(size_t startFrame, size_t endFrame) const 
+    {    
+    	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
-
-        for (PointList::iterator pli =
-		 points.begin(); pli != points.end(); ++pli) {
-
-	    size_t duration = pli->duration;
+        for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
+    	    size_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
                 duration = getSampleRate() / 20;
             }
-
             int pitch = lrintf(pli->value);
-            
+
             int velocity = 100;
             if (pli->level > 0.f && pli->level <= 1.f) {
                 velocity = lrintf(pli->level * 127);
@@ -257,10 +254,8 @@ public:
                 note.midiPitch = Pitch::getPitchForFrequency(note.frequency);
                 note.isMidiPitchQuantized = false;
             }
-        
             notes.push_back(note);
         }
-        
         return notes;
     }
 
