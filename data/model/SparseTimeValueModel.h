@@ -49,7 +49,7 @@ public:
             .arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, int sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -81,7 +81,7 @@ class SparseTimeValueModel : public SparseValueModel<TimeValuePoint>
     Q_OBJECT
     
 public:
-    SparseTimeValueModel(size_t sampleRate, size_t resolution,
+    SparseTimeValueModel(int sampleRate, int resolution,
 			 bool notifyOnAdd = true) :
 	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
 					 notifyOnAdd)
@@ -91,7 +91,7 @@ public:
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    SparseTimeValueModel(size_t sampleRate, size_t resolution,
+    SparseTimeValueModel(int sampleRate, int resolution,
 			 float valueMinimum, float valueMaximum,
 			 bool notifyOnAdd = true) :
 	SparseValueModel<TimeValuePoint>(sampleRate, resolution,

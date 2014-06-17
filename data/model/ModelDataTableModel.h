@@ -51,8 +51,8 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    QModelIndex getModelIndexForFrame(size_t frame) const;
-    size_t getFrameForModelIndex(const QModelIndex &) const;
+    QModelIndex getModelIndexForFrame(int frame) const;
+    int getFrameForModelIndex(const QModelIndex &) const;
 
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 
@@ -62,14 +62,14 @@ public:
     int getCurrentRow() const;
 
 signals:
-    void frameSelected(size_t);
+    void frameSelected(int);
     void addCommand(Command *);
     void currentChanged(const QModelIndex &);
     void modelRemoved();
 
 protected slots:
     void modelChanged();
-    void modelChanged(size_t, size_t);
+    void modelChanged(int, int);
     void modelAboutToBeDeleted();
 
 protected:

@@ -292,7 +292,7 @@ protected:
             } else if (!prevPoint) {
                 std::cerr << "ERROR: Labeller::getValueFor: Time difference required, but only one point provided" << std::endl;
             } else {
-                size_t f0 = prevPoint->frame, f1 = newPoint.frame;
+                int f0 = prevPoint->frame, f1 = newPoint.frame;
                 if (m_type == ValueFromDurationToNext ||
                     m_type == ValueFromDurationFromPrevious) {
                     value = float(f1 - f0) / m_rate;

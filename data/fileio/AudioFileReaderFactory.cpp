@@ -58,21 +58,21 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(FileSource source, size_t targetRate,
+AudioFileReaderFactory::createReader(FileSource source, int targetRate,
                                      ProgressReporter *reporter)
 {
     return create(source, targetRate, false, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createThreadingReader(FileSource source, size_t targetRate,
+AudioFileReaderFactory::createThreadingReader(FileSource source, int targetRate,
                                               ProgressReporter *reporter)
 {
     return create(source, targetRate, true, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool threading,
+AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading,
                                ProgressReporter *reporter)
 {
     QString err;
@@ -102,7 +102,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||
-             (targetRate != 0 && fileRate != targetRate))) {
+             (targetRate != 0 && fileRate != (int)targetRate))) {
 
             SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
@@ -215,7 +215,7 @@ AudioFileReaderFactory::create(FileSource source, size_t targetRate, bool thread
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||
-             (targetRate != 0 && fileRate != targetRate))) {
+             (targetRate != 0 && fileRate != (int)targetRate))) {
 
             SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 

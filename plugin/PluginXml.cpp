@@ -214,7 +214,7 @@ PluginXml::setParametersFromXml(QString xml)
     QDomNamedNodeMap attrNodes = pluginElt.attributes();
     QXmlAttributes attrs;
 
-    for (unsigned int i = 0; i < attrNodes.length(); ++i) {
+    for (int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
 //        SVDEBUG << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name()//                  << "\" with value \"" << attr.value() << "\"" << endl;

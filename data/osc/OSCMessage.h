@@ -47,8 +47,8 @@ public:
     void clearArgs();
     void addArg(QVariant arg);
 
-    size_t getArgCount() const;
-    const QVariant &getArg(size_t i) const;
+    int getArgCount() const;
+    const QVariant &getArg(int i) const;
 
 private:
     int m_target;

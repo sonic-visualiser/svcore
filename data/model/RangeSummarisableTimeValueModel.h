@@ -74,18 +74,18 @@ public:
      * parameter so as to return the block size that was actually
      * obtained.
      */
-    virtual void getSummaries(size_t channel, size_t start, size_t count,
+    virtual void getSummaries(int channel, int start, int count,
                               RangeBlock &ranges,
-                              size_t &blockSize) const = 0;
+                              int &blockSize) const = 0;
 
     /**
      * Return the range from the given start frame, corresponding to
      * the given number of underlying sample frames, summarised at a
      * block size equal to the distance between start and end frames.
      */
-    virtual Range getSummary(size_t channel, size_t start, size_t count) const = 0;
+    virtual Range getSummary(int channel, int start, int count) const = 0;
 
-    virtual size_t getSummaryBlockSize(size_t desired) const = 0;
+    virtual int getSummaryBlockSize(int desired) const = 0;
 
     QString getTypeName() const { return tr("Range-Summarisable Time-Value"); }
 };

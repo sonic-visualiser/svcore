@@ -65,27 +65,27 @@ AggregateWaveModel::isReady(int *completion) const
     return ready;
 }
 
-size_t
+int
 AggregateWaveModel::getFrameCount() const
 {
-    size_t count = 0;
+    int count = 0;
 
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
-        size_t thisCount = i->model->getEndFrame() - i->model->getStartFrame();
+        int thisCount = i->model->getEndFrame() - i->model->getStartFrame();
         if (thisCount > count) count = thisCount;
     }
 
     return count;
 }
 
-size_t
+int
 AggregateWaveModel::getChannelCount() const
 {
     return m_components.size();
 }
 
-size_t
+int
 AggregateWaveModel::getSampleRate() const
 {
     if (m_components.empty()) return 0;
@@ -98,8 +98,8 @@ AggregateWaveModel::clone() const
     return new AggregateWaveModel(m_components);
 }
 
-size_t
-AggregateWaveModel::getData(int channel, size_t start, size_t count,
+int
+AggregateWaveModel::getData(int channel, int start, int count,
                             float *buffer) const
 {
     int ch0 = channel, ch1 = channel;
@@ -113,21 +113,21 @@ AggregateWaveModel::getData(int channel, size_t start, size_t count,
     float *readbuf = buffer;
     if (mixing) {
         readbuf = new float[count];
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             buffer[i] = 0.f;
         }
     }
 
-    size_t sz = count;
+    int sz = count;
 
     for (int c = ch0; c <= ch1; ++c) {
-        size_t szHere = 
+        int szHere = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
         if (szHere < sz) sz = szHere;
         if (mixing) {
-            for (size_t i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -137,8 +137,8 @@ AggregateWaveModel::getData(int channel, size_t start, size_t count,
     return sz;
 }
          
-size_t
-AggregateWaveModel::getData(int channel, size_t start, size_t count,
+int
+AggregateWaveModel::getData(int channel, int start, int count,
                             double *buffer) const
 {
     int ch0 = channel, ch1 = channel;
@@ -152,21 +152,21 @@ AggregateWaveModel::getData(int channel, size_t start, size_t count,
     double *readbuf = buffer;
     if (mixing) {
         readbuf = new double[count];
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             buffer[i] = 0.0;
         }
     }
 
-    size_t sz = count;
+    int sz = count;
     
     for (int c = ch0; c <= ch1; ++c) {
-        size_t szHere = 
+        int szHere = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
         if (szHere < sz) sz = szHere;
         if (mixing) {
-            for (size_t i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -176,50 +176,50 @@ AggregateWaveModel::getData(int channel, size_t start, size_t count,
     return sz;
 }
 
-size_t
-AggregateWaveModel::getData(size_t fromchannel, size_t tochannel,
-                            size_t start, size_t count,
+int
+AggregateWaveModel::getData(int fromchannel, int tochannel,
+                            int start, int count,
                             float **buffer) const
 {
-    size_t min = count;
+    int min = count;
 
-    for (size_t c = fromchannel; c <= tochannel; ++c) {
-        size_t here = getData(c, start, count, buffer[c - fromchannel]);
+    for (int c = fromchannel; c <= tochannel; ++c) {
+        int here = getData(c, start, count, buffer[c - fromchannel]);
         if (here < min) min = here;
     }
     
     return min;
 }
 
-size_t
-AggregateWaveModel::getSummaryBlockSize(size_t desired) const
+int
+AggregateWaveModel::getSummaryBlockSize(int desired) const
 {
     //!!! complete
     return desired;
 }
         
 void
-AggregateWaveModel::getSummaries(size_t channel, size_t start, size_t count,
-                                 RangeBlock &ranges, size_t &blockSize) const
+AggregateWaveModel::getSummaries(int, int, int,
+                                 RangeBlock &, int &) const
 {
     //!!! complete
 }
 
 AggregateWaveModel::Range
-AggregateWaveModel::getSummary(size_t channel, size_t start, size_t count) const
+AggregateWaveModel::getSummary(int, int, int) const
 {
     //!!! complete
     return Range();
 }
         
-size_t
+int
 AggregateWaveModel::getComponentCount() const
 {
     return m_components.size();
 }
 
 AggregateWaveModel::ModelChannelSpec
-AggregateWaveModel::getComponent(size_t c) const
+AggregateWaveModel::getComponent(int c) const
 {
     return m_components[c];
 }
@@ -231,7 +231,7 @@ AggregateWaveModel::componentModelChanged()
 }
 
 void
-AggregateWaveModel::componentModelChanged(size_t start, size_t end)
+AggregateWaveModel::componentModelChanged(int start, int end)
 {
     emit modelChanged(start, end);
 }
@@ -243,9 +243,9 @@ AggregateWaveModel::componentModelCompletionChanged()
 }
 
 void
-AggregateWaveModel::toXml(QTextStream &out,
-                          QString indent,
-                          QString extraAttributes) const
+AggregateWaveModel::toXml(QTextStream &,
+                          QString ,
+                          QString ) const
 {
     //!!! complete
 }

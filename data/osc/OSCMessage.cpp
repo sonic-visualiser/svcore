@@ -38,14 +38,14 @@ OSCMessage::addArg(QVariant arg)
     m_args.push_back(arg);
 }
 
-size_t
+int
 OSCMessage::getArgCount() const
 {
     return m_args.size();
 }
 
 const QVariant &
-OSCMessage::getArg(size_t i) const
+OSCMessage::getArg(int i) const
 {
     return m_args[i];
 }
