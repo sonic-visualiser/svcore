@@ -22,11 +22,12 @@
 #include <QFileInfo>
 
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
-						 ResampleMode resampleMode,
-						 CacheMode mode,
-						 size_t targetRate,
-                                                 ProgressReporter *reporter) :
-    CodedAudioFileReader(mode, targetRate),
+                                             ResampleMode resampleMode,
+                                             CacheMode mode,
+                                             size_t targetRate,
+                                             bool normalised,
+                                             ProgressReporter *reporter) :
+    CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_cancelled(false),

@@ -41,6 +41,7 @@ public:
                   DecodeMode decodeMode,
                   CacheMode cacheMode,
                   size_t targetRate = 0,
+                  bool normalised = false,
                   ProgressReporter *reporter = 0);
     virtual ~MP3FileReader();
 

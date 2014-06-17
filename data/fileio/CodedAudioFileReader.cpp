@@ -28,7 +28,8 @@
 #include <QMutexLocker>
 
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
-                                           size_t targetRate) :
+                                           size_t targetRate,
+                                           bool normalised) :
     m_cacheMode(cacheMode),
     m_initialised(false),
     m_serialiser(0),
@@ -40,9 +41,12 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_cacheWriteBufferSize(16384),
     m_resampler(0),
     m_resampleBuffer(0),
-    m_fileFrameCount(0)
+    m_fileFrameCount(0),
+    m_normalised(normalised),
+    m_max(0.f),
+    m_gain(1.f)
 {
-    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << endl;
+    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << ", normalised = " << normalised << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -270,11 +274,9 @@ CodedAudioFileReader::finishDecodeCache()
         return;
     }
 
-//    if (m_cacheWriteBufferIndex > 0) {
-        pushBuffer(m_cacheWriteBuffer,
-                   m_cacheWriteBufferIndex / m_channelCount,
-                   true);
-//    }        
+    pushBuffer(m_cacheWriteBuffer,
+               m_cacheWriteBufferIndex / m_channelCount,
+               true);
 
     delete[] m_cacheWriteBuffer;
     m_cacheWriteBuffer = 0;
@@ -312,14 +314,24 @@ CodedAudioFileReader::pushBuffer(float *buffer, size_t sz, bool final)
 void
 CodedAudioFileReader::pushBufferNonResampling(float *buffer, size_t sz)
 {
-    float max = 1.0;
+    float clip = 1.0;
     size_t count = sz * m_channelCount;
 
-    for (size_t i = 0; i < count; ++i) {
-        if (buffer[i] >  max) buffer[i] =  max;
-    }
-    for (size_t i = 0; i < count; ++i) {
-        if (buffer[i] < -max) buffer[i] = -max;
+    if (m_normalised) {
+        for (size_t i = 0; i < count; ++i) {
+            float v = fabsf(buffer[i]);
+            if (v > m_max) {
+                m_max = v;
+                m_gain = 1.f / m_max;
+            }
+        }
+    } else {
+        for (size_t i = 0; i < count; ++i) {
+            if (buffer[i] >  clip) buffer[i] =  clip;
+        }
+        for (size_t i = 0; i < count; ++i) {
+            if (buffer[i] < -clip) buffer[i] = -clip;
+        }
     }
 
     m_frameCount += sz;
@@ -431,6 +443,12 @@ CodedAudioFileReader::getInterleavedFrames(size_t start, size_t count,
         }
         m_dataLock.unlock();
     }
+    }
+
+    if (m_normalised) {
+        for (int i = 0; i < (int)(count * m_channelCount); ++i) {
+            frames[i] *= m_gain;
+        }
     }
 }
 

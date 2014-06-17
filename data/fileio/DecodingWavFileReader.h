@@ -35,10 +35,11 @@ public:
     };
 
     DecodingWavFileReader(FileSource source,
-                            ResampleMode resampleMode,
-                            CacheMode cacheMode,
-                            size_t targetRate = 0,
-                            ProgressReporter *reporter = 0);
+                          ResampleMode resampleMode,
+                          CacheMode cacheMode,
+                          size_t targetRate = 0,
+                          bool normalised = false,
+                          ProgressReporter *reporter = 0);
     virtual ~DecodingWavFileReader();
 
     virtual QString getError() const { return m_error; }
