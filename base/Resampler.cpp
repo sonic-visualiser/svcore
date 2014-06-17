@@ -31,15 +31,15 @@
 class Resampler::D
 {
 public:
-    D(Quality quality, size_t channels, size_t chunkSize);
+    D(Quality quality, int channels, int chunkSize);
     ~D();
 
-    size_t resample(float **in, float **out,
-                    size_t incount, float ratio,
+    int resample(float **in, float **out,
+                    int incount, float ratio,
                     bool final);
 
-    size_t resampleInterleaved(float *in, float *out,
-                               size_t incount, float ratio,
+    int resampleInterleaved(float *in, float *out,
+                               int incount, float ratio,
                                bool final);
 
     void reset();
@@ -48,12 +48,12 @@ protected:
     SRC_STATE *m_src;
     float *m_iin;
     float *m_iout;
-    size_t m_channels;
-    size_t m_iinsize;
-    size_t m_ioutsize;
+    int m_channels;
+    int m_iinsize;
+    int m_ioutsize;
 };
 
-Resampler::D::D(Quality quality, size_t channels, size_t chunkSize) :
+Resampler::D::D(Quality quality, int channels, int chunkSize) :
     m_src(0),
     m_iin(0),
     m_iout(0),
@@ -89,16 +89,16 @@ Resampler::D::~D()
     }
 }
 
-size_t
+int
 Resampler::D::resample(float **in, float **out,
-                       size_t incount, float ratio,
+                       int incount, float ratio,
                        bool final)
 {
     if (m_channels == 1) {
         return resampleInterleaved(*in, *out, incount, ratio, final);
     }
 
-    size_t outcount = lrintf(ceilf(incount * ratio));
+    int outcount = lrintf(ceilf(incount * ratio));
 
     if (incount * m_channels > m_iinsize) {
         m_iinsize = incount * m_channels;
@@ -108,16 +108,16 @@ Resampler::D::resample(float **in, float **out,
         m_ioutsize = outcount * m_channels;
         m_iout = (float *)realloc(m_iout, m_ioutsize * sizeof(float));
     }
-    for (size_t i = 0; i < incount; ++i) {
-        for (size_t c = 0; c < m_channels; ++c) {
+    for (int i = 0; i < incount; ++i) {
+        for (int c = 0; c < m_channels; ++c) {
             m_iin[i * m_channels + c] = in[c][i];
         }
     }
     
-    size_t gen = resampleInterleaved(m_iin, m_iout, incount, ratio, final);
+    int gen = resampleInterleaved(m_iin, m_iout, incount, ratio, final);
 
-    for (size_t i = 0; i < gen; ++i) {
-        for (size_t c = 0; c < m_channels; ++c) {
+    for (int i = 0; i < gen; ++i) {
+        for (int c = 0; c < m_channels; ++c) {
             out[c][i] = m_iout[i * m_channels + c];
         }
     }
@@ -125,14 +125,14 @@ Resampler::D::resample(float **in, float **out,
     return gen;
 }
 
-size_t
+int
 Resampler::D::resampleInterleaved(float *in, float *out,
-                                  size_t incount, float ratio,
+                                  int incount, float ratio,
                                   bool final)
 {
     SRC_DATA data;
 
-    size_t outcount = lrintf(ceilf(incount * ratio));
+    int outcount = lrintf(ceilf(incount * ratio));
 
     data.data_in = in;
     data.data_out = out;
@@ -143,9 +143,13 @@ Resampler::D::resampleInterleaved(float *in, float *out,
 
     int err = src_process(m_src, &data);
 
-    //!!! check err, respond appropriately
+    if (err) {
+        cerr << "Resampler: ERROR: src_process returned error: " <<
+            src_strerror(err) << endl;
+        return 0;
+    }
 
-    if (data.input_frames_used != incount) {
+    if (data.input_frames_used != (int)incount) {
         cerr << "Resampler: NOTE: input_frames_used == " << data.input_frames_used << " (while incount = " << incount << ")" << endl;
     }
 
@@ -158,7 +162,7 @@ Resampler::D::reset()
     src_reset(m_src);
 }
 
-Resampler::Resampler(Quality quality, size_t channels, size_t chunkSize)
+Resampler::Resampler(Quality quality, int channels, int chunkSize)
 {
     m_d = new D(quality, channels, chunkSize);
 }
@@ -168,17 +172,17 @@ Resampler::~Resampler()
     delete m_d;
 }
 
-size_t 
+int 
 Resampler::resample(float **in, float **out,
-                    size_t incount, float ratio,
+                    int incount, float ratio,
                     bool final)
 {
     return m_d->resample(in, out, incount, ratio, final);
 }
 
-size_t 
+int 
 Resampler::resampleInterleaved(float *in, float *out,
-                    size_t incount, float ratio,
+                    int incount, float ratio,
                     bool final)
 {
     return m_d->resampleInterleaved(in, out, incount, ratio, final);

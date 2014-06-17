@@ -21,7 +21,7 @@
 #include <QSettings>
 #include <QRegExp>
 
-RecentFiles::RecentFiles(QString settingsGroup, size_t maxCount) :
+RecentFiles::RecentFiles(QString settingsGroup, int maxCount) :
     m_settingsGroup(settingsGroup),
     m_maxCount(maxCount)
 {
@@ -40,7 +40,7 @@ RecentFiles::read()
     QSettings settings;
     settings.beginGroup(m_settingsGroup);
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i) {
         QString key = QString("recent-%1").arg(i);
         QString name = settings.value(key, "").toString();
         if (name == "") break;
@@ -57,10 +57,10 @@ RecentFiles::write()
     QSettings settings;
     settings.beginGroup(m_settingsGroup);
 
-    for (size_t i = 0; i < m_maxCount; ++i) {
+    for (int i = 0; i < m_maxCount; ++i) {
         QString key = QString("recent-%1").arg(i);
         QString name = "";
-        if (i < m_names.size()) name = m_names[i];
+        if (i < (int)m_names.size()) name = m_names[i];
         settings.setValue(key, name);
     }
 
@@ -70,7 +70,7 @@ RecentFiles::write()
 void
 RecentFiles::truncateAndWrite()
 {
-    while (m_names.size() > m_maxCount) {
+    while (int(m_names.size()) > m_maxCount) {
         m_names.pop_back();
     }
     write();
@@ -80,8 +80,8 @@ std::vector<QString>
 RecentFiles::getRecent() const
 {
     std::vector<QString> names;
-    for (size_t i = 0; i < m_maxCount; ++i) {
-        if (i < m_names.size()) {
+    for (int i = 0; i < m_maxCount; ++i) {
+        if (i < (int)m_names.size()) {
             names.push_back(m_names[i]);
         }
     }
@@ -92,7 +92,7 @@ void
 RecentFiles::add(QString name)
 {
     bool have = false;
-    for (size_t i = 0; i < m_names.size(); ++i) {
+    for (int i = 0; i < int(m_names.size()); ++i) {
         if (m_names[i] == name) {
             have = true;
             break;
@@ -104,7 +104,7 @@ RecentFiles::add(QString name)
     } else {
         std::deque<QString> newnames;
         newnames.push_back(name);
-        for (size_t i = 0; i < m_names.size(); ++i) {
+        for (int i = 0; i < int(m_names.size()); ++i) {
             if (m_names[i] == name) continue;
             newnames.push_back(m_names[i]);
         }

@@ -48,7 +48,7 @@ public:
      * summaries at powers-of-two block sizes, return 1024 or 2048
      * depending on the rounding direction supplied.
      */
-    virtual size_t getNearestBlockSize(size_t requestedBlockSize,
+    virtual int getNearestBlockSize(int requestedBlockSize,
 				       RoundingDirection = RoundNearest)
 	const
     {
@@ -59,7 +59,7 @@ public:
     /**
      * Return the maximum zoom level within range for this constraint.
      */
-    virtual size_t getMaxZoomLevel() const { return 262144; }
+    virtual int getMaxZoomLevel() const { return 262144; }
 };
 
 #endif
