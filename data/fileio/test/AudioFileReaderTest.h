@@ -94,7 +94,6 @@ private slots:
 	
 	float *reference = tdata.getInterleavedData();
         int refFrames = tdata.getFrameCount();
-	int refsize = refFrames * channels;
 	
 	vector<float> test;
 	

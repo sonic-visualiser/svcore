@@ -25,7 +25,7 @@
 class FrameTimer
 {
 public:
-    virtual unsigned long getFrame() const = 0;
+    virtual int getFrame() const = 0;
 };
 
 #endif
