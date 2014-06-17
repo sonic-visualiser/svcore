@@ -534,7 +534,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
 
     // iterate through FeatureLists
         
-    for (int i = 0; i < featureList.size(); ++i) {
+    for (int i = 0; i < (int)featureList.size(); ++i) {
 
         const Plugin::Feature &feature = featureList[i];
         unsigned long featureNumber = m_count++;
@@ -597,7 +597,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
             stream << ";\n";
             //!!! named bins?
             stream << "    af:feature \"" << feature.values[0];
-            for (int j = 1; j < feature.values.size(); ++j) {
+            for (int j = 1; j < (int)feature.values.size(); ++j) {
                 stream << " " << feature.values[j];
             }
             stream << "\" ";
@@ -609,7 +609,7 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
 
 void
 RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
-                                     const Transform &transform,
+                                     const Transform &,
                                      const Plugin::OutputDescriptor& od,
                                      const Plugin::FeatureList& featureList,
                                      PluginRDFDescription &desc,
@@ -618,7 +618,7 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
     if (featureList.empty()) return;
     QTextStream &stream = *sptr;
         
-    bool plain = (m_plain || !desc.haveDescription());
+//    bool plain = (m_plain || !desc.haveDescription());
 
     QString outputId = od.identifier.c_str();
     QString featureUri = desc.getOutputFeatureAttributeURI(outputId);
@@ -628,7 +628,7 @@ RDFFeatureWriter::writeTrackLevelRDF(QTextStream *sptr,
         return;
     }
 
-    for (int i = 0; i < featureList.size(); ++i) {
+    for (int i = 0; i < (int)featureList.size(); ++i) {
 
         const Plugin::Feature &feature = featureList[i];
 
@@ -679,13 +679,13 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
         stream << "\n:feature_timeline_" << featureNumber << " a tl:DiscreteTimeLine .\n\n";
 
-        size_t stepSize = transform.getStepSize();
+        int stepSize = transform.getStepSize();
         if (stepSize == 0) {
             cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the step size properly!" << endl;
             return;
         }
 
-        size_t blockSize = transform.getBlockSize();
+        int blockSize = transform.getBlockSize();
         if (blockSize == 0) {
             cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the block size properly!" << endl;
             return;
@@ -756,11 +756,11 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
     QString &str = m_openDenseFeatures[sp].second;
     QTextStream stream(&str);
 
-    for (int i = 0; i < featureList.size(); ++i) {
+    for (int i = 0; i < (int)featureList.size(); ++i) {
 
         const Plugin::Feature &feature = featureList[i];
 
-        for (int j = 0; j < feature.values.size(); ++j) {
+        for (int j = 0; j < (int)feature.values.size(); ++j) {
             stream << feature.values[j] << " ";
         }
     }

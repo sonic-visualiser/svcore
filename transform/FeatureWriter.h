@@ -49,7 +49,7 @@ public:
         return ParameterList();
     }
 
-    virtual void setParameters(map<string, string> &params) {
+    virtual void setParameters(map<string, string> &) {
         return;
     }
 
@@ -57,7 +57,7 @@ public:
         QString title;
         QString maker;
     };
-    virtual void setTrackMetadata(QString trackid, TrackMetadata metadata) { }
+    virtual void setTrackMetadata(QString /* trackid */, TrackMetadata) { }
 
     class FailedToOpenOutputStream : virtual public std::exception
     {
@@ -93,7 +93,7 @@ public:
      * really an optimisation to ensure that easy-to-recognise failure
      * cases fail early.
      */
-    virtual void testOutputFile(QString trackId, TransformId transformId) { }
+    virtual void testOutputFile(QString /* trackId */, TransformId) { }
 
     virtual void flush() { } // whatever the last stream was
 

@@ -157,7 +157,7 @@ public:
         return s;
     }
 
-    virtual QString toDelimitedDataString(QString delimiter, int f0, int f1) const
+    virtual QString toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
     { 
         QString s;
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {

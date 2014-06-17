@@ -228,10 +228,10 @@ public:
 
     NoteList getNotes() const 
     {
-        return getNotes(getStartFrame(), getEndFrame());
+        return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotes(int startFrame, int endFrame) const 
+    NoteList getNotesWithin(int startFrame, int endFrame) const 
     {    
     	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;

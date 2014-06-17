@@ -66,7 +66,7 @@ protected:
     SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
 
     void addFeature(int n,
-                    size_t blockFrame,
+                    int blockFrame,
 		    const Vamp::Plugin::Feature &feature);
 
     void setCompletion(int, int);
