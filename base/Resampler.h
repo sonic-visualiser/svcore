@@ -28,15 +28,15 @@ class Resampler
 public:
     enum Quality { Best, FastestTolerable, Fastest };
 
-    Resampler(Quality quality, size_t channels, size_t chunkSize = 0);
+    Resampler(Quality quality, int channels, int chunkSize = 0);
     ~Resampler();
 
-    size_t resample(float **in, float **out,
-                    size_t incount, float ratio,
+    int resample(float **in, float **out,
+                    int incount, float ratio,
                     bool final = false);
 
-    size_t resampleInterleaved(float *in, float *out,
-                               size_t incount, float ratio,
+    int resampleInterleaved(float *in, float *out,
+                               int incount, float ratio,
                                bool final = false);
 
     void reset();

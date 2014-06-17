@@ -37,7 +37,7 @@ public:
      * given QSettings group and truncates when the given count of
      * strings is reached.
      */
-    RecentFiles(QString settingsGroup = "RecentFiles", size_t maxCount = 10);
+    RecentFiles(QString settingsGroup = "RecentFiles", int maxCount = 10);
 
     virtual ~RecentFiles();
 
@@ -68,7 +68,7 @@ signals:
 
 protected:
     QString m_settingsGroup;
-    size_t m_maxCount;
+    int m_maxCount;
 
     std::deque<QString> m_names;
 
