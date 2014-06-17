@@ -51,7 +51,7 @@ public:
             .arg(encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, int sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -85,7 +85,7 @@ class TextModel : public SparseModel<TextPoint>
     Q_OBJECT
     
 public:
-    TextModel(size_t sampleRate, size_t resolution, bool notifyOnAdd = true) :
+    TextModel(int sampleRate, int resolution, bool notifyOnAdd = true) :
 	SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
     { }
 

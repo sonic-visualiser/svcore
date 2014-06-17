@@ -34,7 +34,7 @@
 OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         size_t targetRate,
+                                         int targetRate,
                                          ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),

@@ -33,17 +33,17 @@ public:
     /**
      * Return the number of sample frames covered by each column of bins.
      */
-    virtual size_t getResolution() const = 0;
+    virtual int getResolution() const = 0;
 
     /**
      * Return the number of columns of bins in the model.
      */
-    virtual size_t getWidth() const = 0;
+    virtual int getWidth() const = 0;
 
     /**
      * Return the number of bins in each column.
      */
-    virtual size_t getHeight() const = 0; 
+    virtual int getHeight() const = 0; 
 
     /**
      * Return the minimum permissible value in each bin.
@@ -62,25 +62,25 @@ public:
      * If this function returns false, it may still be possible to
      * retrieve the column, but its values may have to be calculated.
      */
-    virtual bool isColumnAvailable(size_t column) const = 0;
+    virtual bool isColumnAvailable(int column) const = 0;
 
     typedef QVector<float> Column;
 
     /**
      * Get data from the given column of bin values.
      */
-    virtual Column getColumn(size_t column) const = 0;
+    virtual Column getColumn(int column) const = 0;
 
     /**
      * Get the single data point from the n'th bin of the given column.
      */
-    virtual float getValueAt(size_t column, size_t n) const = 0;
+    virtual float getValueAt(int column, int n) const = 0;
 
     /**
      * Get the name of a given bin (i.e. a label to associate with
      * that bin across all columns).
      */
-    virtual QString getBinName(size_t n) const = 0;
+    virtual QString getBinName(int n) const = 0;
 
     /**
      * Return true if the bins have values as well as names. If this
@@ -93,7 +93,7 @@ public:
      * value which does not vary from one column to the next. This is
      * only meaningful if hasBinValues() returns true.
      */
-    virtual float getBinValue(size_t n) const { return n; }
+    virtual float getBinValue(int n) const { return n; }
 
     /**
      * Obtain the name of the unit of the values returned from
@@ -111,7 +111,7 @@ public:
      * Utility function to query whether a given bin is greater than
      * its (vertical) neighbours.
      */
-    bool isLocalPeak(size_t x, size_t y) {
+    bool isLocalPeak(int x, int y) {
         float value = getValueAt(x, y);
         if (y > 0 && value < getValueAt(x, y - 1)) return false;
         if (y < getHeight() - 1 && value < getValueAt(x, y + 1)) return false;
@@ -122,7 +122,7 @@ public:
      * Utility function to query whether a given bin is greater than a
      * certain threshold.
      */
-    bool isOverThreshold(size_t x, size_t y, float threshold) {
+    bool isOverThreshold(int x, int y, float threshold) {
         return getValueAt(x, y) > threshold;
     }
 

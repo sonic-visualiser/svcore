@@ -58,15 +58,15 @@ public:
      * MatrixFile has no built-in cache and is not thread-safe.  Use a
      * separate MatrixFile in each thread.
      */
-    MatrixFile(QString fileBase, Mode mode, size_t cellSize,
-               size_t width, size_t height);
+    MatrixFile(QString fileBase, Mode mode, int cellSize,
+               int width, int height);
     virtual ~MatrixFile();
 
     Mode getMode() const { return m_mode; }
 
-    size_t getWidth() const { return m_width; }
-    size_t getHeight() const { return m_height; }
-    size_t getCellSize() const { return m_cellSize; }
+    int getWidth() const { return m_width; }
+    int getHeight() const { return m_height; }
+    int getCellSize() const { return m_cellSize; }
 
     /**
      * If this is set true on a write-mode MatrixFile, then the file
@@ -76,19 +76,19 @@ public:
 
     void close(); // does not decrement ref count; that happens in dtor
 
-    bool haveSetColumnAt(size_t x) const;
-    void getColumnAt(size_t x, void *data); // may throw FileReadFailed
-    void setColumnAt(size_t x, const void *data);
+    bool haveSetColumnAt(int x) const;
+    void getColumnAt(int x, void *data); // may throw FileReadFailed
+    void setColumnAt(int x, const void *data);
 
 protected:
     int     m_fd;
     Mode    m_mode;
     int     m_flags;
     mode_t  m_fmode;
-    size_t  m_cellSize;
-    size_t  m_width;
-    size_t  m_height;
-    size_t  m_headerSize;
+    int     m_cellSize;
+    int     m_width;
+    int     m_height;
+    int     m_headerSize;
     QString m_fileName;
 
     ResizeableBitset *m_setColumns; // only in writer
@@ -102,7 +102,7 @@ protected:
     static QMutex m_createMutex;
 
     void initialise();
-    bool seekTo(size_t x) const;
+    bool seekTo(int col) const;
 };
 
 #endif

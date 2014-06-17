@@ -24,7 +24,7 @@
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
 						 ResampleMode resampleMode,
 						 CacheMode mode,
-						 size_t targetRate,
+						 int targetRate,
                                                  ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate),
     m_source(source),
@@ -63,14 +63,14 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
                 (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
-        size_t blockSize = 16384;
-        size_t total = m_original->getFrameCount();
+        int blockSize = 16384;
+        int total = m_original->getFrameCount();
 
         SampleBlock block;
 
-        for (size_t i = 0; i < total; i += blockSize) {
+        for (int i = 0; i < total; i += blockSize) {
 
-            size_t count = blockSize;
+            int count = blockSize;
             if (i + count > total) count = total - i;
 
             m_original->getInterleavedFrames(i, count, block);
@@ -120,14 +120,14 @@ DecodingWavFileReader::DecodeThread::run()
         m_reader->startSerialised("DecodingWavFileReader::Decode");
     }
 
-    size_t blockSize = 16384;
-    size_t total = m_reader->m_original->getFrameCount();
+    int blockSize = 16384;
+    int total = m_reader->m_original->getFrameCount();
     
     SampleBlock block;
     
-    for (size_t i = 0; i < total; i += blockSize) {
+    for (int i = 0; i < total; i += blockSize) {
         
-        size_t count = blockSize;
+        int count = blockSize;
         if (i + count > total) count = total - i;
         
         m_reader->m_original->getInterleavedFrames(i, count, block);

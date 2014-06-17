@@ -35,7 +35,7 @@
 #include <map>
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
-                             size_t mainModelSampleRate) :
+                             int mainModelSampleRate) :
     m_format(format),
     m_file(0),
     m_warnings(0),
@@ -81,16 +81,16 @@ CSVFileReader::getError() const
     return m_error;
 }
 
-size_t
-CSVFileReader::convertTimeValue(QString s, int lineno, size_t sampleRate,
-                                size_t windowSize) const
+int
+CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
+                                int windowSize) const
 {
     QRegExp nonNumericRx("[^0-9eE.,+-]");
     int warnLimit = 10;
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
 
-    size_t calculatedFrame = 0;
+    int calculatedFrame = 0;
 
     bool ok = false;
     QString numeric = s;
@@ -135,8 +135,8 @@ CSVFileReader::load() const
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
-    size_t sampleRate = m_format.getSampleRate();
-    size_t windowSize = m_format.getWindowSize();
+    int sampleRate = m_format.getSampleRate();
+    int windowSize = m_format.getWindowSize();
     QChar separator = m_format.getSeparator();
     bool allowQuoting = m_format.getAllowQuoting();
 
@@ -169,15 +169,15 @@ CSVFileReader::load() const
 
     float min = 0.0, max = 0.0;
 
-    size_t frameNo = 0;
-    size_t duration = 0;
-    size_t endFrame = 0;
+    int frameNo = 0;
+    int duration = 0;
+    int endFrame = 0;
 
     bool haveAnyValue = false;
     bool haveEndTime = false;
     bool pitchLooksLikeMIDI = true;
 
-    size_t startFrame = 0; // for calculation of dense model resolution
+    int startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
 
     std::map<QString, int> labelCountMap;

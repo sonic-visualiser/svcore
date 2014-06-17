@@ -50,7 +50,7 @@ public:
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createReader(FileSource source,
-                                         size_t targetRate = 0,
+                                         int targetRate = 0,
                                          ProgressReporter *reporter = 0);
 
     /**
@@ -75,12 +75,12 @@ public:
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createThreadingReader(FileSource source,
-                                                  size_t targetRate = 0,
+                                                  int targetRate = 0,
                                                   ProgressReporter *reporter = 0);
 
 protected:
     static AudioFileReader *create(FileSource source,
-                                   size_t targetRate,
+                                   int targetRate,
                                    bool threading,
                                    ProgressReporter *reporter);
 };

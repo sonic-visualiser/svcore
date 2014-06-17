@@ -31,8 +31,8 @@ ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     Model *baseModel = dynamic_cast<Model *>(m);
 
     connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-    connect(baseModel, SIGNAL(modelChanged(size_t, size_t)),
-            this, SLOT(modelChanged(size_t, size_t)));
+    connect(baseModel, SIGNAL(modelChanged(int, int)),
+            this, SLOT(modelChanged(int, int)));
     connect(baseModel, SIGNAL(aboutToBeDeleted()),
             this, SLOT(modelAboutToBeDeleted()));
 }
@@ -105,7 +105,7 @@ ModelDataTableModel::removeRow(int row, const QModelIndex &parent)
 }
 
 Qt::ItemFlags
-ModelDataTableModel::flags(const QModelIndex &index) const
+ModelDataTableModel::flags(const QModelIndex &) const
 {
     Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsEditable |
         Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | Qt::ItemIsSelectable;
@@ -127,13 +127,13 @@ ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int ro
 }
 
 QModelIndex
-ModelDataTableModel::index(int row, int column, const QModelIndex &parent) const
+ModelDataTableModel::index(int row, int column, const QModelIndex &) const
 {
     return createIndex(row, column, (void *)0);
 }
 
 QModelIndex
-ModelDataTableModel::parent(const QModelIndex &index) const
+ModelDataTableModel::parent(const QModelIndex &) const
 {
     return QModelIndex();
 }
@@ -155,14 +155,14 @@ ModelDataTableModel::columnCount(const QModelIndex &parent) const
 }
 
 QModelIndex 
-ModelDataTableModel::getModelIndexForFrame(size_t frame) const
+ModelDataTableModel::getModelIndexForFrame(int frame) const
 {
     if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
     return createIndex(getSorted(row), 0, (void *)0);
 }
 
-size_t 
+int 
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
     if (!m_model) return 0;
@@ -219,7 +219,7 @@ ModelDataTableModel::modelChanged()
 }
 
 void 
-ModelDataTableModel::modelChanged(size_t f0, size_t f1)
+ModelDataTableModel::modelChanged(int, int)
 {
     //!!! inefficient
     clearSort();
@@ -250,7 +250,7 @@ ModelDataTableModel::getSorted(int row) const
         resort();
     }
     int result = 0;
-    if (row >= 0 && row < m_sort.size()) {
+    if (row >= 0 && row < (int)m_sort.size()) {
         result = m_sort[row];
     }
     if (m_sortOrdering == Qt::DescendingOrder) {
@@ -278,7 +278,7 @@ ModelDataTableModel::getUnsorted(int row) const
     }
 
     int result = 0;
-    if (row >= 0 && row < m_sort.size()) {
+    if (row >= 0 && row < (int)m_sort.size()) {
         if (m_sortOrdering == Qt::AscendingOrder) {
             result = m_rsort[row];
         } else {
@@ -309,7 +309,7 @@ ModelDataTableModel::resort() const
 
     // rsort maps from sorted row number to original row number
 
-    for (int i = 0; i < m_rsort.size(); ++i) {
+    for (int i = 0; i < (int)m_rsort.size(); ++i) {
         tmp[m_rsort[i]] = i;
     }
 

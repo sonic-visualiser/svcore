@@ -28,7 +28,7 @@ class QFile;
 class CSVFileReader : public DataFileReader
 {
 public:
-    CSVFileReader(QString path, CSVFormat format, size_t mainModelSampleRate);
+    CSVFileReader(QString path, CSVFormat format, int mainModelSampleRate);
     virtual ~CSVFileReader();
 
     virtual bool isOK() const;
@@ -40,10 +40,10 @@ protected:
     QFile *m_file;
     QString m_error;
     mutable int m_warnings;
-    size_t m_mainModelSampleRate;
+    int m_mainModelSampleRate;
 
-    size_t convertTimeValue(QString, int lineno, size_t sampleRate,
-                            size_t windowSize) const;
+    int convertTimeValue(QString, int lineno, int sampleRate,
+                            int windowSize) const;
 };
 
 

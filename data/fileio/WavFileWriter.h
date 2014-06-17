@@ -44,7 +44,7 @@ public:
         WriteToTarget
     };
 
-    WavFileWriter(QString path, size_t sampleRate, size_t channels,
+    WavFileWriter(QString path, int sampleRate, int channels,
                   FileWriteMode mode);
     virtual ~WavFileWriter();
 
@@ -57,14 +57,14 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(float **samples, size_t count); // count per channel
+    bool writeSamples(float **samples, int count); // count per channel
 
     bool close();
 
 protected:
     QString m_path;
-    size_t m_sampleRate;
-    size_t m_channels;
+    int m_sampleRate;
+    int m_channels;
     TempWriteFile *m_temp;
     SNDFILE *m_file;
     QString m_error;

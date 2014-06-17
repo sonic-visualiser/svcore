@@ -43,7 +43,7 @@ struct PathPoint
     }
         
     QString toDelimitedDataString(QString delimiter,
-                                  size_t sampleRate) const {
+                                  int sampleRate) const {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(mapframe);
@@ -67,7 +67,7 @@ struct PathPoint
 class PathModel : public SparseModel<PathPoint>
 {
 public:
-    PathModel(size_t sampleRate, size_t resolution, bool notify = true) :
+    PathModel(int sampleRate, int resolution, bool notify = true) :
         SparseModel<PathPoint>(sampleRate, resolution, notify) { }
 
     virtual void toXml(QTextStream &out,

@@ -25,19 +25,19 @@ class FFTFileCacheWriter : public FFTCacheWriter
 public:
     FFTFileCacheWriter(QString fileBase,
                        FFTCache::StorageType storageType,
-                       size_t width, size_t height);
+                       int width, int height);
     ~FFTFileCacheWriter();
 
-    size_t getWidth() const;
-    size_t getHeight() const;
+    int getWidth() const;
+    int getHeight() const;
 
-    void setColumnAt(size_t x, float *mags, float *phases, float factor);
-    void setColumnAt(size_t x, float *reals, float *imags);
+    void setColumnAt(int x, float *mags, float *phases, float factor);
+    void setColumnAt(int x, float *reals, float *imags);
 
-    static size_t getCacheSize(size_t width, size_t height,
+    static int getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
-    bool haveSetColumnAt(size_t x) const;
+    bool haveSetColumnAt(int x) const;
 
     void allColumnsWritten();
 
@@ -48,7 +48,7 @@ protected:
     char *m_writebuf;
 
     void setNormalizationFactorToWritebuf(float newfactor) {
-        size_t h = m_mfc->getHeight();
+        int h = m_mfc->getHeight();
         if (h < m_factorSize) return;
         if (m_storageType != FFTCache::Compact) {
             ((float *)m_writebuf)[h - 1] = newfactor;
@@ -65,7 +65,7 @@ protected:
 
     QString m_fileBase;
     FFTCache::StorageType m_storageType;
-    size_t m_factorSize;
+    int m_factorSize;
     MatrixFile *m_mfc;
 };
 

@@ -47,13 +47,13 @@ class FFTMemoryCache : public FFTCacheReader, public FFTCacheWriter
 {
 public:
     FFTMemoryCache(FFTCache::StorageType storageType,
-                   size_t width, size_t height);
+                   int width, int height);
     ~FFTMemoryCache();
 	
-    size_t getWidth() const { return m_width; }
-    size_t getHeight() const { return m_height; }
+    int getWidth() const { return m_width; }
+    int getHeight() const { return m_height; }
 	
-    float getMagnitudeAt(size_t x, size_t y) const {
+    float getMagnitudeAt(int x, int y) const {
         if (m_storageType == FFTCache::Rectangular) {
             Profiler profiler("FFTMemoryCache::getMagnitudeAt: cart to polar");
             return sqrtf(m_freal[x][y] * m_freal[x][y] +
@@ -63,17 +63,17 @@ public:
         }
     }
     
-    float getNormalizedMagnitudeAt(size_t x, size_t y) const {
+    float getNormalizedMagnitudeAt(int x, int y) const {
         if (m_storageType == FFTCache::Rectangular) return getMagnitudeAt(x, y) / m_factor[x];
         else if (m_storageType == FFTCache::Polar) return m_fmagnitude[x][y];
         else return float(m_magnitude[x][y]) / 65535.0;
     }
     
-    float getMaximumMagnitudeAt(size_t x) const {
+    float getMaximumMagnitudeAt(int x) const {
         return m_factor[x];
     }
     
-    float getPhaseAt(size_t x, size_t y) const {
+    float getPhaseAt(int x, int y) const {
         if (m_storageType == FFTCache::Rectangular) {
             Profiler profiler("FFTMemoryCache::getValuesAt: cart to polar");
             return atan2f(m_fimag[x][y], m_freal[x][y]);
@@ -85,7 +85,7 @@ public:
         }
     }
     
-    void getValuesAt(size_t x, size_t y, float &real, float &imag) const {
+    void getValuesAt(int x, int y, float &real, float &imag) const {
         if (m_storageType == FFTCache::Rectangular) {
             real = m_freal[x][y];
             imag = m_fimag[x][y];
@@ -98,48 +98,48 @@ public:
         }
     }
 
-    void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
+    void getMagnitudesAt(int x, float *values, int minbin, int count, int step) const
     {
         if (m_storageType == FFTCache::Rectangular) {
-            for (size_t i = 0; i < count; ++i) {
-                size_t y = i * step + minbin;
+            for (int i = 0; i < count; ++i) {
+                int y = i * step + minbin;
                 values[i] = sqrtf(m_freal[x][y] * m_freal[x][y] +
                                   m_fimag[x][y] * m_fimag[x][y]);
             }
         } else if (m_storageType == FFTCache::Polar) {
-            for (size_t i = 0; i < count; ++i) {
-                size_t y = i * step + minbin;
+            for (int i = 0; i < count; ++i) {
+                int y = i * step + minbin;
                 values[i] = m_fmagnitude[x][y] * m_factor[x];
             }
         } else {
-            for (size_t i = 0; i < count; ++i) {
-                size_t y = i * step + minbin;
+            for (int i = 0; i < count; ++i) {
+                int y = i * step + minbin;
                 values[i] = (float(m_magnitude[x][y]) * m_factor[x]) / 65535.0;
             }
         }
     }
 
-    bool haveSetColumnAt(size_t x) const {
+    bool haveSetColumnAt(int x) const {
         m_colsetLock.lockForRead();
         bool have = m_colset.get(x);
         m_colsetLock.unlock();
         return have;
     }
 
-    void setColumnAt(size_t x, float *mags, float *phases, float factor);
+    void setColumnAt(int x, float *mags, float *phases, float factor);
 
-    void setColumnAt(size_t x, float *reals, float *imags);
+    void setColumnAt(int x, float *reals, float *imags);
 
     void allColumnsWritten() { } 
 
-    static size_t getCacheSize(size_t width, size_t height,
+    static int getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
     FFTCache::StorageType getStorageType() const { return m_storageType; }
 
 private:
-    size_t m_width;
-    size_t m_height;
+    int m_width;
+    int m_height;
     uint16_t **m_magnitude;
     uint16_t **m_phase;
     float **m_fmagnitude;
@@ -153,23 +153,23 @@ private:
 
     void initialise();
 
-    void setNormalizationFactor(size_t x, float factor) {
+    void setNormalizationFactor(int x, float factor) {
         if (x < m_width) m_factor[x] = factor;
     }
     
-    void setMagnitudeAt(size_t x, size_t y, float mag) {
+    void setMagnitudeAt(int x, int y, float mag) {
          // norm factor must already be set
         setNormalizedMagnitudeAt(x, y, mag / m_factor[x]);
     }
     
-    void setNormalizedMagnitudeAt(size_t x, size_t y, float norm) {
+    void setNormalizedMagnitudeAt(int x, int y, float norm) {
         if (x < m_width && y < m_height) {
             if (m_storageType == FFTCache::Polar) m_fmagnitude[x][y] = norm;
             else m_magnitude[x][y] = uint16_t(norm * 65535.0);
         }
     }
     
-    void setPhaseAt(size_t x, size_t y, float phase) {
+    void setPhaseAt(int x, int y, float phase) {
         // phase in range -pi -> pi
         if (x < m_width && y < m_height) {
             if (m_storageType == FFTCache::Polar) m_fphase[x][y] = phase;

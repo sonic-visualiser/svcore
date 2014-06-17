@@ -43,14 +43,14 @@ class SparseModel : public Model,
                     public TabularModel
 {
 public:
-    SparseModel(size_t sampleRate, size_t resolution,
+    SparseModel(int sampleRate, int resolution,
 		bool notifyOnAdd = true);
     virtual ~SparseModel() { }
     
     virtual bool isOK() const { return true; }
-    virtual size_t getStartFrame() const;
-    virtual size_t getEndFrame() const;
-    virtual size_t getSampleRate() const { return m_sampleRate; }
+    virtual int getStartFrame() const;
+    virtual int getEndFrame() const;
+    virtual int getSampleRate() const { return m_sampleRate; }
 
     virtual Model *clone() const;
 
@@ -59,10 +59,10 @@ public:
     // then every point in this model will be at a multiple of 10
     // sample frames and should be considered to cover a window ending
     // 10 sample frames later.
-    virtual size_t getResolution() const {
+    virtual int getResolution() const {
         return m_resolution ? m_resolution : 1;
     }
-    virtual void setResolution(size_t resolution);
+    virtual void setResolution(int resolution);
 
     typedef PointType Point;
     typedef std::multiset<PointType,
@@ -78,7 +78,7 @@ public:
     /**
      * Get the total number of points in the model.
      */
-    virtual size_t getPointCount() const;
+    virtual int getPointCount() const;
 
     /**
      * Get all points.
@@ -157,7 +157,7 @@ public:
         return s;
     }
 
-    virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const
+    virtual QString toDelimitedDataString(QString delimiter, int f0, int f1) const
     { 
         QString s;
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
@@ -371,15 +371,15 @@ public:
     }
             
 protected:
-    size_t m_sampleRate;
-    size_t m_resolution;
+    int m_sampleRate;
+    int m_resolution;
     bool m_notifyOnAdd;
     long m_sinceLastNotifyMin;
     long m_sinceLastNotifyMax;
     bool m_hasTextLabels;
 
     PointList m_points;
-    size_t m_pointCount;
+    int m_pointCount;
     mutable QMutex m_mutex;
     int m_completion;
 
@@ -407,7 +407,7 @@ protected:
         if (m_rows.empty()) rebuildRowVector();
         if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
 
-        size_t frame = m_rows[row];
+        int frame = m_rows[row];
         int indexAtFrame = 0;
         int ri = row;
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
@@ -434,7 +434,7 @@ protected:
         if (m_rows.empty()) rebuildRowVector();
         if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
 
-        size_t frame = m_rows[row];
+        int frame = m_rows[row];
         int indexAtFrame = 0;
         int ri = row;
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
@@ -465,8 +465,8 @@ protected:
 
 
 template <typename PointType>
-SparseModel<PointType>::SparseModel(size_t sampleRate,
-                                    size_t resolution,
+SparseModel<PointType>::SparseModel(int sampleRate,
+                                    int resolution,
                                     bool notifyOnAdd) :
     m_sampleRate(sampleRate),
     m_resolution(resolution),
@@ -480,11 +480,11 @@ SparseModel<PointType>::SparseModel(size_t sampleRate,
 }
 
 template <typename PointType>
-size_t
+int
 SparseModel<PointType>::getStartFrame() const
 {
     QMutexLocker locker(&m_mutex);
-    size_t f = 0;
+    int f = 0;
     if (!m_points.empty()) {
 	f = m_points.begin()->frame;
     }
@@ -492,11 +492,11 @@ SparseModel<PointType>::getStartFrame() const
 }
 
 template <typename PointType>
-size_t
+int
 SparseModel<PointType>::getEndFrame() const
 {
     QMutexLocker locker(&m_mutex);
-    size_t f = 0;
+    int f = 0;
     if (!m_points.empty()) {
 	PointListConstIterator i(m_points.end());
 	f = (--i)->frame;
@@ -526,7 +526,7 @@ SparseModel<PointType>::isEmpty() const
 }
 
 template <typename PointType>
-size_t
+int
 SparseModel<PointType>::getPointCount() const
 {
     return m_pointCount;
@@ -676,7 +676,7 @@ SparseModel<PointType>::getNextPoints(long originFrame) const
 
 template <typename PointType>
 void
-SparseModel<PointType>::setResolution(size_t resolution)
+SparseModel<PointType>::setResolution(int resolution)
 {
     {
 	QMutexLocker locker(&m_mutex);

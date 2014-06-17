@@ -18,7 +18,7 @@
 #include "base/Profiler.h"
 
 Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
-					     size_t columnsPerPeak) :
+					     int columnsPerPeak) :
     m_source(source),
     m_resolution(columnsPerPeak)
 {
@@ -44,7 +44,7 @@ Dense3DModelPeakCache::~Dense3DModelPeakCache()
 }
 
 bool
-Dense3DModelPeakCache::isColumnAvailable(size_t column) const
+Dense3DModelPeakCache::isColumnAvailable(int column) const
 {
     if (!m_source) return false;
     if (haveColumn(column)) return true;
@@ -58,7 +58,7 @@ Dense3DModelPeakCache::isColumnAvailable(size_t column) const
 }
 
 Dense3DModelPeakCache::Column
-Dense3DModelPeakCache::getColumn(size_t column) const
+Dense3DModelPeakCache::getColumn(int column) const
 {
     Profiler profiler("Dense3DModelPeakCache::getColumn");
     if (!m_source) return Column();
@@ -67,7 +67,7 @@ Dense3DModelPeakCache::getColumn(size_t column) const
 }
 
 float
-Dense3DModelPeakCache::getValueAt(size_t column, size_t n) const
+Dense3DModelPeakCache::getValueAt(int column, int n) const
 {
     if (!m_source) return 0.f;
     if (!haveColumn(column)) fillColumn(column);
@@ -93,29 +93,29 @@ Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 }
 
 bool
-Dense3DModelPeakCache::haveColumn(size_t column) const
+Dense3DModelPeakCache::haveColumn(int column) const
 {
-    return column < m_coverage.size() && m_coverage.get(column);
+    return column < (int)m_coverage.size() && m_coverage.get(column);
 }
 
 void
-Dense3DModelPeakCache::fillColumn(size_t column) const
+Dense3DModelPeakCache::fillColumn(int column) const
 {
     Profiler profiler("Dense3DModelPeakCache::fillColumn");
 
-    if (column >= m_coverage.size()) {
+    if (column >= (int)m_coverage.size()) {
         // see note in sourceModelChanged
         if (m_coverage.size() > 0) m_coverage.reset(m_coverage.size()-1);
         m_coverage.resize(column + 1);
     }
 
     Column peak;
-    for (int i = 0; i < m_resolution; ++i) {
+    for (int i = 0; i < int(m_resolution); ++i) {
         Column here = m_source->getColumn(column * m_resolution + i);
         if (i == 0) {
             peak = here;
         } else {
-            for (int j = 0; j < peak.size() && j < here.size(); ++j) {
+            for (int j = 0; j < (int)peak.size() && j < (int)here.size(); ++j) {
                 if (here[j] > peak[j]) peak[j] = here[j];
             }
         }

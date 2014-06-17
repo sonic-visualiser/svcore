@@ -26,7 +26,7 @@ class WritableWaveFileModel : public RangeSummarisableTimeValueModel
     Q_OBJECT
 
 public:
-    WritableWaveFileModel(size_t sampleRate, size_t channels, QString path = "");
+    WritableWaveFileModel(int sampleRate, int channels, QString path = "");
     ~WritableWaveFileModel();
 
     /**
@@ -35,7 +35,7 @@ public:
      * progress of this file, if it has a known end point, and should
      * call setCompletion(100) when the file has been written.
      */
-    virtual bool addSamples(float **samples, size_t count);
+    virtual bool addSamples(float **samples, int count);
     
     bool isOK() const;
     bool isReady(int *) const;
@@ -48,36 +48,36 @@ public:
         return &zc;
     }
 
-    size_t getFrameCount() const;
-    size_t getChannelCount() const { return m_channels; }
-    size_t getSampleRate() const { return m_sampleRate; }
+    int getFrameCount() const;
+    int getChannelCount() const { return m_channels; }
+    int getSampleRate() const { return m_sampleRate; }
 
     virtual Model *clone() const;
 
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual size_t getStartFrame() const { return m_startFrame; }
-    virtual size_t getEndFrame() const { return m_startFrame + getFrameCount(); }
+    virtual int getStartFrame() const { return m_startFrame; }
+    virtual int getEndFrame() const { return m_startFrame + getFrameCount(); }
 
-    void setStartFrame(size_t startFrame);
+    void setStartFrame(int startFrame);
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            float *buffer) const;
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            double *buffer) const;
 
-    virtual size_t getData(size_t fromchannel, size_t tochannel,
-                           size_t start, size_t count,
+    virtual int getData(int fromchannel, int tochannel,
+                           int start, int count,
                            float **buffer) const;
 
-    virtual size_t getSummaryBlockSize(size_t desired) const;
+    virtual int getSummaryBlockSize(int desired) const;
 
-    virtual void getSummaries(size_t channel, size_t start, size_t count,
-                              RangeBlock &ranges, size_t &blockSize) const;
+    virtual void getSummaries(int channel, int start, int count,
+                              RangeBlock &ranges, int &blockSize) const;
 
-    virtual Range getSummary(size_t channel, size_t start, size_t count) const;
+    virtual Range getSummary(int channel, int start, int count) const;
 
     QString getTypeName() const { return tr("Writable Wave File"); }
 
@@ -89,10 +89,10 @@ protected:
     WaveFileModel *m_model;
     WavFileWriter *m_writer;
     WavFileReader *m_reader;
-    size_t m_sampleRate;
-    size_t m_channels;
-    size_t m_frameCount;
-    size_t m_startFrame;
+    int m_sampleRate;
+    int m_channels;
+    int m_frameCount;
+    int m_startFrame;
     int m_completion;
 };
 

@@ -29,12 +29,12 @@ template <typename PointType>
 class IntervalModel : public SparseValueModel<PointType>
 {
 public:
-    IntervalModel(size_t sampleRate, size_t resolution,
+    IntervalModel(int sampleRate, int resolution,
                   bool notifyOnAdd = true) :
 	SparseValueModel<PointType>(sampleRate, resolution, notifyOnAdd)
     { }
 
-    IntervalModel(size_t sampleRate, size_t resolution,
+    IntervalModel(int sampleRate, int resolution,
                   float valueMinimum, float valueMaximum,
                   bool notifyOnAdd = true) :
 	SparseValueModel<PointType>(sampleRate, resolution,
