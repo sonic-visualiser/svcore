@@ -617,7 +617,7 @@ WaveFileModel::fillTimerTimedOut()
         SVDEBUG << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
 	if (fillExtent > m_lastFillExtent) {
-	    emit modelChanged(m_lastFillExtent, fillExtent);
+	    emit modelChangedWithin(m_lastFillExtent, fillExtent);
 	    m_lastFillExtent = fillExtent;
 	}
     } else {
@@ -638,7 +638,7 @@ WaveFileModel::cacheFilled()
     m_updateTimer = 0;
     m_mutex.unlock();
     if (getEndFrame() > m_lastFillExtent) {
-        emit modelChanged(m_lastFillExtent, getEndFrame());
+        emit modelChangedWithin(m_lastFillExtent, getEndFrame());
     }
     emit modelChanged();
     emit ready();

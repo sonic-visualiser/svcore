@@ -367,7 +367,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 	if (allChange) {
 	    emit modelChanged();
 	} else {
-	    emit modelChanged(windowStart, windowStart + m_resolution);
+	    emit modelChangedWithin(windowStart, windowStart + m_resolution);
 	}
     } else {
 	if (allChange) {
@@ -487,8 +487,8 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 	    if (update &&
                 m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
-		emit modelChanged(m_sinceLastNotifyMin,
-				  m_sinceLastNotifyMax + m_resolution);
+		emit modelChangedWithin(m_sinceLastNotifyMin,
+                                        m_sinceLastNotifyMax + m_resolution);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
 	    } else {
 		emit completionChanged();

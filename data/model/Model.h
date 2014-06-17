@@ -235,7 +235,7 @@ signals:
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChanged(int startFrame, int endFrame);
+    void modelChangedWithin(int startFrame, int endFrame);
 
     /**
      * Emitted when some internal processing has advanced a stage, but

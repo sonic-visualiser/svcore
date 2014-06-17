@@ -718,7 +718,7 @@ SparseModel<PointType>::addPoint(const PointType &point)
 
     if (m_notifyOnAdd) {
         m_rows.clear(); //!!! inefficient
-	emit modelChanged(point.frame, point.frame + m_resolution);
+	emit modelChangedWithin(point.frame, point.frame + m_resolution);
     } else {
 	if (m_sinceLastNotifyMin == -1 ||
 	    point.frame < m_sinceLastNotifyMin) {
@@ -753,7 +753,7 @@ SparseModel<PointType>::deletePoint(const PointType &point)
 //    std::cout << "SparseOneDimensionalModel: emit modelChanged("
 //	      << point.frame << ")" << std::endl;
     m_rows.clear(); //!!! inefficient
-    emit modelChanged(point.frame, point.frame + m_resolution);
+    emit modelChangedWithin(point.frame, point.frame + m_resolution);
 }
 
 template <typename PointType>
@@ -781,7 +781,7 @@ SparseModel<PointType>::setCompletion(int completion, bool update)
                 m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
                 m_rows.clear(); //!!! inefficient
-		emit modelChanged(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
+		emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
 	    } else {
 		emit completionChanged();
