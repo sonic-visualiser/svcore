@@ -47,8 +47,8 @@ public:
                                Vamp::PluginBase *plugin,
                                Model *&inputModel,
                                AudioPlaySource *source,
-                               size_t startFrame,
-                               size_t duration,
+                               int startFrame,
+                               int duration,
                                const QMap<QString, Model *> &modelMap,
                                QStringList candidateModelNames,
                                QString defaultModelName) = 0;
@@ -67,8 +67,8 @@ public:
                                  const std::vector<Model *> &candidateInputModels,
                                  Model *defaultInputModel,
                                  AudioPlaySource *source = 0,
-                                 size_t startFrame = 0,
-                                 size_t duration = 0,
+                                 int startFrame = 0,
+                                 int duration = 0,
                                  UserConfigurator *configurator = 0);
 
     class AdditionalModelHandler {

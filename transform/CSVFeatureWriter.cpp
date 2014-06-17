@@ -79,7 +79,7 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
 void
 CSVFeatureWriter::write(QString trackId,
                         const Transform &transform,
-                        const Plugin::OutputDescriptor& output,
+                        const Plugin::OutputDescriptor& ,
                         const Plugin::FeatureList& features,
                         std::string summaryType)
 {

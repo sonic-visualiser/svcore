@@ -156,7 +156,7 @@ RDFTransformFactoryImpl::getErrorString() const
 }
 
 std::vector<Transform>
-RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
+RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
 {
     std::vector<Transform> transforms;
 
@@ -215,7 +215,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *reporter)
             "duration"
         };
         
-        for (int j = 0; j < sizeof(optionals)/sizeof(optionals[0]); ++j) {
+        for (int j = 0; j < int(sizeof(optionals)/sizeof(optionals[0])); ++j) {
 
             QString optional = optionals[j];
 

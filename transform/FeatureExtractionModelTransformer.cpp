@@ -112,11 +112,11 @@ FeatureExtractionModelTransformer::initialise()
     TransformFactory::getInstance()->setPluginParameters
         (primaryTransform, m_plugin);
 
-    size_t channelCount = input->getChannelCount();
-    if (m_plugin->getMaxChannelCount() < channelCount) {
+    int channelCount = input->getChannelCount();
+    if ((int)m_plugin->getMaxChannelCount() < channelCount) {
 	channelCount = 1;
     }
-    if (m_plugin->getMinChannelCount() > channelCount) {
+    if ((int)m_plugin->getMinChannelCount() > channelCount) {
         m_message = tr("Cannot provide enough channels to feature extraction plugin \"%1\" (plugin min is %2, max %3; input model has %4)")
             .arg(pluginId)
             .arg(m_plugin->getMinChannelCount())
@@ -133,8 +133,8 @@ FeatureExtractionModelTransformer::initialise()
                               primaryTransform.getStepSize(),
                               primaryTransform.getBlockSize())) {
 
-        size_t pstep = primaryTransform.getStepSize();
-        size_t pblock = primaryTransform.getBlockSize();
+        int pstep = primaryTransform.getStepSize();
+        int pblock = primaryTransform.getBlockSize();
 
 ///!!! hang on, this isn't right -- we're modifying a copy
         primaryTransform.setStepSize(0);
@@ -204,7 +204,7 @@ FeatureExtractionModelTransformer::initialise()
             }
         }
 
-        if (m_descriptors.size() <= j) {
+        if ((int)m_descriptors.size() <= j) {
             m_message = tr("Plugin \"%1\" has no output named \"%2\"")
                 .arg(pluginId)
                 .arg(m_transforms[j].getOutput());
@@ -249,8 +249,8 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         haveExtents = true;
     }
 
-    size_t modelRate = input->getSampleRate();
-    size_t modelResolution = 1;
+    int modelRate = input->getSampleRate();
+    int modelResolution = 1;
 
     if (m_descriptors[n]->sampleType != 
         Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
@@ -264,7 +264,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
 	if (m_descriptors[n]->sampleRate != 0.0) {
-	    modelResolution = size_t(modelRate / m_descriptors[n]->sampleRate + 0.001);
+	    modelResolution = int(modelRate / m_descriptors[n]->sampleRate + 0.001);
 	}
 	break;
 
@@ -281,7 +281,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = size_t(round(input->getSampleRate() /
+            modelResolution = int(round(input->getSampleRate() /
                                            m_descriptors[n]->sampleRate));
         }
 	break;
@@ -455,7 +455,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
 	if (!m_descriptors[n]->binNames.empty()) {
 	    std::vector<QString> names;
-	    for (size_t i = 0; i < m_descriptors[n]->binNames.size(); ++i) {
+	    for (int i = 0; i < (int)m_descriptors[n]->binNames.size(); ++i) {
 		names.push_back(m_descriptors[n]->binNames[i].c_str());
 	    }
 	    model->setBinNames(names);
@@ -477,7 +477,7 @@ FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
     delete m_plugin;
-    for (int j = 0; j < m_descriptors.size(); ++j) {
+    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
         delete m_descriptors[j];
     }
 }
@@ -573,27 +573,27 @@ FeatureExtractionModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    size_t sampleRate = input->getSampleRate();
+    int sampleRate = input->getSampleRate();
 
-    size_t channelCount = input->getChannelCount();
-    if (m_plugin->getMaxChannelCount() < channelCount) {
+    int channelCount = input->getChannelCount();
+    if ((int)m_plugin->getMaxChannelCount() < channelCount) {
 	channelCount = 1;
     }
 
     float **buffers = new float*[channelCount];
-    for (size_t ch = 0; ch < channelCount; ++ch) {
+    for (int ch = 0; ch < channelCount; ++ch) {
 	buffers[ch] = new float[primaryTransform.getBlockSize() + 2];
     }
 
-    size_t stepSize = primaryTransform.getStepSize();
-    size_t blockSize = primaryTransform.getBlockSize();
+    int stepSize = primaryTransform.getStepSize();
+    int blockSize = primaryTransform.getBlockSize();
 
     bool frequencyDomain = (m_plugin->getInputDomain() ==
                             Vamp::Plugin::FrequencyDomain);
     std::vector<FFTModel *> fftModels;
 
     if (frequencyDomain) {
-        for (size_t ch = 0; ch < channelCount; ++ch) {
+        for (int ch = 0; ch < channelCount; ++ch) {
             FFTModel *model = new FFTModel
                                   (getConformingInput(),
                                    channelCount == 1 ? m_input.getChannel() : ch,
@@ -677,10 +677,10 @@ FeatureExtractionModelTransformer::run()
 	// channelCount is either m_input.getModel()->channelCount or 1
 
         if (frequencyDomain) {
-            for (size_t ch = 0; ch < channelCount; ++ch) {
+            for (int ch = 0; ch < channelCount; ++ch) {
                 int column = (blockFrame - startFrame) / stepSize;
                 fftModels[ch]->getValuesAt(column, reals, imaginaries);
-                for (size_t i = 0; i <= blockSize/2; ++i) {
+                for (int i = 0; i <= blockSize/2; ++i) {
                     buffers[ch][i*2] = reals[i];
                     buffers[ch][i*2+1] = imaginaries[i];
                 }
@@ -703,7 +703,7 @@ FeatureExtractionModelTransformer::run()
         if (m_abandoned) break;
 
         for (int j = 0; j < (int)m_outputNos.size(); ++j) {
-            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+            for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
                 Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
                 addFeature(j, blockFrame, feature);
             }
@@ -723,7 +723,7 @@ FeatureExtractionModelTransformer::run()
         Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
 
         for (int j = 0; j < (int)m_outputNos.size(); ++j) {
-            for (size_t fi = 0; fi < features[m_outputNos[j]].size(); ++fi) {
+            for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
                 Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
                 addFeature(j, blockFrame, feature);
             }
@@ -735,7 +735,7 @@ FeatureExtractionModelTransformer::run()
     }
 
     if (frequencyDomain) {
-        for (size_t ch = 0; ch < channelCount; ++ch) {
+        for (int ch = 0; ch < channelCount; ++ch) {
             delete fftModels[ch];
         }
         delete[] reals;
@@ -805,21 +805,16 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 
 void
 FeatureExtractionModelTransformer::addFeature(int n,
-                                              size_t blockFrame,
+                                              int blockFrame,
                                               const Vamp::Plugin::Feature &feature)
 {
-    size_t inputRate = m_input.getModel()->getSampleRate();
+    int inputRate = m_input.getModel()->getSampleRate();
 
 //    cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
 //              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
 //              << ", timestamp = " << feature.timestamp << ", hasDuration = "
 //              << feature.hasDuration << ", duration = " << feature.duration
 //              << endl;
-
-    int binCount = 1;
-    if (m_descriptors[n]->hasFixedBinCount) {
-	binCount = m_descriptors[n]->binCount;
-    }
 
     int frame = blockFrame;
 
@@ -885,7 +880,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             getConformingOutput<SparseTimeValueModel>(n);
 	if (!model) return;
 
-        for (int i = 0; i < feature.values.size(); ++i) {
+        for (int i = 0; i < (int)feature.values.size(); ++i) {
 
             float value = feature.values[i];
 
@@ -912,7 +907,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         int index = 0;
 
         float value = 0.0;
-        if (feature.values.size() > index) {
+        if ((int)feature.values.size() > index) {
             value = feature.values[index++];
         }
 
@@ -920,7 +915,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (feature.hasDuration) {
             duration = Vamp::RealTime::realTime2Frame(feature.duration, inputRate);
         } else {
-            if (feature.values.size() > index) {
+            if ((int)feature.values.size() > index) {
                 duration = feature.values[index++];
             }
         }
@@ -928,7 +923,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (isOutput<FlexiNoteModel>(n)) { // GF: added for flexi note model
 
             float velocity = 100;
-            if (feature.values.size() > index) {
+            if ((int)feature.values.size() > index) {
                 velocity = feature.values[index++];
             }
             if (velocity < 0) velocity = 127;
@@ -944,7 +939,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         } else  if (isOutput<NoteModel>(n)) {
 
             float velocity = 100;
-            if (feature.values.size() > index) {
+            if ((int)feature.values.size() > index) {
                 velocity = feature.values[index++];
             }
             if (velocity < 0) velocity = 127;
@@ -963,7 +958,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
             if (feature.hasDuration && !feature.values.empty()) {
 
-                for (int i = 0; i < feature.values.size(); ++i) {
+                for (int i = 0; i < (int)feature.values.size(); ++i) {
 
                     float value = feature.values[i];
 
