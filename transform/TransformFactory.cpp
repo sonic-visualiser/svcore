@@ -405,7 +405,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
     if (m_exiting) return;
 
-    for (size_t i = 0; i < plugs.size(); ++i) {
+    for (int i = 0; i < (int)plugs.size(); ++i) {
 
 	QString pluginId = plugs[i];
 
@@ -431,7 +431,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	Vamp::Plugin::OutputList outputs =
 	    plugin->getOutputDescriptors();
 
-	for (size_t j = 0; j < outputs.size(); ++j) {
+	for (int j = 0; j < (int)outputs.size(); ++j) {
 
 	    QString transformId = QString("%1:%2")
 		    .arg(pluginId).arg(outputs[j].identifier.c_str());
@@ -506,7 +506,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
     static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
-    for (size_t i = 0; i < plugs.size(); ++i) {
+    for (int i = 0; i < (int)plugs.size(); ++i) {
         
 	QString pluginId = plugs[i];
 
@@ -539,14 +539,14 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
         if (descriptor->audioInputPortCount > 0) {
 
-            for (size_t j = 0; j < descriptor->controlOutputPortCount; ++j) {
+            for (int j = 0; j < (int)descriptor->controlOutputPortCount; ++j) {
 
                 QString transformId = QString("%1:%2").arg(pluginId).arg(j);
                 QString userName;
                 QString units;
                 QString portName;
 
-                if (j < descriptor->controlOutputPortNames.size() &&
+                if (j < (int)descriptor->controlOutputPortNames.size() &&
                     descriptor->controlOutputPortNames[j] != "") {
 
                     portName = descriptor->controlOutputPortNames[j].c_str();
@@ -749,7 +749,7 @@ TransformFactory::populateUninstalledTransforms()
 }
 
 Transform
-TransformFactory::getDefaultTransformFor(TransformId id, size_t rate)
+TransformFactory::getDefaultTransformFor(TransformId id, int rate)
 {
     Transform t;
     t.setIdentifier(id);
@@ -781,7 +781,7 @@ TransformFactory::instantiatePluginFor(const Transform &transform)
 }
 
 Vamp::PluginBase *
-TransformFactory::instantiateDefaultPluginFor(TransformId identifier, size_t rate)
+TransformFactory::instantiateDefaultPluginFor(TransformId identifier, int rate)
 {
     Transform t;
     t.setIdentifier(identifier);

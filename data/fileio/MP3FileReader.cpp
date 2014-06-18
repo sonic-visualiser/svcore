@@ -37,9 +37,10 @@
 #include <QFileInfo>
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
-                             CacheMode mode, size_t targetRate,
+                             CacheMode mode, int targetRate,
+                             bool normalised,
                              ProgressReporter *reporter) :
-    CodedAudioFileReader(mode, targetRate),
+    CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_decodeThread(0)
@@ -85,7 +86,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     }
     
     ssize_t sz = 0;
-    size_t offset = 0;
+    int offset = 0;
     while (offset < m_fileSize) {
         sz = ::read(fd, m_filebuffer + offset, m_fileSize - offset);
         if (sz < 0) {
@@ -274,7 +275,7 @@ MP3FileReader::DecodeThread::run()
     m_reader->m_filebuffer = 0;
 
     if (m_reader->m_samplebuffer) {
-        for (size_t c = 0; c < m_reader->m_channelCount; ++c) {
+        for (int c = 0; c < m_reader->m_channelCount; ++c) {
             delete[] m_reader->m_samplebuffer[c];
         }
         delete[] m_reader->m_samplebuffer;
@@ -290,7 +291,7 @@ MP3FileReader::DecodeThread::run()
 } 
 
 bool
-MP3FileReader::decode(void *mm, size_t sz)
+MP3FileReader::decode(void *mm, int sz)
 {
     DecoderData data;
     struct mad_decoder decoder;
@@ -391,7 +392,7 @@ MP3FileReader::accept(struct mad_header const *header,
         initialiseDecodeCache();
     }
 
-    if (m_samplebuffersize < frames) {
+    if (int(m_samplebuffersize) < frames) {
         if (!m_samplebuffer) {
             m_samplebuffer = new float *[channels];
             for (int c = 0; c < channels; ++c) {
@@ -427,11 +428,11 @@ MP3FileReader::accept(struct mad_header const *header,
 }
 
 enum mad_flow
-MP3FileReader::error(void *dp,
-		     struct mad_stream *stream,
+MP3FileReader::error(void * /* dp */,
+		     struct mad_stream * /* stream */,
 		     struct mad_frame *)
 {
-    DecoderData *data = (DecoderData *)dp;
+//    DecoderData *data = (DecoderData *)dp;
 
 //    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
 //	    stream->error, mad_stream_errorstr(stream),

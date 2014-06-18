@@ -40,7 +40,8 @@ public:
     MP3FileReader(FileSource source,
                   DecodeMode decodeMode,
                   CacheMode cacheMode,
-                  size_t targetRate = 0,
+                  int targetRate = 0,
+                  bool normalised = false,
                   ProgressReporter *reporter = 0);
     virtual ~MP3FileReader();
 
@@ -72,15 +73,15 @@ protected:
     QString m_title;
     QString m_maker;
     TagMap m_tags;
-    size_t m_fileSize;
+    int m_fileSize;
     double m_bitrateNum;
-    size_t m_bitrateDenom;
+    int m_bitrateDenom;
     int m_completion;
     bool m_done;
 
     unsigned char *m_filebuffer;
     float **m_samplebuffer;
-    size_t m_samplebuffersize;
+    int m_samplebuffersize;
 
     ProgressReporter *m_reporter;
     bool m_cancelled;
@@ -92,7 +93,7 @@ protected:
 	MP3FileReader *reader;
     };
 
-    bool decode(void *mm, size_t sz);
+    bool decode(void *mm, int sz);
     enum mad_flow accept(struct mad_header const *, struct mad_pcm *);
 
     static enum mad_flow input(void *, struct mad_stream *);

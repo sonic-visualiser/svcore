@@ -37,7 +37,7 @@ public:
      * Start playing from the given frame.  If playback is already
      * under way, reseek to the given frame and continue.
      */
-    virtual void play(size_t startFrame) = 0;
+    virtual void play(int startFrame) = 0;
 
     /**
      * Stop playback.
@@ -53,7 +53,7 @@ public:
      * Return the frame number that is currently expected to be coming
      * out of the speakers.  (i.e. compensating for playback latency.)
      */
-    virtual size_t getCurrentPlayingFrame() = 0;
+    virtual int getCurrentPlayingFrame() = 0;
 
     /**
      * Return the current (or thereabouts) output levels in the range
@@ -65,14 +65,14 @@ public:
      * Return the sample rate of the source material -- any material
      * that wants to play at a different rate will sound wrong.
      */
-    virtual size_t getSourceSampleRate() const = 0;
+    virtual int getSourceSampleRate() const = 0;
 
     /**
      * Return the sample rate set by the target audio device (or the
      * source sample rate if the target hasn't set one).  If the
      * source and target sample rates differ, resampling will occur.
      */
-    virtual size_t getTargetSampleRate() const = 0;
+    virtual int getTargetSampleRate() const = 0;
 
     /**
      * Get the block size of the target audio device.  This may be an
@@ -80,7 +80,7 @@ public:
      * size; the source should behave itself even if this value turns
      * out to be inaccurate.
      */
-    virtual size_t getTargetBlockSize() const = 0;
+    virtual int getTargetBlockSize() const = 0;
 
     /**
      * Get the number of channels of audio that will be provided
@@ -88,7 +88,7 @@ public:
      * count: for example, a mono source will provide 2 channels
      * after pan.
      */
-    virtual size_t getTargetChannelCount() const = 0;
+    virtual int getTargetChannelCount() const = 0;
 
     /**
      * Set a plugin or other subclass of Auditionable as an

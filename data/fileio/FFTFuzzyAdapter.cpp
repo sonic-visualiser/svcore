@@ -20,11 +20,11 @@
 FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
 				 int channel,
 				 WindowType windowType,
-				 size_t windowSize,
-				 size_t windowIncrement,
-				 size_t fftSize,
+				 int windowSize,
+				 int windowIncrement,
+				 int fftSize,
 				 bool polar,
-				 size_t fillFromColumn) :
+				 int fillFromColumn) :
     m_server(0),
     m_xshift(0),
     m_yshift(0)
@@ -38,8 +38,8 @@ FFTFuzzyAdapter::FFTFuzzyAdapter(const DenseTimeValueModel *model,
                                                polar,
                                                fillFromColumn);
 
-    size_t xratio = windowIncrement / m_server->getWindowIncrement();
-    size_t yratio = m_server->getFFTSize() / fftSize;
+    int xratio = windowIncrement / m_server->getWindowIncrement();
+    int yratio = m_server->getFFTSize() / fftSize;
 
     while (xratio > 1) {
         if (xratio & 0x1) {

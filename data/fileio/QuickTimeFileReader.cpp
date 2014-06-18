@@ -43,16 +43,17 @@ public:
     OSErr                        err; 
     AudioStreamBasicDescription  asbd;
     Movie                        movie;
-    size_t                       blockSize;
+    int                          blockSize;
 };
 
 
 QuickTimeFileReader::QuickTimeFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         size_t targetRate,
+                                         int targetRate,
+                                         bool normalised,
                                          ProgressReporter *reporter) :
-    CodedAudioFileReader(mode, targetRate),
+    CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_d(new D),

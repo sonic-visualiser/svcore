@@ -47,7 +47,7 @@ public:
      * than symmetrical. (A window of size N is equivalent to a
      * symmetrical window of size N+1 with the final element missing.)
      */
-    Window(WindowType type, size_t size) : m_type(type), m_size(size) { encache(); }
+    Window(WindowType type, int size) : m_type(type), m_size(size) { encache(); }
     Window(const Window &w) : m_type(w.m_type), m_size(w.m_size) { encache(); }
     Window &operator=(const Window &w) {
 	if (&w == this) return *this;
@@ -60,14 +60,14 @@ public:
     
     void cut(T *src) const { cut(src, src); }
     void cut(T *src, T *dst) const {
-	for (size_t i = 0; i < m_size; ++i) dst[i] = src[i] * m_cache[i];
+	for (int i = 0; i < m_size; ++i) dst[i] = src[i] * m_cache[i];
     }
 
     T getArea() { return m_area; }
-    T getValue(size_t i) { return m_cache[i]; }
+    T getValue(int i) { return m_cache[i]; }
 
     WindowType getType() const { return m_type; }
-    size_t getSize() const { return m_size; }
+    int getSize() const { return m_size; }
 
     // The names used by these functions are un-translated, for use in
     // e.g. XML I/O.  Use Preferences::getPropertyValueLabel if you
@@ -77,7 +77,7 @@ public:
 
 protected:
     WindowType m_type;
-    size_t m_size;
+    int m_size;
     T *m_cache;
     T m_area;
     
@@ -88,7 +88,7 @@ protected:
 template <typename T>
 void Window<T>::encache()
 {
-    int n = int(m_size);
+    const int n = m_size;
     T *mult = new T[n];
     int i;
     for (i = 0; i < n; ++i) mult[i] = 1.0;
@@ -164,7 +164,7 @@ void Window<T>::encache()
 template <typename T>
 void Window<T>::cosinewin(T *mult, T a0, T a1, T a2, T a3)
 {
-    int n = int(m_size);
+    const int n = m_size;
     for (int i = 0; i < n; ++i) {
         mult[i] *= (a0
                     - a1 * cos((2 * M_PI * i) / n)

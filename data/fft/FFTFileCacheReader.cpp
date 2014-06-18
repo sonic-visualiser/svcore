@@ -53,22 +53,22 @@ FFTFileCacheReader::~FFTFileCacheReader()
     delete m_mfc;
 }
 
-size_t
+int
 FFTFileCacheReader::getWidth() const
 {
     return m_mfc->getWidth();
 }
 
-size_t
+int
 FFTFileCacheReader::getHeight() const
 {
-    size_t mh = m_mfc->getHeight();
+    int mh = m_mfc->getHeight();
     if (mh > m_factorSize) return (mh - m_factorSize) / 2;
     else return 0;
 }
 
 float
-FFTFileCacheReader::getMagnitudeAt(size_t x, size_t y) const
+FFTFileCacheReader::getMagnitudeAt(int x, int y) const
 {
     Profiler profiler("FFTFileCacheReader::getMagnitudeAt", false);
 
@@ -98,7 +98,7 @@ FFTFileCacheReader::getMagnitudeAt(size_t x, size_t y) const
 }
 
 float
-FFTFileCacheReader::getNormalizedMagnitudeAt(size_t x, size_t y) const
+FFTFileCacheReader::getNormalizedMagnitudeAt(int x, int y) const
 {
     float value = 0.f;
 
@@ -108,7 +108,8 @@ FFTFileCacheReader::getNormalizedMagnitudeAt(size_t x, size_t y) const
         value = getFromReadBufCompactUnsigned(x, y * 2) / 65535.0;
         break;
 
-    default:
+    case FFTCache::Rectangular:
+    case FFTCache::Polar:
     {
         float mag = getMagnitudeAt(x, y);
         float factor = getNormalizationFactor(x);
@@ -122,13 +123,13 @@ FFTFileCacheReader::getNormalizedMagnitudeAt(size_t x, size_t y) const
 }
 
 float
-FFTFileCacheReader::getMaximumMagnitudeAt(size_t x) const
+FFTFileCacheReader::getMaximumMagnitudeAt(int x) const
 {
     return getNormalizationFactor(x);
 }
 
 float
-FFTFileCacheReader::getPhaseAt(size_t x, size_t y) const
+FFTFileCacheReader::getPhaseAt(int x, int y) const
 {
     float value = 0.f;
     
@@ -155,7 +156,7 @@ FFTFileCacheReader::getPhaseAt(size_t x, size_t y) const
 }
 
 void
-FFTFileCacheReader::getValuesAt(size_t x, size_t y, float &real, float &imag) const
+FFTFileCacheReader::getValuesAt(int x, int y, float &real, float &imag) const
 {
 //    SVDEBUG << "FFTFileCacheReader::getValuesAt(" << x << "," << y << ")" << endl;
 
@@ -166,7 +167,8 @@ FFTFileCacheReader::getValuesAt(size_t x, size_t y, float &real, float &imag) co
         imag = getFromReadBufStandard(x, y * 2 + 1);
         return;
 
-    default:
+    case FFTCache::Compact:
+    case FFTCache::Polar:
         float mag = getMagnitudeAt(x, y);
         float phase = getPhaseAt(x, y);
         real = mag * cosf(phase);
@@ -176,15 +178,15 @@ FFTFileCacheReader::getValuesAt(size_t x, size_t y, float &real, float &imag) co
 }
 
 void
-FFTFileCacheReader::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const
+FFTFileCacheReader::getMagnitudesAt(int x, float *values, int minbin, int count, int step) const
 {
     Profiler profiler("FFTFileCacheReader::getMagnitudesAt");
 
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        for (size_t i = 0; i < count; ++i) {
-            size_t y = minbin + i * step;
+        for (int i = 0; i < count; ++i) {
+            int y = minbin + i * step;
             values[i] = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.0)
                 * getNormalizationFactor(x);
         }
@@ -193,8 +195,8 @@ FFTFileCacheReader::getMagnitudesAt(size_t x, float *values, size_t minbin, size
     case FFTCache::Rectangular:
     {
         float real, imag;
-        for (size_t i = 0; i < count; ++i) {
-            size_t y = minbin + i * step;
+        for (int i = 0; i < count; ++i) {
+            int y = minbin + i * step;
             real = getFromReadBufStandard(x, y * 2);
             imag = getFromReadBufStandard(x, y * 2 + 1);
             values[i] = sqrtf(real * real + imag * imag);
@@ -203,8 +205,8 @@ FFTFileCacheReader::getMagnitudesAt(size_t x, float *values, size_t minbin, size
     }
 
     case FFTCache::Polar:
-        for (size_t i = 0; i < count; ++i) {
-            size_t y = minbin + i * step;
+        for (int i = 0; i < count; ++i) {
+            int y = minbin + i * step;
             values[i] = getFromReadBufStandard(x, y * 2);
         }
         break;
@@ -212,7 +214,7 @@ FFTFileCacheReader::getMagnitudesAt(size_t x, float *values, size_t minbin, size
 }
 
 bool
-FFTFileCacheReader::haveSetColumnAt(size_t x) const
+FFTFileCacheReader::haveSetColumnAt(int x) const
 {
     if (m_readbuf && m_readbufGood &&
         (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
@@ -222,17 +224,17 @@ FFTFileCacheReader::haveSetColumnAt(size_t x) const
     return m_mfc->haveSetColumnAt(x);
 }
 
-size_t
-FFTFileCacheReader::getCacheSize(size_t width, size_t height,
+int
+FFTFileCacheReader::getCacheSize(int width, int height,
                                  FFTCache::StorageType type)
 {
     return (height * 2 + (type == FFTCache::Compact ? 2 : 1)) * width *
         (type == FFTCache::Compact ? sizeof(uint16_t) : sizeof(float)) +
-        2 * sizeof(size_t); // matrix file header size
+        2 * sizeof(int); // matrix file header size
 }
 
 void
-FFTFileCacheReader::populateReadBuf(size_t x) const
+FFTFileCacheReader::populateReadBuf(int x) const
 {
     Profiler profiler("FFTFileCacheReader::populateReadBuf", false);
 

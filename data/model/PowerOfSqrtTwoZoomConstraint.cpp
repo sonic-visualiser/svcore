@@ -19,26 +19,26 @@
 #include <cmath>
 
 
-size_t
-PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
+int
+PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 						  RoundingDirection dir) const
 {
     int type, power;
-    size_t rv = getNearestBlockSize(blockSize, type, power, dir);
+    int rv = getNearestBlockSize(blockSize, type, power, dir);
     return rv;
 }
 
-size_t
-PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
+int
+PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 						  int &type, 
 						  int &power,
 						  RoundingDirection dir) const
 {
 //    cerr << "given " << blockSize << endl;
 
-    size_t minCachePower = getMinCachePower();
+    int minCachePower = getMinCachePower();
 
-    if (blockSize < (1U << minCachePower)) {
+    if (blockSize < (1 << minCachePower)) {
 	type = -1;
 	power = 0;
 	float val = 1.0, prevVal = 1.0;
@@ -46,27 +46,27 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(size_t blockSize,
 	    prevVal = val;
 	    val *= sqrt(2.f);
 	}
-	size_t rval;
-	if (dir == RoundUp) rval = size_t(val + 0.01);
-	else if (dir == RoundDown) rval = size_t(prevVal + 0.01);
-	else if (val - blockSize < blockSize - prevVal) rval = size_t(val + 0.01);
-	else rval = size_t(prevVal + 0.01);
+	int rval;
+	if (dir == RoundUp) rval = int(val + 0.01);
+	else if (dir == RoundDown) rval = int(prevVal + 0.01);
+	else if (val - blockSize < blockSize - prevVal) rval = int(val + 0.01);
+	else rval = int(prevVal + 0.01);
 //	SVDEBUG << "returning " << rval << endl;
 	return rval;
     }
 
-    unsigned int prevBase = (1 << minCachePower);
-    unsigned int prevPower = minCachePower;
-    unsigned int prevType = 0;
+    int prevBase = (1 << minCachePower);
+    int prevPower = minCachePower;
+    int prevType = 0;
 
-    size_t result = 0;
+    int result = 0;
 
     for (unsigned int i = 0; ; ++i) {
 
 	power = minCachePower + i/2;
 	type = i % 2;
 
-	unsigned int base;
+	int base;
 	if (type == 0) {
 	    base = (1 << power);
 	} else {

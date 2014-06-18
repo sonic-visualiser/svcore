@@ -59,9 +59,10 @@ codestr(OSStatus err)
 CoreAudioFileReader::CoreAudioFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         size_t targetRate,
+                                         int targetRate,
+                                         bool normalised,
                                          ProgressReporter *reporter) :
-    CodedAudioFileReader(mode, targetRate),
+    CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_d(new D),

@@ -52,7 +52,7 @@ protected:
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 
-    virtual void discoverPlugins(QString soName);
+    virtual void discoverPluginsFrom(QString soName);
 
     virtual const LADSPA_Descriptor *getLADSPADescriptor(QString identifier);
     virtual const DSSI_Descriptor *getDSSIDescriptor(QString identifier);

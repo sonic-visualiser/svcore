@@ -126,7 +126,7 @@ private:
     bool m_network;
     bool m_networkRetrieved;
 
-    unsigned long m_count;
+    long m_count;
 };
 
 #endif

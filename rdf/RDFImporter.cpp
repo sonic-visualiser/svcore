@@ -576,14 +576,14 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 RealTime time;
                 RealTime duration;
 
-                bool haveTime = false;
+//                bool haveTime = false;
                 bool haveDuration = false;
 
                 Node at = m_store->complete(Triple(tn, expand("tl:at"), Node()));
 
                 if (at != Node()) {
                     time = RealTime::fromXsdDuration(at.value.toStdString());
-                    haveTime = true;
+//                    haveTime = true;
                 } else {
     //!!! NB we're using rather old terminology for these things, apparently:
     // beginsAt -> start
@@ -596,7 +596,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                             (start.value.toStdString());
                         duration = RealTime::fromXsdDuration
                             (dur.value.toStdString());
-                        haveTime = haveDuration = true;
+//                        haveTime = haveDuration = true;
                     }
                 }
 

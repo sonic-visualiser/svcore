@@ -50,23 +50,23 @@ public:
     /**
      * Return the first audio frame spanned by the model.
      */
-    virtual size_t getStartFrame() const = 0;
+    virtual int getStartFrame() const = 0;
 
     /**
      * Return the last audio frame spanned by the model.
      */
-    virtual size_t getEndFrame() const = 0;
+    virtual int getEndFrame() const = 0;
 
     /**
      * Return the frame rate in frames per second.
      */
-    virtual size_t getSampleRate() const = 0;
+    virtual int getSampleRate() const = 0;
 
     /**
      * Return the frame rate of the underlying material, if the model
      * itself has already been resampled.
      */
-    virtual size_t getNativeRate() const { return getSampleRate(); }
+    virtual int getNativeRate() const { return getSampleRate(); }
 
     /**
      * Return the "work title" of the model, if known.
@@ -105,7 +105,27 @@ public:
      * Caller owns the returned value.
      */
     virtual Model *clone() const = 0;
-    
+
+    /**
+     * Mark the model as abandoning. This means that the application
+     * no longer needs it, so it can stop doing any background
+     * calculations it may be involved in. Note that as far as the
+     * model API is concerned, this does nothing more than tell the
+     * model to return true from isAbandoning().  The actual response
+     * to this will depend on the model's context -- it's possible
+     * nothing at all will change.
+     */
+    virtual void abandon() {
+        m_abandoning = true;
+    }
+
+    /**
+     * Query whether the model has been marked as abandoning.
+     */
+    virtual bool isAbandoning() const { 
+        return m_abandoning;
+    }
+
     /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
@@ -180,13 +200,13 @@ public:
      * Return the frame number of the reference model that corresponds
      * to the given frame number in this model.
      */
-    virtual size_t alignToReference(size_t frame) const;
+    virtual int alignToReference(int frame) const;
 
     /**
      * Return the frame number in this model that corresponds to the
      * given frame number of the reference model.
      */
-    virtual size_t alignFromReference(size_t referenceFrame) const;
+    virtual int alignFromReference(int referenceFrame) const;
 
     /**
      * Return the completion percentage for the alignment model: 100
@@ -214,9 +234,9 @@ public:
                        QString extraAttributes = "") const;
 
     virtual QString toDelimitedDataString(QString delimiter) const {
-        return toDelimitedDataString(delimiter, getStartFrame(), getEndFrame());
+        return toDelimitedDataStringSubset(delimiter, getStartFrame(), getEndFrame());
     }
-    virtual QString toDelimitedDataString(QString, size_t /* f0 */, size_t /* f1 */) const {
+    virtual QString toDelimitedDataStringSubset(QString, int /* f0 */, int /* f1 */) const {
         return "";
     }
 
@@ -235,7 +255,7 @@ signals:
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChanged(size_t startFrame, size_t endFrame);
+    void modelChangedWithin(int startFrame, int endFrame);
 
     /**
      * Emitted when some internal processing has advanced a stage, but
@@ -268,7 +288,11 @@ signals:
     void aboutToBeDeleted();
 
 protected:
-    Model() : m_sourceModel(0), m_alignment(0), m_aboutToDelete(false) { }
+    Model() : 
+        m_sourceModel(0), 
+        m_alignment(0), 
+        m_abandoning(false), 
+        m_aboutToDelete(false) { }
 
     // Not provided.
     Model(const Model &);
@@ -277,6 +301,7 @@ protected:
     Model *m_sourceModel;
     AlignmentModel *m_alignment;
     QString m_typeUri;
+    bool m_abandoning;
     bool m_aboutToDelete;
 };
 

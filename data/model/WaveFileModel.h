@@ -34,7 +34,7 @@ class WaveFileModel : public RangeSummarisableTimeValueModel
     Q_OBJECT
 
 public:
-    WaveFileModel(FileSource source, size_t targetRate = 0);
+    WaveFileModel(FileSource source, int targetRate = 0);
     WaveFileModel(FileSource source, AudioFileReader *reader);
     ~WaveFileModel();
 
@@ -43,10 +43,10 @@ public:
 
     const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
-    size_t getFrameCount() const;
-    size_t getChannelCount() const;
-    size_t getSampleRate() const;
-    size_t getNativeRate() const;
+    int getFrameCount() const;
+    int getChannelCount() const;
+    int getSampleRate() const;
+    int getNativeRate() const;
 
     QString getTitle() const;
     QString getMaker() const;
@@ -57,28 +57,28 @@ public:
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual size_t getStartFrame() const { return m_startFrame; }
-    virtual size_t getEndFrame() const { return m_startFrame + getFrameCount(); }
+    virtual int getStartFrame() const { return m_startFrame; }
+    virtual int getEndFrame() const { return m_startFrame + getFrameCount(); }
 
-    void setStartFrame(size_t startFrame) { m_startFrame = startFrame; }
+    void setStartFrame(int startFrame) { m_startFrame = startFrame; }
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            float *buffer) const;
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            double *buffer) const;
 
-    virtual size_t getData(size_t fromchannel, size_t tochannel,
-                           size_t start, size_t count,
+    virtual int getData(int fromchannel, int tochannel,
+                           int start, int count,
                            float **buffers) const;
 
-    virtual size_t getSummaryBlockSize(size_t desired) const;
+    virtual int getSummaryBlockSize(int desired) const;
 
-    virtual void getSummaries(size_t channel, size_t start, size_t count,
+    virtual void getSummaries(int channel, int start, int count,
                               RangeBlock &ranges,
-                              size_t &blockSize) const;
+                              int &blockSize) const;
 
-    virtual Range getSummary(size_t channel, size_t start, size_t count) const;
+    virtual Range getSummary(int channel, int start, int count) const;
 
     QString getTypeName() const { return tr("Wave File"); }
 
@@ -100,13 +100,13 @@ protected:
 	    m_model(model), m_fillExtent(0),
             m_frameCount(model.getFrameCount()) { }
     
-	size_t getFillExtent() const { return m_fillExtent; }
+	int getFillExtent() const { return m_fillExtent; }
         virtual void run();
 
     protected:
         WaveFileModel &m_model;
-	size_t m_fillExtent;
-        size_t m_frameCount;
+	int m_fillExtent;
+        int m_frameCount;
     };
          
     void fillCache();
@@ -116,19 +116,19 @@ protected:
     AudioFileReader *m_reader;
     bool m_myReader;
 
-    size_t m_startFrame;
+    int m_startFrame;
 
     RangeBlock m_cache[2]; // interleaved at two base resolutions
     mutable QMutex m_mutex;
     RangeCacheFillThread *m_fillThread;
     QTimer *m_updateTimer;
-    size_t m_lastFillExtent;
+    int m_lastFillExtent;
     bool m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 
     mutable SampleBlock m_directRead;
-    mutable size_t m_lastDirectReadStart;
-    mutable size_t m_lastDirectReadCount;
+    mutable int m_lastDirectReadStart;
+    mutable int m_lastDirectReadCount;
     mutable QMutex m_directReadMutex;
 };    
 

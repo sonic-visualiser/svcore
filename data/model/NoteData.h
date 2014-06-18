@@ -21,12 +21,12 @@
 
 struct NoteData
 {
-    NoteData(size_t _start, size_t _dur, int _mp, int _vel) :
+    NoteData(int _start, int _dur, int _mp, int _vel) :
 	start(_start), duration(_dur), midiPitch(_mp), frequency(0),
 	isMidiPitchQuantized(true), velocity(_vel) { };
             
-    size_t start;     // audio sample frame
-    size_t duration;  // in audio sample frames
+    int start;     // audio sample frame
+    int duration;  // in audio sample frames
     int midiPitch; // 0-127
     float frequency; // Hz, to be used if isMidiPitchQuantized false
     bool isMidiPitchQuantized;
@@ -47,7 +47,7 @@ class NoteExportable
 {
 public:
     virtual NoteList getNotes() const = 0;
-    virtual NoteList getNotes(size_t startFrame, size_t endFrame) const = 0;
+    virtual NoteList getNotesWithin(int startFrame, int endFrame) const = 0;
 };
 
 #endif

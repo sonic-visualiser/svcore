@@ -42,7 +42,7 @@ public:
     bool isOK() const;
 
     bool isEmpty() const { return getMessagesAvailable() == 0; }
-    size_t getMessagesAvailable() const;
+    int getMessagesAvailable() const;
     OSCMessage readMessage();
 
     QString getOSCURL() const;

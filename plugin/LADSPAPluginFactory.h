@@ -67,7 +67,7 @@ protected:
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 
-    virtual void discoverPlugins(QString soName);
+    virtual void discoverPluginsFrom(QString soName);
     virtual void generateTaxonomy(QString uri, QString base);
     virtual void generateFallbackCategories();
 
