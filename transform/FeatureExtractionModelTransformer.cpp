@@ -1013,6 +1013,7 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 	SparseOneDimensionalModel *model =
             getConformingOutput<SparseOneDimensionalModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true);
 
     } else if (isOutput<SparseTimeValueModel>(n)) {
@@ -1020,24 +1021,28 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 	SparseTimeValueModel *model =
             getConformingOutput<SparseTimeValueModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true);
 
     } else if (isOutput<NoteModel>(n)) {
 
 	NoteModel *model = getConformingOutput<NoteModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true);
 	
-	} else if (isOutput<FlexiNoteModel>(n)) {
+    } else if (isOutput<FlexiNoteModel>(n)) {
 
 	FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true);
 
     } else if (isOutput<RegionModel>(n)) {
 
 	RegionModel *model = getConformingOutput<RegionModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true);
 
     } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
@@ -1045,6 +1050,7 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 	EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);
 	if (!model) return;
+        if (model->isAbandoning()) abandon();
 	model->setCompletion(completion, true); //!!!m_context.updates);
     }
 }

@@ -38,8 +38,9 @@
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
                              CacheMode mode, int targetRate,
+                             bool normalised,
                              ProgressReporter *reporter) :
-    CodedAudioFileReader(mode, targetRate),
+    CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_decodeThread(0)

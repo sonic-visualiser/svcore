@@ -50,7 +50,9 @@ signals:
     void progress(int);
 
 protected:
-    CodedAudioFileReader(CacheMode cacheMode, int targetRate);
+    CodedAudioFileReader(CacheMode cacheMode, 
+                         int targetRate,
+                         bool normalised);
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
@@ -91,6 +93,10 @@ protected:
     Resampler *m_resampler;
     float *m_resampleBuffer;
     int m_fileFrameCount;
+
+    bool m_normalised;
+    float m_max;
+    float m_gain;
 };
 
 #endif

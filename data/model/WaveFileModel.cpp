@@ -20,6 +20,8 @@
 
 #include "system/System.h"
 
+#include "base/Preferences.h"
+
 #include <QFileInfo>
 #include <QTextStream>
 
@@ -49,8 +51,9 @@ WaveFileModel::WaveFileModel(FileSource source, int targetRate) :
 {
     m_source.waitForData();
     if (m_source.isOK()) {
+        bool normalise = Preferences::getInstance()->getNormaliseAudio();
         m_reader = AudioFileReaderFactory::createThreadingReader
-            (m_source, targetRate);
+            (m_source, targetRate, normalise);
         if (m_reader) {
             SVDEBUG << "WaveFileModel::WaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << endl;

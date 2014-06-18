@@ -21,6 +21,21 @@
 
 #include "XmlExportable.h"
 
+/**
+ * A selection object simply represents a range in time, via start and
+ * end frame.
+ *
+ * The end frame is the index of the frame just *after* the end of the
+ * selection. For example a selection of length 10 frames starting at
+ * time 0 will have start frame 0 and end frame 10. This will be
+ * contiguous with (rather than overlapping with) a selection that
+ * starts at frame 10.
+ *
+ * Any selection with equal start and end frames is empty,
+ * representing "no selection". All empty selections are equal under
+ * the comparison operators. The default constructor makes an empty
+ * selection with start and end frames equal to zero.
+ */
 class Selection
 {
 public:
