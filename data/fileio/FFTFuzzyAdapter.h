@@ -24,49 +24,49 @@ public:
     FFTFuzzyAdapter(const DenseTimeValueModel *model,
                     int channel,
                     WindowType windowType,
-                    size_t windowSize,
-                    size_t windowIncrement,
-                    size_t fftSize,
+                    int windowSize,
+                    int windowIncrement,
+                    int fftSize,
                     bool polar,
-                    size_t fillFromColumn = 0);
+                    int fillFromColumn = 0);
     ~FFTFuzzyAdapter();
 
-    size_t getWidth() const {
+    int getWidth() const {
         return m_server->getWidth() >> m_xshift;
     }
-    size_t getHeight() const {
+    int getHeight() const {
         return m_server->getHeight() >> m_yshift;
     }
-    float getMagnitudeAt(size_t x, size_t y) {
+    float getMagnitudeAt(int x, int y) {
         return m_server->getMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    float getNormalizedMagnitudeAt(size_t x, size_t y) {
+    float getNormalizedMagnitudeAt(int x, int y) {
         return m_server->getNormalizedMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    float getMaximumMagnitudeAt(size_t x) {
+    float getMaximumMagnitudeAt(int x) {
         return m_server->getMaximumMagnitudeAt(x << m_xshift);
     }
-    float getPhaseAt(size_t x, size_t y) {
+    float getPhaseAt(int x, int y) {
         return m_server->getPhaseAt(x << m_xshift, y << m_yshift);
     }
-    void getValuesAt(size_t x, size_t y, float &real, float &imaginary) {
+    void getValuesAt(int x, int y, float &real, float &imaginary) {
         m_server->getValuesAt(x << m_xshift, y << m_yshift, real, imaginary);
     }
-    bool isColumnReady(size_t x) {
+    bool isColumnReady(int x) {
         return m_server->isColumnReady(x << m_xshift);
     }
-    bool isLocalPeak(size_t x, size_t y) {
+    bool isLocalPeak(int x, int y) {
         float mag = getMagnitudeAt(x, y);
         if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
         if (y < getHeight() - 1 && mag < getMagnitudeAt(x, y + 1)) return false;
         return true;
     }
-    bool isOverThreshold(size_t x, size_t y, float threshold) {
+    bool isOverThreshold(int x, int y, float threshold) {
         return getMagnitudeAt(x, y) > threshold;
     }
 
-    size_t getFillCompletion() const { return m_server->getFillCompletion(); }
-    size_t getFillExtent() const { return m_server->getFillExtent(); }
+    int getFillCompletion() const { return m_server->getFillCompletion(); }
+    int getFillExtent() const { return m_server->getFillExtent(); }
 
 private:
     FFTFuzzyAdapter(const FFTFuzzyAdapter &); // not implemented

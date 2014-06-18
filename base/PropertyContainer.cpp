@@ -54,7 +54,7 @@ PropertyContainer::getPropertyRangeAndValue(const PropertyName &,
 }
 
 QString
-PropertyContainer::getPropertyValueLabel(const PropertyName &name, int value) const
+PropertyContainer::getPropertyValueLabel(const PropertyName &, int) const
 {
     return QString();
 }

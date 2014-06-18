@@ -105,14 +105,14 @@ StringBits::splitQuoted(QString s, QChar separator)
 		c = s[i];
 		switch (mode) {
 		case sep: mode = unq; tok += c; break;
-		default: tok += c; break;
+                case unq: case q1: case q2: tok += c; break;
 		}
 	    }
 
 	} else {
 	    switch (mode) {
 	    case sep: mode = unq; tok += c; break;
-	    default: tok += c; break;
+            case unq: case q1: case q2: tok += c; break;
 	    }
 	}
     }

@@ -281,7 +281,7 @@ DSSIPluginFactory::getLRDFPath(QString &baseUri)
 
 
 void
-DSSIPluginFactory::discoverPlugins(QString soname)
+DSSIPluginFactory::discoverPluginsFrom(QString soname)
 {
     Profiler profiler("DSSIPluginFactory::discoverPlugins");
 

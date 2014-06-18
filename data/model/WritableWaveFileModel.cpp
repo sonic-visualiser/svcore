@@ -30,8 +30,8 @@
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
-WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
-					     size_t channels,
+WritableWaveFileModel::WritableWaveFileModel(int sampleRate,
+					     int channels,
 					     QString path) :
     m_model(0),
     m_writer(0),
@@ -86,8 +86,8 @@ WritableWaveFileModel::WritableWaveFileModel(size_t sampleRate,
     m_model->setStartFrame(m_startFrame);
 
     connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
-    connect(m_model, SIGNAL(modelChanged(size_t, size_t)),
-            this, SIGNAL(modelChanged(size_t, size_t)));
+    connect(m_model, SIGNAL(modelChanged(int, int)),
+            this, SIGNAL(modelChanged(int, int)));
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
@@ -98,14 +98,14 @@ WritableWaveFileModel::~WritableWaveFileModel()
 }
 
 void
-WritableWaveFileModel::setStartFrame(size_t startFrame)
+WritableWaveFileModel::setStartFrame(int startFrame)
 {
     m_startFrame = startFrame;
     if (m_model) m_model->setStartFrame(startFrame);
 }
 
 bool
-WritableWaveFileModel::addSamples(float **samples, size_t count)
+WritableWaveFileModel::addSamples(float **samples, int count)
 {
     if (!m_writer) return false;
 
@@ -162,7 +162,7 @@ WritableWaveFileModel::setCompletion(int completion)
     }
 }
 
-size_t
+int
 WritableWaveFileModel::getFrameCount() const
 {
 //    SVDEBUG << "WritableWaveFileModel::getFrameCount: count = " << m_frameCount << endl;
@@ -176,42 +176,42 @@ WritableWaveFileModel::clone() const
     return 0;
 }
 
-size_t
-WritableWaveFileModel::getData(int channel, size_t start, size_t count,
+int
+WritableWaveFileModel::getData(int channel, int start, int count,
                                float *buffer) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
     return m_model->getData(channel, start, count, buffer);
 }
 
-size_t
-WritableWaveFileModel::getData(int channel, size_t start, size_t count,
+int
+WritableWaveFileModel::getData(int channel, int start, int count,
                                double *buffer) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
     return m_model->getData(channel, start, count, buffer);
 }
 
-size_t
-WritableWaveFileModel::getData(size_t fromchannel, size_t tochannel,
-                               size_t start, size_t count,
+int
+WritableWaveFileModel::getData(int fromchannel, int tochannel,
+                               int start, int count,
                                float **buffers) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
     return m_model->getData(fromchannel, tochannel, start, count, buffers);
 }    
 
-size_t
-WritableWaveFileModel::getSummaryBlockSize(size_t desired) const
+int
+WritableWaveFileModel::getSummaryBlockSize(int desired) const
 {
     if (!m_model) return desired;
     return m_model->getSummaryBlockSize(desired);
 }
 
 void
-WritableWaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
+WritableWaveFileModel::getSummaries(int channel, int start, int count,
                                     RangeBlock &ranges,
-                                    size_t &blockSize) const
+                                    int &blockSize) const
 {
     ranges.clear();
     if (!m_model || m_model->getChannelCount() == 0) return;
@@ -219,7 +219,7 @@ WritableWaveFileModel::getSummaries(size_t channel, size_t start, size_t count,
 }
 
 WritableWaveFileModel::Range
-WritableWaveFileModel::getSummary(size_t channel, size_t start, size_t count) const
+WritableWaveFileModel::getSummary(int channel, int start, int count) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return Range();
     return m_model->getSummary(channel, start, count);

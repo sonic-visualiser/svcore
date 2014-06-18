@@ -35,10 +35,11 @@ public:
     };
 
     DecodingWavFileReader(FileSource source,
-                            ResampleMode resampleMode,
-                            CacheMode cacheMode,
-                            size_t targetRate = 0,
-                            ProgressReporter *reporter = 0);
+                          ResampleMode resampleMode,
+                          CacheMode cacheMode,
+                          int targetRate = 0,
+                          bool normalised = false,
+                          ProgressReporter *reporter = 0);
     virtual ~DecodingWavFileReader();
 
     virtual QString getError() const { return m_error; }
@@ -62,7 +63,7 @@ protected:
     QString m_path;
     QString m_error;
     bool m_cancelled;
-    size_t m_processed;
+    int m_processed;
     int m_completion;
 
     WavFileReader *m_original;

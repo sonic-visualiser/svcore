@@ -52,7 +52,7 @@ static size_t totalCount = 0;
 static size_t openCount = 0;
 
 MatrixFile::MatrixFile(QString fileBase, Mode mode,
-                       size_t cellSize, size_t width, size_t height) :
+                       int cellSize, int width, int height) :
     m_fd(-1),
     m_mode(mode),
     m_flags(0),
@@ -60,7 +60,7 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     m_cellSize(cellSize),
     m_width(width),
     m_height(height),
-    m_headerSize(2 * sizeof(size_t)),
+    m_headerSize(2 * sizeof(int)),
     m_setColumns(0),
     m_autoClose(false),
     m_readyToReadColumn(-1)
@@ -125,8 +125,8 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
     if (newFile) {
         initialise(); // write header and "unwritten" column tags
     } else {
-        size_t header[2];
-        if (::read(m_fd, header, 2 * sizeof(size_t)) < 0) {
+        int header[2];
+        if (::read(m_fd, header, 2 * sizeof(int)) < 0) {
             ::perror("MatrixFile::MatrixFile: read failed");
             cerr << "ERROR: MatrixFile::MatrixFile: "
                       << "Failed to read header (fd " << m_fd << ", file \""
@@ -222,10 +222,10 @@ MatrixFile::initialise()
         throw FileOperationFailed(m_fileName, "lseek");
     }
 
-    size_t header[2];
+    int header[2];
     header[0] = m_width;
     header[1] = m_height;
-    if (::write(m_fd, header, 2 * sizeof(size_t)) != 2 * sizeof(size_t)) {
+    if (::write(m_fd, header, 2 * sizeof(int)) != 2 * sizeof(int)) {
         ::perror("ERROR: MatrixFile::initialise: Failed to write header");
         throw FileOperationFailed(m_fileName, "write");
     }
@@ -263,7 +263,7 @@ MatrixFile::close()
 }
 
 void
-MatrixFile::getColumnAt(size_t x, void *data)
+MatrixFile::getColumnAt(int x, void *data)
 {
     assert(m_mode == ReadOnly);
     
@@ -276,7 +276,7 @@ MatrixFile::getColumnAt(size_t x, void *data)
     ssize_t r = -1;
 
     if (m_readyToReadColumn < 0 ||
-        size_t(m_readyToReadColumn) != x) {
+        m_readyToReadColumn != x) {
 
         unsigned char set = 0;
         if (!seekTo(x)) {
@@ -303,14 +303,14 @@ MatrixFile::getColumnAt(size_t x, void *data)
 }
 
 bool
-MatrixFile::haveSetColumnAt(size_t x) const
+MatrixFile::haveSetColumnAt(int x) const
 {
     if (m_mode == WriteOnly) {
         return m_setColumns->get(x);
     }
 
     if (m_readyToReadColumn >= 0 &&
-        size_t(m_readyToReadColumn) == x) return true;
+        int(m_readyToReadColumn) == x) return true;
     
     Profiler profiler("MatrixFile::haveSetColumnAt");
 
@@ -338,7 +338,7 @@ MatrixFile::haveSetColumnAt(size_t x) const
 }
 
 void
-MatrixFile::setColumnAt(size_t x, const void *data)
+MatrixFile::setColumnAt(int x, const void *data)
 {
     assert(m_mode == WriteOnly);
     if (m_fd < 0) return; // closed
@@ -408,7 +408,7 @@ MatrixFile::setColumnAt(size_t x, const void *data)
 }
 
 bool
-MatrixFile::seekTo(size_t x) const
+MatrixFile::seekTo(int x) const
 {
     if (m_fd < 0) {
         cerr << "ERROR: MatrixFile::seekTo: File not open" << endl;

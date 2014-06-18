@@ -21,7 +21,7 @@
 class PowerOfTwoZoomConstraint : virtual public ZoomConstraint
 {
 public:
-    virtual size_t getNearestBlockSize(size_t requestedBlockSize,
+    virtual int getNearestBlockSize(int requestedBlockSize,
 				       RoundingDirection dir = RoundNearest)
 	const;
 };

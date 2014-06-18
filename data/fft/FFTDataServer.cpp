@@ -48,12 +48,12 @@ FFTDataServer *
 FFTDataServer::getInstance(const DenseTimeValueModel *model,
                            int channel,
                            WindowType windowType,
-                           size_t windowSize,
-                           size_t windowIncrement,
-                           size_t fftSize,
+                           int windowSize,
+                           int windowIncrement,
+                           int fftSize,
                            bool polar,
                            StorageAdviser::Criteria criteria,
-                           size_t fillFromColumn)
+                           int fillFromColumn)
 {
     QString n = generateFileBasename(model,
                                      channel,
@@ -110,12 +110,12 @@ FFTDataServer *
 FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                                 int channel,
                                 WindowType windowType,
-                                size_t windowSize,
-                                size_t windowIncrement,
-                                size_t fftSize,
+                                int windowSize,
+                                int windowIncrement,
+                                int fftSize,
                                 bool polar,
                                 StorageAdviser::Criteria criteria,
-                                size_t fillFromColumn)
+                                int fillFromColumn)
 {
     // Fuzzy matching:
     // 
@@ -483,12 +483,12 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
                              const DenseTimeValueModel *model,
                              int channel,
 			     WindowType windowType,
-			     size_t windowSize,
-			     size_t windowIncrement,
-			     size_t fftSize,
+			     int windowSize,
+			     int windowIncrement,
+			     int fftSize,
                              bool polar,
                              StorageAdviser::Criteria criteria,
-                             size_t fillFromColumn) :
+                             int fillFromColumn) :
     m_fileBaseName(fileBaseName),
     m_model(model),
     m_channel(channel),
@@ -514,8 +514,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 
     //!!! end is not correct until model finished reading -- what to do???
 
-    size_t start = m_model->getStartFrame();
-    size_t end = m_model->getEndFrame();
+    int start = m_model->getStartFrame();
+    int end = m_model->getEndFrame();
 
     m_width = (end - start) / m_windowIncrement + 1;
     m_height = m_fftSize / 2 + 1; // DC == 0, Nyquist == fftsize/2
@@ -525,8 +525,8 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
               << m_width << "x" << m_height << endl;
 #endif
 
-    size_t maxCacheSize = 20 * 1024 * 1024;
-    size_t columnSize = m_height * sizeof(fftsample) * 2 + sizeof(fftsample);
+    int maxCacheSize = 20 * 1024 * 1024;
+    int columnSize = m_height * sizeof(fftsample) * 2 + sizeof(fftsample);
     if (m_width * columnSize < maxCacheSize * 2) m_cacheWidth = m_width;
     else m_cacheWidth = maxCacheSize / columnSize;
     
@@ -562,7 +562,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
         }
     }
 
-    for (size_t i = 0; i <= m_width / m_cacheWidth; ++i) {
+    for (int i = 0; i <= m_width / m_cacheWidth; ++i) {
         m_caches.push_back(0);
     }
 
@@ -678,7 +678,7 @@ FFTDataServer::resume()
 }
 
 void
-FFTDataServer::getStorageAdvice(size_t w, size_t h,
+FFTDataServer::getStorageAdvice(int w, int h,
                                 bool &memoryCache, bool &compactCache)
 {
     int cells = w * h;
@@ -763,7 +763,7 @@ FFTDataServer::makeCache(int c)
 
     QString name = QString("%1-%2").arg(m_fileBaseName).arg(c);
 
-    size_t width = m_cacheWidth;
+    int width = m_cacheWidth;
     if (c * m_cacheWidth + width > m_width) {
         width = m_width - c * m_cacheWidth;
     }
@@ -885,7 +885,7 @@ FFTDataServer::makeCacheReader(int c)
 }
        
 float
-FFTDataServer::getMagnitudeAt(size_t x, size_t y)
+FFTDataServer::getMagnitudeAt(int x, int y)
 {
     Profiler profiler("FFTDataServer::getMagnitudeAt", false);
 
@@ -894,7 +894,7 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
     float val = 0;
 
     try {
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return 0;
 
@@ -917,7 +917,7 @@ FFTDataServer::getMagnitudeAt(size_t x, size_t y)
 }
 
 bool
-FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+FFTDataServer::getMagnitudesAt(int x, float *values, int minbin, int count, int step)
 {
     Profiler profiler("FFTDataServer::getMagnitudesAt", false);
 
@@ -930,7 +930,7 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
     }
 
     try {
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return false;
 
@@ -950,7 +950,7 @@ FFTDataServer::getMagnitudesAt(size_t x, float *values, size_t minbin, size_t co
 }
 
 float
-FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
+FFTDataServer::getNormalizedMagnitudeAt(int x, int y)
 {
     Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt", false);
 
@@ -960,7 +960,7 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return 0;
 
@@ -978,7 +978,7 @@ FFTDataServer::getNormalizedMagnitudeAt(size_t x, size_t y)
 }
 
 bool
-FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+FFTDataServer::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count, int step)
 {
     Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt", false);
 
@@ -992,7 +992,7 @@ FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin,
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return false;
 
@@ -1001,7 +1001,7 @@ FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin,
             fillColumn(x);
         }
         
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             values[i] = cache->getNormalizedMagnitudeAt(col, i * step + minbin);
         }
         
@@ -1014,7 +1014,7 @@ FFTDataServer::getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin,
 }
 
 float
-FFTDataServer::getMaximumMagnitudeAt(size_t x)
+FFTDataServer::getMaximumMagnitudeAt(int x)
 {
     Profiler profiler("FFTDataServer::getMaximumMagnitudeAt", false);
 
@@ -1024,7 +1024,7 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return 0;
 
@@ -1042,7 +1042,7 @@ FFTDataServer::getMaximumMagnitudeAt(size_t x)
 }
 
 float
-FFTDataServer::getPhaseAt(size_t x, size_t y)
+FFTDataServer::getPhaseAt(int x, int y)
 {
     Profiler profiler("FFTDataServer::getPhaseAt", false);
 
@@ -1052,7 +1052,7 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return 0;
 
@@ -1070,7 +1070,7 @@ FFTDataServer::getPhaseAt(size_t x, size_t y)
 }
 
 bool
-FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count, size_t step)
+FFTDataServer::getPhasesAt(int x, float *values, int minbin, int count, int step)
 {
     Profiler profiler("FFTDataServer::getPhasesAt", false);
 
@@ -1084,7 +1084,7 @@ FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count,
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return false;
 
@@ -1093,7 +1093,7 @@ FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count,
             fillColumn(x);
         }
         
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             values[i] = cache->getPhaseAt(col, i * step + minbin);
         }
 
@@ -1106,7 +1106,7 @@ FFTDataServer::getPhasesAt(size_t x, float *values, size_t minbin, size_t count,
 }
 
 void
-FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
+FFTDataServer::getValuesAt(int x, int y, float &real, float &imaginary)
 {
     Profiler profiler("FFTDataServer::getValuesAt", false);
 
@@ -1118,7 +1118,7 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
 
         if (!cache) {
@@ -1143,7 +1143,7 @@ FFTDataServer::getValuesAt(size_t x, size_t y, float &real, float &imaginary)
 }
 
 bool
-FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin, size_t count, size_t step)
+FFTDataServer::getValuesAt(int x, float *reals, float *imaginaries, int minbin, int count, int step)
 {
     Profiler profiler("FFTDataServer::getValuesAt", false);
 
@@ -1157,7 +1157,7 @@ FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t mi
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return false;
 
@@ -1166,7 +1166,7 @@ FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t mi
             fillColumn(x);
         }
 
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             cache->getValuesAt(col, i * step + minbin, reals[i], imaginaries[i]);
         }
 
@@ -1179,7 +1179,7 @@ FFTDataServer::getValuesAt(size_t x, float *reals, float *imaginaries, size_t mi
 }
 
 bool
-FFTDataServer::isColumnReady(size_t x)
+FFTDataServer::isColumnReady(int x)
 {
     Profiler profiler("FFTDataServer::isColumnReady", false);
 
@@ -1200,7 +1200,7 @@ FFTDataServer::isColumnReady(size_t x)
 
     try {
 
-        size_t col;
+        int col;
         FFTCacheReader *cache = getCacheReader(x, col);
         if (!cache) return true;
 
@@ -1213,7 +1213,7 @@ FFTDataServer::isColumnReady(size_t x)
 }    
 
 void
-FFTDataServer::fillColumn(size_t x)
+FFTDataServer::fillColumn(int x)
 {
     Profiler profiler("FFTDataServer::fillColumn", false);
 
@@ -1237,7 +1237,7 @@ FFTDataServer::fillColumn(size_t x)
         return;
     }
 
-    size_t col;
+    int col;
 #ifdef DEBUG_FFT_SERVER_FILL
     cout << "FFTDataServer::fillColumn(" << x << ")" << endl;
 #endif
@@ -1397,14 +1397,14 @@ FFTDataServer::getError() const
     else return "";
 }
 
-size_t
+int
 FFTDataServer::getFillCompletion() const 
 {
     if (m_fillThread) return m_fillThread->getCompletion();
     else return 100;
 }
 
-size_t
+int
 FFTDataServer::getFillExtent() const
 {
     if (m_fillThread) return m_fillThread->getExtent();
@@ -1423,9 +1423,9 @@ QString
 FFTDataServer::generateFileBasename(const DenseTimeValueModel *model,
                                     int channel,
                                     WindowType windowType,
-                                    size_t windowSize,
-                                    size_t windowIncrement,
-                                    size_t fftSize,
+                                    int windowSize,
+                                    int windowIncrement,
+                                    int fftSize,
                                     bool polar)
 {
     char buffer[200];
@@ -1460,9 +1460,9 @@ FFTDataServer::FillThread::run()
     }
     if (m_server.m_exiting) return;
 
-    size_t start = m_server.m_model->getStartFrame();
-    size_t end = m_server.m_model->getEndFrame();
-    size_t remainingEnd = end;
+    int start = m_server.m_model->getStartFrame();
+    int end = m_server.m_model->getEndFrame();
+    int remainingEnd = end;
 
     int counter = 0;
     int updateAt = 1;
@@ -1471,7 +1471,7 @@ FFTDataServer::FillThread::run()
 
     if (m_fillFrom > start) {
 
-        for (size_t f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
+        for (int f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
 	    
             try {
                 m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
@@ -1503,7 +1503,7 @@ FFTDataServer::FillThread::run()
 
             if (++counter == updateAt) {
                 m_extent = f;
-                m_completion = size_t(100 * fabsf(float(f - m_fillFrom) /
+                m_completion = int(100 * fabsf(float(f - m_fillFrom) /
                                                   float(end - start)));
                 counter = 0;
                 if (updateAt < maxUpdateAt) {
@@ -1518,9 +1518,9 @@ FFTDataServer::FillThread::run()
         else remainingEnd = start;
     }
 
-    size_t baseCompletion = m_completion;
+    int baseCompletion = m_completion;
 
-    for (size_t f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
+    for (int f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
 
         try {
             m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
@@ -1552,7 +1552,7 @@ FFTDataServer::FillThread::run()
         if (++counter == updateAt) {
             m_extent = f;
             m_completion = baseCompletion +
-                size_t(100 * fabsf(float(f - start) /
+                int(100 * fabsf(float(f - start) /
                                    float(end - start)));
             counter = 0;
             if (updateAt < maxUpdateAt) {

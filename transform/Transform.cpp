@@ -66,7 +66,7 @@ Transform::Transform(QString xml) :
     QDomNamedNodeMap attrNodes = transformElt.attributes();
     QXmlAttributes attrs;
 
-    for (unsigned int i = 0; i < attrNodes.length(); ++i) {
+    for (int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (!attr.isNull()) attrs.append(attr.name(), "", "", attr.value());
     }
@@ -319,26 +319,26 @@ Transform::setSummaryType(SummaryType type)
     m_summaryType = type;
 }
     
-size_t
+int
 Transform::getStepSize() const
 {
     return m_stepSize;
 }
 
 void
-Transform::setStepSize(size_t s)
+Transform::setStepSize(int s)
 {
     m_stepSize = s;
 }
     
-size_t
+int
 Transform::getBlockSize() const
 {
     return m_blockSize;
 }
 
 void
-Transform::setBlockSize(size_t s)
+Transform::setBlockSize(int s)
 {
     m_blockSize = s;
 }

@@ -55,7 +55,7 @@ public:
             .arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, int sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -89,7 +89,7 @@ class ImageModel : public SparseModel<ImagePoint>
     Q_OBJECT
 
 public:
-    ImageModel(size_t sampleRate, size_t resolution, bool notifyOnAdd = true) :
+    ImageModel(int sampleRate, int resolution, bool notifyOnAdd = true) :
 	SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
     { }
 

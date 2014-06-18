@@ -29,9 +29,9 @@
 
 #include "system/System.h"
 
-EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(size_t sampleRate,
-                                                                       size_t resolution,
-                                                                       size_t yBinCount,
+EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(int sampleRate,
+                                                                       int resolution,
+                                                                       int yBinCount,
                                                                        CompressionType compression,
                                                                        bool notifyOnAdd) :
     m_startFrame(0),
@@ -55,25 +55,25 @@ EditableDenseThreeDimensionalModel::isOK() const
     return true;
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getSampleRate() const
 {
     return m_sampleRate;
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getStartFrame() const
 {
     return m_startFrame;
 }
 
 void
-EditableDenseThreeDimensionalModel::setStartFrame(size_t f)
+EditableDenseThreeDimensionalModel::setStartFrame(int f)
 {
     m_startFrame = f; 
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getEndFrame() const
 {
     return m_resolution * m_data.size() + (m_resolution - 1);
@@ -92,39 +92,39 @@ EditableDenseThreeDimensionalModel::clone() const
     model->m_maximum = m_maximum;
     model->m_haveExtents = m_haveExtents;
 
-    for (size_t i = 0; i < m_data.size(); ++i) {
+    for (int i = 0; i < m_data.size(); ++i) {
 	model->setColumn(i, m_data.at(i));
     }
 
     return model;
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getResolution() const
 {
     return m_resolution;
 }
 
 void
-EditableDenseThreeDimensionalModel::setResolution(size_t sz)
+EditableDenseThreeDimensionalModel::setResolution(int sz)
 {
     m_resolution = sz;
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getWidth() const
 {
     return m_data.size();
 }
 
-size_t
+int
 EditableDenseThreeDimensionalModel::getHeight() const
 {
     return m_yBinCount;
 }
 
 void
-EditableDenseThreeDimensionalModel::setHeight(size_t sz)
+EditableDenseThreeDimensionalModel::setHeight(int sz)
 {
     m_yBinCount = sz;
 }
@@ -154,28 +154,28 @@ EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 }
 
 EditableDenseThreeDimensionalModel::Column
-EditableDenseThreeDimensionalModel::getColumn(size_t index) const
+EditableDenseThreeDimensionalModel::getColumn(int index) const
 {
     QReadLocker locker(&m_lock);
-    if (index >= m_data.size()) return Column();
+    if (int(index) >= m_data.size()) return Column();
     return expandAndRetrieve(index);
 }
 
 float
-EditableDenseThreeDimensionalModel::getValueAt(size_t index, size_t n) const
+EditableDenseThreeDimensionalModel::getValueAt(int index, int n) const
 {
     Column c = getColumn(index);
-    if (n < c.size()) return c.at(n);
+    if (int(n) < c.size()) return c.at(n);
     return m_minimum;
 }
 
 //static int given = 0, stored = 0;
 
 void
-EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
+EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                                                      const Column &values)
 {
-    assert(index < m_data.size());
+    assert(int(index) < m_data.size());
 
     //cout << "truncateAndStore(" << index << ", " << values.size() << ")" << endl;
 
@@ -187,7 +187,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
     m_trunc[index] = 0;
     if (index == 0 ||
         m_compression == NoCompression ||
-        values.size() != m_yBinCount) {
+        values.size() != int(m_yBinCount)) {
 //        given += values.size();
 //        stored += values.size();
         m_data[index] = values;
@@ -283,11 +283,11 @@ EditableDenseThreeDimensionalModel::truncateAndStore(size_t index,
 }
 
 EditableDenseThreeDimensionalModel::Column
-EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
+EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
 {
     // See comment above m_trunc declaration in header
 
-    assert(index < m_data.size());
+    assert(int(index) < m_data.size());
     Column c = m_data.at(index);
     if (index == 0) {
         return c;
@@ -301,7 +301,7 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
     if (trunc < 0) { top = false; tdist = -trunc; }
     Column p = expandAndRetrieve(index - tdist);
     int psize = p.size(), csize = c.size();
-    if (psize != m_yBinCount) {
+    if (psize != int(m_yBinCount)) {
         cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
     if (top) {
@@ -326,12 +326,12 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(size_t index) const
 }
 
 void
-EditableDenseThreeDimensionalModel::setColumn(size_t index,
+EditableDenseThreeDimensionalModel::setColumn(int index,
                                               const Column &values)
 {
     QWriteLocker locker(&m_lock);
 
-    while (index >= m_data.size()) {
+    while (int(index) >= m_data.size()) {
 	m_data.push_back(Column());
         m_trunc.push_back(0);
     }
@@ -340,7 +340,7 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 
 //    if (values.size() > m_yBinCount) m_yBinCount = values.size();
 
-    for (size_t i = 0; i < values.size(); ++i) {
+    for (int i = 0; i < values.size(); ++i) {
         float value = values[i];
         if (ISNAN(value) || ISINF(value)) {
             continue;
@@ -367,7 +367,7 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 	if (allChange) {
 	    emit modelChanged();
 	} else {
-	    emit modelChanged(windowStart, windowStart + m_resolution);
+	    emit modelChangedWithin(windowStart, windowStart + m_resolution);
 	}
     } else {
 	if (allChange) {
@@ -388,16 +388,16 @@ EditableDenseThreeDimensionalModel::setColumn(size_t index,
 }
 
 QString
-EditableDenseThreeDimensionalModel::getBinName(size_t n) const
+EditableDenseThreeDimensionalModel::getBinName(int n) const
 {
-    if (m_binNames.size() > n) return m_binNames[n];
+    if ((int)m_binNames.size() > n) return m_binNames[n];
     else return "";
 }
 
 void
-EditableDenseThreeDimensionalModel::setBinName(size_t n, QString name)
+EditableDenseThreeDimensionalModel::setBinName(int n, QString name)
 {
-    while (m_binNames.size() <= n) m_binNames.push_back("");
+    while ((int)m_binNames.size() <= n) m_binNames.push_back("");
     m_binNames[n] = name;
     emit modelChanged();
 }
@@ -416,9 +416,9 @@ EditableDenseThreeDimensionalModel::hasBinValues() const
 }
 
 float
-EditableDenseThreeDimensionalModel::getBinValue(size_t n) const
+EditableDenseThreeDimensionalModel::getBinValue(int n) const
 {
-    if (n < m_binValues.size()) return m_binValues[n];
+    if (n < (int)m_binValues.size()) return m_binValues[n];
     else return 0.f;
 }
 
@@ -449,7 +449,7 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
     QVector<int> n;
     
     for (int i = 0; i < 10; ++i) {
-        size_t index = i * 10;
+        int index = i * 10;
         if (index < m_data.size()) {
             const Column &c = m_data.at(index);
             while (c.size() > sample.size()) {
@@ -487,8 +487,8 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 	    if (update &&
                 m_sinceLastNotifyMin >= 0 &&
 		m_sinceLastNotifyMax >= 0) {
-		emit modelChanged(m_sinceLastNotifyMin,
-				  m_sinceLastNotifyMax + m_resolution);
+		emit modelChangedWithin(m_sinceLastNotifyMin,
+                                        m_sinceLastNotifyMax + m_resolution);
 		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
 	    } else {
 		emit completionChanged();
@@ -504,9 +504,9 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
 {
     QReadLocker locker(&m_lock);
     QString s;
-    for (size_t i = 0; i < m_data.size(); ++i) {
+    for (int i = 0; i < m_data.size(); ++i) {
         QStringList list;
-	for (size_t j = 0; j < m_data.at(i).size(); ++j) {
+	for (int j = 0; j < m_data.at(i).size(); ++j) {
             list << QString("%1").arg(m_data.at(i).at(j));
         }
         s += list.join(delimiter) + "\n";
@@ -515,15 +515,15 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
 }
 
 QString
-EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const
+EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
 {
     QReadLocker locker(&m_lock);
     QString s;
-    for (size_t i = 0; i < m_data.size(); ++i) {
-        size_t fr = m_startFrame + i * m_resolution;
-        if (fr >= f0 && fr < f1) {
+    for (int i = 0; i < m_data.size(); ++i) {
+        int fr = m_startFrame + i * m_resolution;
+        if (fr >= int(f0) && fr < int(f1)) {
             QStringList list;
-            for (size_t j = 0; j < m_data.at(i).size(); ++j) {
+            for (int j = 0; j < m_data.at(i).size(); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));
             }
             s += list.join(delimiter) + "\n";
@@ -558,7 +558,7 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     out << QString("<dataset id=\"%1\" dimensions=\"3\" separator=\" \">\n")
 	.arg(getObjectExportId(&m_data));
 
-    for (size_t i = 0; i < m_binNames.size(); ++i) {
+    for (int i = 0; i < (int)m_binNames.size(); ++i) {
 	if (m_binNames[i] != "") {
 	    out << indent + "  ";
 	    out << QString("<bin number=\"%1\" name=\"%2\"/>\n")
@@ -566,10 +566,10 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 	}
     }
 
-    for (size_t i = 0; i < m_data.size(); ++i) {
+    for (int i = 0; i < (int)m_data.size(); ++i) {
 	out << indent + "  ";
 	out << QString("<row n=\"%1\">").arg(i);
-	for (size_t j = 0; j < m_data.at(i).size(); ++j) {
+	for (int j = 0; j < (int)m_data.at(i).size(); ++j) {
 	    if (j > 0) out << " ";
 	    out << m_data.at(i).at(j);
 	}

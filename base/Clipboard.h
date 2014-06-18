@@ -27,8 +27,8 @@ public:
     public:
         Point(long frame, QString label);
         Point(long frame, float value, QString label);
-        Point(long frame, float value, size_t duration, QString label);
-        Point(long frame, float value, size_t duration, float level, QString label);
+        Point(long frame, float value, int duration, QString label);
+        Point(long frame, float value, int duration, float level, QString label);
         Point(const Point &point);
         Point &operator=(const Point &point);
 
@@ -41,8 +41,8 @@ public:
         Point withValue(float value) const;
         
         bool haveDuration() const;
-        size_t getDuration() const;
-        Point withDuration(size_t duration) const;
+        int getDuration() const;
+        Point withDuration(int duration) const;
         
         bool haveLabel() const;
         QString getLabel() const;
@@ -64,7 +64,7 @@ public:
         bool m_haveValue;
         float m_value;
         bool m_haveDuration;
-        size_t m_duration;
+        int m_duration;
         bool m_haveLabel;
         QString m_label;
         bool m_haveLevel;

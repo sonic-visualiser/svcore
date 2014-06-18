@@ -25,8 +25,8 @@
 #include <iostream>
 
 WavFileWriter::WavFileWriter(QString path,
-			     size_t sampleRate,
-                             size_t channels,
+			     int sampleRate,
+                             int channels,
                              FileWriteMode mode) :
     m_path(path),
     m_sampleRate(sampleRate),
@@ -120,7 +120,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
         ownSelection = true;
     }
 
-    size_t bs = 2048;
+    int bs = 2048;
     float *ub = new float[bs]; // uninterleaved buffer (one channel)
     float *ib = new float[bs * m_channels]; // interleaved buffer
 
@@ -128,15 +128,15 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 	     selection->getSelections().begin();
 	 i != selection->getSelections().end(); ++i) {
 	
-	size_t f0(i->getStartFrame()), f1(i->getEndFrame());
+	int f0(i->getStartFrame()), f1(i->getEndFrame());
 
-	for (size_t f = f0; f < f1; f += bs) {
+	for (int f = f0; f < f1; f += bs) {
 	    
-	    size_t n = std::min(bs, f1 - f);
+	    int n = std::min(bs, f1 - f);
 
 	    for (int c = 0; c < int(m_channels); ++c) {
 		source->getData(c, f, n, ub);
-		for (size_t i = 0; i < n; ++i) {
+		for (int i = 0; i < n; ++i) {
 		    ib[i * m_channels + c] = ub[i];
 		}
 	    }	    
@@ -159,7 +159,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 }
 	
 bool
-WavFileWriter::writeSamples(float **samples, size_t count)
+WavFileWriter::writeSamples(float **samples, int count)
 {
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
@@ -168,8 +168,8 @@ WavFileWriter::writeSamples(float **samples, size_t count)
     }
 
     float *b = new float[count * m_channels];
-    for (size_t i = 0; i < count; ++i) {
-        for (size_t c = 0; c < m_channels; ++c) {
+    for (int i = 0; i < int(count); ++i) {
+        for (int c = 0; c < int(m_channels); ++c) {
             b[i * m_channels + c] = samples[c][i];
         }
     }
@@ -178,7 +178,7 @@ WavFileWriter::writeSamples(float **samples, size_t count)
 
     delete[] b;
 
-    if (written < count) {
+    if (written < int(count)) {
         m_error = QString("Only wrote %1 of %2 frames")
             .arg(written).arg(count);
     }

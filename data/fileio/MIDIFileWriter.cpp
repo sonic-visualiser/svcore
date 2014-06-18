@@ -344,8 +344,8 @@ MIDIFileWriter::convert()
 
     for (NoteList::const_iterator i = notes.begin(); i != notes.end(); ++i) {
 
-        size_t frame = i->start;
-        size_t duration = i->duration;
+        int frame = i->start;
+        int duration = i->duration;
         int pitch = i->midiPitch;
         int velocity = i->velocity;
 
