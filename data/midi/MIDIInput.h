@@ -36,7 +36,7 @@ public:
     bool isOK() const { return m_rtmidi != 0; }
 
     bool isEmpty() const { return getEventsAvailable() == 0; }
-    size_t getEventsAvailable() const { return m_buffer.getReadSpace(); }
+    int getEventsAvailable() const { return m_buffer.getReadSpace(); }
     MIDIEvent readEvent();
 
 signals:

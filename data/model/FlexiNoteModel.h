@@ -43,14 +43,14 @@ struct FlexiNote
 {
 public:
     FlexiNote(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
-    FlexiNote(long _frame, float _value, size_t _duration, float _level, QString _label) :
+    FlexiNote(long _frame, float _value, int _duration, float _level, QString _label) :
 	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
 
     int getDimensions() const { return 3; }
 
     long frame;
     float value;
-    size_t duration;
+    int duration;
     float level;
     QString label;
 
@@ -66,7 +66,7 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, int sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -102,7 +102,7 @@ class FlexiNoteModel : public IntervalModel<FlexiNote>, public NoteExportable
     Q_OBJECT
     
 public:
-    FlexiNoteModel(size_t sampleRate, size_t resolution,
+    FlexiNoteModel(int sampleRate, int resolution,
 	      bool notifyOnAdd = true) :
 	IntervalModel<FlexiNote>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
@@ -110,7 +110,7 @@ public:
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    FlexiNoteModel(size_t sampleRate, size_t resolution,
+    FlexiNoteModel(int sampleRate, int resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
 	IntervalModel<FlexiNote>(sampleRate, resolution,
@@ -228,15 +228,15 @@ public:
 
     NoteList getNotes() const 
     {
-        return getNotes(getStartFrame(), getEndFrame());
+        return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotes(size_t startFrame, size_t endFrame) const 
+    NoteList getNotesWithin(int startFrame, int endFrame) const 
     {    
     	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
         for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
-    	    size_t duration = pli->duration;
+    	    int duration = pli->duration;
             if (duration == 0 || duration == 1) {
                 duration = getSampleRate() / 20;
             }

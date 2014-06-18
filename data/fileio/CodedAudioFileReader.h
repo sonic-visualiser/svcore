@@ -38,10 +38,10 @@ public:
         CacheInMemory
     };
 
-    virtual void getInterleavedFrames(size_t start, size_t count,
+    virtual void getInterleavedFrames(int start, int count,
 				      SampleBlock &frames) const;
 
-    virtual size_t getNativeRate() const { return m_fileRate; }
+    virtual int getNativeRate() const { return m_fileRate; }
 
     /// Intermediate cache means all CodedAudioFileReaders are quickly seekable
     virtual bool isQuicklySeekable() const { return true; }
@@ -50,15 +50,15 @@ signals:
     void progress(int);
 
 protected:
-    CodedAudioFileReader(CacheMode cacheMode,
-                         size_t targetRate,
+    CodedAudioFileReader(CacheMode cacheMode, 
+                         int targetRate,
                          bool normalised);
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
     // may throw InsufficientDiscSpace:
-    void addSamplesToDecodeCache(float **samples, size_t nframes);
-    void addSamplesToDecodeCache(float *samplesInterleaved, size_t nframes);
+    void addSamplesToDecodeCache(float **samples, int nframes);
+    void addSamplesToDecodeCache(float *samplesInterleaved, int nframes);
     void addSamplesToDecodeCache(const SampleBlock &interleaved);
 
     // may throw InsufficientDiscSpace:
@@ -70,9 +70,9 @@ protected:
     void endSerialised();
 
 private:
-    void pushBuffer(float *interleaved, size_t sz, bool final);
-    void pushBufferResampling(float *interleaved, size_t sz, float ratio, bool final);
-    void pushBufferNonResampling(float *interleaved, size_t sz);
+    void pushBuffer(float *interleaved, int sz, bool final);
+    void pushBufferResampling(float *interleaved, int sz, float ratio, bool final);
+    void pushBufferNonResampling(float *interleaved, int sz);
 
 protected:
     QMutex m_cacheMutex;
@@ -81,18 +81,18 @@ protected:
     mutable QReadWriteLock m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;
-    size_t m_fileRate;
+    int m_fileRate;
 
     QString m_cacheFileName;
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    size_t m_cacheWriteBufferIndex;
-    size_t m_cacheWriteBufferSize; // frames
+    int m_cacheWriteBufferIndex;
+    int m_cacheWriteBufferSize; // frames
 
     Resampler *m_resampler;
     float *m_resampleBuffer;
-    size_t m_fileFrameCount;
+    int m_fileFrameCount;
 
     bool m_normalised;
     float m_max;

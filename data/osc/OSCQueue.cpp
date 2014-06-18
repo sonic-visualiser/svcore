@@ -142,7 +142,7 @@ OSCQueue::getOSCURL() const
     return url;
 }
 
-size_t
+int
 OSCQueue::getMessagesAvailable() const
 {
     return m_buffer.getReadSpace();

@@ -28,31 +28,31 @@ public:
     FFTFileCacheReader(FFTFileCacheWriter *);
     ~FFTFileCacheReader();
 
-    size_t getWidth() const;
-    size_t getHeight() const;
+    int getWidth() const;
+    int getHeight() const;
 	
-    float getMagnitudeAt(size_t x, size_t y) const;
-    float getNormalizedMagnitudeAt(size_t x, size_t y) const;
-    float getMaximumMagnitudeAt(size_t x) const;
-    float getPhaseAt(size_t x, size_t y) const;
+    float getMagnitudeAt(int x, int y) const;
+    float getNormalizedMagnitudeAt(int x, int y) const;
+    float getMaximumMagnitudeAt(int x) const;
+    float getPhaseAt(int x, int y) const;
 
-    void getValuesAt(size_t x, size_t y, float &real, float &imag) const;
-    void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const;
+    void getValuesAt(int x, int y, float &real, float &imag) const;
+    void getMagnitudesAt(int x, float *values, int minbin, int count, int step) const;
 
-    bool haveSetColumnAt(size_t x) const;
+    bool haveSetColumnAt(int x) const;
 
-    static size_t getCacheSize(size_t width, size_t height,
+    static int getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
     FFTCache::StorageType getStorageType() const { return m_storageType; }
 
 protected:
     mutable char *m_readbuf;
-    mutable size_t m_readbufCol;
-    mutable size_t m_readbufWidth;
+    mutable int m_readbufCol;
+    mutable int m_readbufWidth;
     mutable bool m_readbufGood;
 
-    float getFromReadBufStandard(size_t x, size_t y) const {
+    float getFromReadBufStandard(int x, int y) const {
         float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
@@ -65,7 +65,7 @@ protected:
         }
     }
 
-    float getFromReadBufCompactUnsigned(size_t x, size_t y) const {
+    float getFromReadBufCompactUnsigned(int x, int y) const {
         float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
@@ -78,7 +78,7 @@ protected:
         }
     }
 
-    float getFromReadBufCompactSigned(size_t x, size_t y) const {
+    float getFromReadBufCompactSigned(int x, int y) const {
         float v;
         if (m_readbuf &&
             (m_readbufCol == x || (m_readbufWidth > 1 && m_readbufCol+1 == x))) {
@@ -91,10 +91,10 @@ protected:
         }
     }
 
-    void populateReadBuf(size_t x) const;
+    void populateReadBuf(int x) const;
 
-    float getNormalizationFactor(size_t col) const {
-        size_t h = m_mfc->getHeight();
+    float getNormalizationFactor(int col) const {
+        int h = m_mfc->getHeight();
         if (h < m_factorSize) return 0;
         if (m_storageType != FFTCache::Compact) {
             return getFromReadBufStandard(col, h - 1);
@@ -108,7 +108,7 @@ protected:
                   (m_readbufWidth > 1 && m_readbufCol+1 == col))) {
                 populateReadBuf(col);
             }
-            size_t ix = (col - m_readbufCol) * m_mfc->getHeight() + h;
+            int ix = (col - m_readbufCol) * m_mfc->getHeight() + h;
             factor.u[0] = ((uint16_t *)m_readbuf)[ix - 2];
             factor.u[1] = ((uint16_t *)m_readbuf)[ix - 1];
             return factor.f;
@@ -116,7 +116,7 @@ protected:
     }
  
     FFTCache::StorageType m_storageType;
-    size_t m_factorSize;
+    int m_factorSize;
     MatrixFile *m_mfc;
 };
 

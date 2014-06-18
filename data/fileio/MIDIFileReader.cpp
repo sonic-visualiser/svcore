@@ -57,7 +57,7 @@ using namespace MIDIConstants;
 
 MIDIFileReader::MIDIFileReader(QString path,
                                MIDIFileImportPreferenceAcquirer *acquirer,
-			       size_t mainModelSampleRate) :
+			       int mainModelSampleRate) :
     m_smpte(false),
     m_timingDivision(0),
     m_fps(0),
@@ -896,7 +896,7 @@ MIDIFileReader::load() const
 
     if (tracksToLoad.empty()) return 0;
 
-    size_t n = tracksToLoad.size(), count = 0;
+    int n = tracksToLoad.size(), count = 0;
     Model *model = 0;
 
     for (std::set<unsigned int>::iterator i = tracksToLoad.begin();
@@ -943,10 +943,9 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
     const MIDITrack &track = m_midiComposition.find(trackToLoad)->second;
 
-    size_t totalEvents = track.size();
-    size_t count = 0;
+    int totalEvents = track.size();
+    int count = 0;
 
-    bool minorKey = false;
     bool sharpKey = true;
 
     for (MIDITrack::const_iterator i = track.begin(); i != track.end(); ++i) {
@@ -968,7 +967,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 	    switch((*i)->getMetaEventCode()) {
 
 	    case MIDI_KEY_SIGNATURE:
-		minorKey = (int((*i)->getMetaMessage()[1]) != 0);
+		// minorKey = (int((*i)->getMetaMessage()[1]) != 0);
 		sharpKey = (int((*i)->getMetaMessage()[0]) >= 0);
 		break;
 

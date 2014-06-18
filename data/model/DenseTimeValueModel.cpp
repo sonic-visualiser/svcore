@@ -29,32 +29,32 @@ DenseTimeValueModel::~DenseTimeValueModel()
 }
 	
 QString
-DenseTimeValueModel::toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const
+DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
 {
-    size_t ch = getChannelCount();
+    int ch = getChannelCount();
 
     cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
 
     if (f1 <= f0) return "";
 
     float **all = new float *[ch];
-    for (size_t c = 0; c < ch; ++c) {
+    for (int c = 0; c < ch; ++c) {
         all[c] = new float[f1 - f0];
     }
 
-    size_t n = getData(0, ch - 1, f0, f1 - f0, all);
+    int n = getData(0, ch - 1, f0, f1 - f0, all);
 
     QStringList list;
-    for (size_t i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
         QStringList parts;
         parts << QString("%1").arg(f0 + i);
-        for (size_t c = 0; c < ch; ++c) {
+        for (int c = 0; c < ch; ++c) {
             parts << QString("%1").arg(all[c][i]);
         }
         list << parts.join(delimiter);
     }
 
-    for (size_t c = 0; c < ch; ++c) {
+    for (int c = 0; c < ch; ++c) {
         delete[] all[c];
     }
     delete[] all;

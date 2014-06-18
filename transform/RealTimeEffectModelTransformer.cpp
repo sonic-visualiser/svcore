@@ -82,7 +82,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (m_outputNo == -1) {
 
-        size_t outputChannels = m_plugin->getAudioOutputCount();
+        int outputChannels = m_plugin->getAudioOutputCount();
         if (outputChannels > input->getChannelCount()) {
             outputChannels = input->getChannelCount();
         }
@@ -137,8 +137,8 @@ RealTimeEffectModelTransformer::run()
 
     if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;
 
-    size_t sampleRate = input->getSampleRate();
-    size_t channelCount = input->getChannelCount();
+    int sampleRate = input->getSampleRate();
+    int channelCount = input->getChannelCount();
     if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
     long blockSize = m_plugin->getBufferSize();
@@ -197,7 +197,7 @@ RealTimeEffectModelTransformer::run()
                     inbufs[0][got++] = 0.0;
                 }          
             }
-            for (size_t ch = 1; ch < m_plugin->getAudioInputCount(); ++ch) {
+            for (int ch = 1; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
                 for (long i = 0; i < blockSize; ++i) {
                     inbufs[ch][i] = inbufs[0][i];
                 }
@@ -208,13 +208,13 @@ RealTimeEffectModelTransformer::run()
                                      blockFrame, blockSize,
                                      inbufs);
                 while (got < blockSize) {
-                    for (size_t ch = 0; ch < channelCount; ++ch) {
+                    for (int ch = 0; ch < channelCount; ++ch) {
                         inbufs[ch][got] = 0.0;
                     }
                     ++got;
                 }
             }
-            for (size_t ch = channelCount; ch < m_plugin->getAudioInputCount(); ++ch) {
+            for (int ch = channelCount; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
                 for (long i = 0; i < blockSize; ++i) {
                     inbufs[ch][i] = inbufs[ch % channelCount][i];
                 }
@@ -224,9 +224,9 @@ RealTimeEffectModelTransformer::run()
 /*
         cerr << "Input for plugin: " << m_plugin->getAudioInputCount() << " channels "<< endl;
 
-        for (size_t ch = 0; ch < m_plugin->getAudioInputCount(); ++ch) {
+        for (int ch = 0; ch < m_plugin->getAudioInputCount(); ++ch) {
             cerr << "Input channel " << ch << endl;
-            for (size_t i = 0; i < 100; ++i) {
+            for (int i = 0; i < 100; ++i) {
                 cerr << inbufs[ch][i] << " ";
                 if (isnan(inbufs[ch][i])) {
                     cerr << "\n\nWARNING: NaN in audio input" << endl;
@@ -263,7 +263,7 @@ RealTimeEffectModelTransformer::run()
                     long offset = latency - blockFrame;
                     long count = blockSize - offset;
                     float **tmp = new float *[channelCount];
-                    for (size_t c = 0; c < channelCount; ++c) {
+                    for (int c = 0; c < channelCount; ++c) {
                         tmp[c] = outbufs[c] + offset;
                     }
                     wwfm->addSamples(tmp, count);

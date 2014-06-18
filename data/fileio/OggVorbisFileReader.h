@@ -42,7 +42,7 @@ public:
     OggVorbisFileReader(FileSource source,
                         DecodeMode decodeMode,
                         CacheMode cacheMode,
-                        size_t targetRate = 0,
+                        int targetRate = 0,
                         bool normalised = false,
                         ProgressReporter *reporter = 0);
     virtual ~OggVorbisFileReader();
@@ -79,8 +79,8 @@ protected:
     OGGZ *m_oggz;
     FishSound *m_fishSound;
     ProgressReporter *m_reporter;
-    size_t m_fileSize;
-    size_t m_bytesRead;
+    int m_fileSize;
+    int m_bytesRead;
     bool m_commentsRead;
     bool m_cancelled;
     int m_completion;

@@ -37,8 +37,8 @@ AlignmentModel::AlignmentModel(Model *reference,
         connect(m_rawPath, SIGNAL(modelChanged()),
                 this, SLOT(pathChanged()));
 
-        connect(m_rawPath, SIGNAL(modelChanged(size_t, size_t)),
-                this, SLOT(pathChanged(size_t, size_t)));
+        connect(m_rawPath, SIGNAL(modelChanged(int, int)),
+                this, SLOT(pathChanged(int, int)));
         
         connect(m_rawPath, SIGNAL(completionChanged()),
                 this, SLOT(pathCompletionChanged()));
@@ -74,23 +74,23 @@ AlignmentModel::isOK() const
     else return true;
 }
 
-size_t
+int
 AlignmentModel::getStartFrame() const
 {
-    size_t a = m_reference->getStartFrame();
-    size_t b = m_aligned->getStartFrame();
+    int a = m_reference->getStartFrame();
+    int b = m_aligned->getStartFrame();
     return std::min(a, b);
 }
 
-size_t
+int
 AlignmentModel::getEndFrame() const
 {
-    size_t a = m_reference->getEndFrame();
-    size_t b = m_aligned->getEndFrame();
+    int a = m_reference->getEndFrame();
+    int b = m_aligned->getEndFrame();
     return std::max(a, b);
 }
 
-size_t
+int
 AlignmentModel::getSampleRate() const
 {
     return m_reference->getSampleRate();
@@ -137,8 +137,8 @@ AlignmentModel::getAlignedModel() const
     return m_aligned;
 }
 
-size_t
-AlignmentModel::toReference(size_t frame) const
+int
+AlignmentModel::toReference(int frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
     SVDEBUG << "AlignmentModel::toReference(" << frame << ")" << endl;
@@ -150,8 +150,8 @@ AlignmentModel::toReference(size_t frame) const
     return align(m_path, frame);
 }
 
-size_t
-AlignmentModel::fromReference(size_t frame) const
+int
+AlignmentModel::fromReference(int frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
     SVDEBUG << "AlignmentModel::fromReference(" << frame << ")" << endl;
@@ -175,7 +175,7 @@ AlignmentModel::pathChanged()
 }
 
 void
-AlignmentModel::pathChanged(size_t, size_t)
+AlignmentModel::pathChanged(int, int)
 {
     if (!m_pathComplete) return;
     constructPath();
@@ -277,8 +277,8 @@ AlignmentModel::constructReversePath() const
 #endif
 }
 
-size_t
-AlignmentModel::align(PathModel *path, size_t frame) const
+int
+AlignmentModel::align(PathModel *path, int frame) const
 {
     if (!path) return frame;
 
@@ -330,7 +330,7 @@ AlignmentModel::align(PathModel *path, size_t frame) const
 
     if (foundMapFrame < 0) return 0;
 
-    size_t resultFrame = foundMapFrame;
+    int resultFrame = foundMapFrame;
 
     if (followingFrame != foundFrame && long(frame) > foundFrame) {
         float interp =

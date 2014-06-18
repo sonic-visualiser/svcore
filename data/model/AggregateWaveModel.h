@@ -44,40 +44,40 @@ public:
 
     QString getTypeName() const { return tr("Aggregate Wave"); }
 
-    size_t getComponentCount() const;
-    ModelChannelSpec getComponent(size_t c) const;
+    int getComponentCount() const;
+    ModelChannelSpec getComponent(int c) const;
 
     const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
-    size_t getFrameCount() const;
-    size_t getChannelCount() const;
-    size_t getSampleRate() const;
+    int getFrameCount() const;
+    int getChannelCount() const;
+    int getSampleRate() const;
 
     virtual Model *clone() const;
 
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual size_t getStartFrame() const { return 0; }
-    virtual size_t getEndFrame() const { return getFrameCount(); }
+    virtual int getStartFrame() const { return 0; }
+    virtual int getEndFrame() const { return getFrameCount(); }
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            float *buffer) const;
 
-    virtual size_t getData(int channel, size_t start, size_t count,
+    virtual int getData(int channel, int start, int count,
                            double *buffer) const;
 
-    virtual size_t getData(size_t fromchannel, size_t tochannel,
-                           size_t start, size_t count,
+    virtual int getData(int fromchannel, int tochannel,
+                           int start, int count,
                            float **buffer) const;
 
-    virtual size_t getSummaryBlockSize(size_t desired) const;
+    virtual int getSummaryBlockSize(int desired) const;
 
-    virtual void getSummaries(size_t channel, size_t start, size_t count,
+    virtual void getSummaries(int channel, int start, int count,
                               RangeBlock &ranges,
-                              size_t &blockSize) const;
+                              int &blockSize) const;
 
-    virtual Range getSummary(size_t channel, size_t start, size_t count) const;
+    virtual Range getSummary(int channel, int start, int count) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
@@ -85,12 +85,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChanged(size_t, size_t);
+    void modelChanged(int, int);
     void completionChanged();
 
 protected slots:
     void componentModelChanged();
-    void componentModelChanged(size_t, size_t);
+    void componentModelChanged(int, int);
     void componentModelCompletionChanged();
 
 protected:

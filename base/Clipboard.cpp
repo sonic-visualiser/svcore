@@ -44,7 +44,7 @@ Clipboard::Point::Point(long frame, float value, QString label) :
 {
 }
 
-Clipboard::Point::Point(long frame, float value, size_t duration, QString label) :
+Clipboard::Point::Point(long frame, float value, int duration, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(true),
@@ -60,7 +60,7 @@ Clipboard::Point::Point(long frame, float value, size_t duration, QString label)
 {
 }
 
-Clipboard::Point::Point(long frame, float value, size_t duration, float level, QString label) :
+Clipboard::Point::Point(long frame, float value, int duration, float level, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(true),
@@ -159,14 +159,14 @@ Clipboard::Point::haveDuration() const
     return m_haveDuration;
 }
 
-size_t
+int
 Clipboard::Point::getDuration() const
 {
     return m_duration;
 }
 
 Clipboard::Point
-Clipboard::Point::withDuration(size_t duration) const
+Clipboard::Point::withDuration(int duration) const
 {
     Point p(*this);
     p.m_haveDuration = true;

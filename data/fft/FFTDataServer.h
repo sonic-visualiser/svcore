@@ -43,24 +43,24 @@ public:
     static FFTDataServer *getInstance(const DenseTimeValueModel *model,
                                       int channel,
                                       WindowType windowType,
-                                      size_t windowSize,
-                                      size_t windowIncrement,
-                                      size_t fftSize,
+                                      int windowSize,
+                                      int windowIncrement,
+                                      int fftSize,
                                       bool polar,
                                       StorageAdviser::Criteria criteria =
                                           StorageAdviser::NoCriteria,
-                                      size_t fillFromColumn = 0);
+                                      int fillFromColumn = 0);
 
     static FFTDataServer *getFuzzyInstance(const DenseTimeValueModel *model,
                                            int channel,
                                            WindowType windowType,
-                                           size_t windowSize,
-                                           size_t windowIncrement,
-                                           size_t fftSize,
+                                           int windowSize,
+                                           int windowIncrement,
+                                           int fftSize,
                                            bool polar,
                                            StorageAdviser::Criteria criteria =
                                                StorageAdviser::NoCriteria,
-                                           size_t fillFromColumn = 0);
+                                           int fillFromColumn = 0);
 
     static void claimInstance(FFTDataServer *);
     static void releaseInstance(FFTDataServer *);
@@ -70,25 +70,25 @@ public:
     const DenseTimeValueModel *getModel() const { return m_model; }
     int        getChannel() const { return m_channel; }
     WindowType getWindowType() const { return m_windower.getType(); }
-    size_t     getWindowSize() const { return m_windowSize; }
-    size_t     getWindowIncrement() const { return m_windowIncrement; }
-    size_t     getFFTSize() const { return m_fftSize; }
+    int     getWindowSize() const { return m_windowSize; }
+    int     getWindowIncrement() const { return m_windowIncrement; }
+    int     getFFTSize() const { return m_fftSize; }
     bool       getPolar() const { return m_polar; }
 
-    size_t     getWidth() const  { return m_width;  }
-    size_t     getHeight() const { return m_height; }
+    int     getWidth() const  { return m_width;  }
+    int     getHeight() const { return m_height; }
 
-    float      getMagnitudeAt(size_t x, size_t y);
-    float      getNormalizedMagnitudeAt(size_t x, size_t y);
-    float      getMaximumMagnitudeAt(size_t x);
-    float      getPhaseAt(size_t x, size_t y);
-    void       getValuesAt(size_t x, size_t y, float &real, float &imaginary);
-    bool       isColumnReady(size_t x);
+    float      getMagnitudeAt(int x, int y);
+    float      getNormalizedMagnitudeAt(int x, int y);
+    float      getMaximumMagnitudeAt(int x);
+    float      getPhaseAt(int x, int y);
+    void       getValuesAt(int x, int y, float &real, float &imaginary);
+    bool       isColumnReady(int x);
 
-    bool       getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
-    bool       getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
-    bool       getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0, size_t step = 1);
-    bool       getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin = 0, size_t count = 0, size_t step = 1);
+    bool       getMagnitudesAt(int x, float *values, int minbin = 0, int count = 0, int step = 1);
+    bool       getNormalizedMagnitudesAt(int x, float *values, int minbin = 0, int count = 0, int step = 1);
+    bool       getPhasesAt(int x, float *values, int minbin = 0, int count = 0, int step = 1);
+    bool       getValuesAt(int x, float *reals, float *imaginaries, int minbin = 0, int count = 0, int step = 1);
 
     void       suspend();
     void       suspendWrites();
@@ -96,31 +96,31 @@ public:
 
     // Convenience functions:
 
-    bool isLocalPeak(size_t x, size_t y) {
+    bool isLocalPeak(int x, int y) {
         float mag = getMagnitudeAt(x, y);
         if (y > 0 && mag < getMagnitudeAt(x, y - 1)) return false;
         if (y < getHeight()-1 && mag < getMagnitudeAt(x, y + 1)) return false;
         return true;
     }
-    bool isOverThreshold(size_t x, size_t y, float threshold) {
+    bool isOverThreshold(int x, int y, float threshold) {
         return getMagnitudeAt(x, y) > threshold;
     }
 
     QString getError() const;
-    size_t getFillCompletion() const;
-    size_t getFillExtent() const;
+    int getFillCompletion() const;
+    int getFillExtent() const;
 
 private:
     FFTDataServer(QString fileBaseName,
                   const DenseTimeValueModel *model,
                   int channel,
                   WindowType windowType,
-                  size_t windowSize,
-                  size_t windowIncrement,
-                  size_t fftSize,
+                  int windowSize,
+                  int windowIncrement,
+                  int fftSize,
                   bool polar,
                   StorageAdviser::Criteria criteria,
-                  size_t fillFromColumn = 0);
+                  int fillFromColumn = 0);
 
     virtual ~FFTDataServer();
 
@@ -135,16 +135,16 @@ private:
 
     Window<fftsample> m_windower;
 
-    size_t m_windowSize;
-    size_t m_windowIncrement;
-    size_t m_fftSize;
+    int m_windowSize;
+    int m_windowIncrement;
+    int m_fftSize;
     bool m_polar;
 
-    size_t m_width;
-    size_t m_height;
-    size_t m_cacheWidth;
-    size_t m_cacheWidthPower;
-    size_t m_cacheWidthMask;
+    int m_width;
+    int m_height;
+    int m_cacheWidth;
+    int m_cacheWidthPower;
+    int m_cacheWidthMask;
 
     struct CacheBlock {
         FFTMemoryCache *memoryCache;
@@ -167,7 +167,7 @@ private:
     QReadWriteLock m_cacheVectorLock; // locks cache lookup, not use
     QMutex m_cacheCreationMutex; // solely to serialise makeCache() calls
 
-    FFTCacheReader *getCacheReader(size_t x, size_t &col) {
+    FFTCacheReader *getCacheReader(int x, int &col) {
         Profiler profiler("FFTDataServer::getCacheReader");
         col = x & m_cacheWidthMask;
         int c = x >> m_cacheWidthPower;
@@ -200,7 +200,7 @@ private:
         return getCacheReader(x, col);
     }
     
-    FFTCacheWriter *getCacheWriter(size_t x, size_t &col) {
+    FFTCacheWriter *getCacheWriter(int x, int &col) {
         Profiler profiler("FFTDataServer::getCacheWriter");
         col = x & m_cacheWidthMask;
         int c = x >> m_cacheWidthPower;
@@ -218,7 +218,7 @@ private:
         return getCacheWriter(x, col);
     }
 
-    bool haveCache(size_t x) {
+    bool haveCache(int x) {
         int c = x >> m_cacheWidthPower;
         return (m_caches.at(c) != 0);
     }
@@ -228,7 +228,7 @@ private:
     
     StorageAdviser::Criteria m_criteria;
 
-    void getStorageAdvice(size_t w, size_t h, bool &memory, bool &compact);
+    void getStorageAdvice(int w, int h, bool &memory, bool &compact);
         
     QMutex m_fftBuffersLock;
     QWaitCondition m_condition;
@@ -241,20 +241,20 @@ private:
     class FillThread : public Thread
     {
     public:
-        FillThread(FFTDataServer &server, size_t fillFromColumn) :
+        FillThread(FFTDataServer &server, int fillFromColumn) :
             m_server(server), m_extent(0), m_completion(0),
             m_fillFrom(fillFromColumn) { }
 
-        size_t getExtent() const { return m_extent; }
-        size_t getCompletion() const { return m_completion ? m_completion : 1; }
+        int getExtent() const { return m_extent; }
+        int getCompletion() const { return m_completion ? m_completion : 1; }
         QString getError() const { return m_error; }
         virtual void run();
 
     protected:
         FFTDataServer &m_server;
-        size_t m_extent;
-        size_t m_completion;
-        size_t m_fillFrom;
+        int m_extent;
+        int m_completion;
+        int m_fillFrom;
         QString m_error;
     };
 
@@ -264,16 +264,16 @@ private:
     QString m_error;
 
     void deleteProcessingData();
-    void fillColumn(size_t x);
+    void fillColumn(int x);
     void fillComplete();
 
     QString generateFileBasename() const;
     static QString generateFileBasename(const DenseTimeValueModel *model,
                                         int channel,
                                         WindowType windowType,
-                                        size_t windowSize,
-                                        size_t windowIncrement,
-                                        size_t fftSize,
+                                        int windowSize,
+                                        int windowIncrement,
+                                        int fftSize,
                                         bool polar);
 
     typedef std::pair<FFTDataServer *, int> ServerCountPair;

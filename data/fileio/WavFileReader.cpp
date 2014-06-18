@@ -89,7 +89,7 @@ WavFileReader::updateFrameCount()
 {
     QMutexLocker locker(&m_mutex);
 
-    size_t prevCount = m_fileInfo.frames;
+    int prevCount = m_fileInfo.frames;
 
     if (m_file) {
         sf_close(m_file);
@@ -123,7 +123,7 @@ WavFileReader::updateDone()
 }
 
 void
-WavFileReader::getInterleavedFrames(size_t start, size_t count,
+WavFileReader::getInterleavedFrames(int start, int count,
 				    SampleBlock &results) const
 {
     if (count == 0) return;
@@ -173,7 +173,7 @@ WavFileReader::getInterleavedFrames(size_t start, size_t count,
 	m_lastCount = readCount;
     }
 
-    for (size_t i = 0; i < count * m_fileInfo.channels; ++i) {
+    for (int i = 0; i < count * m_fileInfo.channels; ++i) {
         if (i >= m_bufsiz) {
             cerr << "INTERNAL ERROR: WavFileReader::getInterleavedFrames: " << i << " >= " << m_bufsiz << endl;
         }

@@ -23,13 +23,13 @@ class FFTCacheWriter
 public:
     virtual ~FFTCacheWriter() { }
 
-    virtual size_t getWidth() const = 0;
-    virtual size_t getHeight() const = 0;
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
 
-    virtual void setColumnAt(size_t x, float *mags, float *phases, float factor) = 0;
-    virtual void setColumnAt(size_t x, float *reals, float *imags) = 0;
+    virtual void setColumnAt(int x, float *mags, float *phases, float factor) = 0;
+    virtual void setColumnAt(int x, float *reals, float *imags) = 0;
 
-    virtual bool haveSetColumnAt(size_t x) const = 0;
+    virtual bool haveSetColumnAt(int x) const = 0;
 
     virtual void allColumnsWritten() = 0; // notify cache to close
 

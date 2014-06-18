@@ -89,8 +89,6 @@ RealTime::fromXsdDuration(std::string xsdd)
 
     bool negative = false, afterT = false;
 
-    int valstart = 0;
-
     while (i < len) {
 
         if (s[i] == '-') {
@@ -103,7 +101,6 @@ RealTime::fromXsdDuration(std::string xsdd)
         char *eptr = 0;
 
         if (isdigit(s[i]) || s[i] == '.') {
-            valstart = i;
             value = strtod(&s[i], &eptr);
             i = eptr - s;
         }
@@ -151,7 +148,11 @@ RealTime::fromXsdDuration(std::string xsdd)
 
     t = t + fromSeconds(second);
 
-    return t;
+    if (negative) {
+        return -t;
+    } else {
+        return t;
+    }
 }
 
 double

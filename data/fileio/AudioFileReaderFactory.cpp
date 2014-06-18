@@ -59,7 +59,7 @@ AudioFileReaderFactory::getKnownExtensions()
 
 AudioFileReader *
 AudioFileReaderFactory::createReader(FileSource source, 
-                                     size_t targetRate,
+                                     int targetRate,
                                      bool normalised,
                                      ProgressReporter *reporter)
 {
@@ -68,7 +68,7 @@ AudioFileReaderFactory::createReader(FileSource source,
 
 AudioFileReader *
 AudioFileReaderFactory::createThreadingReader(FileSource source, 
-                                              size_t targetRate,
+                                              int targetRate,
                                               bool normalised,
                                               ProgressReporter *reporter)
 {
@@ -77,7 +77,7 @@ AudioFileReaderFactory::createThreadingReader(FileSource source,
 
 AudioFileReader *
 AudioFileReaderFactory::create(FileSource source, 
-                               size_t targetRate, 
+                               int targetRate, 
                                bool normalised,
                                bool threading,
                                ProgressReporter *reporter)

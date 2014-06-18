@@ -40,22 +40,22 @@ class Selection
 {
 public:
     Selection();
-    Selection(size_t startFrame, size_t endFrame);
+    Selection(int startFrame, int endFrame);
     Selection(const Selection &);
     Selection &operator=(const Selection &);
     virtual ~Selection();
 
     bool isEmpty() const;
-    size_t getStartFrame() const;
-    size_t getEndFrame() const;
-    bool contains(size_t frame) const;
+    int getStartFrame() const;
+    int getEndFrame() const;
+    bool contains(int frame) const;
 
     bool operator<(const Selection &) const;
     bool operator==(const Selection &) const;
     
 protected:
-    size_t m_startFrame;
-    size_t m_endFrame;
+    int m_startFrame;
+    int m_endFrame;
 };
 
 class MultiSelection : public XmlExportable
@@ -72,7 +72,7 @@ public:
     void removeSelection(const Selection &selection);
     void clearSelections();
 
-    void getExtents(size_t &startFrame, size_t &endFrame) const;
+    void getExtents(int &startFrame, int &endFrame) const;
 
     /**
      * Return the selection that contains a given frame.
@@ -80,7 +80,7 @@ public:
      * selected area, return the next selection after the given frame.
      * Return the empty selection if no appropriate selection is found.
      */
-    Selection getContainingSelection(size_t frame, bool defaultToFollowing) const;
+    Selection getContainingSelection(int frame, bool defaultToFollowing) const;
 
     virtual void toXml(QTextStream &stream, QString indent = "",
                        QString extraAttributes = "") const;

@@ -15,13 +15,13 @@
 
 #include "PowerOfTwoZoomConstraint.h"
 
-size_t
-PowerOfTwoZoomConstraint::getNearestBlockSize(size_t req,
+int
+PowerOfTwoZoomConstraint::getNearestBlockSize(int req,
 					      RoundingDirection dir) const
 {
-    size_t result = 0;
+    int result = 0;
 
-    for (size_t bs = 1; ; bs *= 2) {
+    for (int bs = 1; ; bs *= 2) {
 	if (bs >= req) {
 	    if (dir == RoundNearest) {
 		if (bs - req < req - bs/2) {

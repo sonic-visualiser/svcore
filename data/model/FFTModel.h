@@ -58,54 +58,54 @@ public:
     FFTModel(const DenseTimeValueModel *model,
              int channel,
              WindowType windowType,
-             size_t windowSize,
-             size_t windowIncrement,
-             size_t fftSize,
+             int windowSize,
+             int windowIncrement,
+             int fftSize,
              bool polar,
              StorageAdviser::Criteria criteria = StorageAdviser::NoCriteria,
-             size_t fillFromColumn = 0);
+             int fillFromColumn = 0);
     ~FFTModel();
 
-    inline float getMagnitudeAt(size_t x, size_t y) {
+    inline float getMagnitudeAt(int x, int y) {
         return m_server->getMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    inline float getNormalizedMagnitudeAt(size_t x, size_t y) {
+    inline float getNormalizedMagnitudeAt(int x, int y) {
         return m_server->getNormalizedMagnitudeAt(x << m_xshift, y << m_yshift);
     }
-    inline float getMaximumMagnitudeAt(size_t x) {
+    inline float getMaximumMagnitudeAt(int x) {
         return m_server->getMaximumMagnitudeAt(x << m_xshift);
     }
-    inline float getPhaseAt(size_t x, size_t y) {
+    inline float getPhaseAt(int x, int y) {
         return m_server->getPhaseAt(x << m_xshift, y << m_yshift);
     }
-    inline void getValuesAt(size_t x, size_t y, float &real, float &imaginary) {
+    inline void getValuesAt(int x, int y, float &real, float &imaginary) {
         m_server->getValuesAt(x << m_xshift, y << m_yshift, real, imaginary);
     }
-    inline bool isColumnAvailable(size_t x) const {
+    inline bool isColumnAvailable(int x) const {
         return m_server->isColumnReady(x << m_xshift);
     }
 
-    inline bool getMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) {
         return m_server->getMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    inline bool getNormalizedMagnitudesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getNormalizedMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) {
         return m_server->getNormalizedMagnitudesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    inline bool getPhasesAt(size_t x, float *values, size_t minbin = 0, size_t count = 0) {
+    inline bool getPhasesAt(int x, float *values, int minbin = 0, int count = 0) {
         return m_server->getPhasesAt(x << m_xshift, values, minbin << m_yshift, count, getYRatio());
     }
-    inline bool getValuesAt(size_t x, float *reals, float *imaginaries, size_t minbin = 0, size_t count = 0) {
+    inline bool getValuesAt(int x, float *reals, float *imaginaries, int minbin = 0, int count = 0) {
         return m_server->getValuesAt(x << m_xshift, reals, imaginaries, minbin << m_yshift, count, getYRatio());
     }
 
-    inline size_t getFillExtent() const { return m_server->getFillExtent(); }
+    inline int getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
     //
-    inline virtual size_t getWidth() const {
+    inline virtual int getWidth() const {
         return m_server->getWidth() >> m_xshift;
     }
-    inline virtual size_t getHeight() const {
+    inline virtual int getHeight() const {
         // If there is no y-shift, the server's height (based on its
         // fftsize/2 + 1) is correct.  If there is a shift, then the
         // server is using a larger fft size than we want, so we shift
@@ -114,23 +114,23 @@ public:
         // fftsize/2 + 1).
         return (m_server->getHeight() >> m_yshift) + (m_yshift > 0 ? 1 : 0);
     }
-    virtual float getValueAt(size_t x, size_t y) const {
+    virtual float getValueAt(int x, int y) const {
         return const_cast<FFTModel *>(this)->getMagnitudeAt(x, y);
     }
     virtual bool isOK() const {
         return m_server && m_server->getModel();
     }
-    virtual size_t getStartFrame() const {
+    virtual int getStartFrame() const {
         return 0;
     }
-    virtual size_t getEndFrame() const {
+    virtual int getEndFrame() const {
         return getWidth() * getResolution() + getResolution();
     }
-    virtual size_t getSampleRate() const;
-    virtual size_t getResolution() const {
+    virtual int getSampleRate() const;
+    virtual int getResolution() const {
         return m_server->getWindowIncrement() << m_xshift;
     }
-    virtual size_t getYBinCount() const {
+    virtual int getYBinCount() const {
         return getHeight();
     }
     virtual float getMinimumLevel() const {
@@ -139,8 +139,8 @@ public:
     virtual float getMaximumLevel() const {
         return 1.f; // Can't provide
     }
-    virtual Column getColumn(size_t x) const;
-    virtual QString getBinName(size_t n) const;
+    virtual Column getColumn(int x) const;
+    virtual QString getBinName(int n) const;
 
     virtual bool shouldUseLogValueScale() const {
         return true; // Although obviously it's up to the user...
@@ -151,7 +151,7 @@ public:
      * bin, using phase unwrapping.  This will be completely wrong if
      * the signal is not stable here.
      */
-    virtual bool estimateStableFrequency(size_t x, size_t y, float &frequency);
+    virtual bool estimateStableFrequency(int x, int y, float &frequency);
 
     enum PeakPickType
     {
@@ -160,21 +160,21 @@ public:
         MajorPitchAdaptivePeaks  /// Bigger window for higher frequencies
     };
 
-    typedef std::set<size_t> PeakLocationSet; // bin
-    typedef std::map<size_t, float> PeakSet; // bin -> freq
+    typedef std::set<int> PeakLocationSet; // bin
+    typedef std::map<int, float> PeakSet; // bin -> freq
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
      * ymax is zero, getHeight()-1 will be used.
      */
-    virtual PeakLocationSet getPeaks(PeakPickType type, size_t x,
-                                     size_t ymin = 0, size_t ymax = 0);
+    virtual PeakLocationSet getPeaks(PeakPickType type, int x,
+                                     int ymin = 0, int ymax = 0);
 
     /**
      * Return locations and estimated stable frequencies of peak bins.
      */
-    virtual PeakSet getPeakFrequencies(PeakPickType type, size_t x,
-                                       size_t ymin = 0, size_t ymax = 0);
+    virtual PeakSet getPeakFrequencies(PeakPickType type, int x,
+                                       int ymin = 0, int ymax = 0);
 
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
     virtual QString getError() const { return m_server->getError(); }
@@ -199,15 +199,15 @@ private:
     int m_yshift;
 
     FFTDataServer *getServer(const DenseTimeValueModel *,
-                             int, WindowType, size_t, size_t, size_t,
-                             bool, StorageAdviser::Criteria, size_t);
+                             int, WindowType, int, int, int,
+                             bool, StorageAdviser::Criteria, int);
 
-    size_t getPeakPickWindowSize(PeakPickType type, size_t sampleRate,
-                                 size_t bin, float &percentile) const;
+    int getPeakPickWindowSize(PeakPickType type, int sampleRate,
+                                 int bin, float &percentile) const;
 
-    size_t getYRatio() {
-        size_t ys = m_yshift;
-        size_t r = 1;
+    int getYRatio() {
+        int ys = m_yshift;
+        int r = 1;
         while (ys) { --ys; r <<= 1; }
         return r;
     }

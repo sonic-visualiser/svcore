@@ -2263,5 +2263,5 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 {
 }
 
-#endif __RTMIDI_DUMMY_ONLY__
+#endif /* __RTMIDI_DUMMY_ONLY__ */
 
