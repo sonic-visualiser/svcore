@@ -31,7 +31,7 @@ template <typename PointType>
 class SparseValueModel : public SparseModel<PointType>
 {
 public:
-    SparseValueModel(size_t sampleRate, size_t resolution,
+    SparseValueModel(int sampleRate, int resolution,
 		     bool notifyOnAdd = true) :
 	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
 	m_valueMinimum(0.f),
@@ -39,7 +39,7 @@ public:
         m_haveExtents(false)
     { }
 
-    SparseValueModel(size_t sampleRate, size_t resolution,
+    SparseValueModel(int sampleRate, int resolution,
 		     float valueMinimum, float valueMaximum,
 		     bool notifyOnAdd = true) :
 	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),

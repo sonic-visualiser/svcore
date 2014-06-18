@@ -55,8 +55,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       const std::vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
                                                       AudioPlaySource *source,
-                                                      size_t startFrame,
-                                                      size_t duration,
+                                                      int startFrame,
+                                                      int duration,
                                                       UserConfigurator *configurator)
 {
     ModelTransformer::Input input(0);
@@ -70,7 +70,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     QStringList candidateModelNames;
     QString defaultModelName;
     QMap<QString, Model *> modelMap;
-    for (size_t i = 0; i < candidateInputModels.size(); ++i) {
+    for (int i = 0; i < (int)candidateInputModels.size(); ++i) {
         QString modelName = candidateInputModels[i]->objectName();
         QString origModelName = modelName;
         int dupcount = 1;
@@ -107,9 +107,9 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
-        size_t sampleRate = inputModel->getSampleRate();
-        size_t blockSize = 1024;
-        size_t channels = 1;
+        int sampleRate = inputModel->getSampleRate();
+        int blockSize = 1024;
+        int channels = 1;
         if (source) {
             sampleRate = source->getTargetSampleRate();
             blockSize = source->getTargetBlockSize();

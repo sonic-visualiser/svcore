@@ -42,17 +42,17 @@ public:
         BasicMultirateCompression
     };
 
-    EditableDenseThreeDimensionalModel(size_t sampleRate,
-				       size_t resolution,
-				       size_t yBinCount,
+    EditableDenseThreeDimensionalModel(int sampleRate,
+				       int resolution,
+				       int yBinCount,
                                        CompressionType compression,
 				       bool notifyOnAdd = true);
 
     virtual bool isOK() const;
 
-    virtual size_t getSampleRate() const;
-    virtual size_t getStartFrame() const;
-    virtual size_t getEndFrame() const;
+    virtual int getSampleRate() const;
+    virtual int getStartFrame() const;
+    virtual int getEndFrame() const;
 
     virtual Model *clone() const;
     
@@ -60,32 +60,32 @@ public:
     /**
      * Set the frame offset of the first column.
      */
-    virtual void setStartFrame(size_t);
+    virtual void setStartFrame(int);
 
     /**
      * Return the number of sample frames covered by each set of bins.
      */
-    virtual size_t getResolution() const;
+    virtual int getResolution() const;
 
     /**
      * Set the number of sample frames covered by each set of bins.
      */
-    virtual void setResolution(size_t sz);
+    virtual void setResolution(int sz);
 
     /**
      * Return the number of columns.
      */
-    virtual size_t getWidth() const;
+    virtual int getWidth() const;
 
     /**
      * Return the number of bins in each set of bins.
      */
-    virtual size_t getHeight() const; 
+    virtual int getHeight() const; 
 
     /**
      * Set the number of bins in each set of bins.
      */
-    virtual void setHeight(size_t sz);
+    virtual void setHeight(int sz);
 
     /**
      * Return the minimum value of the value in each bin.
@@ -110,33 +110,33 @@ public:
     /**
      * Return true if there are data available for the given column.
      */
-    virtual bool isColumnAvailable(size_t x) const { return x < getWidth(); }
+    virtual bool isColumnAvailable(int x) const { return x < getWidth(); }
 
     /**
      * Get the set of bin values at the given column.
      */
-    virtual Column getColumn(size_t x) const;
+    virtual Column getColumn(int x) const;
 
     /**
      * Get a single value, from the n'th bin of the given column.
      */
-    virtual float getValueAt(size_t x, size_t n) const;
+    virtual float getValueAt(int x, int n) const;
 
     /**
      * Set the entire set of bin values at the given column.
      */
-    virtual void setColumn(size_t x, const Column &values);
+    virtual void setColumn(int x, const Column &values);
 
     /**
      * Return the name of bin n. This is a single label per bin that
      * does not vary from one column to the next.
      */
-    virtual QString getBinName(size_t n) const;
+    virtual QString getBinName(int n) const;
 
     /**
      * Set the name of bin n.
      */
-    virtual void setBinName(size_t n, QString);
+    virtual void setBinName(int n, QString);
 
     /**
      * Set the names of all bins.
@@ -156,7 +156,7 @@ public:
      * value which does not vary from one column to the next. This is
      * only meaningful if hasBinValues() returns true.
      */
-    virtual float getBinValue(size_t n) const;
+    virtual float getBinValue(int n) const;
 
     /**
      * Set the values of all bins (separate from their labels). These
@@ -190,7 +190,7 @@ public:
     QString getTypeName() const { return tr("Editable Dense 3-D"); }
 
     virtual QString toDelimitedDataString(QString delimiter) const;
-    virtual QString toDelimitedDataString(QString delimiter, size_t f0, size_t f1) const;
+    virtual QString toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
@@ -209,17 +209,17 @@ protected:
     // value).  If m_trunc[x] is 0 then the whole of column x is
     // stored.
     std::vector<signed char> m_trunc;
-    void truncateAndStore(size_t index, const Column & values);
-    Column expandAndRetrieve(size_t index) const;
+    void truncateAndStore(int index, const Column & values);
+    Column expandAndRetrieve(int index) const;
 
     std::vector<QString> m_binNames;
     std::vector<float> m_binValues;
     QString m_binValueUnit;
 
-    size_t m_startFrame;
-    size_t m_sampleRate;
-    size_t m_resolution;
-    size_t m_yBinCount;
+    int m_startFrame;
+    int m_sampleRate;
+    int m_resolution;
+    int m_yBinCount;
     CompressionType m_compression;
     float m_minimum;
     float m_maximum;

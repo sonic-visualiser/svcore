@@ -33,7 +33,7 @@
 
 FFTFileCacheWriter::FFTFileCacheWriter(QString fileBase,
                                        FFTCache::StorageType storageType,
-                                       size_t width, size_t height) :
+                                       int width, int height) :
     m_writebuf(0),
     m_fileBase(fileBase),
     m_storageType(storageType),
@@ -62,49 +62,49 @@ FFTFileCacheWriter::getFileBase() const
     return m_fileBase;
 }
 
-size_t
+int
 FFTFileCacheWriter::getWidth() const
 {
     return m_mfc->getWidth();
 }
 
-size_t
+int
 FFTFileCacheWriter::getHeight() const
 {
-    size_t mh = m_mfc->getHeight();
+    int mh = m_mfc->getHeight();
     if (mh > m_factorSize) return (mh - m_factorSize) / 2;
     else return 0;
 }
 
 bool
-FFTFileCacheWriter::haveSetColumnAt(size_t x) const
+FFTFileCacheWriter::haveSetColumnAt(int x) const
 {
     return m_mfc->haveSetColumnAt(x);
 }
 
 void
-FFTFileCacheWriter::setColumnAt(size_t x, float *mags, float *phases, float factor)
+FFTFileCacheWriter::setColumnAt(int x, float *mags, float *phases, float factor)
 {
-    size_t h = getHeight();
+    int h = getHeight();
 
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             ((uint16_t *)m_writebuf)[y * 2] = uint16_t((mags[y] / factor) * 65535.0);
             ((uint16_t *)m_writebuf)[y * 2 + 1] = uint16_t(int16_t((phases[y] * 32767) / M_PI));
         }
         break;
 
     case FFTCache::Rectangular:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             ((float *)m_writebuf)[y * 2] = mags[y] * cosf(phases[y]);
             ((float *)m_writebuf)[y * 2 + 1] = mags[y] * sinf(phases[y]);
         }
         break;
 
     case FFTCache::Polar:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             ((float *)m_writebuf)[y * 2] = mags[y];
             ((float *)m_writebuf)[y * 2 + 1] = phases[y];
         }
@@ -123,20 +123,20 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *mags, float *phases, float fact
 }
 
 void
-FFTFileCacheWriter::setColumnAt(size_t x, float *real, float *imag)
+FFTFileCacheWriter::setColumnAt(int x, float *real, float *imag)
 {
-    size_t h = getHeight();
+    int h = getHeight();
 
     float factor = 0.0f;
 
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             if (mag > factor) factor = mag;
         }
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             float phase = atan2f(imag[y], real[y]);
             ((uint16_t *)m_writebuf)[y * 2] = uint16_t((mag / factor) * 65535.0);
@@ -145,7 +145,7 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *real, float *imag)
         break;
 
     case FFTCache::Rectangular:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             ((float *)m_writebuf)[y * 2] = real[y];
             ((float *)m_writebuf)[y * 2 + 1] = imag[y];
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
@@ -154,7 +154,7 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *real, float *imag)
         break;
 
     case FFTCache::Polar:
-        for (size_t y = 0; y < h; ++y) {
+        for (int y = 0; y < h; ++y) {
             float mag = sqrtf(real[y] * real[y] + imag[y] * imag[y]);
             if (mag > factor) factor = mag;
             ((float *)m_writebuf)[y * 2] = mag;
@@ -175,13 +175,13 @@ FFTFileCacheWriter::setColumnAt(size_t x, float *real, float *imag)
     m_mfc->setColumnAt(x, m_writebuf);
 }
 
-size_t
-FFTFileCacheWriter::getCacheSize(size_t width, size_t height,
+int
+FFTFileCacheWriter::getCacheSize(int width, int height,
                                  FFTCache::StorageType type)
 {
     return (height * 2 + (type == FFTCache::Compact ? 2 : 1)) * width *
         (type == FFTCache::Compact ? sizeof(uint16_t) : sizeof(float)) +
-        2 * sizeof(size_t); // matrix file header size
+        2 * sizeof(int); // matrix file header size
 }
 
 void

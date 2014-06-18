@@ -22,7 +22,7 @@
 //#define DEBUG_FFT_MEMORY_CACHE 1
 
 FFTMemoryCache::FFTMemoryCache(FFTCache::StorageType storageType,
-                               size_t width, size_t height) :
+                               int width, int height) :
     m_width(width),
     m_height(height),
     m_magnitude(0),
@@ -48,7 +48,7 @@ FFTMemoryCache::~FFTMemoryCache()
     cerr << "FFTMemoryCache[" << this << "]::~FFTMemoryCache" << endl;
 #endif
 
-    for (size_t i = 0; i < m_width; ++i) {
+    for (int i = 0; i < m_width; ++i) {
 	if (m_magnitude && m_magnitude[i]) free(m_magnitude[i]);
 	if (m_phase && m_phase[i]) free(m_phase[i]);
 	if (m_fmagnitude && m_fmagnitude[i]) free(m_fmagnitude[i]);
@@ -71,7 +71,7 @@ FFTMemoryCache::initialise()
 {
     Profiler profiler("FFTMemoryCache::initialise");
 
-    size_t width = m_width, height = m_height;
+    int width = m_width, height = m_height;
 
 #ifdef DEBUG_FFT_MEMORY_CACHE
     cerr << "FFTMemoryCache[" << this << "]::initialise(" << width << "x" << height << " = " << width*height << ")" << endl;
@@ -107,7 +107,7 @@ FFTMemoryCache::initialise(uint16_t **&array)
     if (!array) throw std::bad_alloc();
     MUNLOCK(array, m_width * sizeof(uint16_t *));
 
-    for (size_t i = 0; i < m_width; ++i) {
+    for (int i = 0; i < m_width; ++i) {
 	array[i] = (uint16_t *)malloc(m_height * sizeof(uint16_t));
 	if (!array[i]) throw std::bad_alloc();
 	MUNLOCK(array[i], m_height * sizeof(uint16_t));
@@ -121,7 +121,7 @@ FFTMemoryCache::initialise(float **&array)
     if (!array) throw std::bad_alloc();
     MUNLOCK(array, m_width * sizeof(float *));
 
-    for (size_t i = 0; i < m_width; ++i) {
+    for (int i = 0; i < m_width; ++i) {
 	array[i] = (float *)malloc(m_height * sizeof(float));
 	if (!array[i]) throw std::bad_alloc();
 	MUNLOCK(array[i], m_height * sizeof(float));
@@ -129,7 +129,7 @@ FFTMemoryCache::initialise(float **&array)
 }
 
 void
-FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
+FFTMemoryCache::setColumnAt(int x, float *mags, float *phases, float factor)
 {
     Profiler profiler("FFTMemoryCache::setColumnAt: from polar");
 
@@ -137,12 +137,12 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 
     if (m_storageType == FFTCache::Rectangular) {
         Profiler subprof("FFTMemoryCache::setColumnAt: polar to cart");
-        for (size_t y = 0; y < m_height; ++y) {
+        for (int y = 0; y < m_height; ++y) {
             m_freal[x][y] = mags[y] * cosf(phases[y]);
             m_fimag[x][y] = mags[y] * sinf(phases[y]);
         }
     } else {
-        for (size_t y = 0; y < m_height; ++y) {
+        for (int y = 0; y < m_height; ++y) {
             setMagnitudeAt(x, y, mags[y]);
             setPhaseAt(x, y, phases[y]);
         }
@@ -154,7 +154,7 @@ FFTMemoryCache::setColumnAt(size_t x, float *mags, float *phases, float factor)
 }
 
 void
-FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
+FFTMemoryCache::setColumnAt(int x, float *reals, float *imags)
 {
     Profiler profiler("FFTMemoryCache::setColumnAt: from cart");
 
@@ -163,7 +163,7 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     switch (m_storageType) {
 
     case FFTCache::Rectangular:
-        for (size_t y = 0; y < m_height; ++y) {
+        for (int y = 0; y < m_height; ++y) {
             m_freal[x][y] = reals[y];
             m_fimag[x][y] = imags[y];
             float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
@@ -175,7 +175,7 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     case FFTCache::Polar:
     {
         Profiler subprof("FFTMemoryCache::setColumnAt: cart to polar");
-        for (size_t y = 0; y < m_height; ++y) {
+        for (int y = 0; y < m_height; ++y) {
             float mag = sqrtf(reals[y] * reals[y] + imags[y] * imags[y]);
             float phase = atan2f(imags[y], reals[y]);
             reals[y] = mag;
@@ -196,10 +196,10 @@ FFTMemoryCache::setColumnAt(size_t x, float *reals, float *imags)
     }
 }
 
-size_t
-FFTMemoryCache::getCacheSize(size_t width, size_t height, FFTCache::StorageType type)
+int
+FFTMemoryCache::getCacheSize(int width, int height, FFTCache::StorageType type)
 {
-    size_t sz = 0;
+    int sz = 0;
 
     switch (type) {
 

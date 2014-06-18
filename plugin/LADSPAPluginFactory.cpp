@@ -672,13 +672,13 @@ LADSPAPluginFactory::discoverPlugins()
 	QDir pluginDir(*i, PLUGIN_GLOB);
 
 	for (unsigned int j = 0; j < pluginDir.count(); ++j) {
-	    discoverPlugins(QString("%1/%2").arg(*i).arg(pluginDir[j]));
+	    discoverPluginsFrom(QString("%1/%2").arg(*i).arg(pluginDir[j]));
 	}
     }
 }
 
 void
-LADSPAPluginFactory::discoverPlugins(QString soname)
+LADSPAPluginFactory::discoverPluginsFrom(QString soname)
 {
     void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
 

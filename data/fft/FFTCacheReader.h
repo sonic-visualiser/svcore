@@ -24,18 +24,18 @@ class FFTCacheReader
 public:
     virtual ~FFTCacheReader() { }
 
-    virtual size_t getWidth() const = 0;
-    virtual size_t getHeight() const = 0;
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
 	
-    virtual float getMagnitudeAt(size_t x, size_t y) const = 0;
-    virtual float getNormalizedMagnitudeAt(size_t x, size_t y) const = 0;
-    virtual float getMaximumMagnitudeAt(size_t x) const = 0;
-    virtual float getPhaseAt(size_t x, size_t y) const = 0;
+    virtual float getMagnitudeAt(int x, int y) const = 0;
+    virtual float getNormalizedMagnitudeAt(int x, int y) const = 0;
+    virtual float getMaximumMagnitudeAt(int x) const = 0;
+    virtual float getPhaseAt(int x, int y) const = 0;
 
-    virtual void getValuesAt(size_t x, size_t y, float &real, float &imag) const = 0;
-    virtual void getMagnitudesAt(size_t x, float *values, size_t minbin, size_t count, size_t step) const = 0;
+    virtual void getValuesAt(int x, int y, float &real, float &imag) const = 0;
+    virtual void getMagnitudesAt(int x, float *values, int minbin, int count, int step) const = 0;
 
-    virtual bool haveSetColumnAt(size_t x) const = 0;
+    virtual bool haveSetColumnAt(int x) const = 0;
 
     virtual FFTCache::StorageType getStorageType() const = 0;
 };

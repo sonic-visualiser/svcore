@@ -163,8 +163,11 @@ FixedPoints: true 0
             break;
         }
 
-        if (state < 3) ++state;
-        else if (state == 3 && alignment.thisIndex.size() == count) ++state;
+        if (state < 3) {
+            ++state;
+        } else if (state == 3 && int(alignment.thisIndex.size()) == count) {
+            ++state;
+        }
     }
 
     if (alignment.thisHopTime == 0.0) {

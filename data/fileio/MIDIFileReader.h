@@ -62,7 +62,7 @@ class MIDIFileReader : public DataFileReader
 public:
     MIDIFileReader(QString path,
                    MIDIFileImportPreferenceAcquirer *pref,
-                   size_t mainModelSampleRate);
+                   int mainModelSampleRate);
     virtual ~MIDIFileReader();
 
     virtual bool isOK() const;
@@ -126,9 +126,9 @@ protected:
 
     QString                m_path;
     std::ifstream         *m_midiFile;
-    size_t                 m_fileSize;
+    int                    m_fileSize;
     QString                m_error;
-    size_t                 m_mainModelSampleRate;
+    int                    m_mainModelSampleRate;
 
     MIDIFileImportPreferenceAcquirer *m_acquirer;
 };

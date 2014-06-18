@@ -26,22 +26,22 @@ class Dense3DModelPeakCache : public DenseThreeDimensionalModel
 
 public:
     Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
-                          size_t columnsPerPeak);
+                          int columnsPerPeak);
     ~Dense3DModelPeakCache();
 
     virtual bool isOK() const {
         return m_source && m_source->isOK(); 
     }
 
-    virtual size_t getSampleRate() const {
+    virtual int getSampleRate() const {
         return m_source->getSampleRate();
     }
 
-    virtual size_t getStartFrame() const {
+    virtual int getStartFrame() const {
         return m_source->getStartFrame();
     }
 
-    virtual size_t getEndFrame() const {
+    virtual int getEndFrame() const {
         return m_source->getEndFrame();
     }
 
@@ -49,15 +49,15 @@ public:
         return new Dense3DModelPeakCache(m_source, m_resolution);
     }
     
-    virtual size_t getResolution() const {
+    virtual int getResolution() const {
         return m_source->getResolution() * m_resolution;
     }
 
-    virtual size_t getWidth() const {
+    virtual int getWidth() const {
         return m_source->getWidth() / m_resolution + 1;
     }
 
-    virtual size_t getHeight() const {
+    virtual int getHeight() const {
         return m_source->getHeight();
     }
 
@@ -69,13 +69,13 @@ public:
         return m_source->getMaximumLevel();
     }
 
-    virtual bool isColumnAvailable(size_t column) const;
+    virtual bool isColumnAvailable(int column) const;
 
-    virtual Column getColumn(size_t column) const;
+    virtual Column getColumn(int column) const;
 
-    virtual float getValueAt(size_t column, size_t n) const;
+    virtual float getValueAt(int column, int n) const;
 
-    virtual QString getBinName(size_t n) const {
+    virtual QString getBinName(int n) const {
         return m_source->getBinName(n);
     }
 
@@ -97,10 +97,10 @@ private:
     DenseThreeDimensionalModel *m_source;
     mutable EditableDenseThreeDimensionalModel *m_cache;
     mutable ResizeableBitset m_coverage;
-    size_t m_resolution;
+    int m_resolution;
 
-    bool haveColumn(size_t column) const;
-    void fillColumn(size_t column) const;
+    bool haveColumn(int column) const;
+    void fillColumn(int column) const;
 };
 
 

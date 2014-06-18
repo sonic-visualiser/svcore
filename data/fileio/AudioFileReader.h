@@ -36,11 +36,11 @@ public:
 
     virtual QString getError() const { return ""; }
 
-    size_t getFrameCount() const { return m_frameCount; }
-    size_t getChannelCount() const { return m_channelCount; }
-    size_t getSampleRate() const { return m_sampleRate; }
+    int getFrameCount() const { return m_frameCount; }
+    int getChannelCount() const { return m_channelCount; }
+    int getSampleRate() const { return m_sampleRate; }
 
-    virtual size_t getNativeRate() const { return m_sampleRate; } // if resampled
+    virtual int getNativeRate() const { return m_sampleRate; } // if resampled
 
     /**
      * Return the location of the audio data in the reader (as passed
@@ -81,7 +81,7 @@ public:
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual void getInterleavedFrames(size_t start, size_t count,
+    virtual void getInterleavedFrames(int start, int count,
 				      SampleBlock &frames) const = 0;
 
     /**
@@ -91,7 +91,7 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual void getDeInterleavedFrames(size_t start, size_t count,
+    virtual void getDeInterleavedFrames(int start, int count,
                                         std::vector<SampleBlock> &frames) const;
 
     // only subclasses that do not know exactly how long the audio
@@ -104,9 +104,9 @@ signals:
     void frameCountChanged();
     
 protected:
-    size_t m_frameCount;
-    size_t m_channelCount;
-    size_t m_sampleRate;
+    int m_frameCount;
+    int m_channelCount;
+    int m_sampleRate;
 };
 
 #endif

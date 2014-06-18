@@ -39,7 +39,7 @@ public:
     CoreAudioFileReader(FileSource source,
                         DecodeMode decodeMode,
                         CacheMode cacheMode,
-                        size_t targetRate = 0,
+                        int targetRate = 0,
                         bool normalised = false,
                         ProgressReporter *reporter = 0);
     virtual ~CoreAudioFileReader();

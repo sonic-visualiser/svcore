@@ -38,14 +38,14 @@ struct RegionRec
 public:
     RegionRec() : frame(0), value(0.f), duration(0) { }
     RegionRec(long _frame) : frame(_frame), value(0.0f), duration(0) { }
-    RegionRec(long _frame, float _value, size_t _duration, QString _label) :
+    RegionRec(long _frame, float _value, int _duration, QString _label) :
 	frame(_frame), value(_value), duration(_duration), label(_label) { }
 
     int getDimensions() const { return 3; }
 
     long frame;
     float value;
-    size_t duration;
+    int duration;
     QString label;
 
     QString getLabel() const { return label; }
@@ -60,7 +60,7 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, size_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, int sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -94,7 +94,7 @@ class RegionModel : public IntervalModel<RegionRec>
     Q_OBJECT
     
 public:
-    RegionModel(size_t sampleRate, size_t resolution,
+    RegionModel(int sampleRate, int resolution,
                 bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0),
@@ -102,7 +102,7 @@ public:
     {
     }
 
-    RegionModel(size_t sampleRate, size_t resolution,
+    RegionModel(int sampleRate, int resolution,
                 float valueMinimum, float valueMaximum,
                 bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution,

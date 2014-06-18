@@ -37,9 +37,9 @@ public:
     ~AlignmentModel();
 
     virtual bool isOK() const;
-    virtual size_t getStartFrame() const;
-    virtual size_t getEndFrame() const;
-    virtual size_t getSampleRate() const;
+    virtual int getStartFrame() const;
+    virtual int getEndFrame() const;
+    virtual int getSampleRate() const;
     virtual Model *clone() const;
     virtual bool isReady(int *completion = 0) const;
     virtual const ZoomConstraint *getZoomConstraint() const;
@@ -49,8 +49,8 @@ public:
     const Model *getReferenceModel() const;
     const Model *getAlignedModel() const;
 
-    size_t toReference(size_t frame) const;
-    size_t fromReference(size_t frame) const;
+    int toReference(int frame) const;
+    int fromReference(int frame) const;
 
     void setPath(PathModel *path);
 
@@ -60,12 +60,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChanged(size_t startFrame, size_t endFrame);
+    void modelChanged(int startFrame, int endFrame);
     void completionChanged();
 
 protected slots:
     void pathChanged();
-    void pathChanged(size_t startFrame, size_t endFrame);
+    void pathChanged(int startFrame, int endFrame);
     void pathCompletionChanged();
 
 protected:
@@ -83,7 +83,7 @@ protected:
     void constructPath() const;
     void constructReversePath() const;
 
-    size_t align(PathModel *path, size_t frame) const;
+    int align(PathModel *path, int frame) const;
 };
 
 #endif

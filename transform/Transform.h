@@ -120,11 +120,11 @@ public:
     QString getProgram() const;
     void setProgram(QString program);
     
-    size_t getStepSize() const;
-    void setStepSize(size_t s);
+    int getStepSize() const;
+    void setStepSize(int s);
     
-    size_t getBlockSize() const;
-    void setBlockSize(size_t s);
+    int getBlockSize() const;
+    void setBlockSize(int s);
     
     WindowType getWindowType() const;
     void setWindowType(WindowType type);
@@ -189,8 +189,8 @@ protected:
     SummaryType m_summaryType;
     QString m_pluginVersion;
     QString m_program;
-    size_t m_stepSize;
-    size_t m_blockSize;
+    int m_stepSize;
+    int m_blockSize;
     WindowType m_windowType;
     RealTime m_startTime;
     RealTime m_duration;
