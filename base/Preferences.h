@@ -66,8 +66,15 @@ public:
 
     QString getTemporaryDirectoryRoot() const { return m_tempDirRoot; }
 
+    /// If we should always resample audio to the same rate, return it; otherwise (the normal case) return 0
+    int getFixedSampleRate() const { return m_fixedSampleRate; }
+
+    /// True if we should resample second or subsequent audio file to match first audio file's rate
     bool getResampleOnLoad() const { return m_resampleOnLoad; }    
     
+    /// True if audio files should be loaded with normalisation (max == 1)
+    bool getNormaliseAudio() const { return m_normaliseAudio; }
+
     enum BackgroundMode {
         BackgroundFromTheme,
         DarkBackground,
@@ -107,7 +114,9 @@ public slots:
     void setResampleQuality(int quality);
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
+    void setFixedSampleRate(int);
     void setResampleOnLoad(bool);
+    void setNormaliseAudio(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
     void setOctaveOfMiddleC(int oct);
@@ -141,7 +150,9 @@ private:
     int m_resampleQuality;
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
+    int m_fixedSampleRate;
     bool m_resampleOnLoad;
+    bool m_normaliseAudio;
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
     TimeToTextMode m_timeToTextMode;

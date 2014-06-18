@@ -58,21 +58,28 @@ AudioFileReaderFactory::getKnownExtensions()
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createReader(FileSource source, int targetRate,
+AudioFileReaderFactory::createReader(FileSource source, 
+                                     int targetRate,
+                                     bool normalised,
                                      ProgressReporter *reporter)
 {
-    return create(source, targetRate, false, reporter);
+    return create(source, targetRate, normalised, false, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::createThreadingReader(FileSource source, int targetRate,
+AudioFileReaderFactory::createThreadingReader(FileSource source, 
+                                              int targetRate,
+                                              bool normalised,
                                               ProgressReporter *reporter)
 {
-    return create(source, targetRate, true, reporter);
+    return create(source, targetRate, normalised, true, reporter);
 }
 
 AudioFileReader *
-AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading,
+AudioFileReaderFactory::create(FileSource source, 
+                               int targetRate, 
+                               bool normalised,
+                               bool threading,
                                ProgressReporter *reporter)
 {
     QString err;
@@ -102,9 +109,10 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||
-             (targetRate != 0 && fileRate != (int)targetRate))) {
+             normalised ||
+             (targetRate != 0 && fileRate != targetRate))) {
 
-            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
             delete reader;
             reader = new DecodingWavFileReader
@@ -114,6 +122,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  DecodingWavFileReader::ResampleAtOnce,
                  DecodingWavFileReader::CacheInTemporaryFile,
                  targetRate ? targetRate : fileRate,
+                 normalised,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -133,6 +142,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  OggVorbisFileReader::DecodeAtOnce,
                  OggVorbisFileReader::CacheInTemporaryFile,
                  targetRate,
+                 normalised,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -153,6 +163,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  MP3FileReader::DecodeAtOnce,
                  MP3FileReader::CacheInTemporaryFile,
                  targetRate,
+                 normalised,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -172,6 +183,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  QuickTimeFileReader::DecodeAtOnce,
                  QuickTimeFileReader::CacheInTemporaryFile,
                  targetRate,
+                 normalised,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -191,6 +203,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  CoreAudioFileReader::DecodeAtOnce,
                  CoreAudioFileReader::CacheInTemporaryFile,
                  targetRate,
+                 normalised,
                  reporter);
             if (!reader->isOK()) {
                 delete reader;
@@ -215,9 +228,10 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||
-             (targetRate != 0 && fileRate != (int)targetRate))) {
+             normalised ||
+             (targetRate != 0 && fileRate != targetRate))) {
 
-            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
             delete reader;
             reader = new DecodingWavFileReader
@@ -227,6 +241,7 @@ AudioFileReaderFactory::create(FileSource source, int targetRate, bool threading
                  DecodingWavFileReader::ResampleAtOnce,
                  DecodingWavFileReader::CacheInTemporaryFile,
                  targetRate ? targetRate : fileRate,
+                 normalised,
                  reporter);
         }
 

@@ -105,7 +105,27 @@ public:
      * Caller owns the returned value.
      */
     virtual Model *clone() const = 0;
-    
+
+    /**
+     * Mark the model as abandoning. This means that the application
+     * no longer needs it, so it can stop doing any background
+     * calculations it may be involved in. Note that as far as the
+     * model API is concerned, this does nothing more than tell the
+     * model to return true from isAbandoning().  The actual response
+     * to this will depend on the model's context -- it's possible
+     * nothing at all will change.
+     */
+    virtual void abandon() {
+        m_abandoning = true;
+    }
+
+    /**
+     * Query whether the model has been marked as abandoning.
+     */
+    virtual bool isAbandoning() const { 
+        return m_abandoning;
+    }
+
     /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
@@ -268,7 +288,11 @@ signals:
     void aboutToBeDeleted();
 
 protected:
-    Model() : m_sourceModel(0), m_alignment(0), m_aboutToDelete(false) { }
+    Model() : 
+        m_sourceModel(0), 
+        m_alignment(0), 
+        m_abandoning(false), 
+        m_aboutToDelete(false) { }
 
     // Not provided.
     Model(const Model &);
@@ -277,6 +301,7 @@ protected:
     Model *m_sourceModel;
     AlignmentModel *m_alignment;
     QString m_typeUri;
+    bool m_abandoning;
     bool m_aboutToDelete;
 };
 

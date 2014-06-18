@@ -84,7 +84,8 @@ public:
      * Return the output model resulting from applying the named
      * transform to the given input model.  The transform may still be
      * working in the background when the model is returned; check the
-     * output model's isReady completion status for more details.
+     * output model's isReady completion status for more details. To
+     * cancel a background transform, call abandon() on its model.
      *
      * If the transform is unknown or the input model is not an
      * appropriate type for the given transform, or if some other
@@ -116,7 +117,8 @@ public:
      * (as appropriate). Models will be returned in the same order as
      * the transforms were given. The plugin may still be working in
      * the background when the model is returned; check the output
-     * models' isReady completion statuses for more details.
+     * models' isReady completion statuses for more details. To cancel
+     * a background transform, call abandon() on its model.
      *
      * If a transform is unknown or the transforms are insufficiently
      * closely related or the input model is not an appropriate type
@@ -130,7 +132,10 @@ public:
      * is provided here, its moreModelsAvailable method will be called
      * when those models become available, and ownership of those
      * models will be transferred to the handler. Otherwise (if the
-     * handler is null) any such models will be discarded.
+     * handler is null) any such models will be discarded. Note that
+     * calling abandon() on any one of the models returned by
+     * transformMultiple is sufficient to cancel all background
+     * transform activity associated with these output models.
      *
      * The returned models are owned by the caller and must be deleted
      * when no longer needed.

@@ -43,6 +43,9 @@ public:
      * if you want to find out whether the file is being resampled
      * or not.
      *
+     * If normalised is true, the file data will be normalised to
+     * abs(max) == 1.0. Otherwise the file will not be normalised.
+     *
      * If a ProgressReporter is provided, it will be updated with
      * progress status.  Caller retains ownership of the reporter
      * object.
@@ -51,6 +54,7 @@ public:
      */
     static AudioFileReader *createReader(FileSource source,
                                          int targetRate = 0,
+                                         bool normalised = false,
                                          ProgressReporter *reporter = 0);
 
     /**
@@ -65,6 +69,9 @@ public:
      * if you want to find out whether the file is being resampled
      * or not.
      *
+     * If normalised is true, the file data will be normalised to
+     * abs(max) == 1.0. Otherwise the file will not be normalised.
+     *
      * If a ProgressReporter is provided, it will be updated with
      * progress status.  This will only be meaningful if threading
      * mode is not used because the file reader in use does not
@@ -76,11 +83,13 @@ public:
      */
     static AudioFileReader *createThreadingReader(FileSource source,
                                                   int targetRate = 0,
+                                                  bool normalised = false,
                                                   ProgressReporter *reporter = 0);
 
 protected:
     static AudioFileReader *create(FileSource source,
                                    int targetRate,
+                                   bool normalised,
                                    bool threading,
                                    ProgressReporter *reporter);
 };
