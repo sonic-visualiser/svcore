@@ -157,7 +157,7 @@ EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::getColumn(int index) const
 {
     QReadLocker locker(&m_lock);
-    if (int(index) >= m_data.size()) return Column();
+    if (index < 0 || index >= m_data.size()) return Column();
     return expandAndRetrieve(index);
 }
 
