@@ -390,7 +390,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 QString
 EditableDenseThreeDimensionalModel::getBinName(int n) const
 {
-    if ((int)m_binNames.size() > n) return m_binNames[n];
+    if (n >= 0 && (int)m_binNames.size() > n) return m_binNames[n];
     else return "";
 }
 
