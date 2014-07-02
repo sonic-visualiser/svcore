@@ -34,14 +34,16 @@ getSVDebug()
     static QDebug *debug = 0;
     static QMutex mutex;
     static char *prefix;
+
     mutex.lock();
+
     if (!debug) {
         prefix = new char[20];
         sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
 	QString pfx = ResourceFinder().getUserResourcePrefix();
 	QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 	if (!logdir.exists()) logdir.mkpath(logdir.path());
-        logFile = new QFile(logdir.path() + "/debug.log");
+        logFile = new QFile(logdir.path() + "/sv-debug.log");
         if (logFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             QDebug(QtDebugMsg) << (const char *)prefix
                                << "Opened debug log file "
@@ -59,10 +61,12 @@ getSVDebug()
         *debug << endl << (const char *)prefix << "Log started at "
                << QDateTime::currentDateTime().toString();
     }
-    mutex.unlock();
 
     QDebug &dref = *debug;
-    return dref << endl << (const char *)prefix;
+    dref << endl << (const char *)prefix;
+
+    mutex.unlock();
+    return dref;
 }
 
 QDebug &

@@ -157,7 +157,7 @@ EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::getColumn(int index) const
 {
     QReadLocker locker(&m_lock);
-    if (int(index) >= m_data.size()) return Column();
+    if (index < 0 || index >= m_data.size()) return Column();
     return expandAndRetrieve(index);
 }
 
@@ -287,7 +287,7 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
 {
     // See comment above m_trunc declaration in header
 
-    assert(int(index) < m_data.size());
+    assert(index >= 0 && index < int(m_data.size()));
     Column c = m_data.at(index);
     if (index == 0) {
         return c;
@@ -301,7 +301,7 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
     if (trunc < 0) { top = false; tdist = -trunc; }
     Column p = expandAndRetrieve(index - tdist);
     int psize = p.size(), csize = c.size();
-    if (psize != int(m_yBinCount)) {
+    if (psize != m_yBinCount) {
         cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
     if (top) {
@@ -390,7 +390,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 QString
 EditableDenseThreeDimensionalModel::getBinName(int n) const
 {
-    if ((int)m_binNames.size() > n) return m_binNames[n];
+    if (n >= 0 && (int)m_binNames.size() > n) return m_binNames[n];
     else return "";
 }
 
