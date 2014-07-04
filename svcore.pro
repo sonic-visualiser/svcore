@@ -26,6 +26,7 @@ exists(config.pri) {
 
     macx* {
         DEFINES += HAVE_COREAUDIO
+        DEFINES -= HAVE_LIBLO  # for now
     }
 }
 
