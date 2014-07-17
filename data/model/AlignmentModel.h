@@ -60,12 +60,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChanged(int startFrame, int endFrame);
+    void modelChangedWithin(int startFrame, int endFrame);
     void completionChanged();
 
 protected slots:
     void pathChanged();
-    void pathChanged(int startFrame, int endFrame);
+    void pathChangedWithin(int startFrame, int endFrame);
     void pathCompletionChanged();
 
 protected:
