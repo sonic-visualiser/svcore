@@ -197,7 +197,9 @@ WaveFileModel::getData(int channel, int start, int count,
     if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
-        for (int i = 0; i < count; ++i) buffer[i] = 0.f;
+        for (int i = 0; i < count; ++i) {
+            buffer[i] = 0.f;
+        }
         if (count <= m_startFrame - start) {
             return 0;
         } else {
