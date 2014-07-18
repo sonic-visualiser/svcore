@@ -63,14 +63,14 @@ public:
     void setStartFrame(int startFrame) { m_startFrame = startFrame; }
 
     virtual int getData(int channel, int start, int count,
-                           float *buffer) const;
+                        float *buffer) const;
 
     virtual int getData(int channel, int start, int count,
-                           double *buffer) const;
+                        double *buffer) const;
 
     virtual int getData(int fromchannel, int tochannel,
-                           int start, int count,
-                           float **buffers) const;
+                        int start, int count,
+                        float **buffers) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 

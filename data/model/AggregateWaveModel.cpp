@@ -231,9 +231,9 @@ AggregateWaveModel::componentModelChanged()
 }
 
 void
-AggregateWaveModel::componentModelChanged(int start, int end)
+AggregateWaveModel::componentModelChangedWithin(int start, int end)
 {
-    emit modelChanged(start, end);
+    emit modelChangedWithin(start, end);
 }
 
 void

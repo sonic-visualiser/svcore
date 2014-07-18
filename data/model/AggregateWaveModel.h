@@ -85,12 +85,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChanged(int, int);
+    void modelChangedWithin(int, int);
     void completionChanged();
 
 protected slots:
     void componentModelChanged();
-    void componentModelChanged(int, int);
+    void componentModelChangedWithin(int, int);
     void componentModelCompletionChanged();
 
 protected:

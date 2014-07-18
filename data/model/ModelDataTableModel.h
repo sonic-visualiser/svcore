@@ -69,7 +69,7 @@ signals:
 
 protected slots:
     void modelChanged();
-    void modelChanged(int, int);
+    void modelChangedWithin(int, int);
     void modelAboutToBeDeleted();
 
 protected:
