@@ -86,8 +86,8 @@ WritableWaveFileModel::WritableWaveFileModel(int sampleRate,
     m_model->setStartFrame(m_startFrame);
 
     connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
-    connect(m_model, SIGNAL(modelChanged(int, int)),
-            this, SIGNAL(modelChanged(int, int)));
+    connect(m_model, SIGNAL(modelChangedWithin(int, int)),
+            this, SIGNAL(modelChangedWithin(int, int)));
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()

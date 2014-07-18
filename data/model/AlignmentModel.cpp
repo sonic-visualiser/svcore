@@ -37,8 +37,8 @@ AlignmentModel::AlignmentModel(Model *reference,
         connect(m_rawPath, SIGNAL(modelChanged()),
                 this, SLOT(pathChanged()));
 
-        connect(m_rawPath, SIGNAL(modelChanged(int, int)),
-                this, SLOT(pathChanged(int, int)));
+        connect(m_rawPath, SIGNAL(modelChangedWithin(int, int)),
+                this, SLOT(pathChangedWithin(int, int)));
         
         connect(m_rawPath, SIGNAL(completionChanged()),
                 this, SLOT(pathCompletionChanged()));
@@ -175,7 +175,7 @@ AlignmentModel::pathChanged()
 }
 
 void
-AlignmentModel::pathChanged(int, int)
+AlignmentModel::pathChangedWithin(int, int)
 {
     if (!m_pathComplete) return;
     constructPath();
