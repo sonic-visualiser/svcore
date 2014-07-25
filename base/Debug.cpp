@@ -24,20 +24,23 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QThreadStorage>
 
 #include <cstdio>
+
+static QThreadStorage<QDebug *> debugs;
+static QMutex mutex;
+static QFile *logFile = 0;
+static char *prefix = 0;
 
 QDebug &
 getSVDebug()
 {
-    static QFile *logFile = 0;
-    static QDebug *debug = 0;
-    static QMutex mutex;
-    static char *prefix;
-
     mutex.lock();
 
-    if (!debug) {
+    QDebug *debug = 0;
+
+    if (!prefix) {
         prefix = new char[20];
         sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
 	QString pfx = ResourceFinder().getUserResourcePrefix();
@@ -48,24 +51,34 @@ getSVDebug()
             QDebug(QtDebugMsg) << (const char *)prefix
                                << "Opened debug log file "
                                << logFile->fileName();
-            debug = new QDebug(logFile);
         } else {
             QDebug(QtWarningMsg) << (const char *)prefix
                                  << "Failed to open debug log file "
                                  << logFile->fileName()
                                  << " for writing, using console debug instead";
-            debug = new QDebug(QtDebugMsg);
             delete logFile;
             logFile = 0;
         }
+    }
+
+    if (debugs.hasLocalData()) {
+        debug = debugs.localData();
+    } else {
+        if (logFile) {
+            debug = new QDebug(logFile);
+        } else {
+            debug = new QDebug(QtDebugMsg);
+        }
+        debugs.setLocalData(debug);
         *debug << endl << (const char *)prefix << "Log started at "
                << QDateTime::currentDateTime().toString();
     }
 
+    mutex.unlock();
+
     QDebug &dref = *debug;
     dref << endl << (const char *)prefix;
 
-    mutex.unlock();
     return dref;
 }
 
