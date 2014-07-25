@@ -30,7 +30,6 @@
 
 static QThreadStorage<QDebug *> debugs;
 static QMutex mutex;
-static QFile *logFile = 0;
 static char *prefix = 0;
 
 QDebug &
@@ -40,17 +39,22 @@ getSVDebug()
 
     QDebug *debug = 0;
 
+    QString pfx = ResourceFinder().getUserResourcePrefix();
+    QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
+
     if (!prefix) {
         prefix = new char[20];
         sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
-	QString pfx = ResourceFinder().getUserResourcePrefix();
-	QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 	if (!logdir.exists()) logdir.mkpath(logdir.path());
-        logFile = new QFile(logdir.path() + "/sv-debug.log");
-        if (logFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    }
+
+    if (!debugs.hasLocalData()) {
+        QFile *logFile = new QFile(logdir.path() + "/sv-debug.log");
+        if (logFile->open(QIODevice::WriteOnly | QIODevice::Append)) {
             QDebug(QtDebugMsg) << (const char *)prefix
                                << "Opened debug log file "
                                << logFile->fileName();
+            debug = new QDebug(logFile);
         } else {
             QDebug(QtWarningMsg) << (const char *)prefix
                                  << "Failed to open debug log file "
@@ -58,20 +62,13 @@ getSVDebug()
                                  << " for writing, using console debug instead";
             delete logFile;
             logFile = 0;
-        }
-    }
-
-    if (debugs.hasLocalData()) {
-        debug = debugs.localData();
-    } else {
-        if (logFile) {
-            debug = new QDebug(logFile);
-        } else {
             debug = new QDebug(QtDebugMsg);
         }
         debugs.setLocalData(debug);
         *debug << endl << (const char *)prefix << "Log started at "
                << QDateTime::currentDateTime().toString();
+    } else {
+        debug = debugs.localData();
     }
 
     mutex.unlock();
