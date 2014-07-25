@@ -109,6 +109,7 @@ Model::getAlignmentReference() const
 int
 Model::alignToReference(int frame) const
 {
+//    cerr << "Model(" << this << ")::alignToReference(" << frame << ")" << endl;
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->alignToReference(frame);
         else return frame;
@@ -116,18 +117,21 @@ Model::alignToReference(int frame) const
     int refFrame = m_alignment->toReference(frame);
     const Model *m = m_alignment->getReferenceModel();
     if (m && refFrame > m->getEndFrame()) refFrame = m->getEndFrame();
+//    cerr << "have alignment, aligned is " << refFrame << endl;
     return refFrame;
 }
 
 int
 Model::alignFromReference(int refFrame) const
 {
+//    cerr << "Model(" << this << ")::alignFromReference(" << refFrame << ")" << endl;
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->alignFromReference(refFrame);
         else return refFrame;
     }
     int frame = m_alignment->fromReference(refFrame);
     if (frame > getEndFrame()) frame = getEndFrame();
+//    cerr << "have alignment, aligned is " << frame << endl;
     return frame;
 }
 
