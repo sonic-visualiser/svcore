@@ -49,6 +49,9 @@ PlayParameterRepository::addPlayable(const Playable *playable)
 
         params->setPlayClipId
             (playable->getDefaultPlayClipId());
+
+        params->setPlayAudible
+            (playable->getDefaultPlayAudible());
         
         connect(params, SIGNAL(playParametersChanged()),
                 this, SLOT(playParametersChanged()));
