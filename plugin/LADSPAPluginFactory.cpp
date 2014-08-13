@@ -621,6 +621,8 @@ LADSPAPluginFactory::getLRDFPath(QString &baseUri)
     }
 
     baseUri = LADSPA_BASE;
+#else
+    baseUri = "";
 #endif
 
     return lrdfPaths;
@@ -877,6 +879,10 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 	}
 	lrdf_free_uris(uris);
     }
+#else
+    // avoid unused parameter
+    (void)uri;
+    (void)base;
 #endif
 }
     

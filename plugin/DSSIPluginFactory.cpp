@@ -274,6 +274,9 @@ DSSIPluginFactory::getLRDFPath(QString &baseUri)
 #else
     baseUri = "http://dssi.sourceforge.net/ontology#";
 #endif
+#else
+    // avoid unused parameter
+    baseUri = "";
 #endif
 
     return lrdfPaths;
