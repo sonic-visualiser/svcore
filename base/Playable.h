@@ -25,6 +25,7 @@ public:
     
     virtual bool canPlay() const { return false; }
     virtual QString getDefaultPlayClipId() const { return ""; }
+    virtual bool getDefaultPlayAudible() const { return true; }
 };
 
 #endif

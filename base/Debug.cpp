@@ -24,27 +24,33 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QThreadStorage>
 
 #include <cstdio>
+
+static QThreadStorage<QDebug *> debugs;
+static QMutex mutex;
+static char *prefix = 0;
 
 QDebug &
 getSVDebug()
 {
-    static QFile *logFile = 0;
-    static QDebug *debug = 0;
-    static QMutex mutex;
-    static char *prefix;
-
     mutex.lock();
 
-    if (!debug) {
+    QDebug *debug = 0;
+
+    QString pfx = ResourceFinder().getUserResourcePrefix();
+    QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
+
+    if (!prefix) {
         prefix = new char[20];
         sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
-	QString pfx = ResourceFinder().getUserResourcePrefix();
-	QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 	if (!logdir.exists()) logdir.mkpath(logdir.path());
-        logFile = new QFile(logdir.path() + "/sv-debug.log");
-        if (logFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    }
+
+    if (!debugs.hasLocalData()) {
+        QFile *logFile = new QFile(logdir.path() + "/sv-debug.log");
+        if (logFile->open(QIODevice::WriteOnly | QIODevice::Append)) {
             QDebug(QtDebugMsg) << (const char *)prefix
                                << "Opened debug log file "
                                << logFile->fileName();
@@ -54,18 +60,22 @@ getSVDebug()
                                  << "Failed to open debug log file "
                                  << logFile->fileName()
                                  << " for writing, using console debug instead";
-            debug = new QDebug(QtDebugMsg);
             delete logFile;
             logFile = 0;
+            debug = new QDebug(QtDebugMsg);
         }
+        debugs.setLocalData(debug);
         *debug << endl << (const char *)prefix << "Log started at "
                << QDateTime::currentDateTime().toString();
+    } else {
+        debug = debugs.localData();
     }
+
+    mutex.unlock();
 
     QDebug &dref = *debug;
     dref << endl << (const char *)prefix;
 
-    mutex.unlock();
     return dref;
 }
 

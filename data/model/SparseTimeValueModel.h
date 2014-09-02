@@ -111,6 +111,7 @@ public:
     QString getTypeName() const { return tr("Sparse Time-Value"); }
 
     virtual bool canPlay() const { return true; }
+    virtual bool getDefaultPlayAudible() const { return false; } // user must unmute
 
     /**
      * TabularModel methods.  
