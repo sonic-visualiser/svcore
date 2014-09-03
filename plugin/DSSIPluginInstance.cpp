@@ -1009,7 +1009,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
     if (!m_descriptor || !m_descriptor->run_synth) {
 	m_eventBuffer.skip(m_eventBuffer.getReadSpace());
 	m_haveLastEventSendTime = false;
-	if (m_descriptor->LADSPA_Plugin->run) {
+	if (m_descriptor && m_descriptor->LADSPA_Plugin->run) {
 	    m_descriptor->LADSPA_Plugin->run(m_instanceHandle, count);
 	} else {
 	    for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
