@@ -24,7 +24,7 @@
 class ResizeableBitset {
 
 public:
-    ResizeableBitset() : m_bits(0) {
+    ResizeableBitset() : m_bits(0), m_size(0) {
     }
     ResizeableBitset(size_t size) : m_bits(new std::vector<uint8_t>), m_size(size) {
         m_bits->assign((size >> 3) + 1, 0);
