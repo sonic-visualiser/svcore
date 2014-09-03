@@ -23,7 +23,8 @@
 
 Alignment::Alignment() :
     thisHopTime(0.0),
-    refHopTime(0.0)
+    refHopTime(0.0),
+    m_mainModel(0)
 {
 }
 
