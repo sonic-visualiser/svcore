@@ -64,6 +64,7 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     RealTimePluginInstance(factory, identifier),
     m_client(clientId),
     m_position(position),
+    m_instanceHandle(0),
     m_descriptor(descriptor),
     m_programCacheValid(false),
     m_eventBuffer(EVENT_BUFFER_SIZE),
@@ -146,6 +147,7 @@ DSSIPluginInstance::getParameterDescriptors() const
 {
     ParameterList list;
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    if (!f) return list;
     
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         
@@ -988,7 +990,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
     if (count == 0) count = m_blockSize;
 
     bool needLock = false;
-    if (m_descriptor->select_program) needLock = true;
+    if (m_descriptor && m_descriptor->select_program) needLock = true;
 
     if (needLock) {
 	if (!m_processLock.tryLock()) {

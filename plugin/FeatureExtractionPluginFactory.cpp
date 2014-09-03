@@ -48,6 +48,8 @@ PluginDeletionNotifyAdapter::~PluginDeletionNotifyAdapter()
     Vamp::Plugin *p = m_plugin;
     delete m_plugin;
     m_plugin = 0;
+    // acceptable use after free here, as pluginDeleted uses p only as
+    // pointer key and does not deref it
     if (m_factory) m_factory->pluginDeleted(p);
 }
 

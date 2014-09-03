@@ -123,6 +123,7 @@ LADSPAPluginInstance::getParameterDescriptors() const
 {
     ParameterList list;
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
+    if (!f) return list;
     
     for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
         
