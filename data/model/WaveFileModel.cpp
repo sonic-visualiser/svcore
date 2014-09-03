@@ -40,6 +40,7 @@ WaveFileModel::m_zoomConstraint;
 WaveFileModel::WaveFileModel(FileSource source, int targetRate) :
     m_source(source),
     m_path(source.getLocation()),
+    m_reader(0),
     m_myReader(true),
     m_startFrame(0),
     m_fillThread(0),
@@ -67,6 +68,7 @@ WaveFileModel::WaveFileModel(FileSource source, int targetRate) :
 WaveFileModel::WaveFileModel(FileSource source, AudioFileReader *reader) :
     m_source(source),
     m_path(source.getLocation()),
+    m_reader(0),
     m_myReader(false),
     m_startFrame(0),
     m_fillThread(0),
