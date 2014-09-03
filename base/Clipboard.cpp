@@ -19,6 +19,7 @@ Clipboard::Point::Point(long frame, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(false),
+    m_value(0),
     m_haveDuration(false),
     m_duration(0),
     m_haveLabel(true),
