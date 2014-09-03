@@ -208,7 +208,7 @@ RealTime
 RealTime::fromString(std::string s)
 {
     bool negative = false;
-    bool section = 0;
+    int section = 0;
     std::string ssec, snsec;
 
     for (size_t i = 0; i < s.length(); ++i) {
