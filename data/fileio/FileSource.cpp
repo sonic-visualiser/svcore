@@ -857,7 +857,7 @@ FileSource::createCacheFile()
 #ifdef DEBUG_FILE_SOURCE
         cerr << "FileSource::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << endl;
 #endif
-        return "";
+        return false;
     }
 
     QString filepart = m_url.path().section('/', -1, -1,
@@ -915,7 +915,7 @@ FileSource::createCacheFile()
                       << m_url.toString() << "\" (or file already exists)" << endl;
 #endif
 
-            return "";
+            return false;
         }
     }
 
