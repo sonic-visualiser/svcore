@@ -169,7 +169,7 @@ private slots:
 		totdiff += diff;
                 // in edge areas, record this only if it exceeds edgeLimit
                 if (i < edgeSize || i + edgeSize >= read - offset) {
-                    if (diff > edgeLimit) {
+                    if (diff > edgeLimit && diff > maxdiff) {
                         maxdiff = diff;
                         maxAt = i;
                     }
