@@ -430,7 +430,7 @@ CSVFileReader::load() const
         }
     }
 
-    if (modelType == CSVFormat::ThreeDimensionalModel) {
+    if (model3) {
 	model3->setMinimumLevel(min);
 	model3->setMaximumLevel(max);
     }
