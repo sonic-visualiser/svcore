@@ -45,6 +45,7 @@ getSVDebug()
     if (!prefix) {
         prefix = new char[20];
         sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
+        //!!! what to do if mkpath fails?
 	if (!logdir.exists()) logdir.mkpath(logdir.path());
     }
 
