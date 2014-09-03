@@ -741,6 +741,11 @@ FeatureExtractionModelTransformer::run()
         delete[] reals;
         delete[] imaginaries;
     }
+
+    for (int ch = 0; ch < channelCount; ++ch) {
+        delete[] buffers[ch];
+    }
+    delete[] buffers;
 }
 
 void
