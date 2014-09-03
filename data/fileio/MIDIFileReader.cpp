@@ -661,10 +661,7 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
     bool noteOffFound;
 
     for (MIDITrack::iterator i = m_midiComposition[track].begin();
-	 i != m_midiComposition[track].end(); ) {
-
-        MIDITrack::iterator nexti = i;
-        ++nexti; 
+	 i != m_midiComposition[track].end(); i++) {
 
         if ((*i)->getMessageType() == MIDI_NOTE_ON && (*i)->getVelocity() > 0) {
 
@@ -681,13 +678,6 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
                      (*j)->getVelocity() == 0x00))) {
 
                     (*i)->setDuration((*j)->getTime() - (*i)->getTime());
-
-                    if (nexti == j) {
-                        // we're about to erase j, invalidating nexti
-                        // as well (but as this is a map, that is the
-                        // only iterator to be invalidated)
-                        ++nexti;
-                    }
 
                     delete *j;
                     m_midiComposition[track].erase(j);
@@ -706,8 +696,6 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
                 (*i)->setDuration((*j)->getTime() - (*i)->getTime());
 	    }
         }
-
-        i = nexti;
     }
 
     return notesOnTrack;
