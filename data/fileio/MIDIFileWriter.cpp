@@ -41,7 +41,8 @@ MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
     m_path(path),
     m_exportable(exportable),
     m_sampleRate(sampleRate),
-    m_tempo(tempo)
+    m_tempo(tempo),
+    m_midiFile(0)
 {
     if (!convert()) {
         m_error = "Conversion from model to internal MIDI format failed";
