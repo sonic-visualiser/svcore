@@ -218,7 +218,7 @@ ResourceFinder::getResourceSaveDir(QString resourceCat)
         QString save = QString("%1%2").arg(user).arg(resourceCat);
         QDir saveDir(save);
         if (!saveDir.exists()) {
-            if (!userDir.mkpath(save)) {
+            if (!saveDir.mkpath(save)) {
                 cerr << "ResourceFinder::getResourceSaveDir: ERROR: Failed to create user resource path \"" << save << "\"" << endl;
                 return "";
             }
