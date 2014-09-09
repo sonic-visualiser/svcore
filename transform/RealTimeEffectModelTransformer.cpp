@@ -196,10 +196,10 @@ RealTimeEffectModelTransformer::run()
                 while (got < blockSize) {
                     inbufs[0][got++] = 0.0;
                 }          
-            }
-            for (int ch = 1; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
-                for (long i = 0; i < blockSize; ++i) {
-                    inbufs[ch][i] = inbufs[0][i];
+                for (int ch = 1; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
+                    for (long i = 0; i < blockSize; ++i) {
+                        inbufs[ch][i] = inbufs[0][i];
+                    }
                 }
             }
 	} else {
@@ -213,10 +213,10 @@ RealTimeEffectModelTransformer::run()
                     }
                     ++got;
                 }
-            }
-            for (int ch = channelCount; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
-                for (long i = 0; i < blockSize; ++i) {
-                    inbufs[ch][i] = inbufs[ch % channelCount][i];
+                for (int ch = channelCount; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
+                    for (long i = 0; i < blockSize; ++i) {
+                        inbufs[ch][i] = inbufs[ch % channelCount][i];
+                    }
                 }
             }
 	}

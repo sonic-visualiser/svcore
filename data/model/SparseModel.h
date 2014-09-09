@@ -363,9 +363,9 @@ public:
             
     virtual Command *getRemoveRowCommand(int row)
     {
-        EditCommand *command = new EditCommand(this, tr("Delete Data Point"));
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return 0;
+        EditCommand *command = new EditCommand(this, tr("Delete Data Point"));
         command->deletePoint(*i);
         return command->finish();
     }

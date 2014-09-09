@@ -53,7 +53,8 @@ struct TransformDescription
         UnknownType
     };
 
-    TransformDescription() { }
+    TransformDescription() : 
+        type(UnknownType), configurable(false) { }
     TransformDescription(Type _type, QString _category,
                          TransformId _identifier, QString _name,
                          QString _friendlyName, QString _description,

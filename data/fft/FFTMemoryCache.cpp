@@ -205,10 +205,12 @@ FFTMemoryCache::getCacheSize(int width, int height, FFTCache::StorageType type)
 
     case FFTCache::Compact:
         sz = (height * 2 + 1) * width * sizeof(uint16_t);
+        break;
 
     case FFTCache::Polar:
     case FFTCache::Rectangular:
         sz = (height * 2 + 1) * width * sizeof(float);
+        break;
     }
 
     return sz;

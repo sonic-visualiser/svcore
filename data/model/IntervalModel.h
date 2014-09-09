@@ -106,7 +106,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 0: case 1: point.frame = value.toInt(); break; 
+        // column cannot be 0 or 1, those cases were handled above
         case 2: point.value = value.toDouble(); break;
         case 3: point.duration = value.toInt(); break;
         }
