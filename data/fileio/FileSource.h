@@ -101,10 +101,10 @@ public:
     void waitForData();
 
     /**
-     * Return true if the FileSource object is valid and no error
-     * occurred in looking up the file or remote URL.  Non-existence
-     * of the file or URL is not an error -- call isAvailable() to
-     * test for that.
+     * Return true if the FileSource object is valid and neither error
+     * nor cancellation occurred while retrieving the file or remote
+     * URL.  Non-existence of the file or URL is not an error -- call
+     * isAvailable() to test for that.
      */
     bool isOK() const;
 
@@ -120,6 +120,14 @@ public:
      * available.
      */
     bool isDone() const;
+
+    /**
+     * Return true if the operation was cancelled by the user through
+     * the ProgressReporter interface. Note that the cancelled()
+     * signal will have been emitted, and isOK() will also return
+     * false in this case.
+     */
+    bool wasCancelled() const;
 
     /**
      * Return true if this FileSource is referring to a QRC resource.
@@ -227,6 +235,7 @@ protected:
     QString m_contentType;
     QString m_preferredContentType;
     bool m_ok;
+    bool m_cancelled;
     int m_lastStatus;
     bool m_resource;
     bool m_remote;
