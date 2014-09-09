@@ -27,6 +27,10 @@
 #include <QProcess>
 #include <QCoreApplication>
 
+#if QT_VERSION >= 0x050000
+#include <QStandardPaths>
+#endif
+
 #include <cstdlib>
 #include <iostream>
 
@@ -91,7 +95,12 @@ ResourceFinder::getSystemResourcePrefixList()
 QString
 ResourceFinder::getUserResourcePrefix()
 {
+#if QT_VERSION >= 0x050000
+    QString loc = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    return loc;
+#else
 #ifdef Q_OS_WIN32
+    // This does not work correctly for non-ASCII home directory names
     char *homedrive = getenv("HOMEDRIVE");
     char *homepath = getenv("HOMEPATH");
     QString home;
@@ -114,7 +123,8 @@ ResourceFinder::getUserResourcePrefix()
         .arg(home)
         .arg(qApp->applicationName());
 #endif
-#endif    
+#endif
+#endif
 }
 
 QStringList
