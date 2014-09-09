@@ -381,7 +381,7 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, int sampleRate,
     if (bin == 0) return 3;
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    float binfreq = (sampleRate * bin) / fftSize;
+    float binfreq = (float(sampleRate) * bin) / fftSize;
     float hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
 
     int hibin = lrintf((hifreq * fftSize) / sampleRate);

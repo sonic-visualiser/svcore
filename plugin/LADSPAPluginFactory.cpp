@@ -730,8 +730,8 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
 
 	QString category = m_taxonomy[identifier];
 	
-	if (category == "" && descriptor->Name != 0) {
-	    std::string name = descriptor->Name;
+	if (category == "") {
+	    std::string name = rtd->name;
 	    if (name.length() > 4 &&
 		name.substr(name.length() - 4) == " VST") {
 		category = "VST effects";

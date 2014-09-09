@@ -63,6 +63,10 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
     m_fileSize = stat.st_size;
 
+    m_filebuffer = 0;
+    m_samplebuffer = 0;
+    m_samplebuffersize = 0;
+
     int fd = -1;
     if ((fd = ::open(m_path.toLocal8Bit().data(), O_RDONLY
 #ifdef _WIN32
@@ -72,10 +76,6 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 	m_error = QString("Failed to open file %1 for reading.").arg(m_path);
 	return;
     }	
-
-    m_filebuffer = 0;
-    m_samplebuffer = 0;
-    m_samplebuffersize = 0;
 
     try {
         m_filebuffer = new unsigned char[m_fileSize];

@@ -629,13 +629,6 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                 m_midiComposition[trackNum].push_back(midiEvent);
                 break;
 
-            case MIDI_END_OF_EXCLUSIVE:
-#ifdef MIDI_DEBUG
-                SVDEBUG << "MIDIFileReader::parseTrack() - "
-                          << "Found a stray MIDI_END_OF_EXCLUSIVE" << endl;
-#endif
-                break;
-
             default:
 #ifdef MIDI_DEBUG
                 SVDEBUG << "MIDIFileReader::parseTrack()" 

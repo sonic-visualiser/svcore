@@ -60,7 +60,8 @@ TransformFactory::TransformFactory() :
     m_transformsPopulated(false),
     m_uninstalledTransformsPopulated(false),
     m_thread(0),
-    m_exiting(false)
+    m_exiting(false),
+    m_populatingSlowly(false)
 {
 }
 

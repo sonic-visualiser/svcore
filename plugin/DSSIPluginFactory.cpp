@@ -346,8 +346,8 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
             category = m_taxonomy[identifier];
         }
 
-	if (category == "" && ladspaDescriptor->Name != 0) {
-	    std::string name = ladspaDescriptor->Name;
+	if (category == "") {
+	    std::string name = rtd->name;
 	    if (name.length() > 4 &&
 		name.substr(name.length() - 4) == " VST") {
 		if (descriptor->run_synth || descriptor->run_multiple_synths) {
