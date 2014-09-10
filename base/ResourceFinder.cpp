@@ -92,15 +92,12 @@ ResourceFinder::getSystemResourcePrefixList()
     return list;
 }
 
-QString
-ResourceFinder::getUserResourcePrefix()
+static QString
+getOldStyleUserResourcePrefix()
 {
-#if QT_VERSION >= 0x050000
-    QString loc = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    return loc;
-#else
 #ifdef Q_OS_WIN32
-    // This does not work correctly for non-ASCII home directory names
+    // This is awkward and does not work correctly for non-ASCII home
+    // directory names, hence getNewStyleUserResourcePrefix() below
     char *homedrive = getenv("HOMEDRIVE");
     char *homepath = getenv("HOMEPATH");
     QString home;
@@ -124,7 +121,83 @@ ResourceFinder::getUserResourcePrefix()
         .arg(qApp->applicationName());
 #endif
 #endif
+}
+
+static QString
+getNewStyleUserResourcePrefix()
+{
+#if QT_VERSION >= 0x050000
+    // This is expected to be much more reliable than
+    // getOldStyleUserResourcePrefix(), but it returns a different
+    // directory because it includes the organisation name (which is
+    // fair enough). Hence migrateOldStyleResources() which moves
+    // across any resources found in the old-style path the first time
+    // we look for the new-style one
+    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#else
+    return getOldStyleUserResourcePrefix();
 #endif
+}
+
+static void
+migrateOldStyleResources()
+{
+    QString oldPath = getOldStyleUserResourcePrefix();
+    QString newPath = getNewStyleUserResourcePrefix();
+    
+    if (oldPath != newPath &&
+        QDir(oldPath).exists() &&
+        !QDir(newPath).exists()) {
+
+        QDir d(oldPath);
+        
+        if (!d.mkpath(newPath)) {
+            cerr << "WARNING: Failed to create new-style resource path \""
+                 << newPath << "\" to migrate old resources to" << endl;
+            return;
+        }
+
+        QDir target(newPath);
+
+        bool success = true;
+
+        QStringList entries
+            (d.entryList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot));
+
+        foreach (QString entry, entries) {
+            if (d.rename(entry, target.filePath(entry))) {
+                cerr << "NOTE: Successfully moved resource \""
+                     << entry << "\" from old resource path to new" << endl;
+            } else {
+                cerr << "WARNING: Failed to move old resource \""
+                     << entry << "\" from old location \""
+                     << oldPath << "\" to new location \""
+                     << newPath << "\"" << endl;
+                success = false;
+            }
+        }
+
+        if (success) {
+            if (!d.rmdir(oldPath)) {
+                cerr << "WARNING: Failed to remove old resource path \""
+                     << oldPath << "\" after migrating " << entries.size()
+                     << " resource(s) to new path \"" << newPath
+                     << "\" (directory not empty?)" << endl;
+            } else {
+                cerr << "NOTE: Successfully moved " << entries.size()
+                     << " resource(s) from old resource "
+                     << "path \"" << oldPath << "\" to new path \""
+                     << newPath << "\"" << endl;
+            }
+        }
+    }
+}
+
+QString
+ResourceFinder::getUserResourcePrefix()
+{
+    migrateOldStyleResources();
+    return getNewStyleUserResourcePrefix();
 }
 
 QStringList
