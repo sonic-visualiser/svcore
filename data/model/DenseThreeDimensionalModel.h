@@ -172,10 +172,10 @@ public:
     }
 
     virtual long getFrameForRow(int row) const {
-        return row * getSampleRate();
+        return row * getResolution();
     }
     virtual int getRowForFrame(long frame) const {
-        return frame / getSampleRate();
+        return frame / getResolution();
     }
 
 protected:
