@@ -241,11 +241,14 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
             } else if (optional == "sample_rate") {
                 transform.setSampleRate(onode.value.toFloat());
             } else if (optional == "start") {
-                transform.setStartTime
-                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+                RealTime start = RealTime::fromXsdDuration(onode.value.toStdString());
+                transform.setStartTime(start);
             } else if (optional == "duration") {
-                transform.setDuration
-                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+                RealTime duration = RealTime::fromXsdDuration(onode.value.toStdString());
+                transform.setDuration(duration);
+                if (duration == RealTime::zeroTime) {
+                    cerr << "\nRDFTransformFactory: WARNING: Duration is specified as \"" << onode.value << "\" in RDF file,\n    but this evaluates to zero when parsed as an xsd:duration datatype.\n    The duration property will therefore be ignored.\n    To specify start time and duration use the xsd:duration format,\n    for example \"PT2.5S\"^^xsd:duration (for 2.5 seconds).\n\n";
+                }
             } else {
                 cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
             }
