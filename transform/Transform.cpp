@@ -520,7 +520,7 @@ Transform::setFromXmlAttributes(const QXmlAttributes &attrs)
     }
 
     if (attrs.value("duration") != "") {
-        setStartTime(RealTime::fromString(attrs.value("duration").toStdString()));
+        setDuration(RealTime::fromString(attrs.value("duration").toStdString()));
     }
     
     if (attrs.value("sampleRate") != "") {
