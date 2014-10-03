@@ -103,7 +103,7 @@ CSVFormat::guessQualities(QString line, int lineno)
     QStringList list = StringBits::split(line, m_separator[0], m_allowQuoting);
 
     int cols = list.size();
-    if (lineno == 0 || (cols < m_columnCount)) m_columnCount = cols;
+    if (lineno == 0 || (cols > m_columnCount)) m_columnCount = cols;
     if (cols != m_columnCount) m_variableColumnCount = true;
 
     // All columns are regarded as having these qualities until we see
