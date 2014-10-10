@@ -212,7 +212,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
             "window_type",
             "sample_rate",
             "start", 
-            "duration"
+            "duration",
+            "plugin_version"
         };
         
         for (int j = 0; j < int(sizeof(optionals)/sizeof(optionals[0])); ++j) {
@@ -249,6 +250,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
                 if (duration == RealTime::zeroTime) {
                     cerr << "\nRDFTransformFactory: WARNING: Duration is specified as \"" << onode.value << "\" in RDF file,\n    but this evaluates to zero when parsed as an xsd:duration datatype.\n    The duration property will therefore be ignored.\n    To specify start time and duration use the xsd:duration format,\n    for example \"PT2.5S\"^^xsd:duration (for 2.5 seconds).\n\n";
                 }
+            } else if (optional == "plugin_version") {
+                transform.setPluginVersion(onode.value);
             } else {
                 cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
             }
