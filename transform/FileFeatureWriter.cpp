@@ -98,6 +98,8 @@ FileFeatureWriter::getSupportedParameters() const
             p.hasArg = true;
             pl.push_back(p);
         }
+    }
+    if (m_support & SupportStdOut) {
         p.name = "stdout";
         p.description = "Write all transform results directly to standard output.";
         p.hasArg = false;
@@ -149,7 +151,7 @@ FileFeatureWriter::setParameters(map<string, string> &params)
                 }
             }
         } else if (i->first == "stdout") {
-            if (m_support & SupportOneFileTotal) {
+            if (m_support & SupportStdOut) {
                 if (m_singleFileName != "") {
                     SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both stdout and one-file provided, ignoring stdout" << endl;
                 } else {

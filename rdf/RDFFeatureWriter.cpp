@@ -15,9 +15,6 @@
 
 #include <fstream>
 
-#include "vamp-hostsdk/PluginHostAdapter.h"
-#include "vamp-hostsdk/PluginLoader.h"
-
 #include "base/Exceptions.h"
 
 #include "RDFFeatureWriter.h"
@@ -36,7 +33,8 @@ using Vamp::PluginBase;
 RDFFeatureWriter::RDFFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
                       SupportOneFilePerTrack |
-                      SupportOneFileTotal,
+                      SupportOneFileTotal |
+                      SupportStdOut,
                       "n3"),
     m_plain(false),
     m_network(false),
