@@ -39,6 +39,8 @@ class FeatureWriter
 public:
     virtual ~FeatureWriter() { }
 
+    virtual string getDescription() const = 0;
+
     struct Parameter { // parameter of the writer, not the plugin
         string name;
         string description;

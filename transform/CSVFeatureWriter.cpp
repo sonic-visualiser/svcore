@@ -41,6 +41,12 @@ CSVFeatureWriter::~CSVFeatureWriter()
 {
 }
 
+string
+CSVFeatureWriter::getDescription() const
+{
+    return "Write features in comma-separated (CSV) format. If transforms are being written to a single file or to stdout, the first column in the output will contain the input audio filename, or an empty string if the feature hails from the same audio file as its predecessor. If transforms are being written to multiple files, the audio filename column will be omitted. Subsequent columns will contain the feature timestamp, then any or all of duration, values, and label.";
+}
+
 CSVFeatureWriter::ParameterList
 CSVFeatureWriter::getSupportedParameters() const
 {
