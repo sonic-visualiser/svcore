@@ -679,29 +679,45 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
         stream << "\n:feature_timeline_" << featureNumber << " a tl:DiscreteTimeLine .\n\n";
 
-        int stepSize = transform.getStepSize();
-        if (stepSize == 0) {
-            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the step size properly!" << endl;
-            return;
-        }
+        float sampleRate;
+        int stepSize, blockSize;
 
-        int blockSize = transform.getBlockSize();
-        if (blockSize == 0) {
-            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the block size properly!" << endl;
-            return;
-        }
+        // If the output is FixedSampleRate, we need to draw the
+        // sample rate and step size from the output descriptor;
+        // otherwise they come from the transform
 
-        float sampleRate = transform.getSampleRate();
-        if (sampleRate == 0.f) {
-            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the sample rate properly!" << endl;
-            return;
+        if (od.sampleType == Plugin::OutputDescriptor::FixedSampleRate) {
+
+            sampleRate = od.sampleRate;
+            stepSize = 1;
+            blockSize = 1;
+
+        } else {
+
+            sampleRate = transform.getSampleRate();
+            if (sampleRate == 0.f) {
+                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the sample rate properly!" << endl;
+                return;
+            }
+
+            stepSize = transform.getStepSize();
+            if (stepSize == 0) {
+                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the step size properly!" << endl;
+                return;
+            }
+
+            blockSize = transform.getBlockSize();
+            if (blockSize == 0) {
+                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the block size properly!" << endl;
+                return;
+            }
         }
 
         stream << ":feature_timeline_map_" << featureNumber
                << " a tl:UniformSamplingWindowingMap ;\n"
                << "    tl:rangeTimeLine :feature_timeline_" << featureNumber << " ;\n"
                << "    tl:domainTimeLine " << timelineURI << " ;\n"
-               << "    tl:sampleRate \"" << int(sampleRate) << "\"^^xsd:int ;\n"
+               << "    tl:sampleRate \"" << sampleRate << "\"^^xsd:float ;\n"
                << "    tl:windowLength \"" << blockSize << "\"^^xsd:int ;\n"
                << "    tl:hopSize \"" << stepSize << "\"^^xsd:int .\n\n";
 
