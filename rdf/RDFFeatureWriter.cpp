@@ -47,6 +47,12 @@ RDFFeatureWriter::~RDFFeatureWriter()
 {
 }
 
+string
+RDFFeatureWriter::getDescription() const
+{
+    return "Write output in Audio Features Ontology RDF/Turtle format.";
+}
+
 RDFFeatureWriter::ParameterList
 RDFFeatureWriter::getSupportedParameters() const
 {
