@@ -29,7 +29,8 @@ using namespace Vamp;
 
 CSVFeatureWriter::CSVFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
-                      SupportOneFileTotal,
+                      SupportOneFileTotal |
+                      SupportStdOut,
                       "csv"),
     m_separator(","),
     m_sampleTiming(false)

@@ -50,7 +50,8 @@ protected:
     enum FileWriteSupport {
         SupportOneFilePerTrackTransform = 1,
         SupportOneFilePerTrack = 2,
-        SupportOneFileTotal = 4
+        SupportOneFileTotal = 4,
+        SupportStdOut = 8
     };
 
     FileFeatureWriter(int support, QString extension);
