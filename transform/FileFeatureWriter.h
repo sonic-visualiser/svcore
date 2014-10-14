@@ -58,13 +58,26 @@ protected:
     QTextStream *getOutputStream(QString, TransformId);
 
     typedef pair<QString, TransformId> TrackTransformPair;
+    typedef map<TrackTransformPair, QString> FileNameMap;
     typedef map<TrackTransformPair, QFile *> FileMap;
     typedef map<QFile *, QTextStream *> FileStreamMap;
     FileMap m_files;
+    FileNameMap m_filenames;
     FileStreamMap m_streams;
     QTextStream *m_prevstream;
 
+    TrackTransformPair getFilenameKey(QString, TransformId);
+
+    // Come up with a suitable output filename for the given track ID - 
+    // transform ID combo. Fail if it already exists, etc.
+    QString createOutputFilename(QString, TransformId);
+
+    // Look up and return the output filename for the given track ID -
+    // transform ID combo.
     QString getOutputFilename(QString, TransformId);
+
+    // Look up and return the output file handle for the given track
+    // ID - transform ID combo. Return 0 if it could not be opened.
     QFile *getOutputFile(QString, TransformId);
     
     // subclass can implement this to be called before file is opened for append
