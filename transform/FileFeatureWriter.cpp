@@ -75,14 +75,14 @@ FileFeatureWriter::getSupportedParameters() const
     Parameter p;
 
     p.name = "basedir";
-    p.description = "Base output directory path.  (The default is the same directory as the input file.)";
+    p.description = "Base output directory path. (The default is the same directory as the input file.) The directory must exist already.";
     p.hasArg = true;
     pl.push_back(p);
 
     if (m_support & SupportOneFilePerTrackTransform &&
         m_support & SupportOneFilePerTrack) {
         p.name = "many-files";
-        p.description = "Create a separate output file for every combination of input file and transform.  The output file names will be based on the input file names.  (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
+        p.description = "Create a separate output file for every combination of input file and transform. The output file names will be based on the input file names. (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
         p.hasArg = false;
         pl.push_back(p);
     }
@@ -91,9 +91,9 @@ FileFeatureWriter::getSupportedParameters() const
         if (m_support & ~SupportOneFileTotal) { // not only option
             p.name = "one-file";
             if (m_support & SupportOneFilePerTrack) {
-                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
+                p.description = "Write all transform results for all input files into the single named output file. (The default is to create one output file per input audio file, and write all transform results for that input into it.)";
             } else {
-                p.description = "Write all transform results for all input files into the single named output file.  (The default is to create a separate output file for each combination of input audio file and transform.)";
+                p.description = "Write all transform results for all input files into the single named output file. (The default is to create a separate output file for each combination of input audio file and transform.)";
             }                
             p.hasArg = true;
             pl.push_back(p);
@@ -167,8 +167,8 @@ FileFeatureWriter::setParameters(map<string, string> &params)
 }
 
 QString
-FileFeatureWriter::getOutputFilename(QString trackId,
-                                     TransformId transformId)
+FileFeatureWriter::createOutputFilename(QString trackId,
+                                        TransformId transformId)
 {
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
@@ -179,7 +179,9 @@ FileFeatureWriter::getOutputFilename(QString trackId,
         return m_singleFileName;
     }
 
-    if (m_stdout) return "";
+    if (m_stdout) {
+        return "";
+    }
     
     QUrl url(trackId, QUrl::StrictMode);
     QString scheme = url.scheme().toLower();
@@ -237,29 +239,49 @@ FileFeatureWriter::testOutputFile(QString trackId,
     // leave it to it
     if (m_stdout || m_singleFileName != "") return;
 
-    QString filename = getOutputFilename(trackId, transformId);
+    QString filename = createOutputFilename(trackId, transformId);
     if (filename == "") {
         throw FailedToOpenOutputStream(trackId, transformId);
     }
+}
+
+FileFeatureWriter::TrackTransformPair
+FileFeatureWriter::getFilenameKey(QString trackId,
+                                  TransformId transformId)
+{
+    TrackTransformPair key;
+
+    if (m_singleFileName != "") {
+        key = TrackTransformPair("", "");
+    } else if (m_manyFiles) {
+        key = TrackTransformPair(trackId, transformId);
+    } else {
+        key = TrackTransformPair(trackId, "");
+    }
+
+    return key;
+}    
+
+QString
+FileFeatureWriter::getOutputFilename(QString trackId,
+                                     TransformId transformId)
+{
+    TrackTransformPair key = getFilenameKey(trackId, transformId);
+    if (m_filenames.find(key) == m_filenames.end()) {
+        m_filenames[key] = createOutputFilename(trackId, transformId);
+    }
+    return m_filenames[key];
 }
 
 QFile *
 FileFeatureWriter::getOutputFile(QString trackId,
                                  TransformId transformId)
 {
-    pair<QString, TransformId> key;
-
-    if (m_singleFileName != "") {
-        key = pair<QString, TransformId>("", "");
-    } else if (m_manyFiles) {
-        key = pair<QString, TransformId>(trackId, transformId);
-    } else {
-        key = pair<QString, TransformId>(trackId, "");
-    }
+    TrackTransformPair key = getFilenameKey(trackId, transformId);
 
     if (m_files.find(key) == m_files.end()) {
 
-        QString filename = getOutputFilename(trackId, transformId);
+        QString filename = createOutputFilename(trackId, transformId);
 
         if (filename == "") { // stdout or failure
             return 0;
