@@ -51,13 +51,30 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "");
 
+    virtual void finish();
+
     virtual QString getWriterTag() const { return "csv"; }
 
 private:
     QString m_separator;
     bool m_sampleTiming;
     bool m_endTimes;
+    bool m_forceEnd;
     QString m_prevPrintedTrackId;
+
+    typedef map<TrackTransformPair, Vamp::Plugin::Feature> PendingFeatures;
+    typedef map<TrackTransformPair, std::string> PendingSummaryTypes;
+    PendingFeatures m_pending;
+    PendingSummaryTypes m_pendingSummaryTypes;
+
+    typedef map<TransformId, float> SampleRateMap;
+    SampleRateMap m_rates;
+
+    void writeFeature(TrackTransformPair trackId,
+                      QTextStream &,
+                      const Vamp::Plugin::Feature &f,
+                      const Vamp::Plugin::Feature *optionalNextFeature,
+                      std::string summaryType);
 };
 
 #endif
