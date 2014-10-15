@@ -63,15 +63,13 @@ private:
     bool m_omitFilename;
     QString m_prevPrintedTrackId;
 
-    typedef map<TrackTransformPair, Vamp::Plugin::Feature> PendingFeatures;
-    typedef map<TrackTransformPair, std::string> PendingSummaryTypes;
+    typedef pair<QString, Transform> DataId; // track id, transform
+    typedef map<DataId, Vamp::Plugin::Feature> PendingFeatures;
+    typedef map<DataId, std::string> PendingSummaryTypes;
     PendingFeatures m_pending;
     PendingSummaryTypes m_pendingSummaryTypes;
 
-    typedef map<TransformId, float> SampleRateMap;
-    SampleRateMap m_rates;
-
-    void writeFeature(TrackTransformPair trackId,
+    void writeFeature(DataId,
                       QTextStream &,
                       const Vamp::Plugin::Feature &f,
                       const Vamp::Plugin::Feature *optionalNextFeature,

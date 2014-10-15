@@ -134,11 +134,7 @@ CSVFeatureWriter::write(QString trackId,
 
     if (n == 0) return;
 
-    TrackTransformPair tt(trackId, transformId);
-
-    if (m_rates.find(transformId) == m_rates.end()) {
-        m_rates[transformId] = transform.getSampleRate();
-    }
+    DataId tt(trackId, transform);
 
     if (m_pending.find(tt) != m_pending.end()) {
         writeFeature(tt,
@@ -171,11 +167,11 @@ CSVFeatureWriter::finish()
 {
     for (PendingFeatures::const_iterator i = m_pending.begin();
          i != m_pending.end(); ++i) {
-        TrackTransformPair tt = i->first;
+        DataId tt = i->first;
         Plugin::Feature f = i->second;
-        QTextStream *sptr = getOutputStream(tt.first, tt.second);
+        QTextStream *sptr = getOutputStream(tt.first, tt.second.getIdentifier());
         if (!sptr) {
-            throw FailedToOpenOutputStream(tt.first, tt.second);
+            throw FailedToOpenOutputStream(tt.first, tt.second.getIdentifier());
         }
         QTextStream &stream = *sptr;
         // final feature has its own time as end time (we can't
@@ -189,14 +185,14 @@ CSVFeatureWriter::finish()
 }
 
 void
-CSVFeatureWriter::writeFeature(TrackTransformPair tt,
+CSVFeatureWriter::writeFeature(DataId tt,
                                QTextStream &stream,
                                const Plugin::Feature &f,
                                const Plugin::Feature *optionalNextFeature,
                                std::string summaryType)
 {
     QString trackId = tt.first;
-    TransformId transformId = tt.second;
+    Transform transform = tt.second;
 
     if (!m_omitFilename) {
         if (m_stdout || m_singleFileName != "") {
@@ -222,7 +218,7 @@ CSVFeatureWriter::writeFeature(TrackTransformPair tt,
 
     if (m_sampleTiming) {
 
-        float rate = m_rates[transformId];
+        float rate = transform.getSampleRate();
 
         stream << Vamp::RealTime::realTime2Frame(f.timestamp, rate);
 
