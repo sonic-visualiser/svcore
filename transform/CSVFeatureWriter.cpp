@@ -35,7 +35,8 @@ CSVFeatureWriter::CSVFeatureWriter() :
     m_separator(","),
     m_sampleTiming(false),
     m_endTimes(false),
-    m_forceEnd(false)
+    m_forceEnd(false),
+    m_omitFilename(false)
 {
 }
 
@@ -58,6 +59,11 @@ CSVFeatureWriter::getSupportedParameters() const
     p.name = "separator";
     p.description = "Column separator for output.  Default is \",\" (comma).";
     p.hasArg = true;
+    pl.push_back(p);
+    
+    p.name = "omit-filename";
+    p.description = "Omit the filename column. May result in confusion if sending more than one audio file's features to the same CSV output.";
+    p.hasArg = false;
     pl.push_back(p);
     
     p.name = "sample-timing";
@@ -89,12 +95,18 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
         cerr << i->first << " -> " << i->second << endl;
         if (i->first == "separator") {
             m_separator = i->second.c_str();
+            cerr << "m_separator = " << m_separator << endl;
+            if (m_separator == "\\t") {
+                m_separator = QChar::Tabulation;
+            }
         } else if (i->first == "sample-timing") {
             m_sampleTiming = true;
         } else if (i->first == "end-times") {
             m_endTimes = true;
         } else if (i->first == "fill-ends") {
             m_forceEnd = true;
+        } else if (i->first == "omit-filename") {
+            m_omitFilename = true;
         }
     }
 }
@@ -186,12 +198,14 @@ CSVFeatureWriter::writeFeature(TrackTransformPair tt,
     QString trackId = tt.first;
     TransformId transformId = tt.second;
 
-    if (m_stdout || m_singleFileName != "") {
-        if (trackId != m_prevPrintedTrackId) {
-            stream << "\"" << trackId << "\"" << m_separator;
-            m_prevPrintedTrackId = trackId;
-        } else {
-            stream << m_separator;
+    if (!m_omitFilename) {
+        if (m_stdout || m_singleFileName != "") {
+            if (trackId != m_prevPrintedTrackId) {
+                stream << "\"" << trackId << "\"" << m_separator;
+                m_prevPrintedTrackId = trackId;
+            } else {
+                stream << m_separator;
+            }
         }
     }
 

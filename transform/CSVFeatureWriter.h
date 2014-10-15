@@ -60,6 +60,7 @@ private:
     bool m_sampleTiming;
     bool m_endTimes;
     bool m_forceEnd;
+    bool m_omitFilename;
     QString m_prevPrintedTrackId;
 
     typedef map<TrackTransformPair, Vamp::Plugin::Feature> PendingFeatures;
