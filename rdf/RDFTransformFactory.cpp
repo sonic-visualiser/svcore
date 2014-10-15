@@ -409,6 +409,9 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     if (transform.getSampleRate() != 0) {
         s << "    vamp:sample_rate \"" << transform.getSampleRate() << "\"^^xsd:float ; " << endl;
     }
+    if (transform.getPluginVersion() != "") {
+        s << "    vamp:plugin_version \"\"\"" << transform.getPluginVersion() << "\"\"\" ; " << endl;
+    }
     
     QString program = transform.getProgram();
     if (program != "") {
