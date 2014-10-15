@@ -400,6 +400,11 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     if (transform.getBlockSize() != 0) {
         s << "    vamp:block_size \"" << transform.getBlockSize() << "\"^^xsd:int ; " << endl;
     }
+    if (transform.getWindowType() != HanningWindow) {
+        s << "    vamp:window_type \"" <<
+            Window<float>::getNameForType(transform.getWindowType()).c_str()
+          << "\" ; " << endl;
+    }
     if (transform.getStartTime() != RealTime::zeroTime) {
         s << "    vamp:start \"" << transform.getStartTime().toXsdDuration().c_str() << "\"^^xsd:duration ; " << endl;
     }
