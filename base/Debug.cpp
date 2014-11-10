@@ -43,8 +43,9 @@ getSVDebug()
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
     if (!prefix) {
-        prefix = new char[20];
-        sprintf(prefix, "[%lu]", (unsigned long)QCoreApplication::applicationPid());
+        prefix = strdup(QString("[%1]")
+                        .arg(QCoreApplication::applicationPid())
+                        .toLatin1().data());
         //!!! what to do if mkpath fails?
 	if (!logdir.exists()) logdir.mkpath(logdir.path());
     }

@@ -78,6 +78,7 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
     m_reply(0),
     m_preferredContentType(preferredContentType),
     m_ok(false),
+    m_cancelled(false),
     m_lastStatus(0),
     m_resource(fileOrUrl.startsWith(':')),
     m_remote(isRemote(fileOrUrl)),
@@ -167,6 +168,7 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_localFile(0),
     m_reply(0),
     m_ok(false),
+    m_cancelled(false),
     m_lastStatus(0),
     m_resource(false),
     m_remote(isRemote(url.toString())),
@@ -199,6 +201,7 @@ FileSource::FileSource(const FileSource &rf) :
     m_localFile(0),
     m_reply(0),
     m_ok(rf.m_ok),
+    m_cancelled(rf.m_cancelled),
     m_lastStatus(rf.m_lastStatus),
     m_resource(rf.m_resource),
     m_remote(rf.m_remote),
@@ -484,6 +487,7 @@ FileSource::cleanup()
     m_done = true;
     if (m_reply) {
         QNetworkReply *r = m_reply;
+        disconnect(r, 0, this, 0);
         m_reply = 0;
         // Can only call abort() when there are no errors.
         if (r->error() == QNetworkReply::NoError) {
@@ -568,6 +572,12 @@ bool
 FileSource::isDone() const
 {
     return m_done;
+}
+
+bool
+FileSource::wasCancelled() const
+{
+    return m_cancelled;
 }
 
 bool
@@ -710,6 +720,7 @@ FileSource::cancelled()
     cleanup();
 
     m_ok = false;
+    m_cancelled = true;
     m_errorString = tr("Download cancelled");
 }
 
