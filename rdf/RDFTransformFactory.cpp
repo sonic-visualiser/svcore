@@ -212,7 +212,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
             "window_type",
             "sample_rate",
             "start", 
-            "duration"
+            "duration",
+            "plugin_version"
         };
         
         for (int j = 0; j < int(sizeof(optionals)/sizeof(optionals[0])); ++j) {
@@ -241,11 +242,16 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
             } else if (optional == "sample_rate") {
                 transform.setSampleRate(onode.value.toFloat());
             } else if (optional == "start") {
-                transform.setStartTime
-                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+                RealTime start = RealTime::fromXsdDuration(onode.value.toStdString());
+                transform.setStartTime(start);
             } else if (optional == "duration") {
-                transform.setDuration
-                    (RealTime::fromXsdDuration(onode.value.toStdString()));
+                RealTime duration = RealTime::fromXsdDuration(onode.value.toStdString());
+                transform.setDuration(duration);
+                if (duration == RealTime::zeroTime) {
+                    cerr << "\nRDFTransformFactory: WARNING: Duration is specified as \"" << onode.value << "\" in RDF file,\n    but this evaluates to zero when parsed as an xsd:duration datatype.\n    The duration property will therefore be ignored.\n    To specify start time and duration use the xsd:duration format,\n    for example \"PT2.5S\"^^xsd:duration (for 2.5 seconds).\n\n";
+                }
+            } else if (optional == "plugin_version") {
+                transform.setPluginVersion(onode.value);
             } else {
                 cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
             }
@@ -394,6 +400,11 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     if (transform.getBlockSize() != 0) {
         s << "    vamp:block_size \"" << transform.getBlockSize() << "\"^^xsd:int ; " << endl;
     }
+    if (transform.getWindowType() != HanningWindow) {
+        s << "    vamp:window_type \"" <<
+            Window<float>::getNameForType(transform.getWindowType()).c_str()
+          << "\" ; " << endl;
+    }
     if (transform.getStartTime() != RealTime::zeroTime) {
         s << "    vamp:start \"" << transform.getStartTime().toXsdDuration().c_str() << "\"^^xsd:duration ; " << endl;
     }
@@ -402,6 +413,9 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     }
     if (transform.getSampleRate() != 0) {
         s << "    vamp:sample_rate \"" << transform.getSampleRate() << "\"^^xsd:float ; " << endl;
+    }
+    if (transform.getPluginVersion() != "") {
+        s << "    vamp:plugin_version \"\"\"" << transform.getPluginVersion() << "\"\"\" ; " << endl;
     }
     
     QString program = transform.getProgram();

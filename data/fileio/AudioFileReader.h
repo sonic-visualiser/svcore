@@ -75,7 +75,9 @@ public:
     /** 
      * Return interleaved samples for count frames from index start.
      * The resulting sample block will contain count *
-     * getChannelCount() samples (or fewer if end of file is reached).
+     * getChannelCount() samples (or fewer if end of file is
+     * reached). The caller does not need to allocate space and any
+     * existing content in the SampleBlock will be erased.
      *
      * The subclass implementations of this function must be
      * thread-safe -- that is, safe to call from multiple threads with

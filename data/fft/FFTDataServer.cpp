@@ -1428,18 +1428,14 @@ FFTDataServer::generateFileBasename(const DenseTimeValueModel *model,
                                     int fftSize,
                                     bool polar)
 {
-    char buffer[200];
-
-    sprintf(buffer, "%u-%u-%u-%u-%u-%u%s",
-            (unsigned int)XmlExportable::getObjectExportId(model),
-            (unsigned int)(channel + 1),
-            (unsigned int)windowType,
-            (unsigned int)windowSize,
-            (unsigned int)windowIncrement,
-            (unsigned int)fftSize,
-            polar ? "-p" : "-r");
-
-    return buffer;
+    return QString("%1-%2-%3-%4-%5-%6%7")
+        .arg(XmlExportable::getObjectExportId(model))
+        .arg(channel + 1)
+        .arg((int)windowType)
+        .arg(windowSize)
+        .arg(windowIncrement)
+        .arg(fftSize)
+        .arg(polar ? "-p" : "-r");
 }
 
 void

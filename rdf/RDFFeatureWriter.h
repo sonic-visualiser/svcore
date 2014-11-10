@@ -44,6 +44,8 @@ public:
     RDFFeatureWriter();
     virtual ~RDFFeatureWriter();
 
+    virtual string getDescription() const;
+
     virtual ParameterList getSupportedParameters() const;
     virtual void setParameters(map<string, string> &params);
 

@@ -37,8 +37,9 @@ public:
 
     enum TimeUnits {
 	TimeSeconds,
+        TimeMilliseconds,
 	TimeAudioFrames,
-	TimeWindows
+	TimeWindows,
     };
 
     enum ColumnPurpose {

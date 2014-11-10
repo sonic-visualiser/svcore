@@ -40,6 +40,8 @@ public:
     CSVFeatureWriter();
     virtual ~CSVFeatureWriter();
 
+    virtual string getDescription() const;
+
     virtual ParameterList getSupportedParameters() const;
     virtual void setParameters(map<string, string> &params);
 
@@ -49,12 +51,29 @@ public:
                        const Vamp::Plugin::FeatureList &features,
                        std::string summaryType = "");
 
+    virtual void finish();
+
     virtual QString getWriterTag() const { return "csv"; }
 
 private:
     QString m_separator;
     bool m_sampleTiming;
+    bool m_endTimes;
+    bool m_forceEnd;
+    bool m_omitFilename;
     QString m_prevPrintedTrackId;
+
+    typedef pair<QString, Transform> DataId; // track id, transform
+    typedef map<DataId, Vamp::Plugin::Feature> PendingFeatures;
+    typedef map<DataId, std::string> PendingSummaryTypes;
+    PendingFeatures m_pending;
+    PendingSummaryTypes m_pendingSummaryTypes;
+
+    void writeFeature(DataId,
+                      QTextStream &,
+                      const Vamp::Plugin::Feature &f,
+                      const Vamp::Plugin::Feature *optionalNextFeature,
+                      std::string summaryType);
 };
 
 #endif

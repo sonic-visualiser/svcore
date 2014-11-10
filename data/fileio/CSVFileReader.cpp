@@ -101,6 +101,12 @@ CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
         double time = numeric.toDouble(&ok);
         if (!ok) time = StringBits::stringToDoubleLocaleFree(numeric, &ok);
         calculatedFrame = int(time * sampleRate + 0.5);
+    
+    } else if (timeUnits == CSVFormat::TimeMilliseconds) {
+
+        double time = numeric.toDouble(&ok);
+        if (!ok) time = StringBits::stringToDoubleLocaleFree(numeric, &ok);
+        calculatedFrame = int((time / 1000.0) * sampleRate + 0.5);
         
     } else {
         
@@ -149,7 +155,8 @@ CSVFileReader::load() const
         } else {
             windowSize = 1;
         }
-	if (timeUnits == CSVFormat::TimeSeconds) {
+	if (timeUnits == CSVFormat::TimeSeconds ||
+            timeUnits == CSVFormat::TimeMilliseconds) {
 	    sampleRate = m_mainModelSampleRate;
 	}
     }
