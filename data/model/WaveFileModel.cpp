@@ -183,6 +183,13 @@ WaveFileModel::getLocation() const
     if (m_reader) return m_reader->getLocation();
     return "";
 }
+
+QString
+WaveFileModel::getLocalFilename() const
+{
+    if (m_reader) return m_reader->getLocalFilename();
+    return "";
+}
     
 int
 WaveFileModel::getData(int channel, int start, int count,
