@@ -100,8 +100,8 @@ public:
     void setTimingType(TimingType t)      { m_timingType   = t; }
     void setTimeUnits(TimeUnits t)        { m_timeUnits    = t; }
     void setSeparator(QChar s)            { m_separator    = s; }
-    void setSampleRate(int r)          { m_sampleRate   = r; }
-    void setWindowSize(int s)          { m_windowSize   = s; }
+    void setSampleRate(int r)             { m_sampleRate   = r; }
+    void setWindowSize(int s)             { m_windowSize   = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
 
