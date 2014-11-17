@@ -43,6 +43,8 @@ public:
 
     virtual int getNativeRate() const { return m_fileRate; }
 
+    virtual QString getLocalFilename() const { return m_cacheFileName; }
+    
     /// Intermediate cache means all CodedAudioFileReaders are quickly seekable
     virtual bool isQuicklySeekable() const { return true; }
 

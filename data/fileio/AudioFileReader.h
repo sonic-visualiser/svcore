@@ -62,6 +62,16 @@ public:
      */
     virtual QString getMaker() const { return ""; }
 
+    /**
+     * Return the local file path of the audio data. This is the
+     * location most likely to contain readable audio data: it may be
+     * in a different place or format from the originally specified
+     * location, for example if the file has been retrieved and
+     * decoded. In some cases there may be no local file path, and
+     * this will return "" if there is none.
+     */
+    virtual QString getLocalFilename() const { return ""; }
+    
     typedef std::map<QString, QString> TagMap;
     virtual TagMap getTags() const { return TagMap(); }
 
@@ -75,7 +85,9 @@ public:
     /** 
      * Return interleaved samples for count frames from index start.
      * The resulting sample block will contain count *
-     * getChannelCount() samples (or fewer if end of file is reached).
+     * getChannelCount() samples (or fewer if end of file is
+     * reached). The caller does not need to allocate space and any
+     * existing content in the SampleBlock will be erased.
      *
      * The subclass implementations of this function must be
      * thread-safe -- that is, safe to call from multiple threads with

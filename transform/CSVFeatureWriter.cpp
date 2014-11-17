@@ -29,15 +29,25 @@ using namespace Vamp;
 
 CSVFeatureWriter::CSVFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
-                      SupportOneFileTotal,
+                      SupportOneFileTotal |
+                      SupportStdOut,
                       "csv"),
     m_separator(","),
-    m_sampleTiming(false)
+    m_sampleTiming(false),
+    m_endTimes(false),
+    m_forceEnd(false),
+    m_omitFilename(false)
 {
 }
 
 CSVFeatureWriter::~CSVFeatureWriter()
 {
+}
+
+string
+CSVFeatureWriter::getDescription() const
+{
+    return "Write features in comma-separated (CSV) format. If transforms are being written to a single file or to stdout, the first column in the output will contain the input audio filename, or an empty string if the feature hails from the same audio file as its predecessor. If transforms are being written to multiple files, the audio filename column will be omitted. Subsequent columns will contain the feature timestamp, then any or all of duration, values, and label.";
 }
 
 CSVFeatureWriter::ParameterList
@@ -51,8 +61,23 @@ CSVFeatureWriter::getSupportedParameters() const
     p.hasArg = true;
     pl.push_back(p);
     
+    p.name = "omit-filename";
+    p.description = "Omit the filename column. May result in confusion if sending more than one audio file's features to the same CSV output.";
+    p.hasArg = false;
+    pl.push_back(p);
+    
     p.name = "sample-timing";
     p.description = "Show timings as sample frame counts instead of in seconds.";
+    p.hasArg = false;
+    pl.push_back(p);
+    
+    p.name = "end-times";
+    p.description = "Show start and end time instead of start and duration, for features with duration.";
+    p.hasArg = false;
+    pl.push_back(p);
+
+    p.name = "fill-ends";
+    p.description = "Include durations (or end times) even for features without duration, by using the gap to the next feature instead.";
     p.hasArg = false;
     pl.push_back(p);
 
@@ -70,8 +95,18 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
         cerr << i->first << " -> " << i->second << endl;
         if (i->first == "separator") {
             m_separator = i->second.c_str();
+            cerr << "m_separator = " << m_separator << endl;
+            if (m_separator == "\\t") {
+                m_separator = QChar::Tabulation;
+            }
         } else if (i->first == "sample-timing") {
             m_sampleTiming = true;
+        } else if (i->first == "end-times") {
+            m_endTimes = true;
+        } else if (i->first == "fill-ends") {
+            m_forceEnd = true;
+        } else if (i->first == "omit-filename") {
+            m_omitFilename = true;
         }
     }
 }
@@ -83,18 +118,83 @@ CSVFeatureWriter::write(QString trackId,
                         const Plugin::FeatureList& features,
                         std::string summaryType)
 {
+    TransformId transformId = transform.getIdentifier();
+
     // Select appropriate output file for our track/transform
     // combination
 
-    QTextStream *sptr = getOutputStream(trackId, transform.getIdentifier());
+    QTextStream *sptr = getOutputStream(trackId, transformId);
     if (!sptr) {
-        throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
+        throw FailedToOpenOutputStream(trackId, transformId);
     }
 
     QTextStream &stream = *sptr;
 
-    for (unsigned int i = 0; i < features.size(); ++i) {
+    int n = features.size();
 
+    if (n == 0) return;
+
+    DataId tt(trackId, transform);
+
+    if (m_pending.find(tt) != m_pending.end()) {
+        writeFeature(tt,
+                     stream,
+                     m_pending[tt],
+                     &features[0],
+                     m_pendingSummaryTypes[tt]);
+        m_pending.erase(tt);
+        m_pendingSummaryTypes.erase(tt);
+    }
+
+    if (m_forceEnd) {
+        // can't write final feature until we know its end time
+        --n;
+        m_pending[tt] = features[n];
+        m_pendingSummaryTypes[tt] = summaryType;
+    }
+
+    for (int i = 0; i < n; ++i) {
+        writeFeature(tt, 
+                     stream,
+                     features[i], 
+                     m_forceEnd ? &features[i+1] : 0,
+                     summaryType);
+    }
+}
+
+void
+CSVFeatureWriter::finish()
+{
+    for (PendingFeatures::const_iterator i = m_pending.begin();
+         i != m_pending.end(); ++i) {
+        DataId tt = i->first;
+        Plugin::Feature f = i->second;
+        QTextStream *sptr = getOutputStream(tt.first, tt.second.getIdentifier());
+        if (!sptr) {
+            throw FailedToOpenOutputStream(tt.first, tt.second.getIdentifier());
+        }
+        QTextStream &stream = *sptr;
+        // final feature has its own time as end time (we can't
+        // reliably determine the end of audio file, and because of
+        // the nature of block processing, the feature could even
+        // start beyond that anyway)
+        writeFeature(tt, stream, f, &f, m_pendingSummaryTypes[tt]);
+    }
+
+    m_pending.clear();
+}
+
+void
+CSVFeatureWriter::writeFeature(DataId tt,
+                               QTextStream &stream,
+                               const Plugin::Feature &f,
+                               const Plugin::Feature *optionalNextFeature,
+                               std::string summaryType)
+{
+    QString trackId = tt.first;
+    Transform transform = tt.second;
+
+    if (!m_omitFilename) {
         if (m_stdout || m_singleFileName != "") {
             if (trackId != m_prevPrintedTrackId) {
                 stream << "\"" << trackId << "\"" << m_separator;
@@ -103,45 +203,68 @@ CSVFeatureWriter::write(QString trackId,
                 stream << m_separator;
             }
         }
-
-        if (m_sampleTiming) {
-
-            stream << Vamp::RealTime::realTime2Frame
-                (features[i].timestamp, transform.getSampleRate());
-
-            if (features[i].hasDuration) {
-                stream << m_separator;
-                stream << Vamp::RealTime::realTime2Frame
-                    (features[i].duration, transform.getSampleRate());
-            }
-
-        } else {
-
-            QString timestamp = features[i].timestamp.toString().c_str();
-            timestamp.replace(QRegExp("^ +"), "");
-            stream << timestamp;
-
-            if (features[i].hasDuration) {
-                QString duration = features[i].duration.toString().c_str();
-                duration.replace(QRegExp("^ +"), "");
-                stream << m_separator << duration;
-            }            
-        }
-
-        if (summaryType != "") {
-            stream << m_separator << summaryType.c_str();
-        }
-
-        for (unsigned int j = 0; j < features[i].values.size(); ++j) {
-            stream << m_separator << features[i].values[j];
-        }
-
-        if (features[i].label != "") {
-            stream << m_separator << "\"" << features[i].label.c_str() << "\"";
-        }
-
-        stream << "\n";
     }
+
+    Vamp::RealTime duration;
+    bool haveDuration = true;
+    
+    if (f.hasDuration) {
+        duration = f.duration;
+    } else if (optionalNextFeature) {
+        duration = optionalNextFeature->timestamp - f.timestamp;
+    } else {
+        haveDuration = false;
+    }
+
+    if (m_sampleTiming) {
+
+        float rate = transform.getSampleRate();
+
+        stream << Vamp::RealTime::realTime2Frame(f.timestamp, rate);
+
+        if (haveDuration) {
+            stream << m_separator;
+            if (m_endTimes) {
+                stream << Vamp::RealTime::realTime2Frame
+                    (f.timestamp + duration, rate);
+            } else {
+                stream << Vamp::RealTime::realTime2Frame(duration, rate);
+            }
+        }
+
+    } else {
+
+        QString timestamp = f.timestamp.toString().c_str();
+        timestamp.replace(QRegExp("^ +"), "");
+        stream << timestamp;
+
+        if (haveDuration) {
+            if (m_endTimes) {
+                QString endtime =
+                    (f.timestamp + duration).toString().c_str();
+                endtime.replace(QRegExp("^ +"), "");
+                stream << m_separator << endtime;
+            } else {
+                QString d = duration.toString().c_str();
+                d.replace(QRegExp("^ +"), "");
+                stream << m_separator << d;
+            }
+        }            
+    }
+
+    if (summaryType != "") {
+        stream << m_separator << summaryType.c_str();
+    }
+    
+    for (unsigned int j = 0; j < f.values.size(); ++j) {
+        stream << m_separator << f.values[j];
+    }
+    
+    if (f.label != "") {
+        stream << m_separator << "\"" << f.label.c_str() << "\"";
+    }
+    
+    stream << "\n";
 }
 
 

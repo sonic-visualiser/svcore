@@ -32,7 +32,7 @@ class AlignmentModel : public Model
 public:
     AlignmentModel(Model *reference,
                    Model *aligned,
-                   Model *inputModel, // probably an AggregateWaveModel; I take ownership
+                   Model *inputModel, // probably an AggregateWaveModel; may be null; I take ownership
                    SparseTimeValueModel *path); // I take ownership
     ~AlignmentModel();
 

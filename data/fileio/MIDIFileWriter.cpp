@@ -317,7 +317,6 @@ MIDIFileWriter::convert()
     m_numberOfTracks = 1;
 
     int track = 0;
-    int midiChannel = 0;
 
     MIDIEvent *event;
 
@@ -349,9 +348,13 @@ MIDIFileWriter::convert()
         int duration = i->duration;
         int pitch = i->midiPitch;
         int velocity = i->velocity;
+        int channel = i->channel;
 
         if (pitch < 0) pitch = 0;
         if (pitch > 127) pitch = 127;
+
+        if (channel < 0) channel = 0;
+        if (channel > 15) channel = 0;
 
         // Convert frame to MIDI time
 
@@ -370,13 +373,13 @@ MIDIFileWriter::convert()
         // in place).
 
         event = new MIDIEvent(midiTime,
-                              MIDI_NOTE_ON | midiChannel,
+                              MIDI_NOTE_ON | channel,
                               pitch,
                               velocity);
         m_midiComposition[track].push_back(event);
 
         event = new MIDIEvent(endTime,
-                              MIDI_NOTE_OFF | midiChannel,
+                              MIDI_NOTE_OFF | channel,
                               pitch,
                               127); // loudest silence you can muster
 
