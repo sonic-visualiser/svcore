@@ -487,6 +487,7 @@ FileSource::cleanup()
     m_done = true;
     if (m_reply) {
         QNetworkReply *r = m_reply;
+        disconnect(r, 0, this, 0);
         m_reply = 0;
         // Can only call abort() when there are no errors.
         if (r->error() == QNetworkReply::NoError) {

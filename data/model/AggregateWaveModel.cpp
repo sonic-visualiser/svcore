@@ -118,14 +118,21 @@ AggregateWaveModel::getData(int channel, int start, int count,
         }
     }
 
-    int sz = count;
-
+    int longest = 0;
+    
     for (int c = ch0; c <= ch1; ++c) {
-        int szHere = 
+        int here = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
-        if (szHere < sz) sz = szHere;
+        if (here > longest) {
+            longest = here;
+        }
+        if (here < count) {
+            for (int i = here; i < count; ++i) {
+                readbuf[i] = 0.f;
+            }
+        }
         if (mixing) {
             for (int i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
@@ -134,7 +141,7 @@ AggregateWaveModel::getData(int channel, int start, int count,
     }
 
     if (mixing) delete[] readbuf;
-    return sz;
+    return longest;
 }
          
 int
@@ -157,14 +164,21 @@ AggregateWaveModel::getData(int channel, int start, int count,
         }
     }
 
-    int sz = count;
+    int longest = 0;
     
     for (int c = ch0; c <= ch1; ++c) {
-        int szHere = 
+        int here = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
-        if (szHere < sz) sz = szHere;
+        if (here > longest) {
+            longest = here;
+        }
+        if (here < count) {
+            for (int i = here; i < count; ++i) {
+                readbuf[i] = 0.;
+            }
+        }
         if (mixing) {
             for (int i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
@@ -173,7 +187,7 @@ AggregateWaveModel::getData(int channel, int start, int count,
     }
     
     if (mixing) delete[] readbuf;
-    return sz;
+    return longest;
 }
 
 int

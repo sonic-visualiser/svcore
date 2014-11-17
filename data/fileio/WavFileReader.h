@@ -42,6 +42,8 @@ public:
     virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getError() const { return m_error; }
 
+    virtual QString getLocalFilename() const { return m_path; }
+    
     virtual bool isQuicklySeekable() const { return m_seekable; }
     
     /** 

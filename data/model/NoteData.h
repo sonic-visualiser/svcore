@@ -23,14 +23,15 @@ struct NoteData
 {
     NoteData(int _start, int _dur, int _mp, int _vel) :
 	start(_start), duration(_dur), midiPitch(_mp), frequency(0),
-	isMidiPitchQuantized(true), velocity(_vel) { };
+	isMidiPitchQuantized(true), velocity(_vel), channel(0) { };
             
-    int start;     // audio sample frame
-    int duration;  // in audio sample frames
-    int midiPitch; // 0-127
+    int start;       // audio sample frame
+    int duration;    // in audio sample frames
+    int midiPitch;   // 0-127
     float frequency; // Hz, to be used if isMidiPitchQuantized false
     bool isMidiPitchQuantized;
-    int velocity;  // MIDI-style 0-127
+    int velocity;    // MIDI-style 0-127
+    int channel;     // MIDI 0-15
 
     float getFrequency() const {
         if (isMidiPitchQuantized) {

@@ -39,6 +39,8 @@ class FeatureWriter
 public:
     virtual ~FeatureWriter() { }
 
+    virtual string getDescription() const = 0;
+
     struct Parameter { // parameter of the writer, not the plugin
         string name;
         string description;
@@ -77,8 +79,15 @@ public:
         QString m_transformId;
     };
 
-    // may throw FailedToOpenFile or other exceptions
+    /**
+     * Notify the writer that we are about to start extraction for
+     * input file N of M (where N is 1..M). May be useful when writing
+     * multiple outputs into a single file where some syntactic
+     * element is needed to connect them.
+     */
+    virtual void setNofM(int /* N */, int /* M */) { }
 
+    // may throw FailedToOpenFile or other exceptions
     virtual void write(QString trackid,
                        const Transform &transform,
                        const Vamp::Plugin::OutputDescriptor &output,
