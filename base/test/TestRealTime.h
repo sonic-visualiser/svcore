@@ -187,6 +187,26 @@ private slots:
 	QCOMPARE(RealTime(0, ONE_BILLION/2) + RealTime(-1, 0), RealTime(0, -ONE_BILLION/2));
 	QCOMPARE(RealTime(0, -ONE_BILLION/2) + RealTime(1, 0), RealTime(0, ONE_BILLION/2));
     }
+    
+    void minus()
+    {
+	QCOMPARE(RealTime(0, 0) - RealTime(0, 0), RealTime(0, 0));
+
+	QCOMPARE(RealTime(0, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+	QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(0, ONE_BILLION/2), RealTime(0, 0));
+	QCOMPARE(RealTime(1, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+
+	QCOMPARE(RealTime(0, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+	QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(0, 0));
+	QCOMPARE(RealTime(-1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+
+    	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, 0));
+	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, ONE_BILLION/2));
+
+	QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(-1, 0), RealTime(1, ONE_BILLION/2));
+	QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(1, 0), RealTime(-1, -ONE_BILLION/2));
+    }
 };
 
 #endif
