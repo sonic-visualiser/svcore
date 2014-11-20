@@ -51,6 +51,11 @@ private slots:
 	QCOMPARE(RealTime(0, ONE_BILLION/2), RealTime(1, -ONE_BILLION/2));
 	QCOMPARE(RealTime(0, -ONE_BILLION/2), RealTime(-1, ONE_BILLION/2));
 
+	QCOMPARE(RealTime(1, ONE_BILLION), RealTime(2, 0));
+	QCOMPARE(RealTime(1, -ONE_BILLION), RealTime(0, 0));
+	QCOMPARE(RealTime(-1, ONE_BILLION), RealTime(0, 0));
+	QCOMPARE(RealTime(-1, -ONE_BILLION), RealTime(-2, 0));
+
 	QCOMPARE(RealTime(2, -ONE_BILLION*2), RealTime(0, 0));
 	QCOMPARE(RealTime(2, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
 
@@ -67,6 +72,16 @@ private slots:
 	QCOMPARE(RealTime(-1, 1).nsec, -ONE_BILLION+1);
 	QCOMPARE(RealTime(-1, -1).sec, -1);
 	QCOMPARE(RealTime(-1, -1).nsec, -1);
+	
+	QCOMPARE(RealTime(2, -ONE_BILLION*2).sec, 0);
+	QCOMPARE(RealTime(2, -ONE_BILLION*2).nsec, 0);
+	QCOMPARE(RealTime(2, -ONE_BILLION/2).sec, 1);
+	QCOMPARE(RealTime(2, -ONE_BILLION/2).nsec, ONE_BILLION/2);
+
+	QCOMPARE(RealTime(-2, ONE_BILLION*2).sec, 0);
+	QCOMPARE(RealTime(-2, ONE_BILLION*2).nsec, 0);
+	QCOMPARE(RealTime(-2, ONE_BILLION/2).sec, -1);
+	QCOMPARE(RealTime(-2, ONE_BILLION/2).nsec, -ONE_BILLION/2);
     }
     
     void fromSeconds()
@@ -207,6 +222,55 @@ private slots:
 	QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(-1, 0), RealTime(1, ONE_BILLION/2));
 	QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(1, 0), RealTime(-1, -ONE_BILLION/2));
     }
+
+    void negate()
+    {
+	QCOMPARE(-RealTime(0, 0), RealTime(0, 0));
+	QCOMPARE(-RealTime(1, 0), RealTime(-1, 0));
+	QCOMPARE(-RealTime(1, ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
+	QCOMPARE(-RealTime(-1, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+    }
+
+    void compare()
+    {
+	int sec, nsec;
+	for (sec = -2; sec <= 2; sec += 2) {
+	    for (nsec = -1; nsec <= 1; nsec += 1) {
+		QCOMPARE(RealTime(sec, nsec) < RealTime(sec, nsec), false);
+		QCOMPARE(RealTime(sec, nsec) > RealTime(sec, nsec), false);
+		QCOMPARE(RealTime(sec, nsec) == RealTime(sec, nsec), true);
+		QCOMPARE(RealTime(sec, nsec) != RealTime(sec, nsec), false);
+		QCOMPARE(RealTime(sec, nsec) <= RealTime(sec, nsec), true);
+		QCOMPARE(RealTime(sec, nsec) >= RealTime(sec, nsec), true);
+	    }
+	}
+	RealTime prev(-3, 0);
+	for (sec = -2; sec <= 2; sec += 2) {
+	    for (nsec = -1; nsec <= 1; nsec += 1) {
+
+		RealTime curr(sec, nsec);
+
+		QCOMPARE(prev < curr, true);
+		QCOMPARE(prev > curr, false);
+		QCOMPARE(prev == curr, false);
+		QCOMPARE(prev != curr, true);
+		QCOMPARE(prev <= curr, true);
+		QCOMPARE(prev >= curr, false);
+
+		QCOMPARE(curr < prev, false);
+		QCOMPARE(curr > prev, true);
+		QCOMPARE(curr == prev, false);
+		QCOMPARE(curr != prev, true);
+		QCOMPARE(curr <= prev, false);
+		QCOMPARE(curr >= prev, true);
+
+		prev = curr;
+	    }
+	}
+    }
+
+	
+	
 };
 
 #endif
