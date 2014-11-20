@@ -49,7 +49,7 @@ INCLUDEPATH += ../..
 OBJECTS_DIR = o
 MOC_DIR = o
 
-HEADERS += TestRangeMapper.h TestPitch.h
+HEADERS += TestRangeMapper.h TestPitch.h TestRealTime.h
 SOURCES += main.cpp
 
 win* {
