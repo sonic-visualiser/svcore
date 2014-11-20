@@ -112,9 +112,16 @@ AlignmentModel::isReady(int *completion) const
         if (completion) *completion = 0;
         return false;
     }
-    if (m_pathComplete || !m_rawPath) {
+    if (m_pathComplete) {
         if (completion) *completion = 100;
         return true;
+    }
+    if (!m_rawPath) {
+        // lack of raw path could mean path is complete (in which case
+        // m_pathComplete true above) or else no alignment has been
+        // set at all yet (this case)
+        if (completion) *completion = 0;
+        return false;
     }
     return m_rawPath->isReady(completion);
 }
@@ -344,6 +351,31 @@ AlignmentModel::align(PathModel *path, int frame) const
 #endif
 
     return resultFrame;
+}
+
+void
+AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
+{
+    if (m_rawPath) m_rawPath->aboutToDelete();
+    delete m_rawPath;
+
+    m_rawPath = rawpath;
+
+    connect(m_rawPath, SIGNAL(modelChanged()),
+            this, SLOT(pathChanged()));
+
+    connect(m_rawPath, SIGNAL(modelChangedWithin(int, int)),
+            this, SLOT(pathChangedWithin(int, int)));
+        
+    connect(m_rawPath, SIGNAL(completionChanged()),
+            this, SLOT(pathCompletionChanged()));
+    
+    constructPath();
+    constructReversePath();
+
+    if (m_rawPath->isReady()) {
+        pathCompletionChanged();
+    }        
 }
 
 void
