@@ -52,6 +52,7 @@ public:
     int toReference(int frame) const;
     int fromReference(int frame) const;
 
+    void setPathFrom(SparseTimeValueModel *rawpath);
     void setPath(PathModel *path);
 
     virtual void toXml(QTextStream &stream,
