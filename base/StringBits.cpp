@@ -83,14 +83,14 @@ StringBits::splitQuoted(QString s, QChar separator)
 	    switch (mode) {
 	    case sep: mode = q1; break;
 	    case unq: case q2: tok += c; break;
-	    case q1: mode = sep; tokens << tok; tok = ""; break;
+	    case q1: mode = unq; break;
 	    }
 
 	} else if (c == '"') {
 	    switch (mode) {
 	    case sep: mode = q2; break;
 	    case unq: case q1: tok += c; break;
-	    case q2: mode = sep; tokens << tok; tok = ""; break;
+	    case q2: mode = unq; break;
 	    }
 
 	} else if (c == separator || (separator == ' ' && c.isSpace())) {
