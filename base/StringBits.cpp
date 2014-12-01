@@ -20,6 +20,10 @@
 
 #include "StringBits.h"
 
+#include "Debug.h"
+
+using namespace std;
+
 double
 StringBits::stringToDoubleLocaleFree(QString s, bool *ok)
 {
@@ -73,6 +77,11 @@ StringBits::splitQuoted(QString s, QChar separator)
     QStringList tokens;
     QString tok;
 
+    // sep -> just seen a field separator (or start of line)
+    // unq -> in an unquoted field
+    // q1  -> in a single-quoted field
+    // q2  -> in a double-quoted field
+
     enum { sep, unq, q1, q2 } mode = sep;
 
     for (int i = 0; i < s.length(); ++i) {
@@ -117,85 +126,18 @@ StringBits::splitQuoted(QString s, QChar separator)
 	}
     }
 
-    if (tok != "" || mode != sep) tokens << tok;
+    if (tok != "" || mode != sep) {
+        if (mode == q1) {
+            tokens << ("'" + tok);  // turns out it wasn't quoted after all
+        } else if (mode == q2) {
+            tokens << ("\"" + tok);
+        } else {
+            tokens << tok;
+        }
+    }
+
     return tokens;
 }
-
-/*
-
-void testSplit()
-{
-    QStringList tests;
-    tests << "a b c d";
-    tests << "a \"b c\" d";
-    tests << "a 'b c' d";
-    tests << "a \"b c\\\" d\"";
-    tests << "a 'b c\\' d'";
-    tests << "a \"b c' d\"";
-    tests << "a 'b c\" d'";
-    tests << "aa 'bb cc\" dd'";
-    tests << "a'a 'bb' \\\"cc\" dd\\\"";
-    tests << "  a'a \\\'	 'bb'	 \'	\\\"cc\" ' dd\\\" '";
-
-    for (int j = 0; j < tests.size(); ++j) {
-	cout << endl;
-	cout << tests[j] << endl;
-	cout << "->" << endl << "(";
-	QStringList l = splitQuoted(tests[j], ' ');
-	for (int i = 0; i < l.size(); ++i) {
-	    if (i > 0) cout << ";";
-	    cout << l[i];
-	}
-	cout << ")" << endl;
-    }
-}
-
-*/
-
-/* 
-   Results:
-
-a b c d
-->     
-(a;b;c;d)
-
-a "b c" d
-->       
-(a;b c;d)
-
-a 'b c' d
-->       
-(a;b c;d)
-
-a "b c\" d"
-->         
-(a;b c" d) 
-
-a 'b c\' d'
-->         
-(a;b c' d) 
-
-a "b c' d"
-->        
-(a;b c' d)
-
-a 'b c" d'
-->        
-(a;b c" d)
-
-aa 'bb cc" dd'
-->            
-(aa;bb cc" dd)
-
-a'a 'bb' \"cc" dd\"
-->                 
-(a'a;bb;"cc";dd")  
-
-  a'a \'         'bb'    '      \"cc" ' dd\" '
-->                                            
-(a'a;';bb;      "cc" ;dd";)
-
-*/
 
 QStringList
 StringBits::split(QString line, QChar separator, bool quoted)
