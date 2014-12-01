@@ -53,10 +53,11 @@ public:
     };
 
     enum ColumnQuality {
-        ColumnNumeric    = 0x1,
-        ColumnIntegral   = 0x2,
-        ColumnIncreasing = 0x4,
-        ColumnLarge      = 0x8
+        ColumnNumeric    = 1,
+        ColumnIntegral   = 2,
+        ColumnIncreasing = 4,
+        ColumnLarge      = 8,
+        ColumnNearEmpty  = 16,
     };
     typedef unsigned int ColumnQualities;
 
