@@ -85,7 +85,7 @@ public:
     static QString getPitchLabel(int midiPitch,
 				 float centsOffset = 0,
 				 bool useFlats = false);
-
+    
     /**
      * Return a string describing the nearest MIDI pitch to the given
      * frequency, with cents offset.
