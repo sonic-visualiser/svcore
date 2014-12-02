@@ -70,6 +70,22 @@ public:
                                               float concertA = 0.0);
 
     /**
+     * Return the MIDI pitch for the given note number (0-12 where 0
+     * is C) and octave number. The octave numbering system is based
+     * on the application preferences (default is C4 = middle C,
+     * though in previous SV releases that was C3).
+     */
+    static int getPitchForNoteAndOctave(int note, int octave);
+    
+    /**
+     * Return the note number (0-12 where 0 is C) and octave number
+     * for the given MIDI pitch. The octave numbering system is based
+     * on the application preferences (default is C4 = middle C,
+     * though in previous SV releases that was C3).
+     */
+    static void getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave);
+
+    /**
      * Return a string describing the given MIDI pitch, with optional
      * cents offset.  This consists of the note name, octave number,
      * and optional cents. The octave numbering system is based on the

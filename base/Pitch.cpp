@@ -96,13 +96,19 @@ static QString flatNotes[] = {
     "Ab%1", "A%1",  "Bb%1", "B%1"
 };
 
-QString
-Pitch::getPitchLabel(int midiPitch,
-		     float centsOffset,
-		     bool useFlats)
+int
+Pitch::getPitchForNoteAndOctave(int note, int octave)
 {
     int baseOctave = Preferences::getInstance()->getOctaveOfLowestMIDINote();
-    int octave = baseOctave;
+    return (octave - baseOctave) * 12 + note;
+}
+
+void
+Pitch::getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave)
+{
+    int baseOctave = Preferences::getInstance()->getOctaveOfLowestMIDINote();
+
+    octave = baseOctave;
 
     // Note, this only gets the right octave number at octave
     // boundaries because Cb is enharmonic with B (not B#) and B# is
@@ -118,7 +124,18 @@ Pitch::getPitchLabel(int midiPitch,
 	octave = midiPitch / 12 + baseOctave;
     }
 
-    QString plain = (useFlats ? flatNotes : notes)[midiPitch % 12].arg(octave);
+    note = midiPitch % 12;
+}
+
+QString
+Pitch::getPitchLabel(int midiPitch,
+		     float centsOffset,
+		     bool useFlats)
+{
+    int note, octave;
+    getNoteAndOctaveForPitch(midiPitch, note, octave);
+
+    QString plain = (useFlats ? flatNotes : notes)[note].arg(octave);
 
     int ic = lrintf(centsOffset);
     if (ic == 0) return plain;
