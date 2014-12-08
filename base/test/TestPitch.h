@@ -72,17 +72,28 @@ private slots:
 	QCOMPARE(Pitch::getPitchLabelForFrequency(261.63, 440, false), QString("C4"));
     }
 
-#define MIDDLE_C 261.6255653f
+#define MIDDLE_C 261.6255653005986
 
     void frequencyForPitch()
     {
 	QCOMPARE(Pitch::getFrequencyForPitch(60, 0), MIDDLE_C);
-	QCOMPARE(Pitch::getFrequencyForPitch(69, 0), 440.f);
-	QCOMPARE(Pitch::getFrequencyForPitch(60, 0, 220), MIDDLE_C / 2.f);
-	QCOMPARE(Pitch::getFrequencyForPitch(69, 0, 220), 220.f);
+	QCOMPARE(Pitch::getFrequencyForPitch(69, 0), 440.0);
+	QCOMPARE(Pitch::getFrequencyForPitch(60, 0, 220), MIDDLE_C / 2.0);
+	QCOMPARE(Pitch::getFrequencyForPitch(69, 0, 220), 220.0);
     }
 
     void pitchForFrequency()
+    {
+	double centsOffset = 0.0;
+	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
+	QCOMPARE(centsOffset, 0.0);
+	QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
+	QCOMPARE(int(centsOffset), -4);
+	QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
+	QCOMPARE(centsOffset, 0.0);
+    }
+
+    void pitchForFrequencyF()
     {
 	float centsOffset = 0.f;
 	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
