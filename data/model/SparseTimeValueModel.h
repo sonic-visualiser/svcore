@@ -29,13 +29,13 @@
 struct TimeValuePoint
 {
 public:
-    TimeValuePoint(long _frame) : frame(_frame), value(0.0f) { }
-    TimeValuePoint(long _frame, float _value, QString _label) : 
+    TimeValuePoint(sv_frame_t _frame) : frame(_frame), value(0.0f) { }
+    TimeValuePoint(sv_frame_t _frame, float _value, QString _label) : 
 	frame(_frame), value(_value), label(_label) { }
 
     int getDimensions() const { return 2; }
     
-    long frame;
+    sv_frame_t frame;
     float value;
     QString label;
 

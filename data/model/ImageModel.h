@@ -31,13 +31,13 @@
 struct ImagePoint : public XmlExportable
 {
 public:
-    ImagePoint(long _frame) : frame(_frame) { }
-    ImagePoint(long _frame, QString _image, QString _label) :
+    ImagePoint(sv_frame_t _frame) : frame(_frame) { }
+    ImagePoint(sv_frame_t _frame, QString _image, QString _label) :
         frame(_frame), image(_image), label(_label) { }
 
     int getDimensions() const { return 1; }
     
-    long frame;
+    sv_frame_t frame;
     QString image;
     QString label;
 
