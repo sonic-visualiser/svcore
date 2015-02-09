@@ -85,9 +85,13 @@ Model::setAlignment(AlignmentModel *alignment)
         m_alignment->aboutToDelete();
         delete m_alignment;
     }
+    
     m_alignment = alignment;
-    connect(m_alignment, SIGNAL(completionChanged()),
-            this, SIGNAL(alignmentCompletionChanged()));
+
+    if (m_alignment) {
+        connect(m_alignment, SIGNAL(completionChanged()),
+                this, SIGNAL(alignmentCompletionChanged()));
+    }
 }
 
 const AlignmentModel *

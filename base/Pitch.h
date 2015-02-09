@@ -30,9 +30,9 @@ public:
      * for the A at MIDI pitch 69; otherwise use the tuning frequency
      * specified in the application preferences (default 440Hz).
      */
-    static float getFrequencyForPitch(int midiPitch,
-				      float centsOffset = 0,
-				      float concertA = 0.0);
+    static double getFrequencyForPitch(int midiPitch,
+				      double centsOffset = 0,
+				      double concertA = 0.0);
 
     /**
      * Return the nearest MIDI pitch to the given frequency.
@@ -46,9 +46,22 @@ public:
      * for the A at MIDI pitch 69; otherwise use the tuning frequency
      * specified in the application preferences (default 440Hz).
      */
-    static int getPitchForFrequency(float frequency,
-				    float *centsOffsetReturn = 0,
-				    float concertA = 0.0);
+    static int getPitchForFrequency(double frequency,
+				    double *centsOffsetReturn = 0,
+				    double concertA = 0.0);
+
+    /**
+     * Compatibility version of getPitchForFrequency accepting float
+     * pointer argument.
+     */
+    static int getPitchForFrequency(double frequency,
+				    float *centsOffsetReturn,
+				    double concertA = 0.0) {
+        double c;
+        int p = getPitchForFrequency(frequency, &c, concertA);
+        if (centsOffsetReturn) *centsOffsetReturn = float(c);
+        return p;
+    }
 
     /**
      * Return the nearest MIDI pitch range to the given frequency
@@ -64,10 +77,41 @@ public:
      * for the A at MIDI pitch 69; otherwise use the tuning frequency
      * specified in the application preferences (default 440Hz).
      */
-    static int getPitchForFrequencyDifference(float frequencyA,
-                                              float frequencyB,
-                                              float *centsOffsetReturn = 0,
-                                              float concertA = 0.0);
+    static int getPitchForFrequencyDifference(double frequencyA,
+                                              double frequencyB,
+                                              double *centsOffsetReturn = 0,
+                                              double concertA = 0.0);
+
+    /**
+     * Compatibility version of getPitchForFrequencyDifference
+     * accepting float pointer argument.
+     */
+    static int getPitchForFrequencyDifference(double frequencyA,
+                                              double frequencyB,
+                                              float *centsOffsetReturn,
+                                              double concertA = 0.0) {
+        double c;
+        int p = getPitchForFrequencyDifference(frequencyA, frequencyB,
+                                               &c, concertA);
+        if (centsOffsetReturn) *centsOffsetReturn = float(c);
+        return p;
+    }
+    
+    /**
+     * Return the MIDI pitch for the given note number (0-12 where 0
+     * is C) and octave number. The octave numbering system is based
+     * on the application preferences (default is C4 = middle C,
+     * though in previous SV releases that was C3).
+     */
+    static int getPitchForNoteAndOctave(int note, int octave);
+    
+    /**
+     * Return the note number (0-12 where 0 is C) and octave number
+     * for the given MIDI pitch. The octave numbering system is based
+     * on the application preferences (default is C4 = middle C,
+     * though in previous SV releases that was C3).
+     */
+    static void getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave);
 
     /**
      * Return a string describing the given MIDI pitch, with optional
@@ -83,9 +127,9 @@ public:
      * e.g. Bb3 instead of A#3.
      */
     static QString getPitchLabel(int midiPitch,
-				 float centsOffset = 0,
+				 double centsOffset = 0,
 				 bool useFlats = false);
-
+    
     /**
      * Return a string describing the nearest MIDI pitch to the given
      * frequency, with cents offset.
@@ -97,15 +141,15 @@ public:
      * If useFlats is true, spell notes with flats instead of sharps,
      * e.g. Bb3 instead of A#3.
      */
-    static QString getPitchLabelForFrequency(float frequency,
-					     float concertA = 0.0,
+    static QString getPitchLabelForFrequency(double frequency,
+					     double concertA = 0.0,
 					     bool useFlats = false);
 
     /**
      * Return a string describing the given pitch range in octaves,
      * semitones and cents.  This is in the form e.g. "1'2+4c".
      */
-    static QString getLabelForPitchRange(int semis, float cents = 0);
+    static QString getLabelForPitchRange(int semis, double cents = 0);
 
     /**
      * Return true if the given frequency falls within the range of
@@ -118,8 +162,8 @@ public:
      * for the A at MIDI pitch 69; otherwise use the tuning frequency
      * specified in the application preferences (default 440Hz).
      */
-    static bool isFrequencyInMidiRange(float frequency,
-                                       float concertA = 0.0);
+    static bool isFrequencyInMidiRange(double frequency,
+                                       double concertA = 0.0);
 };
 
 
