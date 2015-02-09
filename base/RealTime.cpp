@@ -59,7 +59,11 @@ RealTime::RealTime(int s, int n) :
 RealTime
 RealTime::fromSeconds(double sec)
 {
-    return RealTime(int(sec), int((sec - int(sec)) * ONE_BILLION + 0.5));
+    if (sec >= 0) {
+        return RealTime(int(sec), int((sec - int(sec)) * ONE_BILLION + 0.5));
+    } else {
+        return -fromSeconds(-sec);
+    }
 }
 
 RealTime
