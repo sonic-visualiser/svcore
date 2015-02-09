@@ -47,6 +47,7 @@ public:
     virtual QString getError() const { return m_error; }
     virtual QString getLocation() const { return m_source.getLocation(); }
     virtual QString getTitle() const { return m_title; }
+    virtual QString getMaker() const { return m_maker; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
@@ -67,6 +68,7 @@ protected:
     QString m_path;
     QString m_error;
     QString m_title;
+    QString m_maker;
 
     class D;
     D *m_d;
@@ -86,6 +88,8 @@ protected:
     };
 
     DecodeThread *m_decodeThread;
+
+    void readMetadata();
 };
 
 #endif

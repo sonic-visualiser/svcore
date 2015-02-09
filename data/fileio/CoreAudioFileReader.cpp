@@ -88,18 +88,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
          (CFIndex)ba.length(),
          false);
 
-    //!!! how do we find out if the file open fails because of DRM protection?
-
-//#if (MACOSX_DEPLOYMENT_TARGET <= 1040 && MAC_OS_X_VERSION_MIN_REQUIRED <= 1040)
-//    FSRef fsref;
-//    if (!CFURLGetFSRef(url, &fsref)) { // returns Boolean, not error code
-//        m_error = "CoreAudioReadStream: Error looking up FS ref (file not found?)";
-//        return;
-//    }
-//    m_d->err = ExtAudioFileOpen(&fsref, &m_d->file);
-//#else
     m_d->err = ExtAudioFileOpenURL(url, &m_d->file);
-//#endif
 
     CFRelease(url);
 
@@ -154,6 +143,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
     m_d->valid = true;
 
+    readMetadata();
     initialiseDecodeCache();
 
     if (m_reporter) {
@@ -189,7 +179,6 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_completion = 100;
 }
 
-
 CoreAudioFileReader::~CoreAudioFileReader()
 {
     cerr << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
@@ -200,6 +189,45 @@ CoreAudioFileReader::~CoreAudioFileReader()
     }
 
     delete m_d;
+}
+
+void
+CoreAudioFileReader::readMetadata()
+{
+    AudioFileID audiofile;
+    UInt32 propsize = sizeof(AudioFileID);
+
+    // err is local, failures here are only warnings
+    OSStatus err = noErr;
+    
+    err = ExtAudioFileGetProperty
+	(m_d->file, kExtAudioFileProperty_AudioFile, &propsize, &audiofile);
+
+    if (err) {
+        cerr << "WARNING: CoreAudioReadStream: Error in getting underlying audio file: code " << codestr(err) << endl;
+        return;
+    }
+
+    propsize = 0;
+    char *data = 0;
+    err = AudioFileGetPropertyInfo
+        (audiofile, kAudioFilePropertyID3Tag, &propsize, 0);
+    if (err) {
+        cerr << "WARNING: CoreAudioReadStream: Failed to get id3 tag size: code " << codestr(err) << endl;
+        return;
+    }
+
+    data = new char[propsize];
+    err = AudioFileGetProperty
+        (audiofile, kAudioFilePropertyID3Tag, &propsize, data);
+    if (err) {
+        cerr << "WARNING: CoreAudioReadStream: Failed to read id3 tag data: code " << codestr(err) << endl;
+        return;
+    }
+
+    
+    
+    delete[] data;
 }
 
 void
