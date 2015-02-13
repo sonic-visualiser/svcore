@@ -53,6 +53,7 @@ protected:
     CSVFormat m_format;
     QIODevice *m_device;
     bool m_ownDevice;
+    QString m_filename;
     QString m_error;
     mutable int m_warnings;
     int m_mainModelSampleRate;
