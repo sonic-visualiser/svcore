@@ -36,6 +36,7 @@
 #include "model/NoteModel.h"
 
 #include <QString>
+#include <QFileInfo>
 
 #include <sstream>
 
@@ -932,6 +933,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
     if (!model) {
 	model = new NoteModel(m_mainModelSampleRate, 1, 0.0, 0.0, false);
 	model->setValueQuantization(1.0);
+        model->setObjectName(QFileInfo(m_path).fileName());
     }
 
     const MIDITrack &track = m_midiComposition.find(trackToLoad)->second;
