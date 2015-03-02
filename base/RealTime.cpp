@@ -274,19 +274,25 @@ RealTime::toText(bool fixedDp) const
 
     std::stringstream out;
 
-    if (sec >= 3600) {
-	out << (sec / 3600) << ":";
-    }
+    if (p->getShowHMS()) {
+    
+        if (sec >= 3600) {
+            out << (sec / 3600) << ":";
+        }
 
-    if (sec >= 60) {
-	out << (sec % 3600) / 60 << ":";
-    }
+        if (sec >= 60) {
+            out << (sec % 3600) / 60 << ":";
+        }
 
-    if (sec >= 10) {
-	out << ((sec % 60) / 10);
-    }
+        if (sec >= 10) {
+            out << ((sec % 60) / 10);
+        }
 
-    out << (sec % 10);
+        out << (sec % 10);
+
+    } else {
+        out << sec;
+    }
     
     int ms = msec();
 
@@ -319,21 +325,29 @@ RealTime::toFrameText(int fps) const
 {
     if (*this < RealTime::zeroTime) return "-" + (-*this).toFrameText(fps);
 
+    Preferences *p = Preferences::getInstance();
+
     std::stringstream out;
 
-    if (sec >= 3600) {
-	out << (sec / 3600) << ":";
-    }
+    if (p->getShowHMS()) {
+    
+        if (sec >= 3600) {
+            out << (sec / 3600) << ":";
+        }
 
-    if (sec >= 60) {
-	out << (sec % 3600) / 60 << ":";
-    }
+        if (sec >= 60) {
+            out << (sec % 3600) / 60 << ":";
+        }
 
-    if (sec >= 10) {
-	out << ((sec % 60) / 10);
-    }
+        if (sec >= 10) {
+            out << ((sec % 60) / 10);
+        }
 
-    out << (sec % 10);
+        out << (sec % 10);
+
+    } else {
+        out << sec;
+    }
     
     int f = nsec / (ONE_BILLION / fps);
 
