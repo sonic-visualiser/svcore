@@ -22,6 +22,7 @@
 #include "PluginRDFIndexer.h"
 
 #include <QTextStream>
+#include <QTextCodec>
 #include <QUrl>
 #include <QFileInfo>
 #include <QRegExp>
@@ -160,7 +161,8 @@ RDFFeatureWriter::write(QString trackId,
     // Need to select appropriate output file for our track/transform
     // combination
 
-    QTextStream *stream = getOutputStream(trackId, transform.getIdentifier());
+    QTextStream *stream = getOutputStream(trackId, transform.getIdentifier(),
+                                          QTextCodec::codecForName("UTF-8"));
     if (!stream) {
         throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
     }

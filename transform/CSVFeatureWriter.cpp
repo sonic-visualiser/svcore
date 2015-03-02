@@ -23,6 +23,7 @@
 
 #include <QRegExp>
 #include <QTextStream>
+#include <QTextCodec>
 
 using namespace std;
 using namespace Vamp;
@@ -123,7 +124,9 @@ CSVFeatureWriter::write(QString trackId,
     // Select appropriate output file for our track/transform
     // combination
 
-    QTextStream *sptr = getOutputStream(trackId, transformId);
+    QTextStream *sptr = getOutputStream(trackId,
+                                        transformId,
+                                        QTextCodec::codecForName("UTF-8"));
     if (!sptr) {
         throw FailedToOpenOutputStream(trackId, transformId);
     }
@@ -169,7 +172,9 @@ CSVFeatureWriter::finish()
          i != m_pending.end(); ++i) {
         DataId tt = i->first;
         Plugin::Feature f = i->second;
-        QTextStream *sptr = getOutputStream(tt.first, tt.second.getIdentifier());
+        QTextStream *sptr = getOutputStream(tt.first,
+                                            tt.second.getIdentifier(),
+                                            QTextCodec::codecForName("UTF-8"));
         if (!sptr) {
             throw FailedToOpenOutputStream(tt.first, tt.second.getIdentifier());
         }
