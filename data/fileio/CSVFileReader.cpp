@@ -26,6 +26,7 @@
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QRegExp>
 #include <QStringList>
@@ -55,6 +56,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
 
     if (good) {
         m_device = file;
+        m_filename = QFileInfo(path).fileName();
     } else {
 	delete file;
     }
@@ -262,6 +264,12 @@ CSVFileReader::load() const
                          EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
                     break;
+                }
+
+                if (model) {
+                    if (m_filename != "") {
+                        model->setObjectName(m_filename);
+                    }
                 }
             }
 

@@ -49,6 +49,7 @@ Preferences::Preferences() :
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
     m_timeToTextMode(TimeToTextMs),
+    m_showHMS(true),
     m_octave(4),
     m_showSplash(true)
 {
@@ -71,6 +72,7 @@ Preferences::Preferences() :
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     m_timeToTextMode = TimeToTextMode
         (settings.value("time-to-text-mode", int(TimeToTextMs)).toInt());
+    m_showHMS = (settings.value("show-hours-minutes-seconds", true)).toBool(); 
     m_octave = (settings.value("octave-of-middle-c", 4)).toInt();
     m_viewFontSize = settings.value("view-font-size", 10).toInt();
     m_showSplash = settings.value("show-splash", true).toBool();
@@ -102,6 +104,7 @@ Preferences::getProperties() const
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
     props.push_back("Time To Text Mode");
+    props.push_back("Show Hours And Minutes");
     props.push_back("Octave Numbering System");
     props.push_back("View Font Size");
     props.push_back("Show Splash Screen");
@@ -148,7 +151,10 @@ Preferences::getPropertyLabel(const PropertyName &name) const
         return tr("Background colour preference");
     }
     if (name == "Time To Text Mode") {
-        return tr("Time display format");
+        return tr("Time display precision");
+    }
+    if (name == "Show Hours And Minutes") {
+        return tr("Use hours:minutes:seconds format");
     }
     if (name == "Octave Numbering System") {
         return tr("Label middle C as");
@@ -205,6 +211,9 @@ Preferences::getPropertyType(const PropertyName &name) const
     if (name == "Time To Text Mode") {
         return ValueProperty;
     }
+    if (name == "Show Hours And Minutes") {
+        return ToggleProperty;
+    }
     if (name == "Octave Numbering System") {
         return ValueProperty;
     }
@@ -259,6 +268,7 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 
     if (name == "Omit Temporaries from Recent Files") {
         if (deflt) *deflt = 1;
+        return m_omitRecentTemps ? 1 : 0;
     }
 
     if (name == "Background Mode") {
@@ -275,6 +285,11 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return int(m_timeToTextMode);
     }        
 
+    if (name == "Show Hours And Minutes") {
+        if (deflt) *deflt = 1;
+        return m_showHMS ? 1 : 0;
+    }
+    
     if (name == "Octave Numbering System") {
         // we don't support arbitrary octaves in the gui, because we
         // want to be able to label what the octave system comes
@@ -294,6 +309,7 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 
     if (name == "Show Splash Screen") {
         if (deflt) *deflt = 1;
+        return m_showSplash ? 1 : 0;
     }
 
     return 0;
@@ -404,6 +420,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setBackgroundMode(BackgroundMode(value));
     } else if (name == "Time To Text Mode") {
         setTimeToTextMode(TimeToTextMode(value));
+    } else if (name == "Show Hours And Minutes") {
+        setShowHMS(value ? true : false);
     } else if (name == "Octave Numbering System") {
         setOctaveOfMiddleC(getOctaveOfMiddleCInSystem
                            (OctaveNumberingSystem(value)));
@@ -595,6 +613,21 @@ Preferences::setTimeToTextMode(TimeToTextMode mode)
         settings.setValue("time-to-text-mode", int(mode));
         settings.endGroup();
         emit propertyChanged("Time To Text Mode");
+    }
+}
+
+void
+Preferences::setShowHMS(bool show)
+{
+    if (m_showHMS != show) {
+
+        m_showHMS = show;
+
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("show-hours-minutes-seconds", show);
+        settings.endGroup();
+        emit propertyChanged("Show Hours And Minutes");
     }
 }
 

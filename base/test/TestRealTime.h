@@ -269,8 +269,33 @@ private slots:
 	}
     }
 
-	
-	
+    void frame()
+    {
+        int frames[] = {
+            0, 1, 2047, 2048, 6656, 32767, 32768, 44100, 44101, 999999999
+        };
+        int n = sizeof(frames)/sizeof(frames[0]);
+
+        int rates[] = {
+            1, 2, 8000, 22050, 44100, 44101, 192000
+        };
+        int m = sizeof(rates)/sizeof(rates[0]);
+
+        for (int i = 0; i < n; ++i) {
+            int frame = frames[i];
+            for (int j = 0; j < m; ++j) {
+                int rate = rates[j];
+
+                RealTime rt = RealTime::frame2RealTime(frame, rate);
+                int conv = RealTime::realTime2Frame(rt, rate);
+                QCOMPARE(frame, conv);
+
+                rt = RealTime::frame2RealTime(-frame, rate);
+                conv = RealTime::realTime2Frame(rt, rate);
+                QCOMPARE(-frame, conv);
+            }
+        }
+    }
 };
 
 #endif

@@ -32,7 +32,7 @@
 
 #include <unistd.h>
 
-//#define DEBUG_FILE_SOURCE 1
+#define DEBUG_FILE_SOURCE 1
 
 int
 FileSource::m_count = 0;
@@ -51,8 +51,11 @@ FileSource::m_mapMutex;
 
 #ifdef DEBUG_FILE_SOURCE
 static int extantCount = 0;
+static int threadCount = 0;
 static std::map<QString, int> urlExtantCountMap;
+static QMutex countMutex;
 static void incCount(QString url) {
+    QMutexLocker locker(&countMutex);
     ++extantCount;
     if (urlExtantCountMap.find(url) == urlExtantCountMap.end()) {
         urlExtantCountMap[url] = 1;
@@ -62,10 +65,26 @@ static void incCount(QString url) {
     cerr << "FileSource: Now " << urlExtantCountMap[url] << " for this url, " << extantCount << " total" << endl;
 }
 static void decCount(QString url) {
+    QMutexLocker locker(&countMutex);
     --extantCount;
     --urlExtantCountMap[url];
     cerr << "FileSource: Now " << urlExtantCountMap[url] << " for this url, " << extantCount << " total" << endl;
 }
+void
+FileSource::debugReport()
+{
+    QMutexLocker locker(&countMutex);
+    cerr << "\nFileSource::debugReport: Have " << extantCount << " FileSource object(s) extant across " << threadCount << " thread(s)" << endl;
+    cerr << "URLs by extant count:" << endl;
+    cerr << "Count | URL" << endl;
+    for (std::map<QString, int>::const_iterator i = urlExtantCountMap.begin();
+         i != urlExtantCountMap.end(); ++i) {
+        cerr << i->second << " | " << i->first << endl;
+    }
+    cerr << "FileSource::debugReport done\n" << endl;
+}
+#else
+void FileSource::debugReport() { }
 #endif
 
 static QThreadStorage<QNetworkAccessManager *> nms;
@@ -268,13 +287,6 @@ FileSource::~FileSource()
 void
 FileSource::init()
 {
-    { // check we have a QNetworkAccessManager
-        QMutexLocker locker(&m_mapMutex);
-        if (!nms.hasLocalData()) {
-            nms.setLocalData(new QNetworkAccessManager());
-        }
-    }
-
     if (isResource()) {
 #ifdef DEBUG_FILE_SOURCE
         cerr << "FileSource::init: Is a resource" << endl;
@@ -461,6 +473,16 @@ FileSource::initRemote()
         req.setRawHeader
             ("Accept",
              QString("%1, */*").arg(m_preferredContentType).toLatin1());
+    }
+
+    { // check we have a QNetworkAccessManager
+        QMutexLocker locker(&m_mapMutex);
+        if (!nms.hasLocalData()) {
+#ifdef DEBUG_FILE_SOURCE
+            ++threadCount;
+#endif
+            nms.setLocalData(new QNetworkAccessManager());
+        }
     }
 
     m_reply = nms.localData()->get(req);
