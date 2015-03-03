@@ -50,7 +50,7 @@ public:
      * Must be safe to call from multiple threads with different
      * arguments on the same object at the same time.
      */
-    virtual void getInterleavedFrames(int start, int count,
+    virtual void getInterleavedFrames(sv_frame_t start, sv_frame_t count,
 				      SampleBlock &frames) const;
     
     static void getSupportedExtensions(std::set<QString> &extensions);
@@ -77,9 +77,9 @@ protected:
 
     mutable QMutex m_mutex;
     mutable float *m_buffer;
-    mutable int m_bufsiz;
-    mutable int m_lastStart;
-    mutable int m_lastCount;
+    mutable sv_frame_t m_bufsiz;
+    mutable sv_frame_t m_lastStart;
+    mutable sv_frame_t m_lastCount;
 
     bool m_updating;
 };

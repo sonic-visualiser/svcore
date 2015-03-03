@@ -20,6 +20,8 @@
 
 #include <vector>
 
+#include "base/BaseTypes.h"
+
 class TabularModel;
 class Command;
 
@@ -51,8 +53,8 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
-    QModelIndex getModelIndexForFrame(int frame) const;
-    int getFrameForModelIndex(const QModelIndex &) const;
+    QModelIndex getModelIndexForFrame(sv_frame_t frame) const;
+    sv_frame_t getFrameForModelIndex(const QModelIndex &) const;
 
     void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
 

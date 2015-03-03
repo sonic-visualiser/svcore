@@ -30,6 +30,8 @@
 
 #include <QWriteLocker>
 
+#include <stdexcept>
+
 //#define DEBUG_FFT_SERVER 1
 //#define DEBUG_FFT_SERVER_FILL 1
 
@@ -514,10 +516,10 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 
     //!!! end is not correct until model finished reading -- what to do???
 
-    int start = m_model->getStartFrame();
-    int end = m_model->getEndFrame();
+    sv_frame_t start = m_model->getStartFrame();
+    sv_frame_t end = m_model->getEndFrame();
 
-    m_width = (end - start) / m_windowIncrement + 1;
+    m_width = int((end - start) / m_windowIncrement) + 1;
     m_height = m_fftSize / 2 + 1; // DC == 0, Nyquist == fftsize/2
 
 #ifdef DEBUG_FFT_SERVER 
@@ -526,7 +528,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 #endif
 
     int maxCacheSize = 20 * 1024 * 1024;
-    int columnSize = m_height * sizeof(fftsample) * 2 + sizeof(fftsample);
+    int columnSize = int(m_height * sizeof(fftsample) * 2 + sizeof(fftsample));
     if (m_width * columnSize < maxCacheSize * 2) m_cacheWidth = m_width;
     else m_cacheWidth = maxCacheSize / columnSize;
     
@@ -681,9 +683,10 @@ void
 FFTDataServer::getStorageAdvice(int w, int h,
                                 bool &memoryCache, bool &compactCache)
 {
-    int cells = w * h;
-    int minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
-    int maximumSize = (cells / 1024) * sizeof(float); // kb
+    if (w < 0 || h < 0) throw std::domain_error("width & height must be non-negative");
+    size_t cells = size_t(w) * h;
+    size_t minimumSize = (cells / 1024) * sizeof(uint16_t); // kb
+    size_t maximumSize = (cells / 1024) * sizeof(float); // kb
 
     // We don't have a compact rectangular representation, and compact
     // of course is never precision-critical
@@ -1248,11 +1251,11 @@ FFTDataServer::fillColumn(int x)
     int fftsize = m_fftSize;
     int hs = fftsize/2;
 
-    int pfx = 0;
+    sv_frame_t pfx = 0;
     int off = (fftsize - winsize) / 2;
 
-    int startFrame = m_windowIncrement * x;
-    int endFrame = startFrame + m_windowSize;
+    sv_frame_t startFrame = m_windowIncrement * sv_frame_t(x);
+    sv_frame_t endFrame = startFrame + m_windowSize;
 
     startFrame -= winsize / 2;
     endFrame   -= winsize / 2;
@@ -1300,11 +1303,11 @@ FFTDataServer::fillColumn(int x)
 	}
     }
 
-    int count = 0;
+    sv_frame_t count = 0;
     if (endFrame > startFrame + pfx) count = endFrame - (startFrame + pfx);
 
-    int got = m_model->getData(m_channel, startFrame + pfx,
-                               count, m_fftInput + off + pfx);
+    sv_frame_t got = m_model->getData(m_channel, startFrame + pfx,
+                                      count, m_fftInput + off + pfx);
 
     while (got + pfx < winsize) {
 	m_fftInput[off + got + pfx] = 0.0;
@@ -1315,7 +1318,7 @@ FFTDataServer::fillColumn(int x)
 	int channels = m_model->getChannelCount();
 	if (channels > 1) {
 	    for (int i = 0; i < winsize; ++i) {
-		m_fftInput[off + i] /= channels;
+		m_fftInput[off + i] /= float(channels);
 	    }
 	}
     }
@@ -1404,7 +1407,7 @@ FFTDataServer::getFillCompletion() const
     else return 100;
 }
 
-int
+sv_frame_t
 FFTDataServer::getFillExtent() const
 {
     if (m_fillThread) return m_fillThread->getExtent();
@@ -1456,18 +1459,18 @@ FFTDataServer::FillThread::run()
     }
     if (m_server.m_exiting) return;
 
-    int start = m_server.m_model->getStartFrame();
-    int end = m_server.m_model->getEndFrame();
-    int remainingEnd = end;
+    sv_frame_t start = m_server.m_model->getStartFrame();
+    sv_frame_t end = m_server.m_model->getEndFrame();
+    sv_frame_t remainingEnd = end;
 
     int counter = 0;
     int updateAt = 1;
-    int maxUpdateAt = (end / m_server.m_windowIncrement) / 20;
+    int maxUpdateAt = int(end / m_server.m_windowIncrement) / 20;
     if (maxUpdateAt < 100) maxUpdateAt = 100;
 
     if (m_fillFrom > start) {
 
-        for (int f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
+        for (sv_frame_t f = m_fillFrom; f < end; f += m_server.m_windowIncrement) {
 	    
             try {
                 m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
@@ -1516,7 +1519,7 @@ FFTDataServer::FillThread::run()
 
     int baseCompletion = m_completion;
 
-    for (int f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
+    for (sv_frame_t f = start; f < remainingEnd; f += m_server.m_windowIncrement) {
 
         try {
             m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));

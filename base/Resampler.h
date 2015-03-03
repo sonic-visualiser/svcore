@@ -21,6 +21,8 @@
 #ifndef _RESAMPLER_H_
 #define _RESAMPLER_H_
 
+#include "BaseTypes.h"
+
 #include <sys/types.h>
 
 class Resampler
@@ -28,16 +30,16 @@ class Resampler
 public:
     enum Quality { Best, FastestTolerable, Fastest };
 
-    Resampler(Quality quality, int channels, int chunkSize = 0);
+    Resampler(Quality quality, int channels, sv_frame_t chunkSize = 0);
     ~Resampler();
 
-    int resample(float **in, float **out,
-                    int incount, float ratio,
-                    bool final = false);
+    sv_frame_t resample(float **in, float **out,
+                        sv_frame_t incount, double ratio,
+                        bool final = false);
 
-    int resampleInterleaved(float *in, float *out,
-                               int incount, float ratio,
-                               bool final = false);
+    sv_frame_t resampleInterleaved(float *in, float *out,
+                                   sv_frame_t incount, double ratio,
+                                   bool final = false);
 
     void reset();
 

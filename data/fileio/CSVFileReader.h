@@ -20,6 +20,8 @@
 
 #include "CSVFormat.h"
 
+#include "base/BaseTypes.h"
+
 #include <QList>
 #include <QStringList>
 
@@ -58,8 +60,8 @@ protected:
     mutable int m_warnings;
     int m_mainModelSampleRate;
 
-    int convertTimeValue(QString, int lineno, int sampleRate,
-                            int windowSize) const;
+    sv_frame_t convertTimeValue(QString, int lineno, int sampleRate,
+                                int windowSize) const;
 };
 
 

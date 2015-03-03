@@ -75,7 +75,7 @@ RealTime::fromMilliseconds(int msec)
 RealTime
 RealTime::fromTimeval(const struct timeval &tv)
 {
-    return RealTime(tv.tv_sec, tv.tv_usec * 1000);
+    return RealTime(int(tv.tv_sec), int(tv.tv_usec * 1000));
 }
 
 RealTime
@@ -89,7 +89,7 @@ RealTime::fromXsdDuration(std::string xsdd)
     int i = 0;
 
     const char *s = xsdd.c_str();
-    int len = xsdd.length();
+    int len = int(xsdd.length());
 
     bool negative = false, afterT = false;
 
@@ -106,7 +106,7 @@ RealTime::fromXsdDuration(std::string xsdd)
 
         if (isdigit(s[i]) || s[i] == '.') {
             value = strtod(&s[i], &eptr);
-            i = eptr - s;
+            i = int(eptr - s);
         }
 
         if (i == len) break;
@@ -456,22 +456,22 @@ RealTime::operator/(const RealTime &r) const
     else return lTotal/rTotal;
 }
 
-long
-RealTime::realTime2Frame(const RealTime &time, unsigned int sampleRate)
+sv_frame_t
+RealTime::realTime2Frame(const RealTime &time, int sampleRate)
 {
     if (time < zeroTime) return -realTime2Frame(-time, sampleRate);
     double s = time.sec + double(time.nsec + 1) / 1000000000.0;
-    return long(s * double(sampleRate));
+    return sv_frame_t(s * double(sampleRate));
 }
 
 RealTime
-RealTime::frame2RealTime(long frame, unsigned int sampleRate)
+RealTime::frame2RealTime(sv_frame_t frame, int sampleRate)
 {
     if (frame < 0) return -frame2RealTime(-frame, sampleRate);
 
     RealTime rt;
-    rt.sec = frame / long(sampleRate);
-    frame -= rt.sec * long(sampleRate);
+    rt.sec = int(frame / sv_frame_t(sampleRate));
+    frame -= rt.sec * sv_frame_t(sampleRate);
     rt.nsec = (int)(((double(frame) * 1000000.0) / long(sampleRate)) * 1000.0);
     return rt;
 }

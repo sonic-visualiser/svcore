@@ -82,7 +82,7 @@ protected:
     T m_area;
     
     void encache();
-    void cosinewin(T *, T, T, T, T);
+    void cosinewin(T *, double, double, double, double);
 };
 
 template <typename T>
@@ -97,14 +97,14 @@ void Window<T>::encache()
 		
     case RectangularWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] *= 0.5;
+	    mult[i] *= T(0.5);
 	}
 	break;
 	    
     case BartlettWindow:
 	for (i = 0; i < n/2; ++i) {
-	    mult[i] *= (i / T(n/2));
-	    mult[i + n/2] *= (1.0 - (i / T(n/2)));
+	    mult[i] *= T(i) / T(n/2);
+	    mult[i + n/2] *= T(1.0) - T(i) / T(n/2);
 	}
 	break;
 	    
@@ -122,7 +122,7 @@ void Window<T>::encache()
 	    
     case GaussianWindow:
 	for (i = 0; i < n; ++i) {
-            mult[i] *= pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2));
+            mult[i] *= T(pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2)));
 	}
 	break;
 	    
@@ -130,13 +130,13 @@ void Window<T>::encache()
     {
         int N = n-1;
         for (i = 0; i < N/4; ++i) {
-            T m = 2 * pow(1.0 - (T(N)/2 - i) / (T(N)/2), 3);
+            T m = T(2 * pow(1.0 - (T(N)/2 - T(i)) / (T(N)/2), 3));
             mult[i] *= m;
             mult[N-i] *= m;
         }
         for (i = N/4; i <= N/2; ++i) {
             int wn = i - N/2;
-            T m = 1.0 - 6 * pow(wn / (T(N)/2), 2) * (1.0 - abs(wn) / (T(N)/2));
+            T m = T(1.0 - 6 * pow(T(wn) / (T(N)/2), 2) * (1.0 - T(abs(wn)) / (T(N)/2)));
             mult[i] *= m;
             mult[N-i] *= m;
         }            
@@ -158,18 +158,18 @@ void Window<T>::encache()
     for (int i = 0; i < n; ++i) {
         m_area += m_cache[i];
     }
-    m_area /= n;
+    m_area /= T(n);
 }
 
 template <typename T>
-void Window<T>::cosinewin(T *mult, T a0, T a1, T a2, T a3)
+void Window<T>::cosinewin(T *mult, double a0, double a1, double a2, double a3)
 {
     const int n = m_size;
     for (int i = 0; i < n; ++i) {
-        mult[i] *= (a0
-                    - a1 * cos((2 * M_PI * i) / n)
-                    + a2 * cos((4 * M_PI * i) / n)
-                    - a3 * cos((6 * M_PI * i) / n));
+        mult[i] *= T(a0
+                     - a1 * cos((2 * M_PI * i) / n)
+                     + a2 * cos((4 * M_PI * i) / n)
+                     - a3 * cos((6 * M_PI * i) / n));
     }
 }
 

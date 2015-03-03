@@ -26,12 +26,12 @@
 struct OneDimensionalPoint
 {
 public:
-    OneDimensionalPoint(int _frame) : frame(_frame) { }
-    OneDimensionalPoint(int _frame, QString _label) : frame(_frame), label(_label) { }
+    OneDimensionalPoint(sv_frame_t _frame) : frame(_frame) { }
+    OneDimensionalPoint(sv_frame_t _frame, QString _label) : frame(_frame), label(_label) { }
 
     int getDimensions() const { return 1; }
     
-    int frame;
+    sv_frame_t frame;
     QString label;
 
     QString getLabel() const { return label; }
@@ -187,7 +187,7 @@ public:
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(int startFrame, int endFrame) const {
+    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const {
         
 	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;

@@ -18,6 +18,7 @@
 
 #include <QString>
 
+#include "base/BaseTypes.h"
 #include "FileSource.h"
 
 #include <vector>
@@ -36,7 +37,7 @@ public:
 
     virtual QString getError() const { return ""; }
 
-    int getFrameCount() const { return m_frameCount; }
+    sv_frame_t getFrameCount() const { return m_frameCount; }
     int getChannelCount() const { return m_channelCount; }
     int getSampleRate() const { return m_sampleRate; }
 
@@ -93,7 +94,7 @@ public:
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual void getInterleavedFrames(int start, int count,
+    virtual void getInterleavedFrames(sv_frame_t start, sv_frame_t count,
 				      SampleBlock &frames) const = 0;
 
     /**
@@ -103,7 +104,7 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual void getDeInterleavedFrames(int start, int count,
+    virtual void getDeInterleavedFrames(sv_frame_t start, sv_frame_t count,
                                         std::vector<SampleBlock> &frames) const;
 
     // only subclasses that do not know exactly how long the audio
@@ -116,7 +117,7 @@ signals:
     void frameCountChanged();
     
 protected:
-    int m_frameCount;
+    sv_frame_t m_frameCount;
     int m_channelCount;
     int m_sampleRate;
 };

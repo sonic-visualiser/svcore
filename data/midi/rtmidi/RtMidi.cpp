@@ -835,7 +835,7 @@ extern "C" void *alsaMidiHandler( void *ptr )
       if ( data->firstMessage == true )
         data->firstMessage = false;
       else
-        message.timeStamp = time * 0.000001;
+	  message.timeStamp = double(time) * 0.000001;
     }
 
     snd_seq_free_event(ev);
@@ -947,9 +947,9 @@ void RtMidiIn :: openPort( unsigned int portNumber, const std::string portName )
 
 
   snd_seq_addr_t sender, receiver;
-  sender.client = snd_seq_port_info_get_client( pinfo );
-  sender.port = snd_seq_port_info_get_port( pinfo );
-  receiver.client = snd_seq_client_id( data->seq );
+  sender.client = (unsigned char)snd_seq_port_info_get_client( pinfo );
+  sender.port = (unsigned char)snd_seq_port_info_get_port( pinfo );
+  receiver.client = (unsigned char)snd_seq_client_id( data->seq );
   if ( data->vport < 0 ) {
     snd_seq_port_info_set_client( pinfo, 0 );
     snd_seq_port_info_set_port( pinfo, 0 );
@@ -972,7 +972,7 @@ void RtMidiIn :: openPort( unsigned int portNumber, const std::string portName )
     }
   }
 
-  receiver.port = data->vport;
+  receiver.port = (unsigned char)data->vport;
 
   // Make subscription
   snd_seq_port_subscribe_malloc( &data->subscription );
@@ -1222,9 +1222,9 @@ void RtMidiOut :: openPort( unsigned int portNumber, const std::string portName 
   }
 
   snd_seq_addr_t sender, receiver;
-  receiver.client = snd_seq_port_info_get_client( pinfo );
-  receiver.port = snd_seq_port_info_get_port( pinfo );
-  sender.client = snd_seq_client_id( data->seq );
+  receiver.client = (unsigned char)snd_seq_port_info_get_client( pinfo );
+  receiver.port = (unsigned char)snd_seq_port_info_get_port( pinfo );
+  sender.client = (unsigned char)snd_seq_client_id( data->seq );
 
   if ( data->vport < 0 ) {
     data->vport = snd_seq_create_simple_port( data->seq, portName.c_str(),
@@ -1236,7 +1236,7 @@ void RtMidiOut :: openPort( unsigned int portNumber, const std::string portName 
     }
   }
 
-  sender.port = data->vport;
+  sender.port = (unsigned char)data->vport;
 
   // Make subscription
   snd_seq_port_subscribe_malloc( &data->subscription );
@@ -1295,7 +1295,7 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 {
   int result;
   AlsaMidiData *data = static_cast<AlsaMidiData *> (apiData_);
-  unsigned int nBytes = message->size();
+  unsigned int nBytes = (unsigned int) message->size();
   if ( nBytes > data->bufferSize ) {
     data->bufferSize = nBytes;
     result = snd_midi_event_resize_buffer ( data->coder, nBytes);
@@ -1313,11 +1313,11 @@ void RtMidiOut :: sendMessage( std::vector<unsigned char> *message )
 
   snd_seq_event_t ev;
   snd_seq_ev_clear(&ev);
-  snd_seq_ev_set_source(&ev, data->vport);
+  snd_seq_ev_set_source(&ev, (unsigned char) data->vport);
   snd_seq_ev_set_subs(&ev);
   snd_seq_ev_set_direct(&ev);
   for ( unsigned int i=0; i<nBytes; i++ ) data->buffer[i] = message->at(i);
-  result = snd_midi_event_encode( data->coder, data->buffer, (long)nBytes, &ev );
+  result = (int) snd_midi_event_encode( data->coder, data->buffer, (long)nBytes, &ev );
   if ( result < (int)nBytes ) {
     errorString_ = "RtMidiOut::sendMessage: event parsing error!";
     error( RtError::WARNING );

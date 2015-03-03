@@ -155,14 +155,14 @@ ModelDataTableModel::columnCount(const QModelIndex &parent) const
 }
 
 QModelIndex 
-ModelDataTableModel::getModelIndexForFrame(int frame) const
+ModelDataTableModel::getModelIndexForFrame(sv_frame_t frame) const
 {
     if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
     return createIndex(getSorted(row), 0, (void *)0);
 }
 
-int 
+sv_frame_t
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
     if (!m_model) return 0;

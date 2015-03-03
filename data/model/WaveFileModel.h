@@ -43,7 +43,7 @@ public:
 
     const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
-    int getFrameCount() const;
+    sv_frame_t getFrameCount() const;
     int getChannelCount() const;
     int getSampleRate() const;
     int getNativeRate() const;
@@ -59,28 +59,28 @@ public:
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual int getStartFrame() const { return m_startFrame; }
-    virtual int getEndFrame() const { return m_startFrame + getFrameCount(); }
+    virtual sv_frame_t getStartFrame() const { return m_startFrame; }
+    virtual sv_frame_t getEndFrame() const { return m_startFrame + getFrameCount(); }
 
-    void setStartFrame(int startFrame) { m_startFrame = startFrame; }
+    void setStartFrame(sv_frame_t startFrame) { m_startFrame = startFrame; }
 
-    virtual int getData(int channel, int start, int count,
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
                         float *buffer) const;
 
-    virtual int getData(int channel, int start, int count,
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
                         double *buffer) const;
 
-    virtual int getData(int fromchannel, int tochannel,
-                        int start, int count,
+    virtual sv_frame_t getData(int fromchannel, int tochannel,
+                        sv_frame_t start, sv_frame_t count,
                         float **buffers) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
-    virtual void getSummaries(int channel, int start, int count,
+    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
                               int &blockSize) const;
 
-    virtual Range getSummary(int channel, int start, int count) const;
+    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
 
     QString getTypeName() const { return tr("Wave File"); }
 
@@ -102,13 +102,13 @@ protected:
 	    m_model(model), m_fillExtent(0),
             m_frameCount(model.getFrameCount()) { }
     
-	int getFillExtent() const { return m_fillExtent; }
+	sv_frame_t getFillExtent() const { return m_fillExtent; }
         virtual void run();
 
     protected:
         WaveFileModel &m_model;
-	int m_fillExtent;
-        int m_frameCount;
+	sv_frame_t m_fillExtent;
+        sv_frame_t m_frameCount;
     };
          
     void fillCache();
@@ -118,19 +118,19 @@ protected:
     AudioFileReader *m_reader;
     bool m_myReader;
 
-    int m_startFrame;
+    sv_frame_t m_startFrame;
 
     RangeBlock m_cache[2]; // interleaved at two base resolutions
     mutable QMutex m_mutex;
     RangeCacheFillThread *m_fillThread;
     QTimer *m_updateTimer;
-    int m_lastFillExtent;
+    sv_frame_t m_lastFillExtent;
     bool m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 
     mutable SampleBlock m_directRead;
-    mutable int m_lastDirectReadStart;
-    mutable int m_lastDirectReadCount;
+    mutable sv_frame_t m_lastDirectReadStart;
+    mutable sv_frame_t m_lastDirectReadCount;
     mutable QMutex m_directReadMutex;
 };    
 

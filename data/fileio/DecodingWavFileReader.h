@@ -63,7 +63,7 @@ protected:
     QString m_path;
     QString m_error;
     bool m_cancelled;
-    int m_processed;
+    sv_frame_t m_processed;
     int m_completion;
 
     WavFileReader *m_original;

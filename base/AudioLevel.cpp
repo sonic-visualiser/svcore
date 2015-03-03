@@ -26,52 +26,52 @@
 #include <cassert>
 #include "system/System.h"
 
-const float AudioLevel::DB_FLOOR = -1000.f;
+const double AudioLevel::DB_FLOOR = -1000.;
 
 struct FaderDescription
 {
-    FaderDescription(float _minDb, float _maxDb, float _zeroPoint) :
+    FaderDescription(double _minDb, double _maxDb, double _zeroPoint) :
 	minDb(_minDb), maxDb(_maxDb), zeroPoint(_zeroPoint) { }
 
-    float minDb;
-    float maxDb;
-    float zeroPoint; // as fraction of total throw
+    double minDb;
+    double maxDb;
+    double zeroPoint; // as fraction of total throw
 };
 
 static const FaderDescription faderTypes[] = {
-    FaderDescription(-40.f,  +6.f, 0.75f), // short
-    FaderDescription(-70.f, +10.f, 0.80f), // long
-    FaderDescription(-70.f,   0.f, 1.00f), // IEC268
-    FaderDescription(-70.f, +10.f, 0.80f), // IEC268 long
-    FaderDescription(-40.f,   0.f, 1.00f), // preview
+    FaderDescription(-40.,  +6., 0.75), // short
+    FaderDescription(-70., +10., 0.80), // long
+    FaderDescription(-70.,   0., 1.00), // IEC268
+    FaderDescription(-70., +10., 0.80), // IEC268 long
+    FaderDescription(-40.,   0., 1.00), // preview
 };
 
-//typedef std::vector<float> LevelList;
+//typedef std::vector<double> LevelList;
 //static std::map<int, LevelList> previewLevelCache;
 //static const LevelList &getPreviewLevelCache(int levels);
 
-float
-AudioLevel::multiplier_to_dB(float multiplier)
+double
+AudioLevel::multiplier_to_dB(double multiplier)
 {
-    if (multiplier == 0.f) return DB_FLOOR;
-    else if (multiplier < 0.f) return multiplier_to_dB(-multiplier);
-    float dB = 10 * log10f(multiplier);
+    if (multiplier == 0.) return DB_FLOOR;
+    else if (multiplier < 0.) return multiplier_to_dB(-multiplier);
+    double dB = 10 * log10(multiplier);
     return dB;
 }
 
-float
-AudioLevel::dB_to_multiplier(float dB)
+double
+AudioLevel::dB_to_multiplier(double dB)
 {
-    if (dB == DB_FLOOR) return 0.f;
-    float m = powf(10.f, dB / 10.f);
+    if (dB == DB_FLOOR) return 0.;
+    double m = pow(10., dB / 10.);
     return m;
 }
 
 /* IEC 60-268-18 fader levels.  Thanks to Steve Harris. */
 
-static float iec_dB_to_fader(float db)
+static double iec_dB_to_fader(double db)
 {
-    float def = 0.0f; // Meter deflection %age
+    double def = 0.0f; // Meter deflection %age
 
     if (db < -70.0f) {
         def = 0.0f;
@@ -92,9 +92,9 @@ static float iec_dB_to_fader(float db)
     return def;
 }
 
-static float iec_fader_to_dB(float def)  // Meter deflection %age
+static double iec_fader_to_dB(double def)  // Meter deflection %age
 {
-    float db = 0.0f;
+    double db = 0.0f;
 
     if (def >= 50.0f) {
 	db = (def - 50.0f) / 2.5f - 20.0f;
@@ -113,16 +113,16 @@ static float iec_fader_to_dB(float def)  // Meter deflection %age
     return db;
 }
 
-float
+double
 AudioLevel::fader_to_dB(int level, int maxLevel, FaderType type)
 {
     if (level == 0) return DB_FLOOR;
 
     if (type == IEC268Meter || type == IEC268LongMeter) {
 
-	float maxPercent = iec_dB_to_fader(faderTypes[type].maxDb);
-	float percent = float(level) * maxPercent / float(maxLevel);
-	float dB = iec_fader_to_dB(percent);
+	double maxPercent = iec_dB_to_fader(faderTypes[type].maxDb);
+	double percent = double(level) * maxPercent / double(maxLevel);
+	double dB = iec_fader_to_dB(percent);
 	return dB;
 
     } else { // scale proportional to sqrt(fabs(dB))
@@ -131,27 +131,27 @@ AudioLevel::fader_to_dB(int level, int maxLevel, FaderType type)
     
 	if (level >= zeroLevel) {
 	    
-	    float value = level - zeroLevel;
-	    float scale = float(maxLevel - zeroLevel) /
-		sqrtf(faderTypes[type].maxDb);
+	    double value = level - zeroLevel;
+	    double scale = (maxLevel - zeroLevel) /
+		sqrt(faderTypes[type].maxDb);
 	    value /= scale;
-	    float dB = powf(value, 2.f);
+	    double dB = pow(value, 2.);
 	    return dB;
 	    
 	} else {
 	    
-	    float value = zeroLevel - level;
-	    float scale = zeroLevel / sqrtf(0.f - faderTypes[type].minDb);
+	    double value = zeroLevel - level;
+	    double scale = zeroLevel / sqrt(0. - faderTypes[type].minDb);
 	    value /= scale;
-	    float dB = powf(value, 2.f);
-	    return 0.f - dB;
+	    double dB = pow(value, 2.);
+	    return 0. - dB;
 	}
     }
 }
 
 
 int
-AudioLevel::dB_to_fader(float dB, int maxLevel, FaderType type)
+AudioLevel::dB_to_fader(double dB, int maxLevel, FaderType type)
 {
     if (dB == DB_FLOOR) return 0;
 
@@ -162,8 +162,8 @@ AudioLevel::dB_to_fader(float dB, int maxLevel, FaderType type)
 	// result not as a percentage, but as a scale between 0 and
 	// whatever the "percentage" for our (possibly >0dB) max dB is.
 	
-	float maxPercent = iec_dB_to_fader(faderTypes[type].maxDb);
-	float percent = iec_dB_to_fader(dB);
+	double maxPercent = iec_dB_to_fader(faderTypes[type].maxDb);
+	double percent = iec_dB_to_fader(dB);
 	int faderLevel = int((maxLevel * percent) / maxPercent + 0.01f);
 	
 	if (faderLevel < 0) faderLevel = 0;
@@ -174,16 +174,16 @@ AudioLevel::dB_to_fader(float dB, int maxLevel, FaderType type)
 
 	int zeroLevel = int(maxLevel * faderTypes[type].zeroPoint);
 
-	if (dB >= 0.f) {
+	if (dB >= 0.) {
 	    
-            if (faderTypes[type].maxDb <= 0.f) {
+            if (faderTypes[type].maxDb <= 0.) {
                 
                 return maxLevel;
 
             } else {
 
-                float value = sqrtf(dB);
-                float scale = (maxLevel - zeroLevel) / sqrtf(faderTypes[type].maxDb);
+                double value = sqrt(dB);
+                double scale = (maxLevel - zeroLevel) / sqrt(faderTypes[type].maxDb);
                 value *= scale;
                 int level = int(value + 0.01f) + zeroLevel;
                 if (level > maxLevel) level = maxLevel;
@@ -192,9 +192,9 @@ AudioLevel::dB_to_fader(float dB, int maxLevel, FaderType type)
 	    
 	} else {
 
-	    dB = 0.f - dB;
-	    float value = sqrtf(dB);
-	    float scale = zeroLevel / sqrtf(0.f - faderTypes[type].minDb);
+	    dB = 0. - dB;
+	    double value = sqrt(dB);
+	    double scale = zeroLevel / sqrt(0. - faderTypes[type].minDb);
 	    value *= scale;
 	    int level = zeroLevel - int(value + 0.01f);
 	    if (level < 0) level = 0;
@@ -204,18 +204,18 @@ AudioLevel::dB_to_fader(float dB, int maxLevel, FaderType type)
 }
 
 	
-float
+double
 AudioLevel::fader_to_multiplier(int level, int maxLevel, FaderType type)
 {
-    if (level == 0) return 0.f;
+    if (level == 0) return 0.;
     return dB_to_multiplier(fader_to_dB(level, maxLevel, type));
 }
 
 int
-AudioLevel::multiplier_to_fader(float multiplier, int maxLevel, FaderType type)
+AudioLevel::multiplier_to_fader(double multiplier, int maxLevel, FaderType type)
 {
-    if (multiplier == 0.f) return 0;
-    float dB = multiplier_to_dB(multiplier);
+    if (multiplier == 0.) return 0;
+    double dB = multiplier_to_dB(multiplier);
     int fader = dB_to_fader(dB, maxLevel, type);
     return fader;
 }
@@ -227,7 +227,7 @@ getPreviewLevelCache(int levels)
     LevelList &ll = previewLevelCache[levels];
     if (ll.empty()) {
 	for (int i = 0; i <= levels; ++i) {
-	    float m = AudioLevel::fader_to_multiplier
+	    double m = AudioLevel::fader_to_multiplier
 		(i + levels/4, levels + levels/4, AudioLevel::PreviewLevel);
 	    if (levels == 1) m /= 100; // noise
 	    ll.push_back(m);
@@ -238,14 +238,14 @@ getPreviewLevelCache(int levels)
 */
 
 int
-AudioLevel::multiplier_to_preview(float m, int levels)
+AudioLevel::multiplier_to_preview(double m, int levels)
 {
     assert(levels > 0);
     return multiplier_to_fader(m, levels, PreviewLevel);
 
     /* The original multiplier_to_preview which follows is not thread-safe.
 
-    if (m < 0.f) return -multiplier_to_preview(-m, levels);
+    if (m < 0.) return -multiplier_to_preview(-m, levels);
 
     const LevelList &ll = getPreviewLevelCache(levels);
     int result = -1;
@@ -277,7 +277,7 @@ AudioLevel::multiplier_to_preview(float m, int levels)
     */
 }
 
-float
+double
 AudioLevel::preview_to_multiplier(int level, int levels)
 {
     assert(levels > 0);

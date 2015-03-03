@@ -44,12 +44,13 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 	float val = 1.0, prevVal = 1.0;
 	while (val + 0.01 < blockSize) {
 	    prevVal = val;
-	    val *= sqrt(2.f);
+	    val *= sqrtf(2.f);
 	}
 	int rval;
-	if (dir == RoundUp) rval = int(val + 0.01);
-	else if (dir == RoundDown) rval = int(prevVal + 0.01);
-	else if (val - blockSize < blockSize - prevVal) rval = int(val + 0.01);
+	if (dir == RoundUp) rval = int(val + 0.01f);
+	else if (dir == RoundDown) rval = int(prevVal + 0.01f);
+	else if (val - float(blockSize) <
+                 float(blockSize) - prevVal) rval = int(val + 0.01f);
 	else rval = int(prevVal + 0.01);
 //	SVDEBUG << "returning " << rval << endl;
 	return rval;

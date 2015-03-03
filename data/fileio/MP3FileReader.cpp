@@ -86,7 +86,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     }
     
     ssize_t sz = 0;
-    int offset = 0;
+    ssize_t offset = 0;
     while (offset < m_fileSize) {
         sz = ::read(fd, m_filebuffer + offset, m_fileSize - offset);
         if (sz < 0) {
@@ -291,7 +291,7 @@ MP3FileReader::DecodeThread::run()
 } 
 
 bool
-MP3FileReader::decode(void *mm, int sz)
+MP3FileReader::decode(void *mm, sv_frame_t sz)
 {
     DecoderData data;
     struct mad_decoder decoder;
@@ -320,7 +320,7 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
 
 #ifdef HAVE_ID3TAG
     if (length > ID3_TAG_QUERYSIZE) {
-        int taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
+        ssize_t taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
         if (taglen > 0) {
 //            cerr << "ID3 tag length to skip: " << taglen << endl;
             start += taglen;
@@ -352,7 +352,7 @@ MP3FileReader::accept(struct mad_header const *header,
     int frames = pcm->length;
 
     if (header) {
-        m_bitrateNum += header->bitrate;
+        m_bitrateNum = m_bitrateNum + double(header->bitrate);
         m_bitrateDenom ++;
     }
 

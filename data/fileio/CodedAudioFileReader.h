@@ -38,7 +38,7 @@ public:
         CacheInMemory
     };
 
-    virtual void getInterleavedFrames(int start, int count,
+    virtual void getInterleavedFrames(sv_frame_t start, sv_frame_t count,
 				      SampleBlock &frames) const;
 
     virtual int getNativeRate() const { return m_fileRate; }
@@ -59,8 +59,8 @@ protected:
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
     // may throw InsufficientDiscSpace:
-    void addSamplesToDecodeCache(float **samples, int nframes);
-    void addSamplesToDecodeCache(float *samplesInterleaved, int nframes);
+    void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
+    void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
     void addSamplesToDecodeCache(const SampleBlock &interleaved);
 
     // may throw InsufficientDiscSpace:
@@ -72,9 +72,9 @@ protected:
     void endSerialised();
 
 private:
-    void pushBuffer(float *interleaved, int sz, bool final);
-    void pushBufferResampling(float *interleaved, int sz, float ratio, bool final);
-    void pushBufferNonResampling(float *interleaved, int sz);
+    void pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+    void pushBufferResampling(float *interleaved, sv_frame_t sz, double ratio, bool final);
+    void pushBufferNonResampling(float *interleaved, sv_frame_t sz);
 
 protected:
     QMutex m_cacheMutex;
@@ -89,12 +89,12 @@ protected:
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    int m_cacheWriteBufferIndex;
-    int m_cacheWriteBufferSize; // frames
+    sv_frame_t m_cacheWriteBufferIndex;
+    sv_frame_t m_cacheWriteBufferSize; // frames
 
     Resampler *m_resampler;
     float *m_resampleBuffer;
-    int m_fileFrameCount;
+    sv_frame_t m_fileFrameCount;
 
     bool m_normalised;
     float m_max;

@@ -61,19 +61,19 @@ EditableDenseThreeDimensionalModel::getSampleRate() const
     return m_sampleRate;
 }
 
-int
+sv_frame_t
 EditableDenseThreeDimensionalModel::getStartFrame() const
 {
     return m_startFrame;
 }
 
 void
-EditableDenseThreeDimensionalModel::setStartFrame(int f)
+EditableDenseThreeDimensionalModel::setStartFrame(sv_frame_t f)
 {
     m_startFrame = f; 
 }
 
-int
+sv_frame_t
 EditableDenseThreeDimensionalModel::getEndFrame() const
 {
     return m_resolution * m_data.size() + (m_resolution - 1);
@@ -255,7 +255,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                     tcol[i - bcount] = values.at(i);
                 }
                 m_data[index] = tcol;
-                m_trunc[index] = -tdist;
+                m_trunc[index] = (signed char)(-tdist);
                 return;
             } else {
                 // create a new column with h - tcount values from 0 up
@@ -266,7 +266,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                     tcol[i] = values.at(i);
                 }
                 m_data[index] = tcol;
-                m_trunc[index] = tdist;
+                m_trunc[index] = (signed char)(tdist);
                 return;
             }
         }
@@ -465,7 +465,7 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 
     if (sample.empty()) return false;
     for (int j = 0; j < sample.size(); ++j) {
-        if (n[j]) sample[j] /= n[j];
+        if (n[j]) sample[j] /= float(n[j]);
     }
     
     return LogRange::useLogScale(sample.toStdVector());
@@ -515,13 +515,13 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
 }
 
 QString
-EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
+EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
 {
     QReadLocker locker(&m_lock);
     QString s;
     for (int i = 0; i < m_data.size(); ++i) {
-        int fr = m_startFrame + i * m_resolution;
-        if (fr >= int(f0) && fr < int(f1)) {
+        sv_frame_t fr = m_startFrame + i * m_resolution;
+        if (fr >= f0 && fr < f1) {
             QStringList list;
             for (int j = 0; j < m_data.at(i).size(); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));

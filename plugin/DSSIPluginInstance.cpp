@@ -57,7 +57,7 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
 				       int clientId,
 				       QString identifier,
 				       int position,
-				       unsigned long sampleRate,
+				       int sampleRate,
 				       size_t blockSize,
 				       int idealChannelCount,
 				       const DSSI_Descriptor* descriptor) :
@@ -149,10 +149,10 @@ DSSIPluginInstance::getParameterDescriptors() const
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (!f) return list;
     
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+    for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
         
         ParameterDescriptor pd;
-        unsigned int pn = m_controlPortsIn[i].first;
+        int pn = (int)m_controlPortsIn[i].first;
 
         pd.identifier = m_descriptor->LADSPA_Plugin->PortNames[pn];
         pd.name = pd.identifier;
@@ -181,7 +181,7 @@ DSSIPluginInstance::getParameter(std::string id) const
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::getParameter(" << id << ")" << endl;
 #endif
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+    for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
         if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
 #ifdef DEBUG_DSSI
             cerr << "Matches port " << i << endl;
@@ -204,7 +204,7 @@ DSSIPluginInstance::setParameter(std::string id, float value)
     SVDEBUG << "DSSIPluginInstance::setParameter(" << id << ", " << value << ")" << endl;
 #endif
 
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+    for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
         if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
             setParameterValue(i, value);
             break;
@@ -223,7 +223,7 @@ DSSIPluginInstance::init()
     //
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
-    for (unsigned long i = 0; i < descriptor->PortCount; ++i)
+    for (int i = 0; i < (int)descriptor->PortCount; ++i)
     {
         if (LADSPA_IS_PORT_AUDIO(descriptor->PortDescriptors[i]))
         {
@@ -240,7 +240,7 @@ DSSIPluginInstance::init()
 
 		LADSPA_Data *data = new LADSPA_Data(0.0);
 
-		m_controlPortsIn.push_back(std::pair<unsigned long, LADSPA_Data*>
+		m_controlPortsIn.push_back(std::pair<long, LADSPA_Data*>
 					   (i, data));
 
 		m_backupControlPortsIn.push_back(0.0);
@@ -248,7 +248,7 @@ DSSIPluginInstance::init()
 	    } else {
 		LADSPA_Data *data = new LADSPA_Data(0.0);
 		m_controlPortsOut.push_back(
-                    std::pair<unsigned long, LADSPA_Data*>(i, data));
+                    std::pair<long, LADSPA_Data*>(i, data));
 		if (!strcmp(descriptor->PortNames[i], "latency") ||
 		    !strcmp(descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_DSSI
@@ -428,10 +428,10 @@ DSSIPluginInstance::~DSSIPluginInstance()
 
     cleanup();
 
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i)
+    for (int i = 0; in_range_for(m_controlPortsIn, i); ++i)
         delete m_controlPortsIn[i].second;
 
-    for (unsigned int i = 0; i < m_controlPortsOut.size(); ++i)
+    for (int i = 0; in_range_for(m_controlPortsOut, i); ++i)
         delete m_controlPortsOut[i].second;
 
     m_controlPortsIn.clear();
@@ -455,7 +455,7 @@ DSSIPluginInstance::~DSSIPluginInstance()
 
 
 void
-DSSIPluginInstance::instantiate(unsigned long sampleRate)
+DSSIPluginInstance::instantiate(int sampleRate)
 {
     if (!m_descriptor) return;
 
@@ -478,7 +478,7 @@ DSSIPluginInstance::instantiate(unsigned long sampleRate)
 
 	if (m_descriptor->get_midi_controller_for_port) {
 
-	    for (unsigned long i = 0; i < descriptor->PortCount; ++i) {
+	    for (int i = 0; i < (int)descriptor->PortCount; ++i) {
 
 		if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i]) &&
 		    LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
@@ -512,13 +512,13 @@ DSSIPluginInstance::checkProgramCache() const
 	return;
     }
 
-    unsigned long index = 0;
+    int index = 0;
     const DSSI_Program_Descriptor *programDescriptor;
     while ((programDescriptor = m_descriptor->get_program(m_instanceHandle, index))) {
 	++index;
 	ProgramDescriptor d;
-	d.bank = programDescriptor->Bank;
-	d.program = programDescriptor->Program;
+	d.bank = (int)programDescriptor->Bank;
+	d.program = (int)programDescriptor->Program;
 	d.name = programDescriptor->Name;
 	m_cachedPrograms.push_back(d);
     }
@@ -570,7 +570,7 @@ DSSIPluginInstance::getProgram(int bank, int program) const
     return std::string();
 }
 
-unsigned long
+int
 DSSIPluginInstance::getProgram(std::string name) const
 {
 #ifdef DEBUG_DSSI
@@ -581,7 +581,7 @@ DSSIPluginInstance::getProgram(std::string name) const
 
     checkProgramCache();
 
-    unsigned long rv;
+    int rv;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
 	 i != m_cachedPrograms.end(); ++i) {
@@ -621,7 +621,7 @@ DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
     if (!m_descriptor->select_program) return;
 
     bool found = false;
-    unsigned long bankNo = 0, programNo = 0;
+    int bankNo = 0, programNo = 0;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
 	 i != m_cachedPrograms.end(); ++i) {
@@ -700,7 +700,7 @@ DSSIPluginInstance::connectPorts()
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     int inbuf = 0, outbuf = 0;
 
-    for (unsigned int i = 0; i < m_audioPortsIn.size(); ++i) {
+    for (size_t i = 0; i < m_audioPortsIn.size(); ++i) {
 	m_descriptor->LADSPA_Plugin->connect_port
 	    (m_instanceHandle,
 	     m_audioPortsIn[i],
@@ -708,7 +708,7 @@ DSSIPluginInstance::connectPorts()
 	++inbuf;
     }
 
-    for (unsigned int i = 0; i < m_audioPortsOut.size(); ++i) {
+    for (size_t i = 0; i < m_audioPortsOut.size(); ++i) {
 	m_descriptor->LADSPA_Plugin->connect_port
 	    (m_instanceHandle,
 	     m_audioPortsOut[i],
@@ -716,7 +716,7 @@ DSSIPluginInstance::connectPorts()
 	++outbuf;
     }
 
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+    for (size_t i = 0; i < m_controlPortsIn.size(); ++i) {
 	m_descriptor->LADSPA_Plugin->connect_port
 	    (m_instanceHandle,
 	     m_controlPortsIn[i].first,
@@ -724,7 +724,7 @@ DSSIPluginInstance::connectPorts()
 
         if (f) {
             float defaultValue = f->getPortDefault
-                (m_descriptor->LADSPA_Plugin, m_controlPortsIn[i].first);
+                (m_descriptor->LADSPA_Plugin, (int)m_controlPortsIn[i].first);
             *m_controlPortsIn[i].second = defaultValue;
             m_backupControlPortsIn[i] = defaultValue;
 #ifdef DEBUG_DSSI
@@ -733,7 +733,7 @@ DSSIPluginInstance::connectPorts()
         }
     }
 
-    for (unsigned int i = 0; i < m_controlPortsOut.size(); ++i) {
+    for (size_t i = 0; i < m_controlPortsOut.size(); ++i) {
 	m_descriptor->LADSPA_Plugin->connect_port
 	    (m_instanceHandle,
 	     m_controlPortsOut[i].first,
@@ -741,21 +741,21 @@ DSSIPluginInstance::connectPorts()
     }
 }
 
-unsigned int
+int
 DSSIPluginInstance::getParameterCount() const
 {
-    return m_controlPortsIn.size();
+    return (int)m_controlPortsIn.size();
 }
 
 void
-DSSIPluginInstance::setParameterValue(unsigned int parameter, float value)
+DSSIPluginInstance::setParameterValue(int parameter, float value)
 {
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::setParameterValue(" << parameter << ") to " << value << endl;
 #endif
-    if (parameter >= m_controlPortsIn.size()) return;
+    if (!in_range_for(m_controlPortsIn, parameter)) return;
 
-    unsigned int portNumber = m_controlPortsIn[parameter].first;
+    int portNumber = m_controlPortsIn[parameter].first;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -772,7 +772,7 @@ DSSIPluginInstance::setParameterValue(unsigned int parameter, float value)
 }
 
 void
-DSSIPluginInstance::setPortValueFromController(unsigned int port, int cv)
+DSSIPluginInstance::setPortValueFromController(int port, int cv)
 {
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::setPortValueFromController(" << port << ") to " << cv << endl;
@@ -803,7 +803,7 @@ DSSIPluginInstance::setPortValueFromController(unsigned int port, int cv)
 	}
     }
 
-    for (unsigned int i = 0; i < m_controlPortsIn.size(); ++i) {
+    for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
 	if (m_controlPortsIn[i].first == port) {
 	    setParameterValue(i, value);
 	}
@@ -813,24 +813,24 @@ DSSIPluginInstance::setPortValueFromController(unsigned int port, int cv)
 float
 DSSIPluginInstance::getControlOutputValue(size_t output) const
 {
-    if (output > m_controlPortsOut.size()) return 0.0;
+    if (!in_range_for(m_controlPortsOut, output)) return 0.0;
     return (*m_controlPortsOut[output].second);
 }
 
 float
-DSSIPluginInstance::getParameterValue(unsigned int parameter) const
+DSSIPluginInstance::getParameterValue(int parameter) const
 {
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::getParameterValue(" << parameter << ")" << endl;
 #endif
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
     return (*m_controlPortsIn[parameter].second);
 }
 
 float
-DSSIPluginInstance::getParameterDefault(unsigned int parameter) const
+DSSIPluginInstance::getParameterDefault(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -842,9 +842,9 @@ DSSIPluginInstance::getParameterDefault(unsigned int parameter) const
 }
 
 int
-DSSIPluginInstance::getParameterDisplayHint(unsigned int parameter) const
+DSSIPluginInstance::getParameterDisplayHint(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -1040,9 +1040,11 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 
 	Vamp::RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
 
-	int frameOffset = 0;
+        long frameOffset = 0;
 	if (evTime > blockTime) {
-	    frameOffset = Vamp::RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+	    frameOffset = Vamp::RealTime::realTime2Frame
+                (evTime - blockTime,
+                 (unsigned int)m_sampleRate);
 	}
 
 #ifdef DEBUG_DSSI_PROCESS
@@ -1051,7 +1053,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 	cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
 #endif
 
-	if (frameOffset >= int(count)) break;
+	if (frameOffset >= (long)count) break;
 	if (frameOffset < 0) {
 	    frameOffset = 0;
 	    if (ev->type == SND_SEQ_EVENT_NOTEON) {
@@ -1182,8 +1184,8 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 #endif
 
     size_t index = 0;
-    unsigned long *counts = (unsigned long *)
-	alloca(m_groupLocalEventBufferCount * sizeof(unsigned long));
+    int *counts = (int *)
+	alloca(m_groupLocalEventBufferCount * sizeof(int));
     LADSPA_Handle *instances = (LADSPA_Handle *)
 	alloca(m_groupLocalEventBufferCount * sizeof(LADSPA_Handle));
 
@@ -1268,7 +1270,7 @@ DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
 void
 DSSIPluginInstance::midiSend(LADSPA_Handle /* instance */,
 			     snd_seq_event_t * /* events */,
-			     unsigned long /* eventCount */)
+			     unsignd long /* eventCount */)
 {
     // This is likely to be called from an RT context
 

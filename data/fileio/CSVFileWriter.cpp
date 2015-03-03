@@ -95,7 +95,7 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
                  selection->getSelections().begin();
              i != selection->getSelections().end(); ++i) {
 	
-            int f0(i->getStartFrame()), f1(i->getEndFrame());
+            sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
             out << m_model->toDelimitedDataStringSubset(m_delimiter, f0, f1);
         }
 

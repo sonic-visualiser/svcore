@@ -56,11 +56,11 @@ public:
 
     virtual void run(const Vamp::RealTime &, size_t count = 0);
 
-    virtual unsigned int getParameterCount() const;
-    virtual void setParameterValue(unsigned int parameter, float value);
-    virtual float getParameterValue(unsigned int parameter) const;
-    virtual float getParameterDefault(unsigned int parameter) const;
-    virtual int getParameterDisplayHint(unsigned int parameter) const;
+    virtual int getParameterCount() const;
+    virtual void setParameterValue(int parameter, float value);
+    virtual float getParameterValue(int parameter) const;
+    virtual float getParameterDefault(int parameter) const;
+    virtual int getParameterDisplayHint(int parameter) const;
 
     virtual ParameterList getParameterDescriptors() const;
     virtual float getParameter(std::string) const;
@@ -83,7 +83,7 @@ public:
     virtual ProgramList getPrograms() const;
     virtual std::string getCurrentProgram() const;
     virtual std::string getProgram(int bank, int program) const;
-    virtual unsigned long getProgram(std::string name) const;
+    virtual int getProgram(std::string name) const;
     virtual void selectProgram(std::string program);
 
     virtual bool isBypassed() const { return m_bypassed; }
@@ -110,20 +110,20 @@ protected:
 		       int client,
 		       QString identifier,
 		       int position,
-		       unsigned long sampleRate,
+		       int sampleRate,
 		       size_t blockSize,
 		       int idealChannelCount,
 		       const DSSI_Descriptor* descriptor);
     
     void init();
-    void instantiate(unsigned long sampleRate);
+    void instantiate(int sampleRate);
     void cleanup();
     void activate();
     void deactivate();
     void connectPorts();
 
     bool handleController(snd_seq_event_t *ev);
-    void setPortValueFromController(unsigned int portNumber, int controlValue);
+    void setPortValueFromController(int portNumber, int controlValue);
     void selectProgramAux(std::string program, bool backupPortValues);
     void checkProgramCache() const;
 
@@ -145,8 +145,8 @@ protected:
     LADSPA_Handle              m_instanceHandle;
     const DSSI_Descriptor     *m_descriptor;
 
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsIn;
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsOut;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsIn;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsOut;
 
     std::vector<LADSPA_Data>  m_backupControlPortsIn;
 
