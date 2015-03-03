@@ -42,15 +42,15 @@
 struct FlexiNote
 {
 public:
-    FlexiNote(long _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
-    FlexiNote(long _frame, float _value, int _duration, float _level, QString _label) :
+    FlexiNote(sv_frame_t _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
+    FlexiNote(sv_frame_t _frame, float _value, sv_frame_t _duration, float _level, QString _label) :
 	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
 
     int getDimensions() const { return 3; }
 
-    long frame;
+    sv_frame_t frame;
     float value;
-    int duration;
+    sv_frame_t duration;
     float level;
     QString label;
 
@@ -208,7 +208,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 4: point.level = value.toDouble(); break;
+        case 4: point.level = float(value.toDouble()); break;
         case 5: point.label = value.toString(); break;
         }
 
@@ -231,20 +231,20 @@ public:
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(int startFrame, int endFrame) const 
+    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const 
     {    
     	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
         for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
-    	    int duration = pli->duration;
+    	    sv_frame_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
                 duration = getSampleRate() / 20;
             }
-            int pitch = lrintf(pli->value);
+            int pitch = int(lrintf(pli->value));
 
             int velocity = 100;
             if (pli->level > 0.f && pli->level <= 1.f) {
-                velocity = lrintf(pli->level * 127);
+                velocity = int(lrintf(pli->level * 127));
             }
 
             NoteData note(pli->frame, duration, pitch, velocity);

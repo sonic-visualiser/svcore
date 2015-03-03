@@ -133,7 +133,7 @@ CSVFeatureWriter::write(QString trackId,
 
     QTextStream &stream = *sptr;
 
-    int n = features.size();
+    int n = (int)features.size();
 
     if (n == 0) return;
 
@@ -223,7 +223,7 @@ CSVFeatureWriter::writeFeature(DataId tt,
 
     if (m_sampleTiming) {
 
-        float rate = transform.getSampleRate();
+        int rate = int(lrintf(transform.getSampleRate()));
 
         stream << Vamp::RealTime::realTime2Frame(f.timestamp, rate);
 

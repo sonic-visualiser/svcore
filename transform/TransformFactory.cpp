@@ -754,7 +754,7 @@ TransformFactory::getDefaultTransformFor(TransformId id, int rate)
 {
     Transform t;
     t.setIdentifier(id);
-    if (rate != 0) t.setSampleRate(rate);
+    if (rate != 0) t.setSampleRate(float(rate));
 
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
@@ -772,7 +772,7 @@ Vamp::PluginBase *
 TransformFactory::instantiatePluginFor(const Transform &transform)
 {
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
-        (transform.getIdentifier(), transform.getSampleRate());
+        (transform.getIdentifier(), int(lrintf(transform.getSampleRate())));
 
     if (plugin) {
         setPluginParameters(transform, plugin);
@@ -797,7 +797,7 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier, int rate)
             FeatureExtractionPluginFactory::instanceFor(pluginId);
 
         if (factory) {
-            plugin = factory->instantiatePlugin(pluginId, rate);
+            plugin = factory->instantiatePlugin(pluginId, float(rate));
         }
 
     } else {
@@ -913,8 +913,8 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
             instantiatePlugin(id, 44100);
         if (!plugin) return false;
 
-        min = plugin->getMinChannelCount();
-        max = plugin->getMaxChannelCount();
+        min = (int)plugin->getMinChannelCount();
+        max = (int)plugin->getMaxChannelCount();
         delete plugin;
 
         return true;
@@ -1040,10 +1040,10 @@ TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
     } else {
         Vamp::Plugin::InputDomain domain = vp->getInputDomain();
         if (!transform.getStepSize()) {
-            transform.setStepSize(vp->getPreferredStepSize());
+            transform.setStepSize((int)vp->getPreferredStepSize());
         }
         if (!transform.getBlockSize()) {
-            transform.setBlockSize(vp->getPreferredBlockSize());
+            transform.setBlockSize((int)vp->getPreferredBlockSize());
         }
         if (!transform.getBlockSize()) {
             transform.setBlockSize(1024);

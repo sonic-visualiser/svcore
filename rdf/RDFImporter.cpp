@@ -81,7 +81,8 @@ protected:
                                    int &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
 
-    void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
+    void fillModel(Model *, sv_frame_t, sv_frame_t,
+                   bool, std::vector<float> &, QString);
 };
 
 QString
@@ -686,8 +687,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 model = modelMap[timeline][type][dimensions][haveDuration];
 
                 if (model) {
-                    long ftime = RealTime::realTime2Frame(time, m_sampleRate);
-                    long fduration = RealTime::realTime2Frame(duration, m_sampleRate);
+                    sv_frame_t ftime = RealTime::realTime2Frame(time, m_sampleRate);
+                    sv_frame_t fduration = RealTime::realTime2Frame(duration, m_sampleRate);
                     fillModel(model, ftime, fduration, haveDuration, values, label);
                 }
             }
@@ -697,8 +698,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
 void
 RDFImporterImpl::fillModel(Model *model,
-                           long ftime,
-                           long fduration,
+                           sv_frame_t ftime,
+                           sv_frame_t fduration,
                            bool haveDuration,
                            std::vector<float> &values,
                            QString label)
@@ -757,7 +758,8 @@ RDFImporterImpl::fillModel(Model *model,
                     }
                 }
             }
-            NoteModel::Point point(ftime, value, duration, level, label);
+            NoteModel::Point point(ftime, value, sv_frame_t(lrintf(duration)),
+                                   level, label);
             nm->addPoint(point);
         }
         return;
@@ -789,7 +791,8 @@ RDFImporterImpl::fillModel(Model *model,
                     duration = values[1];
                 }
             }
-            RegionModel::Point point(ftime, value, duration, label);
+            RegionModel::Point point(ftime, value,
+                                     sv_frame_t(lrintf(duration)), label);
             rm->addPoint(point);
         }
         return;
