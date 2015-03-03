@@ -40,7 +40,7 @@ FFTFileCacheReader::FFTFileCacheReader(FFTFileCacheWriter *writer) :
     m_mfc(new MatrixFile
           (writer->getFileBase(),
            MatrixFile::ReadOnly,
-           m_storageType == FFTCache::Compact ? sizeof(uint16_t) : sizeof(float),
+           int((m_storageType == FFTCache::Compact) ? sizeof(uint16_t) : sizeof(float)),
            writer->getWidth(),
            writer->getHeight() * 2 + m_factorSize))
 {
@@ -77,7 +77,7 @@ FFTFileCacheReader::getMagnitudeAt(int x, int y) const
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        value = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.0)
+        value = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.f)
             * getNormalizationFactor(x);
         break;
 
@@ -105,7 +105,7 @@ FFTFileCacheReader::getNormalizedMagnitudeAt(int x, int y) const
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        value = getFromReadBufCompactUnsigned(x, y * 2) / 65535.0;
+        value = getFromReadBufCompactUnsigned(x, y * 2) / 65535.f;
         break;
 
     case FFTCache::Rectangular:
@@ -136,7 +136,7 @@ FFTFileCacheReader::getPhaseAt(int x, int y) const
     switch (m_storageType) {
 
     case FFTCache::Compact:
-        value = (getFromReadBufCompactSigned(x, y * 2 + 1) / 32767.0) * M_PI;
+        value = (getFromReadBufCompactSigned(x, y * 2 + 1) / 32767.f) * float(M_PI);
         break;
 
     case FFTCache::Rectangular:
@@ -187,7 +187,7 @@ FFTFileCacheReader::getMagnitudesAt(int x, float *values, int minbin, int count,
     case FFTCache::Compact:
         for (int i = 0; i < count; ++i) {
             int y = minbin + i * step;
-            values[i] = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.0)
+            values[i] = (getFromReadBufCompactUnsigned(x, y * 2) / 65535.f)
                 * getNormalizationFactor(x);
         }
         break;
@@ -224,7 +224,7 @@ FFTFileCacheReader::haveSetColumnAt(int x) const
     return m_mfc->haveSetColumnAt(x);
 }
 
-int
+size_t
 FFTFileCacheReader::getCacheSize(int width, int height,
                                  FFTCache::StorageType type)
 {

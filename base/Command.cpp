@@ -95,6 +95,6 @@ QString
 BundleCommand::getName() const
 {
     if (m_commands.size() == 1) return m_name;
-    return tr("%1 (%n change(s))", "", m_commands.size()).arg(m_name);
+    return tr("%1 (%n change(s))", "", int(m_commands.size())).arg(m_name);
 }
 

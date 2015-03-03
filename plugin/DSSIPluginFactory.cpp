@@ -82,7 +82,7 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
 	list.push_back(m_taxonomy[*i]);
 	list.push_back(QString("%1").arg(descriptor->PortCount));
 
-	for (unsigned long p = 0; p < descriptor->PortCount; ++p) {
+	for (int p = 0; p < (int)descriptor->PortCount; ++p) {
 
 	    int type = 0;
 	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[p])) {
@@ -375,13 +375,13 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
 	
 	unsigned int controlPortNumber = 1;
 	
-	for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
+	for (int i = 0; i < (int)ladspaDescriptor->PortCount; i++) {
 	    
 	    if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
 		
 		if (def_uri && defs) {
 		    
-		    for (unsigned int j = 0; j < defs->count; j++) {
+		    for (int j = 0; j < (int)defs->count; j++) {
 			if (defs->items[j].pid == controlPortNumber) {
 //			    cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << ladspaDescriptor->PortNames[i] << endl;
 			    m_portDefaults[ladspaDescriptor->UniqueID][i] =

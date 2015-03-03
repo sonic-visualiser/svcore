@@ -51,8 +51,8 @@ public:
     virtual bool isOK() const;
 
     virtual int getSampleRate() const;
-    virtual int getStartFrame() const;
-    virtual int getEndFrame() const;
+    virtual sv_frame_t getStartFrame() const;
+    virtual sv_frame_t getEndFrame() const;
 
     virtual Model *clone() const;
     
@@ -60,7 +60,7 @@ public:
     /**
      * Set the frame offset of the first column.
      */
-    virtual void setStartFrame(int);
+    virtual void setStartFrame(sv_frame_t);
 
     /**
      * Return the number of sample frames covered by each set of bins.
@@ -190,7 +190,7 @@ public:
     QString getTypeName() const { return tr("Editable Dense 3-D"); }
 
     virtual QString toDelimitedDataString(QString delimiter) const;
-    virtual QString toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const;
+    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
@@ -216,7 +216,7 @@ protected:
     std::vector<float> m_binValues;
     QString m_binValueUnit;
 
-    int m_startFrame;
+    sv_frame_t m_startFrame;
     int m_sampleRate;
     int m_resolution;
     int m_yBinCount;

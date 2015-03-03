@@ -93,7 +93,7 @@ public:
      * value which does not vary from one column to the next. This is
      * only meaningful if hasBinValues() returns true.
      */
-    virtual float getBinValue(int n) const { return n; }
+    virtual float getBinValue(int n) const { return float(n); }
 
     /**
      * Obtain the name of the unit of the values returned from
@@ -171,11 +171,11 @@ public:
         return SortNumeric;
     }
 
-    virtual long getFrameForRow(int row) const {
-        return row * getResolution();
+    virtual sv_frame_t getFrameForRow(int row) const {
+        return sv_frame_t(row) * getResolution();
     }
-    virtual int getRowForFrame(long frame) const {
-        return frame / getResolution();
+    virtual int getRowForFrame(sv_frame_t frame) const {
+        return int(frame / getResolution());
     }
 
 protected:

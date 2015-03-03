@@ -21,11 +21,12 @@
 #ifndef _REAL_TIME_H_
 #define _REAL_TIME_H_
 
+#include "BaseTypes.h"
+
 #include <iostream>
 #include <string>
 
 struct timeval;
-
 
 /**
  * RealTime represents time values to nanosecond precision
@@ -149,12 +150,12 @@ struct RealTime
     /**
      * Convert a RealTime into a sample frame at the given sample rate.
      */
-    static long realTime2Frame(const RealTime &r, unsigned int sampleRate);
+    static sv_frame_t realTime2Frame(const RealTime &r, int sampleRate);
 
     /**
      * Convert a sample frame at the given sample rate into a RealTime.
      */
-    static RealTime frame2RealTime(long frame, unsigned int sampleRate);
+    static RealTime frame2RealTime(sv_frame_t frame, int sampleRate);
 
     static const RealTime zeroTime;
 };

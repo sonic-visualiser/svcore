@@ -22,12 +22,12 @@ Selection::Selection() :
 {
 }
 
-Selection::Selection(int startFrame, int endFrame) :
+Selection::Selection(sv_frame_t startFrame, sv_frame_t endFrame) :
     m_startFrame(startFrame),
     m_endFrame(endFrame)
 {
     if (m_startFrame > m_endFrame) {
-	int tmp = m_endFrame;
+	sv_frame_t tmp = m_endFrame;
 	m_endFrame = m_startFrame;
 	m_startFrame = tmp;
     }
@@ -59,20 +59,20 @@ Selection::isEmpty() const
     return m_startFrame == m_endFrame;
 }
 
-int
+sv_frame_t
 Selection::getStartFrame() const
 {
     return m_startFrame;
 }
 
-int
+sv_frame_t
 Selection::getEndFrame() const
 {
     return m_endFrame;
 }
 
 bool
-Selection::contains(int frame) const
+Selection::contains(sv_frame_t frame) const
 {
     return (frame >= m_startFrame) && (frame < m_endFrame);
 }
@@ -174,7 +174,7 @@ MultiSelection::clearSelections()
 }
 
 void
-MultiSelection::getExtents(int &startFrame, int &endFrame) const
+MultiSelection::getExtents(sv_frame_t &startFrame, sv_frame_t &endFrame) const
 {
     startFrame = 0;
     endFrame = 0;
@@ -193,7 +193,7 @@ MultiSelection::getExtents(int &startFrame, int &endFrame) const
 }
 
 Selection
-MultiSelection::getContainingSelection(int frame, bool defaultToFollowing) const
+MultiSelection::getContainingSelection(sv_frame_t frame, bool defaultToFollowing) const
 {
     // This scales very badly with the number of selections, but it's
     // more efficient for very small numbers of selections than a more

@@ -34,7 +34,7 @@ public:
     void setColumnAt(int x, float *mags, float *phases, float factor);
     void setColumnAt(int x, float *reals, float *imags);
 
-    static int getCacheSize(int width, int height,
+    static size_t getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
     bool haveSetColumnAt(int x) const;

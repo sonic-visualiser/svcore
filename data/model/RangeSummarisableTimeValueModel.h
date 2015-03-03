@@ -74,7 +74,7 @@ public:
      * parameter so as to return the block size that was actually
      * obtained.
      */
-    virtual void getSummaries(int channel, int start, int count,
+    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
                               int &blockSize) const = 0;
 
@@ -83,7 +83,7 @@ public:
      * the given number of underlying sample frames, summarised at a
      * block size equal to the distance between start and end frames.
      */
-    virtual Range getSummary(int channel, int start, int count) const = 0;
+    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const = 0;
 
     virtual int getSummaryBlockSize(int desired) const = 0;
 

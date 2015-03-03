@@ -109,14 +109,14 @@ public:
 //     virtual QStringList getPrograms() const { return QStringList(); }
 //     virtual QString getCurrentProgram() const { return QString(); }
     virtual std::string getProgram(int /* bank */, int /* program */) const { return std::string(); }
-//     virtual unsigned long getProgram(QString /* name */) const { return 0; } // bank << 16 + program
+//     virtual int getProgram(QString /* name */) const { return 0; } // bank << 16 + program
 //     virtual void selectProgram(QString) { }
 
-    virtual unsigned int getParameterCount() const = 0;
-    virtual void setParameterValue(unsigned int parameter, float value) = 0;
-    virtual float getParameterValue(unsigned int parameter) const = 0;
-    virtual float getParameterDefault(unsigned int parameter) const = 0;
-    virtual int getParameterDisplayHint(unsigned int parameter) const = 0;
+    virtual int getParameterCount() const = 0;
+    virtual void setParameterValue(int parameter, float value) = 0;
+    virtual float getParameterValue(int parameter) const = 0;
+    virtual float getParameterDefault(int parameter) const = 0;
+    virtual int getParameterDisplayHint(int parameter) const = 0;
 
     virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 

@@ -20,6 +20,8 @@
 
 #include <sndfile.h>
 
+#include "base/BaseTypes.h"
+
 class DenseTimeValueModel;
 class MultiSelection;
 class TempWriteFile;
@@ -57,7 +59,7 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(float **samples, int count); // count per channel
+    bool writeSamples(float **samples, sv_frame_t count); // count per channel
 
     bool close();
 

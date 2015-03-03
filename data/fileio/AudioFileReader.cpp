@@ -16,14 +16,14 @@
 #include "AudioFileReader.h"
 
 void
-AudioFileReader::getDeInterleavedFrames(int start, int count,
+AudioFileReader::getDeInterleavedFrames(sv_frame_t start, sv_frame_t count,
                                         std::vector<SampleBlock> &frames) const
 {
     SampleBlock interleaved;
     getInterleavedFrames(start, count, interleaved);
     
     int channels = getChannelCount();
-    int rc = interleaved.size() / channels;
+    sv_frame_t rc = interleaved.size() / channels;
 
     frames.clear();
 
@@ -31,7 +31,7 @@ AudioFileReader::getDeInterleavedFrames(int start, int count,
         frames.push_back(SampleBlock());
     }
 
-    for (int i = 0; i < rc; ++i) {
+    for (sv_frame_t i = 0; i < rc; ++i) {
         for (int c = 0; c < channels; ++c) {
             frames[c].push_back(interleaved[i * channels + c]);
         }

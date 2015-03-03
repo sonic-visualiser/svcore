@@ -49,7 +49,7 @@ public:
 
     SpectrogramSmoothing getSpectrogramSmoothing() const { return m_spectrogramSmoothing; }
     SpectrogramXSmoothing getSpectrogramXSmoothing() const { return m_spectrogramXSmoothing; }
-    float getTuningFrequency() const { return m_tuningFrequency; }
+    double getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
     int getResampleQuality() const { return m_resampleQuality; }
 
@@ -110,7 +110,7 @@ public slots:
 
     void setSpectrogramSmoothing(SpectrogramSmoothing smoothing);
     void setSpectrogramXSmoothing(SpectrogramXSmoothing smoothing);
-    void setTuningFrequency(float freq);
+    void setTuningFrequency(double freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
     void setResampleQuality(int quality);
@@ -147,7 +147,7 @@ private:
 
     SpectrogramSmoothing m_spectrogramSmoothing;
     SpectrogramXSmoothing m_spectrogramXSmoothing;
-    float m_tuningFrequency;
+    double m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
     int m_resampleQuality;

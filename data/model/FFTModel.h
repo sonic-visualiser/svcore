@@ -98,7 +98,7 @@ public:
         return m_server->getValuesAt(x << m_xshift, reals, imaginaries, minbin << m_yshift, count, getYRatio());
     }
 
-    inline int getFillExtent() const { return m_server->getFillExtent(); }
+    inline sv_frame_t getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
     //
@@ -120,11 +120,11 @@ public:
     virtual bool isOK() const {
         return m_server && m_server->getModel();
     }
-    virtual int getStartFrame() const {
+    virtual sv_frame_t getStartFrame() const {
         return 0;
     }
-    virtual int getEndFrame() const {
-        return getWidth() * getResolution() + getResolution();
+    virtual sv_frame_t getEndFrame() const {
+        return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
     virtual int getSampleRate() const;
     virtual int getResolution() const {

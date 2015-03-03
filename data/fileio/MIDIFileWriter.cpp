@@ -89,8 +89,8 @@ MIDIFileWriter::intToMIDIBytes(int number) const
     MIDIByte upper;
     MIDIByte lower;
 
-    upper = (number & 0xFF00) >> 8;
-    lower = (number & 0x00FF);
+    upper = MIDIByte((number & 0xFF00) >> 8);
+    lower = MIDIByte( number & 0x00FF);
 
     string rv;
     rv += upper;
@@ -106,10 +106,10 @@ MIDIFileWriter::longToMIDIBytes(unsigned long number) const
     MIDIByte upper2;
     MIDIByte lower2;
 
-    upper1 = (number & 0xff000000) >> 24;
-    lower1 = (number & 0x00ff0000) >> 16;
-    upper2 = (number & 0x0000ff00) >> 8;
-    lower2 = (number & 0x000000ff);
+    upper1 = MIDIByte((number & 0xff000000) >> 24);
+    lower1 = MIDIByte((number & 0x00ff0000) >> 16);
+    upper2 = MIDIByte((number & 0x0000ff00) >> 8);
+    lower2 = MIDIByte((number & 0x000000ff));
 
     string rv;
     rv += upper1;
@@ -344,8 +344,8 @@ MIDIFileWriter::convert()
 
     for (NoteList::const_iterator i = notes.begin(); i != notes.end(); ++i) {
 
-        int frame = i->start;
-        int duration = i->duration;
+        sv_frame_t frame = i->start;
+        sv_frame_t duration = i->duration;
         int pitch = i->midiPitch;
         int velocity = i->velocity;
         int channel = i->channel;

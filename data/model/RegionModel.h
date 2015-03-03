@@ -37,15 +37,15 @@ struct RegionRec
 {
 public:
     RegionRec() : frame(0), value(0.f), duration(0) { }
-    RegionRec(long _frame) : frame(_frame), value(0.0f), duration(0) { }
-    RegionRec(long _frame, float _value, int _duration, QString _label) :
+    RegionRec(sv_frame_t _frame) : frame(_frame), value(0.0f), duration(0) { }
+    RegionRec(sv_frame_t _frame, float _value, sv_frame_t _duration, QString _label) :
 	frame(_frame), value(_value), duration(_duration), label(_label) { }
 
     int getDimensions() const { return 3; }
 
-    long frame;
+    sv_frame_t frame;
     float value;
-    int duration;
+    sv_frame_t duration;
     QString label;
 
     QString getLabel() const { return label; }

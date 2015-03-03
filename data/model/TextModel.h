@@ -31,13 +31,13 @@
 struct TextPoint : public XmlExportable
 {
 public:
-    TextPoint(long _frame) : frame(_frame), height(0.0f) { }
-    TextPoint(long _frame, float _height, QString _label) : 
+    TextPoint(sv_frame_t _frame) : frame(_frame), height(0.0f) { }
+    TextPoint(sv_frame_t _frame, float _height, QString _label) : 
 	frame(_frame), height(_height), label(_label) { }
 
     int getDimensions() const { return 2; }
     
-    long frame;
+    sv_frame_t frame;
     float height;
     QString label;
 
@@ -155,7 +155,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 2: point.height = value.toDouble(); break;
+        case 2: point.height = float(value.toDouble()); break;
         case 3: point.label = value.toString(); break;
         }
 

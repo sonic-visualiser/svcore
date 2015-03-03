@@ -40,7 +40,7 @@ FFTFileCacheWriter::FFTFileCacheWriter(QString fileBase,
     m_factorSize(storageType == FFTCache::Compact ? 2 : 1),
     m_mfc(new MatrixFile
           (fileBase, MatrixFile::WriteOnly, 
-           storageType == FFTCache::Compact ? sizeof(uint16_t) : sizeof(float),
+           int((storageType == FFTCache::Compact) ? sizeof(uint16_t) : sizeof(float)),
            width, height * 2 + m_factorSize))
 {
 #ifdef DEBUG_FFT_FILE_CACHE_WRITER
@@ -175,7 +175,7 @@ FFTFileCacheWriter::setColumnAt(int x, float *real, float *imag)
     m_mfc->setColumnAt(x, m_writebuf);
 }
 
-int
+size_t
 FFTFileCacheWriter::getCacheSize(int width, int height,
                                  FFTCache::StorageType type)
 {

@@ -168,7 +168,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 2: point.value = value.toDouble(); break;
+        case 2: point.value = float(value.toDouble()); break;
         case 3: point.label = value.toString(); break;
         }
 

@@ -25,6 +25,8 @@
 #include <QString>
 #include <string>
 #include <iostream>
+#include <stdexcept>
+
 #include "base/Debug.h"
 
 typedef unsigned char MIDIByte;
@@ -118,16 +120,22 @@ class MIDIEvent
 {
 public:
     MIDIEvent(unsigned long deltaTime,
-              MIDIByte eventCode,
-              MIDIByte data1 = 0,
-              MIDIByte data2 = 0) :
+              int eventCode,
+              int data1 = 0,
+              int data2 = 0) :
 	m_deltaTime(deltaTime),
 	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(data1),
-	m_data2(data2),
 	m_metaEventCode(0)
-    { }
+    {
+        if (eventCode < 0 || eventCode > 0xff ||
+            data1 < 0 || data1 > 0xff ||
+            data2 < 0 || data2 > 0xff) {
+            throw std::domain_error("not all args within byte range");
+        }
+        m_eventCode = MIDIByte(eventCode);
+        m_data1 = MIDIByte(data1);
+        m_data2 = MIDIByte(data2);
+    }
 
     MIDIEvent(unsigned long deltaTime,
               MIDIByte eventCode,

@@ -82,19 +82,19 @@ class InsufficientDiscSpace : virtual public std::exception
 {
 public:
     InsufficientDiscSpace(QString directory,
-                          int required, int available) throw();
+                          size_t required, size_t available) throw();
     InsufficientDiscSpace(QString directory) throw();
     virtual ~InsufficientDiscSpace() throw() { }
     virtual const char *what() const throw();
 
     QString getDirectory() const { return m_directory; }
-    int getRequired() const { return m_required; }
-    int getAvailable() const { return m_available; }
+    size_t getRequired() const { return m_required; }
+    size_t getAvailable() const { return m_available; }
 
 protected:
     QString m_directory;
-    int m_required;
-    int m_available;
+    size_t m_required;
+    size_t m_available;
 };
 
 class AllocationFailed : virtual public std::exception

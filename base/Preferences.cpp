@@ -59,7 +59,7 @@ Preferences::Preferences() :
         (settings.value("spectrogram-y-smoothing", int(m_spectrogramSmoothing)).toInt());
     m_spectrogramXSmoothing = SpectrogramXSmoothing
         (settings.value("spectrogram-x-smoothing", int(m_spectrogramXSmoothing)).toInt());
-    m_tuningFrequency = settings.value("tuning-frequency", 440.f).toDouble();
+    m_tuningFrequency = settings.value("tuning-frequency", 440.).toDouble();
     m_propertyBoxLayout = PropertyBoxLayout
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
     m_windowType = WindowType
@@ -467,7 +467,7 @@ Preferences::setSpectrogramXSmoothing(SpectrogramXSmoothing smoothing)
 }
 
 void
-Preferences::setTuningFrequency(float freq)
+Preferences::setTuningFrequency(double freq)
 {
     if (m_tuningFrequency != freq) {
         m_tuningFrequency = freq;

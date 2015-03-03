@@ -126,7 +126,7 @@ protected:
 
     QString                m_path;
     std::ifstream         *m_midiFile;
-    int                    m_fileSize;
+    size_t                 m_fileSize;
     QString                m_error;
     int                    m_mainModelSampleRate;
 

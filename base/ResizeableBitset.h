@@ -62,11 +62,11 @@ public:
     }
     
     void set(size_t column) {
-        ((*m_bits)[column >> 3]) |=  (uint8_t(1) << (column & 0x07));
+        ((*m_bits)[column >> 3]) |= uint8_t((1u << (column & 0x07)) & 0xff);
     }
 
     void reset(size_t column) {
-        ((*m_bits)[column >> 3]) &= ~(uint8_t(1) << (column & 0x07));
+        ((*m_bits)[column >> 3]) &= uint8_t((~(1u << (column & 0x07))) & 0xff);
     }
 
     void copy(size_t source, size_t dest) {
