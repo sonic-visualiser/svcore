@@ -99,7 +99,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
-            (id, inputModel->getSampleRate());
+            (id, float(inputModel->getSampleRate()));
 
         plugin = vp;
 

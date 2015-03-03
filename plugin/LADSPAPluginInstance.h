@@ -27,6 +27,7 @@
 
 #include "api/ladspa.h"
 #include "RealTimePluginInstance.h"
+#include "base/BaseTypes.h"
 
 // LADSPA plugin instance.  LADSPA is a variable block size API, but
 // for one reason and another it's more convenient to use a fixed
@@ -52,11 +53,11 @@ public:
 
     virtual void run(const Vamp::RealTime &rt, size_t count = 0);
 
-    virtual unsigned int getParameterCount() const;
-    virtual void setParameterValue(unsigned int parameter, float value);
-    virtual float getParameterValue(unsigned int parameter) const;
-    virtual float getParameterDefault(unsigned int parameter) const;
-    virtual int getParameterDisplayHint(unsigned int parameter) const;
+    virtual int getParameterCount() const;
+    virtual void setParameterValue(int parameter, float value);
+    virtual float getParameterValue(int parameter) const;
+    virtual float getParameterDefault(int parameter) const;
+    virtual int getParameterDisplayHint(int parameter) const;
     
     virtual ParameterList getParameterDescriptors() const;
     virtual float getParameter(std::string) const;
@@ -112,8 +113,8 @@ protected:
     size_t                     m_instanceCount;
     const LADSPA_Descriptor   *m_descriptor;
 
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsIn;
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsOut;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsIn;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsOut;
 
     std::vector<int>          m_audioPortsIn;
     std::vector<int>          m_audioPortsOut;

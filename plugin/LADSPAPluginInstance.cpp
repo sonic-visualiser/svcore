@@ -156,12 +156,12 @@ LADSPAPluginInstance::getParameterDescriptors() const
             if (defaults) {
                 if (defaults->count > 0) {
                     std::map<int, std::string> values;
-                    size_t v = 0;
+                    int v = 0;
                     for (size_t i = 0; i < defaults->count; ++i) {
-                        v = size_t(lrintf(fabsf(defaults->items[i].value)));
+                        v = int(lrintf(fabsf(defaults->items[i].value)));
                         values[v] = defaults->items[i].label;
                     }
-                    for (size_t i = 0; i <= v; ++i) {
+                    for (int i = 0; i <= v; ++i) {
                         pd.valueNames.push_back(values[i]);
                     }
                     haveLabels = true;
@@ -227,7 +227,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 
     // Discover ports numbers and identities
     //
-    for (unsigned long i = 0; i < m_descriptor->PortCount; ++i) {
+    for (int i = 0; i < (int)m_descriptor->PortCount; ++i) {
 
         if (LADSPA_IS_PORT_AUDIO(m_descriptor->PortDescriptors[i])) {
 
@@ -464,16 +464,16 @@ LADSPAPluginInstance::connectPorts()
     }
 }
 
-unsigned int
+int
 LADSPAPluginInstance::getParameterCount() const
 {
-    return m_controlPortsIn.size();
+    return (int)m_controlPortsIn.size();
 }
 
 void
-LADSPAPluginInstance::setParameterValue(unsigned int parameter, float value)
+LADSPAPluginInstance::setParameterValue(int parameter, float value)
 {
-    if (parameter >= m_controlPortsIn.size()) return;
+    if (!in_range_for(m_controlPortsIn, parameter)) return;
 
     unsigned int portNumber = m_controlPortsIn[parameter].first;
 
@@ -493,21 +493,21 @@ LADSPAPluginInstance::setParameterValue(unsigned int parameter, float value)
 float
 LADSPAPluginInstance::getControlOutputValue(size_t output) const
 {
-    if (output > m_controlPortsOut.size()) return 0.0;
+    if (!in_range_for(m_controlPortsOut, output)) return 0.0;
     return (*m_controlPortsOut[output].second);
 }
 
 float
-LADSPAPluginInstance::getParameterValue(unsigned int parameter) const
+LADSPAPluginInstance::getParameterValue(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
     return (*m_controlPortsIn[parameter].second);
 }
 
 float
-LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
+LADSPAPluginInstance::getParameterDefault(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -518,9 +518,9 @@ LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
 }
 
 int
-LADSPAPluginInstance::getParameterDisplayHint(unsigned int parameter) const
+LADSPAPluginInstance::getParameterDisplayHint(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {

@@ -1062,7 +1062,7 @@ DSSIPluginInstance::run(const Vamp::RealTime &blockTime, size_t count)
 	    }
 	}
 
-	ev->time.tick = frameOffset;
+	ev->time.tick = (snd_seq_tick_time_t)frameOffset;
 	m_eventBuffer.skip(1);
 
 	if (ev->type == SND_SEQ_EVENT_CONTROLLER) {
@@ -1184,8 +1184,8 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 #endif
 
     size_t index = 0;
-    int *counts = (int *)
-	alloca(m_groupLocalEventBufferCount * sizeof(int));
+    unsigned long *counts = (unsigned long *)
+	alloca(m_groupLocalEventBufferCount * sizeof(unsigned long));
     LADSPA_Handle *instances = (LADSPA_Handle *)
 	alloca(m_groupLocalEventBufferCount * sizeof(LADSPA_Handle));
 
@@ -1220,7 +1220,9 @@ DSSIPluginInstance::runGrouped(const Vamp::RealTime &blockTime)
 
 	    int frameOffset = 0;
 	    if (evTime > blockTime) {
-		frameOffset = Vamp::RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+		frameOffset = (int)
+                    Vamp::RealTime::realTime2Frame(evTime - blockTime,
+                                                   (unsigned)m_sampleRate);
 	    }
 
 #ifdef DEBUG_DSSI_PROCESS
@@ -1270,7 +1272,7 @@ DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
 void
 DSSIPluginInstance::midiSend(LADSPA_Handle /* instance */,
 			     snd_seq_event_t * /* events */,
-			     unsignd long /* eventCount */)
+			     unsigned long /* eventCount */)
 {
     // This is likely to be called from an RT context
 

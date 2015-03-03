@@ -751,8 +751,10 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
         RealTime startrt = transform.getStartTime();
         RealTime durationrt = transform.getDuration();
 
-        int start = RealTime::realTime2Frame(startrt, sampleRate) / stepSize;
-        int duration = RealTime::realTime2Frame(durationrt, sampleRate) / stepSize;
+        sv_frame_t start = RealTime::realTime2Frame
+            (startrt, int(lrintf(sampleRate))) / stepSize;
+        sv_frame_t duration = RealTime::realTime2Frame
+            (durationrt, int(lrintf(sampleRate))) / stepSize;
 
         if (start != 0) {
             stream << "\n        tl:start \"" << start << "\"^^xsd:int ;";
