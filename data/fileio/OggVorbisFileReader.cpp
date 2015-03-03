@@ -173,11 +173,11 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
 
     if (!reader->m_commentsRead) {
         const FishSoundComment *comment;
-        comment = fish_sound_comment_first_byname(fs, "TITLE");
+        comment = fish_sound_comment_first_byname(fs, (char *)"TITLE");
         if (comment && comment->value) {
             reader->m_title = QString::fromUtf8(comment->value);
         }
-        comment = fish_sound_comment_first_byname(fs, "ARTIST");
+        comment = fish_sound_comment_first_byname(fs, (char *)"ARTIST");
         if (comment && comment->value) {
             reader->m_maker = QString::fromUtf8(comment->value);
         }
