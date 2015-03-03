@@ -93,6 +93,8 @@ public:
     };
     TimeToTextMode getTimeToTextMode() const { return m_timeToTextMode; }
 
+    bool getShowHMS() const { return m_showHMS; }
+    
     int getOctaveOfMiddleC() const {
         // weed out unsupported octaves
         return getOctaveOfMiddleCInSystem(getSystemWithMiddleCInOctave(m_octave));
@@ -119,6 +121,7 @@ public slots:
     void setNormaliseAudio(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
+    void setShowHMS(bool show);
     void setOctaveOfMiddleC(int oct);
     void setViewFontSize(int size);
     void setShowSplash(bool);
@@ -156,6 +159,7 @@ private:
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
     TimeToTextMode m_timeToTextMode;
+    bool m_showHMS;
     int m_octave;
     bool m_showSplash;
 };
