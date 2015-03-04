@@ -733,7 +733,8 @@ WaveFileModel::RangeCacheFillThread::run()
                         means[rangeIndex] += fabsf(sample);
                     }
                 }
-                
+
+                //!!! this looks like a ludicrous way to do synchronisation
                 QMutexLocker locker(&m_model.m_mutex);
 
                 for (int ct = 0; ct < 2; ++ct) {
