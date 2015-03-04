@@ -79,8 +79,8 @@ protected:
     OGGZ *m_oggz;
     FishSound *m_fishSound;
     ProgressReporter *m_reporter;
-    int m_fileSize;
-    int m_bytesRead;
+    sv_frame_t m_fileSize;
+    sv_frame_t m_bytesRead;
     bool m_commentsRead;
     bool m_cancelled;
     int m_completion;
