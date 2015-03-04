@@ -37,15 +37,15 @@ public:
 
     virtual void setAudioPlaySource(AudioPlaySource *source) = 0;
 
-    virtual int alignPlaybackFrameToReference(int) const = 0;
-    virtual int alignReferenceToPlaybackFrame(int) const = 0;
+    virtual sv_frame_t alignPlaybackFrameToReference(sv_frame_t) const = 0;
+    virtual sv_frame_t alignReferenceToPlaybackFrame(sv_frame_t) const = 0;
 
     virtual const MultiSelection &getSelection() const = 0;
     virtual const MultiSelection::SelectionList &getSelections() const = 0;
-    virtual int constrainFrameToSelection(int frame) const = 0;
+    virtual sv_frame_t constrainFrameToSelection(sv_frame_t frame) const = 0;
 
     virtual Selection getContainingSelection
-    (int frame, bool defaultToFollowing) const = 0;
+    (sv_frame_t frame, bool defaultToFollowing) const = 0;
 
     virtual bool getPlayLoopMode() const = 0;
     virtual bool getPlaySelectionMode() const = 0;
