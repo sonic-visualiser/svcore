@@ -37,7 +37,7 @@
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
-WaveFileModel::WaveFileModel(FileSource source, int targetRate) :
+WaveFileModel::WaveFileModel(FileSource source, sv_samplerate_t targetRate) :
     m_source(source),
     m_path(source.getLocation()),
     m_reader(0),
@@ -145,18 +145,18 @@ WaveFileModel::getChannelCount() const
     return m_reader->getChannelCount();
 }
 
-int
+sv_samplerate_t
 WaveFileModel::getSampleRate() const 
 {
     if (!m_reader) return 0;
     return m_reader->getSampleRate();
 }
 
-int
+sv_samplerate_t
 WaveFileModel::getNativeRate() const 
 {
     if (!m_reader) return 0;
-    int rate = m_reader->getNativeRate();
+    sv_samplerate_t rate = m_reader->getNativeRate();
     if (rate == 0) rate = getSampleRate();
     return rate;
 }

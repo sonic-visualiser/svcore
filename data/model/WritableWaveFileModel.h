@@ -26,7 +26,7 @@ class WritableWaveFileModel : public RangeSummarisableTimeValueModel
     Q_OBJECT
 
 public:
-    WritableWaveFileModel(int sampleRate, int channels, QString path = "");
+    WritableWaveFileModel(sv_samplerate_t sampleRate, int channels, QString path = "");
     ~WritableWaveFileModel();
 
     /**
@@ -50,7 +50,7 @@ public:
 
     sv_frame_t getFrameCount() const;
     int getChannelCount() const { return m_channels; }
-    int getSampleRate() const { return m_sampleRate; }
+    sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
     virtual Model *clone() const;
 
@@ -89,7 +89,7 @@ protected:
     WaveFileModel *m_model;
     WavFileWriter *m_writer;
     WavFileReader *m_reader;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_channels;
     sv_frame_t m_frameCount;
     sv_frame_t m_startFrame;

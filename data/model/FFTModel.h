@@ -126,7 +126,7 @@ public:
     virtual sv_frame_t getEndFrame() const {
         return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
-    virtual int getSampleRate() const;
+    virtual sv_samplerate_t getSampleRate() const;
     virtual int getResolution() const {
         return m_server->getWindowIncrement() << m_xshift;
     }
@@ -202,8 +202,8 @@ private:
                              int, WindowType, int, int, int,
                              bool, StorageAdviser::Criteria, int);
 
-    int getPeakPickWindowSize(PeakPickType type, int sampleRate,
-                                 int bin, float &percentile) const;
+    int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
+                              int bin, float &percentile) const;
 
     int getYRatio() {
         int ys = m_yshift;

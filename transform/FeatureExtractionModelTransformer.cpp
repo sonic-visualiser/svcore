@@ -100,7 +100,7 @@ FeatureExtractionModelTransformer::initialise()
         return false;
     }
 
-    m_plugin = factory->instantiatePlugin(pluginId, float(input->getSampleRate()));
+    m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
 	return false;
@@ -249,7 +249,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         haveExtents = true;
     }
 
-    int modelRate = input->getSampleRate();
+    sv_samplerate_t modelRate = input->getSampleRate();
     int modelResolution = 1;
 
     if (m_descriptors[n]->sampleType != 
@@ -264,8 +264,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
 	if (m_descriptors[n]->sampleRate != 0.0) {
-	    modelResolution = int(round(float(modelRate) /
-                                        m_descriptors[n]->sampleRate));
+	    modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
 	}
 	break;
 
@@ -282,8 +281,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = int(round(float(modelRate) /
-                                        m_descriptors[n]->sampleRate));
+            modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
         }
 	break;
     }
@@ -574,7 +572,7 @@ FeatureExtractionModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    int sampleRate = input->getSampleRate();
+    sv_samplerate_t sampleRate = input->getSampleRate();
 
     int channelCount = input->getChannelCount();
     if ((int)m_plugin->getMaxChannelCount() < channelCount) {
@@ -617,16 +615,16 @@ FeatureExtractionModelTransformer::run()
         }
     }
 
-    long startFrame = m_input.getModel()->getStartFrame();
-    long   endFrame = m_input.getModel()->getEndFrame();
+    sv_frame_t startFrame = m_input.getModel()->getStartFrame();
+    sv_frame_t endFrame = m_input.getModel()->getEndFrame();
 
     RealTime contextStartRT = primaryTransform.getStartTime();
     RealTime contextDurationRT = primaryTransform.getDuration();
 
-    long contextStart =
+    sv_frame_t contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
 
-    long contextDuration =
+    sv_frame_t contextDuration =
         RealTime::realTime2Frame(contextDurationRT, sampleRate);
 
     if (contextStart == 0 || contextStart < startFrame) {
@@ -705,7 +703,7 @@ FeatureExtractionModelTransformer::run()
         if (m_abandoned) break;
 
 	Vamp::Plugin::FeatureSet features = m_plugin->process
-	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
+	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
 
         if (m_abandoned) break;
 
@@ -821,7 +819,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
                                               sv_frame_t blockFrame,
                                               const Vamp::Plugin::Feature &feature)
 {
-    int inputRate = m_input.getModel()->getSampleRate();
+    sv_samplerate_t inputRate = m_input.getModel()->getSampleRate();
 
 //    cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
 //              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
@@ -841,7 +839,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 		<< endl;
 	    return;
 	} else {
-	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp, inputRate);
+	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
     } else if (m_descriptors[n]->sampleType ==
@@ -927,7 +925,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
         sv_frame_t duration = 1;
         if (feature.hasDuration) {
-            duration = Vamp::RealTime::realTime2Frame(feature.duration, inputRate);
+            duration = RealTime::realTime2Frame(feature.duration, inputRate);
         } else {
             if (in_range_for(feature.values, index)) {
                 duration = lrintf(feature.values[index++]);

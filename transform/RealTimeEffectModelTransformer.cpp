@@ -137,7 +137,7 @@ RealTimeEffectModelTransformer::run()
 
     if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;
 
-    int sampleRate = input->getSampleRate();
+    sv_samplerate_t sampleRate = input->getSampleRate();
     int channelCount = input->getChannelCount();
     if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
@@ -235,7 +235,7 @@ RealTimeEffectModelTransformer::run()
         }
 */
 
-        m_plugin->run(Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
+        m_plugin->run(RealTime::frame2RealTime(blockFrame, sampleRate));
 
         if (stvm) {
 

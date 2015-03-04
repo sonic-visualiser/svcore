@@ -39,7 +39,7 @@ public:
     virtual bool isOK() const;
     virtual sv_frame_t getStartFrame() const;
     virtual sv_frame_t getEndFrame() const;
-    virtual int getSampleRate() const;
+    virtual sv_samplerate_t getSampleRate() const;
     virtual Model *clone() const;
     virtual bool isReady(int *completion = 0) const;
     virtual const ZoomConstraint *getZoomConstraint() const;

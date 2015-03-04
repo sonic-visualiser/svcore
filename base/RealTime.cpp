@@ -456,24 +456,36 @@ RealTime::operator/(const RealTime &r) const
     else return lTotal/rTotal;
 }
 
+static RealTime
+frame2RealTime_i(sv_frame_t frame, sv_frame_t iSampleRate)
+{
+    if (frame < 0) return -frame2RealTime_i(-frame, iSampleRate);
+
+    RealTime rt;
+    sv_frame_t sec = frame / iSampleRate;
+    rt.sec = int(sec);
+    frame -= sec * iSampleRate;
+    rt.nsec = (int)(((double(frame) * 1000000.0) / double(iSampleRate)) * 1000.0);
+    return rt;
+}
+
 sv_frame_t
-RealTime::realTime2Frame(const RealTime &time, int sampleRate)
+RealTime::realTime2Frame(const RealTime &time, sv_samplerate_t sampleRate)
 {
     if (time < zeroTime) return -realTime2Frame(-time, sampleRate);
     double s = time.sec + double(time.nsec + 1) / 1000000000.0;
-    return sv_frame_t(s * double(sampleRate));
+    return sv_frame_t(s * sampleRate);
 }
 
 RealTime
-RealTime::frame2RealTime(sv_frame_t frame, int sampleRate)
+RealTime::frame2RealTime(sv_frame_t frame, sv_samplerate_t sampleRate)
 {
-    if (frame < 0) return -frame2RealTime(-frame, sampleRate);
+    if (sampleRate == double(int(sampleRate))) {
+        return frame2RealTime_i(frame, int(sampleRate));
+    }
 
-    RealTime rt;
-    rt.sec = int(frame / sv_frame_t(sampleRate));
-    frame -= rt.sec * sv_frame_t(sampleRate);
-    rt.nsec = (int)(((double(frame) * 1000000.0) / long(sampleRate)) * 1000.0);
-    return rt;
+    double sec = double(frame) / sampleRate;
+    return fromSeconds(sec);
 }
 
 const RealTime RealTime::zeroTime(0,0);

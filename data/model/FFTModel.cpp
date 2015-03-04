@@ -159,7 +159,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                                            fillFromColumn);
 }
 
-int
+sv_samplerate_t
 FFTModel::getSampleRate() const
 {
     return isOK() ? m_server->getModel()->getSampleRate() : 0;
@@ -198,7 +198,7 @@ FFTModel::getColumn(int x) const
 QString
 FFTModel::getBinName(int n) const
 {
-    int sr = getSampleRate();
+    sv_samplerate_t sr = getSampleRate();
     if (!sr) return "";
     QString name = tr("%1 Hz").arg((n * sr) / ((getHeight()-1) * 2));
     return name;
@@ -209,10 +209,10 @@ FFTModel::estimateStableFrequency(int x, int y, float &frequency)
 {
     if (!isOK()) return false;
 
-    int sampleRate = m_server->getModel()->getSampleRate();
+    sv_samplerate_t sampleRate = m_server->getModel()->getSampleRate();
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    frequency = float((double(y) * sampleRate) / fftSize);
+    frequency = float((y * sampleRate) / fftSize);
 
     if (x+1 >= getWidth()) return false;
 
@@ -291,7 +291,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
     // exceed the median.  For pitch adaptivity, we adjust the window
     // size to a roughly constant pitch range (about four tones).
 
-    int sampleRate = getSampleRate();
+    sv_samplerate_t sampleRate = getSampleRate();
 
     std::deque<float> window;
     std::vector<int> inrange;
@@ -373,7 +373,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
 }
 
 int
-FFTModel::getPeakPickWindowSize(PeakPickType type, int sampleRate,
+FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                                 int bin, float &percentile) const
 {
     percentile = 0.5;
@@ -381,7 +381,7 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, int sampleRate,
     if (bin == 0) return 3;
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    double binfreq = (double(sampleRate) * bin) / fftSize;
+    double binfreq = (sampleRate * bin) / fftSize;
     double hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
 
     int hibin = int(lrint((hifreq * fftSize) / sampleRate));
@@ -403,7 +403,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     if (!isOK()) return peaks;
     PeakLocationSet locations = getPeaks(type, x, ymin, ymax);
 
-    int sampleRate = getSampleRate();
+    sv_samplerate_t sampleRate = getSampleRate();
     int fftSize = m_server->getFFTSize() >> m_yshift;
     int incr = getResolution();
 

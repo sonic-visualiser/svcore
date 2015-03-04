@@ -45,7 +45,7 @@ public:
             .arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -76,7 +76,7 @@ class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>,
     Q_OBJECT
     
 public:
-    SparseOneDimensionalModel(int sampleRate, int resolution,
+    SparseOneDimensionalModel(sv_samplerate_t sampleRate, int resolution,
 			      bool notifyOnAdd = true) :
 	SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
     {
@@ -197,7 +197,7 @@ public:
 
             notes.push_back
                 (NoteData(pli->frame,
-                          getSampleRate() / 6, // arbitrary short duration
+                          sv_frame_t(getSampleRate() / 6), // arbitrary short duration
                           64,   // default pitch
                           100)); // default velocity
         }

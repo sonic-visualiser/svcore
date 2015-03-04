@@ -90,7 +90,7 @@ AlignmentModel::getEndFrame() const
     return std::max(a, b);
 }
 
-int
+sv_samplerate_t
 AlignmentModel::getSampleRate() const
 {
     return m_reference->getSampleRate();

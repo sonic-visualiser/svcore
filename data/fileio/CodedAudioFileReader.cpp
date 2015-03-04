@@ -28,7 +28,7 @@
 #include <QMutexLocker>
 
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
-                                           int targetRate,
+                                           sv_samplerate_t targetRate,
                                            bool normalised) :
     m_cacheMode(cacheMode),
     m_initialised(false),
@@ -113,7 +113,7 @@ CodedAudioFileReader::initialiseDecodeCache()
         m_resampler = new Resampler(Resampler::FastestTolerable,
                                     m_channelCount,
                                     m_cacheWriteBufferSize);
-        double ratio = double(m_sampleRate) / double(m_fileRate);
+        double ratio = m_sampleRate / m_fileRate;
         m_resampleBuffer = new float
             [lrint(ceil(double(m_cacheWriteBufferSize) * m_channelCount * ratio + 1))];
     }
@@ -129,9 +129,15 @@ CodedAudioFileReader::initialiseDecodeCache()
                                            .arg((intptr_t)this));
 
             SF_INFO fileInfo;
-            fileInfo.samplerate = m_sampleRate;
+            int fileRate = int(round(m_sampleRate));
+            if (m_sampleRate != sv_samplerate_t(fileRate)) {
+                cerr << "CodedAudioFileReader: WARNING: Non-integer sample rate "
+                     << m_sampleRate << " presented for writing, rounding to " << fileRate
+                     << endl;
+            }
+            fileInfo.samplerate = fileRate;
             fileInfo.channels = m_channelCount;
-
+            
             // No point in writing 24-bit or float; generally this
             // class is used for decoding files that have come from a
             // 16 bit source or that decode to only 16 bits anyway.
@@ -297,12 +303,12 @@ CodedAudioFileReader::pushBuffer(float *buffer, sv_frame_t sz, bool final)
 {
     m_fileFrameCount += sz;
 
-    float ratio = 1.f;
+    double ratio = 1.0;
     if (m_resampler && m_fileRate != 0) {
-        ratio = float(m_sampleRate) / float(m_fileRate);
+        ratio = m_sampleRate / m_fileRate;
     }
         
-    if (ratio != 1.f) {
+    if (ratio != 1.0) {
         pushBufferResampling(buffer, sz, ratio, final);
     } else {
         pushBufferNonResampling(buffer, sz);

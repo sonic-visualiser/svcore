@@ -43,14 +43,14 @@ class SparseModel : public Model,
                     public TabularModel
 {
 public:
-    SparseModel(int sampleRate, int resolution,
+    SparseModel(sv_samplerate_t sampleRate, int resolution,
 		bool notifyOnAdd = true);
     virtual ~SparseModel() { }
     
     virtual bool isOK() const { return true; }
     virtual sv_frame_t getStartFrame() const;
     virtual sv_frame_t getEndFrame() const;
-    virtual int getSampleRate() const { return m_sampleRate; }
+    virtual sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
     virtual Model *clone() const;
 
@@ -366,7 +366,7 @@ public:
     }
             
 protected:
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_resolution;
     bool m_notifyOnAdd;
     sv_frame_t m_sinceLastNotifyMin;
@@ -460,7 +460,7 @@ protected:
 
 
 template <typename PointType>
-SparseModel<PointType>::SparseModel(int sampleRate,
+SparseModel<PointType>::SparseModel(sv_samplerate_t sampleRate,
                                     int resolution,
                                     bool notifyOnAdd) :
     m_sampleRate(sampleRate),

@@ -33,7 +33,7 @@ public:
         return m_source && m_source->isOK(); 
     }
 
-    virtual int getSampleRate() const {
+    virtual sv_samplerate_t getSampleRate() const {
         return m_source->getSampleRate();
     }
 

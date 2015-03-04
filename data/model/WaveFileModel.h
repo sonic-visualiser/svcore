@@ -34,7 +34,7 @@ class WaveFileModel : public RangeSummarisableTimeValueModel
     Q_OBJECT
 
 public:
-    WaveFileModel(FileSource source, int targetRate = 0);
+    WaveFileModel(FileSource source, sv_samplerate_t targetRate = 0);
     WaveFileModel(FileSource source, AudioFileReader *reader);
     ~WaveFileModel();
 
@@ -45,8 +45,8 @@ public:
 
     sv_frame_t getFrameCount() const;
     int getChannelCount() const;
-    int getSampleRate() const;
-    int getNativeRate() const;
+    sv_samplerate_t getSampleRate() const;
+    sv_samplerate_t getNativeRate() const;
 
     QString getTitle() const;
     QString getMaker() const;

@@ -29,7 +29,7 @@
 
 #include "system/System.h"
 
-EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(int sampleRate,
+EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
                                                                        int resolution,
                                                                        int yBinCount,
                                                                        CompressionType compression,
@@ -55,7 +55,7 @@ EditableDenseThreeDimensionalModel::isOK() const
     return true;
 }
 
-int
+sv_samplerate_t
 EditableDenseThreeDimensionalModel::getSampleRate() const
 {
     return m_sampleRate;

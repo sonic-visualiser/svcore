@@ -51,7 +51,7 @@ public:
 
     sv_frame_t getFrameCount() const;
     int getChannelCount() const;
-    int getSampleRate() const;
+    sv_samplerate_t getSampleRate() const;
 
     virtual Model *clone() const;
 

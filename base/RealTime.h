@@ -26,6 +26,8 @@
 #include <iostream>
 #include <string>
 
+#include <vamp-hostsdk/RealTime.h>
+
 struct timeval;
 
 /**
@@ -47,12 +49,16 @@ struct RealTime
     RealTime(const RealTime &r) :
 	sec(r.sec), nsec(r.nsec) { }
 
+    RealTime(const Vamp::RealTime &r) :
+	sec(r.sec), nsec(r.nsec) { }
+
     static RealTime fromSeconds(double sec);
     static RealTime fromMilliseconds(int msec);
     static RealTime fromTimeval(const struct timeval &);
     static RealTime fromXsdDuration(std::string xsdd);
 
     double toDouble() const;
+    Vamp::RealTime toVampRealTime() const { return Vamp::RealTime(sec, nsec); }
 
     RealTime &operator=(const RealTime &r) {
 	sec = r.sec; nsec = r.nsec; return *this;
@@ -150,12 +156,12 @@ struct RealTime
     /**
      * Convert a RealTime into a sample frame at the given sample rate.
      */
-    static sv_frame_t realTime2Frame(const RealTime &r, int sampleRate);
+    static sv_frame_t realTime2Frame(const RealTime &r, sv_samplerate_t sampleRate);
 
     /**
      * Convert a sample frame at the given sample rate into a RealTime.
      */
-    static RealTime frame2RealTime(sv_frame_t frame, int sampleRate);
+    static RealTime frame2RealTime(sv_frame_t frame, sv_samplerate_t sampleRate);
 
     static const RealTime zeroTime;
 };

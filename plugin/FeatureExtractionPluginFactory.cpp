@@ -299,7 +299,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
 
 Vamp::Plugin *
 FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
-						  float inputSampleRate)
+						  sv_samplerate_t inputSampleRate)
 {
     Profiler profiler("FeatureExtractionPluginFactory::instantiatePlugin");
 
@@ -357,7 +357,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
         goto done;
     }
 
-    plugin = new Vamp::PluginHostAdapter(descriptor, inputSampleRate);
+    plugin = new Vamp::PluginHostAdapter(descriptor, float(inputSampleRate));
 
     if (plugin) {
         m_handleMap[plugin] = libraryHandle;

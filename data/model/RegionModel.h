@@ -60,7 +60,7 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -94,7 +94,7 @@ class RegionModel : public IntervalModel<RegionRec>
     Q_OBJECT
     
 public:
-    RegionModel(int sampleRate, int resolution,
+    RegionModel(sv_samplerate_t sampleRate, int resolution,
                 bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0),
@@ -102,7 +102,7 @@ public:
     {
     }
 
-    RegionModel(int sampleRate, int resolution,
+    RegionModel(sv_samplerate_t sampleRate, int resolution,
                 float valueMinimum, float valueMaximum,
                 bool notifyOnAdd = true) :
 	IntervalModel<RegionRec>(sampleRate, resolution,
