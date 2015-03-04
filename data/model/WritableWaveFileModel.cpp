@@ -30,7 +30,7 @@
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
-WritableWaveFileModel::WritableWaveFileModel(int sampleRate,
+WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
 					     int channels,
 					     QString path) :
     m_model(0),

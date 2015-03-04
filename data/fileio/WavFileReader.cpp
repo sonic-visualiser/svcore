@@ -136,13 +136,13 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count,
         return;
     }
 
-    if ((long)start >= m_fileInfo.frames) {
+    if (start >= m_fileInfo.frames) {
 //        SVDEBUG << "WavFileReader::getInterleavedFrames: " << start
 //                  << " > " << m_fileInfo.frames << endl;
 	return;
     }
 
-    if (long(start + count) > m_fileInfo.frames) {
+    if (start + count > m_fileInfo.frames) {
 	count = m_fileInfo.frames - start;
     }
 

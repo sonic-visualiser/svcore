@@ -62,7 +62,7 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -98,7 +98,7 @@ class NoteModel : public IntervalModel<Note>, public NoteExportable
     Q_OBJECT
     
 public:
-    NoteModel(int sampleRate, int resolution,
+    NoteModel(sv_samplerate_t sampleRate, int resolution,
 	      bool notifyOnAdd = true) :
 	IntervalModel<Note>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
@@ -106,7 +106,7 @@ public:
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    NoteModel(int sampleRate, int resolution,
+    NoteModel(sv_samplerate_t sampleRate, int resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
 	IntervalModel<Note>(sampleRate, resolution,
@@ -234,7 +234,7 @@ public:
 
 	    sv_frame_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
-                duration = getSampleRate() / 20;
+                duration = sv_frame_t(getSampleRate() / 20);
             }
 
             int pitch = int(lrintf(pli->value));

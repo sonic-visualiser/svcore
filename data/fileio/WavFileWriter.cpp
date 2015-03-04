@@ -25,7 +25,7 @@
 #include <iostream>
 
 WavFileWriter::WavFileWriter(QString path,
-			     int sampleRate,
+			     sv_samplerate_t sampleRate,
                              int channels,
                              FileWriteMode mode) :
     m_path(path),
@@ -35,7 +35,14 @@ WavFileWriter::WavFileWriter(QString path,
     m_file(0)
 {
     SF_INFO fileInfo;
-    fileInfo.samplerate = m_sampleRate;
+
+    int fileRate = int(round(m_sampleRate));
+    if (m_sampleRate != sv_samplerate_t(fileRate)) {
+        cerr << "WavFileWriter: WARNING: Non-integer sample rate "
+             << m_sampleRate << " presented, rounding to " << fileRate
+             << endl;
+    }
+    fileInfo.samplerate = fileRate;
     fileInfo.channels = m_channels;
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 

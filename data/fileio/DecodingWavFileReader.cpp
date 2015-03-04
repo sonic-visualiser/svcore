@@ -24,7 +24,7 @@
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
                                              ResampleMode resampleMode,
                                              CacheMode mode,
-                                             int targetRate,
+                                             sv_samplerate_t targetRate,
                                              bool normalised,
                                              ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),

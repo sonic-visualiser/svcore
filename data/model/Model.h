@@ -61,13 +61,13 @@ public:
     /**
      * Return the frame rate in frames per second.
      */
-    virtual int getSampleRate() const = 0;
+    virtual sv_samplerate_t getSampleRate() const = 0;
 
     /**
      * Return the frame rate of the underlying material, if the model
      * itself has already been resampled.
      */
-    virtual int getNativeRate() const { return getSampleRate(); }
+    virtual sv_samplerate_t getNativeRate() const { return getSampleRate(); }
 
     /**
      * Return the "work title" of the model, if known.

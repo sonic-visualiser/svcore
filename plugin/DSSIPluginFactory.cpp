@@ -113,9 +113,9 @@ RealTimePluginInstance *
 DSSIPluginFactory::instantiatePlugin(QString identifier,
 				     int instrument,
 				     int position,
-				     unsigned int sampleRate,
-				     unsigned int blockSize,
-				     unsigned int channels)
+				     sv_samplerate_t sampleRate,
+				     int blockSize,
+				     int channels)
 {
     Profiler profiler("DSSIPluginFactory::instantiatePlugin");
 

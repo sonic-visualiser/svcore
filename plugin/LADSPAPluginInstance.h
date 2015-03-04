@@ -51,7 +51,7 @@ public:
     virtual int getPluginVersion() const;
     virtual std::string getCopyright() const;
 
-    virtual void run(const Vamp::RealTime &rt, size_t count = 0);
+    virtual void run(const RealTime &rt, int count = 0);
 
     virtual int getParameterCount() const;
     virtual void setParameterValue(int parameter, float value);
@@ -63,22 +63,22 @@ public:
     virtual float getParameter(std::string) const;
     virtual void setParameter(std::string, float);
 
-    virtual size_t getBufferSize() const { return m_blockSize; }
-    virtual size_t getAudioInputCount() const { return m_instanceCount * m_audioPortsIn.size(); }
-    virtual size_t getAudioOutputCount() const { return m_instanceCount * m_audioPortsOut.size(); }
+    virtual int getBufferSize() const { return m_blockSize; }
+    virtual int getAudioInputCount() const { return int(m_instanceCount * m_audioPortsIn.size()); }
+    virtual int getAudioOutputCount() const { return int(m_instanceCount * m_audioPortsOut.size()); }
     virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
     virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
 
-    virtual size_t getControlOutputCount() const { return m_controlPortsOut.size(); }
-    virtual float getControlOutputValue(size_t n) const;
+    virtual int getControlOutputCount() const { return int(m_controlPortsOut.size()); }
+    virtual float getControlOutputValue(int n) const;
 
     virtual bool isBypassed() const { return m_bypassed; }
     virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
 
-    virtual size_t getLatency();
+    virtual sv_frame_t getLatency();
 
     virtual void silence();
-    virtual void setIdealChannelCount(size_t channels); // may re-instantiate
+    virtual void setIdealChannelCount(int channels); // may re-instantiate
 
     virtual std::string getType() const { return "LADSPA Real-Time Plugin"; }
 
@@ -92,13 +92,13 @@ protected:
 			 int client,
 			 QString identifier,
                          int position,
-			 unsigned long sampleRate,
-			 size_t blockSize,
+			 sv_samplerate_t sampleRate,
+			 int blockSize,
 			 int idealChannelCount,
                          const LADSPA_Descriptor* descriptor);
 
     void init(int idealChannelCount = 0);
-    void instantiate(unsigned long sampleRate);
+    void instantiate(sv_samplerate_t sampleRate);
     void cleanup();
     void activate();
     void deactivate();
@@ -110,7 +110,7 @@ protected:
     int                        m_client;
     int                        m_position;
     std::vector<LADSPA_Handle> m_instanceHandles;
-    size_t                     m_instanceCount;
+    int                        m_instanceCount;
     const LADSPA_Descriptor   *m_descriptor;
 
     std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsIn;
@@ -119,11 +119,11 @@ protected:
     std::vector<int>          m_audioPortsIn;
     std::vector<int>          m_audioPortsOut;
 
-    size_t                    m_blockSize;
+    int                       m_blockSize;
     sample_t                **m_inputBuffers;
     sample_t                **m_outputBuffers;
     bool                      m_ownBuffers;
-    size_t                    m_sampleRate;
+    sv_samplerate_t           m_sampleRate;
     float                    *m_latencyPort;
     bool                      m_run;
     

@@ -41,7 +41,7 @@ public:
     virtual void getInterleavedFrames(sv_frame_t start, sv_frame_t count,
 				      SampleBlock &frames) const;
 
-    virtual int getNativeRate() const { return m_fileRate; }
+    virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
 
     virtual QString getLocalFilename() const { return m_cacheFileName; }
     
@@ -53,7 +53,7 @@ signals:
 
 protected:
     CodedAudioFileReader(CacheMode cacheMode, 
-                         int targetRate,
+                         sv_samplerate_t targetRate,
                          bool normalised);
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
@@ -83,7 +83,7 @@ protected:
     mutable QReadWriteLock m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;
-    int m_fileRate;
+    sv_samplerate_t m_fileRate;
 
     QString m_cacheFileName;
     SNDFILE *m_cacheFileWritePtr;

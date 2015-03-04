@@ -63,7 +63,7 @@ private slots:
     {
         QFETCH(QString, audiofile);
 
-        int readRate = 48000;
+        sv_samplerate_t readRate = 48000;
 
 	AudioFileReader *reader =
 	    AudioFileReaderFactory::createReader
@@ -72,7 +72,7 @@ private slots:
         QStringList fileAndExt = audiofile.split(".");
         QStringList bits = fileAndExt[0].split("-");
         QString extension = fileAndExt[1];
-        int nominalRate = bits[0].toInt();
+        sv_samplerate_t nominalRate = bits[0].toInt();
         int nominalChannels = bits[1].toInt();
         int nominalDepth = 16;
         if (bits.length() > 2) nominalDepth = bits[2].toInt();
@@ -86,14 +86,14 @@ private slots:
 	}
 
         QCOMPARE((int)reader->getChannelCount(), nominalChannels);
-        QCOMPARE((int)reader->getNativeRate(), nominalRate);
-        QCOMPARE((int)reader->getSampleRate(), readRate);
+        QCOMPARE(reader->getNativeRate(), nominalRate);
+        QCOMPARE(reader->getSampleRate(), readRate);
 
 	int channels = reader->getChannelCount();
 	AudioTestData tdata(readRate, channels);
 	
 	float *reference = tdata.getInterleavedData();
-        int refFrames = tdata.getFrameCount();
+        sv_frame_t refFrames = tdata.getFrameCount();
 	
 	vector<float> test;
 	
@@ -103,7 +103,7 @@ private slots:
 	// expected number back (if this is not mp3/aac) or (b) take
 	// into account silence at beginning and end (if it is).
 	reader->getInterleavedFrames(0, refFrames + 5000, test);
-	int read = test.size() / channels;
+	sv_frame_t read = test.size() / channels;
 
         if (extension == "mp3" || extension == "aac" || extension == "m4a") {
             // mp3s and aacs can have silence at start and end
@@ -116,8 +116,8 @@ private slots:
         // or resampler quality here, just whether the results are
         // plainly wrong (e.g. at wrong samplerate or with an offset)
 
-	float limit = 0.01;
-        float edgeLimit = limit * 10; // in first or final edgeSize frames
+	double limit = 0.01;
+        double edgeLimit = limit * 10; // in first or final edgeSize frames
         int edgeSize = 100; 
 
         if (nominalDepth < 16) {
@@ -130,23 +130,23 @@ private slots:
         }
 
         // And we ignore completely the last few frames when upsampling
-        int discard = 1 + readRate / nominalRate;
+        int discard = 1 + int(round(readRate / nominalRate));
 
         int offset = 0;
 
         if (extension == "aac" || extension == "m4a") {
             // our m4a file appears to have a fixed offset of 1024 (at
             // file sample rate)
-            offset = (1024 / float(nominalRate)) * readRate;
+            offset = int(round((1024 / nominalRate) * readRate));
         }
 
         if (extension == "mp3") {
             // while mp3s appear to vary
             for (int i = 0; i < read; ++i) {
                 bool any = false;
-                float thresh = 0.01;
+                double thresh = 0.01;
                 for (int c = 0; c < channels; ++c) {
-                    if (fabsf(test[i * channels + c]) > thresh) {
+                    if (fabs(test[i * channels + c]) > thresh) {
                         any = true;
                         break;
                     }
@@ -180,7 +180,7 @@ private slots:
                     }
 		}
 	    }
-	    float meandiff = totdiff / read;
+	    float meandiff = totdiff / float(read);
 //	    cerr << "meandiff on channel " << c << ": " << meandiff << endl;
 //	    cerr << "maxdiff on channel " << c << ": " << maxdiff << " at " << maxAt << endl;
             if (meandiff >= limit) {

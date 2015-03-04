@@ -42,7 +42,7 @@ public:
         BasicMultirateCompression
     };
 
-    EditableDenseThreeDimensionalModel(int sampleRate,
+    EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
 				       int resolution,
 				       int yBinCount,
                                        CompressionType compression,
@@ -50,7 +50,7 @@ public:
 
     virtual bool isOK() const;
 
-    virtual int getSampleRate() const;
+    virtual sv_samplerate_t getSampleRate() const;
     virtual sv_frame_t getStartFrame() const;
     virtual sv_frame_t getEndFrame() const;
 
@@ -217,7 +217,7 @@ protected:
     QString m_binValueUnit;
 
     sv_frame_t m_startFrame;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_resolution;
     int m_yBinCount;
     CompressionType m_compression;

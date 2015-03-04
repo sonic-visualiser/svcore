@@ -282,12 +282,12 @@ private slots:
         int m = sizeof(rates)/sizeof(rates[0]);
 
         for (int i = 0; i < n; ++i) {
-            int frame = frames[i];
+            sv_frame_t frame = frames[i];
             for (int j = 0; j < m; ++j) {
                 int rate = rates[j];
 
                 RealTime rt = RealTime::frame2RealTime(frame, rate);
-                int conv = RealTime::realTime2Frame(rt, rate);
+                sv_frame_t conv = RealTime::realTime2Frame(rt, rate);
                 QCOMPARE(frame, conv);
 
                 rt = RealTime::frame2RealTime(-frame, rate);

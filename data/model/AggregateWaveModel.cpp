@@ -85,7 +85,7 @@ AggregateWaveModel::getChannelCount() const
     return int(m_components.size());
 }
 
-int
+sv_samplerate_t
 AggregateWaveModel::getSampleRate() const
 {
     if (m_components.empty()) return 0;

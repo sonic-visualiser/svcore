@@ -46,7 +46,7 @@ public:
         WriteToTarget
     };
 
-    WavFileWriter(QString path, int sampleRate, int channels,
+    WavFileWriter(QString path, sv_samplerate_t sampleRate, int channels,
                   FileWriteMode mode);
     virtual ~WavFileWriter();
 
@@ -65,7 +65,7 @@ public:
 
 protected:
     QString m_path;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_channels;
     TempWriteFile *m_temp;
     SNDFILE *m_file;

@@ -107,7 +107,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
-        int sampleRate = inputModel->getSampleRate();
+        sv_samplerate_t sampleRate = inputModel->getSampleRate();
         int blockSize = 1024;
         int channels = 1;
         if (source) {

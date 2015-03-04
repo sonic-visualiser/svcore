@@ -66,7 +66,7 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -102,15 +102,15 @@ class FlexiNoteModel : public IntervalModel<FlexiNote>, public NoteExportable
     Q_OBJECT
     
 public:
-    FlexiNoteModel(int sampleRate, int resolution,
-	      bool notifyOnAdd = true) :
+    FlexiNoteModel(sv_samplerate_t sampleRate, int resolution,
+                   bool notifyOnAdd = true) :
 	IntervalModel<FlexiNote>(sampleRate, resolution, notifyOnAdd),
 	m_valueQuantization(0)
     {
 	PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    FlexiNoteModel(int sampleRate, int resolution,
+    FlexiNoteModel(sv_samplerate_t sampleRate, int resolution,
 	      float valueMinimum, float valueMaximum,
 	      bool notifyOnAdd = true) :
 	IntervalModel<FlexiNote>(sampleRate, resolution,
@@ -238,7 +238,7 @@ public:
         for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
     	    sv_frame_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
-                duration = getSampleRate() / 20;
+                duration = sv_frame_t(getSampleRate() / 20);
             }
             int pitch = int(lrintf(pli->value));
 

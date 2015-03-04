@@ -37,7 +37,7 @@
 #include <QFileInfo>
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
-                             CacheMode mode, int targetRate,
+                             CacheMode mode, sv_samplerate_t targetRate,
                              bool normalised,
                              ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),

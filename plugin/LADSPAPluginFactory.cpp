@@ -161,7 +161,7 @@ LADSPAPluginFactory::getPortMinimum(const LADSPA_Descriptor *descriptor, int por
     }
     
     if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
-	minimum *= float(m_sampleRate);
+	minimum = float(minimum * m_sampleRate);
     }
 
     if (LADSPA_IS_HINT_LOGARITHMIC(d)) {
@@ -188,7 +188,7 @@ LADSPAPluginFactory::getPortMaximum(const LADSPA_Descriptor *descriptor, int por
     }
     
     if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
-	maximum *= float(m_sampleRate);
+	maximum = float(maximum * m_sampleRate);
     }
 
     return maximum;
@@ -331,9 +331,9 @@ RealTimePluginInstance *
 LADSPAPluginFactory::instantiatePlugin(QString identifier,
 				       int instrument,
 				       int position,
-				       unsigned int sampleRate,
-				       unsigned int blockSize,
-				       unsigned int channels)
+				       sv_samplerate_t sampleRate,
+				       int blockSize,
+				       int channels)
 {
     Profiler profiler("LADSPAPluginFactory::instantiatePlugin");
 

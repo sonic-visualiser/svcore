@@ -39,9 +39,9 @@ public:
 
     sv_frame_t getFrameCount() const { return m_frameCount; }
     int getChannelCount() const { return m_channelCount; }
-    int getSampleRate() const { return m_sampleRate; }
+    sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
-    virtual int getNativeRate() const { return m_sampleRate; } // if resampled
+    virtual sv_samplerate_t getNativeRate() const { return m_sampleRate; } // if resampled
 
     /**
      * Return the location of the audio data in the reader (as passed
@@ -119,7 +119,7 @@ signals:
 protected:
     sv_frame_t m_frameCount;
     int m_channelCount;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
 };
 
 #endif
