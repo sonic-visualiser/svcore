@@ -38,8 +38,7 @@ public:
         CacheInMemory
     };
 
-    virtual void getInterleavedFrames(sv_frame_t start, sv_frame_t count,
-				      SampleBlock &frames) const;
+    virtual SampleBlock getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
 

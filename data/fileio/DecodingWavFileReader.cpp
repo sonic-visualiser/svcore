@@ -74,7 +74,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
             sv_frame_t count = blockSize;
             if (i + count > total) count = total - i;
 
-            m_original->getInterleavedFrames(i, count, block);
+            block = m_original->getInterleavedFrames(i, count);
             addBlock(block);
 
             if (m_cancelled) break;
@@ -131,7 +131,7 @@ DecodingWavFileReader::DecodeThread::run()
         sv_frame_t count = blockSize;
         if (i + count > total) count = total - i;
         
-        m_reader->m_original->getInterleavedFrames(i, count, block);
+        block = m_reader->m_original->getInterleavedFrames(i, count);
         m_reader->addBlock(block);
 
         if (m_reader->m_cancelled) break;
