@@ -95,14 +95,12 @@ private slots:
 	float *reference = tdata.getInterleavedData();
         sv_frame_t refFrames = tdata.getFrameCount();
 	
-	vector<float> test;
-	
 	// The reader should give us exactly the expected number of
 	// frames, except for mp3/aac files. We ask for quite a lot
 	// more, though, so we can (a) check that we only get the
 	// expected number back (if this is not mp3/aac) or (b) take
 	// into account silence at beginning and end (if it is).
-	reader->getInterleavedFrames(0, refFrames + 5000, test);
+	vector<float> test = reader->getInterleavedFrames(0, refFrames + 5000);
 	sv_frame_t read = test.size() / channels;
 
         if (extension == "mp3" || extension == "aac" || extension == "m4a") {

@@ -229,8 +229,7 @@ WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
 
     int channels = getChannelCount();
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
     sv_frame_t i = 0;
 
@@ -286,8 +285,7 @@ WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
 
     int channels = getChannelCount();
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
     sv_frame_t i = 0;
 
@@ -372,8 +370,7 @@ WaveFileModel::getData(int fromchannel, int tochannel,
         return 0;
     }
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
     sv_frame_t i = 0;
 
@@ -455,7 +452,7 @@ WaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t count,
             m_lastDirectReadCount != count ||
             m_directRead.empty()) {
 
-            m_reader->getInterleavedFrames(start, count, m_directRead);
+            m_directRead = m_reader->getInterleavedFrames(start, count);
             m_lastDirectReadStart = start;
             m_lastDirectReadCount = count;
         }
@@ -709,7 +706,7 @@ WaveFileModel::RangeCacheFillThread::run()
 
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 
-            m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
+            block = m_model.m_reader->getInterleavedFrames(frame, readBlockSize);
 
 //            cerr << "block is " << block.size() << endl;
 

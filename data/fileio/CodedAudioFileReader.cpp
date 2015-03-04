@@ -355,7 +355,6 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
         for (sv_frame_t s = 0; s < count; ++s) {
             m_data.push_back(buffer[s]);
         }
-	MUNLOCK_SAMPLEBLOCK(m_data);
         m_dataLock.unlock();
         break;
     }
@@ -409,9 +408,8 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     }
 }
 
-void
-CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count,
-                                           SampleBlock &frames) const
+SampleBlock
+CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
     // reader is expected to be thread safe and manage its own
@@ -419,31 +417,32 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count,
 
     if (!m_initialised) {
         SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
-        return;
+        return SampleBlock();
     }
 
+    SampleBlock frames;
+    
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
         if (m_cacheFileReader) {
-            m_cacheFileReader->getInterleavedFrames(start, count, frames);
+            frames = m_cacheFileReader->getInterleavedFrames(start, count);
         }
         break;
 
     case CacheInMemory:
     {
-        frames.clear();
-        if (!isOK()) return;
-        if (count == 0) return;
-        frames.reserve(count * m_channelCount);
+        if (!isOK()) return SampleBlock();
+        if (count == 0) return SampleBlock();
 
         sv_frame_t idx = start * m_channelCount;
         sv_frame_t i = 0;
+        sv_frame_t n = count * m_channelCount;
 
         m_dataLock.lockForRead();
-        while (i < count * m_channelCount && idx < (sv_frame_t)m_data.size()) {
-            frames.push_back(m_data[idx]);
-            ++idx;
+        while (i < n && in_range_for(m_data, idx)) {
+            frames.push_back(m_data[idx++]);
+            ++i;
         }
         m_dataLock.unlock();
     }
@@ -454,5 +453,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count,
             frames[i] *= m_gain;
         }
     }
+
+    return frames;
 }
 
