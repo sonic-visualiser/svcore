@@ -49,7 +49,7 @@ public:
                                       bool polar,
                                       StorageAdviser::Criteria criteria =
                                           StorageAdviser::NoCriteria,
-                                      int fillFromColumn = 0);
+                                      sv_frame_t fillFromFrame = 0);
 
     static FFTDataServer *getFuzzyInstance(const DenseTimeValueModel *model,
                                            int channel,
@@ -60,7 +60,7 @@ public:
                                            bool polar,
                                            StorageAdviser::Criteria criteria =
                                                StorageAdviser::NoCriteria,
-                                           int fillFromColumn = 0);
+                                           sv_frame_t fillFromFrame = 0);
 
     static void claimInstance(FFTDataServer *);
     static void releaseInstance(FFTDataServer *);
@@ -120,7 +120,7 @@ private:
                   int fftSize,
                   bool polar,
                   StorageAdviser::Criteria criteria,
-                  int fillFromColumn = 0);
+                  sv_frame_t fillFromFrame = 0);
 
     virtual ~FFTDataServer();
 
@@ -241,9 +241,9 @@ private:
     class FillThread : public Thread
     {
     public:
-        FillThread(FFTDataServer &server, int fillFromColumn) :
+        FillThread(FFTDataServer &server, sv_frame_t fillFromFrame) :
             m_server(server), m_extent(0), m_completion(0),
-            m_fillFrom(fillFromColumn) { }
+            m_fillFrom(fillFromFrame) { }
 
         sv_frame_t getExtent() const { return m_extent; }
         int getCompletion() const { return m_completion ? m_completion : 1; }

@@ -63,7 +63,7 @@ public:
              int fftSize,
              bool polar,
              StorageAdviser::Criteria criteria = StorageAdviser::NoCriteria,
-             int fillFromColumn = 0);
+             sv_frame_t fillFromFrame = 0);
     ~FFTModel();
 
     inline float getMagnitudeAt(int x, int y) {
@@ -151,7 +151,7 @@ public:
      * bin, using phase unwrapping.  This will be completely wrong if
      * the signal is not stable here.
      */
-    virtual bool estimateStableFrequency(int x, int y, float &frequency);
+    virtual bool estimateStableFrequency(int x, int y, double &frequency);
 
     enum PeakPickType
     {
@@ -161,7 +161,7 @@ public:
     };
 
     typedef std::set<int> PeakLocationSet; // bin
-    typedef std::map<int, float> PeakSet; // bin -> freq
+    typedef std::map<int, double> PeakSet; // bin -> freq
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
@@ -200,7 +200,7 @@ private:
 
     FFTDataServer *getServer(const DenseTimeValueModel *,
                              int, WindowType, int, int, int,
-                             bool, StorageAdviser::Criteria, int);
+                             bool, StorageAdviser::Criteria, sv_frame_t);
 
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                               int bin, float &percentile) const;
