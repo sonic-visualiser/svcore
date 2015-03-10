@@ -32,7 +32,7 @@ DataFileReaderFactory::createReader(QString path,
                                     bool csv,
                                     MIDIFileImportPreferenceAcquirer *acquirer,
                                     CSVFormat format,
-                                    int mainModelSampleRate)
+                                    sv_samplerate_t mainModelSampleRate)
 {
     QString err;
 
@@ -58,7 +58,7 @@ DataFileReaderFactory::createReader(QString path,
 DataFileReader *
 DataFileReaderFactory::createReader(QString path,
                                     MIDIFileImportPreferenceAcquirer *acquirer,
-                                    int mainModelSampleRate)
+                                    sv_samplerate_t mainModelSampleRate)
 {
     DataFileReader *reader = createReader
         (path, false, acquirer, CSVFormat(), mainModelSampleRate);
@@ -74,7 +74,7 @@ DataFileReaderFactory::createReader(QString path,
 Model *
 DataFileReaderFactory::load(QString path,
                             MIDIFileImportPreferenceAcquirer *acquirer,
-                            int mainModelSampleRate)
+                            sv_samplerate_t mainModelSampleRate)
 {
     DataFileReader *reader = createReader(path,
                                           acquirer,
@@ -94,7 +94,7 @@ DataFileReaderFactory::load(QString path,
 Model *
 DataFileReaderFactory::loadNonCSV(QString path,
                                   MIDIFileImportPreferenceAcquirer *acquirer,
-                                  int mainModelSampleRate)
+                                  sv_samplerate_t mainModelSampleRate)
 {
     DataFileReader *reader = createReader(path, false,
                                           acquirer,
@@ -114,7 +114,7 @@ DataFileReaderFactory::loadNonCSV(QString path,
 
 Model *
 DataFileReaderFactory::loadCSV(QString path, CSVFormat format,
-                               int mainModelSampleRate)
+                               sv_samplerate_t mainModelSampleRate)
 {
     DataFileReader *reader = createReader(path, true, 0, format,
                                           mainModelSampleRate);

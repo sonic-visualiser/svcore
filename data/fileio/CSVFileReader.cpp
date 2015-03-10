@@ -36,7 +36,7 @@
 #include <map>
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
-                             int mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate) :
     m_format(format),
     m_device(0),
     m_ownDevice(true),
@@ -63,7 +63,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
 }
 
 CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
-                             int mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate) :
     m_format(format),
     m_device(device),
     m_ownDevice(false),
@@ -96,7 +96,8 @@ CSVFileReader::getError() const
 }
 
 sv_frame_t
-CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
+CSVFileReader::convertTimeValue(QString s, int lineno,
+                                sv_samplerate_t sampleRate,
                                 int windowSize) const
 {
     QRegExp nonNumericRx("[^0-9eE.,+-]");
@@ -155,7 +156,7 @@ CSVFileReader::load() const
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
-    int sampleRate = m_format.getSampleRate();
+    sv_samplerate_t sampleRate = m_format.getSampleRate();
     int windowSize = m_format.getWindowSize();
     QChar separator = m_format.getSeparator();
     bool allowQuoting = m_format.getAllowQuoting();

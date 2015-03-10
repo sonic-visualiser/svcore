@@ -27,6 +27,8 @@
 #include <cmath>
 #include <cassert>
 
+using std::vector;
+
 #include "system/System.h"
 
 EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
@@ -445,15 +447,15 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
     QReadLocker locker(&m_lock);
 
-    QVector<float> sample;
-    QVector<int> n;
+    vector<double> sample;
+    vector<int> n;
     
     for (int i = 0; i < 10; ++i) {
         int index = i * 10;
         if (index < m_data.size()) {
             const Column &c = m_data.at(index);
-            while (c.size() > sample.size()) {
-                sample.push_back(0.f);
+            while (c.size() > int(sample.size())) {
+                sample.push_back(0.0);
                 n.push_back(0);
             }
             for (int j = 0; j < c.size(); ++j) {
@@ -464,11 +466,11 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
     }
 
     if (sample.empty()) return false;
-    for (int j = 0; j < sample.size(); ++j) {
-        if (n[j]) sample[j] /= float(n[j]);
+    for (decltype(sample)::size_type j = 0; j < sample.size(); ++j) {
+        if (n[j]) sample[j] /= n[j];
     }
     
-    return LogRange::useLogScale(sample.toStdVector());
+    return LogRange::useLogScale(sample);
 }
 
 void

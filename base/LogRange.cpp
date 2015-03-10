@@ -21,7 +21,7 @@
 #include <cmath>
 
 void
-LogRange::mapRange(float &min, float &max, float logthresh)
+LogRange::mapRange(double &min, double &max, double logthresh)
 {
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
@@ -30,19 +30,19 @@ LogRange::mapRange(float &min, float &max, float logthresh)
 
     if (min >= 0.f) {
 
-        max = log10f(max); // we know max != 0
+        max = log10(max); // we know max != 0
 
         if (min == 0.f) min = std::min(logthresh, max);
-        else min = log10f(min);
+        else min = log10(min);
 
 //        SVDEBUG << "LogRange::mapRange: positive: min = " << min << ", max = " << max << endl;
 
     } else if (max <= 0.f) {
         
-        min = log10f(-min); // we know min != 0
+        min = log10(-min); // we know min != 0
         
         if (max == 0.f) max = std::min(logthresh, min);
-        else max = log10f(-max);
+        else max = log10(-max);
         
         std::swap(min, max);
         
@@ -52,7 +52,7 @@ LogRange::mapRange(float &min, float &max, float logthresh)
         
         // min < 0 and max > 0
         
-        max = log10f(std::max(max, -min));
+        max = log10(std::max(max, -min));
         min = std::min(logthresh, max);
 
 //        SVDEBUG << "LogRange::mapRange: spanning: min = " << min << ", max = " << max << endl;
@@ -61,21 +61,21 @@ LogRange::mapRange(float &min, float &max, float logthresh)
     if (min == max) min = max - 1;
 }        
 
-float
-LogRange::map(float value, float thresh)
+double
+LogRange::map(double value, double thresh)
 {
     if (value == 0.f) return thresh;
-    return log10f(fabsf(value));
+    return log10(fabs(value));
 }
 
-float
-LogRange::unmap(float value)
+double
+LogRange::unmap(double value)
 {
-    return powf(10.0, value);
+    return pow(10.0, value);
 }
 
 static double
-sd(const std::vector<float> &values, int start, int n)
+sd(const std::vector<double> &values, int start, int n)
 {
     double sum = 0.f, mean = 0.f, variance = 0.f;
     for (int i = 0; i < n; ++i) {
@@ -91,7 +91,7 @@ sd(const std::vector<float> &values, int start, int n)
 }
 
 bool
-LogRange::useLogScale(std::vector<float> values)
+LogRange::useLogScale(std::vector<double> values)
 {
     // Principle: Partition the data into two sets around the median;
     // calculate the standard deviation of each set; if the two SDs

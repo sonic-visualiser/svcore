@@ -16,6 +16,8 @@
 #ifndef _FRAME_TIMER_H_
 #define _FRAME_TIMER_H_
 
+#include "BaseTypes.h"
+
 /**
  * A trivial interface for things that permit retrieving "the current
  * frame".  Implementations of this interface are used, for example,
@@ -25,7 +27,7 @@
 class FrameTimer
 {
 public:
-    virtual int getFrame() const = 0;
+    virtual sv_frame_t getFrame() const = 0;
 };
 
 #endif

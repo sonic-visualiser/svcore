@@ -37,7 +37,7 @@ using std::ios;
 using namespace MIDIConstants;
 
 MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
-                               int sampleRate, float tempo) :
+                               sv_samplerate_t sampleRate, float tempo) :
     m_path(path),
     m_exportable(exportable),
     m_sampleRate(sampleRate),
@@ -358,12 +358,12 @@ MIDIFileWriter::convert()
 
         // Convert frame to MIDI time
 
-        double seconds = double(frame) / double(m_sampleRate);
+        double seconds = double(frame) / m_sampleRate;
         double quarters = (seconds * m_tempo) / 60.0;
         unsigned long midiTime = int(quarters * m_timingDivision + 0.5);
 
         // Get the sounding time for the matching NOTE_OFF
-        seconds = double(frame + duration) / double(m_sampleRate);
+        seconds = double(frame + duration) / m_sampleRate;
         quarters = (seconds * m_tempo) / 60.0;
         unsigned long endTime = int(quarters * m_timingDivision + 0.5);
 
