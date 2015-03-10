@@ -55,8 +55,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       const std::vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
                                                       AudioPlaySource *source,
-                                                      int startFrame,
-                                                      int duration,
+                                                      sv_frame_t startFrame,
+                                                      sv_frame_t duration,
                                                       UserConfigurator *configurator)
 {
     ModelTransformer::Input input(0);
