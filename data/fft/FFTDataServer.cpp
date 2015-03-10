@@ -55,7 +55,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
                            int fftSize,
                            bool polar,
                            StorageAdviser::Criteria criteria,
-                           int fillFromColumn)
+                           sv_frame_t fillFromFrame)
 {
     QString n = generateFileBasename(model,
                                      channel,
@@ -95,7 +95,7 @@ FFTDataServer::getInstance(const DenseTimeValueModel *model,
                                    fftSize,
                                    polar,
                                    criteria,
-                                   fillFromColumn);
+                                   fillFromFrame);
     } catch (InsufficientDiscSpace) {
         delete server;
         server = 0;
@@ -117,7 +117,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                                 int fftSize,
                                 bool polar,
                                 StorageAdviser::Criteria criteria,
-                                int fillFromColumn)
+                                sv_frame_t fillFromFrame)
 {
     // Fuzzy matching:
     // 
@@ -223,7 +223,7 @@ FFTDataServer::getFuzzyInstance(const DenseTimeValueModel *model,
                        fftSize,
                        polar,
                        criteria,
-                       fillFromColumn);
+                       fillFromFrame);
 }
 
 FFTDataServer *
@@ -490,7 +490,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 			     int fftSize,
                              bool polar,
                              StorageAdviser::Criteria criteria,
-                             int fillFromColumn) :
+                             sv_frame_t fillFromFrame) :
     m_fileBaseName(fileBaseName),
     m_model(model),
     m_channel(channel),
@@ -587,7 +587,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
         throw(0);
     }
 
-    m_fillThread = new FillThread(*this, fillFromColumn);
+    m_fillThread = new FillThread(*this, fillFromFrame);
 }
 
 FFTDataServer::~FFTDataServer()

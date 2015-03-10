@@ -36,7 +36,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                    int fftSize,
                    bool polar,
                    StorageAdviser::Criteria criteria,
-                   int fillFromColumn) :
+                   sv_frame_t fillFromFrame) :
     //!!! ZoomConstraint!
     m_server(0),
     m_xshift(0),
@@ -52,7 +52,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                          fftSize,
                          polar,
                          criteria,
-                         fillFromColumn);
+                         fillFromFrame);
 
     if (!m_server) return; // caller should check isOK()
 
@@ -110,7 +110,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                     int fftSize,
                     bool polar,
                     StorageAdviser::Criteria criteria,
-                    int fillFromColumn)
+                    sv_frame_t fillFromFrame)
 {
     // Obviously, an FFT model of channel C (where C != -1) of an
     // aggregate model is the same as the FFT model of the appropriate
@@ -142,7 +142,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                              fftSize,
                              polar,
                              criteria,
-                             fillFromColumn);
+                             fillFromFrame);
         }
     }
 
@@ -156,7 +156,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                                            fftSize,
                                            polar,
                                            criteria,
-                                           fillFromColumn);
+                                           fillFromFrame);
 }
 
 sv_samplerate_t
@@ -205,14 +205,14 @@ FFTModel::getBinName(int n) const
 }
 
 bool
-FFTModel::estimateStableFrequency(int x, int y, float &frequency)
+FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 {
     if (!isOK()) return false;
 
     sv_samplerate_t sampleRate = m_server->getModel()->getSampleRate();
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    frequency = float((y * sampleRate) / fftSize);
+    frequency = double(y * sampleRate) / fftSize;
 
     if (x+1 >= getWidth()) return false;
 
@@ -240,8 +240,8 @@ FFTModel::estimateStableFrequency(int x, int y, float &frequency)
     // from assuming the "native" frequency of this bin
 
     frequency =
-        float((sampleRate * (expectedPhase + phaseError - oldPhase)) /
-              (2 * M_PI * incr));
+        (sampleRate * (expectedPhase + phaseError - oldPhase)) /
+        (2.0 * M_PI * incr);
 
     return true;
 }
@@ -430,7 +430,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
             / (2 * M_PI * incr);
 //        bool stable = (fabsf(phaseError) < (1.1f * (incr * M_PI) / fftSize));
 //        if (stable)
-        peaks[*i] = float(frequency);
+        peaks[*i] = frequency;
         ++phaseIndex;
     }
 
