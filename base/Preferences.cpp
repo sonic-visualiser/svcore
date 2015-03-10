@@ -65,7 +65,7 @@ Preferences::Preferences() :
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
     m_resampleQuality = settings.value("resample-quality", 1).toInt();
-    m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toInt();
+    m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
     m_backgroundMode = BackgroundMode
@@ -561,7 +561,7 @@ Preferences::setResampleOnLoad(bool resample)
 }
 
 void
-Preferences::setFixedSampleRate(int rate)
+Preferences::setFixedSampleRate(sv_samplerate_t rate)
 {
     if (m_fixedSampleRate != rate) {
         m_fixedSampleRate = rate;

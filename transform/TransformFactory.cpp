@@ -750,11 +750,11 @@ TransformFactory::populateUninstalledTransforms()
 }
 
 Transform
-TransformFactory::getDefaultTransformFor(TransformId id, int rate)
+TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
 {
     Transform t;
     t.setIdentifier(id);
-    if (rate != 0) t.setSampleRate(float(rate));
+    if (rate != 0) t.setSampleRate(rate);
 
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
@@ -772,7 +772,7 @@ Vamp::PluginBase *
 TransformFactory::instantiatePluginFor(const Transform &transform)
 {
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
-        (transform.getIdentifier(), int(lrintf(transform.getSampleRate())));
+        (transform.getIdentifier(), transform.getSampleRate());
 
     if (plugin) {
         setPluginParameters(transform, plugin);
@@ -782,11 +782,12 @@ TransformFactory::instantiatePluginFor(const Transform &transform)
 }
 
 Vamp::PluginBase *
-TransformFactory::instantiateDefaultPluginFor(TransformId identifier, int rate)
+TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
+                                              sv_samplerate_t rate)
 {
     Transform t;
     t.setIdentifier(identifier);
-    if (rate == 0) rate = 44100;
+    if (rate == 0) rate = 44100.0;
     QString pluginId = t.getPluginIdentifier();
 
     Vamp::PluginBase *plugin = 0;
@@ -797,7 +798,7 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier, int rate)
             FeatureExtractionPluginFactory::instanceFor(pluginId);
 
         if (factory) {
-            plugin = factory->instantiatePlugin(pluginId, float(rate));
+            plugin = factory->instantiatePlugin(pluginId, rate);
         }
 
     } else {

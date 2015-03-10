@@ -19,6 +19,8 @@
 #include <QString>
 #include <QStringList>
 
+#include "base/BaseTypes.h"
+
 class CSVFormat
 {
 public:
@@ -88,7 +90,7 @@ public:
     ModelType    getModelType()     const { return m_modelType;     }
     TimingType   getTimingType()    const { return m_timingType;    }
     TimeUnits    getTimeUnits()     const { return m_timeUnits;     }
-    int          getSampleRate()    const { return m_sampleRate;    }
+    sv_samplerate_t getSampleRate() const { return m_sampleRate;    }
     int          getWindowSize()    const { return m_windowSize;    }
     int          getColumnCount()   const { return m_columnCount;   }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
@@ -101,7 +103,7 @@ public:
     void setTimingType(TimingType t)      { m_timingType   = t; }
     void setTimeUnits(TimeUnits t)        { m_timeUnits    = t; }
     void setSeparator(QChar s)            { m_separator    = s; }
-    void setSampleRate(int r)             { m_sampleRate   = r; }
+    void setSampleRate(sv_samplerate_t r) { m_sampleRate   = r; }
     void setWindowSize(int s)             { m_windowSize   = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
@@ -125,7 +127,7 @@ protected:
     TimingType   m_timingType;
     TimeUnits    m_timeUnits;
     QString      m_separator;
-    int          m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int          m_windowSize;
 
     int          m_columnCount;
