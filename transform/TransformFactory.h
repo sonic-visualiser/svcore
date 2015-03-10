@@ -88,7 +88,7 @@ public:
      * with different parameters and execution context settings.
      * Return the default one for the given transform.
      */
-    Transform getDefaultTransformFor(TransformId identifier, int rate = 0);
+    Transform getDefaultTransformFor(TransformId identifier, sv_samplerate_t rate = 0);
 
     /**
      * Full name of a transform, suitable for putting on a menu.
@@ -210,7 +210,7 @@ protected:
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
 
-    Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, int rate);
+    Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, sv_samplerate_t rate);
     QMutex m_transformsMutex;
     QMutex m_uninstalledTransformsMutex;
 

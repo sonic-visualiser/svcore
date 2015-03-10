@@ -135,8 +135,8 @@ public:
     RealTime getDuration() const; // 0 -> all
     void setDuration(RealTime d);
     
-    float getSampleRate() const; // 0 -> as input
-    void setSampleRate(float rate);
+    sv_samplerate_t getSampleRate() const; // 0 -> as input
+    void setSampleRate(sv_samplerate_t rate);
 
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const;
@@ -194,7 +194,7 @@ protected:
     WindowType m_windowType;
     RealTime m_startTime;
     RealTime m_duration;
-    float m_sampleRate;
+    sv_samplerate_t m_sampleRate;
 };
 
 typedef std::vector<Transform> Transforms;
