@@ -71,7 +71,7 @@ signals:
 
 protected slots:
     void modelChanged();
-    void modelChangedWithin(int, int);
+    void modelChangedWithin(sv_frame_t, sv_frame_t);
     void modelAboutToBeDeleted();
 
 protected:
