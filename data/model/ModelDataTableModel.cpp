@@ -31,8 +31,8 @@ ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     Model *baseModel = dynamic_cast<Model *>(m);
 
     connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-    connect(baseModel, SIGNAL(modelChangedWithin(int, int)),
-            this, SLOT(modelChangedWithin(int, int)));
+    connect(baseModel, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+            this, SLOT(modelChangedWithin(sv_frame_t, sv_frame_t)));
     connect(baseModel, SIGNAL(aboutToBeDeleted()),
             this, SLOT(modelAboutToBeDeleted()));
 }
@@ -219,7 +219,7 @@ ModelDataTableModel::modelChanged()
 }
 
 void 
-ModelDataTableModel::modelChangedWithin(int, int)
+ModelDataTableModel::modelChangedWithin(sv_frame_t, sv_frame_t)
 {
     //!!! inefficient
     clearSort();

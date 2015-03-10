@@ -364,8 +364,8 @@ AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
     connect(m_rawPath, SIGNAL(modelChanged()),
             this, SLOT(pathChanged()));
 
-    connect(m_rawPath, SIGNAL(modelChangedWithin(int, int)),
-            this, SLOT(pathChangedWithin(int, int)));
+    connect(m_rawPath, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+            this, SLOT(pathChangedWithin(sv_frame_t, sv_frame_t)));
         
     connect(m_rawPath, SIGNAL(completionChanged()),
             this, SLOT(pathCompletionChanged()));
