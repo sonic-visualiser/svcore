@@ -140,8 +140,6 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 	count = m_fileInfo.frames - start;
     }
 
-    sf_count_t readCount = 0;
-
     if (start != m_lastStart || count != m_lastCount) {
 
 	if (sf_seek(m_file, start, SEEK_SET) < 0) {
@@ -151,10 +149,14 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
         sv_frame_t n = count * m_fileInfo.channels;
         m_buffer.resize(n);
 	
+        sf_count_t readCount = 0;
+
 	if ((readCount = sf_readf_float(m_file, m_buffer.data(), count)) < 0) {
 	    return SampleBlock();
 	}
 
+        m_buffer.resize(readCount * m_fileInfo.channels);
+        
 	m_lastStart = start;
 	m_lastCount = readCount;
     }
