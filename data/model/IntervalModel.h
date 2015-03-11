@@ -48,7 +48,7 @@ public:
      * and after).  Consequently this can be very slow (optimised data
      * structures still to be done!).
      */
-    virtual typename SparseValueModel<PointType>::PointList getPoints(long start, long end) const;
+    virtual typename SparseValueModel<PointType>::PointList getPoints(sv_frame_t start, sv_frame_t end) const;
 
     /**
      * PointTypes have a duration, so this returns all points that span the
