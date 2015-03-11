@@ -23,6 +23,7 @@
 #include <QFileInfo>
 
 #include <iostream>
+#include <cmath>
 
 WavFileWriter::WavFileWriter(QString path,
 			     sv_samplerate_t sampleRate,
