@@ -679,11 +679,17 @@ FeatureExtractionModelTransformer::run()
         if (frequencyDomain) {
             for (int ch = 0; ch < channelCount; ++ch) {
                 int column = (blockFrame - startFrame) / stepSize;
-                fftModels[ch]->getValuesAt(column, reals, imaginaries);
-                for (int i = 0; i <= blockSize/2; ++i) {
-                    buffers[ch][i*2] = reals[i];
-                    buffers[ch][i*2+1] = imaginaries[i];
-                }
+                if (fftModels[ch]->getValuesAt(column, reals, imaginaries)) {
+                    for (int i = 0; i <= blockSize/2; ++i) {
+                        buffers[ch][i*2] = reals[i];
+                        buffers[ch][i*2+1] = imaginaries[i];
+                    }
+                } else {
+                    for (int i = 0; i <= blockSize/2; ++i) {
+                        buffers[ch][i*2] = 0.f;
+                        buffers[ch][i*2+1] = 0.f;
+                    }
+                }                    
                 error = fftModels[ch]->getError();
                 if (error != "") {
                     cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;

@@ -19,34 +19,38 @@
 
 #include <cmath>
 
-float
+double
 Pitch::getFrequencyForPitch(int midiPitch,
-			    float centsOffset,
-			    float concertA)
+			    double centsOffset,
+			    double concertA)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
     }
-    float p = float(midiPitch) + (centsOffset / 100);
-    return concertA * powf(2.0, (p - 69.0) / 12.0);
+    double p = double(midiPitch) + (centsOffset / 100);
+    return concertA * pow(2.0, (p - 69.0) / 12.0);
 }
 
 int
-Pitch::getPitchForFrequency(float frequency,
-			    float *centsOffsetReturn,
-			    float concertA)
+Pitch::getPitchForFrequency(double frequency,
+			    double *centsOffsetReturn,
+			    double concertA)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
     }
-    float p = 12.0 * (log(frequency / (concertA / 2.0)) / log(2.0)) + 57.0;
+    double p = 12.0 * (log(frequency / (concertA / 2.0)) / log(2.0)) + 57.0;
 
-    int midiPitch = int(p + 0.00001);
-    float centsOffset = (p - midiPitch) * 100.0;
+    int midiPitch = int(round(p));
+    double centsOffset = (p - midiPitch) * 100.0;
 
     if (centsOffset >= 50.0) {
 	midiPitch = midiPitch + 1;
 	centsOffset = -(100.0 - centsOffset);
+    }
+    if (centsOffset < -50.0) {
+	midiPitch = midiPitch - 1;
+	centsOffset = (100.0 + centsOffset);
     }
     
     if (centsOffsetReturn) *centsOffsetReturn = centsOffset;
@@ -54,10 +58,10 @@ Pitch::getPitchForFrequency(float frequency,
 }
 
 int
-Pitch::getPitchForFrequencyDifference(float frequencyA,
-                                      float frequencyB,
-                                      float *centsOffsetReturn,
-                                      float concertA)
+Pitch::getPitchForFrequencyDifference(double frequencyA,
+                                      double frequencyB,
+                                      double *centsOffsetReturn,
+                                      double concertA)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
@@ -67,13 +71,13 @@ Pitch::getPitchForFrequencyDifference(float frequencyA,
         std::swap(frequencyA, frequencyB);
     }
 
-    float pA = 12.0 * (log(frequencyA / (concertA / 2.0)) / log(2.0)) + 57.0;
-    float pB = 12.0 * (log(frequencyB / (concertA / 2.0)) / log(2.0)) + 57.0;
+    double pA = 12.0 * (log(frequencyA / (concertA / 2.0)) / log(2.0)) + 57.0;
+    double pB = 12.0 * (log(frequencyB / (concertA / 2.0)) / log(2.0)) + 57.0;
 
-    float p = pB - pA;
+    double p = pB - pA;
 
     int midiPitch = int(p + 0.00001);
-    float centsOffset = (p - midiPitch) * 100.0;
+    double centsOffset = (p - midiPitch) * 100.0;
 
     if (centsOffset >= 50.0) {
 	midiPitch = midiPitch + 1;
@@ -96,13 +100,19 @@ static QString flatNotes[] = {
     "Ab%1", "A%1",  "Bb%1", "B%1"
 };
 
-QString
-Pitch::getPitchLabel(int midiPitch,
-		     float centsOffset,
-		     bool useFlats)
+int
+Pitch::getPitchForNoteAndOctave(int note, int octave)
 {
     int baseOctave = Preferences::getInstance()->getOctaveOfLowestMIDINote();
-    int octave = baseOctave;
+    return (octave - baseOctave) * 12 + note;
+}
+
+void
+Pitch::getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave)
+{
+    int baseOctave = Preferences::getInstance()->getOctaveOfLowestMIDINote();
+
+    octave = baseOctave;
 
     // Note, this only gets the right octave number at octave
     // boundaries because Cb is enharmonic with B (not B#) and B# is
@@ -118,44 +128,55 @@ Pitch::getPitchLabel(int midiPitch,
 	octave = midiPitch / 12 + baseOctave;
     }
 
-    QString plain = (useFlats ? flatNotes : notes)[midiPitch % 12].arg(octave);
+    note = midiPitch % 12;
+}
 
-    int ic = lrintf(centsOffset);
+QString
+Pitch::getPitchLabel(int midiPitch,
+		     double centsOffset,
+		     bool useFlats)
+{
+    int note, octave;
+    getNoteAndOctaveForPitch(midiPitch, note, octave);
+
+    QString plain = (useFlats ? flatNotes : notes)[note].arg(octave);
+
+    int ic = lrint(centsOffset);
     if (ic == 0) return plain;
     else if (ic > 0) return QString("%1+%2c").arg(plain).arg(ic);
     else return QString("%1%2c").arg(plain).arg(ic);
 }
 
 QString
-Pitch::getPitchLabelForFrequency(float frequency,
-				 float concertA,
+Pitch::getPitchLabelForFrequency(double frequency,
+				 double concertA,
 				 bool useFlats)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
     }
-    float centsOffset = 0.0;
+    double centsOffset = 0.0;
     int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
     return getPitchLabel(midiPitch, centsOffset, useFlats);
 }
 
 QString
-Pitch::getLabelForPitchRange(int semis, float cents)
+Pitch::getLabelForPitchRange(int semis, double cents)
 {
     if (semis > 0) {
-        while (cents < 0.f) {
+        while (cents < 0.0) {
             --semis;
-            cents += 100.f;
+            cents += 100.0;
         }
     }
     if (semis < 0) {
-        while (cents > 0.f) {
+        while (cents > 0.0) {
             ++semis;
-            cents -= 100.f;
+            cents -= 100.0;
         }
     }
 
-    int ic = lrintf(cents);
+    int ic = lrint(cents);
 
     if (ic == 0) {
         if (semis >= 12) {
@@ -181,10 +202,10 @@ Pitch::getLabelForPitchRange(int semis, float cents)
 }
 
 bool
-Pitch::isFrequencyInMidiRange(float frequency,
-                              float concertA)
+Pitch::isFrequencyInMidiRange(double frequency,
+                              double concertA)
 {
-    float centsOffset = 0.0;
+    double centsOffset = 0.0;
     int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
     return (midiPitch >= 0 && midiPitch < 128);
 }

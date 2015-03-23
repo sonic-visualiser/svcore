@@ -110,7 +110,7 @@ CSVFormat::guessQualities(QString line, int lineno)
     // something that indicates otherwise:
 
     ColumnQualities defaultQualities =
-        ColumnNumeric | ColumnIntegral | ColumnIncreasing;
+        ColumnNumeric | ColumnIntegral | ColumnIncreasing | ColumnNearEmpty;
     
     for (int i = 0; i < cols; ++i) {
 	    
@@ -128,7 +128,12 @@ CSVFormat::guessQualities(QString line, int lineno)
         bool integral   = (qualities & ColumnIntegral);
         bool increasing = (qualities & ColumnIncreasing);
         bool large      = (qualities & ColumnLarge); // this one defaults to off
+        bool emptyish   = (qualities & ColumnNearEmpty);
 
+        if (lineno > 1 && s.trimmed() != "") {
+            emptyish = false;
+        }
+        
         float value = 0.f;
 
         //!!! how to take into account headers?
@@ -166,7 +171,8 @@ CSVFormat::guessQualities(QString line, int lineno)
             (numeric    ? ColumnNumeric : 0) |
             (integral   ? ColumnIntegral : 0) |
             (increasing ? ColumnIncreasing : 0) |
-            (large      ? ColumnLarge : 0);
+            (large      ? ColumnLarge : 0) |
+            (emptyish   ? ColumnNearEmpty : 0);
     }
 
     if (lineno < 10) {
@@ -190,11 +196,31 @@ CSVFormat::guessPurposes()
     m_timeUnits = CSVFormat::TimeWindows;
 	
     int timingColumnCount = 0;
+
+    // if our first column has zero or one entries in it and the rest
+    // have more, then we'll default to ignoring the first column and
+    // counting the next one as primary. (e.g. Sonic Annotator output
+    // with filename at start of first column.)
+
+    int primaryColumnNo = 0;
+
+    if (m_columnCount >= 2) {
+        if ( (m_columnQualities[0] & ColumnNearEmpty) &&
+            !(m_columnQualities[1] & ColumnNearEmpty)) {
+            primaryColumnNo = 1;
+        }
+    }
     
     for (int i = 0; i < m_columnCount; ++i) {
         
         ColumnPurpose purpose = ColumnUnknown;
-        bool primary = (i == 0);
+
+        if (i < primaryColumnNo) {
+            setColumnPurpose(i, purpose);
+            continue;
+        }
+        
+        bool primary = (i == primaryColumnNo);
 
         ColumnQualities qualities = m_columnQualities[i];
 

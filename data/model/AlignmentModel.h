@@ -32,7 +32,7 @@ class AlignmentModel : public Model
 public:
     AlignmentModel(Model *reference,
                    Model *aligned,
-                   Model *inputModel, // probably an AggregateWaveModel; I take ownership
+                   Model *inputModel, // probably an AggregateWaveModel; may be null; I take ownership
                    SparseTimeValueModel *path); // I take ownership
     ~AlignmentModel();
 
@@ -52,6 +52,7 @@ public:
     int toReference(int frame) const;
     int fromReference(int frame) const;
 
+    void setPathFrom(SparseTimeValueModel *rawpath);
     void setPath(PathModel *path);
 
     virtual void toXml(QTextStream &stream,
