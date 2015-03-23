@@ -49,7 +49,7 @@ public:
                                       bool polar,
                                       StorageAdviser::Criteria criteria =
                                           StorageAdviser::NoCriteria,
-                                      int fillFromColumn = 0);
+                                      sv_frame_t fillFromFrame = 0);
 
     static FFTDataServer *getFuzzyInstance(const DenseTimeValueModel *model,
                                            int channel,
@@ -60,7 +60,7 @@ public:
                                            bool polar,
                                            StorageAdviser::Criteria criteria =
                                                StorageAdviser::NoCriteria,
-                                           int fillFromColumn = 0);
+                                           sv_frame_t fillFromFrame = 0);
 
     static void claimInstance(FFTDataServer *);
     static void releaseInstance(FFTDataServer *);
@@ -108,7 +108,7 @@ public:
 
     QString getError() const;
     int getFillCompletion() const;
-    int getFillExtent() const;
+    sv_frame_t getFillExtent() const;
 
 private:
     FFTDataServer(QString fileBaseName,
@@ -120,7 +120,7 @@ private:
                   int fftSize,
                   bool polar,
                   StorageAdviser::Criteria criteria,
-                  int fillFromColumn = 0);
+                  sv_frame_t fillFromFrame = 0);
 
     virtual ~FFTDataServer();
 
@@ -241,20 +241,20 @@ private:
     class FillThread : public Thread
     {
     public:
-        FillThread(FFTDataServer &server, int fillFromColumn) :
+        FillThread(FFTDataServer &server, sv_frame_t fillFromFrame) :
             m_server(server), m_extent(0), m_completion(0),
-            m_fillFrom(fillFromColumn) { }
+            m_fillFrom(fillFromFrame) { }
 
-        int getExtent() const { return m_extent; }
+        sv_frame_t getExtent() const { return m_extent; }
         int getCompletion() const { return m_completion ? m_completion : 1; }
         QString getError() const { return m_error; }
         virtual void run();
 
     protected:
         FFTDataServer &m_server;
-        int m_extent;
+        sv_frame_t m_extent;
         int m_completion;
-        int m_fillFrom;
+        sv_frame_t m_fillFrom;
         QString m_error;
     };
 

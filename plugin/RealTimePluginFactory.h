@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "base/Debug.h"
+#include "base/BaseTypes.h"
 
 class RealTimePluginInstance;
 
@@ -55,7 +56,7 @@ public:
     static std::vector<QString> getAllPluginIdentifiers();
     static void enumerateAllPlugins(std::vector<QString> &);
 
-    static void setSampleRate(int sampleRate) { m_sampleRate = sampleRate; }
+    static void setSampleRate(sv_samplerate_t sampleRate) { m_sampleRate = sampleRate; }
 
     /**
      * Look up the plugin path and find the plugins in it.  Called 
@@ -87,9 +88,9 @@ public:
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
 						      int clientId,
 						      int position,
-						      unsigned int sampleRate,
-						      unsigned int blockSize,
-						      unsigned int channels) = 0;
+						      sv_samplerate_t sampleRate,
+						      int blockSize,
+						      int channels) = 0;
 
     /**
      * Get category metadata about a plugin (without instantiating it).
@@ -103,7 +104,7 @@ protected:
     virtual void releasePlugin(RealTimePluginInstance *, QString identifier) = 0;
     friend class RealTimePluginInstance;
 
-    static int m_sampleRate;
+    static sv_samplerate_t m_sampleRate;
 };
 
 #endif

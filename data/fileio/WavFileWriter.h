@@ -20,6 +20,8 @@
 
 #include <sndfile.h>
 
+#include "base/BaseTypes.h"
+
 class DenseTimeValueModel;
 class MultiSelection;
 class TempWriteFile;
@@ -44,7 +46,7 @@ public:
         WriteToTarget
     };
 
-    WavFileWriter(QString path, int sampleRate, int channels,
+    WavFileWriter(QString path, sv_samplerate_t sampleRate, int channels,
                   FileWriteMode mode);
     virtual ~WavFileWriter();
 
@@ -57,13 +59,13 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(float **samples, int count); // count per channel
+    bool writeSamples(float **samples, sv_frame_t count); // count per channel
 
     bool close();
 
 protected:
     QString m_path;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_channels;
     TempWriteFile *m_temp;
     SNDFILE *m_file;

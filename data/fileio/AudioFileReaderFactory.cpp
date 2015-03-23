@@ -59,7 +59,7 @@ AudioFileReaderFactory::getKnownExtensions()
 
 AudioFileReader *
 AudioFileReaderFactory::createReader(FileSource source, 
-                                     int targetRate,
+                                     sv_samplerate_t targetRate,
                                      bool normalised,
                                      ProgressReporter *reporter)
 {
@@ -68,7 +68,7 @@ AudioFileReaderFactory::createReader(FileSource source,
 
 AudioFileReader *
 AudioFileReaderFactory::createThreadingReader(FileSource source, 
-                                              int targetRate,
+                                              sv_samplerate_t targetRate,
                                               bool normalised,
                                               ProgressReporter *reporter)
 {
@@ -77,7 +77,7 @@ AudioFileReaderFactory::createThreadingReader(FileSource source,
 
 AudioFileReader *
 AudioFileReaderFactory::create(FileSource source, 
-                               int targetRate, 
+                               sv_samplerate_t targetRate, 
                                bool normalised,
                                bool threading,
                                ProgressReporter *reporter)
@@ -105,7 +105,7 @@ AudioFileReaderFactory::create(FileSource source,
 
         reader = new WavFileReader(source);
 
-        int fileRate = reader->getSampleRate();
+        sv_samplerate_t fileRate = reader->getSampleRate();
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||
@@ -224,7 +224,7 @@ AudioFileReaderFactory::create(FileSource source,
 
         reader = new WavFileReader(source);
 
-        int fileRate = reader->getSampleRate();
+        sv_samplerate_t fileRate = reader->getSampleRate();
 
         if (reader->isOK() &&
             (!reader->isQuicklySeekable() ||

@@ -49,35 +49,35 @@ public:
 
     const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
 
-    int getFrameCount() const;
+    sv_frame_t getFrameCount() const;
     int getChannelCount() const;
-    int getSampleRate() const;
+    sv_samplerate_t getSampleRate() const;
 
     virtual Model *clone() const;
 
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 
-    virtual int getStartFrame() const { return 0; }
-    virtual int getEndFrame() const { return getFrameCount(); }
+    virtual sv_frame_t getStartFrame() const { return 0; }
+    virtual sv_frame_t getEndFrame() const { return getFrameCount(); }
 
-    virtual int getData(int channel, int start, int count,
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
                            float *buffer) const;
 
-    virtual int getData(int channel, int start, int count,
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
                            double *buffer) const;
 
-    virtual int getData(int fromchannel, int tochannel,
-                           int start, int count,
+    virtual sv_frame_t getData(int fromchannel, int tochannel,
+                           sv_frame_t start, sv_frame_t count,
                            float **buffer) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
-    virtual void getSummaries(int channel, int start, int count,
+    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
                               int &blockSize) const;
 
-    virtual Range getSummary(int channel, int start, int count) const;
+    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
 
     virtual void toXml(QTextStream &out,
                        QString indent = "",
@@ -85,12 +85,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChangedWithin(int, int);
+    void modelChangedWithin(sv_frame_t, sv_frame_t);
     void completionChanged();
 
 protected slots:
     void componentModelChanged();
-    void componentModelChangedWithin(int, int);
+    void componentModelChangedWithin(sv_frame_t, sv_frame_t);
     void componentModelCompletionChanged();
 
 protected:

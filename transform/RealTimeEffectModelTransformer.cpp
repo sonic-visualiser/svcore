@@ -82,7 +82,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (m_outputNo == -1) {
 
-        int outputChannels = m_plugin->getAudioOutputCount();
+        int outputChannels = (int)m_plugin->getAudioOutputCount();
         if (outputChannels > input->getChannelCount()) {
             outputChannels = input->getChannelCount();
         }
@@ -137,26 +137,26 @@ RealTimeEffectModelTransformer::run()
 
     if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;
 
-    int sampleRate = input->getSampleRate();
+    sv_samplerate_t sampleRate = input->getSampleRate();
     int channelCount = input->getChannelCount();
     if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
-    long blockSize = m_plugin->getBufferSize();
+    sv_frame_t blockSize = m_plugin->getBufferSize();
 
     float **inbufs = m_plugin->getAudioInputBuffers();
 
-    long startFrame = m_input.getModel()->getStartFrame();
-    long   endFrame = m_input.getModel()->getEndFrame();
+    sv_frame_t startFrame = m_input.getModel()->getStartFrame();
+    sv_frame_t endFrame = m_input.getModel()->getEndFrame();
 
     Transform transform = m_transforms[0];
     
     RealTime contextStartRT = transform.getStartTime();
     RealTime contextDurationRT = transform.getDuration();
 
-    long contextStart =
+    sv_frame_t contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
 
-    long contextDuration =
+    sv_frame_t contextDuration =
         RealTime::realTime2Frame(contextDurationRT, sampleRate);
 
     if (contextStart == 0 || contextStart < startFrame) {
@@ -174,20 +174,20 @@ RealTimeEffectModelTransformer::run()
         wwfm->setStartFrame(contextStart);
     }
 
-    long blockFrame = contextStart;
+    sv_frame_t blockFrame = contextStart;
 
-    long prevCompletion = 0;
+    int prevCompletion = 0;
 
-    long latency = m_plugin->getLatency();
+    sv_frame_t latency = m_plugin->getLatency();
 
     while (blockFrame < contextStart + contextDuration + latency &&
            !m_abandoned) {
 
-	long completion =
-	    (((blockFrame - contextStart) / blockSize) * 99) /
-	    (1 + ((contextDuration) / blockSize));
+	int completion = int
+	    ((((blockFrame - contextStart) / blockSize) * 99) /
+             (1 + ((contextDuration) / blockSize)));
 
-	long got = 0;
+	sv_frame_t got = 0;
 
 	if (channelCount == 1) {
             if (inbufs && inbufs[0]) {
@@ -197,7 +197,7 @@ RealTimeEffectModelTransformer::run()
                     inbufs[0][got++] = 0.0;
                 }          
                 for (int ch = 1; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
-                    for (long i = 0; i < blockSize; ++i) {
+                    for (sv_frame_t i = 0; i < blockSize; ++i) {
                         inbufs[ch][i] = inbufs[0][i];
                     }
                 }
@@ -214,7 +214,7 @@ RealTimeEffectModelTransformer::run()
                     ++got;
                 }
                 for (int ch = channelCount; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
-                    for (long i = 0; i < blockSize; ++i) {
+                    for (sv_frame_t i = 0; i < blockSize; ++i) {
                         inbufs[ch][i] = inbufs[ch % channelCount][i];
                     }
                 }
@@ -235,13 +235,13 @@ RealTimeEffectModelTransformer::run()
         }
 */
 
-        m_plugin->run(Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
+        m_plugin->run(RealTime::frame2RealTime(blockFrame, sampleRate));
 
         if (stvm) {
 
             float value = m_plugin->getControlOutputValue(m_outputNo);
 
-            long pointFrame = blockFrame;
+            sv_frame_t pointFrame = blockFrame;
             if (pointFrame > latency) pointFrame -= latency;
             else pointFrame = 0;
 
@@ -255,13 +255,13 @@ RealTimeEffectModelTransformer::run()
             if (outbufs) {
 
                 if (blockFrame >= latency) {
-                    long writeSize = std::min
+                    sv_frame_t writeSize = std::min
                         (blockSize,
                          contextStart + contextDuration + latency - blockFrame);
                     wwfm->addSamples(outbufs, writeSize);
                 } else if (blockFrame + blockSize >= latency) {
-                    long offset = latency - blockFrame;
-                    long count = blockSize - offset;
+                    sv_frame_t offset = latency - blockFrame;
+                    sv_frame_t count = blockSize - offset;
                     float **tmp = new float *[channelCount];
                     for (int c = 0; c < channelCount; ++c) {
                         tmp[c] = outbufs[c] + offset;

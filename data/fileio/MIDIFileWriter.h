@@ -24,6 +24,7 @@
 #define _MIDI_FILE_WRITER_H_
 
 #include "base/RealTime.h"
+#include "base/BaseTypes.h"
 
 #include <QString>
 
@@ -45,7 +46,7 @@ class MIDIFileWriter
 public:
     MIDIFileWriter(QString path, 
                    const NoteExportable *exportable, 
-                   int sampleRate, // used to convert exportable sample timings
+                   sv_samplerate_t sampleRate, // used to convert exportable sample timings
                    float tempo = 120.f);
     virtual ~MIDIFileWriter();
 
@@ -79,7 +80,7 @@ protected:
 
     QString               m_path;
     const NoteExportable *m_exportable;
-    int                   m_sampleRate;
+    sv_samplerate_t       m_sampleRate;
     float                 m_tempo;
     int                   m_timingDivision;   // pulses per quarter note
     MIDIFileFormatType    m_format;

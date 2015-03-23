@@ -50,7 +50,7 @@ public:
 QuickTimeFileReader::QuickTimeFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         int targetRate,
+                                         sv_samplerate_t targetRate,
                                          bool normalised,
                                          ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),

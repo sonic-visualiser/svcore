@@ -33,15 +33,15 @@ public:
         return m_source && m_source->isOK(); 
     }
 
-    virtual int getSampleRate() const {
+    virtual sv_samplerate_t getSampleRate() const {
         return m_source->getSampleRate();
     }
 
-    virtual int getStartFrame() const {
+    virtual sv_frame_t getStartFrame() const {
         return m_source->getStartFrame();
     }
 
-    virtual int getEndFrame() const {
+    virtual sv_frame_t getEndFrame() const {
         return m_source->getEndFrame();
     }
 

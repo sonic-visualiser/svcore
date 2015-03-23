@@ -21,6 +21,8 @@
 
 #include <vector>
 
+#include "base/BaseTypes.h"
+
 class Model;
 class RDFImporterImpl;
 class ProgressReporter;
@@ -37,10 +39,10 @@ public:
      */
     static QString getKnownExtensions();
 
-    RDFImporter(QString url, int sampleRate = 0);
+    RDFImporter(QString url, sv_samplerate_t sampleRate = 0);
     virtual ~RDFImporter();
 
-    void setSampleRate(int sampleRate);
+    void setSampleRate(sv_samplerate_t sampleRate);
 
     bool isOK();
     QString getErrorString() const;

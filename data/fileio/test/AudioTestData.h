@@ -18,6 +18,8 @@
 
 #include <cmath>
 
+#include "base/BaseTypes.h"
+
 /**
  * Class that generates a single fixed test pattern to a given sample
  * rate and number of channels.
@@ -35,7 +37,7 @@
 class AudioTestData
 {
 public:
-    AudioTestData(float rate, int channels) :
+    AudioTestData(double rate, int channels) :
 	m_channelCount(channels),
 	m_duration(2.0),
 	m_sampleRate(rate),
@@ -54,24 +56,25 @@ public:
 
     void generate() {
 
-	float hpw = m_pulseWidth / 2.0;
+	double hpw = m_pulseWidth / 2.0;
 
 	for (int i = 0; i < m_frameCount; ++i) {
 	    for (int c = 0; c < m_channelCount; ++c) {
 
-		float s = 0.f;
+		double s = 0.0;
 
 		if (c == 0) {
 
-		    float phase = (i * m_sinFreq * 2.f * M_PI) / m_sampleRate;
-		    s = sinf(phase);
+		    double phase = (i * m_sinFreq * 2.0 * M_PI) / m_sampleRate;
+		    s = sin(phase);
 
 		} else if (c == 1) {
 
 		    int pulseNo = int((i * m_pulseFreq) / m_sampleRate);
-		    int index = (i * m_pulseFreq) - (m_sampleRate * pulseNo);
+		    int index = int(round((i * m_pulseFreq) -
+                                          (m_sampleRate * pulseNo)));
 		    if (index < m_pulseWidth) {
-			s = 1.0 - fabsf(hpw - index) / hpw;
+			s = 1.0 - fabs(hpw - index) / hpw;
 			if (pulseNo % 2) s = -s;
 		    }
 
@@ -80,7 +83,7 @@ public:
 		    s = c / 20.0;
 		}
 
-		m_data[i * m_channelCount + c] = s;
+		m_data[i * m_channelCount + c] = float(s);
 	    }
 	}
     }
@@ -89,7 +92,7 @@ public:
 	return m_data;
     }
 
-    int getFrameCount() const { 
+    sv_frame_t getFrameCount() const { 
 	return m_frameCount;
     }
 
@@ -97,23 +100,23 @@ public:
 	return m_channelCount;
     }
 
-    float getSampleRate () const {
+    sv_samplerate_t getSampleRate () const {
 	return m_sampleRate;
     }
 
-    float getDuration() const { // seconds
+    double getDuration() const { // seconds
 	return m_duration;
     }
 
 private:
     float *m_data;
-    int m_frameCount;
+    sv_frame_t m_frameCount;
     int m_channelCount;
-    float m_duration;
-    float m_sampleRate;
-    float m_sinFreq;
-    float m_pulseFreq;
-    float m_pulseWidth;
+    double m_duration;
+    sv_samplerate_t m_sampleRate;
+    double m_sinFreq;
+    double m_pulseFreq;
+    double m_pulseWidth;
 };
 
 #endif

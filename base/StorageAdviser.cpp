@@ -24,16 +24,16 @@
 
 //#define DEBUG_STORAGE_ADVISER 1
 
-long StorageAdviser::m_discPlanned = 0;
-long StorageAdviser::m_memoryPlanned = 0;
+size_t StorageAdviser::m_discPlanned = 0;
+size_t StorageAdviser::m_memoryPlanned = 0;
 
 StorageAdviser::Recommendation
 StorageAdviser::m_baseRecommendation = StorageAdviser::NoRecommendation;
 
 StorageAdviser::Recommendation
 StorageAdviser::recommend(Criteria criteria,
-			  int minimumSize,
-			  int maximumSize)
+			  size_t minimumSize,
+			  size_t maximumSize)
 {
 #ifdef DEBUG_STORAGE_ADVISER
     SVDEBUG << "StorageAdviser::recommend: Criteria " << criteria 
@@ -52,17 +52,17 @@ StorageAdviser::recommend(Criteria criteria,
         cerr << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
         return Recommendation(UseMemory | ConserveSpace);
     }
-    int discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
-    int memoryFree, memoryTotal;
+    ssize_t discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
+    ssize_t memoryFree, memoryTotal;
     GetRealMemoryMBAvailable(memoryFree, memoryTotal);
 
-    if (discFree > m_discPlanned / 1024 + 1) {
+    if (discFree > ssize_t(m_discPlanned / 1024 + 1)) {
         discFree -= m_discPlanned / 1024 + 1;
     } else if (discFree > 0) { // can also be -1 for unknown
         discFree = 0;
     }
 
-    if (memoryFree > m_memoryPlanned / 1024 + 1) {
+    if (memoryFree > ssize_t(m_memoryPlanned / 1024 + 1)) {
         memoryFree -= m_memoryPlanned / 1024 + 1;
     } else if (memoryFree > 0) { // can also be -1 for unknown
         memoryFree = 0;
@@ -87,8 +87,8 @@ StorageAdviser::recommend(Criteria criteria,
     StorageStatus memoryStatus = Unknown;
     StorageStatus discStatus = Unknown;
 
-    int minmb = minimumSize / 1024 + 1;
-    int maxmb = maximumSize / 1024 + 1;
+    ssize_t minmb = ssize_t(minimumSize / 1024 + 1);
+    ssize_t maxmb = ssize_t(maximumSize / 1024 + 1);
 
     if (memoryFree == -1) memoryStatus = Unknown;
     else if (memoryFree < memoryTotal / 3) memoryStatus = Insufficient;
@@ -185,7 +185,7 @@ StorageAdviser::recommend(Criteria criteria,
 }
 
 void
-StorageAdviser::notifyPlannedAllocation(AllocationArea area, int size)
+StorageAdviser::notifyPlannedAllocation(AllocationArea area, size_t size)
 {
     if (area == MemoryAllocation) m_memoryPlanned += size;
     else if (area == DiscAllocation) m_discPlanned += size;
@@ -194,7 +194,7 @@ StorageAdviser::notifyPlannedAllocation(AllocationArea area, int size)
 }
 
 void
-StorageAdviser::notifyDoneAllocation(AllocationArea area, int size)
+StorageAdviser::notifyDoneAllocation(AllocationArea area, size_t size)
 {
     if (area == MemoryAllocation) {
         if (m_memoryPlanned > size) m_memoryPlanned -= size;

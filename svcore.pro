@@ -29,7 +29,7 @@ exists(config.pri) {
     }
 }
 
-CONFIG += staticlib qt thread warn_on stl rtti exceptions
+CONFIG += staticlib qt thread warn_on stl rtti exceptions c++11
 QT += network xml
 QT -= gui
 
@@ -51,6 +51,7 @@ solaris*: DEFINES += __RTMIDI_DUMMY_ONLY__
 
 HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
+           base/BaseTypes.h \
            base/Clipboard.h \
            base/Command.h \
            base/Debug.h \
@@ -138,7 +139,6 @@ HEADERS += data/fft/FFTapi.h \
            data/fileio/FileFinder.h \
            data/fileio/FileReadThread.h \
            data/fileio/FileSource.h \
-           data/fileio/MatchFileReader.h \
            data/fileio/MatrixFile.h \
            data/fileio/MIDIFileReader.h \
            data/fileio/MIDIFileWriter.h \
@@ -199,7 +199,6 @@ SOURCES += data/fft/FFTapi.cpp \
            data/fileio/DataFileReaderFactory.cpp \
            data/fileio/FileReadThread.cpp \
            data/fileio/FileSource.cpp \
-           data/fileio/MatchFileReader.cpp \
            data/fileio/MatrixFile.cpp \
            data/fileio/MIDIFileReader.cpp \
            data/fileio/MIDIFileWriter.cpp \

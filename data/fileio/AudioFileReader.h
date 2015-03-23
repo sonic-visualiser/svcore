@@ -18,6 +18,7 @@
 
 #include <QString>
 
+#include "base/BaseTypes.h"
 #include "FileSource.h"
 
 #include <vector>
@@ -36,11 +37,11 @@ public:
 
     virtual QString getError() const { return ""; }
 
-    int getFrameCount() const { return m_frameCount; }
+    sv_frame_t getFrameCount() const { return m_frameCount; }
     int getChannelCount() const { return m_channelCount; }
-    int getSampleRate() const { return m_sampleRate; }
+    sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
-    virtual int getNativeRate() const { return m_sampleRate; } // if resampled
+    virtual sv_samplerate_t getNativeRate() const { return m_sampleRate; } // if resampled
 
     /**
      * Return the location of the audio data in the reader (as passed
@@ -93,8 +94,7 @@ public:
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual void getInterleavedFrames(int start, int count,
-				      SampleBlock &frames) const = 0;
+    virtual SampleBlock getInterleavedFrames(sv_frame_t start, sv_frame_t count) const = 0;
 
     /**
      * Return de-interleaved samples for count frames from index
@@ -103,8 +103,7 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual void getDeInterleavedFrames(int start, int count,
-                                        std::vector<SampleBlock> &frames) const;
+    virtual std::vector<SampleBlock> getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     // only subclasses that do not know exactly how long the audio
     // file is until it's been completely decoded should implement this
@@ -116,9 +115,9 @@ signals:
     void frameCountChanged();
     
 protected:
-    int m_frameCount;
+    sv_frame_t m_frameCount;
     int m_channelCount;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
 };
 
 #endif
