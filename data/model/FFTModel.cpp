@@ -36,7 +36,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                    int fftSize,
                    bool polar,
                    StorageAdviser::Criteria criteria,
-                   int fillFromColumn) :
+                   sv_frame_t fillFromFrame) :
     //!!! ZoomConstraint!
     m_server(0),
     m_xshift(0),
@@ -52,7 +52,7 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
                          fftSize,
                          polar,
                          criteria,
-                         fillFromColumn);
+                         fillFromFrame);
 
     if (!m_server) return; // caller should check isOK()
 
@@ -110,7 +110,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                     int fftSize,
                     bool polar,
                     StorageAdviser::Criteria criteria,
-                    int fillFromColumn)
+                    sv_frame_t fillFromFrame)
 {
     // Obviously, an FFT model of channel C (where C != -1) of an
     // aggregate model is the same as the FFT model of the appropriate
@@ -142,7 +142,7 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                              fftSize,
                              polar,
                              criteria,
-                             fillFromColumn);
+                             fillFromFrame);
         }
     }
 
@@ -156,10 +156,10 @@ FFTModel::getServer(const DenseTimeValueModel *model,
                                            fftSize,
                                            polar,
                                            criteria,
-                                           fillFromColumn);
+                                           fillFromFrame);
 }
 
-int
+sv_samplerate_t
 FFTModel::getSampleRate() const
 {
     return isOK() ? m_server->getModel()->getSampleRate() : 0;
@@ -198,21 +198,21 @@ FFTModel::getColumn(int x) const
 QString
 FFTModel::getBinName(int n) const
 {
-    int sr = getSampleRate();
+    sv_samplerate_t sr = getSampleRate();
     if (!sr) return "";
     QString name = tr("%1 Hz").arg((n * sr) / ((getHeight()-1) * 2));
     return name;
 }
 
 bool
-FFTModel::estimateStableFrequency(int x, int y, float &frequency)
+FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 {
     if (!isOK()) return false;
 
-    int sampleRate = m_server->getModel()->getSampleRate();
+    sv_samplerate_t sampleRate = m_server->getModel()->getSampleRate();
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    frequency = (float(y) * sampleRate) / fftSize;
+    frequency = double(y * sampleRate) / fftSize;
 
     if (x+1 >= getWidth()) return false;
 
@@ -225,14 +225,14 @@ FFTModel::estimateStableFrequency(int x, int y, float &frequency)
     //  = 2pi * ((h * b * sr) / (w * sr))
     //  = 2pi * (h * b) / w.
 
-    float oldPhase = getPhaseAt(x, y);
-    float newPhase = getPhaseAt(x+1, y);
+    double oldPhase = getPhaseAt(x, y);
+    double newPhase = getPhaseAt(x+1, y);
 
     int incr = getResolution();
 
-    float expectedPhase = oldPhase + (2.0 * M_PI * y * incr) / fftSize;
+    double expectedPhase = oldPhase + (2.0 * M_PI * y * incr) / fftSize;
 
-    float phaseError = princargf(newPhase - expectedPhase);
+    double phaseError = princarg(newPhase - expectedPhase);
 
 //    bool stable = (fabsf(phaseError) < (1.1f * (m_windowIncrement * M_PI) / m_fftSize));
 
@@ -241,7 +241,7 @@ FFTModel::estimateStableFrequency(int x, int y, float &frequency)
 
     frequency =
         (sampleRate * (expectedPhase + phaseError - oldPhase)) /
-        (2 * M_PI * incr);
+        (2.0 * M_PI * incr);
 
     return true;
 }
@@ -284,14 +284,14 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
 
     float mean = 0.f;
     for (int i = 0; i < values.size(); ++i) mean += values[i];
-    if (values.size() >0) mean /= values.size();
-
+    if (values.size() > 0) mean = mean / float(values.size());
+    
     // For peak picking we use a moving median window, picking the
     // highest value within each continuous region of values that
     // exceed the median.  For pitch adaptivity, we adjust the window
     // size to a roughly constant pitch range (about four tones).
 
-    int sampleRate = getSampleRate();
+    sv_samplerate_t sampleRate = getSampleRate();
 
     std::deque<float> window;
     std::vector<int> inrange;
@@ -324,7 +324,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
             window.pop_front();
         }
 
-        int actualSize = window.size();
+        int actualSize = int(window.size());
 
         if (type == MajorPitchAdaptivePeaks) {
             if (ymax + halfWin < values.size()) binmax = ymax + halfWin;
@@ -333,7 +333,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
 
         std::deque<float> sorted(window);
         std::sort(sorted.begin(), sorted.end());
-        float median = sorted[int(sorted.size() * dist)];
+        float median = sorted[int(float(sorted.size()) * dist)];
 
         int centrebin = 0;
         if (bin > actualSize/2) centrebin = bin - actualSize/2;
@@ -373,7 +373,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
 }
 
 int
-FFTModel::getPeakPickWindowSize(PeakPickType type, int sampleRate,
+FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                                 int bin, float &percentile) const
 {
     percentile = 0.5;
@@ -381,14 +381,14 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, int sampleRate,
     if (bin == 0) return 3;
 
     int fftSize = m_server->getFFTSize() >> m_yshift;
-    float binfreq = (float(sampleRate) * bin) / fftSize;
-    float hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
+    double binfreq = (sampleRate * bin) / fftSize;
+    double hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
 
-    int hibin = lrintf((hifreq * fftSize) / sampleRate);
+    int hibin = int(lrint((hifreq * fftSize) / sampleRate));
     int medianWinSize = hibin - bin;
     if (medianWinSize < 3) medianWinSize = 3;
 
-    percentile = 0.5 + (binfreq / sampleRate);
+    percentile = 0.5f + float(binfreq / sampleRate);
 
     return medianWinSize;
 }
@@ -403,7 +403,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     if (!isOK()) return peaks;
     PeakLocationSet locations = getPeaks(type, x, ymin, ymax);
 
-    int sampleRate = getSampleRate();
+    sv_samplerate_t sampleRate = getSampleRate();
     int fftSize = m_server->getFFTSize() >> m_yshift;
     int incr = getResolution();
 
@@ -421,11 +421,11 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     int phaseIndex = 0;
     for (PeakLocationSet::iterator i = locations.begin();
          i != locations.end(); ++i) {
-        float oldPhase = phases[phaseIndex];
-        float newPhase = getPhaseAt(x+1, *i);
-        float expectedPhase = oldPhase + (2.0 * M_PI * *i * incr) / fftSize;
-        float phaseError = princargf(newPhase - expectedPhase);
-        float frequency =
+        double oldPhase = phases[phaseIndex];
+        double newPhase = getPhaseAt(x+1, *i);
+        double expectedPhase = oldPhase + (2.0 * M_PI * *i * incr) / fftSize;
+        double phaseError = princarg(newPhase - expectedPhase);
+        double frequency =
             (sampleRate * (expectedPhase + phaseError - oldPhase))
             / (2 * M_PI * incr);
 //        bool stable = (fabsf(phaseError) < (1.1f * (incr * M_PI) / fftSize));

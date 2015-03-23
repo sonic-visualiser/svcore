@@ -19,20 +19,21 @@
 #include "Model.h"
 #include "SparseModel.h"
 #include "base/RealTime.h"
+#include "base/BaseTypes.h"
 
 #include <QStringList>
 
 
 struct PathPoint
 {
-    PathPoint(long _frame) : frame(_frame), mapframe(_frame) { }
-    PathPoint(long _frame, long _mapframe) :
+    PathPoint(sv_frame_t _frame) : frame(_frame), mapframe(_frame) { }
+    PathPoint(sv_frame_t _frame, sv_frame_t _mapframe) :
         frame(_frame), mapframe(_mapframe) { }
 
     int getDimensions() const { return 2; }
 
-    long frame;
-    long mapframe;
+    sv_frame_t frame;
+    sv_frame_t mapframe;
 
     QString getLabel() const { return ""; }
 
@@ -43,7 +44,7 @@ struct PathPoint
     }
         
     QString toDelimitedDataString(QString delimiter,
-                                  int sampleRate) const {
+                                  sv_samplerate_t sampleRate) const {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(mapframe);
@@ -67,7 +68,7 @@ struct PathPoint
 class PathModel : public SparseModel<PathPoint>
 {
 public:
-    PathModel(int sampleRate, int resolution, bool notify = true) :
+    PathModel(sv_samplerate_t sampleRate, int resolution, bool notify = true) :
         SparseModel<PathPoint>(sampleRate, resolution, notify) { }
 
     virtual void toXml(QTextStream &out,

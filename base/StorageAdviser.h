@@ -17,6 +17,8 @@
 #ifndef _STORAGE_ADVISER_H_
 #define _STORAGE_ADVISER_H_
 
+#include <cstdlib>
+
 /**
  * A utility class designed to help decide whether to store cache data
  * (for example FFT outputs) in memory or on disk in the TempDirectory.
@@ -57,8 +59,8 @@ public:
      * be nowhere the minimum amount of data can be stored.
      */
     static Recommendation recommend(Criteria criteria,
-                                    int minimumSize,
-                                    int maximumSize);
+                                    size_t minimumSize,
+                                    size_t maximumSize);
 
     enum AllocationArea {
         MemoryAllocation,
@@ -69,14 +71,14 @@ public:
      * Specify that we are planning to use a given amount of storage
      * (in kilobytes), but haven't allocated it yet.
      */
-    static void notifyPlannedAllocation(AllocationArea area, int size);
+    static void notifyPlannedAllocation(AllocationArea area, size_t size);
 
     /**
      * Specify that we have now allocated, or abandoned the allocation
      * of, the given amount (in kilobytes) of a storage area that was
      * previously notified using notifyPlannedAllocation.
      */
-    static void notifyDoneAllocation(AllocationArea area, int size);
+    static void notifyDoneAllocation(AllocationArea area, size_t size);
 
     /**
      * Force all subsequent recommendations to use the (perhaps
@@ -86,8 +88,8 @@ public:
     static void setFixedRecommendation(Recommendation recommendation);
 
 private:
-    static long m_discPlanned;
-    static long m_memoryPlanned;
+    static size_t m_discPlanned;
+    static size_t m_memoryPlanned;
     static Recommendation m_baseRecommendation;
 };
 

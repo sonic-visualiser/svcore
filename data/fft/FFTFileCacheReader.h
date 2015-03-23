@@ -41,7 +41,7 @@ public:
 
     bool haveSetColumnAt(int x) const;
 
-    static int getCacheSize(int width, int height,
+    static size_t getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
     FFTCache::StorageType getStorageType() const { return m_storageType; }

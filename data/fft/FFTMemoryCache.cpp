@@ -196,10 +196,10 @@ FFTMemoryCache::setColumnAt(int x, float *reals, float *imags)
     }
 }
 
-int
+size_t
 FFTMemoryCache::getCacheSize(int width, int height, FFTCache::StorageType type)
 {
-    int sz = 0;
+    size_t sz = 0;
 
     switch (type) {
 

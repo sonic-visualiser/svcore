@@ -31,16 +31,16 @@
 class Resampler::D
 {
 public:
-    D(Quality quality, int channels, int chunkSize);
+    D(Quality quality, int channels, sv_frame_t chunkSize);
     ~D();
 
-    int resample(float **in, float **out,
-                    int incount, float ratio,
-                    bool final);
+    sv_frame_t resample(float **in, float **out,
+                 sv_frame_t incount, double ratio,
+                 bool final);
 
-    int resampleInterleaved(float *in, float *out,
-                               int incount, float ratio,
-                               bool final);
+    sv_frame_t resampleInterleaved(float *in, float *out,
+                            sv_frame_t incount, double ratio,
+                            bool final);
 
     void reset();
 
@@ -49,11 +49,11 @@ protected:
     float *m_iin;
     float *m_iout;
     int m_channels;
-    int m_iinsize;
-    int m_ioutsize;
+    sv_frame_t m_iinsize;
+    sv_frame_t m_ioutsize;
 };
 
-Resampler::D::D(Quality quality, int channels, int chunkSize) :
+Resampler::D::D(Quality quality, int channels, sv_frame_t chunkSize) :
     m_src(0),
     m_iin(0),
     m_iout(0),
@@ -89,16 +89,16 @@ Resampler::D::~D()
     }
 }
 
-int
+sv_frame_t
 Resampler::D::resample(float **in, float **out,
-                       int incount, float ratio,
+                       sv_frame_t incount, double ratio,
                        bool final)
 {
     if (m_channels == 1) {
         return resampleInterleaved(*in, *out, incount, ratio, final);
     }
 
-    int outcount = lrintf(ceilf(incount * ratio));
+    sv_frame_t outcount = lrint(ceil(double(incount) * ratio));
 
     if (incount * m_channels > m_iinsize) {
         m_iinsize = incount * m_channels;
@@ -108,15 +108,15 @@ Resampler::D::resample(float **in, float **out,
         m_ioutsize = outcount * m_channels;
         m_iout = (float *)realloc(m_iout, m_ioutsize * sizeof(float));
     }
-    for (int i = 0; i < incount; ++i) {
+    for (sv_frame_t i = 0; i < incount; ++i) {
         for (int c = 0; c < m_channels; ++c) {
             m_iin[i * m_channels + c] = in[c][i];
         }
     }
     
-    int gen = resampleInterleaved(m_iin, m_iout, incount, ratio, final);
+    sv_frame_t gen = resampleInterleaved(m_iin, m_iout, incount, ratio, final);
 
-    for (int i = 0; i < gen; ++i) {
+    for (sv_frame_t i = 0; i < gen; ++i) {
         for (int c = 0; c < m_channels; ++c) {
             out[c][i] = m_iout[i * m_channels + c];
         }
@@ -125,14 +125,14 @@ Resampler::D::resample(float **in, float **out,
     return gen;
 }
 
-int
+sv_frame_t
 Resampler::D::resampleInterleaved(float *in, float *out,
-                                  int incount, float ratio,
+                                  sv_frame_t incount, double ratio,
                                   bool final)
 {
     SRC_DATA data;
 
-    int outcount = lrintf(ceilf(incount * ratio));
+    sv_frame_t outcount = lrint(ceil(double(incount) * ratio));
 
     data.data_in = in;
     data.data_out = out;
@@ -149,7 +149,7 @@ Resampler::D::resampleInterleaved(float *in, float *out,
         return 0;
     }
 
-    if (data.input_frames_used != (int)incount) {
+    if (data.input_frames_used != incount) {
         cerr << "Resampler: NOTE: input_frames_used == " << data.input_frames_used << " (while incount = " << incount << ")" << endl;
     }
 
@@ -162,7 +162,7 @@ Resampler::D::reset()
     src_reset(m_src);
 }
 
-Resampler::Resampler(Quality quality, int channels, int chunkSize)
+Resampler::Resampler(Quality quality, int channels, sv_frame_t chunkSize)
 {
     m_d = new D(quality, channels, chunkSize);
 }
@@ -172,18 +172,18 @@ Resampler::~Resampler()
     delete m_d;
 }
 
-int 
+sv_frame_t 
 Resampler::resample(float **in, float **out,
-                    int incount, float ratio,
+                    sv_frame_t incount, double ratio,
                     bool final)
 {
     return m_d->resample(in, out, incount, ratio, final);
 }
 
-int 
+sv_frame_t 
 Resampler::resampleInterleaved(float *in, float *out,
-                    int incount, float ratio,
-                    bool final)
+                               sv_frame_t incount, double ratio,
+                               bool final)
 {
     return m_d->resampleInterleaved(in, out, incount, ratio, final);
 }

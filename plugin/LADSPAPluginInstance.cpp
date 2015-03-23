@@ -37,8 +37,8 @@ LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
 					   int clientId,
 					   QString identifier,
                                            int position,
-					   unsigned long sampleRate,
-					   size_t blockSize,
+					   sv_samplerate_t sampleRate,
+					   int blockSize,
 					   int idealChannelCount,
                                            const LADSPA_Descriptor* descriptor) :
     RealTimePluginInstance(factory, identifier),
@@ -156,12 +156,12 @@ LADSPAPluginInstance::getParameterDescriptors() const
             if (defaults) {
                 if (defaults->count > 0) {
                     std::map<int, std::string> values;
-                    size_t v = 0;
+                    int v = 0;
                     for (size_t i = 0; i < defaults->count; ++i) {
-                        v = size_t(lrintf(fabsf(defaults->items[i].value)));
+                        v = int(lrintf(fabsf(defaults->items[i].value)));
                         values[v] = defaults->items[i].label;
                     }
-                    for (size_t i = 0; i <= v; ++i) {
+                    for (int i = 0; i <= v; ++i) {
                         pd.valueNames.push_back(values[i]);
                     }
                     haveLabels = true;
@@ -227,7 +227,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
 
     // Discover ports numbers and identities
     //
-    for (unsigned long i = 0; i < m_descriptor->PortCount; ++i) {
+    for (int i = 0; i < (int)m_descriptor->PortCount; ++i) {
 
         if (LADSPA_IS_PORT_AUDIO(m_descriptor->PortDescriptors[i])) {
 
@@ -289,19 +289,19 @@ LADSPAPluginInstance::init(int idealChannelCount)
     }
 }
 
-size_t
+sv_frame_t
 LADSPAPluginInstance::getLatency()
 {
     if (m_latencyPort) {
 	if (!m_run) {
-            for (size_t i = 0; i < getAudioInputCount(); ++i) {
-                for (size_t j = 0; j < m_blockSize; ++j) {
+            for (int i = 0; i < getAudioInputCount(); ++i) {
+                for (int j = 0; j < m_blockSize; ++j) {
                     m_inputBuffers[i][j] = 0.f;
                 }
             }
             run(Vamp::RealTime::zeroTime);
         }
-	if (*m_latencyPort > 0) return (size_t)*m_latencyPort;
+	if (*m_latencyPort > 0) return (sv_frame_t)*m_latencyPort;
     }
     return 0;
 }
@@ -316,7 +316,7 @@ LADSPAPluginInstance::silence()
 }
 
 void
-LADSPAPluginInstance::setIdealChannelCount(size_t channels)
+LADSPAPluginInstance::setIdealChannelCount(int channels)
 {
     if (m_audioPortsIn.size() != 1 || channels == m_instanceCount) {
 	silence();
@@ -378,7 +378,7 @@ LADSPAPluginInstance::~LADSPAPluginInstance()
 
 
 void
-LADSPAPluginInstance::instantiate(unsigned long sampleRate)
+LADSPAPluginInstance::instantiate(sv_samplerate_t sampleRate)
 {
     if (!m_descriptor) return;
 
@@ -394,9 +394,16 @@ LADSPAPluginInstance::instantiate(unsigned long sampleRate)
 	return;
     }
 
-    for (size_t i = 0; i < m_instanceCount; ++i) {
+    unsigned long pluginRate = (unsigned long)(sampleRate);
+    if (sampleRate != sv_samplerate_t(pluginRate)) {
+        cerr << "LADSPAPluginInstance: WARNING: Non-integer sample rate "
+             << sampleRate << " presented, rounding to " << pluginRate
+             << endl;
+    }
+    
+    for (int i = 0; i < m_instanceCount; ++i) {
 	m_instanceHandles.push_back
-	    (m_descriptor->instantiate(m_descriptor, sampleRate));
+	    (m_descriptor->instantiate(m_descriptor, pluginRate));
     }
 }
 
@@ -464,16 +471,16 @@ LADSPAPluginInstance::connectPorts()
     }
 }
 
-unsigned int
+int
 LADSPAPluginInstance::getParameterCount() const
 {
-    return m_controlPortsIn.size();
+    return (int)m_controlPortsIn.size();
 }
 
 void
-LADSPAPluginInstance::setParameterValue(unsigned int parameter, float value)
+LADSPAPluginInstance::setParameterValue(int parameter, float value)
 {
-    if (parameter >= m_controlPortsIn.size()) return;
+    if (!in_range_for(m_controlPortsIn, parameter)) return;
 
     unsigned int portNumber = m_controlPortsIn[parameter].first;
 
@@ -491,23 +498,23 @@ LADSPAPluginInstance::setParameterValue(unsigned int parameter, float value)
 }
 
 float
-LADSPAPluginInstance::getControlOutputValue(size_t output) const
+LADSPAPluginInstance::getControlOutputValue(int output) const
 {
-    if (output > m_controlPortsOut.size()) return 0.0;
+    if (!in_range_for(m_controlPortsOut, output)) return 0.0;
     return (*m_controlPortsOut[output].second);
 }
 
 float
-LADSPAPluginInstance::getParameterValue(unsigned int parameter) const
+LADSPAPluginInstance::getParameterValue(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
     return (*m_controlPortsIn[parameter].second);
 }
 
 float
-LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
+LADSPAPluginInstance::getParameterDefault(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -518,9 +525,9 @@ LADSPAPluginInstance::getParameterDefault(unsigned int parameter) const
 }
 
 int
-LADSPAPluginInstance::getParameterDisplayHint(unsigned int parameter) const
+LADSPAPluginInstance::getParameterDisplayHint(int parameter) const
 {
-    if (parameter >= m_controlPortsIn.size()) return 0.0;
+    if (!in_range_for(m_controlPortsIn, parameter)) return 0.0;
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
@@ -531,7 +538,7 @@ LADSPAPluginInstance::getParameterDisplayHint(unsigned int parameter) const
 }
 
 void
-LADSPAPluginInstance::run(const Vamp::RealTime &, size_t count)
+LADSPAPluginInstance::run(const RealTime &, int count)
 {
     if (!m_descriptor || !m_descriptor->run) return;
 

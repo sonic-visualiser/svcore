@@ -25,8 +25,6 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_source(source),
     m_path(source.getLocalFilename()),
     m_seekable(false),
-    m_buffer(0),
-    m_bufsiz(0),
     m_lastStart(0),
     m_lastCount(0),
     m_updating(fileUpdating)
@@ -81,7 +79,6 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 WavFileReader::~WavFileReader()
 {
     if (m_file) sf_close(m_file);
-    delete[] m_buffer;
 }
 
 void
@@ -89,7 +86,7 @@ WavFileReader::updateFrameCount()
 {
     QMutexLocker locker(&m_mutex);
 
-    int prevCount = m_fileInfo.frames;
+    sv_frame_t prevCount = m_fileInfo.frames;
 
     if (m_file) {
         sf_close(m_file);
@@ -122,65 +119,49 @@ WavFileReader::updateDone()
     m_updating = false;
 }
 
-void
-WavFileReader::getInterleavedFrames(int start, int count,
-				    SampleBlock &results) const
+SampleBlock
+WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
-    if (count == 0) return;
-    results.clear();
-    results.reserve(count * m_fileInfo.channels);
+    if (count == 0) return SampleBlock();
 
     QMutexLocker locker(&m_mutex);
 
     if (!m_file || !m_channelCount) {
-        return;
+        return SampleBlock();
     }
 
-    if ((long)start >= m_fileInfo.frames) {
+    if (start >= m_fileInfo.frames) {
 //        SVDEBUG << "WavFileReader::getInterleavedFrames: " << start
 //                  << " > " << m_fileInfo.frames << endl;
-	return;
+	return SampleBlock();
     }
 
-    if (long(start + count) > m_fileInfo.frames) {
+    if (start + count > m_fileInfo.frames) {
 	count = m_fileInfo.frames - start;
     }
-
-    sf_count_t readCount = 0;
 
     if (start != m_lastStart || count != m_lastCount) {
 
 	if (sf_seek(m_file, start, SEEK_SET) < 0) {
-//            cerr << "sf_seek failed" << endl;
-	    return;
-	}
-	
-	if (count * m_fileInfo.channels > m_bufsiz) {
-//	    cerr << "WavFileReader: Reallocating buffer for " << count
-//		      << " frames, " << m_fileInfo.channels << " channels: "
-//		      << m_bufsiz << " floats" << endl;
-	    m_bufsiz = count * m_fileInfo.channels;
-	    delete[] m_buffer;
-	    m_buffer = new float[m_bufsiz];
-	}
-	
-	if ((readCount = sf_readf_float(m_file, m_buffer, count)) < 0) {
-//            cerr << "sf_readf_float failed" << endl;
-	    return;
+	    return SampleBlock();
 	}
 
+        sv_frame_t n = count * m_fileInfo.channels;
+        m_buffer.resize(n);
+	
+        sf_count_t readCount = 0;
+
+	if ((readCount = sf_readf_float(m_file, m_buffer.data(), count)) < 0) {
+	    return SampleBlock();
+	}
+
+        m_buffer.resize(readCount * m_fileInfo.channels);
+        
 	m_lastStart = start;
 	m_lastCount = readCount;
     }
 
-    for (int i = 0; i < count * m_fileInfo.channels; ++i) {
-        if (i >= m_bufsiz) {
-            cerr << "INTERNAL ERROR: WavFileReader::getInterleavedFrames: " << i << " >= " << m_bufsiz << endl;
-        }
-	results.push_back(m_buffer[i]);
-    }
-
-    return;
+    return m_buffer;
 }
 
 void

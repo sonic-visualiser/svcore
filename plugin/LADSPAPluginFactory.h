@@ -47,9 +47,9 @@ public:
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
 						      int clientId,
 						      int position,
-						      unsigned int sampleRate,
-						      unsigned int blockSize,
-						      unsigned int channels);
+						      sv_samplerate_t sampleRate,
+						      int blockSize,
+						      int channels);
 
     virtual QString getPluginCategory(QString identifier);
 

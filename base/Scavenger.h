@@ -61,17 +61,17 @@ public:
     void scavenge(bool clearNow = false);
 
 protected:
-    typedef std::pair<T *, int> ObjectTimePair;
+    typedef std::pair<T *, time_t> ObjectTimePair;
     typedef std::vector<ObjectTimePair> ObjectTimeList;
     ObjectTimeList m_objects;
-    int m_sec;
+    time_t m_sec;
 
     typedef std::list<T *> ObjectList;
     ObjectList m_excess;
-    int m_lastExcess;
+    time_t m_lastExcess;
     QMutex m_excessMutex;
     void pushExcess(T *);
-    void clearExcess(int);
+    void clearExcess(time_t);
 
     unsigned int m_claimed;
     unsigned int m_scavenged;
@@ -129,7 +129,7 @@ Scavenger<T>::claim(T *t)
 
     struct timeval tv;
     (void)gettimeofday(&tv, 0);
-    int sec = tv.tv_sec;
+    time_t sec = tv.tv_sec;
 
     for (size_t i = 0; i < m_objects.size(); ++i) {
 	ObjectTimePair &pair = m_objects[i];
@@ -156,7 +156,7 @@ Scavenger<T>::scavenge(bool clearNow)
     
     struct timeval tv;
     (void)gettimeofday(&tv, 0);
-    int sec = tv.tv_sec;
+    time_t sec = tv.tv_sec;
 
     for (size_t i = 0; i < m_objects.size(); ++i) {
 	ObjectTimePair &pair = m_objects[i];
@@ -188,7 +188,7 @@ Scavenger<T>::pushExcess(T *t)
 
 template <typename T>
 void
-Scavenger<T>::clearExcess(int sec)
+Scavenger<T>::clearExcess(time_t sec)
 {
     m_excessMutex.lock();
     for (typename ObjectList::iterator i = m_excess.begin();

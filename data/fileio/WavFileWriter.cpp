@@ -23,9 +23,10 @@
 #include <QFileInfo>
 
 #include <iostream>
+#include <cmath>
 
 WavFileWriter::WavFileWriter(QString path,
-			     int sampleRate,
+			     sv_samplerate_t sampleRate,
                              int channels,
                              FileWriteMode mode) :
     m_path(path),
@@ -35,7 +36,14 @@ WavFileWriter::WavFileWriter(QString path,
     m_file(0)
 {
     SF_INFO fileInfo;
-    fileInfo.samplerate = m_sampleRate;
+
+    int fileRate = int(round(m_sampleRate));
+    if (m_sampleRate != sv_samplerate_t(fileRate)) {
+        cerr << "WavFileWriter: WARNING: Non-integer sample rate "
+             << m_sampleRate << " presented, rounding to " << fileRate
+             << endl;
+    }
+    fileInfo.samplerate = fileRate;
     fileInfo.channels = m_channels;
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
@@ -120,7 +128,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
         ownSelection = true;
     }
 
-    int bs = 2048;
+    sv_frame_t bs = 2048;
     float *ub = new float[bs]; // uninterleaved buffer (one channel)
     float *ib = new float[bs * m_channels]; // interleaved buffer
 
@@ -128,11 +136,11 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 	     selection->getSelections().begin();
 	 i != selection->getSelections().end(); ++i) {
 	
-	int f0(i->getStartFrame()), f1(i->getEndFrame());
+	sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
 
-	for (int f = f0; f < f1; f += bs) {
+	for (sv_frame_t f = f0; f < f1; f += bs) {
 	    
-	    int n = std::min(bs, f1 - f);
+	    sv_frame_t n = std::min(bs, f1 - f);
 
 	    for (int c = 0; c < int(m_channels); ++c) {
 		source->getData(c, f, n, ub);
@@ -159,7 +167,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 }
 	
 bool
-WavFileWriter::writeSamples(float **samples, int count)
+WavFileWriter::writeSamples(float **samples, sv_frame_t count)
 {
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
@@ -168,17 +176,17 @@ WavFileWriter::writeSamples(float **samples, int count)
     }
 
     float *b = new float[count * m_channels];
-    for (int i = 0; i < int(count); ++i) {
+    for (sv_frame_t i = 0; i < count; ++i) {
         for (int c = 0; c < int(m_channels); ++c) {
             b[i * m_channels + c] = samples[c][i];
         }
     }
 
-    sf_count_t written = sf_writef_float(m_file, b, count);
+    sv_frame_t written = sf_writef_float(m_file, b, count);
 
     delete[] b;
 
-    if (written < int(count)) {
+    if (written < count) {
         m_error = QString("Only wrote %1 of %2 frames")
             .arg(written).arg(count);
     }

@@ -66,12 +66,12 @@ protected:
     SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
 
     void addFeature(int n,
-                    int blockFrame,
+                    sv_frame_t blockFrame,
 		    const Vamp::Plugin::Feature &feature);
 
     void setCompletion(int, int);
 
-    void getFrames(int channelCount, long startFrame, long size,
+    void getFrames(int channelCount, sv_frame_t startFrame, sv_frame_t size,
                    float **buffer);
 
     // just casts

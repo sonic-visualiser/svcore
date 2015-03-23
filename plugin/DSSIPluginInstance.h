@@ -54,46 +54,46 @@ public:
     virtual int getPluginVersion() const;
     virtual std::string getCopyright() const;
 
-    virtual void run(const Vamp::RealTime &, size_t count = 0);
+    virtual void run(const RealTime &, int count = 0);
 
-    virtual unsigned int getParameterCount() const;
-    virtual void setParameterValue(unsigned int parameter, float value);
-    virtual float getParameterValue(unsigned int parameter) const;
-    virtual float getParameterDefault(unsigned int parameter) const;
-    virtual int getParameterDisplayHint(unsigned int parameter) const;
+    virtual int getParameterCount() const;
+    virtual void setParameterValue(int parameter, float value);
+    virtual float getParameterValue(int parameter) const;
+    virtual float getParameterDefault(int parameter) const;
+    virtual int getParameterDisplayHint(int parameter) const;
 
     virtual ParameterList getParameterDescriptors() const;
     virtual float getParameter(std::string) const;
     virtual void setParameter(std::string, float);
 
     virtual std::string configure(std::string key, std::string value);
-    virtual void sendEvent(const Vamp::RealTime &eventTime,
+    virtual void sendEvent(const RealTime &eventTime,
 			   const void *event);
     virtual void clearEvents();
 
-    virtual size_t getBufferSize() const { return m_blockSize; }
-    virtual size_t getAudioInputCount() const { return m_audioPortsIn.size(); }
-    virtual size_t getAudioOutputCount() const { return m_idealChannelCount; }
+    virtual int getBufferSize() const { return m_blockSize; }
+    virtual int getAudioInputCount() const { return (int)m_audioPortsIn.size(); }
+    virtual int getAudioOutputCount() const { return m_idealChannelCount; }
     virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
     virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
 
-    virtual size_t getControlOutputCount() const { return m_controlPortsOut.size(); }
-    virtual float getControlOutputValue(size_t n) const;
+    virtual int getControlOutputCount() const { return (int)m_controlPortsOut.size(); }
+    virtual float getControlOutputValue(int n) const;
 
     virtual ProgramList getPrograms() const;
     virtual std::string getCurrentProgram() const;
     virtual std::string getProgram(int bank, int program) const;
-    virtual unsigned long getProgram(std::string name) const;
+    virtual int getProgram(std::string name) const;
     virtual void selectProgram(std::string program);
 
     virtual bool isBypassed() const { return m_bypassed; }
     virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
 
-    virtual size_t getLatency();
+    virtual sv_frame_t getLatency();
 
     virtual void silence();
     virtual void discardEvents();
-    virtual void setIdealChannelCount(size_t channels); // may re-instantiate
+    virtual void setIdealChannelCount(int channels); // may re-instantiate
 
     virtual bool isInGroup() const { return m_grouped; }
     virtual void detachFromGroup();
@@ -110,25 +110,25 @@ protected:
 		       int client,
 		       QString identifier,
 		       int position,
-		       unsigned long sampleRate,
-		       size_t blockSize,
+		       sv_samplerate_t sampleRate,
+		       int blockSize,
 		       int idealChannelCount,
 		       const DSSI_Descriptor* descriptor);
     
     void init();
-    void instantiate(unsigned long sampleRate);
+    void instantiate(sv_samplerate_t sampleRate);
     void cleanup();
     void activate();
     void deactivate();
     void connectPorts();
 
     bool handleController(snd_seq_event_t *ev);
-    void setPortValueFromController(unsigned int portNumber, int controlValue);
+    void setPortValueFromController(int portNumber, int controlValue);
     void selectProgramAux(std::string program, bool backupPortValues);
     void checkProgramCache() const;
 
     void initialiseGroupMembership();
-    void runGrouped(const Vamp::RealTime &);
+    void runGrouped(const RealTime &);
 
     // For use in DSSIPluginFactory (set in the DSSI_Host_Descriptor):
     static int requestMidiSend(LADSPA_Handle instance,
@@ -145,8 +145,8 @@ protected:
     LADSPA_Handle              m_instanceHandle;
     const DSSI_Descriptor     *m_descriptor;
 
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsIn;
-    std::vector<std::pair<unsigned long, LADSPA_Data*> > m_controlPortsOut;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsIn;
+    std::vector<std::pair<int, LADSPA_Data*> > m_controlPortsOut;
 
     std::vector<LADSPA_Data>  m_backupControlPortsIn;
 
@@ -172,22 +172,22 @@ protected:
 
     RingBuffer<snd_seq_event_t> m_eventBuffer;
 
-    size_t                    m_blockSize;
+    int                       m_blockSize;
     sample_t                **m_inputBuffers;
     sample_t                **m_outputBuffers;
     bool                      m_ownBuffers;
-    size_t                    m_idealChannelCount;
-    size_t                    m_outputBufferCount;
-    size_t                    m_sampleRate;
+    int                       m_idealChannelCount;
+    int                       m_outputBufferCount;
+    sv_samplerate_t           m_sampleRate;
     float                    *m_latencyPort;
     bool                      m_run;
     
     bool                      m_bypassed;
     std::string               m_program;
     bool                      m_grouped;
-    Vamp::RealTime            m_lastRunTime;
+    RealTime                  m_lastRunTime;
 
-    Vamp::RealTime            m_lastEventSendTime;
+    RealTime                  m_lastEventSendTime;
     bool                      m_haveLastEventSendTime;
 
     QMutex                    m_processLock;

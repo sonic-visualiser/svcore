@@ -21,11 +21,14 @@
 #ifndef _REAL_TIME_H_
 #define _REAL_TIME_H_
 
+#include "BaseTypes.h"
+
 #include <iostream>
 #include <string>
 
-struct timeval;
+#include <vamp-hostsdk/RealTime.h>
 
+struct timeval;
 
 /**
  * RealTime represents time values to nanosecond precision
@@ -46,12 +49,16 @@ struct RealTime
     RealTime(const RealTime &r) :
 	sec(r.sec), nsec(r.nsec) { }
 
+    RealTime(const Vamp::RealTime &r) :
+	sec(r.sec), nsec(r.nsec) { }
+
     static RealTime fromSeconds(double sec);
     static RealTime fromMilliseconds(int msec);
     static RealTime fromTimeval(const struct timeval &);
     static RealTime fromXsdDuration(std::string xsdd);
 
     double toDouble() const;
+    Vamp::RealTime toVampRealTime() const { return Vamp::RealTime(sec, nsec); }
 
     RealTime &operator=(const RealTime &r) {
 	sec = r.sec; nsec = r.nsec; return *this;
@@ -149,12 +156,12 @@ struct RealTime
     /**
      * Convert a RealTime into a sample frame at the given sample rate.
      */
-    static long realTime2Frame(const RealTime &r, unsigned int sampleRate);
+    static sv_frame_t realTime2Frame(const RealTime &r, sv_samplerate_t sampleRate);
 
     /**
      * Convert a sample frame at the given sample rate into a RealTime.
      */
-    static RealTime frame2RealTime(long frame, unsigned int sampleRate);
+    static RealTime frame2RealTime(sv_frame_t frame, sv_samplerate_t sampleRate);
 
     static const RealTime zeroTime;
 };

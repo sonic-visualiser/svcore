@@ -20,6 +20,7 @@
 #include <set>
 
 #include "XmlExportable.h"
+#include "BaseTypes.h"
 
 /**
  * A selection object simply represents a range in time, via start and
@@ -40,22 +41,22 @@ class Selection
 {
 public:
     Selection();
-    Selection(int startFrame, int endFrame);
+    Selection(sv_frame_t startFrame, sv_frame_t endFrame);
     Selection(const Selection &);
     Selection &operator=(const Selection &);
     virtual ~Selection();
 
     bool isEmpty() const;
-    int getStartFrame() const;
-    int getEndFrame() const;
-    bool contains(int frame) const;
+    sv_frame_t getStartFrame() const;
+    sv_frame_t getEndFrame() const;
+    bool contains(sv_frame_t frame) const;
 
     bool operator<(const Selection &) const;
     bool operator==(const Selection &) const;
     
 protected:
-    int m_startFrame;
-    int m_endFrame;
+    sv_frame_t m_startFrame;
+    sv_frame_t m_endFrame;
 };
 
 class MultiSelection : public XmlExportable
@@ -72,7 +73,7 @@ public:
     void removeSelection(const Selection &selection);
     void clearSelections();
 
-    void getExtents(int &startFrame, int &endFrame) const;
+    void getExtents(sv_frame_t &startFrame, sv_frame_t &endFrame) const;
 
     /**
      * Return the selection that contains a given frame.
@@ -80,7 +81,7 @@ public:
      * selected area, return the next selection after the given frame.
      * Return the empty selection if no appropriate selection is found.
      */
-    Selection getContainingSelection(int frame, bool defaultToFollowing) const;
+    Selection getContainingSelection(sv_frame_t frame, bool defaultToFollowing) const;
 
     virtual void toXml(QTextStream &stream, QString indent = "",
                        QString extraAttributes = "") const;

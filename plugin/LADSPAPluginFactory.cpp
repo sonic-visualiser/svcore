@@ -104,7 +104,7 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 
 	list.push_back(QString("%1").arg(descriptor->PortCount));
 
-	for (unsigned long p = 0; p < descriptor->PortCount; ++p) {
+	for (int p = 0; p < (int)descriptor->PortCount; ++p) {
 
 	    int type = 0;
 	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[p])) {
@@ -150,18 +150,18 @@ LADSPAPluginFactory::getPortMinimum(const LADSPA_Descriptor *descriptor, int por
     LADSPA_PortRangeHintDescriptor d =
 	descriptor->PortRangeHints[port].HintDescriptor;
 
-    float minimum = 0.0;
+    float minimum = 0.f;
 		
     if (LADSPA_IS_HINT_BOUNDED_BELOW(d)) {
 	float lb = descriptor->PortRangeHints[port].LowerBound;
 	minimum = lb;
     } else if (LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
 	float ub = descriptor->PortRangeHints[port].UpperBound;
-	minimum = std::min(0.0, ub - 1.0);
+	minimum = std::min(0.f, ub - 1.f);
     }
     
     if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
-	minimum *= m_sampleRate;
+	minimum = float(minimum * m_sampleRate);
     }
 
     if (LADSPA_IS_HINT_LOGARITHMIC(d)) {
@@ -177,18 +177,18 @@ LADSPAPluginFactory::getPortMaximum(const LADSPA_Descriptor *descriptor, int por
     LADSPA_PortRangeHintDescriptor d =
 	descriptor->PortRangeHints[port].HintDescriptor;
 
-    float maximum = 1.0;
+    float maximum = 1.f;
     
     if (LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
 	float ub = descriptor->PortRangeHints[port].UpperBound;
 	maximum = ub;
     } else {
 	float lb = descriptor->PortRangeHints[port].LowerBound;
-	maximum = lb + 1.0;
+	maximum = lb + 1.f;
     }
     
     if (LADSPA_IS_HINT_SAMPLE_RATE(d)) {
-	maximum *= m_sampleRate;
+	maximum = float(maximum * m_sampleRate);
     }
 
     return maximum;
@@ -240,25 +240,25 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     } else if (LADSPA_IS_HINT_DEFAULT_LOW(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, logmin * 0.75 + logmax * 0.25);
+	    deft = powf(10, logmin * 0.75f + logmax * 0.25f);
 	} else {
-	    deft = minimum * 0.75 + maximum * 0.25;
+	    deft = minimum * 0.75f + maximum * 0.25f;
 	}
 	
     } else if (LADSPA_IS_HINT_DEFAULT_MIDDLE(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, logmin * 0.5 + logmax * 0.5);
+	    deft = powf(10, logmin * 0.5f + logmax * 0.5f);
 	} else {
-	    deft = minimum * 0.5 + maximum * 0.5;
+	    deft = minimum * 0.5f + maximum * 0.5f;
 	}
 	
     } else if (LADSPA_IS_HINT_DEFAULT_HIGH(d)) {
 	
 	if (logarithmic) {
-	    deft = powf(10, logmin * 0.25 + logmax * 0.75);
+	    deft = powf(10, logmin * 0.25f + logmax * 0.75f);
 	} else {
-	    deft = minimum * 0.25 + maximum * 0.75;
+	    deft = minimum * 0.25f + maximum * 0.75f;
 	}
 	
     } else if (LADSPA_IS_HINT_DEFAULT_MAXIMUM(d)) {
@@ -280,7 +280,7 @@ LADSPAPluginFactory::getPortDefault(const LADSPA_Descriptor *descriptor, int por
     } else if (LADSPA_IS_HINT_DEFAULT_440(d)) {
 	
 //	deft = 440.0;
-        deft = Preferences::getInstance()->getTuningFrequency();
+        deft = (float)Preferences::getInstance()->getTuningFrequency();
 	
     } else {
 	
@@ -303,8 +303,8 @@ LADSPAPluginFactory::getPortQuantization(const LADSPA_Descriptor *descriptor, in
 {
     int displayHint = getPortDisplayHint(descriptor, port);
     if (displayHint & PortHint::Toggled) {
-        return lrintf(getPortMaximum(descriptor, port)) - 
-            lrintf(getPortMinimum(descriptor, port));
+        return float(lrintf(getPortMaximum(descriptor, port)) - 
+                     lrintf(getPortMinimum(descriptor, port)));
     }
     if (displayHint & PortHint::Integer) {
         return 1.0;
@@ -331,9 +331,9 @@ RealTimePluginInstance *
 LADSPAPluginFactory::instantiatePlugin(QString identifier,
 				       int instrument,
 				       int position,
-				       unsigned int sampleRate,
-				       unsigned int blockSize,
-				       unsigned int channels)
+				       sv_samplerate_t sampleRate,
+				       int blockSize,
+				       int channels)
 {
     Profiler profiler("LADSPAPluginFactory::instantiatePlugin");
 
@@ -754,7 +754,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
 
 	unsigned int controlPortNumber = 1;
 	
-	for (unsigned long i = 0; i < descriptor->PortCount; i++) {
+	for (int i = 0; i < (int)descriptor->PortCount; i++) {
 	    
 	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i])) {
 		
@@ -774,7 +774,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
 	}
 #endif // HAVE_LRDF
 
-	for (unsigned long i = 0; i < descriptor->PortCount; i++) {
+	for (int i = 0; i < (int)descriptor->PortCount; i++) {
 	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i])) {
                 if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
                     ++rtd->parameterCount;

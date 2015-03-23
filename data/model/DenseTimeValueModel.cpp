@@ -29,7 +29,7 @@ DenseTimeValueModel::~DenseTimeValueModel()
 }
 	
 QString
-DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
+DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
 {
     int ch = getChannelCount();
 
@@ -42,10 +42,10 @@ DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, int f0, int 
         all[c] = new float[f1 - f0];
     }
 
-    int n = getData(0, ch - 1, f0, f1 - f0, all);
+    sv_frame_t n = getData(0, ch - 1, f0, f1 - f0, all);
 
     QStringList list;
-    for (int i = 0; i < n; ++i) {
+    for (sv_frame_t i = 0; i < n; ++i) {
         QStringList parts;
         parts << QString("%1").arg(f0 + i);
         for (int c = 0; c < ch; ++c) {

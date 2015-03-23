@@ -235,7 +235,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     bool haveBinCount = m_descriptors[n]->hasFixedBinCount;
 
     if (haveBinCount) {
-	binCount = m_descriptors[n]->binCount;
+	binCount = (int)m_descriptors[n]->binCount;
     }
 
     m_needAdditionalModels[n] = false;
@@ -249,7 +249,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         haveExtents = true;
     }
 
-    int modelRate = input->getSampleRate();
+    sv_samplerate_t modelRate = input->getSampleRate();
     int modelResolution = 1;
 
     if (m_descriptors[n]->sampleType != 
@@ -264,7 +264,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
 	if (m_descriptors[n]->sampleRate != 0.0) {
-	    modelResolution = int(modelRate / m_descriptors[n]->sampleRate + 0.001);
+	    modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
 	}
 	break;
 
@@ -281,8 +281,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
         } else {
-            modelResolution = int(round(input->getSampleRate() /
-                                           m_descriptors[n]->sampleRate));
+            modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
         }
 	break;
     }
@@ -573,7 +572,7 @@ FeatureExtractionModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    int sampleRate = input->getSampleRate();
+    sv_samplerate_t sampleRate = input->getSampleRate();
 
     int channelCount = input->getChannelCount();
     if ((int)m_plugin->getMaxChannelCount() < channelCount) {
@@ -616,16 +615,16 @@ FeatureExtractionModelTransformer::run()
         }
     }
 
-    long startFrame = m_input.getModel()->getStartFrame();
-    long   endFrame = m_input.getModel()->getEndFrame();
+    sv_frame_t startFrame = m_input.getModel()->getStartFrame();
+    sv_frame_t endFrame = m_input.getModel()->getEndFrame();
 
     RealTime contextStartRT = primaryTransform.getStartTime();
     RealTime contextDurationRT = primaryTransform.getDuration();
 
-    long contextStart =
+    sv_frame_t contextStart =
         RealTime::realTime2Frame(contextStartRT, sampleRate);
 
-    long contextDuration =
+    sv_frame_t contextDuration =
         RealTime::realTime2Frame(contextDurationRT, sampleRate);
 
     if (contextStart == 0 || contextStart < startFrame) {
@@ -639,7 +638,7 @@ FeatureExtractionModelTransformer::run()
         contextDuration = endFrame - contextStart;
     }
 
-    long blockFrame = contextStart;
+    sv_frame_t blockFrame = contextStart;
 
     long prevCompletion = 0;
 
@@ -670,15 +669,15 @@ FeatureExtractionModelTransformer::run()
 //		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
 //                  << blockSize << endl;
 
-	long completion =
-	    (((blockFrame - contextStart) / stepSize) * 99) /
-	    (contextDuration / stepSize + 1);
+	int completion = int
+	    ((((blockFrame - contextStart) / stepSize) * 99) /
+             (contextDuration / stepSize + 1));
 
 	// channelCount is either m_input.getModel()->channelCount or 1
 
         if (frequencyDomain) {
             for (int ch = 0; ch < channelCount; ++ch) {
-                int column = (blockFrame - startFrame) / stepSize;
+                int column = int((blockFrame - startFrame) / stepSize);
                 if (fftModels[ch]->getValuesAt(column, reals, imaginaries)) {
                     for (int i = 0; i <= blockSize/2; ++i) {
                         buffers[ch][i*2] = reals[i];
@@ -704,7 +703,7 @@ FeatureExtractionModelTransformer::run()
         if (m_abandoned) break;
 
 	Vamp::Plugin::FeatureSet features = m_plugin->process
-	    (buffers, Vamp::RealTime::frame2RealTime(blockFrame, sampleRate));
+	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
 
         if (m_abandoned) break;
 
@@ -756,14 +755,15 @@ FeatureExtractionModelTransformer::run()
 
 void
 FeatureExtractionModelTransformer::getFrames(int channelCount,
-                                             long startFrame, long size,
+                                             sv_frame_t startFrame,
+                                             sv_frame_t size,
                                              float **buffers)
 {
-    long offset = 0;
+    sv_frame_t offset = 0;
 
     if (startFrame < 0) {
         for (int c = 0; c < channelCount; ++c) {
-            for (int i = 0; i < size && startFrame + i < 0; ++i) {
+            for (sv_frame_t i = 0; i < size && startFrame + i < 0; ++i) {
                 buffers[c][i] = 0.0f;
             }
         }
@@ -776,7 +776,7 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
     
-    long got = 0;
+    sv_frame_t got = 0;
 
     if (channelCount == 1) {
 
@@ -786,7 +786,7 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
         if (m_input.getChannel() == -1 && input->getChannelCount() > 1) {
             // use mean instead of sum, as plugin input
             float cc = float(input->getChannelCount());
-            for (long i = 0; i < size; ++i) {
+            for (sv_frame_t i = 0; i < size; ++i) {
                 buffers[0][i + offset] /= cc;
             }
         }
@@ -816,10 +816,10 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 
 void
 FeatureExtractionModelTransformer::addFeature(int n,
-                                              int blockFrame,
+                                              sv_frame_t blockFrame,
                                               const Vamp::Plugin::Feature &feature)
 {
-    int inputRate = m_input.getModel()->getSampleRate();
+    sv_samplerate_t inputRate = m_input.getModel()->getSampleRate();
 
 //    cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
 //              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
@@ -827,7 +827,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 //              << feature.hasDuration << ", duration = " << feature.duration
 //              << endl;
 
-    int frame = blockFrame;
+    sv_frame_t frame = blockFrame;
 
     if (m_descriptors[n]->sampleType ==
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
@@ -839,7 +839,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 		<< endl;
 	    return;
 	} else {
-	    frame = Vamp::RealTime::realTime2Frame(feature.timestamp, inputRate);
+	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
     } else if (m_descriptors[n]->sampleType ==
@@ -849,7 +849,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             ++m_fixedRateFeatureNos[n];
         } else {
             RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
-            m_fixedRateFeatureNos[n] =
+            m_fixedRateFeatureNos[n] = (int)
                 lrint(ts.toDouble() * m_descriptors[n]->sampleRate);
         }
 
@@ -857,8 +857,9 @@ FeatureExtractionModelTransformer::addFeature(int n,
 //             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
 //             << ", inputRate = " << inputRate
 //             << " giving frame = ";
-        frame = lrintf((m_fixedRateFeatureNos[n] / m_descriptors[n]->sampleRate)
-                       * int(inputRate));
+        frame = lrint((double(m_fixedRateFeatureNos[n])
+                       / m_descriptors[n]->sampleRate)
+                      * inputRate);
     }
 
     if (frame < 0) {
@@ -922,12 +923,12 @@ FeatureExtractionModelTransformer::addFeature(int n,
             value = feature.values[index++];
         }
 
-        float duration = 1;
+        sv_frame_t duration = 1;
         if (feature.hasDuration) {
-            duration = Vamp::RealTime::realTime2Frame(feature.duration, inputRate);
+            duration = RealTime::realTime2Frame(feature.duration, inputRate);
         } else {
-            if ((int)feature.values.size() > index) {
-                duration = feature.values[index++];
+            if (in_range_for(feature.values, index)) {
+                duration = lrintf(feature.values[index++]);
             }
         }
 
@@ -942,10 +943,11 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
             FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
             if (!model) return;
-            model->addPoint(FlexiNoteModel::Point(frame, value, // value is pitch
-                                             lrintf(duration),
-                                             velocity / 127.f,
-                                             feature.label.c_str()));
+            model->addPoint(FlexiNoteModel::Point(frame,
+                                                  value, // value is pitch
+                                                  duration,
+                                                  velocity / 127.f,
+                                                  feature.label.c_str()));
 			// GF: end -- added for flexi note model
         } else  if (isOutput<NoteModel>(n)) {
 
@@ -959,7 +961,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             NoteModel *model = getConformingOutput<NoteModel>(n);
             if (!model) return;
             model->addPoint(NoteModel::Point(frame, value, // value is pitch
-                                             lrintf(duration),
+                                             duration,
                                              velocity / 127.f,
                                              feature.label.c_str()));
         } else {
@@ -978,14 +980,16 @@ FeatureExtractionModelTransformer::addFeature(int n,
                         label = QString("[%1] %2").arg(i+1).arg(label);
                     }
 
-                    model->addPoint(RegionModel::Point(frame, value,
-                                                       lrintf(duration),
+                    model->addPoint(RegionModel::Point(frame,
+                                                       value,
+                                                       duration,
                                                        label));
                 }
             } else {
             
-                model->addPoint(RegionModel::Point(frame, value,
-                                                   lrintf(duration),
+                model->addPoint(RegionModel::Point(frame,
+                                                   value,
+                                                   duration,
                                                    feature.label.c_str()));
             }
         }
@@ -1005,7 +1009,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (!feature.hasTimestamp && m_fixedRateFeatureNos[n] >= 0) {
             model->setColumn(m_fixedRateFeatureNos[n], values);
         } else {
-            model->setColumn(frame / model->getResolution(), values);
+            model->setColumn(int(frame / model->getResolution()), values);
         }
 
     } else {

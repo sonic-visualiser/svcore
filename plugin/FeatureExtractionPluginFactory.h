@@ -23,6 +23,7 @@
 #include <vamp-hostsdk/Plugin.h>
 
 #include "base/Debug.h"
+#include "base/BaseTypes.h"
 
 class FeatureExtractionPluginFactory
 {
@@ -42,7 +43,7 @@ public:
     // We don't set blockSize or channels on this -- they're
     // negotiated and handled via initialize() on the plugin
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
-                                            float inputSampleRate);
+                                            sv_samplerate_t inputSampleRate);
 
     /**
      * Get category metadata about a plugin (without instantiating it).
