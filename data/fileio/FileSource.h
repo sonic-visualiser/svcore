@@ -195,6 +195,13 @@ public:
      */
     static bool canHandleScheme(QUrl url);
 
+    /**
+     * Print some stats, if FileSource was compiled with debugging.
+     * It's safe to leave a call to this function in release code, as
+     * long as FileSource itself is compiled with release flags.
+     */
+    static void debugReport();
+    
 signals:
     /**
      * Emitted during URL retrieval, when the retrieval progress

@@ -28,16 +28,32 @@ class QFile;
 class CSVFileReader : public DataFileReader
 {
 public:
+    /**
+     * Construct a CSVFileReader to read the CSV file at the given
+     * path, with the given format.
+     */
     CSVFileReader(QString path, CSVFormat format, int mainModelSampleRate);
+
+    /**
+     * Construct a CSVFileReader to read from the given
+     * QIODevice. Caller retains ownership of the QIODevice: the
+     * CSVFileReader will not close or delete it and it must outlive
+     * the CSVFileReader.
+     */
+    CSVFileReader(QIODevice *device, CSVFormat format, int mainModelSampleRate);
+
     virtual ~CSVFileReader();
 
     virtual bool isOK() const;
     virtual QString getError() const;
+
     virtual Model *load() const;
 
 protected:
     CSVFormat m_format;
-    QFile *m_file;
+    QIODevice *m_device;
+    bool m_ownDevice;
+    QString m_filename;
     QString m_error;
     mutable int m_warnings;
     int m_mainModelSampleRate;

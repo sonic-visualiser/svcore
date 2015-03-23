@@ -26,6 +26,7 @@
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QRegExp>
 #include <QStringList>
@@ -37,42 +38,55 @@
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              int mainModelSampleRate) :
     m_format(format),
-    m_file(0),
+    m_device(0),
+    m_ownDevice(true),
     m_warnings(0),
     m_mainModelSampleRate(mainModelSampleRate)
 {
-    m_file = new QFile(path);
+    QFile *file = new QFile(path);
     bool good = false;
     
-    if (!m_file->exists()) {
+    if (!file->exists()) {
 	m_error = QFile::tr("File \"%1\" does not exist").arg(path);
-    } else if (!m_file->open(QIODevice::ReadOnly | QIODevice::Text)) {
+    } else if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
 	m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
     } else {
 	good = true;
     }
 
-    if (!good) {
-	delete m_file;
-	m_file = 0;
+    if (good) {
+        m_device = file;
+        m_filename = QFileInfo(path).fileName();
+    } else {
+	delete file;
     }
+}
+
+CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
+                             int mainModelSampleRate) :
+    m_format(format),
+    m_device(device),
+    m_ownDevice(false),
+    m_warnings(0),
+    m_mainModelSampleRate(mainModelSampleRate)
+{
 }
 
 CSVFileReader::~CSVFileReader()
 {
-    SVDEBUG << "CSVFileReader::~CSVFileReader: file is " << m_file << endl;
+    SVDEBUG << "CSVFileReader::~CSVFileReader: device is " << m_device << endl;
 
-    if (m_file) {
-        SVDEBUG << "CSVFileReader::CSVFileReader: Closing file" << endl;
-        m_file->close();
+    if (m_device && m_ownDevice) {
+        SVDEBUG << "CSVFileReader::CSVFileReader: Closing device" << endl;
+        m_device->close();
+        delete m_device;
     }
-    delete m_file;
 }
 
 bool
 CSVFileReader::isOK() const
 {
-    return (m_file != 0);
+    return (m_device != 0);
 }
 
 QString
@@ -136,7 +150,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
 Model *
 CSVFileReader::load() const
 {
-    if (!m_file) return 0;
+    if (!m_device) return 0;
 
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
@@ -168,8 +182,7 @@ CSVFileReader::load() const
     EditableDenseThreeDimensionalModel *model3 = 0;
     Model *model = 0;
 
-    QTextStream in(m_file);
-    in.seek(0);
+    QTextStream in(m_device);
 
     unsigned int warnings = 0, warnLimit = 10;
     unsigned int lineno = 0;
@@ -215,7 +228,7 @@ CSVFileReader::load() const
         for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
-
+            
             if (line.startsWith("#")) continue;
 
             QStringList list = StringBits::split(line, separator, allowQuoting);
@@ -251,6 +264,12 @@ CSVFileReader::load() const
                          EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
                     break;
+                }
+
+                if (model) {
+                    if (m_filename != "") {
+                        model->setObjectName(m_filename);
+                    }
                 }
             }
 

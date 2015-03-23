@@ -53,10 +53,11 @@ public:
     };
 
     enum ColumnQuality {
-        ColumnNumeric    = 0x1,
-        ColumnIntegral   = 0x2,
-        ColumnIncreasing = 0x4,
-        ColumnLarge      = 0x8
+        ColumnNumeric    = 1,
+        ColumnIntegral   = 2,
+        ColumnIncreasing = 4,
+        ColumnLarge      = 8,
+        ColumnNearEmpty  = 16,
     };
     typedef unsigned int ColumnQualities;
 
@@ -100,8 +101,8 @@ public:
     void setTimingType(TimingType t)      { m_timingType   = t; }
     void setTimeUnits(TimeUnits t)        { m_timeUnits    = t; }
     void setSeparator(QChar s)            { m_separator    = s; }
-    void setSampleRate(int r)          { m_sampleRate   = r; }
-    void setWindowSize(int s)          { m_windowSize   = s; }
+    void setSampleRate(int r)             { m_sampleRate   = r; }
+    void setWindowSize(int s)             { m_windowSize   = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
 
