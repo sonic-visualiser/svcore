@@ -46,9 +46,10 @@ getSVDebug()
         prefix = strdup(QString("[%1]")
                         .arg(QCoreApplication::applicationPid())
                         .toLatin1().data());
-        //!!! what to do if mkpath fails?
-	if (!logdir.exists()) logdir.mkpath(logdir.path());
     }
+
+    //!!! what to do if mkpath fails?
+    if (!logdir.exists()) logdir.mkpath(logdir.path());
 
     if (!debugs.hasLocalData()) {
         QFile *logFile = new QFile(logdir.path() + "/sv-debug.log");
