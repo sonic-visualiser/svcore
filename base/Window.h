@@ -22,7 +22,7 @@
 #include <map>
 #include <cstdlib>
 
-#include <cstdlib>
+#include "system/System.h"
 
 enum WindowType {
     RectangularWindow,

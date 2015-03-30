@@ -156,6 +156,10 @@ extern void RestoreStartupLocale();
 
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 extern double mod(double x, double y);
 extern float modf(float x, float y);
 
