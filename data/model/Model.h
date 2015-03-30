@@ -22,6 +22,7 @@
 #include "base/XmlExportable.h"
 #include "base/Playable.h"
 #include "base/BaseTypes.h"
+#include "base/DataExportOptions.h"
 
 typedef std::vector<float> SampleBlock;
 
@@ -237,8 +238,15 @@ public:
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataStringSubset(delimiter, getStartFrame(), getEndFrame());
     }
+    virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
+        return toDelimitedDataStringSubsetWithOptions(delimiter, opts, getStartFrame(), getEndFrame());
+    }
     virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
         return "";
+    }
+    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions, sv_frame_t f0, sv_frame_t f1) const {
+        // Default implementation supports no options
+        return toDelimitedDataStringSubset(delimiter, f0, f1);
     }
 
 public slots:
