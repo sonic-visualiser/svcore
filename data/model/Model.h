@@ -93,22 +93,6 @@ public:
     virtual QString getTypeName() const = 0;
 
     /**
-     * Return a copy of this model.
-     *
-     * If the model is not editable, this may be effectively a shallow
-     * copy.  If the model is editable, however, this operation must
-     * properly copy all of the model's editable data.
-     *
-     * In general this operation is not useful for non-editable dense
-     * models such as waveforms, because there may be no efficient
-     * copy operation implemented -- for such models it is better not
-     * to copy at all.
-     *
-     * Caller owns the returned value.
-     */
-    virtual Model *clone() const = 0;
-
-    /**
      * Mark the model as abandoning. This means that the application
      * no longer needs it, so it can stop doing any background
      * calculations it may be involved in. Note that as far as the

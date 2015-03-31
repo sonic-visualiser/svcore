@@ -54,8 +54,6 @@ public:
 
     QString getLocalFilename() const;
 
-    virtual Model *clone() const;
-
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 

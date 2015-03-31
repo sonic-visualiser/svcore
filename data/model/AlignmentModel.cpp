@@ -96,15 +96,6 @@ AlignmentModel::getSampleRate() const
     return m_reference->getSampleRate();
 }
 
-Model *
-AlignmentModel::clone() const
-{
-    return new AlignmentModel
-        (m_reference, m_aligned,
-         m_inputModel ? m_inputModel->clone() : 0,
-         m_rawPath ? static_cast<SparseTimeValueModel *>(m_rawPath->clone()) : 0);
-}
-
 bool
 AlignmentModel::isReady(int *completion) const
 {

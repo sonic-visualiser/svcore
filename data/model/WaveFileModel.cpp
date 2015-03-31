@@ -124,13 +124,6 @@ WaveFileModel::isReady(int *completion) const
     return ready;
 }
 
-Model *
-WaveFileModel::clone() const
-{
-    WaveFileModel *model = new WaveFileModel(m_source);
-    return model;
-}
-
 sv_frame_t
 WaveFileModel::getFrameCount() const
 {

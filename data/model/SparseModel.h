@@ -52,8 +52,6 @@ public:
     virtual sv_frame_t getEndFrame() const;
     virtual sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
-    virtual Model *clone() const;
-
     // Number of frames of the underlying sample rate that this model
     // is capable of resolving to.  For example, if m_resolution == 10
     // then every point in this model will be at a multiple of 10
@@ -549,20 +547,6 @@ SparseModel<PointType>::getEndFrame() const
 	f = (--i)->frame;
     }
     return f;
-}
-
-template <typename PointType>
-Model *
-SparseModel<PointType>::clone() const
-{
-    return 0; //!!! is this ever used?
-/*
-    SparseModel<PointType> *model =
-	new SparseModel<PointType>(m_sampleRate, m_resolution, m_notifyOnAdd);
-    model->m_points = m_points;
-    model->m_pointCount = m_pointCount;
-    return model;
-*/
 }
 
 template <typename PointType>

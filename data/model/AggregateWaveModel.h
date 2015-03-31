@@ -53,8 +53,6 @@ public:
     int getChannelCount() const;
     sv_samplerate_t getSampleRate() const;
 
-    virtual Model *clone() const;
-
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
 

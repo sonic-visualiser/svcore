@@ -54,9 +54,6 @@ public:
     virtual sv_frame_t getStartFrame() const;
     virtual sv_frame_t getEndFrame() const;
 
-    virtual Model *clone() const;
-    
-
     /**
      * Set the frame offset of the first column.
      */
