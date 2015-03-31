@@ -66,13 +66,15 @@ public:
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, sv_samplerate_t sampleRate) const
+    QString toDelimitedDataString(QString delimiter, DataExportOptions opts, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
         list << QString("%1").arg(value);
         list << RealTime::frame2RealTime(duration, sampleRate).toString().c_str();
-        list << QString("%1").arg(level);
+        if (!(opts & DataExportOmitLevels)) {
+            list << QString("%1").arg(level);
+        }
         if (label != "") list << label;
         return list.join(delimiter);
     }

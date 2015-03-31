@@ -148,21 +148,28 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toDelimitedDataString(QString delimiter) const
-    { 
+    virtual QString toDelimitedDataString(QString delimiter) const {
+        return toDelimitedDataStringWithOptions(delimiter, DataExportDefaults);
+    }
+
+    virtual QString toDelimitedDataStringWithOptions(QString delimiter,
+                                                     DataExportOptions opts) const { 
         QString s;
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
+            s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
         }
         return s;
     }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
-    { 
+    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
+        return toDelimitedDataStringSubsetWithOptions(delimiter, DataExportDefaults, f0, f1);
+    }
+
+    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const { 
         QString s;
         for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
             if (i->frame >= f0 && i->frame < f1) {
-                s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
+                s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
             }
         }
         return s;
