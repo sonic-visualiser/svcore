@@ -153,26 +153,28 @@ public:
     }
 
     virtual QString toDelimitedDataStringWithOptions(QString delimiter,
-                                                     DataExportOptions opts) const { 
-        QString s;
-        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
-        }
-        return s;
+                                                     DataExportOptions opts) const {
+        return toDelimitedDataStringSubsetWithOptions
+            (delimiter, opts,
+             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame());
     }
 
     virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
         return toDelimitedDataStringSubsetWithOptions(delimiter, DataExportDefaults, f0, f1);
     }
 
-    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const { 
-        QString s;
-        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            if (i->frame >= f0 && i->frame < f1) {
-                s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
+    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const {
+        if (opts & DataExportFillGaps) {
+            return toDelimitedDataStringSubsetFilled(delimiter, opts, f0, f1);
+        } else {
+            QString s;
+            for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
+                if (i->frame >= f0 && i->frame < f1) {
+                    s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
+                }
             }
+            return s;
         }
-        return s;
     }
 
     /**
@@ -462,6 +464,49 @@ protected:
             std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
         }
         return i;
+    }
+
+    QString toDelimitedDataStringSubsetFilled(QString delimiter,
+                                              DataExportOptions opts,
+                                              sv_frame_t f0,
+                                              sv_frame_t f1) const {
+
+        QString s;
+        opts &= ~DataExportFillGaps;
+
+        // find frame time of first point in range (if any)
+        sv_frame_t first = f0;
+        for (auto &p: m_points) {
+            if (p.frame >= f0) {
+                first = p.frame;
+                break;
+            }
+        }
+
+        // project back to first frame time in range according to
+        // resolution.  e.g. if f0 = 2, first = 9, resolution = 4 then
+        // we start at 5 (because 1 is too early and we need to arrive
+        // at 9 to match the first actual point). This method is
+        // stupid but easy to understand:
+        sv_frame_t f = first;
+        while (f >= f0 + m_resolution) f -= m_resolution;
+        
+        // now progress, either writing the next point (if within
+        // distance) or a default point
+        PointListConstIterator itr = m_points.begin();
+
+        while (f < f1) {
+            if (itr != m_points.end() && itr->frame <= f) {
+                s += itr->toDelimitedDataString(delimiter, opts, m_sampleRate);
+                ++itr;
+            } else {
+                s += Point(f).toDelimitedDataString(delimiter, opts, m_sampleRate);
+            }
+            s += "\n";
+            f += m_resolution;
+        }
+
+        return s;
     }
 };
 
