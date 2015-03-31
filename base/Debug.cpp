@@ -16,70 +16,57 @@
 #include "Debug.h"
 #include "ResourceFinder.h"
 
-#include <QString>
-#include <QUrl>
 #include <QMutex>
-#include <QMutexLocker>
-#include <QFile>
 #include <QDir>
+#include <QUrl>
 #include <QCoreApplication>
-#include <QDateTime>
-#include <QThreadStorage>
 
-#include <cstdio>
+#ifndef NDEBUG
 
-static QThreadStorage<QDebug *> debugs;
+static SVDebug *debug = 0;
 static QMutex mutex;
-static char *prefix = 0;
 
-QDebug &
-getSVDebug()
-{
+SVDebug &getSVDebug() {
     mutex.lock();
+    if (!debug) {
+        debug = new SVDebug();
+    }
+    mutex.unlock();
+    return *debug;
+}
 
-    QDebug *debug = 0;
-
+SVDebug::SVDebug() :
+    m_prefix(0),
+    m_ok(false),
+    m_eol(false)
+{
     QString pfx = ResourceFinder().getUserResourcePrefix();
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
-    if (!prefix) {
-        prefix = strdup(QString("[%1]")
-                        .arg(QCoreApplication::applicationPid())
-                        .toLatin1().data());
-    }
+    m_prefix = strdup(QString("[%1]")
+                      .arg(QCoreApplication::applicationPid())
+                      .toLatin1().data());
 
     //!!! what to do if mkpath fails?
     if (!logdir.exists()) logdir.mkpath(logdir.path());
 
-    if (!debugs.hasLocalData()) {
-        QFile *logFile = new QFile(logdir.path() + "/sv-debug.log");
-        if (logFile->open(QIODevice::WriteOnly | QIODevice::Append)) {
-            QDebug(QtDebugMsg) << (const char *)prefix
-                               << "Opened debug log file "
-                               << logFile->fileName();
-            debug = new QDebug(logFile);
-        } else {
-            QDebug(QtWarningMsg) << (const char *)prefix
-                                 << "Failed to open debug log file "
-                                 << logFile->fileName()
-                                 << " for writing, using console debug instead";
-            delete logFile;
-            logFile = 0;
-            debug = new QDebug(QtDebugMsg);
-        }
-        debugs.setLocalData(debug);
-        *debug << endl << (const char *)prefix << "Log started at "
-               << QDateTime::currentDateTime().toString();
+    QString fileName = logdir.path() + "/sv-debug.log";
+
+    m_stream.open(fileName.toLocal8Bit().data(), std::ios_base::out);
+
+    if (!m_stream) {
+        QDebug(QtWarningMsg) << (const char *)m_prefix
+                             << "Failed to open debug log file "
+                             << fileName << " for writing";
     } else {
-        debug = debugs.localData();
+        cerr << m_prefix << ": Log file is " << fileName << endl;
+        m_ok = true;
     }
+}
 
-    mutex.unlock();
-
-    QDebug &dref = *debug;
-    dref << endl << (const char *)prefix;
-
-    return dref;
+SVDebug::~SVDebug()
+{
+    m_stream.close();
 }
 
 QDebug &
@@ -88,6 +75,8 @@ operator<<(QDebug &dbg, const std::string &s)
     dbg << QString::fromUtf8(s.c_str());
     return dbg;
 }
+
+#endif
 
 std::ostream &
 operator<<(std::ostream &target, const QString &str)
