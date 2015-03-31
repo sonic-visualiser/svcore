@@ -92,12 +92,6 @@ AggregateWaveModel::getSampleRate() const
     return m_components.begin()->model->getSampleRate();
 }
 
-Model *
-AggregateWaveModel::clone() const
-{
-    return new AggregateWaveModel(m_components);
-}
-
 sv_frame_t
 AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                             float *buffer) const

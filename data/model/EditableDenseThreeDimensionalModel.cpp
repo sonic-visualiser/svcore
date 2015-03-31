@@ -81,26 +81,6 @@ EditableDenseThreeDimensionalModel::getEndFrame() const
     return m_resolution * m_data.size() + (m_resolution - 1);
 }
 
-Model *
-EditableDenseThreeDimensionalModel::clone() const
-{
-    QReadLocker locker(&m_lock);
-
-    EditableDenseThreeDimensionalModel *model =
-        new EditableDenseThreeDimensionalModel
-	(m_sampleRate, m_resolution, m_yBinCount, m_compression);
-
-    model->m_minimum = m_minimum;
-    model->m_maximum = m_maximum;
-    model->m_haveExtents = m_haveExtents;
-
-    for (int i = 0; i < m_data.size(); ++i) {
-	model->setColumn(i, m_data.at(i));
-    }
-
-    return model;
-}
-
 int
 EditableDenseThreeDimensionalModel::getResolution() const
 {

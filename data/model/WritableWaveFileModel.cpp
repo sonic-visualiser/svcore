@@ -169,13 +169,6 @@ WritableWaveFileModel::getFrameCount() const
     return m_frameCount;
 }
 
-Model *
-WritableWaveFileModel::clone() const
-{
-    assert(0); //!!!
-    return 0;
-}
-
 sv_frame_t
 WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                                float *buffer) const

@@ -45,10 +45,6 @@ public:
         return m_source->getEndFrame();
     }
 
-    virtual Model *clone() const {
-        return new Dense3DModelPeakCache(m_source, m_resolution);
-    }
-    
     virtual int getResolution() const {
         return m_source->getResolution() * m_resolution;
     }

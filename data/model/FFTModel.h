@@ -179,8 +179,6 @@ public:
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
     virtual QString getError() const { return m_server->getError(); }
 
-    virtual Model *clone() const;
-
     virtual void suspend() { m_server->suspend(); }
     virtual void suspendWrites() { m_server->suspendWrites(); }
     virtual void resume() { m_server->resume(); }

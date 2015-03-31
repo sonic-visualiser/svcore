@@ -437,12 +437,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     return peaks;
 }
 
-Model *
-FFTModel::clone() const
-{
-    return new FFTModel(*this);
-}
-
 FFTModel::FFTModel(const FFTModel &model) :
     DenseThreeDimensionalModel(),
     m_server(model.m_server),
