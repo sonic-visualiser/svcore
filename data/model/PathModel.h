@@ -43,7 +43,7 @@ struct PathPoint
             .arg(indent).arg(frame).arg(mapframe).arg(extraAttributes);
     }
         
-    QString toDelimitedDataString(QString delimiter,
+    QString toDelimitedDataString(QString delimiter, DataExportOptions,
                                   sv_samplerate_t sampleRate) const {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
