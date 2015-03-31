@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DEBUG_H_
-#define _DEBUG_H_
+#ifndef SV_DEBUG_H
+#define SV_DEBUG_H
 
 #include <QDebug>
 #include <QTextStream>
@@ -23,6 +23,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 class QString;
 class QUrl;
@@ -37,28 +38,39 @@ using std::endl;
 
 #ifndef NDEBUG
 
-extern QDebug &getSVDebug();
+class SVDebug {
+public:
+    SVDebug();
+    ~SVDebug();
+
+    template <typename T>
+    inline SVDebug &operator<<(const T &t) {
+        if (m_ok) {
+            if (m_eol) {
+                m_stream << m_prefix << " ";
+            }
+            m_stream << t;
+            m_eol = false;
+        }
+        return *this;
+    }
+
+    inline SVDebug &operator<<(QTextStreamFunction) {
+        m_stream << std::endl;
+        m_eol = true;
+        return *this;
+    }
+
+private:
+    std::fstream m_stream;
+    char *m_prefix;
+    bool m_ok;
+    bool m_eol;
+};
+
+extern SVDebug &getSVDebug();
 
 #define SVDEBUG getSVDebug()
-
-inline QDebug &operator<<(QDebug &d, const RealTime &rt) {
-    d << rt.toString();
-    return d;
-}
-
-inline QDebug &operator<<(QDebug &d, const Vamp::RealTime &rt) {
-    d << rt.toString();
-    return d;
-}
-
-template <typename T>
-inline QDebug &operator<<(QDebug &d, const T &t) {
-    QString s;
-    QTextStream ts(&s);
-    ts << t;
-    d << s;
-    return d;
-}
 
 #else
 
