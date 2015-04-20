@@ -48,7 +48,7 @@ public:
      */
     static DataFileReader *createReader(QString path,
                                         MIDIFileImportPreferenceAcquirer *,
-					int mainModelSampleRate);
+					sv_samplerate_t mainModelSampleRate);
 
     /**
      * Read the given path, if a suitable reader is available.
@@ -60,7 +60,7 @@ public:
      */
     static Model *load(QString path,
                        MIDIFileImportPreferenceAcquirer *acquirer,
-                       int mainModelSampleRate);
+                       sv_samplerate_t mainModelSampleRate);
 
     /**
      * Read the given path, if a suitable reader is available.
@@ -69,7 +69,7 @@ public:
      */
     static Model *loadNonCSV(QString path,
                              MIDIFileImportPreferenceAcquirer *acquirer,
-                             int mainModelSampleRate);
+                             sv_samplerate_t mainModelSampleRate);
 
     /**
      * Read the given path using the CSV reader with the given format.
@@ -77,13 +77,13 @@ public:
      */
     static Model *loadCSV(QString path,
                           CSVFormat format,
-                          int mainModelSampleRate);
+                          sv_samplerate_t mainModelSampleRate);
 
 protected:
     static DataFileReader *createReader(QString path, bool csv,
                                         MIDIFileImportPreferenceAcquirer *,
                                         CSVFormat format,
-					int mainModelSampleRate);
+					sv_samplerate_t mainModelSampleRate);
 };
 
 #endif

@@ -30,7 +30,7 @@
 
 #include <iostream>
 
-int RealTimePluginFactory::m_sampleRate = 48000;
+sv_samplerate_t RealTimePluginFactory::m_sampleRate = 48000;
 
 static LADSPAPluginFactory *_ladspaInstance = 0;
 static LADSPAPluginFactory *_dssiInstance = 0;

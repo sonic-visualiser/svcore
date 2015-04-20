@@ -65,14 +65,14 @@ AggregateWaveModel::isReady(int *completion) const
     return ready;
 }
 
-int
+sv_frame_t
 AggregateWaveModel::getFrameCount() const
 {
-    int count = 0;
+    sv_frame_t count = 0;
 
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
-        int thisCount = i->model->getEndFrame() - i->model->getStartFrame();
+        sv_frame_t thisCount = i->model->getEndFrame() - i->model->getStartFrame();
         if (thisCount > count) count = thisCount;
     }
 
@@ -82,24 +82,18 @@ AggregateWaveModel::getFrameCount() const
 int
 AggregateWaveModel::getChannelCount() const
 {
-    return m_components.size();
+    return int(m_components.size());
 }
 
-int
+sv_samplerate_t
 AggregateWaveModel::getSampleRate() const
 {
     if (m_components.empty()) return 0;
     return m_components.begin()->model->getSampleRate();
 }
 
-Model *
-AggregateWaveModel::clone() const
-{
-    return new AggregateWaveModel(m_components);
-}
-
-int
-AggregateWaveModel::getData(int channel, int start, int count,
+sv_frame_t
+AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                             float *buffer) const
 {
     int ch0 = channel, ch1 = channel;
@@ -113,15 +107,15 @@ AggregateWaveModel::getData(int channel, int start, int count,
     float *readbuf = buffer;
     if (mixing) {
         readbuf = new float[count];
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             buffer[i] = 0.f;
         }
     }
 
-    int longest = 0;
+    sv_frame_t longest = 0;
     
     for (int c = ch0; c <= ch1; ++c) {
-        int here = 
+        sv_frame_t here = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
@@ -129,12 +123,12 @@ AggregateWaveModel::getData(int channel, int start, int count,
             longest = here;
         }
         if (here < count) {
-            for (int i = here; i < count; ++i) {
+            for (sv_frame_t i = here; i < count; ++i) {
                 readbuf[i] = 0.f;
             }
         }
         if (mixing) {
-            for (int i = 0; i < count; ++i) {
+            for (sv_frame_t i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -144,8 +138,8 @@ AggregateWaveModel::getData(int channel, int start, int count,
     return longest;
 }
          
-int
-AggregateWaveModel::getData(int channel, int start, int count,
+sv_frame_t
+AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                             double *buffer) const
 {
     int ch0 = channel, ch1 = channel;
@@ -159,15 +153,15 @@ AggregateWaveModel::getData(int channel, int start, int count,
     double *readbuf = buffer;
     if (mixing) {
         readbuf = new double[count];
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             buffer[i] = 0.0;
         }
     }
 
-    int longest = 0;
+    sv_frame_t longest = 0;
     
     for (int c = ch0; c <= ch1; ++c) {
-        int here = 
+        sv_frame_t here = 
             m_components[c].model->getData(m_components[c].channel,
                                            start, count,
                                            readbuf);
@@ -175,12 +169,12 @@ AggregateWaveModel::getData(int channel, int start, int count,
             longest = here;
         }
         if (here < count) {
-            for (int i = here; i < count; ++i) {
+            for (sv_frame_t i = here; i < count; ++i) {
                 readbuf[i] = 0.;
             }
         }
         if (mixing) {
-            for (int i = 0; i < count; ++i) {
+            for (sv_frame_t i = 0; i < count; ++i) {
                 buffer[i] += readbuf[i];
             }
         }
@@ -190,15 +184,15 @@ AggregateWaveModel::getData(int channel, int start, int count,
     return longest;
 }
 
-int
+sv_frame_t
 AggregateWaveModel::getData(int fromchannel, int tochannel,
-                            int start, int count,
+                            sv_frame_t start, sv_frame_t count,
                             float **buffer) const
 {
-    int min = count;
+    sv_frame_t min = count;
 
     for (int c = fromchannel; c <= tochannel; ++c) {
-        int here = getData(c, start, count, buffer[c - fromchannel]);
+        sv_frame_t here = getData(c, start, count, buffer[c - fromchannel]);
         if (here < min) min = here;
     }
     
@@ -213,14 +207,14 @@ AggregateWaveModel::getSummaryBlockSize(int desired) const
 }
         
 void
-AggregateWaveModel::getSummaries(int, int, int,
+AggregateWaveModel::getSummaries(int, sv_frame_t, sv_frame_t,
                                  RangeBlock &, int &) const
 {
     //!!! complete
 }
 
 AggregateWaveModel::Range
-AggregateWaveModel::getSummary(int, int, int) const
+AggregateWaveModel::getSummary(int, sv_frame_t, sv_frame_t) const
 {
     //!!! complete
     return Range();
@@ -229,7 +223,7 @@ AggregateWaveModel::getSummary(int, int, int) const
 int
 AggregateWaveModel::getComponentCount() const
 {
-    return m_components.size();
+    return int(m_components.size());
 }
 
 AggregateWaveModel::ModelChannelSpec
@@ -245,7 +239,7 @@ AggregateWaveModel::componentModelChanged()
 }
 
 void
-AggregateWaveModel::componentModelChangedWithin(int start, int end)
+AggregateWaveModel::componentModelChangedWithin(sv_frame_t start, sv_frame_t end)
 {
     emit modelChangedWithin(start, end);
 }

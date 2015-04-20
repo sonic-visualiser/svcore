@@ -31,8 +31,8 @@ ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
     Model *baseModel = dynamic_cast<Model *>(m);
 
     connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-    connect(baseModel, SIGNAL(modelChangedWithin(int, int)),
-            this, SLOT(modelChangedWithin(int, int)));
+    connect(baseModel, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+            this, SLOT(modelChangedWithin(sv_frame_t, sv_frame_t)));
     connect(baseModel, SIGNAL(aboutToBeDeleted()),
             this, SLOT(modelAboutToBeDeleted()));
 }
@@ -155,14 +155,14 @@ ModelDataTableModel::columnCount(const QModelIndex &parent) const
 }
 
 QModelIndex 
-ModelDataTableModel::getModelIndexForFrame(int frame) const
+ModelDataTableModel::getModelIndexForFrame(sv_frame_t frame) const
 {
     if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
     return createIndex(getSorted(row), 0, (void *)0);
 }
 
-int 
+sv_frame_t
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
     if (!m_model) return 0;
@@ -219,7 +219,7 @@ ModelDataTableModel::modelChanged()
 }
 
 void 
-ModelDataTableModel::modelChangedWithin(int, int)
+ModelDataTableModel::modelChangedWithin(sv_frame_t, sv_frame_t)
 {
     //!!! inefficient
     clearSort();

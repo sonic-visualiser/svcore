@@ -42,7 +42,7 @@ public:
     QuickTimeFileReader(FileSource source,
                         DecodeMode decodeMode,
                         CacheMode cacheMode,
-                        int targetRate = 0,
+                        sv_samplerate_t targetRate = 0,
                         bool normalised = false,
                         ProgressReporter *reporter = 0);
     virtual ~QuickTimeFileReader();

@@ -105,7 +105,7 @@ void Profiles::dump() const
         fprintf(stderr, "\tCPU:  \t%.9g ms/call \t[%d ms total]\n",
                 (((double)pp.second.first * 1000.0 /
 		  (double)pp.first) / CLOCKS_PER_SEC),
-                int((pp.second.first * 1000.0) / CLOCKS_PER_SEC));
+                int((double(pp.second.first) * 1000.0) / CLOCKS_PER_SEC));
 
         fprintf(stderr, "\tReal: \t%s ms      \t[%s ms total]\n",
                 ((pp.second.second / pp.first) * 1000).toString().c_str(),
@@ -118,7 +118,7 @@ void Profiles::dump() const
 
         fprintf(stderr, "\tWorst:\t%s ms/call \t[%d ms CPU]\n",
                 (wc.second * 1000).toString().c_str(),
-                int((wc.first * 1000.0) / CLOCKS_PER_SEC));
+                int((double(wc.first) * 1000.0) / CLOCKS_PER_SEC));
     }
 
     typedef std::multimap<RealTime, const char *> TimeRMap;

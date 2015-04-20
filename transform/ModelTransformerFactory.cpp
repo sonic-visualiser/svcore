@@ -55,8 +55,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       const std::vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
                                                       AudioPlaySource *source,
-                                                      int startFrame,
-                                                      int duration,
+                                                      sv_frame_t startFrame,
+                                                      sv_frame_t duration,
                                                       UserConfigurator *configurator)
 {
     ModelTransformer::Input input(0);
@@ -99,7 +99,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
-            (id, inputModel->getSampleRate());
+            (id, float(inputModel->getSampleRate()));
 
         plugin = vp;
 
@@ -107,7 +107,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
-        int sampleRate = inputModel->getSampleRate();
+        sv_samplerate_t sampleRate = inputModel->getSampleRate();
         int blockSize = 1024;
         int channels = 1;
         if (source) {

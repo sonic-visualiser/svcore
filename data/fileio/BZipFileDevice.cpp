@@ -178,7 +178,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
     if (m_atEnd) return 0;
 
     int bzError = BZ_OK;
-    int read = BZ2_bzRead(&bzError, m_bzFile, data, maxSize);
+    int read = BZ2_bzRead(&bzError, m_bzFile, data, int(maxSize));
 
 //    SVDEBUG << "BZipFileDevice::readData: requested " << maxSize << ", read " << read << endl;
 
@@ -201,7 +201,7 @@ qint64
 BZipFileDevice::writeData(const char *data, qint64 maxSize)
 {
     int bzError = BZ_OK;
-    BZ2_bzWrite(&bzError, m_bzFile, (void *)data, maxSize);
+    BZ2_bzWrite(&bzError, m_bzFile, (void *)data, int(maxSize));
 
 //    SVDEBUG << "BZipFileDevice::writeData: " << maxSize << " to write" << endl;
 

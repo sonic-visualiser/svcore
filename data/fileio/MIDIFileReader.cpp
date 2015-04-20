@@ -58,7 +58,7 @@ using namespace MIDIConstants;
 
 MIDIFileReader::MIDIFileReader(QString path,
                                MIDIFileImportPreferenceAcquirer *acquirer,
-			       int mainModelSampleRate) :
+			       sv_samplerate_t mainModelSampleRate) :
     m_smpte(false),
     m_timingDivision(0),
     m_fps(0),
@@ -301,7 +301,9 @@ MIDIFileReader::parseFile()
 	// Set file size so we can count it off
 	//
 	m_midiFile->seekg(0, ios::end);
-	m_fileSize = m_midiFile->tellg();
+        std::streamoff off = m_midiFile->tellg();
+	m_fileSize = 0;
+        if (off > 0) m_fileSize = off;
 	m_midiFile->seekg(0, ios::beg);
 
 	// Parse the MIDI header first.  The first 14 bytes of the file.
@@ -440,9 +442,9 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
     MIDIByte midiByte, metaEventCode, data1, data2;
     MIDIByte eventCode = 0x80;
     string metaMessage;
-    unsigned int messageLength;
-    unsigned long deltaTime;
-    unsigned long accumulatedTime = 0;
+    long messageLength;
+    long deltaTime;
+    long accumulatedTime = 0;
 
     // The trackNum passed in to this method is the default track for
     // all events provided they're all on the same channel.  If we find
@@ -890,7 +892,7 @@ MIDIFileReader::load() const
 
     if (tracksToLoad.empty()) return 0;
 
-    int n = tracksToLoad.size(), count = 0;
+    int n = int(tracksToLoad.size()), count = 0;
     Model *model = 0;
 
     for (std::set<unsigned int>::iterator i = tracksToLoad.begin();
@@ -938,7 +940,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
     const MIDITrack &track = m_midiComposition.find(trackToLoad)->second;
 
-    int totalEvents = track.size();
+    int totalEvents = int(track.size());
     int count = 0;
 
     bool sharpKey = true;

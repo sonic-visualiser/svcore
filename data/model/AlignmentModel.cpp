@@ -37,8 +37,8 @@ AlignmentModel::AlignmentModel(Model *reference,
         connect(m_rawPath, SIGNAL(modelChanged()),
                 this, SLOT(pathChanged()));
 
-        connect(m_rawPath, SIGNAL(modelChangedWithin(int, int)),
-                this, SLOT(pathChangedWithin(int, int)));
+        connect(m_rawPath, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+                this, SLOT(pathChangedWithin(sv_frame_t, sv_frame_t)));
         
         connect(m_rawPath, SIGNAL(completionChanged()),
                 this, SLOT(pathCompletionChanged()));
@@ -74,35 +74,26 @@ AlignmentModel::isOK() const
     else return true;
 }
 
-int
+sv_frame_t
 AlignmentModel::getStartFrame() const
 {
-    int a = m_reference->getStartFrame();
-    int b = m_aligned->getStartFrame();
+    sv_frame_t a = m_reference->getStartFrame();
+    sv_frame_t b = m_aligned->getStartFrame();
     return std::min(a, b);
 }
 
-int
+sv_frame_t
 AlignmentModel::getEndFrame() const
 {
-    int a = m_reference->getEndFrame();
-    int b = m_aligned->getEndFrame();
+    sv_frame_t a = m_reference->getEndFrame();
+    sv_frame_t b = m_aligned->getEndFrame();
     return std::max(a, b);
 }
 
-int
+sv_samplerate_t
 AlignmentModel::getSampleRate() const
 {
     return m_reference->getSampleRate();
-}
-
-Model *
-AlignmentModel::clone() const
-{
-    return new AlignmentModel
-        (m_reference, m_aligned,
-         m_inputModel ? m_inputModel->clone() : 0,
-         m_rawPath ? static_cast<SparseTimeValueModel *>(m_rawPath->clone()) : 0);
 }
 
 bool
@@ -144,8 +135,8 @@ AlignmentModel::getAlignedModel() const
     return m_aligned;
 }
 
-int
-AlignmentModel::toReference(int frame) const
+sv_frame_t
+AlignmentModel::toReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
     SVDEBUG << "AlignmentModel::toReference(" << frame << ")" << endl;
@@ -157,8 +148,8 @@ AlignmentModel::toReference(int frame) const
     return align(m_path, frame);
 }
 
-int
-AlignmentModel::fromReference(int frame) const
+sv_frame_t
+AlignmentModel::fromReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
     SVDEBUG << "AlignmentModel::fromReference(" << frame << ")" << endl;
@@ -182,7 +173,7 @@ AlignmentModel::pathChanged()
 }
 
 void
-AlignmentModel::pathChangedWithin(int, int)
+AlignmentModel::pathChangedWithin(sv_frame_t, sv_frame_t)
 {
     if (!m_pathComplete) return;
     constructPath();
@@ -242,9 +233,9 @@ AlignmentModel::constructPath() const
         
     for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
          i != points.end(); ++i) {
-        long frame = i->frame;
-        float value = i->value;
-        long rframe = lrintf(value * m_aligned->getSampleRate());
+        sv_frame_t frame = i->frame;
+        double value = i->value;
+        sv_frame_t rframe = lrint(value * m_aligned->getSampleRate());
         m_path->addPoint(PathPoint(frame, rframe));
     }
 
@@ -274,8 +265,8 @@ AlignmentModel::constructReversePath() const
         
     for (PathModel::PointList::const_iterator i = points.begin();
          i != points.end(); ++i) {
-        long frame = i->frame;
-        long rframe = i->mapframe;
+        sv_frame_t frame = i->frame;
+        sv_frame_t rframe = i->mapframe;
         m_reversePath->addPoint(PathPoint(rframe, frame));
     }
 
@@ -284,8 +275,8 @@ AlignmentModel::constructReversePath() const
 #endif
 }
 
-int
-AlignmentModel::align(PathModel *path, int frame) const
+sv_frame_t
+AlignmentModel::align(PathModel *path, sv_frame_t frame) const
 {
     if (!path) return frame;
 
@@ -315,13 +306,13 @@ AlignmentModel::align(PathModel *path, int frame) const
 #endif
         --i;
     }
-    while (i != points.begin() && i->frame > long(frame)) --i;
+    while (i != points.begin() && i->frame > frame) --i;
 
-    long foundFrame = i->frame;
-    long foundMapFrame = i->mapframe;
+    sv_frame_t foundFrame = i->frame;
+    sv_frame_t foundMapFrame = i->mapframe;
 
-    long followingFrame = foundFrame;
-    long followingMapFrame = foundMapFrame;
+    sv_frame_t followingFrame = foundFrame;
+    sv_frame_t followingMapFrame = foundMapFrame;
 
     if (++i != points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -337,13 +328,13 @@ AlignmentModel::align(PathModel *path, int frame) const
 
     if (foundMapFrame < 0) return 0;
 
-    int resultFrame = foundMapFrame;
+    sv_frame_t resultFrame = foundMapFrame;
 
-    if (followingFrame != foundFrame && long(frame) > foundFrame) {
-        float interp =
-            float(frame - foundFrame) /
-            float(followingFrame - foundFrame);
-        resultFrame += lrintf((followingMapFrame - foundMapFrame) * interp);
+    if (followingFrame != foundFrame && frame > foundFrame) {
+        double interp =
+            double(frame - foundFrame) /
+            double(followingFrame - foundFrame);
+        resultFrame += lrint(double(followingMapFrame - foundMapFrame) * interp);
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -364,8 +355,8 @@ AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
     connect(m_rawPath, SIGNAL(modelChanged()),
             this, SLOT(pathChanged()));
 
-    connect(m_rawPath, SIGNAL(modelChangedWithin(int, int)),
-            this, SLOT(pathChangedWithin(int, int)));
+    connect(m_rawPath, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+            this, SLOT(pathChangedWithin(sv_frame_t, sv_frame_t)));
         
     connect(m_rawPath, SIGNAL(completionChanged()),
             this, SLOT(pathCompletionChanged()));

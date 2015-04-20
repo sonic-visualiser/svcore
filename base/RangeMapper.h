@@ -31,7 +31,7 @@ public:
      * the nearest position and clamping to the minimum and maximum
      * extents of the mapper's positional range.
      */
-    virtual int getPositionForValue(float value) const = 0;
+    virtual int getPositionForValue(double value) const = 0;
 
     /**
      * Return the position that maps to the given value, rounding to
@@ -41,13 +41,13 @@ public:
      * range. (The mapping outside that range is not guaranteed to be
      * exact, except if the mapper is a linear one.)
      */
-    virtual int getPositionForValueUnclamped(float value) const = 0;
+    virtual int getPositionForValueUnclamped(double value) const = 0;
 
     /**
      * Return the value mapped from the given position, clamping to
      * the minimum and maximum extents of the mapper's value range.
      */
-    virtual float getValueForPosition(int position) const = 0;
+    virtual double getValueForPosition(int position) const = 0;
 
     /**
      * Return the value mapped from the given positionq, without
@@ -56,7 +56,7 @@ public:
      * mapper's value range. (The mapping outside that range is not
      * guaranteed to be exact, except if the mapper is a linear one.)
      */
-    virtual float getValueForPositionUnclamped(int position) const = 0;
+    virtual double getValueForPositionUnclamped(int position) const = 0;
 
     /**
      * Get the unit of the mapper's value range.
@@ -75,22 +75,22 @@ public:
      * mapped "backwards" (minval to maxpos and maxval to minpos).
      */
     LinearRangeMapper(int minpos, int maxpos,
-                      float minval, float maxval,
+                      double minval, double maxval,
                       QString unit = "", bool inverted = false);
     
-    virtual int getPositionForValue(float value) const;
-    virtual int getPositionForValueUnclamped(float value) const;
+    virtual int getPositionForValue(double value) const;
+    virtual int getPositionForValueUnclamped(double value) const;
 
-    virtual float getValueForPosition(int position) const;
-    virtual float getValueForPositionUnclamped(int position) const;
+    virtual double getValueForPosition(int position) const;
+    virtual double getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
 protected:
     int m_minpos;
     int m_maxpos;
-    float m_minval;
-    float m_maxval;
+    double m_minval;
+    double m_maxval;
     QString m_unit;
     bool m_inverted;
 };
@@ -107,31 +107,31 @@ public:
      * to maxpos and maxval to minpos).
      */
     LogRangeMapper(int minpos, int maxpos,
-                   float minval, float maxval,
+                   double minval, double maxval,
                    QString m_unit = "", bool inverted = false);
 
-    static void convertRatioMinLog(float ratio, float minlog,
+    static void convertRatioMinLog(double ratio, double minlog,
                                    int minpos, int maxpos,
-                                   float &minval, float &maxval);
+                                   double &minval, double &maxval);
 
     static void convertMinMax(int minpos, int maxpos,
-                              float minval, float maxval,
-                              float &ratio, float &minlog);
+                              double minval, double maxval,
+                              double &ratio, double &minlog);
 
-    virtual int getPositionForValue(float value) const;
-    virtual int getPositionForValueUnclamped(float value) const;
+    virtual int getPositionForValue(double value) const;
+    virtual int getPositionForValueUnclamped(double value) const;
 
-    virtual float getValueForPosition(int position) const;
-    virtual float getValueForPositionUnclamped(int position) const;
+    virtual double getValueForPosition(int position) const;
+    virtual double getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
 protected:
     int m_minpos;
     int m_maxpos;
-    float m_ratio;
-    float m_minlog;
-    float m_maxlog;
+    double m_ratio;
+    double m_minlog;
+    double m_maxlog;
     QString m_unit;
     bool m_inverted;
 };
@@ -139,7 +139,7 @@ protected:
 class InterpolatingRangeMapper : public RangeMapper
 {
 public:
-    typedef std::map<float, int> CoordMap;
+    typedef std::map<double, int> CoordMap;
 
     /**
      * Given a series of (value, position) coordinate mappings,
@@ -162,21 +162,21 @@ public:
     InterpolatingRangeMapper(CoordMap pointMappings,
                              QString unit);
 
-    virtual int getPositionForValue(float value) const;
-    virtual int getPositionForValueUnclamped(float value) const;
+    virtual int getPositionForValue(double value) const;
+    virtual int getPositionForValueUnclamped(double value) const;
 
-    virtual float getValueForPosition(int position) const;
-    virtual float getValueForPositionUnclamped(int position) const;
+    virtual double getValueForPosition(int position) const;
+    virtual double getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 
 protected:
     CoordMap m_mappings;
-    std::map<int, float> m_reverse;
+    std::map<int, double> m_reverse;
     QString m_unit;
 
     template <typename T>
-    float interpolate(T *mapping, float v) const;
+    double interpolate(T *mapping, double v) const;
 };
 
 class AutoRangeMapper : public RangeMapper
@@ -188,7 +188,7 @@ public:
         Logarithmic,
     };
 
-    typedef std::map<float, int> CoordMap;
+    typedef std::map<double, int> CoordMap;
 
     /**
      * Given a series of (value, position) coordinate mappings,
@@ -235,11 +235,11 @@ public:
      */
     MappingType getType() const { return m_type; }
 
-    virtual int getPositionForValue(float value) const;
-    virtual int getPositionForValueUnclamped(float value) const;
+    virtual int getPositionForValue(double value) const;
+    virtual int getPositionForValueUnclamped(double value) const;
 
-    virtual float getValueForPosition(int position) const;
-    virtual float getValueForPositionUnclamped(int position) const;
+    virtual double getValueForPosition(int position) const;
+    virtual double getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
 

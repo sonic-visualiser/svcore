@@ -27,9 +27,11 @@
 #include <cmath>
 #include <cassert>
 
+using std::vector;
+
 #include "system/System.h"
 
-EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(int sampleRate,
+EditableDenseThreeDimensionalModel::EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
                                                                        int resolution,
                                                                        int yBinCount,
                                                                        CompressionType compression,
@@ -55,48 +57,28 @@ EditableDenseThreeDimensionalModel::isOK() const
     return true;
 }
 
-int
+sv_samplerate_t
 EditableDenseThreeDimensionalModel::getSampleRate() const
 {
     return m_sampleRate;
 }
 
-int
+sv_frame_t
 EditableDenseThreeDimensionalModel::getStartFrame() const
 {
     return m_startFrame;
 }
 
 void
-EditableDenseThreeDimensionalModel::setStartFrame(int f)
+EditableDenseThreeDimensionalModel::setStartFrame(sv_frame_t f)
 {
     m_startFrame = f; 
 }
 
-int
+sv_frame_t
 EditableDenseThreeDimensionalModel::getEndFrame() const
 {
     return m_resolution * m_data.size() + (m_resolution - 1);
-}
-
-Model *
-EditableDenseThreeDimensionalModel::clone() const
-{
-    QReadLocker locker(&m_lock);
-
-    EditableDenseThreeDimensionalModel *model =
-        new EditableDenseThreeDimensionalModel
-	(m_sampleRate, m_resolution, m_yBinCount, m_compression);
-
-    model->m_minimum = m_minimum;
-    model->m_maximum = m_maximum;
-    model->m_haveExtents = m_haveExtents;
-
-    for (int i = 0; i < m_data.size(); ++i) {
-	model->setColumn(i, m_data.at(i));
-    }
-
-    return model;
 }
 
 int
@@ -255,7 +237,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                     tcol[i - bcount] = values.at(i);
                 }
                 m_data[index] = tcol;
-                m_trunc[index] = -tdist;
+                m_trunc[index] = (signed char)(-tdist);
                 return;
             } else {
                 // create a new column with h - tcount values from 0 up
@@ -266,7 +248,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                     tcol[i] = values.at(i);
                 }
                 m_data[index] = tcol;
-                m_trunc[index] = tdist;
+                m_trunc[index] = (signed char)(tdist);
                 return;
             }
         }
@@ -445,15 +427,15 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 {
     QReadLocker locker(&m_lock);
 
-    QVector<float> sample;
-    QVector<int> n;
+    vector<double> sample;
+    vector<int> n;
     
     for (int i = 0; i < 10; ++i) {
         int index = i * 10;
         if (index < m_data.size()) {
             const Column &c = m_data.at(index);
-            while (c.size() > sample.size()) {
-                sample.push_back(0.f);
+            while (c.size() > int(sample.size())) {
+                sample.push_back(0.0);
                 n.push_back(0);
             }
             for (int j = 0; j < c.size(); ++j) {
@@ -464,11 +446,11 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
     }
 
     if (sample.empty()) return false;
-    for (int j = 0; j < sample.size(); ++j) {
+    for (decltype(sample)::size_type j = 0; j < sample.size(); ++j) {
         if (n[j]) sample[j] /= n[j];
     }
     
-    return LogRange::useLogScale(sample.toStdVector());
+    return LogRange::useLogScale(sample);
 }
 
 void
@@ -515,13 +497,13 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
 }
 
 QString
-EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
+EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
 {
     QReadLocker locker(&m_lock);
     QString s;
     for (int i = 0; i < m_data.size(); ++i) {
-        int fr = m_startFrame + i * m_resolution;
-        if (fr >= int(f0) && fr < int(f1)) {
+        sv_frame_t fr = m_startFrame + i * m_resolution;
+        if (fr >= f0 && fr < f1) {
             QStringList list;
             for (int j = 0; j < m_data.at(i).size(); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));

@@ -132,7 +132,7 @@ public:
         if (m_counter > m_cycle) m_counter = 1;
     }
 
-    void setSampleRate(float rate) { m_rate = rate; }
+    void setSampleRate(sv_samplerate_t rate) { m_rate = rate; }
 
     void resetCounters() {
         m_counter = 1;
@@ -262,24 +262,24 @@ protected:
 
         case ValueFromSimpleCounter:
         case ValueFromCyclicalCounter:
-            value = m_counter;
+            value = float(m_counter);
             incrementCounter();
             break;
 
         case ValueFromTwoLevelCounter:
-            value = m_counter2 + double(m_counter) / double(m_dp);
+            value = float(m_counter2 + double(m_counter) / double(m_dp));
             incrementCounter();
             break;
 
         case ValueFromFrameNumber:
-            value = newPoint.frame;
+            value = float(newPoint.frame);
             break;
             
         case ValueFromRealTime: 
-            if (m_rate == 0.f) {
+            if (m_rate == 0.0) {
                 std::cerr << "ERROR: Labeller::getValueFor: Real-time conversion required, but no sample rate set" << std::endl;
             } else {
-                value = float(newPoint.frame) / float(m_rate);
+                value = float(double(newPoint.frame) / m_rate);
             }
             break;
 
@@ -287,18 +287,18 @@ protected:
         case ValueFromTempoToNext:
         case ValueFromDurationFromPrevious:
         case ValueFromTempoFromPrevious:
-            if (m_rate == 0.f) {
+            if (m_rate == 0.0) {
                 std::cerr << "ERROR: Labeller::getValueFor: Real-time conversion required, but no sample rate set" << std::endl;
             } else if (!prevPoint) {
                 std::cerr << "ERROR: Labeller::getValueFor: Time difference required, but only one point provided" << std::endl;
             } else {
-                int f0 = prevPoint->frame, f1 = newPoint.frame;
+                sv_frame_t f0 = prevPoint->frame, f1 = newPoint.frame;
                 if (m_type == ValueFromDurationToNext ||
                     m_type == ValueFromDurationFromPrevious) {
-                    value = float(f1 - f0) / m_rate;
+                    value = float(double(f1 - f0) / m_rate);
                 } else {
                     if (f1 > f0) {
-                        value = (60.f * m_rate) / (f1 - f0);
+                        value = float((60.0 * m_rate) / double(f1 - f0));
                     }
                 }
             }
@@ -313,7 +313,7 @@ protected:
         case ValueFromLabel:
             if (newPoint.label != "") {
                 // more forgiving than QString::toFloat()
-                value = atof(newPoint.label.toLocal8Bit());
+                value = float(atof(newPoint.label.toLocal8Bit()));
             } else {
                 value = 0.f;
             }
@@ -328,7 +328,7 @@ protected:
     int m_counter2;
     int m_cycle;
     int m_dp;
-    float m_rate;
+    sv_samplerate_t m_rate;
 };
 
 #endif

@@ -66,7 +66,7 @@ public:
     float getNormalizedMagnitudeAt(int x, int y) const {
         if (m_storageType == FFTCache::Rectangular) return getMagnitudeAt(x, y) / m_factor[x];
         else if (m_storageType == FFTCache::Polar) return m_fmagnitude[x][y];
-        else return float(m_magnitude[x][y]) / 65535.0;
+        else return float(m_magnitude[x][y]) / 65535.f;
     }
     
     float getMaximumMagnitudeAt(int x) const {
@@ -81,7 +81,7 @@ public:
             return m_fphase[x][y];
         } else {
             int16_t i = (int16_t)m_phase[x][y];
-            return (float(i) / 32767.0) * M_PI;
+            return float(i / 32767.0 * M_PI);
         }
     }
     
@@ -114,7 +114,7 @@ public:
         } else {
             for (int i = 0; i < count; ++i) {
                 int y = i * step + minbin;
-                values[i] = (float(m_magnitude[x][y]) * m_factor[x]) / 65535.0;
+                values[i] = float(double(m_magnitude[x][y]) * m_factor[x] / 65535.0);
             }
         }
     }
@@ -132,7 +132,7 @@ public:
 
     void allColumnsWritten() { } 
 
-    static int getCacheSize(int width, int height,
+    static size_t getCacheSize(int width, int height,
                                FFTCache::StorageType type);
 
     FFTCache::StorageType getStorageType() const { return m_storageType; }

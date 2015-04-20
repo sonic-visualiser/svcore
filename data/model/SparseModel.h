@@ -43,16 +43,14 @@ class SparseModel : public Model,
                     public TabularModel
 {
 public:
-    SparseModel(int sampleRate, int resolution,
+    SparseModel(sv_samplerate_t sampleRate, int resolution,
 		bool notifyOnAdd = true);
     virtual ~SparseModel() { }
     
     virtual bool isOK() const { return true; }
-    virtual int getStartFrame() const;
-    virtual int getEndFrame() const;
-    virtual int getSampleRate() const { return m_sampleRate; }
-
-    virtual Model *clone() const;
+    virtual sv_frame_t getStartFrame() const;
+    virtual sv_frame_t getEndFrame() const;
+    virtual sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
     // Number of frames of the underlying sample rate that this model
     // is capable of resolving to.  For example, if m_resolution == 10
@@ -64,6 +62,12 @@ public:
     }
     virtual void setResolution(int resolution);
 
+    // Extend the end of the model. If this is set to something beyond
+    // the end of the final point in the model, then getEndFrame()
+    // will return this value. Otherwise getEndFrame() will return the
+    // end of the final point.
+    virtual void extendEndFrame(sv_frame_t to) { m_extendTo = to; }
+    
     typedef PointType Point;
     typedef std::multiset<PointType,
 			  typename PointType::OrderComparator> PointList;
@@ -91,25 +95,25 @@ public:
      * after the boundaries.  If you need exact boundaries, check the
      * point coordinates in the returned list.
      */
-    virtual PointList getPoints(long start, long end) const;
+    virtual PointList getPoints(sv_frame_t start, sv_frame_t end) const;
 
     /**
      * Get all points that cover the given frame number, taking the
      * resolution of the model into account.
      */
-    virtual PointList getPoints(long frame) const;
+    virtual PointList getPoints(sv_frame_t frame) const;
 
     /**
      * Return all points that share the nearest frame number prior to
      * the given one at which there are any points.
      */
-    virtual PointList getPreviousPoints(long frame) const;
+    virtual PointList getPreviousPoints(sv_frame_t frame) const;
 
     /**
      * Return all points that share the nearest frame number
      * subsequent to the given one at which there are any points.
      */
-    virtual PointList getNextPoints(long frame) const;
+    virtual PointList getNextPoints(sv_frame_t frame) const;
 
     /**
      * Remove all points.
@@ -148,24 +152,33 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toDelimitedDataString(QString delimiter) const
-    { 
-        QString s;
-        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
-        }
-        return s;
+    virtual QString toDelimitedDataString(QString delimiter) const {
+        return toDelimitedDataStringWithOptions(delimiter, DataExportDefaults);
     }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const
-    { 
-        QString s;
-        for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-            if (i->frame >= (long)f0 && i->frame < (long)f1) {
-                s += i->toDelimitedDataString(delimiter, m_sampleRate) + "\n";
+    virtual QString toDelimitedDataStringWithOptions(QString delimiter,
+                                                     DataExportOptions opts) const {
+        return toDelimitedDataStringSubsetWithOptions
+            (delimiter, opts,
+             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame());
+    }
+
+    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
+        return toDelimitedDataStringSubsetWithOptions(delimiter, DataExportDefaults, f0, f1);
+    }
+
+    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const {
+        if (opts & DataExportFillGaps) {
+            return toDelimitedDataStringSubsetFilled(delimiter, opts, f0, f1);
+        } else {
+            QString s;
+            for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
+                if (i->frame >= f0 && i->frame < f1) {
+                    s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
+                }
             }
+            return s;
         }
-        return s;
     }
 
     /**
@@ -284,31 +297,26 @@ public:
 
     virtual int getRowCount() const
     {
-        return m_points.size();
+        return int(m_points.size());
     }
 
-    virtual long getFrameForRow(int row) const
+    virtual sv_frame_t getFrameForRow(int row) const
     {
         PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return 0;
         return i->frame;
     }
 
-    virtual int getRowForFrame(long frame) const
+    virtual int getRowForFrame(sv_frame_t frame) const
     {
         if (m_rows.empty()) rebuildRowVector();
-        std::vector<long>::iterator i =
+        std::vector<sv_frame_t>::iterator i =
             std::lower_bound(m_rows.begin(), m_rows.end(), frame);
-#if defined(__SUNPRO_CC) && defined(__STD_RW_ITERATOR__)
-        int row = 0;
-        std::distance(m_rows.begin(), i, row);
-#else
-        int row = std::distance(m_rows.begin(), i);
-#endif
+        ssize_t row = std::distance(m_rows.begin(), i);
         if (i != m_rows.begin() && (i == m_rows.end() || *i != frame)) {
             --row;
         }
-        return row;
+        return int(row);
     }
 
     virtual int getColumnCount() const { return 1; }
@@ -371,11 +379,12 @@ public:
     }
             
 protected:
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
     int m_resolution;
+    sv_frame_t m_extendTo;
     bool m_notifyOnAdd;
-    long m_sinceLastNotifyMin;
-    long m_sinceLastNotifyMax;
+    sv_frame_t m_sinceLastNotifyMin;
+    sv_frame_t m_sinceLastNotifyMax;
     bool m_hasTextLabels;
 
     PointList m_points;
@@ -383,16 +392,16 @@ protected:
     mutable QMutex m_mutex;
     int m_completion;
 
-    void getPointIterators(long frame,
+    void getPointIterators(sv_frame_t frame,
                            PointListIterator &startItr,
                            PointListIterator &endItr);
-    void getPointIterators(long frame,
+    void getPointIterators(sv_frame_t frame,
                            PointListConstIterator &startItr,
                            PointListConstIterator &endItr) const;
 
     // This is only used if the model is called on to act in
     // TabularModel mode
-    mutable std::vector<long> m_rows; // map from row number to frame
+    mutable std::vector<sv_frame_t> m_rows; // map from row number to frame
     void rebuildRowVector() const
     {
         m_rows.clear();
@@ -407,7 +416,7 @@ protected:
         if (m_rows.empty()) rebuildRowVector();
         if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
 
-        int frame = m_rows[row];
+        sv_frame_t frame = m_rows[row];
         int indexAtFrame = 0;
         int ri = row;
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
@@ -434,7 +443,7 @@ protected:
         if (m_rows.empty()) rebuildRowVector();
         if (row < 0 || row + 1 > int(m_rows.size())) return m_points.end();
 
-        int frame = m_rows[row];
+        sv_frame_t frame = m_rows[row];
         int indexAtFrame = 0;
         int ri = row;
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
@@ -461,15 +470,59 @@ protected:
         }
         return i;
     }
+
+    QString toDelimitedDataStringSubsetFilled(QString delimiter,
+                                              DataExportOptions opts,
+                                              sv_frame_t f0,
+                                              sv_frame_t f1) const {
+
+        QString s;
+        opts &= ~DataExportFillGaps;
+
+        // find frame time of first point in range (if any)
+        sv_frame_t first = f0;
+        for (auto &p: m_points) {
+            if (p.frame >= f0) {
+                first = p.frame;
+                break;
+            }
+        }
+
+        // project back to first frame time in range according to
+        // resolution.  e.g. if f0 = 2, first = 9, resolution = 4 then
+        // we start at 5 (because 1 is too early and we need to arrive
+        // at 9 to match the first actual point). This method is
+        // stupid but easy to understand:
+        sv_frame_t f = first;
+        while (f >= f0 + m_resolution) f -= m_resolution;
+        
+        // now progress, either writing the next point (if within
+        // distance) or a default point
+        PointListConstIterator itr = m_points.begin();
+
+        while (f < f1) {
+            if (itr != m_points.end() && itr->frame <= f) {
+                s += itr->toDelimitedDataString(delimiter, opts, m_sampleRate);
+                ++itr;
+            } else {
+                s += Point(f).toDelimitedDataString(delimiter, opts, m_sampleRate);
+            }
+            s += "\n";
+            f += m_resolution;
+        }
+
+        return s;
+    }
 };
 
 
 template <typename PointType>
-SparseModel<PointType>::SparseModel(int sampleRate,
+SparseModel<PointType>::SparseModel(sv_samplerate_t sampleRate,
                                     int resolution,
                                     bool notifyOnAdd) :
     m_sampleRate(sampleRate),
     m_resolution(resolution),
+    m_extendTo(0),
     m_notifyOnAdd(notifyOnAdd),
     m_sinceLastNotifyMin(-1),
     m_sinceLastNotifyMax(-1),
@@ -480,11 +533,11 @@ SparseModel<PointType>::SparseModel(int sampleRate,
 }
 
 template <typename PointType>
-int
+sv_frame_t
 SparseModel<PointType>::getStartFrame() const
 {
     QMutexLocker locker(&m_mutex);
-    int f = 0;
+    sv_frame_t f = 0;
     if (!m_points.empty()) {
 	f = m_points.begin()->frame;
     }
@@ -492,30 +545,17 @@ SparseModel<PointType>::getStartFrame() const
 }
 
 template <typename PointType>
-int
+sv_frame_t
 SparseModel<PointType>::getEndFrame() const
 {
     QMutexLocker locker(&m_mutex);
-    int f = 0;
+    sv_frame_t f = 0;
     if (!m_points.empty()) {
 	PointListConstIterator i(m_points.end());
 	f = (--i)->frame;
     }
-    return f;
-}
-
-template <typename PointType>
-Model *
-SparseModel<PointType>::clone() const
-{
-    return 0; //!!! is this ever used?
-/*
-    SparseModel<PointType> *model =
-	new SparseModel<PointType>(m_sampleRate, m_resolution, m_notifyOnAdd);
-    model->m_points = m_points;
-    model->m_pointCount = m_pointCount;
-    return model;
-*/
+    if (m_extendTo > f) return m_extendTo;
+    else return f;
 }
 
 template <typename PointType>
@@ -541,7 +581,7 @@ SparseModel<PointType>::getPoints() const
 
 template <typename PointType>
 typename SparseModel<PointType>::PointList
-SparseModel<PointType>::getPoints(long start, long end) const
+SparseModel<PointType>::getPoints(sv_frame_t start, sv_frame_t end) const
 {
     if (start > end) return PointList();
     QMutexLocker locker(&m_mutex);
@@ -567,7 +607,7 @@ SparseModel<PointType>::getPoints(long start, long end) const
 
 template <typename PointType>
 typename SparseModel<PointType>::PointList
-SparseModel<PointType>::getPoints(long frame) const
+SparseModel<PointType>::getPoints(sv_frame_t frame) const
 {
     PointListConstIterator startItr, endItr;
     getPointIterators(frame, startItr, endItr);
@@ -583,7 +623,7 @@ SparseModel<PointType>::getPoints(long frame) const
 
 template <typename PointType>
 void
-SparseModel<PointType>::getPointIterators(long frame,
+SparseModel<PointType>::getPointIterators(sv_frame_t frame,
                                           PointListIterator &startItr,
                                           PointListIterator &endItr)
 {
@@ -595,8 +635,8 @@ SparseModel<PointType>::getPointIterators(long frame,
         return;
     }
 
-    long start = (frame / m_resolution) * m_resolution;
-    long end = start + m_resolution;
+    sv_frame_t start = (frame / m_resolution) * m_resolution;
+    sv_frame_t end = start + m_resolution;
 
     PointType startPoint(start), endPoint(end);
 
@@ -606,7 +646,7 @@ SparseModel<PointType>::getPointIterators(long frame,
 
 template <typename PointType>
 void
-SparseModel<PointType>::getPointIterators(long frame,
+SparseModel<PointType>::getPointIterators(sv_frame_t frame,
                                           PointListConstIterator &startItr,
                                           PointListConstIterator &endItr) const
 {
@@ -619,8 +659,8 @@ SparseModel<PointType>::getPointIterators(long frame,
         return;
     }
 
-    long start = (frame / m_resolution) * m_resolution;
-    long end = start + m_resolution;
+    sv_frame_t start = (frame / m_resolution) * m_resolution;
+    sv_frame_t end = start + m_resolution;
 
     PointType startPoint(start), endPoint(end);
     
@@ -632,7 +672,7 @@ SparseModel<PointType>::getPointIterators(long frame,
 
 template <typename PointType>
 typename SparseModel<PointType>::PointList
-SparseModel<PointType>::getPreviousPoints(long originFrame) const
+SparseModel<PointType>::getPreviousPoints(sv_frame_t originFrame) const
 {
     QMutexLocker locker(&m_mutex);
 
@@ -643,7 +683,7 @@ SparseModel<PointType>::getPreviousPoints(long originFrame) const
     if (i == m_points.begin()) return rv;
 
     --i;
-    long frame = i->frame;
+    sv_frame_t frame = i->frame;
     while (i->frame == frame) {
 	rv.insert(*i);
 	if (i == m_points.begin()) break;
@@ -655,7 +695,7 @@ SparseModel<PointType>::getPreviousPoints(long originFrame) const
  
 template <typename PointType>
 typename SparseModel<PointType>::PointList
-SparseModel<PointType>::getNextPoints(long originFrame) const
+SparseModel<PointType>::getNextPoints(sv_frame_t originFrame) const
 {
     QMutexLocker locker(&m_mutex);
 
@@ -665,7 +705,7 @@ SparseModel<PointType>::getNextPoints(long originFrame) const
     PointListConstIterator i = m_points.upper_bound(lookupPoint);
     if (i == m_points.end()) return rv;
 
-    long frame = i->frame;
+    sv_frame_t frame = i->frame;
     while (i != m_points.end() && i->frame == frame) {
 	rv.insert(*i);
 	++i;

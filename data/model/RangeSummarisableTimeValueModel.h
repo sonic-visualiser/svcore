@@ -41,21 +41,33 @@ public:
     {
     public:
         Range() : 
-            m_min(0.f), m_max(0.f), m_absmean(0.f) { }
+            m_new(true), m_min(0.f), m_max(0.f), m_absmean(0.f) { }
         Range(const Range &r) : 
-            m_min(r.m_min), m_max(r.m_max), m_absmean(r.m_absmean) { }
+            m_new(true), m_min(r.m_min), m_max(r.m_max), m_absmean(r.m_absmean) { }
         Range(float min, float max, float absmean) :
-            m_min(min), m_max(max), m_absmean(absmean) { }
+            m_new(true), m_min(min), m_max(max), m_absmean(absmean) { }
 
         float min() const { return m_min; }
         float max() const { return m_max; }
         float absmean() const { return m_absmean; }
 
-        void setMin(float min) { m_min = min; }
-        void setMax(float max) { m_max = max; }
+        void setMin(float min) { m_min = min; m_new = false; }
+        void setMax(float max) { m_max = max; m_new = false; }
         void setAbsmean(float absmean) { m_absmean = absmean; }
 
+        void sample(float s) {
+            if (m_new) {
+                m_min = s;
+                m_max = s;
+                m_new = false;
+            } else {
+                if (s < m_min) m_min = s;
+                if (s > m_max) m_max = s;
+            }
+        }
+        
     private:
+        bool m_new;
         float m_min;
         float m_max;
         float m_absmean;
@@ -74,7 +86,7 @@ public:
      * parameter so as to return the block size that was actually
      * obtained.
      */
-    virtual void getSummaries(int channel, int start, int count,
+    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
                               int &blockSize) const = 0;
 
@@ -83,7 +95,7 @@ public:
      * the given number of underlying sample frames, summarised at a
      * block size equal to the distance between start and end frames.
      */
-    virtual Range getSummary(int channel, int start, int count) const = 0;
+    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const = 0;
 
     virtual int getSummaryBlockSize(int desired) const = 0;
 

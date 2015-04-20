@@ -37,7 +37,7 @@ using std::ios;
 using namespace MIDIConstants;
 
 MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
-                               int sampleRate, float tempo) :
+                               sv_samplerate_t sampleRate, float tempo) :
     m_path(path),
     m_exportable(exportable),
     m_sampleRate(sampleRate),
@@ -89,8 +89,8 @@ MIDIFileWriter::intToMIDIBytes(int number) const
     MIDIByte upper;
     MIDIByte lower;
 
-    upper = (number & 0xFF00) >> 8;
-    lower = (number & 0x00FF);
+    upper = MIDIByte((number & 0xFF00) >> 8);
+    lower = MIDIByte( number & 0x00FF);
 
     string rv;
     rv += upper;
@@ -106,10 +106,10 @@ MIDIFileWriter::longToMIDIBytes(unsigned long number) const
     MIDIByte upper2;
     MIDIByte lower2;
 
-    upper1 = (number & 0xff000000) >> 24;
-    lower1 = (number & 0x00ff0000) >> 16;
-    upper2 = (number & 0x0000ff00) >> 8;
-    lower2 = (number & 0x000000ff);
+    upper1 = MIDIByte((number & 0xff000000) >> 24);
+    lower1 = MIDIByte((number & 0x00ff0000) >> 16);
+    upper2 = MIDIByte((number & 0x0000ff00) >> 8);
+    lower2 = MIDIByte((number & 0x000000ff));
 
     string rv;
     rv += upper1;
@@ -344,8 +344,8 @@ MIDIFileWriter::convert()
 
     for (NoteList::const_iterator i = notes.begin(); i != notes.end(); ++i) {
 
-        int frame = i->start;
-        int duration = i->duration;
+        sv_frame_t frame = i->start;
+        sv_frame_t duration = i->duration;
         int pitch = i->midiPitch;
         int velocity = i->velocity;
         int channel = i->channel;
@@ -358,12 +358,12 @@ MIDIFileWriter::convert()
 
         // Convert frame to MIDI time
 
-        double seconds = double(frame) / double(m_sampleRate);
+        double seconds = double(frame) / m_sampleRate;
         double quarters = (seconds * m_tempo) / 60.0;
         unsigned long midiTime = int(quarters * m_timingDivision + 0.5);
 
         // Get the sounding time for the matching NOTE_OFF
-        seconds = double(frame + duration) / double(m_sampleRate);
+        seconds = double(frame + duration) / m_sampleRate;
         quarters = (seconds * m_tempo) / 60.0;
         unsigned long endTime = int(quarters * m_timingDivision + 0.5);
 

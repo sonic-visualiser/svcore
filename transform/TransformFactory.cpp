@@ -750,7 +750,7 @@ TransformFactory::populateUninstalledTransforms()
 }
 
 Transform
-TransformFactory::getDefaultTransformFor(TransformId id, int rate)
+TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
 {
     Transform t;
     t.setIdentifier(id);
@@ -782,11 +782,12 @@ TransformFactory::instantiatePluginFor(const Transform &transform)
 }
 
 Vamp::PluginBase *
-TransformFactory::instantiateDefaultPluginFor(TransformId identifier, int rate)
+TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
+                                              sv_samplerate_t rate)
 {
     Transform t;
     t.setIdentifier(identifier);
-    if (rate == 0) rate = 44100;
+    if (rate == 0) rate = 44100.0;
     QString pluginId = t.getPluginIdentifier();
 
     Vamp::PluginBase *plugin = 0;
@@ -913,8 +914,8 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
             instantiatePlugin(id, 44100);
         if (!plugin) return false;
 
-        min = plugin->getMinChannelCount();
-        max = plugin->getMaxChannelCount();
+        min = (int)plugin->getMinChannelCount();
+        max = (int)plugin->getMaxChannelCount();
         delete plugin;
 
         return true;
@@ -1040,10 +1041,10 @@ TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
     } else {
         Vamp::Plugin::InputDomain domain = vp->getInputDomain();
         if (!transform.getStepSize()) {
-            transform.setStepSize(vp->getPreferredStepSize());
+            transform.setStepSize((int)vp->getPreferredStepSize());
         }
         if (!transform.getBlockSize()) {
-            transform.setBlockSize(vp->getPreferredBlockSize());
+            transform.setBlockSize((int)vp->getPreferredBlockSize());
         }
         if (!transform.getBlockSize()) {
             transform.setBlockSize(1024);

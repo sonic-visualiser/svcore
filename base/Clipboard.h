@@ -19,30 +19,32 @@
 #include <QString>
 #include <vector>
 
+#include "BaseTypes.h"
+
 class Clipboard
 {
 public:
     class Point
     {
     public:
-        Point(long frame, QString label);
-        Point(long frame, float value, QString label);
-        Point(long frame, float value, int duration, QString label);
-        Point(long frame, float value, int duration, float level, QString label);
+        Point(sv_frame_t frame, QString label);
+        Point(sv_frame_t frame, float value, QString label);
+        Point(sv_frame_t frame, float value, sv_frame_t duration, QString label);
+        Point(sv_frame_t frame, float value, sv_frame_t duration, float level, QString label);
         Point(const Point &point);
         Point &operator=(const Point &point);
 
         bool haveFrame() const;
-        long getFrame() const;
-        Point withFrame(long frame) const;
+        sv_frame_t getFrame() const;
+        Point withFrame(sv_frame_t frame) const;
 
         bool haveValue() const;
         float getValue() const;
         Point withValue(float value) const;
         
         bool haveDuration() const;
-        int getDuration() const;
-        Point withDuration(int duration) const;
+        sv_frame_t getDuration() const;
+        Point withDuration(sv_frame_t duration) const;
         
         bool haveLabel() const;
         QString getLabel() const;
@@ -55,22 +57,22 @@ public:
         bool haveReferenceFrame() const;
         bool referenceFrameDiffers() const; // from point frame
 
-        long getReferenceFrame() const;
-        void setReferenceFrame(long);
+        sv_frame_t getReferenceFrame() const;
+        void setReferenceFrame(sv_frame_t);
 
     private:
         bool m_haveFrame;
-        long m_frame;
+        sv_frame_t m_frame;
         bool m_haveValue;
         float m_value;
         bool m_haveDuration;
-        int m_duration;
+        sv_frame_t m_duration;
         bool m_haveLabel;
         QString m_label;
         bool m_haveLevel;
         float m_level;
         bool m_haveReferenceFrame;
-        long m_referenceFrame;
+        sv_frame_t m_referenceFrame;
     };
 
     Clipboard();

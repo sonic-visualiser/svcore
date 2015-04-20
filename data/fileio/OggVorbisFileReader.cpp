@@ -34,7 +34,7 @@
 OggVorbisFileReader::OggVorbisFileReader(FileSource source,
                                          DecodeMode decodeMode,
                                          CacheMode mode,
-                                         int targetRate,
+                                         sv_samplerate_t targetRate,
                                          bool normalised,
                                          ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),
@@ -144,15 +144,15 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
     FishSound *fs = reader->m_fishSound;
 
-    fish_sound_prepare_truncation(fs, packet->granulepos, packet->e_o_s);
+    fish_sound_prepare_truncation(fs, packet->granulepos, int(packet->e_o_s));
     fish_sound_decode(fs, packet->packet, packet->bytes);
 
     reader->m_bytesRead += packet->bytes;
 
     // The number of bytes read by this function is smaller than
     // the file size because of the packet headers
-    int p = lrint(double(reader->m_bytesRead) * 114 /
-                  double(reader->m_fileSize));
+    int p = int(lrint(double(reader->m_bytesRead) * 114 /
+                      double(reader->m_fileSize)));
     if (p > 99) p = 99;
     reader->m_completion = p;
     reader->progress(p);

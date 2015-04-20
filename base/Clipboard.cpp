@@ -15,7 +15,7 @@
 
 #include "Clipboard.h"
 
-Clipboard::Point::Point(long frame, QString label) :
+Clipboard::Point::Point(sv_frame_t frame, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(false),
@@ -31,7 +31,7 @@ Clipboard::Point::Point(long frame, QString label) :
 {
 }
 
-Clipboard::Point::Point(long frame, float value, QString label) :
+Clipboard::Point::Point(sv_frame_t frame, float value, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(true),
@@ -47,7 +47,7 @@ Clipboard::Point::Point(long frame, float value, QString label) :
 {
 }
 
-Clipboard::Point::Point(long frame, float value, int duration, QString label) :
+Clipboard::Point::Point(sv_frame_t frame, float value, sv_frame_t duration, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(true),
@@ -63,7 +63,7 @@ Clipboard::Point::Point(long frame, float value, int duration, QString label) :
 {
 }
 
-Clipboard::Point::Point(long frame, float value, int duration, float level, QString label) :
+Clipboard::Point::Point(sv_frame_t frame, float value, sv_frame_t duration, float level, QString label) :
     m_haveFrame(true),
     m_frame(frame),
     m_haveValue(true),
@@ -120,14 +120,14 @@ Clipboard::Point::haveFrame() const
     return m_haveFrame;
 }
 
-long
+sv_frame_t
 Clipboard::Point::getFrame() const
 {
     return m_frame;
 }
 
 Clipboard::Point
-Clipboard::Point::withFrame(long frame) const
+Clipboard::Point::withFrame(sv_frame_t frame) const
 {
     Point p(*this);
     p.m_haveFrame = true;
@@ -162,14 +162,14 @@ Clipboard::Point::haveDuration() const
     return m_haveDuration;
 }
 
-int
+sv_frame_t
 Clipboard::Point::getDuration() const
 {
     return m_duration;
 }
 
 Clipboard::Point
-Clipboard::Point::withDuration(int duration) const
+Clipboard::Point::withDuration(sv_frame_t duration) const
 {
     Point p(*this);
     p.m_haveDuration = true;
@@ -231,14 +231,14 @@ Clipboard::Point::referenceFrameDiffers() const
     return m_haveReferenceFrame && (m_referenceFrame != m_frame);
 }
 
-long
+sv_frame_t
 Clipboard::Point::getReferenceFrame() const
 {
     return m_referenceFrame;
 }
 
 void
-Clipboard::Point::setReferenceFrame(long f) 
+Clipboard::Point::setReferenceFrame(sv_frame_t f) 
 {
     m_haveReferenceFrame = true;
     m_referenceFrame = f;

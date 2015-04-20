@@ -123,7 +123,7 @@ typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
 #endif
 
 void
-GetRealMemoryMBAvailable(int &available, int &total)
+GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
 {
     available = -1;
     total = -1;
@@ -175,11 +175,11 @@ GetRealMemoryMBAvailable(int &available, int &total)
 
     DWORDLONG size = wavail / 1048576;
     if (size > INT_MAX) size = INT_MAX;
-    available = int(size);
+    available = ssize_t(size);
 
     size = wtotal / 1048576;
     if (size > INT_MAX) size = INT_MAX;
-    total = int(size);
+    total = ssize_t(size);
 
     return;
 
@@ -243,7 +243,7 @@ GetRealMemoryMBAvailable(int &available, int &total)
 #endif
 }
 
-int
+ssize_t
 GetDiscSpaceMBAvailable(const char *path)
 {
 #ifdef _WIN32
@@ -252,7 +252,7 @@ GetDiscSpaceMBAvailable(const char *path)
 	  __int64 a = available.QuadPart;
         a /= 1048576;
         if (a > INT_MAX) a = INT_MAX;
-        return int(a);
+        return ssize_t(a);
     } else {
         cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
                   << GetLastError() << endl;
@@ -266,7 +266,7 @@ GetDiscSpaceMBAvailable(const char *path)
 //        cerr << "statvfs(" << path << ") says available: " << buf.f_bavail << ", block size: " << buf.f_bsize << endl;
         uint64_t available = ((buf.f_bavail / 1024) * buf.f_bsize) / 1024;
         if (available > INT_MAX) available = INT_MAX;
-        return int(available);
+        return ssize_t(available);
     } else {
         perror("statvfs failed");
         return -1;
@@ -323,5 +323,5 @@ double mod(double x, double y) { return x - (y * floor(x / y)); }
 float modf(float x, float y) { return x - (y * floorf(x / y)); }
 
 double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
-float princargf(float a) { return modf(a + M_PI, -2 * M_PI) + M_PI; }
+float princargf(float a) { return float(princarg(a)); }
 

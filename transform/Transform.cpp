@@ -379,14 +379,14 @@ Transform::setDuration(RealTime d)
     m_duration = d;
 }
     
-float
+sv_samplerate_t
 Transform::getSampleRate() const
 {
     return m_sampleRate;
 }
 
 void
-Transform::setSampleRate(float rate)
+Transform::setSampleRate(sv_samplerate_t rate)
 {
     m_sampleRate = rate;
 }

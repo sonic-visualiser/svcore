@@ -35,7 +35,7 @@ class AudioLevel
 {
 public:
 
-    static const float DB_FLOOR;
+    static const double DB_FLOOR;
 
     enum FaderType {
 	     ShortFader = 0, // -40 -> +6  dB
@@ -45,19 +45,19 @@ public:
 	   PreviewLevel = 4
     };
 
-    static float multiplier_to_dB(float multiplier);
-    static float dB_to_multiplier(float dB);
+    static double multiplier_to_dB(double multiplier);
+    static double dB_to_multiplier(double dB);
 
-    static float fader_to_dB(int level, int maxLevel, FaderType type);
-    static int   dB_to_fader(float dB, int maxFaderLevel, FaderType type);
+    static double fader_to_dB(int level, int maxLevel, FaderType type);
+    static int    dB_to_fader(double dB, int maxFaderLevel, FaderType type);
 
-    static float fader_to_multiplier(int level, int maxLevel, FaderType type);
-    static int   multiplier_to_fader(float multiplier, int maxFaderLevel,
+    static double fader_to_multiplier(int level, int maxLevel, FaderType type);
+    static int    multiplier_to_fader(double multiplier, int maxFaderLevel,
 				     FaderType type);
 
     // fast if "levels" doesn't change often -- for audio segment previews
-    static int   multiplier_to_preview(float multiplier, int levels);
-    static float preview_to_multiplier(int level, int levels);
+    static int    multiplier_to_preview(double multiplier, int levels);
+    static double preview_to_multiplier(int level, int levels);
 };
 
 

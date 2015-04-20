@@ -143,17 +143,22 @@ enum ProcessStatus { ProcessRunning, ProcessNotRunning, UnknownProcessStatus };
 extern ProcessStatus GetProcessStatus(int pid);
 
 // Return a vague approximation to the number of free megabytes of real memory.
-// Return -1 if unknown.
-extern void GetRealMemoryMBAvailable(int &available, int &total);
+// Return -1 if unknown. (Hence signed args)
+extern void GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total);
 
-// Return a vague approximation to the number of free megabytes of disc space
-// on the partition containing the given path.  Return -1 if unknown.
-extern int GetDiscSpaceMBAvailable(const char *path);
+// Return a vague approximation to the number of free megabytes of
+// disc space on the partition containing the given path.  Return -1
+// if unknown. (Hence signed return type)
+extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
 
 #include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 extern double mod(double x, double y);
 extern float modf(float x, float y);

@@ -36,7 +36,7 @@
 #include <map>
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
-                             int mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate) :
     m_format(format),
     m_device(0),
     m_ownDevice(true),
@@ -63,7 +63,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
 }
 
 CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
-                             int mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate) :
     m_format(format),
     m_device(device),
     m_ownDevice(false),
@@ -95,8 +95,9 @@ CSVFileReader::getError() const
     return m_error;
 }
 
-int
-CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
+sv_frame_t
+CSVFileReader::convertTimeValue(QString s, int lineno,
+                                sv_samplerate_t sampleRate,
                                 int windowSize) const
 {
     QRegExp nonNumericRx("[^0-9eE.,+-]");
@@ -104,7 +105,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
 
-    int calculatedFrame = 0;
+    sv_frame_t calculatedFrame = 0;
 
     bool ok = false;
     QString numeric = s;
@@ -114,13 +115,13 @@ CSVFileReader::convertTimeValue(QString s, int lineno, int sampleRate,
 
         double time = numeric.toDouble(&ok);
         if (!ok) time = StringBits::stringToDoubleLocaleFree(numeric, &ok);
-        calculatedFrame = int(time * sampleRate + 0.5);
+        calculatedFrame = sv_frame_t(time * sampleRate + 0.5);
     
     } else if (timeUnits == CSVFormat::TimeMilliseconds) {
 
         double time = numeric.toDouble(&ok);
         if (!ok) time = StringBits::stringToDoubleLocaleFree(numeric, &ok);
-        calculatedFrame = int((time / 1000.0) * sampleRate + 0.5);
+        calculatedFrame = sv_frame_t((time / 1000.0) * sampleRate + 0.5);
         
     } else {
         
@@ -155,7 +156,7 @@ CSVFileReader::load() const
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
-    int sampleRate = m_format.getSampleRate();
+    sv_samplerate_t sampleRate = m_format.getSampleRate();
     int windowSize = m_format.getWindowSize();
     QChar separator = m_format.getSeparator();
     bool allowQuoting = m_format.getAllowQuoting();
@@ -189,15 +190,15 @@ CSVFileReader::load() const
 
     float min = 0.0, max = 0.0;
 
-    int frameNo = 0;
-    int duration = 0;
-    int endFrame = 0;
+    sv_frame_t frameNo = 0;
+    sv_frame_t duration = 0;
+    sv_frame_t endFrame = 0;
 
     bool haveAnyValue = false;
     bool haveEndTime = false;
     bool pitchLooksLikeMIDI = true;
 
-    int startFrame = 0; // for calculation of dense model resolution
+    sv_frame_t startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
 
     std::map<QString, int> labelCountMap;
@@ -373,7 +374,7 @@ CSVFileReader::load() const
                         model3->setStartFrame(startFrame);
                     } else if (lineno == 1 &&
                                timingType == CSVFormat::ExplicitTiming) {
-                        model3->setResolution(frameNo - startFrame);
+                        model3->setResolution(int(frameNo - startFrame));
                     }
                     
                     firstEverValue = false;

@@ -31,13 +31,13 @@
 struct TextPoint : public XmlExportable
 {
 public:
-    TextPoint(long _frame) : frame(_frame), height(0.0f) { }
-    TextPoint(long _frame, float _height, QString _label) : 
+    TextPoint(sv_frame_t _frame) : frame(_frame), height(0.0f) { }
+    TextPoint(sv_frame_t _frame, float _height, QString _label) : 
 	frame(_frame), height(_height), label(_label) { }
 
     int getDimensions() const { return 2; }
     
-    long frame;
+    sv_frame_t frame;
     float height;
     QString label;
 
@@ -51,7 +51,7 @@ public:
             .arg(encodeEntities(label)).arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, DataExportOptions, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -85,7 +85,7 @@ class TextModel : public SparseModel<TextPoint>
     Q_OBJECT
     
 public:
-    TextModel(int sampleRate, int resolution, bool notifyOnAdd = true) :
+    TextModel(sv_samplerate_t sampleRate, int resolution, bool notifyOnAdd = true) :
 	SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
@@ -155,7 +155,7 @@ public:
         command->deletePoint(point);
 
         switch (column) {
-        case 2: point.height = value.toDouble(); break;
+        case 2: point.height = float(value.toDouble()); break;
         case 3: point.label = value.toString(); break;
         }
 

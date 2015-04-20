@@ -37,7 +37,7 @@
 PowerOfSqrtTwoZoomConstraint
 WaveFileModel::m_zoomConstraint;
 
-WaveFileModel::WaveFileModel(FileSource source, int targetRate) :
+WaveFileModel::WaveFileModel(FileSource source, sv_samplerate_t targetRate) :
     m_source(source),
     m_path(source.getLocation()),
     m_reader(0),
@@ -124,14 +124,7 @@ WaveFileModel::isReady(int *completion) const
     return ready;
 }
 
-Model *
-WaveFileModel::clone() const
-{
-    WaveFileModel *model = new WaveFileModel(m_source);
-    return model;
-}
-
-int
+sv_frame_t
 WaveFileModel::getFrameCount() const
 {
     if (!m_reader) return 0;
@@ -145,18 +138,18 @@ WaveFileModel::getChannelCount() const
     return m_reader->getChannelCount();
 }
 
-int
+sv_samplerate_t
 WaveFileModel::getSampleRate() const 
 {
     if (!m_reader) return 0;
     return m_reader->getSampleRate();
 }
 
-int
+sv_samplerate_t
 WaveFileModel::getNativeRate() const 
 {
     if (!m_reader) return 0;
-    int rate = m_reader->getNativeRate();
+    sv_samplerate_t rate = m_reader->getNativeRate();
     if (rate == 0) rate = getSampleRate();
     return rate;
 }
@@ -191,8 +184,8 @@ WaveFileModel::getLocalFilename() const
     return "";
 }
     
-int
-WaveFileModel::getData(int channel, int start, int count,
+sv_frame_t
+WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                        float *buffer) const
 {
     // Always read these directly from the file. 
@@ -206,7 +199,7 @@ WaveFileModel::getData(int channel, int start, int count,
     if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             buffer[i] = 0.f;
         }
         if (count <= m_startFrame - start) {
@@ -218,7 +211,7 @@ WaveFileModel::getData(int channel, int start, int count,
     }
 
     if (!m_reader || !m_reader->isOK() || count == 0) {
-        for (int i = 0; i < count; ++i) buffer[i] = 0.f;
+        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.f;
         return 0;
     }
 
@@ -229,10 +222,9 @@ WaveFileModel::getData(int channel, int start, int count,
 
     int channels = getChannelCount();
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
-    int i = 0;
+    sv_frame_t i = 0;
 
     int ch0 = channel, ch1 = channel;
     if (channel == -1) {
@@ -246,8 +238,8 @@ WaveFileModel::getData(int channel, int start, int count,
 
 	for (int ch = ch0; ch <= ch1; ++ch) {
 
-	    int index = i * channels + ch;
-	    if (index >= (int)frames.size()) break;
+	    sv_frame_t index = i * channels + ch;
+	    if (index >= (sv_frame_t)frames.size()) break;
             
 	    float sample = frames[index];
 	    buffer[i] += sample;
@@ -259,8 +251,8 @@ WaveFileModel::getData(int channel, int start, int count,
     return i;
 }
 
-int
-WaveFileModel::getData(int channel, int start, int count,
+sv_frame_t
+WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
                        double *buffer) const
 {
 #ifdef DEBUG_WAVE_FILE_MODEL
@@ -270,7 +262,7 @@ WaveFileModel::getData(int channel, int start, int count,
     if (start > m_startFrame) {
         start -= m_startFrame;
     } else {
-        for (int i = 0; i < count; ++i) buffer[i] = 0.0;
+        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.0;
         if (count <= m_startFrame - start) {
             return 0;
         } else {
@@ -280,16 +272,15 @@ WaveFileModel::getData(int channel, int start, int count,
     }
 
     if (!m_reader || !m_reader->isOK() || count == 0) {
-        for (int i = 0; i < count; ++i) buffer[i] = 0.0;
+        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.0;
         return 0;
     }
 
     int channels = getChannelCount();
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
-    int i = 0;
+    sv_frame_t i = 0;
 
     int ch0 = channel, ch1 = channel;
     if (channel == -1) {
@@ -303,8 +294,8 @@ WaveFileModel::getData(int channel, int start, int count,
 
 	for (int ch = ch0; ch <= ch1; ++ch) {
 
-	    int index = i * channels + ch;
-	    if (index >= (int)frames.size()) break;
+	    sv_frame_t index = i * channels + ch;
+	    if (index >= (sv_frame_t)frames.size()) break;
             
 	    float sample = frames[index];
 	    buffer[i] += sample;
@@ -316,9 +307,9 @@ WaveFileModel::getData(int channel, int start, int count,
     return i;
 }
 
-int
+sv_frame_t
 WaveFileModel::getData(int fromchannel, int tochannel,
-                       int start, int count,
+                       sv_frame_t start, sv_frame_t count,
                        float **buffer) const
 {
 #ifdef DEBUG_WAVE_FILE_MODEL
@@ -355,7 +346,7 @@ WaveFileModel::getData(int fromchannel, int tochannel,
         start -= m_startFrame;
     } else {
         for (int c = 0; c < reqchannels; ++c) {
-            for (int i = 0; i < count; ++i) buffer[c][i] = 0.f;
+            for (sv_frame_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
         }
         if (count <= m_startFrame - start) {
             return 0;
@@ -367,17 +358,16 @@ WaveFileModel::getData(int fromchannel, int tochannel,
 
     if (!m_reader || !m_reader->isOK() || count == 0) {
         for (int c = 0; c < reqchannels; ++c) {
-            for (int i = 0; i < count; ++i) buffer[c][i] = 0.f;
+            for (sv_frame_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
         }
         return 0;
     }
 
-    SampleBlock frames(count * channels);
-    m_reader->getInterleavedFrames(start, count, frames);
+    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
 
-    int i = 0;
+    sv_frame_t i = 0;
 
-    int index = 0, available = frames.size();
+    sv_frame_t index = 0, available = frames.size();
 
     while (i < count) {
 
@@ -418,7 +408,7 @@ WaveFileModel::getSummaryBlockSize(int desired) const
 }    
 
 void
-WaveFileModel::getSummaries(int channel, int start, int count,
+WaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                             RangeBlock &ranges, int &blockSize) const
 {
     ranges.clear();
@@ -455,18 +445,18 @@ WaveFileModel::getSummaries(int channel, int start, int count,
             m_lastDirectReadCount != count ||
             m_directRead.empty()) {
 
-            m_reader->getInterleavedFrames(start, count, m_directRead);
+            m_directRead = m_reader->getInterleavedFrames(start, count);
             m_lastDirectReadStart = start;
             m_lastDirectReadCount = count;
         }
 
 	float max = 0.0, min = 0.0, total = 0.0;
-	int i = 0, got = 0;
+	sv_frame_t i = 0, got = 0;
 
 	while (i < count) {
 
-	    int index = i * channels + channel;
-	    if (index >= (int)m_directRead.size()) break;
+	    sv_frame_t index = i * channels + channel;
+	    if (index >= (sv_frame_t)m_directRead.size()) break;
             
 	    float sample = m_directRead[index];
             if (sample > max || got == 0) max = sample;
@@ -477,7 +467,7 @@ WaveFileModel::getSummaries(int channel, int start, int count,
             ++got;
             
             if (got == blockSize) {
-                ranges.push_back(Range(min, max, total / got));
+                ranges.push_back(Range(min, max, total / float(got)));
                 min = max = total = 0.0f;
                 got = 0;
 	    }
@@ -486,7 +476,7 @@ WaveFileModel::getSummaries(int channel, int start, int count,
         m_directReadMutex.unlock();
 
 	if (got > 0) {
-            ranges.push_back(Range(min, max, total / got));
+            ranges.push_back(Range(min, max, total / float(got)));
 	}
 
 	return;
@@ -499,21 +489,21 @@ WaveFileModel::getSummaries(int channel, int start, int count,
 
         blockSize = roundedBlockSize;
 
-	int cacheBlock, div;
+	sv_frame_t cacheBlock, div;
         
 	if (cacheType == 0) {
 	    cacheBlock = (1 << m_zoomConstraint.getMinCachePower());
             div = (1 << power) / cacheBlock;
 	} else {
-	    cacheBlock = ((unsigned int)((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2.) + 0.01));
-            div = ((unsigned int)((1 << power) * sqrt(2.) + 0.01)) / cacheBlock;
+	    cacheBlock = sv_frame_t((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2.) + 0.01);
+            div = sv_frame_t(((1 << power) * sqrt(2.) + 0.01) / double(cacheBlock));
 	}
 
-	int startIndex = start / cacheBlock;
-	int endIndex = (start + count) / cacheBlock;
+	sv_frame_t startIndex = start / cacheBlock;
+	sv_frame_t endIndex = (start + count) / cacheBlock;
 
 	float max = 0.0, min = 0.0, total = 0.0;
-	int i = 0, got = 0;
+	sv_frame_t i = 0, got = 0;
 
 #ifdef DEBUG_WAVE_FILE_MODEL
 	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", count " << count << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
@@ -521,8 +511,8 @@ WaveFileModel::getSummaries(int channel, int start, int count,
 
 	for (i = 0; i <= endIndex - startIndex; ) {
         
-	    int index = (i + startIndex) * channels + channel;
-	    if (index >= (int)cache.size()) break;
+	    sv_frame_t index = (i + startIndex) * channels + channel;
+	    if (index >= (sv_frame_t)cache.size()) break;
             
             const Range &range = cache[index];
             if (range.max() > max || got == 0) max = range.max();
@@ -533,14 +523,14 @@ WaveFileModel::getSummaries(int channel, int start, int count,
             ++got;
             
 	    if (got == div) {
-		ranges.push_back(Range(min, max, total / got));
+		ranges.push_back(Range(min, max, total / float(got)));
                 min = max = total = 0.0f;
                 got = 0;
 	    }
 	}
 		
 	if (got > 0) {
-            ranges.push_back(Range(min, max, total / got));
+            ranges.push_back(Range(min, max, total / float(got)));
 	}
     }
 
@@ -551,7 +541,7 @@ WaveFileModel::getSummaries(int channel, int start, int count,
 }
 
 WaveFileModel::Range
-WaveFileModel::getSummary(int channel, int start, int count) const
+WaveFileModel::getSummary(int channel, sv_frame_t start, sv_frame_t count) const
 {
     Range range;
     if (!isOK()) return range;
@@ -569,8 +559,8 @@ WaveFileModel::getSummary(int channel, int start, int count) const
 
     bool first = false;
 
-    int blockStart = (start / blockSize) * blockSize;
-    int blockEnd = ((start + count) / blockSize) * blockSize;
+    sv_frame_t blockStart = (start / blockSize) * blockSize;
+    sv_frame_t blockEnd = ((start + count) / blockSize) * blockSize;
 
     if (blockStart < start) blockStart += blockSize;
         
@@ -626,7 +616,7 @@ void
 WaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
-	int fillExtent = m_fillThread->getFillExtent();
+	sv_frame_t fillExtent = m_fillThread->getFillExtent();
 #ifdef DEBUG_WAVE_FILE_MODEL
         SVDEBUG << "WaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
@@ -666,11 +656,11 @@ WaveFileModel::RangeCacheFillThread::run()
 {
     int cacheBlockSize[2];
     cacheBlockSize[0] = (1 << m_model.m_zoomConstraint.getMinCachePower());
-    cacheBlockSize[1] = ((unsigned int)((1 << m_model.m_zoomConstraint.getMinCachePower()) *
+    cacheBlockSize[1] = (int((1 << m_model.m_zoomConstraint.getMinCachePower()) *
                                         sqrt(2.) + 0.01));
     
-    int frame = 0;
-    int readBlockSize = 16384;
+    sv_frame_t frame = 0;
+    const sv_frame_t readBlockSize = 16384;
     SampleBlock block;
 
     if (!m_model.isOK()) return;
@@ -709,50 +699,44 @@ WaveFileModel::RangeCacheFillThread::run()
 
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 
-            m_model.m_reader->getInterleavedFrames(frame, readBlockSize, block);
+            block = m_model.m_reader->getInterleavedFrames(frame, readBlockSize);
 
 //            cerr << "block is " << block.size() << endl;
 
-            for (int i = 0; i < readBlockSize; ++i) {
+            for (sv_frame_t i = 0; i < readBlockSize; ++i) {
 		
                 if (channels * i + channels > (int)block.size()) break;
 
                 for (int ch = 0; ch < channels; ++ch) {
 
-                    int index = channels * i + ch;
+                    sv_frame_t index = channels * i + ch;
                     float sample = block[index];
                     
-                    for (int ct = 0; ct < 2; ++ct) { // cache type
+                    for (int cacheType = 0; cacheType < 2; ++cacheType) { // cache type
                         
-                        int rangeIndex = ch * 2 + ct;
-                        
-                        if (sample > range[rangeIndex].max() || count[ct] == 0) {
-                            range[rangeIndex].setMax(sample);
-                        }
-                        if (sample < range[rangeIndex].min() || count[ct] == 0) {
-                            range[rangeIndex].setMin(sample);
-                        }
-
+                        sv_frame_t rangeIndex = ch * 2 + cacheType;
+                        range[rangeIndex].sample(sample);
                         means[rangeIndex] += fabsf(sample);
                     }
                 }
-                
+
+                //!!! this looks like a ludicrous way to do synchronisation
                 QMutexLocker locker(&m_model.m_mutex);
 
-                for (int ct = 0; ct < 2; ++ct) {
+                for (int cacheType = 0; cacheType < 2; ++cacheType) {
 
-                    if (++count[ct] == cacheBlockSize[ct]) {
+                    if (++count[cacheType] == cacheBlockSize[cacheType]) {
                         
                         for (int ch = 0; ch < int(channels); ++ch) {
-                            int rangeIndex = ch * 2 + ct;
-                            means[rangeIndex] /= count[ct];
+                            int rangeIndex = ch * 2 + cacheType;
+                            means[rangeIndex] = means[rangeIndex] / float(count[cacheType]);
                             range[rangeIndex].setAbsmean(means[rangeIndex]);
-                            m_model.m_cache[ct].push_back(range[rangeIndex]);
+                            m_model.m_cache[cacheType].push_back(range[rangeIndex]);
                             range[rangeIndex] = Range();
                             means[rangeIndex] = 0.f;
                         }
 
-                        count[ct] = 0;
+                        count[cacheType] = 0;
                     }
                 }
                 
@@ -778,24 +762,24 @@ WaveFileModel::RangeCacheFillThread::run()
 
         QMutexLocker locker(&m_model.m_mutex);
 
-        for (int ct = 0; ct < 2; ++ct) {
+        for (int cacheType = 0; cacheType < 2; ++cacheType) {
 
-            if (count[ct] > 0) {
+            if (count[cacheType] > 0) {
 
                 for (int ch = 0; ch < int(channels); ++ch) {
-                    int rangeIndex = ch * 2 + ct;
-                    means[rangeIndex] /= count[ct];
+                    int rangeIndex = ch * 2 + cacheType;
+                    means[rangeIndex] = means[rangeIndex] / float(count[cacheType]);
                     range[rangeIndex].setAbsmean(means[rangeIndex]);
-                    m_model.m_cache[ct].push_back(range[rangeIndex]);
+                    m_model.m_cache[cacheType].push_back(range[rangeIndex]);
                     range[rangeIndex] = Range();
                     means[rangeIndex] = 0.f;
                 }
 
-                count[ct] = 0;
+                count[cacheType] = 0;
             }
             
-            const Range &rr = *m_model.m_cache[ct].begin();
-            MUNLOCK(&rr, m_model.m_cache[ct].capacity() * sizeof(Range));
+            const Range &rr = *m_model.m_cache[cacheType].begin();
+            MUNLOCK(&rr, m_model.m_cache[cacheType].capacity() * sizeof(Range));
         }
     }
     
@@ -805,8 +789,8 @@ WaveFileModel::RangeCacheFillThread::run()
     m_fillExtent = m_frameCount;
 
 #ifdef DEBUG_WAVE_FILE_MODEL        
-    for (int ct = 0; ct < 2; ++ct) {
-        cerr << "Cache type " << ct << " now contains " << m_model.m_cache[ct].size() << " ranges" << endl;
+    for (int cacheType = 0; cacheType < 2; ++cacheType) {
+        cerr << "Cache type " << cacheType << " now contains " << m_model.m_cache[cacheType].size() << " ranges" << endl;
     }
 #endif
 }

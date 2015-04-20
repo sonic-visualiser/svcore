@@ -63,7 +63,7 @@ public:
              int fftSize,
              bool polar,
              StorageAdviser::Criteria criteria = StorageAdviser::NoCriteria,
-             int fillFromColumn = 0);
+             sv_frame_t fillFromFrame = 0);
     ~FFTModel();
 
     inline float getMagnitudeAt(int x, int y) {
@@ -98,7 +98,7 @@ public:
         return m_server->getValuesAt(x << m_xshift, reals, imaginaries, minbin << m_yshift, count, getYRatio());
     }
 
-    inline int getFillExtent() const { return m_server->getFillExtent(); }
+    inline sv_frame_t getFillExtent() const { return m_server->getFillExtent(); }
 
     // DenseThreeDimensionalModel and Model methods:
     //
@@ -120,13 +120,13 @@ public:
     virtual bool isOK() const {
         return m_server && m_server->getModel();
     }
-    virtual int getStartFrame() const {
+    virtual sv_frame_t getStartFrame() const {
         return 0;
     }
-    virtual int getEndFrame() const {
-        return getWidth() * getResolution() + getResolution();
+    virtual sv_frame_t getEndFrame() const {
+        return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
-    virtual int getSampleRate() const;
+    virtual sv_samplerate_t getSampleRate() const;
     virtual int getResolution() const {
         return m_server->getWindowIncrement() << m_xshift;
     }
@@ -151,7 +151,7 @@ public:
      * bin, using phase unwrapping.  This will be completely wrong if
      * the signal is not stable here.
      */
-    virtual bool estimateStableFrequency(int x, int y, float &frequency);
+    virtual bool estimateStableFrequency(int x, int y, double &frequency);
 
     enum PeakPickType
     {
@@ -161,7 +161,7 @@ public:
     };
 
     typedef std::set<int> PeakLocationSet; // bin
-    typedef std::map<int, float> PeakSet; // bin -> freq
+    typedef std::map<int, double> PeakSet; // bin -> freq
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
@@ -178,8 +178,6 @@ public:
 
     virtual int getCompletion() const { return m_server->getFillCompletion(); }
     virtual QString getError() const { return m_server->getError(); }
-
-    virtual Model *clone() const;
 
     virtual void suspend() { m_server->suspend(); }
     virtual void suspendWrites() { m_server->suspendWrites(); }
@@ -200,10 +198,10 @@ private:
 
     FFTDataServer *getServer(const DenseTimeValueModel *,
                              int, WindowType, int, int, int,
-                             bool, StorageAdviser::Criteria, int);
+                             bool, StorageAdviser::Criteria, sv_frame_t);
 
-    int getPeakPickWindowSize(PeakPickType type, int sampleRate,
-                                 int bin, float &percentile) const;
+    int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
+                              int bin, float &percentile) const;
 
     int getYRatio() {
         int ys = m_yshift;

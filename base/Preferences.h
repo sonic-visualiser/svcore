@@ -49,7 +49,7 @@ public:
 
     SpectrogramSmoothing getSpectrogramSmoothing() const { return m_spectrogramSmoothing; }
     SpectrogramXSmoothing getSpectrogramXSmoothing() const { return m_spectrogramXSmoothing; }
-    float getTuningFrequency() const { return m_tuningFrequency; }
+    double getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
     int getResampleQuality() const { return m_resampleQuality; }
 
@@ -67,7 +67,7 @@ public:
     QString getTemporaryDirectoryRoot() const { return m_tempDirRoot; }
 
     /// If we should always resample audio to the same rate, return it; otherwise (the normal case) return 0
-    int getFixedSampleRate() const { return m_fixedSampleRate; }
+    sv_samplerate_t getFixedSampleRate() const { return m_fixedSampleRate; }
 
     /// True if we should resample second or subsequent audio file to match first audio file's rate
     bool getResampleOnLoad() const { return m_resampleOnLoad; }    
@@ -110,13 +110,13 @@ public slots:
 
     void setSpectrogramSmoothing(SpectrogramSmoothing smoothing);
     void setSpectrogramXSmoothing(SpectrogramXSmoothing smoothing);
-    void setTuningFrequency(float freq);
+    void setTuningFrequency(double freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
     void setResampleQuality(int quality);
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
-    void setFixedSampleRate(int);
+    void setFixedSampleRate(sv_samplerate_t);
     void setResampleOnLoad(bool);
     void setNormaliseAudio(bool);
     void setBackgroundMode(BackgroundMode mode);
@@ -147,13 +147,13 @@ private:
 
     SpectrogramSmoothing m_spectrogramSmoothing;
     SpectrogramXSmoothing m_spectrogramXSmoothing;
-    float m_tuningFrequency;
+    double m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
     int m_resampleQuality;
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
-    int m_fixedSampleRate;
+    sv_samplerate_t m_fixedSampleRate;
     bool m_resampleOnLoad;
     bool m_normaliseAudio;
     int m_viewFontSize;
