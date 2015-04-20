@@ -685,7 +685,7 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
         stream << "\n:feature_timeline_" << featureNumber << " a tl:DiscreteTimeLine .\n\n";
 
-        float sampleRate;
+        sv_samplerate_t sampleRate;
         int stepSize, blockSize;
 
         // If the output is FixedSampleRate, we need to draw the
@@ -751,8 +751,10 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
         RealTime startrt = transform.getStartTime();
         RealTime durationrt = transform.getDuration();
 
-        int start = RealTime::realTime2Frame(startrt, sampleRate) / stepSize;
-        int duration = RealTime::realTime2Frame(durationrt, sampleRate) / stepSize;
+        sv_frame_t start = RealTime::realTime2Frame
+            (startrt, sampleRate) / stepSize;
+        sv_frame_t duration = RealTime::realTime2Frame
+            (durationrt, sampleRate) / stepSize;
 
         if (start != 0) {
             stream << "\n        tl:start \"" << start << "\"^^xsd:int ;";

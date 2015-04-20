@@ -28,7 +28,7 @@
 #include <QMutexLocker>
 
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
-                                           int targetRate,
+                                           sv_samplerate_t targetRate,
                                            bool normalised) :
     m_cacheMode(cacheMode),
     m_initialised(false),
@@ -113,9 +113,9 @@ CodedAudioFileReader::initialiseDecodeCache()
         m_resampler = new Resampler(Resampler::FastestTolerable,
                                     m_channelCount,
                                     m_cacheWriteBufferSize);
-        float ratio = float(m_sampleRate) / float(m_fileRate);
+        double ratio = m_sampleRate / m_fileRate;
         m_resampleBuffer = new float
-            [lrintf(ceilf(m_cacheWriteBufferSize * m_channelCount * ratio + 1))];
+            [lrint(ceil(double(m_cacheWriteBufferSize) * m_channelCount * ratio + 1))];
     }
 
     m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];
@@ -129,9 +129,15 @@ CodedAudioFileReader::initialiseDecodeCache()
                                            .arg((intptr_t)this));
 
             SF_INFO fileInfo;
-            fileInfo.samplerate = m_sampleRate;
+            int fileRate = int(round(m_sampleRate));
+            if (m_sampleRate != sv_samplerate_t(fileRate)) {
+                cerr << "CodedAudioFileReader: WARNING: Non-integer sample rate "
+                     << m_sampleRate << " presented for writing, rounding to " << fileRate
+                     << endl;
+            }
+            fileInfo.samplerate = fileRate;
             fileInfo.channels = m_channelCount;
-
+            
             // No point in writing 24-bit or float; generally this
             // class is used for decoding files that have come from a
             // 16 bit source or that decode to only 16 bits anyway.
@@ -176,13 +182,13 @@ CodedAudioFileReader::initialiseDecodeCache()
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(float **samples, int nframes)
+CodedAudioFileReader::addSamplesToDecodeCache(float **samples, sv_frame_t nframes)
 {
     QMutexLocker locker(&m_cacheMutex);
 
     if (!m_initialised) return;
 
-    for (int i = 0; i < nframes; ++i) {
+    for (sv_frame_t i = 0; i < nframes; ++i) {
         
         for (int c = 0; c < m_channelCount; ++c) {
 
@@ -206,13 +212,13 @@ CodedAudioFileReader::addSamplesToDecodeCache(float **samples, int nframes)
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(float *samples, int nframes)
+CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes)
 {
     QMutexLocker locker(&m_cacheMutex);
 
     if (!m_initialised) return;
 
-    for (int i = 0; i < nframes; ++i) {
+    for (sv_frame_t i = 0; i < nframes; ++i) {
         
         for (int c = 0; c < m_channelCount; ++c) {
 
@@ -242,9 +248,7 @@ CodedAudioFileReader::addSamplesToDecodeCache(const SampleBlock &samples)
 
     if (!m_initialised) return;
 
-    for (int i = 0; i < (int)samples.size(); ++i) {
-
-        float sample = samples[i];
+    for (float sample: samples) {
         
         m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
@@ -295,16 +299,16 @@ CodedAudioFileReader::finishDecodeCache()
 }
 
 void
-CodedAudioFileReader::pushBuffer(float *buffer, int sz, bool final)
+CodedAudioFileReader::pushBuffer(float *buffer, sv_frame_t sz, bool final)
 {
     m_fileFrameCount += sz;
 
-    float ratio = 1.f;
+    double ratio = 1.0;
     if (m_resampler && m_fileRate != 0) {
-        ratio = float(m_sampleRate) / float(m_fileRate);
+        ratio = m_sampleRate / m_fileRate;
     }
         
-    if (ratio != 1.f) {
+    if (ratio != 1.0) {
         pushBufferResampling(buffer, sz, ratio, final);
     } else {
         pushBufferNonResampling(buffer, sz);
@@ -312,13 +316,13 @@ CodedAudioFileReader::pushBuffer(float *buffer, int sz, bool final)
 }
 
 void
-CodedAudioFileReader::pushBufferNonResampling(float *buffer, int sz)
+CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 {
     float clip = 1.0;
-    int count = sz * m_channelCount;
+    sv_frame_t count = sz * m_channelCount;
 
     if (m_normalised) {
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             float v = fabsf(buffer[i]);
             if (v > m_max) {
                 m_max = v;
@@ -326,10 +330,10 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, int sz)
             }
         }
     } else {
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             if (buffer[i] >  clip) buffer[i] =  clip;
         }
-        for (int i = 0; i < count; ++i) {
+        for (sv_frame_t i = 0; i < count; ++i) {
             if (buffer[i] < -clip) buffer[i] = -clip;
         }
     }
@@ -339,7 +343,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, int sz)
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
-        if (sf_writef_float(m_cacheFileWritePtr, buffer, sz) < (int)sz) {
+        if (sf_writef_float(m_cacheFileWritePtr, buffer, sz) < sz) {
             sf_close(m_cacheFileWritePtr);
             m_cacheFileWritePtr = 0;
             throw InsufficientDiscSpace(TempDirectory::getInstance()->getPath());
@@ -348,24 +352,23 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, int sz)
 
     case CacheInMemory:
         m_dataLock.lockForWrite();
-        for (int s = 0; s < count; ++s) {
+        for (sv_frame_t s = 0; s < count; ++s) {
             m_data.push_back(buffer[s]);
         }
-	MUNLOCK_SAMPLEBLOCK(m_data);
         m_dataLock.unlock();
         break;
     }
 }
 
 void
-CodedAudioFileReader::pushBufferResampling(float *buffer, int sz,
-                                           float ratio, bool final)
+CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
+                                           double ratio, bool final)
 {
     SVDEBUG << "pushBufferResampling: ratio = " << ratio << ", sz = " << sz << ", final = " << final << endl;
 
     if (sz > 0) {
 
-        int out = m_resampler->resampleInterleaved
+        sv_frame_t out = m_resampler->resampleInterleaved
             (buffer,
              m_resampleBuffer,
              sz,
@@ -377,27 +380,27 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, int sz,
 
     if (final) {
 
-        int padFrames = 1;
-        if (m_frameCount / ratio < m_fileFrameCount) {
-            padFrames = m_fileFrameCount - (m_frameCount / ratio) + 1;
+        sv_frame_t padFrames = 1;
+        if (double(m_frameCount) / ratio < double(m_fileFrameCount)) {
+            padFrames = m_fileFrameCount - sv_frame_t(double(m_frameCount) / ratio) + 1;
         }
 
-        int padSamples = padFrames * m_channelCount;
+        sv_frame_t padSamples = padFrames * m_channelCount;
 
-        SVDEBUG << "frameCount = " << m_frameCount << ", equivFileFrames = " << m_frameCount / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << endl;
+        SVDEBUG << "frameCount = " << m_frameCount << ", equivFileFrames = " << double(m_frameCount) / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << endl;
 
         float *padding = new float[padSamples];
-        for (int i = 0; i < padSamples; ++i) padding[i] = 0.f;
+        for (sv_frame_t i = 0; i < padSamples; ++i) padding[i] = 0.f;
 
-        int out = m_resampler->resampleInterleaved
+        sv_frame_t out = m_resampler->resampleInterleaved
             (padding,
              m_resampleBuffer,
              padFrames,
              ratio,
              true);
 
-        if (int(m_frameCount + out) > int(m_fileFrameCount * ratio)) {
-            out = int(m_fileFrameCount * ratio) - int(m_frameCount);
+        if (m_frameCount + out > sv_frame_t(double(m_fileFrameCount) * ratio)) {
+            out = sv_frame_t(double(m_fileFrameCount) * ratio) - m_frameCount;
         }
 
         pushBufferNonResampling(m_resampleBuffer, out);
@@ -405,9 +408,8 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, int sz,
     }
 }
 
-void
-CodedAudioFileReader::getInterleavedFrames(int start, int count,
-                                           SampleBlock &frames) const
+SampleBlock
+CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
     // reader is expected to be thread safe and manage its own
@@ -415,40 +417,44 @@ CodedAudioFileReader::getInterleavedFrames(int start, int count,
 
     if (!m_initialised) {
         SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
-        return;
+        return SampleBlock();
     }
 
+    SampleBlock frames;
+    
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
         if (m_cacheFileReader) {
-            m_cacheFileReader->getInterleavedFrames(start, count, frames);
+            frames = m_cacheFileReader->getInterleavedFrames(start, count);
         }
         break;
 
     case CacheInMemory:
     {
-        frames.clear();
-        if (!isOK()) return;
-        if (count == 0) return;
-        frames.reserve(count * m_channelCount);
+        if (!isOK()) return SampleBlock();
+        if (count == 0) return SampleBlock();
 
-        int idx = start * m_channelCount;
-        int i = 0;
+        sv_frame_t idx = start * m_channelCount;
+        sv_frame_t i = 0;
+        sv_frame_t n = count * m_channelCount;
+
+        frames.resize(n);
 
         m_dataLock.lockForRead();
-        while (i < count * m_channelCount && idx < (int)m_data.size()) {
-            frames.push_back(m_data[idx]);
-            ++idx;
+        while (i < n && in_range_for(m_data, idx)) {
+            frames[i++] = m_data[idx++];
         }
         m_dataLock.unlock();
+
+        frames.resize(i);
     }
     }
 
     if (m_normalised) {
-        for (int i = 0; i < (int)(count * m_channelCount); ++i) {
-            frames[i] *= m_gain;
-        }
+        for (auto &f: frames) f *= m_gain;
     }
+
+    return frames;
 }
 

@@ -26,12 +26,12 @@
 struct OneDimensionalPoint
 {
 public:
-    OneDimensionalPoint(int _frame) : frame(_frame) { }
-    OneDimensionalPoint(int _frame, QString _label) : frame(_frame), label(_label) { }
+    OneDimensionalPoint(sv_frame_t _frame) : frame(_frame) { }
+    OneDimensionalPoint(sv_frame_t _frame, QString _label) : frame(_frame), label(_label) { }
 
     int getDimensions() const { return 1; }
     
-    int frame;
+    sv_frame_t frame;
     QString label;
 
     QString getLabel() const { return label; }
@@ -45,7 +45,7 @@ public:
             .arg(extraAttributes);
     }
 
-    QString toDelimitedDataString(QString delimiter, int sampleRate) const
+    QString toDelimitedDataString(QString delimiter, DataExportOptions, sv_samplerate_t sampleRate) const
     {
         QStringList list;
         list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
@@ -76,7 +76,7 @@ class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>,
     Q_OBJECT
     
 public:
-    SparseOneDimensionalModel(int sampleRate, int resolution,
+    SparseOneDimensionalModel(sv_samplerate_t sampleRate, int resolution,
 			      bool notifyOnAdd = true) :
 	SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
     {
@@ -187,7 +187,7 @@ public:
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(int startFrame, int endFrame) const {
+    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const {
         
 	PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
@@ -197,7 +197,7 @@ public:
 
             notes.push_back
                 (NoteData(pli->frame,
-                          getSampleRate() / 6, // arbitrary short duration
+                          sv_frame_t(getSampleRate() / 6), // arbitrary short duration
                           64,   // default pitch
                           100)); // default velocity
         }

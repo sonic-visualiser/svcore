@@ -19,6 +19,8 @@
 #include <QObject>
 #include <QString>
 
+#include "base/DataExportOptions.h"
+
 class Model;
 class MultiSelection;
 
@@ -27,7 +29,10 @@ class CSVFileWriter : public QObject
     Q_OBJECT
 
 public:
-    CSVFileWriter(QString path, Model *model, QString delimiter = ",");
+    CSVFileWriter(QString path,
+                  Model *model,
+                  QString delimiter = ",",
+                  DataExportOptions options = DataExportDefaults);
     virtual ~CSVFileWriter();
 
     virtual bool isOK() const;
@@ -41,6 +46,7 @@ protected:
     Model *m_model;
     QString m_error;
     QString m_delimiter;
+    DataExportOptions m_options;
 };
 
 #endif

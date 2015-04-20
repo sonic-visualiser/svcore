@@ -69,7 +69,7 @@ SamplePlayer::hints[PortCount] =
     { LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_INTEGER |
       LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0, 1 },
     { LADSPA_HINT_DEFAULT_MINIMUM | LADSPA_HINT_LOGARITHMIC |
-      LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0.001, 2.0 }
+      LADSPA_HINT_BOUNDED_BELOW | LADSPA_HINT_BOUNDED_ABOVE, 0.001f, 2.0f }
 };
 
 const LADSPA_Properties
@@ -156,7 +156,7 @@ SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 	return 0;
     }
 
-    SamplePlayer *player = new SamplePlayer(rate);
+    SamplePlayer *player = new SamplePlayer(int(rate));
 	// std::cerr << "Instantiated sample player " << std::endl;
 
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
@@ -282,7 +282,7 @@ SamplePlayer::selectProgram(LADSPA_Handle handle,
 			    unsigned long program)
 {
     SamplePlayer *player = (SamplePlayer *)handle;
-    player->m_pendingProgramChange = program;
+    player->m_pendingProgramChange = (int)program;
 }
 
 int
@@ -415,7 +415,7 @@ SamplePlayer::loadSampleData(QString path)
     if (info.samplerate != m_sampleRate) {
 	
 	double ratio = (double)m_sampleRate / (double)info.samplerate;
-	size_t target = (size_t)(info.frames * ratio);
+	size_t target = (size_t)(double(info.frames) * ratio);
 	SRC_DATA data;
 
 	tmpResamples = (float *)malloc(target * info.channels * sizeof(float));
@@ -572,7 +572,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
             ratio *= *m_concertA / 440.f;
         }
 	if (m_basePitch && n != *m_basePitch) {
-	    ratio *= powf(1.059463094f, n - *m_basePitch);
+	    ratio *= powf(1.059463094f, float(n) - *m_basePitch);
 	}
     }
 
@@ -585,8 +585,8 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 	 ++i, ++s) {
 
 	float         lgain = gain;
-	float         rs = s * ratio;
-	unsigned long rsi = lrintf(floor(rs));
+	float         rs = float(s) * ratio;
+	unsigned long rsi = lrintf(floorf(rs));
 
 	if (rsi >= m_sampleCount) {
 #ifdef DEBUG_SAMPLE_PLAYER
@@ -604,7 +604,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 
 	    unsigned long releaseFrames = 200;
 	    if (m_release) {
-		releaseFrames = long(*m_release * m_sampleRate + 0.0001);
+		releaseFrames = long(*m_release * float(m_sampleRate) + 0.0001f);
 	    }
 
 	    if (dist > releaseFrames) {

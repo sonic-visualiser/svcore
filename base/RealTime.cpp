@@ -75,7 +75,7 @@ RealTime::fromMilliseconds(int msec)
 RealTime
 RealTime::fromTimeval(const struct timeval &tv)
 {
-    return RealTime(tv.tv_sec, tv.tv_usec * 1000);
+    return RealTime(int(tv.tv_sec), int(tv.tv_usec * 1000));
 }
 
 RealTime
@@ -89,7 +89,7 @@ RealTime::fromXsdDuration(std::string xsdd)
     int i = 0;
 
     const char *s = xsdd.c_str();
-    int len = xsdd.length();
+    int len = int(xsdd.length());
 
     bool negative = false, afterT = false;
 
@@ -106,7 +106,7 @@ RealTime::fromXsdDuration(std::string xsdd)
 
         if (isdigit(s[i]) || s[i] == '.') {
             value = strtod(&s[i], &eptr);
-            i = eptr - s;
+            i = int(eptr - s);
         }
 
         if (i == len) break;
@@ -456,24 +456,36 @@ RealTime::operator/(const RealTime &r) const
     else return lTotal/rTotal;
 }
 
-long
-RealTime::realTime2Frame(const RealTime &time, unsigned int sampleRate)
+static RealTime
+frame2RealTime_i(sv_frame_t frame, sv_frame_t iSampleRate)
+{
+    if (frame < 0) return -frame2RealTime_i(-frame, iSampleRate);
+
+    RealTime rt;
+    sv_frame_t sec = frame / iSampleRate;
+    rt.sec = int(sec);
+    frame -= sec * iSampleRate;
+    rt.nsec = (int)(((double(frame) * 1000000.0) / double(iSampleRate)) * 1000.0);
+    return rt;
+}
+
+sv_frame_t
+RealTime::realTime2Frame(const RealTime &time, sv_samplerate_t sampleRate)
 {
     if (time < zeroTime) return -realTime2Frame(-time, sampleRate);
     double s = time.sec + double(time.nsec + 1) / 1000000000.0;
-    return long(s * double(sampleRate));
+    return sv_frame_t(s * sampleRate);
 }
 
 RealTime
-RealTime::frame2RealTime(long frame, unsigned int sampleRate)
+RealTime::frame2RealTime(sv_frame_t frame, sv_samplerate_t sampleRate)
 {
-    if (frame < 0) return -frame2RealTime(-frame, sampleRate);
+    if (sampleRate == double(int(sampleRate))) {
+        return frame2RealTime_i(frame, int(sampleRate));
+    }
 
-    RealTime rt;
-    rt.sec = frame / long(sampleRate);
-    frame -= rt.sec * long(sampleRate);
-    rt.nsec = (int)(((double(frame) * 1000000.0) / long(sampleRate)) * 1000.0);
-    return rt;
+    double sec = double(frame) / sampleRate;
+    return fromSeconds(sec);
 }
 
 const RealTime RealTime::zeroTime(0,0);

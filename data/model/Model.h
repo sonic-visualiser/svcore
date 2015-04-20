@@ -21,6 +21,8 @@
 
 #include "base/XmlExportable.h"
 #include "base/Playable.h"
+#include "base/BaseTypes.h"
+#include "base/DataExportOptions.h"
 
 typedef std::vector<float> SampleBlock;
 
@@ -50,23 +52,23 @@ public:
     /**
      * Return the first audio frame spanned by the model.
      */
-    virtual int getStartFrame() const = 0;
+    virtual sv_frame_t getStartFrame() const = 0;
 
     /**
      * Return the last audio frame spanned by the model.
      */
-    virtual int getEndFrame() const = 0;
+    virtual sv_frame_t getEndFrame() const = 0;
 
     /**
      * Return the frame rate in frames per second.
      */
-    virtual int getSampleRate() const = 0;
+    virtual sv_samplerate_t getSampleRate() const = 0;
 
     /**
      * Return the frame rate of the underlying material, if the model
      * itself has already been resampled.
      */
-    virtual int getNativeRate() const { return getSampleRate(); }
+    virtual sv_samplerate_t getNativeRate() const { return getSampleRate(); }
 
     /**
      * Return the "work title" of the model, if known.
@@ -89,22 +91,6 @@ public:
      * Return the type of the model.  For display purposes only.
      */
     virtual QString getTypeName() const = 0;
-
-    /**
-     * Return a copy of this model.
-     *
-     * If the model is not editable, this may be effectively a shallow
-     * copy.  If the model is editable, however, this operation must
-     * properly copy all of the model's editable data.
-     *
-     * In general this operation is not useful for non-editable dense
-     * models such as waveforms, because there may be no efficient
-     * copy operation implemented -- for such models it is better not
-     * to copy at all.
-     *
-     * Caller owns the returned value.
-     */
-    virtual Model *clone() const = 0;
 
     /**
      * Mark the model as abandoning. This means that the application
@@ -200,13 +186,13 @@ public:
      * Return the frame number of the reference model that corresponds
      * to the given frame number in this model.
      */
-    virtual int alignToReference(int frame) const;
+    virtual sv_frame_t alignToReference(sv_frame_t frame) const;
 
     /**
      * Return the frame number in this model that corresponds to the
      * given frame number of the reference model.
      */
-    virtual int alignFromReference(int referenceFrame) const;
+    virtual sv_frame_t alignFromReference(sv_frame_t referenceFrame) const;
 
     /**
      * Return the completion percentage for the alignment model: 100
@@ -236,8 +222,15 @@ public:
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataStringSubset(delimiter, getStartFrame(), getEndFrame());
     }
-    virtual QString toDelimitedDataStringSubset(QString, int /* f0 */, int /* f1 */) const {
+    virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
+        return toDelimitedDataStringSubsetWithOptions(delimiter, opts, getStartFrame(), getEndFrame());
+    }
+    virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
         return "";
+    }
+    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions, sv_frame_t f0, sv_frame_t f1) const {
+        // Default implementation supports no options
+        return toDelimitedDataStringSubset(delimiter, f0, f1);
     }
 
 public slots:
@@ -255,7 +248,7 @@ signals:
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChangedWithin(int startFrame, int endFrame);
+    void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
 
     /**
      * Emitted when some internal processing has advanced a stage, but

@@ -20,6 +20,8 @@
 
 #include "CSVFormat.h"
 
+#include "base/BaseTypes.h"
+
 #include <QList>
 #include <QStringList>
 
@@ -32,7 +34,7 @@ public:
      * Construct a CSVFileReader to read the CSV file at the given
      * path, with the given format.
      */
-    CSVFileReader(QString path, CSVFormat format, int mainModelSampleRate);
+    CSVFileReader(QString path, CSVFormat format, sv_samplerate_t mainModelSampleRate);
 
     /**
      * Construct a CSVFileReader to read from the given
@@ -40,7 +42,7 @@ public:
      * CSVFileReader will not close or delete it and it must outlive
      * the CSVFileReader.
      */
-    CSVFileReader(QIODevice *device, CSVFormat format, int mainModelSampleRate);
+    CSVFileReader(QIODevice *device, CSVFormat format, sv_samplerate_t mainModelSampleRate);
 
     virtual ~CSVFileReader();
 
@@ -56,10 +58,10 @@ protected:
     QString m_filename;
     QString m_error;
     mutable int m_warnings;
-    int m_mainModelSampleRate;
+    sv_samplerate_t m_mainModelSampleRate;
 
-    int convertTimeValue(QString, int lineno, int sampleRate,
-                            int windowSize) const;
+    sv_frame_t convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
+                                int windowSize) const;
 };
 
 

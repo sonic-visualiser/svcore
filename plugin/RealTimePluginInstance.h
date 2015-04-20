@@ -22,15 +22,15 @@
 #define _REALTIME_PLUGIN_INSTANCE_H_
 
 #include <vamp-hostsdk/PluginBase.h>
-#include <vamp-hostsdk/RealTime.h>
+
+#include "base/RealTime.h"
+#include "base/AudioPlaySource.h"
 
 #include <QString>
 #include <QStringList>
 #include <vector>
 #include <string>
 #include <map>
-
-#include "base/AudioPlaySource.h"
 
 class RealTimePluginFactory;
 	
@@ -91,36 +91,36 @@ public:
      * waiting.  Other plugins can ignore it.  The count, if zero,
      * defaults to our fixed buffer size.
      */
-    virtual void run(const Vamp::RealTime &blockStartTime,
-                     size_t count = 0) = 0;
+    virtual void run(const RealTime &blockStartTime,
+                     int count = 0) = 0;
     
-    virtual size_t getBufferSize() const = 0;
+    virtual int getBufferSize() const = 0;
 
-    virtual size_t getAudioInputCount() const = 0;
-    virtual size_t getAudioOutputCount() const = 0;
+    virtual int getAudioInputCount() const = 0;
+    virtual int getAudioOutputCount() const = 0;
 
     virtual sample_t **getAudioInputBuffers() = 0;
     virtual sample_t **getAudioOutputBuffers() = 0;
 
     // Control inputs are known as parameters here
-    virtual size_t getControlOutputCount() const = 0;
-    virtual float getControlOutputValue(size_t n) const = 0;
+    virtual int getControlOutputCount() const = 0;
+    virtual float getControlOutputValue(int n) const = 0;
 
 //     virtual QStringList getPrograms() const { return QStringList(); }
 //     virtual QString getCurrentProgram() const { return QString(); }
     virtual std::string getProgram(int /* bank */, int /* program */) const { return std::string(); }
-//     virtual unsigned long getProgram(QString /* name */) const { return 0; } // bank << 16 + program
+//     virtual int getProgram(QString /* name */) const { return 0; } // bank << 16 + program
 //     virtual void selectProgram(QString) { }
 
-    virtual unsigned int getParameterCount() const = 0;
-    virtual void setParameterValue(unsigned int parameter, float value) = 0;
-    virtual float getParameterValue(unsigned int parameter) const = 0;
-    virtual float getParameterDefault(unsigned int parameter) const = 0;
-    virtual int getParameterDisplayHint(unsigned int parameter) const = 0;
+    virtual int getParameterCount() const = 0;
+    virtual void setParameterValue(int parameter, float value) = 0;
+    virtual float getParameterValue(int parameter) const = 0;
+    virtual float getParameterDefault(int parameter) const = 0;
+    virtual int getParameterDisplayHint(int parameter) const = 0;
 
     virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 
-    virtual void sendEvent(const Vamp::RealTime & /* eventTime */,
+    virtual void sendEvent(const RealTime & /* eventTime */,
 			   const void * /* event */) { }
     virtual void clearEvents() { }
 
@@ -128,11 +128,11 @@ public:
     virtual void setBypassed(bool value) = 0;
 
     // This should be called after setup, but while not actually playing.
-    virtual size_t getLatency() = 0;
+    virtual sv_frame_t getLatency() = 0;
 
     virtual void silence() = 0;
     virtual void discardEvents() { }
-    virtual void setIdealChannelCount(size_t channels) = 0; // must also silence(); may also re-instantiate
+    virtual void setIdealChannelCount(int channels) = 0; // must also silence(); may also re-instantiate
 
     void setFactory(RealTimePluginFactory *f) { m_factory = f; } // ew
 

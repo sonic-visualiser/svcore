@@ -141,7 +141,7 @@ Pitch::getPitchLabel(int midiPitch,
 
     QString plain = (useFlats ? flatNotes : notes)[note].arg(octave);
 
-    int ic = lrint(centsOffset);
+    long ic = lrint(centsOffset);
     if (ic == 0) return plain;
     else if (ic > 0) return QString("%1+%2c").arg(plain).arg(ic);
     else return QString("%1%2c").arg(plain).arg(ic);
@@ -176,7 +176,7 @@ Pitch::getLabelForPitchRange(int semis, double cents)
         }
     }
 
-    int ic = lrint(cents);
+    long ic = lrint(cents);
 
     if (ic == 0) {
         if (semis >= 12) {

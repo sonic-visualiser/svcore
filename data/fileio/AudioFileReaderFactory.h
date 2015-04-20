@@ -19,6 +19,7 @@
 #include <QString>
 
 #include "FileSource.h"
+#include "base/BaseTypes.h"
 
 class AudioFileReader;
 class ProgressReporter;
@@ -53,7 +54,7 @@ public:
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createReader(FileSource source,
-                                         int targetRate = 0,
+                                         sv_samplerate_t targetRate = 0,
                                          bool normalised = false,
                                          ProgressReporter *reporter = 0);
 
@@ -82,13 +83,13 @@ public:
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createThreadingReader(FileSource source,
-                                                  int targetRate = 0,
+                                                  sv_samplerate_t targetRate = 0,
                                                   bool normalised = false,
                                                   ProgressReporter *reporter = 0);
 
 protected:
     static AudioFileReader *create(FileSource source,
-                                   int targetRate,
+                                   sv_samplerate_t targetRate,
                                    bool normalised,
                                    bool threading,
                                    ProgressReporter *reporter);

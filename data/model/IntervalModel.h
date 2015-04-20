@@ -29,12 +29,12 @@ template <typename PointType>
 class IntervalModel : public SparseValueModel<PointType>
 {
 public:
-    IntervalModel(int sampleRate, int resolution,
+    IntervalModel(sv_samplerate_t sampleRate, int resolution,
                   bool notifyOnAdd = true) :
 	SparseValueModel<PointType>(sampleRate, resolution, notifyOnAdd)
     { }
 
-    IntervalModel(int sampleRate, int resolution,
+    IntervalModel(sv_samplerate_t sampleRate, int resolution,
                   float valueMinimum, float valueMaximum,
                   bool notifyOnAdd = true) :
 	SparseValueModel<PointType>(sampleRate, resolution,
@@ -48,14 +48,14 @@ public:
      * and after).  Consequently this can be very slow (optimised data
      * structures still to be done!).
      */
-    virtual typename SparseValueModel<PointType>::PointList getPoints(long start, long end) const;
+    virtual typename SparseValueModel<PointType>::PointList getPoints(sv_frame_t start, sv_frame_t end) const;
 
     /**
      * PointTypes have a duration, so this returns all points that span the
      * given frame.  Consequently this can be very slow (optimised
      * data structures still to be done!).
      */
-    virtual typename SparseValueModel<PointType>::PointList getPoints(long frame) const;
+    virtual typename SparseValueModel<PointType>::PointList getPoints(sv_frame_t frame) const;
 
     virtual const typename SparseModel<PointType>::PointList &getPoints() const {
         return SparseModel<PointType>::getPoints(); 
@@ -107,7 +107,7 @@ public:
 
         switch (column) {
         // column cannot be 0 or 1, those cases were handled above
-        case 2: point.value = value.toDouble(); break;
+        case 2: point.value = float(value.toDouble()); break;
         case 3: point.duration = value.toInt(); break;
         }
 
@@ -125,7 +125,7 @@ public:
 
 template <typename PointType>
 typename SparseValueModel<PointType>::PointList
-IntervalModel<PointType>::getPoints(long start, long end) const
+IntervalModel<PointType>::getPoints(sv_frame_t start, sv_frame_t end) const
 {
     typedef IntervalModel<PointType> I;
 
@@ -146,7 +146,7 @@ IntervalModel<PointType>::getPoints(long start, long end) const
     for (typename I::PointListConstIterator i = endItr; i != I::m_points.begin(); ) {
         --i;
         if (i->frame < start) {
-            if (i->frame + long(i->duration) >= start) {
+            if (i->frame + i->duration >= start) {
                 rv.insert(*i);
             }
         } else if (i->frame <= end) {
@@ -159,7 +159,7 @@ IntervalModel<PointType>::getPoints(long start, long end) const
 
 template <typename PointType>
 typename SparseValueModel<PointType>::PointList
-IntervalModel<PointType>::getPoints(long frame) const
+IntervalModel<PointType>::getPoints(sv_frame_t frame) const
 {
     typedef IntervalModel<PointType> I;
 
@@ -168,8 +168,8 @@ IntervalModel<PointType>::getPoints(long frame) const
 
     if (I::m_resolution == 0) return typename I::PointList();
 
-    long start = (frame / I::m_resolution) * I::m_resolution;
-    long end = start + I::m_resolution;
+    sv_frame_t start = (frame / I::m_resolution) * I::m_resolution;
+    sv_frame_t end = start + I::m_resolution;
 
     PointType endPoint(end);
     
@@ -180,7 +180,7 @@ IntervalModel<PointType>::getPoints(long frame) const
     for (typename I::PointListConstIterator i = endItr; i != I::m_points.begin(); ) {
         --i;
         if (i->frame < start) {
-            if (i->frame + long(i->duration) >= start) {
+            if (i->frame + i->duration >= start) {
                 rv.insert(*i);
             }
         } else if (i->frame <= end) {

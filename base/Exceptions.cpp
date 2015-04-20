@@ -91,8 +91,8 @@ FileOperationFailed::what() const throw()
 }
 
 InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
-                                             int required,
-                                             int available) throw() :
+                                             size_t required,
+                                             size_t available) throw() :
     m_directory(directory),
     m_required(required),
     m_available(available)

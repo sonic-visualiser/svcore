@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2009 QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,21 +12,16 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FRAME_TIMER_H_
-#define _FRAME_TIMER_H_
+#ifndef DATA_EXPORT_OPTIONS_H
+#define DATA_EXPORT_OPTIONS_H
 
-#include "BaseTypes.h"
-
-/**
- * A trivial interface for things that permit retrieving "the current
- * frame".  Implementations of this interface are used, for example,
- * for timestamping incoming MIDI events when tapping to MIDI.
- */
-
-class FrameTimer
+enum DataExportOption
 {
-public:
-    virtual sv_frame_t getFrame() const = 0;
+    DataExportDefaults = 0x0,
+    DataExportFillGaps = 0x1,
+    DataExportOmitLevels = 0x2,
 };
+
+typedef int DataExportOptions;
 
 #endif

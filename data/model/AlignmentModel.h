@@ -37,10 +37,9 @@ public:
     ~AlignmentModel();
 
     virtual bool isOK() const;
-    virtual int getStartFrame() const;
-    virtual int getEndFrame() const;
-    virtual int getSampleRate() const;
-    virtual Model *clone() const;
+    virtual sv_frame_t getStartFrame() const;
+    virtual sv_frame_t getEndFrame() const;
+    virtual sv_samplerate_t getSampleRate() const;
     virtual bool isReady(int *completion = 0) const;
     virtual const ZoomConstraint *getZoomConstraint() const;
 
@@ -49,8 +48,8 @@ public:
     const Model *getReferenceModel() const;
     const Model *getAlignedModel() const;
 
-    int toReference(int frame) const;
-    int fromReference(int frame) const;
+    sv_frame_t toReference(sv_frame_t frame) const;
+    sv_frame_t fromReference(sv_frame_t frame) const;
 
     void setPathFrom(SparseTimeValueModel *rawpath);
     void setPath(PathModel *path);
@@ -61,12 +60,12 @@ public:
 
 signals:
     void modelChanged();
-    void modelChangedWithin(int startFrame, int endFrame);
+    void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
     void completionChanged();
 
 protected slots:
     void pathChanged();
-    void pathChangedWithin(int startFrame, int endFrame);
+    void pathChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
     void pathCompletionChanged();
 
 protected:
@@ -84,7 +83,7 @@ protected:
     void constructPath() const;
     void constructReversePath() const;
 
-    int align(PathModel *path, int frame) const;
+    sv_frame_t align(PathModel *path, sv_frame_t frame) const;
 };
 
 #endif

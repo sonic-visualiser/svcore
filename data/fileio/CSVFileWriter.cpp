@@ -28,11 +28,15 @@
 #include <QFile>
 #include <QTextStream>
 
-CSVFileWriter::CSVFileWriter(QString path, Model *model, QString delimiter) :
+CSVFileWriter::CSVFileWriter(QString path,
+                             Model *model,
+                             QString delimiter,
+                             DataExportOptions options) :
     m_path(path),
     m_model(model),
     m_error(""),
-    m_delimiter(delimiter)
+    m_delimiter(delimiter),
+    m_options(options)
 {
 }
 
@@ -66,7 +70,8 @@ CSVFileWriter::write()
         }
     
         QTextStream out(&file);
-        out << m_model->toDelimitedDataString(m_delimiter);
+        out << m_model->toDelimitedDataStringWithOptions
+            (m_delimiter, m_options);
 
         file.close();
         temp.moveToTarget();
@@ -95,8 +100,9 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
                  selection->getSelections().begin();
              i != selection->getSelections().end(); ++i) {
 	
-            int f0(i->getStartFrame()), f1(i->getEndFrame());
-            out << m_model->toDelimitedDataStringSubset(m_delimiter, f0, f1);
+            sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
+            out << m_model->toDelimitedDataStringSubsetWithOptions
+                (m_delimiter, m_options, f0, f1);
         }
 
         file.close();

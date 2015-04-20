@@ -48,8 +48,8 @@ public:
     virtual bool isColumnTimeValue(int col) const = 0;
     virtual SortType getSortType(int col) const = 0;
 
-    virtual long getFrameForRow(int row) const = 0;
-    virtual int getRowForFrame(long frame) const = 0;
+    virtual sv_frame_t getFrameForRow(int row) const = 0;
+    virtual int getRowForFrame(sv_frame_t frame) const = 0;
 
     virtual bool isEditable() const { return false; }
     virtual Command *getSetDataCommand(int /* row */, int /* column */, const QVariant &, int /* role */) { return 0; }

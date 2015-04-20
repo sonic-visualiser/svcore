@@ -50,10 +50,10 @@ using Dataquay::PropertyObject;
 class RDFImporterImpl
 {
 public:
-    RDFImporterImpl(QString url, int sampleRate);
+    RDFImporterImpl(QString url, sv_samplerate_t sampleRate);
     virtual ~RDFImporterImpl();
 
-    void setSampleRate(int sampleRate) { m_sampleRate = sampleRate; }
+    void setSampleRate(sv_samplerate_t sampleRate) { m_sampleRate = sampleRate; }
     
     bool isOK();
     QString getErrorString() const;
@@ -67,7 +67,7 @@ protected:
     QString m_uristring;
     QString m_errorString;
     std::map<QString, Model *> m_audioModelMap;
-    int m_sampleRate;
+    sv_samplerate_t m_sampleRate;
 
     std::map<Model *, std::map<QString, float> > m_labelValueMap;
 
@@ -78,10 +78,11 @@ protected:
     void getDenseModelTitle(Model *, QString, QString);
 
     void getDenseFeatureProperties(QString featureUri,
-                                   int &sampleRate, int &windowLength,
+                                   sv_samplerate_t &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
 
-    void fillModel(Model *, long, long, bool, std::vector<float> &, QString);
+    void fillModel(Model *, sv_frame_t, sv_frame_t,
+                   bool, std::vector<float> &, QString);
 };
 
 QString
@@ -90,7 +91,7 @@ RDFImporter::getKnownExtensions()
     return "*.rdf *.n3 *.ttl";
 }
 
-RDFImporter::RDFImporter(QString url, int sampleRate) :
+RDFImporter::RDFImporter(QString url, sv_samplerate_t sampleRate) :
     m_d(new RDFImporterImpl(url, sampleRate)) 
 {
 }
@@ -101,7 +102,7 @@ RDFImporter::~RDFImporter()
 }
 
 void
-RDFImporter::setSampleRate(int sampleRate)
+RDFImporter::setSampleRate(sv_samplerate_t sampleRate)
 {
     m_d->setSampleRate(sampleRate);
 }
@@ -124,7 +125,7 @@ RDFImporter::getDataModels(ProgressReporter *r)
     return m_d->getDataModels(r);
 }
 
-RDFImporterImpl::RDFImporterImpl(QString uri, int sampleRate) :
+RDFImporterImpl::RDFImporterImpl(QString uri, sv_samplerate_t sampleRate) :
     m_store(new BasicStore),
     m_uristring(uri),
     m_sampleRate(sampleRate)
@@ -309,7 +310,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
         
         if (type == "" || value == "") continue;
 
-        int sampleRate = 0;
+        sv_samplerate_t sampleRate = 0;
         int windowLength = 0;
         int hopSize = 0;
         int width = 0;
@@ -416,7 +417,7 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
 
 void
 RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
-                                           int &sampleRate, int &windowLength,
+                                           sv_samplerate_t &sampleRate, int &windowLength,
                                            int &hopSize, int &width, int &height)
 {
     Node dim = m_store->complete
@@ -467,7 +468,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     PropertyObject po(m_store, "tl:", map);
 
     if (po.hasProperty("sampleRate")) {
-        sampleRate = po.getProperty("sampleRate").toInt();
+        sampleRate = po.getProperty("sampleRate").toDouble();
     }
     if (po.hasProperty("hopSize")) {
         hopSize = po.getProperty("hopSize").toInt();
@@ -686,8 +687,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 model = modelMap[timeline][type][dimensions][haveDuration];
 
                 if (model) {
-                    long ftime = RealTime::realTime2Frame(time, m_sampleRate);
-                    long fduration = RealTime::realTime2Frame(duration, m_sampleRate);
+                    sv_frame_t ftime = RealTime::realTime2Frame(time, m_sampleRate);
+                    sv_frame_t fduration = RealTime::realTime2Frame(duration, m_sampleRate);
                     fillModel(model, ftime, fduration, haveDuration, values, label);
                 }
             }
@@ -697,8 +698,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
 void
 RDFImporterImpl::fillModel(Model *model,
-                           long ftime,
-                           long fduration,
+                           sv_frame_t ftime,
+                           sv_frame_t fduration,
                            bool haveDuration,
                            std::vector<float> &values,
                            QString label)
@@ -757,7 +758,8 @@ RDFImporterImpl::fillModel(Model *model,
                     }
                 }
             }
-            NoteModel::Point point(ftime, value, duration, level, label);
+            NoteModel::Point point(ftime, value, sv_frame_t(lrintf(duration)),
+                                   level, label);
             nm->addPoint(point);
         }
         return;
@@ -789,7 +791,8 @@ RDFImporterImpl::fillModel(Model *model,
                     duration = values[1];
                 }
             }
-            RegionModel::Point point(ftime, value, duration, label);
+            RegionModel::Point point(ftime, value,
+                                     sv_frame_t(lrintf(duration)), label);
             rm->addPoint(point);
         }
         return;

@@ -62,8 +62,8 @@ public:
      * If the channel is given as -1, mix all available channels and
      * return the result.
      */
-    virtual int getData(int channel, int start, int count,
-                           float *buffer) const = 0;
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
+                               float *buffer) const = 0;
 
     /**
      * Get the specified set of samples from the given channel of the
@@ -72,22 +72,22 @@ public:
      * If the channel is given as -1, mix all available channels and
      * return the result.
      */
-    virtual int getData(int channel, int start, int count,
-                           double *buffer) const = 0;
-
+    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
+                               double *buffer) const = 0;
+    
     /**
      * Get the specified set of samples from given contiguous range
      * of channels of the model in single-precision floating-point
      * format.  Return the number of sample frames actually retrieved.
      */
-    virtual int getData(int fromchannel, int tochannel,
-                           int start, int count,
-                           float **buffers) const = 0;
+    virtual sv_frame_t getData(int fromchannel, int tochannel,
+                               sv_frame_t start, sv_frame_t count,
+                               float **buffers) const = 0;
 
     virtual bool canPlay() const { return true; }
     virtual QString getDefaultPlayClipId() const { return ""; }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter, int f0, int f1) const;
+    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const;
 
     QString getTypeName() const { return tr("Dense Time-Value"); }
 };
