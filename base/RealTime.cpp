@@ -258,7 +258,10 @@ RealTime::toText(bool fixedDp) const
     if (*this < RealTime::zeroTime) return "-" + (-*this).toText(fixedDp);
 
     Preferences *p = Preferences::getInstance();
+    bool hms = true;
+    
     if (p) {
+        hms = p->getShowHMS();
         int fps = 0;
         switch (p->getTimeToTextMode()) {
         case Preferences::TimeToTextMs: break;
@@ -269,19 +272,24 @@ RealTime::toText(bool fixedDp) const
         case Preferences::TimeToText50Frame: fps = 50; break;
         case Preferences::TimeToText60Frame: fps = 60; break;
         }
-        if (fps != 0) return toFrameText(fps);
+        if (fps != 0) return toFrameText(fps, hms);
     }
 
-    std::stringstream out;
+    return toMSText(fixedDp, hms);
+}
 
-    if (p->getShowHMS()) {
-    
+static void
+writeSecPart(std::stringstream &out, bool hms, int sec)
+{
+    if (hms) {
         if (sec >= 3600) {
             out << (sec / 3600) << ":";
         }
 
         if (sec >= 60) {
-            out << (sec % 3600) / 60 << ":";
+            int minutes = (sec % 3600) / 60;
+            if (sec >= 3600 && minutes < 10) out << "0";
+            out << minutes << ":";
         }
 
         if (sec >= 10) {
@@ -293,6 +301,16 @@ RealTime::toText(bool fixedDp) const
     } else {
         out << sec;
     }
+}
+
+std::string
+RealTime::toMSText(bool fixedDp, bool hms) const
+{
+    if (*this < RealTime::zeroTime) return "-" + (-*this).toMSText(fixedDp, hms);
+
+    std::stringstream out;
+
+    writeSecPart(out, hms, sec);
     
     int ms = msec();
 
@@ -321,35 +339,18 @@ RealTime::toText(bool fixedDp) const
 }
 
 std::string
-RealTime::toFrameText(int fps) const
+RealTime::toFrameText(int fps, bool hms) const
 {
-    if (*this < RealTime::zeroTime) return "-" + (-*this).toFrameText(fps);
-
-    Preferences *p = Preferences::getInstance();
+    if (*this < RealTime::zeroTime) return "-" + (-*this).toFrameText(fps, hms);
 
     std::stringstream out;
 
-    if (p->getShowHMS()) {
-    
-        if (sec >= 3600) {
-            out << (sec / 3600) << ":";
-        }
+    writeSecPart(out, hms, sec);
 
-        if (sec >= 60) {
-            out << (sec % 3600) / 60 << ":";
-        }
-
-        if (sec >= 10) {
-            out << ((sec % 60) / 10);
-        }
-
-        out << (sec % 10);
-
-    } else {
-        out << sec;
-    }
-    
-    int f = nsec / (ONE_BILLION / fps);
+    // avoid rounding error if fps does not divide into ONE_BILLION
+    int64_t fbig = nsec;
+    fbig *= fps;
+    int f = int(fbig / ONE_BILLION);
 
     int div = 1;
     int n = fps - 1;
@@ -381,19 +382,7 @@ RealTime::toSecText() const
 
     std::stringstream out;
 
-    if (sec >= 3600) {
-	out << (sec / 3600) << ":";
-    }
-
-    if (sec >= 60) {
-	out << (sec % 3600) / 60 << ":";
-    }
-
-    if (sec >= 10) {
-	out << ((sec % 60) / 10);
-    }
-
-    out << (sec % 10);
+    writeSecPart(out, true, sec);
     
     if (sec < 60) {
         out << "s";
