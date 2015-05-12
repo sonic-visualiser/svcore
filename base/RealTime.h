@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _REAL_TIME_H_
-#define _REAL_TIME_H_
+#ifndef SV_REAL_TIME_H
+#define SV_REAL_TIME_H
 
 #include "BaseTypes.h"
 
@@ -128,23 +128,55 @@ struct RealTime
     static RealTime fromString(std::string);
 
     /**
-     * Return a user-readable string to the nearest millisecond, in a
-     * form like HH:MM:SS.mmm
+     * Return a user-readable string to the nearest millisecond,
+     * typically in a form like HH:MM:SS.mmm. The exact format will
+     * depend on the application preferences for time display
+     * precision and hours:minutes:seconds format -- this function
+     * simply dispatches to toMSText or toFrameText with appropriate
+     * arguments depending on the preferences.
+     *
+     * If fixedDp is true, the result will be padded to 3 dp,
+     * i.e. millisecond resolution, even if the number of milliseconds
+     * is a multiple of 10.
      */
     std::string toText(bool fixedDp = false) const;
 
+    /** 
+     * Return a user-readable string to the nearest millisecond.
+     *
+     * If fixedDp is true, the result will be padded to 3 dp,
+     * i.e. millisecond resolution, even if the number of milliseconds
+     * is a multiple of 10.
+     *
+     * If hms is true, results may be returned in the form
+     * HH:MM:SS.mmm (if the time is large enough). If hms is false,
+     * the result will always be a (fractional) number of seconds.
+     *
+     * Unlike toText, this function does not depend on the application
+     * preferences.
+     */
+    std::string toMSText(bool fixedDp, bool hms) const;
+    
     /**
      * Return a user-readable string in which seconds are divided into
      * frames (presumably at a lower frame rate than audio rate,
      * e.g. 24 or 25 video frames), in a form like HH:MM:SS:FF.  fps
      * gives the number of frames per second, and must be integral
      * (29.97 not supported).
+     *
+     * Unlike toText, this function does not depend on the application
+     * preferences.
      */
-    std::string toFrameText(int fps) const;
+    std::string toFrameText(int fps, bool hms) const;
 
     /**
-     * Return a user-readable string to the nearest second, in a form
-     * like "6s" (for less than a minute) or "2:21" (for more).
+     * Return a user-readable string to the nearest second, in H:M:S
+     * form. Does not include milliseconds or frames. The result will
+     * be suffixed "s" if it contains only seconds (no hours or
+     * minutes).
+     *
+     * Unlike toText, this function does not depend on the application
+     * preferences.
      */
     std::string toSecText() const;
 
