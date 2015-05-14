@@ -280,6 +280,9 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         //!!! data with a higher resolution than the base model at all
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
             modelResolution = 1;
+        } else if (m_descriptors[n]->sampleRate <= 0.0) {
+            cerr << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
+            modelResolution = 1;
         } else {
             modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
         }
@@ -842,24 +845,30 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
+//        cerr << "variable sample rate: timestamp = " << feature.timestamp
+//             << " at input rate " << inputRate << " -> " << frame << endl;
+        
     } else if (m_descriptors[n]->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
+        sv_samplerate_t rate = m_descriptors[n]->sampleRate;
+        if (rate <= 0.0) {
+            rate = inputRate;
+        }
+        
         if (!feature.hasTimestamp) {
             ++m_fixedRateFeatureNos[n];
         } else {
             RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
-            m_fixedRateFeatureNos[n] = (int)
-                lrint(ts.toDouble() * m_descriptors[n]->sampleRate);
+            m_fixedRateFeatureNos[n] = (int)lrint(ts.toDouble() * rate);
         }
 
-//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNo 
-//             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
+//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNos[n]
+//             << ", m_descriptor->sampleRate = " << m_descriptors[n]->sampleRate
 //             << ", inputRate = " << inputRate
 //             << " giving frame = ";
-        frame = lrint((double(m_fixedRateFeatureNos[n])
-                       / m_descriptors[n]->sampleRate)
-                      * inputRate);
+        frame = lrint((double(m_fixedRateFeatureNos[n]) / rate) * inputRate);
+//        cerr << frame << endl;
     }
 
     if (frame < 0) {
