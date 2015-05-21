@@ -153,18 +153,20 @@ public:
                        QString extraAttributes = "") const;
 
     virtual QString toDelimitedDataString(QString delimiter) const {
-        return toDelimitedDataStringWithOptions(delimiter, DataExportDefaults);
+        return toDelimitedDataStringWithOptions
+            (delimiter, DataExportDefaults);
     }
 
     virtual QString toDelimitedDataStringWithOptions(QString delimiter,
                                                      DataExportOptions opts) const {
         return toDelimitedDataStringSubsetWithOptions
             (delimiter, opts,
-             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame());
+             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame() + 1);
     }
 
     virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
-        return toDelimitedDataStringSubsetWithOptions(delimiter, DataExportDefaults, f0, f1);
+        return toDelimitedDataStringSubsetWithOptions
+            (delimiter, DataExportDefaults, f0, f1);
     }
 
     virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const {
