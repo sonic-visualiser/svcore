@@ -44,7 +44,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transform),
     m_plugin(0)
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
+    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
 
     initialise();
 }
@@ -54,8 +54,12 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transforms),
     m_plugin(0)
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
-
+    if (m_transforms.empty()) {
+        SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s)" << endl;
+    } else {
+        SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
+    }
+    
     initialise();
 }
 
@@ -605,16 +609,18 @@ FeatureExtractionModelTransformer::run()
                                    blockSize,
                                    false,
                                    StorageAdviser::PrecisionCritical);
-            if (!model->isOK()) {
+            if (!model->isOK() || model->getError() != "") {
+                QString err = model->getError();
                 delete model;
                 for (int j = 0; j < (int)m_outputNos.size(); ++j) {
                     setCompletion(j, 100);
                 }
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
-                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer");
+                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
             }
             model->resume();
             fftModels.push_back(model);
+            cerr << "created model for channel " << ch << endl;
         }
     }
 
@@ -697,6 +703,7 @@ FeatureExtractionModelTransformer::run()
                     cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
                     m_abandoned = true;
                     m_message = error;
+                    break;
                 }
             }
         } else {
