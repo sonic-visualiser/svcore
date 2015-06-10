@@ -68,6 +68,12 @@ public:
     void abandon() { m_abandoned = true; }
 
     /**
+     * Return true if the processing thread is being or has been
+     * abandoned, i.e. if abandon() has been called.
+     */
+    bool isAbandoned() const { return m_abandoned; }
+    
+    /**
      * Return the input model for the transform.
      */
     Model *getInputModel()  { return m_input.getModel(); }

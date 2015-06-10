@@ -285,6 +285,12 @@ ModelTransformerFactory::transformerFinished()
         m_handlers.erase(transformer);
     }
 
+    if (transformer->isAbandoned()) {
+        if (transformer->getMessage() != "") {
+            emit transformFailed("", transformer->getMessage());
+        }
+    }
+    
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
 }
