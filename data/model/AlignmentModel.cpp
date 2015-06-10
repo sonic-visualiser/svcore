@@ -139,7 +139,7 @@ sv_frame_t
 AlignmentModel::toReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::toReference(" << frame << ")" << endl;
+    cerr << "AlignmentModel::toReference(" << frame << ")" << endl;
 #endif
     if (!m_path) {
         if (!m_rawPath) return frame;
@@ -152,7 +152,7 @@ sv_frame_t
 AlignmentModel::fromReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::fromReference(" << frame << ")" << endl;
+    cerr << "AlignmentModel::fromReference(" << frame << ")" << endl;
 #endif
     if (!m_reversePath) {
         if (!m_rawPath) return frame;
@@ -192,7 +192,7 @@ AlignmentModel::pathCompletionChanged()
         m_rawPath->isReady(&completion);
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::pathCompletionChanged: completion = "
+        cerr << "AlignmentModel::pathCompletionChanged: completion = "
                   << completion << endl;
 #endif
 
@@ -240,7 +240,7 @@ AlignmentModel::constructPath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
+    cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -271,7 +271,7 @@ AlignmentModel::constructReversePath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
+    cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -289,13 +289,13 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
 
     if (points.empty()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::align: No points" << endl;
+        cerr << "AlignmentModel::align: No points" << endl;
 #endif
         return frame;
     }        
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::align: frame " << frame << " requested" << endl;
+    cerr << "AlignmentModel::align: frame " << frame << " requested" << endl;
 #endif
 
     PathModel::Point point(frame);
@@ -326,6 +326,12 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
 #endif
     }        
 
+#ifdef DEBUG_ALIGNMENT_MODEL
+    cerr << "foundFrame = " << foundFrame << ", foundMapFrame = " << foundMapFrame
+         << ", followingFrame = " << followingFrame << ", followingMapFrame = "
+         << followingMapFrame << endl;
+#endif
+    
     if (foundMapFrame < 0) return 0;
 
     sv_frame_t resultFrame = foundMapFrame;
@@ -338,7 +344,7 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::align: resultFrame = " << resultFrame << endl;
+    cerr << "AlignmentModel::align: resultFrame = " << resultFrame << endl;
 #endif
 
     return resultFrame;
@@ -376,11 +382,11 @@ AlignmentModel::setPath(PathModel *path)
     delete m_path;
     m_path = path;
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::setPath: path = " << m_path << endl;
+    cerr << "AlignmentModel::setPath: path = " << m_path << endl;
 #endif
     constructReversePath();
 #ifdef DEBUG_ALIGNMENT_MODEL
-    SVDEBUG << "AlignmentModel::setPath: after construction path = "
+    cerr << "AlignmentModel::setPath: after construction path = "
               << m_path << ", rpath = " << m_reversePath << endl;
 #endif
 }
