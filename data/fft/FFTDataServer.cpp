@@ -529,7 +529,7 @@ FFTDataServer::FFTDataServer(QString fileBaseName,
 
     int maxCacheSize = 20 * 1024 * 1024;
     int columnSize = int(m_height * sizeof(fftsample) * 2 + sizeof(fftsample));
-    if (m_width * columnSize < maxCacheSize * 2) m_cacheWidth = m_width;
+    if (m_width < ((maxCacheSize * 2) / columnSize)) m_cacheWidth = m_width;
     else m_cacheWidth = maxCacheSize / columnSize;
     
 #ifdef DEBUG_FFT_SERVER
@@ -1411,13 +1411,13 @@ FFTDataServer::getError() const
     QString err;
     if (m_error != "") {
         err = m_error;
-        cerr << "FFTDataServer::getError: err (server " << this << ") = " << err << endl;
+//        cerr << "FFTDataServer::getError: err (server " << this << ") = " << err << endl;
     } else {
         MutexLocker locker(&m_fftBuffersLock, "FFTDataServer::getError");
         if (m_fillThread) {
             err = m_fillThread->getError();
-            cerr << "FFTDataServer::getError: err (server " << this << ", from thread " << m_fillThread
-                 << ") = " << err << endl;
+//            cerr << "FFTDataServer::getError: err (server " << this << ", from thread " << m_fillThread
+//                 << ") = " << err << endl;
         }
     }
     return err;
