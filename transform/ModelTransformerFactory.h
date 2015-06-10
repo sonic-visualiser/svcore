@@ -145,6 +145,9 @@ public:
                                            QString &message,
                                            AdditionalModelHandler *handler = 0);
 
+signals:
+    void transformFailed(QString transformName, QString message);
+                                                                               
 protected slots:
     void transformerFinished();
 
