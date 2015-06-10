@@ -62,7 +62,10 @@ public:
     }
     
     void set(size_t column) {
-        ((*m_bits)[column >> 3]) |= uint8_t((1u << (column & 0x07)) & 0xff);
+        size_t ix = (column >> 3);
+        uint8_t prior = (*m_bits)[ix];
+        uint8_t extra = ((1u << (column & 0x07)) & 0xff);
+        (*m_bits)[ix] = uint8_t(prior | extra);
     }
 
     void reset(size_t column) {
