@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FFT_MODEL_H_
-#define _FFT_MODEL_H_
+#ifndef FFT_MODEL_H
+#define FFT_MODEL_H
 
 #include "data/fft/FFTDataServer.h"
 #include "DenseThreeDimensionalModel.h"

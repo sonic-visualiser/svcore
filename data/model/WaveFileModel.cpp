@@ -252,65 +252,9 @@ WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
 }
 
 sv_frame_t
-WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                       double *buffer) const
-{
-#ifdef DEBUG_WAVE_FILE_MODEL
-    cout << "WaveFileModel::getData(double)[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
-#endif
-
-    if (start > m_startFrame) {
-        start -= m_startFrame;
-    } else {
-        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.0;
-        if (count <= m_startFrame - start) {
-            return 0;
-        } else {
-            count -= (m_startFrame - start);
-            start = 0;
-        }
-    }
-
-    if (!m_reader || !m_reader->isOK() || count == 0) {
-        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.0;
-        return 0;
-    }
-
-    int channels = getChannelCount();
-
-    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
-
-    sv_frame_t i = 0;
-
-    int ch0 = channel, ch1 = channel;
-    if (channel == -1) {
-	ch0 = 0;
-	ch1 = channels - 1;
-    }
-
-    while (i < count) {
-
-	buffer[i] = 0.0;
-
-	for (int ch = ch0; ch <= ch1; ++ch) {
-
-	    sv_frame_t index = i * channels + ch;
-	    if (index >= (sv_frame_t)frames.size()) break;
-            
-	    float sample = frames[index];
-	    buffer[i] += sample;
-	}
-
-	++i;
-    }
-
-    return i;
-}
-
-sv_frame_t
-WaveFileModel::getData(int fromchannel, int tochannel,
-                       sv_frame_t start, sv_frame_t count,
-                       float **buffer) const
+WaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
+                                   sv_frame_t start, sv_frame_t count,
+                                   float **buffer) const
 {
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << endl;

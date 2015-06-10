@@ -178,20 +178,12 @@ WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
 }
 
 sv_frame_t
-WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                               double *buffer) const
+WritableWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
+                                           sv_frame_t start, sv_frame_t count,
+                                           float **buffers) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(channel, start, count, buffer);
-}
-
-sv_frame_t
-WritableWaveFileModel::getData(int fromchannel, int tochannel,
-                               sv_frame_t start, sv_frame_t count,
-                               float **buffers) const
-{
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(fromchannel, tochannel, start, count, buffers);
+    return m_model->getMultiChannelData(fromchannel, tochannel, start, count, buffers);
 }    
 
 int

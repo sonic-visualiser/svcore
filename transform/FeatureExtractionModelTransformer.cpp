@@ -811,7 +811,8 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
             }
         }
 
-        got = input->getData(0, channelCount-1, startFrame, size, writebuf);
+        got = input->getMultiChannelData
+            (0, channelCount-1, startFrame, size, writebuf);
 
         if (writebuf != buffers) delete[] writebuf;
     }

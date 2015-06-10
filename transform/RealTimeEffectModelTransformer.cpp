@@ -204,9 +204,9 @@ RealTimeEffectModelTransformer::run()
             }
 	} else {
             if (inbufs && inbufs[0]) {
-                got = input->getData(0, channelCount - 1,
-                                     blockFrame, blockSize,
-                                     inbufs);
+                got = input->getMultiChannelData(0, channelCount - 1,
+                                                 blockFrame, blockSize,
+                                                 inbufs);
                 while (got < blockSize) {
                     for (int ch = 0; ch < channelCount; ++ch) {
                         inbufs[ch][got] = 0.0;
