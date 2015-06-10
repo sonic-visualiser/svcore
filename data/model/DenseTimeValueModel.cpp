@@ -42,7 +42,7 @@ DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f
         all[c] = new float[f1 - f0];
     }
 
-    sv_frame_t n = getData(0, ch - 1, f0, f1 - f0, all);
+    sv_frame_t n = getMultiChannelData(0, ch - 1, f0, f1 - f0, all);
 
     QStringList list;
     for (sv_frame_t i = 0; i < n; ++i) {

@@ -61,14 +61,11 @@ public:
     void setStartFrame(sv_frame_t startFrame);
 
     virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                           float *buffer) const;
+                               float *buffer) const;
 
-    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                           double *buffer) const;
-
-    virtual sv_frame_t getData(int fromchannel, int tochannel,
-                           sv_frame_t start, sv_frame_t count,
-                           float **buffer) const;
+    virtual sv_frame_t getMultiChannelData(int fromchannel, int tochannel,
+                                           sv_frame_t start, sv_frame_t count,
+                                           float **buffer) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 

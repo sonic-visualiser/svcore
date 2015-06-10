@@ -137,57 +137,11 @@ AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
     if (mixing) delete[] readbuf;
     return longest;
 }
-         
-sv_frame_t
-AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                            double *buffer) const
-{
-    int ch0 = channel, ch1 = channel;
-    bool mixing = false;
-    if (channel == -1) {
-        ch0 = 0;
-        ch1 = getChannelCount()-1;
-        mixing = true;
-    }
-
-    double *readbuf = buffer;
-    if (mixing) {
-        readbuf = new double[count];
-        for (sv_frame_t i = 0; i < count; ++i) {
-            buffer[i] = 0.0;
-        }
-    }
-
-    sv_frame_t longest = 0;
-    
-    for (int c = ch0; c <= ch1; ++c) {
-        sv_frame_t here = 
-            m_components[c].model->getData(m_components[c].channel,
-                                           start, count,
-                                           readbuf);
-        if (here > longest) {
-            longest = here;
-        }
-        if (here < count) {
-            for (sv_frame_t i = here; i < count; ++i) {
-                readbuf[i] = 0.;
-            }
-        }
-        if (mixing) {
-            for (sv_frame_t i = 0; i < count; ++i) {
-                buffer[i] += readbuf[i];
-            }
-        }
-    }
-    
-    if (mixing) delete[] readbuf;
-    return longest;
-}
 
 sv_frame_t
-AggregateWaveModel::getData(int fromchannel, int tochannel,
-                            sv_frame_t start, sv_frame_t count,
-                            float **buffer) const
+AggregateWaveModel::getMultiChannelData(int fromchannel, int tochannel,
+                                        sv_frame_t start, sv_frame_t count,
+                                        float **buffer) const
 {
     sv_frame_t min = count;
 
