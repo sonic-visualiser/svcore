@@ -24,6 +24,8 @@
 
 #include <iostream>
 
+//#define DEBUG_FFT_FILE_CACHE_READER 1
+
 
 // The underlying matrix has height (m_height * 2 + 1).  In each
 // column we store magnitude at [0], [2] etc and phase at [1], [3]
@@ -44,7 +46,9 @@ FFTFileCacheReader::FFTFileCacheReader(FFTFileCacheWriter *writer) :
            writer->getWidth(),
            writer->getHeight() * 2 + m_factorSize))
 {
-//    cerr << "FFTFileCacheReader: storage type is " << (storageType == FFTCache::Compact ? "Compact" : storageType == Polar ? "Polar" : "Rectangular") << endl;
+#ifdef DEBUG_FFT_FILE_CACHE_READER
+    cerr << "FFTFileCacheReader: storage type is " << (m_storageType == FFTCache::Compact ? "Compact" : m_storageType == FFTCache::Polar ? "Polar" : "Rectangular") << endl;
+#endif
 }
 
 FFTFileCacheReader::~FFTFileCacheReader()

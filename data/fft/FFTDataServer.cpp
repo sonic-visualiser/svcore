@@ -902,6 +902,7 @@ FFTDataServer::getMagnitudeAt(int x, int y)
         if (!cache) return 0;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getMagnitudeAt: filling");
 #ifdef DEBUG_FFT_SERVER
             std::cerr << "FFTDataServer::getMagnitudeAt: calling fillColumn("
@@ -938,6 +939,7 @@ FFTDataServer::getMagnitudesAt(int x, float *values, int minbin, int count, int 
         if (!cache) return false;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getMagnitudesAt: filling");
             fillColumn(x);
         }
@@ -968,6 +970,7 @@ FFTDataServer::getNormalizedMagnitudeAt(int x, int y)
         if (!cache) return 0;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getNormalizedMagnitudeAt: filling");
             fillColumn(x);
         }
@@ -1000,6 +1003,7 @@ FFTDataServer::getNormalizedMagnitudesAt(int x, float *values, int minbin, int c
         if (!cache) return false;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getNormalizedMagnitudesAt: filling");
             fillColumn(x);
         }
@@ -1032,6 +1036,7 @@ FFTDataServer::getMaximumMagnitudeAt(int x)
         if (!cache) return 0;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getMaximumMagnitudeAt: filling");
             fillColumn(x);
         }
@@ -1060,6 +1065,7 @@ FFTDataServer::getPhaseAt(int x, int y)
         if (!cache) return 0;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getPhaseAt: filling");
             fillColumn(x);
         }
@@ -1092,6 +1098,7 @@ FFTDataServer::getPhasesAt(int x, float *values, int minbin, int count, int step
         if (!cache) return false;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getPhasesAt: filling");
             fillColumn(x);
         }
@@ -1131,6 +1138,11 @@ FFTDataServer::getValuesAt(int x, int y, float &real, float &imaginary)
         }
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") {
+                real = 0;
+                imaginary = 0;
+                return;
+            }
             Profiler profiler("FFTDataServer::getValuesAt: filling");
 #ifdef DEBUG_FFT_SERVER
             std::cerr << "FFTDataServer::getValuesAt(" << x << ", " << y << "): filling" << std::endl;
@@ -1165,6 +1177,7 @@ FFTDataServer::getValuesAt(int x, float *reals, float *imaginaries, int minbin, 
         if (!cache) return false;
 
         if (!cache->haveSetColumnAt(col)) {
+            if (getError() != "") return false;
             Profiler profiler("FFTDataServer::getValuesAt: filling");
             fillColumn(x);
         }
@@ -1395,9 +1408,19 @@ FFTDataServer::fillComplete()
 QString
 FFTDataServer::getError() const
 {
-    if (m_error != "") return m_error;
-    else if (m_fillThread) return m_fillThread->getError();
-    else return "";
+    QString err;
+    if (m_error != "") {
+        err = m_error;
+        cerr << "FFTDataServer::getError: err (server " << this << ") = " << err << endl;
+    } else {
+        MutexLocker locker(&m_fftBuffersLock, "FFTDataServer::getError");
+        if (m_fillThread) {
+            err = m_fillThread->getError();
+            cerr << "FFTDataServer::getError: err (server " << this << ", from thread " << m_fillThread
+                 << ") = " << err << endl;
+        }
+    }
+    return err;
 }
 
 int
@@ -1475,8 +1498,10 @@ FFTDataServer::FillThread::run()
             try {
                 m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
             } catch (std::exception &e) {
-                std::cerr << "FFTDataServer::FillThread::run: exception: " << e.what() << std::endl;
-                m_error = e.what();
+                MutexLocker locker(&m_server.m_fftBuffersLock,
+                                   "FFTDataServer::run::m_fftBuffersLock [err]");
+                m_threadError = e.what();
+                std::cerr << "FFTDataServer::FillThread::run: exception: " << m_threadError << " (thread = " << this << " from server " << &m_server << ")" << std::endl;
                 m_server.fillComplete();
                 m_completion = 100;
                 m_extent = end;
@@ -1524,8 +1549,10 @@ FFTDataServer::FillThread::run()
         try {
             m_server.fillColumn(int((f - start) / m_server.m_windowIncrement));
         } catch (std::exception &e) {
-            std::cerr << "FFTDataServer::FillThread::run: exception: " << e.what() << std::endl;
-            m_error = e.what();
+            MutexLocker locker(&m_server.m_fftBuffersLock,
+                               "FFTDataServer::run::m_fftBuffersLock [err]");
+            m_threadError = e.what();
+                std::cerr << "FFTDataServer::FillThread::run: exception: " << m_threadError << " (thread = " << this << " from server " << &m_server << ")" << std::endl;
             m_server.fillComplete();
             m_completion = 100;
             m_extent = end;

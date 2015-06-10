@@ -70,13 +70,13 @@ public:
     const DenseTimeValueModel *getModel() const { return m_model; }
     int        getChannel() const { return m_channel; }
     WindowType getWindowType() const { return m_windower.getType(); }
-    int     getWindowSize() const { return m_windowSize; }
-    int     getWindowIncrement() const { return m_windowIncrement; }
-    int     getFFTSize() const { return m_fftSize; }
+    int        getWindowSize() const { return m_windowSize; }
+    int        getWindowIncrement() const { return m_windowIncrement; }
+    int        getFFTSize() const { return m_fftSize; }
     bool       getPolar() const { return m_polar; }
 
-    int     getWidth() const  { return m_width;  }
-    int     getHeight() const { return m_height; }
+    int        getWidth() const  { return m_width;  }
+    int        getHeight() const { return m_height; }
 
     float      getMagnitudeAt(int x, int y);
     float      getNormalizedMagnitudeAt(int x, int y);
@@ -196,6 +196,7 @@ private:
             return 0;
         }
         m_cacheVectorLock.unlock();
+        if (getError() != "") return 0;
         if (!makeCache(c)) return 0;
         return getCacheReader(x, col);
     }
@@ -230,7 +231,7 @@ private:
 
     void getStorageAdvice(int w, int h, bool &memory, bool &compact);
         
-    QMutex m_fftBuffersLock;
+    mutable QMutex m_fftBuffersLock;
     QWaitCondition m_condition;
 
     fftsample *m_fftInput;
@@ -247,7 +248,7 @@ private:
 
         sv_frame_t getExtent() const { return m_extent; }
         int getCompletion() const { return m_completion ? m_completion : 1; }
-        QString getError() const { return m_error; }
+        QString getError() const { return m_threadError; }
         virtual void run();
 
     protected:
@@ -255,7 +256,7 @@ private:
         sv_frame_t m_extent;
         int m_completion;
         sv_frame_t m_fillFrom;
-        QString m_error;
+        QString m_threadError;
     };
 
     bool m_exiting;
