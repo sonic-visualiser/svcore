@@ -118,6 +118,9 @@ public:
         return const_cast<FFTModel *>(this)->getMagnitudeAt(x, y);
     }
     virtual bool isOK() const {
+        // Return true if the model was constructed successfully (not
+        // necessarily whether an error has occurred since
+        // construction, use getError for that)
         return m_server && m_server->getModel();
     }
     virtual sv_frame_t getStartFrame() const {
