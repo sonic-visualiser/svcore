@@ -109,9 +109,11 @@ float
 FFTModel::getMaximumMagnitudeAt(int x) const
 {
     Column col(getColumn(x));
-    auto itr = max_element(col.begin(), col.end());
-    if (itr == col.end()) return 0.f;
-    else return *itr;
+    float max = 0.f;
+    for (int i = 0; i < col.size(); ++i) {
+        if (col[i] > max) max = col[i];
+    }
+    return max;
 }
 
 float
@@ -150,8 +152,18 @@ FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
 bool
 FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
 {
-    //!!! WRONG
-    return getMagnitudesAt(x, values, minbin, count);
+    if (!getMagnitudesAt(x, values, minbin, count)) return false;
+    if (count == 0) count = getHeight();
+    float max = 0.f;
+    for (int i = 0; i < count; ++i) {
+        if (values[i] > max) max = values[i];
+    }
+    if (max > 0.f) {
+        for (int i = 0; i < count; ++i) {
+            values[i] /= max;
+        }
+    }
+    return true;
 }
 
 bool
