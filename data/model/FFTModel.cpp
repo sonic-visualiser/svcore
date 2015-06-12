@@ -43,7 +43,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     m_windowIncrement(windowIncrement),
     m_fftSize(fftSize),
     m_windower(windowType, windowSize),
-    m_fft(fftSize)
+    m_fft(fftSize),
+    m_cacheSize(3)
 {
     if (m_windowSize > m_fftSize) {
         cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
@@ -101,8 +102,9 @@ FFTModel::getColumn(int x) const
 float
 FFTModel::getMagnitudeAt(int x, int y) const
 {
-    //!!! 
-    return abs(getFFTColumn(x)[y]);
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
+    auto col = getFFTColumn(x);
+    return abs(col[y]);
 }
 
 float
@@ -119,7 +121,7 @@ FFTModel::getMaximumMagnitudeAt(int x) const
 float
 FFTModel::getPhaseAt(int x, int y) const
 {
-    //!!! 
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
     return arg(getFFTColumn(x)[y]);
 }
 
@@ -132,7 +134,7 @@ FFTModel::getValuesAt(int x, int y, float &re, float &im) const
 }
 
 bool
-FFTModel::isColumnAvailable(int ) const
+FFTModel::isColumnAvailable(int) const
 {
     //!!!
     return true;
@@ -218,11 +220,25 @@ FFTModel::getSourceSamples(int column) const
 }
 
 vector<complex<float>>
-FFTModel::getFFTColumn(int column) const
+FFTModel::getFFTColumn(int n) const
 {
-    auto samples = getSourceSamples(column);
+    for (auto &incache : m_cached) {
+        if (incache.n == n) {
+            return incache.col;
+        }
+    }
+    
+    auto samples = getSourceSamples(n);
     m_windower.cut(&samples[0]);
-    return m_fft.process(samples);
+    auto col = m_fft.process(samples);
+
+    SavedColumn sc { n, col };
+    if (m_cached.size() >= m_cacheSize) {
+        m_cached.pop_front();
+    }
+    m_cached.push_back(sc);
+
+    return col;
 }
 
 bool

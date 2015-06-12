@@ -24,9 +24,9 @@
 #include "data/fft/FFTapi.h"
 
 #include <set>
-#include <map>
 #include <vector>
 #include <complex>
+#include <deque>
 
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
@@ -80,7 +80,9 @@ public:
     virtual bool shouldUseLogValueScale() const { return true; }
     virtual int getCompletion() const {
         int c = 100;
-        if (m_model) (void)m_model->isReady(&c);
+        if (m_model) {
+            if (m_model->isReady(&c)) return 100;
+        }
         return c;
     }
     virtual QString getError() const { return ""; } //!!!???
@@ -166,6 +168,16 @@ private:
 
     std::vector<std::complex<float> > getFFTColumn(int column) const;
     std::vector<float> getSourceSamples(int column) const;
+
+    struct SavedColumn {
+        int n;
+        std::vector<std::complex<float> > col;
+    };
+    
+    mutable std::deque<SavedColumn> m_cached;
+    size_t m_cacheSize;
+
+    //!!! also optionally cache polar?
 };
 
 #endif
