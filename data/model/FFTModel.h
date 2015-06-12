@@ -37,6 +37,9 @@ class FFTModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
 
+    //!!! threading requirements?
+    //!!! doubles? since we're not caching much
+
 public:
     /**
      * Construct an FFT model derived from the given
