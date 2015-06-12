@@ -196,27 +196,76 @@ FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) 
 vector<float>
 FFTModel::getSourceSamples(int column) const
 {
+    // m_fftSize may be greater than m_windowSize, but not the reverse
+
+//    cerr << "getSourceSamples(" << column << ")" << endl;
+    
     auto range = getSourceSampleRange(column);
-    vector<float> samples(m_fftSize, 0.f);
+    auto data = getSourceData(range);
+
     int off = (m_fftSize - m_windowSize) / 2;
+
+    if (off == 0) {
+        return data;
+    } else {
+        vector<float> pad(off, 0.f);
+        vector<float> padded;
+        padded.reserve(m_fftSize);
+        padded.insert(padded.end(), pad.begin(), pad.end());
+        padded.insert(padded.end(), data.begin(), data.end());
+        padded.insert(padded.end(), pad.begin(), pad.end());
+        return padded;
+    }
+}
+
+vector<float>
+FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
+{
+//    cerr << "getSourceData(" << range.first << "," << range.second
+//         << "): saved range is (" << m_savedData.range.first
+//         << "," << m_savedData.range.second << ")" << endl;
+
+    if (m_savedData.range == range) return m_savedData.data;
+
+    if (range.first < m_savedData.range.second &&
+        range.first >= m_savedData.range.first &&
+        range.second > m_savedData.range.second) {
+
+        //!!! Need FFTModel overlap tests to exercise this
+        
+        sv_frame_t off = range.first - m_savedData.range.first;
+                
+        vector<float> partial(m_savedData.data.begin() + off, m_savedData.data.end());
+
+        vector<float> rest = getSourceData({ m_savedData.range.second, range.second });
+        
+        partial.insert(partial.end(), rest.begin(), rest.end());
+        return partial;
+    }
+
+    vector<float> data(range.second - range.first, 0.f);
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
         pfx = -range.first;
         range = { 0, range.second };
     }
+//    cerr << "requesting " << range.second - range.first << " from file" << endl;
     (void) m_model->getData(m_channel,
                             range.first,
                             range.second - range.first,
-                            &samples[off + pfx]);
+                            &data[pfx]);
     if (m_channel == -1) {
 	int channels = m_model->getChannelCount();
 	if (channels > 1) {
-	    for (int i = 0; i < range.second - range.first; ++i) {
-		samples[off + pfx + i] /= float(channels);
+	    for (int i = 0; in_range_for(data, i); ++i) {
+		data[i] /= float(channels);
 	    }
 	}
     }
-    return samples;
+
+    m_savedData = { range, data };
+    
+    return data;
 }
 
 vector<complex<float>>
