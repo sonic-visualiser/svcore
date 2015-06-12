@@ -76,7 +76,7 @@ private:
             }
         }
     }
-    
+
 private slots:
 
     // NB. FFTModel columns are centred on the sample frame, and in
@@ -88,7 +88,7 @@ private slots:
     // (rather than something with a step in it that is harder to
     // reason about the FFT of) and the results for subsequent columns
     // are those of our expected signal.
-
+    
     void dc_simple_rect() {
 	MockWaveModel mwm({ DC }, 16, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
@@ -98,7 +98,7 @@ private slots:
         test(&mwm, RectangularWindow, 8, 8, 8, 2,
              { { { 4.f, 0.f }, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 3,
-             { { { }, {}, {}, {}, {} } }, 4);
+             { { {}, {}, {}, {}, {} } }, 4);
     }
 
     void dc_simple_hann() {
@@ -112,9 +112,57 @@ private slots:
         test(&mwm, HanningWindow, 8, 8, 8, 2,
              { { { 4.f, 0.f }, { 2.f, 0.f }, {}, {}, {} } }, 4);
         test(&mwm, HanningWindow, 8, 8, 8, 3,
-             { { { }, {}, {}, {}, {} } }, 4);
+             { { {}, {}, {}, {}, {} } }, 4);
     }
     
+    void sine_simple_rect() {
+	MockWaveModel mwm({ Sine }, 16, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             { { {}, {}, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             { { {}, { 0.f, 2.f }, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             { { {}, { 0.f, 2.f }, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             { { {}, {}, {}, {}, {} } }, 4);
+    }
+    
+    void cosine_simple_rect() {
+	MockWaveModel mwm({ Cosine }, 16, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             { { {}, {}, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             { { {}, { 2.f, 0.f }, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             { { {}, { 2.f, 0.f }, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             { { {}, {}, {}, {}, {} } }, 4);
+    }
+    
+    void nyquist_simple_rect() {
+	MockWaveModel mwm({ Nyquist }, 16, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             { { {}, {}, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             { { {}, {}, {}, {}, { 2.f, 0.f } } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             { { {}, {}, {}, {}, { 2.f, 0.f } } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             { { {}, {}, {}, {}, {} } }, 4);
+    }
+    
+    void dirac_simple_rect() {
+	MockWaveModel mwm({ Dirac }, 16, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             { { {}, {}, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             { { { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f } } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             { { { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f } } }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             { { {}, {}, {}, {}, {} } }, 4);
+    }
+
 };
 
 #endif
