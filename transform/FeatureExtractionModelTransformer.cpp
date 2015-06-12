@@ -606,9 +606,7 @@ FeatureExtractionModelTransformer::run()
                                    primaryTransform.getWindowType(),
                                    blockSize,
                                    stepSize,
-                                   blockSize,
-                                   false,
-                                   StorageAdviser::PrecisionCritical);
+                                   blockSize);
             if (!model->isOK() || model->getError() != "") {
                 QString err = model->getError();
                 delete model;
@@ -618,7 +616,6 @@ FeatureExtractionModelTransformer::run()
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
                 throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
             }
-            model->resume();
             fftModels.push_back(model);
             cerr << "created model for channel " << ch << endl;
         }
