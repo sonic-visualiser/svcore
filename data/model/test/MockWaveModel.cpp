@@ -30,17 +30,17 @@ MockWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
 {
     sv_frame_t i = 0;
 
-    cerr << "MockWaveModel::getData(" << channel << "," << start << "," << count << "): ";
+//    cerr << "MockWaveModel::getData(" << channel << "," << start << "," << count << "): ";
 
     while (i < count) {
 	sv_frame_t idx = start + i;
 	if (!in_range_for(m_data[channel], idx)) break;
 	buffer[i] = m_data[channel][idx];
-	cerr << buffer[i] << " ";
+//	cerr << buffer[i] << " ";
 	++i;
     }
 
-    cerr << endl;
+//    cerr << endl;
     
     return i;
 }

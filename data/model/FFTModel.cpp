@@ -42,8 +42,14 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     m_windowSize(windowSize),
     m_windowIncrement(windowIncrement),
     m_fftSize(fftSize),
-    m_windower(windowType, windowSize)
+    m_windower(windowType, windowSize),
+    m_fft(fftSize)
 {
+    if (m_windowSize > m_fftSize) {
+        cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
+             << ") must be at least FFT size (" << m_fftSize << ")" << endl;
+        throw invalid_argument("FFTModel window size must be at least FFT size");
+    }
 }
 
 FFTModel::~FFTModel()
@@ -59,6 +65,20 @@ FFTModel::sourceModelAboutToBeDeleted()
     }
 }
 
+int
+FFTModel::getWidth() const
+{
+    if (!m_model) return 0;
+    return int((m_model->getEndFrame() - m_model->getStartFrame())
+               / m_windowIncrement) + 1;
+}
+
+int
+FFTModel::getHeight() const
+{
+    return m_fftSize / 2 + 1;
+}
+
 QString
 FFTModel::getBinName(int n) const
 {
@@ -66,6 +86,131 @@ FFTModel::getBinName(int n) const
     if (!sr) return "";
     QString name = tr("%1 Hz").arg((n * sr) / ((getHeight()-1) * 2));
     return name;
+}
+
+FFTModel::Column
+FFTModel::getColumn(int x) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(int(cplx.size()));
+    for (auto c: cplx) col.push_back(abs(c));
+    return col;
+}
+
+float
+FFTModel::getMagnitudeAt(int x, int y) const
+{
+    //!!! 
+    return abs(getFFTColumn(x)[y]);
+}
+
+float
+FFTModel::getMaximumMagnitudeAt(int x) const
+{
+    Column col(getColumn(x));
+    auto itr = max_element(col.begin(), col.end());
+    if (itr == col.end()) return 0.f;
+    else return *itr;
+}
+
+float
+FFTModel::getPhaseAt(int x, int y) const
+{
+    //!!! 
+    return arg(getFFTColumn(x)[y]);
+}
+
+void
+FFTModel::getValuesAt(int x, int y, float &re, float &im) const
+{
+    auto col = getFFTColumn(x);
+    re = col[y].real();
+    im = col[y].imag();
+}
+
+bool
+FFTModel::isColumnAvailable(int ) const
+{
+    //!!!
+    return true;
+}
+
+bool
+FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        values[i] = abs(col[minbin + i]);
+    }
+    return true;
+}
+
+bool
+FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
+{
+    //!!! WRONG
+    return getMagnitudesAt(x, values, minbin, count);
+}
+
+bool
+FFTModel::getPhasesAt(int x, float *values, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        values[i] = arg(col[minbin + i]);
+    }
+    return true;
+}
+
+bool
+FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        reals[i] = col[minbin + i].real();
+    }
+    for (int i = 0; i < count; ++i) {
+        imags[i] = col[minbin + i].imag();
+    }
+    return true;
+}
+
+vector<float>
+FFTModel::getSourceSamples(int column) const
+{
+    auto range = getSourceSampleRange(column);
+    vector<float> samples(m_fftSize, 0.f);
+    int off = (m_fftSize - m_windowSize) / 2;
+    decltype(range.first) pfx = 0;
+    if (range.first < 0) {
+        pfx = -range.first;
+        range = { 0, range.second };
+    }
+    (void) m_model->getData(m_channel,
+                            range.first,
+                            range.second - range.first,
+                            &samples[off + pfx]);
+    if (m_channel == -1) {
+	int channels = m_model->getChannelCount();
+	if (channels > 1) {
+	    for (int i = 0; i < range.second - range.first; ++i) {
+		samples[off + pfx + i] /= float(channels);
+	    }
+	}
+    }
+    return samples;
+}
+
+vector<complex<float>>
+FFTModel::getFFTColumn(int column) const
+{
+    auto samples = getSourceSamples(column);
+    m_windower.cut(&samples[0]);
+    return m_fft.process(samples);
 }
 
 bool
@@ -239,14 +384,14 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
     if (type == MajorPeaks) return 10;
     if (bin == 0) return 3;
 
-    double binfreq = (getSampleRate() * bin) / m_fftSize;
+    double binfreq = (sampleRate * bin) / m_fftSize;
     double hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
 
-    int hibin = int(lrint((hifreq * m_fftSize) / getSampleRate()));
+    int hibin = int(lrint((hifreq * m_fftSize) / sampleRate));
     int medianWinSize = hibin - bin;
     if (medianWinSize < 3) medianWinSize = 3;
 
-    percentile = 0.5f + float(binfreq / getSampleRate());
+    percentile = 0.5f + float(binfreq / sampleRate);
 
     return medianWinSize;
 }

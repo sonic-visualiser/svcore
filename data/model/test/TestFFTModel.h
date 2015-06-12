@@ -40,40 +40,38 @@ private:
               int columnNo, vector<vector<complex<float>>> expectedValues,
               int expectedWidth) {
         for (int ch = 0; in_range_for(expectedValues, ch); ++ch) {
-            for (int polar = 0; polar <= 1; ++polar) {
-                FFTModel fftm(model, ch, window, windowSize, windowIncrement,
-                              fftSize, bool(polar));
-                QCOMPARE(fftm.getWidth(), expectedWidth);
-                int hs1 = fftSize/2 + 1;
-                QCOMPARE(fftm.getHeight(), hs1);
-                vector<float> reals(hs1 + 1, 0.f);
-                vector<float> imags(hs1 + 1, 0.f);
-                reals[hs1] = 999.f; // overrun guards
-                imags[hs1] = 999.f;
-                fftm.getValuesAt(columnNo, &reals[0], &imags[0]);
-                for (int i = 0; i < hs1; ++i) {
-                    float eRe = expectedValues[ch][i].real();
-                    float eIm = expectedValues[ch][i].imag();
-                    if (reals[i] != eRe || imags[i] != eIm) {
-                        cerr << "ERROR: output is not as expected for column "
-                             << i << " in channel " << ch << " (polar store = "
-                             << polar << ")" << endl;
-                        cerr << "expected : ";
-                        for (int j = 0; j < hs1; ++j) {
-                            cerr << expectedValues[ch][j] << " ";
-                        }
-                        cerr << "\nactual   : ";
-                        for (int j = 0; j < hs1; ++j) {
-                            cerr << complex<float>(reals[j], imags[j]) << " ";
-                        }
-                        cerr << endl;
+            FFTModel fftm(model, ch, window, windowSize, windowIncrement, fftSize);
+            QCOMPARE(fftm.getWidth(), expectedWidth);
+            int hs1 = fftSize/2 + 1;
+            QCOMPARE(fftm.getHeight(), hs1);
+            vector<float> reals(hs1 + 1, 0.f);
+            vector<float> imags(hs1 + 1, 0.f);
+            reals[hs1] = 999.f; // overrun guards
+            imags[hs1] = 999.f;
+            fftm.getValuesAt(columnNo, &reals[0], &imags[0]);
+            for (int i = 0; i < hs1; ++i) {
+                float eRe = expectedValues[ch][i].real();
+                float eIm = expectedValues[ch][i].imag();
+                float thresh = 1e-5f;
+                if (abs(reals[i] - eRe) > thresh ||
+                    abs(imags[i] - eIm) > thresh) {
+                    cerr << "ERROR: output is not as expected for column "
+                         << i << " in channel " << ch << endl;
+                    cerr << "expected : ";
+                    for (int j = 0; j < hs1; ++j) {
+                        cerr << expectedValues[ch][j] << " ";
                     }
-                    QCOMPARE(reals[i], eRe);
-                    QCOMPARE(imags[i], eIm);
+                    cerr << "\nactual   : ";
+                    for (int j = 0; j < hs1; ++j) {
+                        cerr << complex<float>(reals[j], imags[j]) << " ";
+                    }
+                    cerr << endl;
                 }
-                QCOMPARE(reals[hs1], 999.f);
-                QCOMPARE(imags[hs1], 999.f);
+                COMPARE_FUZZIER_F(reals[i], eRe);
+                COMPARE_FUZZIER_F(imags[i], eIm);
             }
+            QCOMPARE(reals[hs1], 999.f);
+            QCOMPARE(imags[hs1], 999.f);
         }
     }
 
@@ -117,6 +115,10 @@ private slots:
     
     void sine_simple_rect() {
 	MockWaveModel mwm({ Sine }, 16, 4);
+        // Sine: output is purely imaginary. Note the sign is flipped
+        // (normally the first half of the output would have negative
+        // sign for a sine starting at 0) because the model does an
+        // FFT shift to centre the phase
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 1,
@@ -129,38 +131,61 @@ private slots:
     
     void cosine_simple_rect() {
 	MockWaveModel mwm({ Cosine }, 16, 4);
+        // Cosine: output is purely real. Note the sign is flipped
+        // because the model does an FFT shift to centre the phase
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 1,
-             { { {}, { 2.f, 0.f }, {}, {}, {} } }, 4);
+             { { {}, { -2.f, 0.f }, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 2,
-             { { {}, { 2.f, 0.f }, {}, {}, {} } }, 4);
+             { { {}, { -2.f, 0.f }, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 3,
              { { {}, {}, {}, {}, {} } }, 4);
     }
     
     void nyquist_simple_rect() {
 	MockWaveModel mwm({ Nyquist }, 16, 4);
+        // Again, the sign is flipped. This has the same amount of
+        // energy as the DC example
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 1,
-             { { {}, {}, {}, {}, { 2.f, 0.f } } }, 4);
+             { { {}, {}, {}, {}, { -4.f, 0.f } } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 2,
-             { { {}, {}, {}, {}, { 2.f, 0.f } } }, 4);
+             { { {}, {}, {}, {}, { -4.f, 0.f } } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 3,
              { { {}, {}, {}, {}, {} } }, 4);
     }
     
     void dirac_simple_rect() {
 	MockWaveModel mwm({ Dirac }, 16, 4);
+        // The window scales by 0.5 and some signs are flipped. Only
+        // column 1 has any data (the single impulse).
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 1,
-             { { { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f } } }, 4);
+             { { { 0.5f, 0.f }, { -0.5f, 0.f }, { 0.5f, 0.f }, { -0.5f, 0.f }, { 0.5f, 0.f } } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 2,
-             { { { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f }, { 1.f, 0.f } } }, 4);
+             { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 3,
              { { {}, {}, {}, {}, {} } }, 4);
+    }
+    
+    void dirac_simple_rect_2() {
+	MockWaveModel mwm({ Dirac }, 16, 8);
+        // With 8 samples padding, the FFT shift places the first
+        // Dirac impulse at the start of column 1, thus giving all
+        // positive values
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             { { {}, {}, {}, {}, {} } }, 5);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             { { { 0.5f, 0.f }, { 0.5f, 0.f }, { 0.5f, 0.f }, { 0.5f, 0.f }, { 0.5f, 0.f } } }, 5);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             { { {}, {}, {}, {}, {} } }, 5);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             { { {}, {}, {}, {}, {} } }, 5);
+        test(&mwm, RectangularWindow, 8, 8, 8, 4,
+             { { {}, {}, {}, {}, {} } }, 5);
     }
 
 };
