@@ -21,8 +21,12 @@
 
 #include "base/Window.h"
 
+#include "data/fft/FFTapi.h"
+
 #include <set>
 #include <map>
+#include <vector>
+#include <complex>
 
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
@@ -88,7 +92,6 @@ public:
     int getFFTSize() const { return m_fftSize; }
     
     float getMagnitudeAt(int x, int y) const;
-    float getNormalizedMagnitudeAt(int x, int y) const;
     float getMaximumMagnitudeAt(int x) const;
     float getPhaseAt(int x, int y) const;
     void getValuesAt(int x, int y, float &real, float &imaginary) const;
@@ -144,9 +147,22 @@ private:
     int m_windowIncrement;
     int m_fftSize;
     Window<float> m_windower;
+    FFTForward m_fft;
     
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                               int bin, float &percentile) const;
+
+    std::pair<sv_frame_t, sv_frame_t> getSourceSampleRange(int column) const {
+        sv_frame_t startFrame = m_windowIncrement * sv_frame_t(column);
+        sv_frame_t endFrame = startFrame + m_windowSize;
+        // Cols are centred on the audio sample (e.g. col 0 is centred at sample 0)
+        startFrame -= m_windowSize / 2;
+        endFrame -= m_windowSize / 2;
+        return { startFrame, endFrame };
+    }
+
+    std::vector<std::complex<float> > getFFTColumn(int column) const;
+    std::vector<float> getSourceSamples(int column) const;
 };
 
 #endif
