@@ -79,7 +79,7 @@ public:
         std::vector<std::complex<float> > result;
         result.reserve(hs + 1);
         for (int i = 0; i <= hs; ++i) {
-            result[i] = { m_output[i][0], m_output[i][1] };
+            result.push_back({ m_output[i][0], m_output[i][1] });
         }
         return result;
     }
