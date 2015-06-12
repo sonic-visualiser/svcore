@@ -17,10 +17,10 @@
 
 using namespace std;
 
-MockWaveModel::MockWaveModel(vector<Sort> sorts, int length)
+MockWaveModel::MockWaveModel(vector<Sort> sorts, int length, int pad)
 {
     for (auto sort: sorts) {
-	m_data.push_back(generate(sort, length));
+	m_data.push_back(generate(sort, length, pad));
     }
 }
 
@@ -61,10 +61,14 @@ MockWaveModel::getMultiChannelData(int fromchannel, int tochannel,
 }
 
 vector<float>
-MockWaveModel::generate(Sort sort, int length) const
+MockWaveModel::generate(Sort sort, int length, int pad) const
 {
     vector<float> data;
 
+    for (int i = 0; i < pad; ++i) {
+        data.push_back(0.f);
+    }
+    
     for (int i = 0; i < length; ++i) {
 
 	double v = 0.0;
@@ -78,6 +82,10 @@ MockWaveModel::generate(Sort sort, int length) const
 	}
 
 	data.push_back(float(v));
+    }
+
+    for (int i = 0; i < pad; ++i) {
+        data.push_back(0.f);
     }
 
     return data;

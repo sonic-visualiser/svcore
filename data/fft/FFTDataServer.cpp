@@ -1270,10 +1270,10 @@ FFTDataServer::fillColumn(int x)
     sv_frame_t startFrame = m_windowIncrement * sv_frame_t(x);
     sv_frame_t endFrame = startFrame + m_windowSize;
 
-    if (m_windowIncrement != winsize) {
-        startFrame -= (winsize - m_windowIncrement);
-        endFrame   -= (winsize - m_windowIncrement);
-    }
+    // FFT windows are centred at the respective audio sample frame,
+    // so the first one is centred at 0
+    startFrame -= winsize / 2;
+    endFrame   -= winsize / 2;
 
 #ifdef DEBUG_FFT_SERVER_FILL
     std::cerr << "FFTDataServer::fillColumn: requesting frames "

@@ -33,8 +33,9 @@ class MockWaveModel : public DenseTimeValueModel
     Q_OBJECT
 
 public:
-    /** One Sort per channel! Length is in samples */
-    MockWaveModel(std::vector<Sort> sorts, int length);
+    /** One Sort per channel! Length is in samples, and is in addition
+     * to "pad" number of zero samples at the start and end */
+    MockWaveModel(std::vector<Sort> sorts, int length, int pad);
 
     virtual float getValueMinimum() const { return -1.f; }
     virtual float getValueMaximum() const { return  1.f; }
@@ -58,7 +59,7 @@ public:
 
 private:
     std::vector<std::vector<float> > m_data;
-    std::vector<float> generate(Sort sort, int length) const;
+    std::vector<float> generate(Sort sort, int length, int pad) const;
 };
 
 #endif
