@@ -73,6 +73,8 @@ public:
         const int hs = m_size/2;
         for (int i = 0; i < hs; ++i) {
             m_input[i] = in[i + hs];
+        }
+        for (int i = 0; i < hs; ++i) {
             m_input[i + hs] = in[i];
         }
         fftf_execute(m_plan);

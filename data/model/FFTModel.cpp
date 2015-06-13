@@ -235,14 +235,27 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         
         sv_frame_t off = range.first - m_savedData.range.first;
                 
-        vector<float> partial(m_savedData.data.begin() + off, m_savedData.data.end());
+        vector<float> acc(m_savedData.data.begin() + off, m_savedData.data.end());
 
-        vector<float> rest = getSourceData({ m_savedData.range.second, range.second });
+        vector<float> rest =
+            getSourceDataUncached({ m_savedData.range.second, range.second });
         
-        partial.insert(partial.end(), rest.begin(), rest.end());
-        return partial;
-    }
+        acc.insert(acc.end(), rest.begin(), rest.end());
 
+        m_savedData = { range, acc };
+        return acc;
+
+    } else {
+
+        auto data = getSourceDataUncached(range);
+        m_savedData = { range, data };
+        return data;
+    }
+}
+
+vector<float>
+FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
+{
     vector<float> data(range.second - range.first, 0.f);
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
@@ -262,8 +275,6 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 	    }
 	}
     }
-
-    m_savedData = { range, data };
     
     return data;
 }

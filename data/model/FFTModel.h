@@ -169,6 +169,7 @@ private:
     std::vector<std::complex<float> > getFFTColumn(int column) const;
     std::vector<float> getSourceSamples(int column) const;
     std::vector<float> getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
+    std::vector<float> getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
 
     struct SavedSourceData {
         std::pair<sv_frame_t, sv_frame_t> range;
