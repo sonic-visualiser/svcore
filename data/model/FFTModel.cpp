@@ -225,23 +225,24 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 //         << "): saved range is (" << m_savedData.range.first
 //         << "," << m_savedData.range.second << ")" << endl;
 
-    if (m_savedData.range == range) return m_savedData.data;
+    if (m_savedData.range == range) {
+        return m_savedData.data;
+    }
 
     if (range.first < m_savedData.range.second &&
         range.first >= m_savedData.range.first &&
         range.second > m_savedData.range.second) {
 
-        //!!! Need FFTModel overlap tests to exercise this
-        
-        sv_frame_t off = range.first - m_savedData.range.first;
-                
-        vector<float> acc(m_savedData.data.begin() + off, m_savedData.data.end());
+        sv_frame_t discard = range.first - m_savedData.range.first;
+
+        vector<float> acc(m_savedData.data.begin() + discard,
+                          m_savedData.data.end());
 
         vector<float> rest =
             getSourceDataUncached({ m_savedData.range.second, range.second });
-        
-        acc.insert(acc.end(), rest.begin(), rest.end());
 
+        acc.insert(acc.end(), rest.begin(), rest.end());
+        
         m_savedData = { range, acc };
         return acc;
 
@@ -279,6 +280,7 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 	if (channels > 1) {
             int n = int(data.size());
             float factor = 1.f / float(channels);
+            // use mean instead of sum for fft model input
 	    for (int i = 0; i < n; ++i) {
 		data[i] *= factor;
 	    }
@@ -298,7 +300,7 @@ FFTModel::getFFTColumn(int n) const
     }
     
     auto samples = getSourceSamples(n);
-    m_windower.cut(&samples[0]);
+    m_windower.cut(samples.data());
     auto col = m_fft.process(samples);
 
     SavedColumn sc { n, col };

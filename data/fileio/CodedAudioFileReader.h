@@ -84,7 +84,7 @@ protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
     std::vector<float> m_data;
-    mutable QReadWriteLock m_dataLock;
+    mutable QMutex m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;
     sv_samplerate_t m_fileRate;

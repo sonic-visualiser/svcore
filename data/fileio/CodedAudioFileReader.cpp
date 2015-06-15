@@ -367,7 +367,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
         break;
 
     case CacheInMemory:
-        m_dataLock.lockForWrite();
+        m_dataLock.lock();
         m_data.insert(m_data.end(), buffer, buffer + count);
         m_dataLock.unlock();
         break;
@@ -449,26 +449,25 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         if (!isOK()) return {};
         if (count == 0) return {};
 
-        sv_frame_t idx = start * m_channelCount;
-        sv_frame_t i = 0;
-        sv_frame_t n = count * m_channelCount;
+        sv_frame_t ix0 = start * m_channelCount;
+        sv_frame_t ix1 = ix0 + (count * m_channelCount);
 
-        frames.resize(n);
-
-        m_dataLock.lockForRead();
-        while (i < n && in_range_for(m_data, idx)) {
-            frames[i++] = m_data[idx++];
-        }
+        // This lock used to be a QReadWriteLock, but it appears that
+        // its lock mechanism is significantly slower than QMutex so
+        // it's not a good idea in cases like this where we don't
+        // really have threads taking a long time to read concurrently
+        m_dataLock.lock();
+        sv_frame_t n = sv_frame_t(m_data.size());
+        if (ix1 > n) ix1 = n;
+        frames = vector<float>(m_data.begin() + ix0, m_data.begin() + ix1);
         m_dataLock.unlock();
-
-        frames.resize(i);
     }
     }
 
     if (m_normalised) {
         for (auto &f: frames) f *= m_gain;
     }
-
+    
     return frames;
 }
 
