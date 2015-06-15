@@ -61,7 +61,7 @@ PRE_TARGETDEPS += ../../../libsvcore.a
 
 !win32 {
     !macx* {
-        QMAKE_POST_LINK=./$${TARGET}
+        QMAKE_POST_LINK=valgrind ./$${TARGET}
     }
     macx* {
         QMAKE_POST_LINK=./$${TARGET}.app/Contents/MacOS/$${TARGET}

@@ -256,22 +256,31 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 vector<float>
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
-    vector<float> data(range.second - range.first, 0.f);
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
         pfx = -range.first;
         range = { 0, range.second };
     }
-//    cerr << "requesting " << range.second - range.first << " from file" << endl;
-    (void) m_model->getData(m_channel,
-                            range.first,
-                            range.second - range.first,
-                            &data[pfx]);
+
+    auto data = m_model->getData(m_channel,
+                                 range.first,
+                                 range.second - range.first);
+
+    // don't return a partial frame
+    data.resize(range.second - range.first, 0.f);
+
+    if (pfx > 0) {
+        vector<float> pad(pfx, 0.f);
+        data.insert(data.begin(), pad.begin(), pad.end());
+    }
+    
     if (m_channel == -1) {
 	int channels = m_model->getChannelCount();
 	if (channels > 1) {
-	    for (int i = 0; in_range_for(data, i); ++i) {
-		data[i] /= float(channels);
+            int n = int(data.size());
+            float factor = 1.f / float(channels);
+	    for (int i = 0; i < n; ++i) {
+		data[i] *= factor;
 	    }
 	}
     }

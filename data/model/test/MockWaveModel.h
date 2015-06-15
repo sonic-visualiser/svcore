@@ -41,11 +41,8 @@ public:
     virtual float getValueMaximum() const { return  1.f; }
     virtual int getChannelCount() const { return int(m_data.size()); }
     
-    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                               float *buffer) const;
-    virtual sv_frame_t getMultiChannelData(int fromchannel, int tochannel,
-					   sv_frame_t start, sv_frame_t count,
-					   float **buffers) const;
+    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
 
     virtual bool canPlay() const { return true; }
     virtual QString getDefaultPlayClipId() const { return ""; }

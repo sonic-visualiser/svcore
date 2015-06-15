@@ -27,6 +27,8 @@
 #include <QDir>
 #include <QMutexLocker>
 
+using namespace std;
+
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
                                            sv_samplerate_t targetRate,
                                            bool normalised) :
@@ -242,7 +244,7 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(const SampleBlock &samples)
+CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
 {
     QMutexLocker locker(&m_cacheMutex);
 
@@ -352,9 +354,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 
     case CacheInMemory:
         m_dataLock.lockForWrite();
-        for (sv_frame_t s = 0; s < count; ++s) {
-            m_data.push_back(buffer[s]);
-        }
+        m_data.insert(m_data.end(), buffer, buffer + count);
         m_dataLock.unlock();
         break;
     }
@@ -408,7 +408,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     }
 }
 
-SampleBlock
+vector<float>
 CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
@@ -417,10 +417,10 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
     if (!m_initialised) {
         SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
-        return SampleBlock();
+        return {};
     }
 
-    SampleBlock frames;
+    vector<float> frames;
     
     switch (m_cacheMode) {
 
@@ -432,8 +432,8 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
     case CacheInMemory:
     {
-        if (!isOK()) return SampleBlock();
-        if (count == 0) return SampleBlock();
+        if (!isOK()) return {};
+        if (count == 0) return {};
 
         sv_frame_t idx = start * m_channelCount;
         sv_frame_t i = 0;

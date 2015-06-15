@@ -24,8 +24,6 @@
 #include "base/BaseTypes.h"
 #include "base/DataExportOptions.h"
 
-typedef std::vector<float> SampleBlock;
-
 class ZoomConstraint;
 class AlignmentModel;
 
