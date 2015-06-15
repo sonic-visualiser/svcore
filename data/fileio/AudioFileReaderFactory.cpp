@@ -98,8 +98,18 @@ AudioFileReaderFactory::create(FileSource source,
 
     AudioFileReader *reader = 0;
 
+    CodedAudioFileReader::CacheMode cacheMode =
+        CodedAudioFileReader::CacheInTemporaryFile;
+
+    CodedAudioFileReader::DecodeMode decodeMode =
+        (threading ?
+         CodedAudioFileReader::DecodeThreaded :
+         CodedAudioFileReader::DecodeAtOnce);
+    
     // Try to construct a preferred reader based on the extension or
     // MIME type.
+
+#define CHECK(reader) if (!reader->isOK()) { delete reader; reader = 0; }
 
     if (WavFileReader::supports(source)) {
 
@@ -117,156 +127,88 @@ AudioFileReaderFactory::create(FileSource source,
             delete reader;
             reader = new DecodingWavFileReader
                 (source,
-                 threading ?
-                 DecodingWavFileReader::ResampleThreaded :
-                 DecodingWavFileReader::ResampleAtOnce,
-                 DecodingWavFileReader::CacheInTemporaryFile,
+                 decodeMode, cacheMode,
                  targetRate ? targetRate : fileRate,
                  normalised,
                  reporter);
-            if (!reader->isOK()) {
-                delete reader;
-                reader = 0;
-            }
+            CHECK(reader);
         }
     }
     
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
-    if (!reader) {
-        if (OggVorbisFileReader::supports(source)) {
-            reader = new OggVorbisFileReader
-                (source,
-                 threading ?
-                 OggVorbisFileReader::DecodeThreaded :
-                 OggVorbisFileReader::DecodeAtOnce,
-                 OggVorbisFileReader::CacheInTemporaryFile,
-                 targetRate,
-                 normalised,
-                 reporter);
-            if (!reader->isOK()) {
-                delete reader;
-                reader = 0;
-            }
-        }
+    if (!reader && OggVorbisFileReader::supports(source)) {
+        reader = new OggVorbisFileReader
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 #endif
 
 #ifdef HAVE_MAD
-    if (!reader) {
-        if (MP3FileReader::supports(source)) {
-            reader = new MP3FileReader
-                (source,
-                 threading ?
-                 MP3FileReader::DecodeThreaded :
-                 MP3FileReader::DecodeAtOnce,
-                 MP3FileReader::CacheInTemporaryFile,
-                 targetRate,
-                 normalised,
-                 reporter);
-            if (!reader->isOK()) {
-                delete reader;
-                reader = 0;
-            }
-        }
+    if (!reader && MP3FileReader::supports(source)) {
+        reader = new MP3FileReader
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
 #ifdef HAVE_QUICKTIME
-    if (!reader) {
-        if (QuickTimeFileReader::supports(source)) {
-            reader = new QuickTimeFileReader
-                (source,
-                 threading ?
-                 QuickTimeFileReader::DecodeThreaded : 
-                 QuickTimeFileReader::DecodeAtOnce,
-                 QuickTimeFileReader::CacheInTemporaryFile,
-                 targetRate,
-                 normalised,
-                 reporter);
-            if (!reader->isOK()) {
-                delete reader;
-                reader = 0;
-            }
-        }
+    if (!reader && QuickTimeFileReader::supports(source)) {
+        reader = new QuickTimeFileReader
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
 #ifdef HAVE_COREAUDIO
-    if (!reader) {
-        if (CoreAudioFileReader::supports(source)) {
-            reader = new CoreAudioFileReader
-                (source,
-                 threading ?
-                 CoreAudioFileReader::DecodeThreaded :
-                 CoreAudioFileReader::DecodeAtOnce,
-                 CoreAudioFileReader::CacheInTemporaryFile,
-                 targetRate,
-                 normalised,
-                 reporter);
-            if (!reader->isOK()) {
-                delete reader;
-                reader = 0;
-            }
-        }
+    if (!reader && CoreAudioFileReader::supports(source)) {
+        reader = new CoreAudioFileReader
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
-
+    if (reader) {
+        // The happy case: a reader recognised the file extension &
+        // succeeded in opening the file
+        return reader;
+    }
+    
     // If none of the readers claimed to support this file extension,
     // perhaps the extension is missing or misleading.  Try again,
     // ignoring it.  We have to be confident that the reader won't
     // open just any old text file or whatever and pretend it's
     // succeeded
 
-    if (!reader) {
+    reader = new WavFileReader(source);
 
-        reader = new WavFileReader(source);
+    sv_samplerate_t fileRate = reader->getSampleRate();
 
-        sv_samplerate_t fileRate = reader->getSampleRate();
+    if (reader->isOK() &&
+        (!reader->isQuicklySeekable() ||
+         normalised ||
+         (targetRate != 0 && fileRate != targetRate))) {
 
-        if (reader->isOK() &&
-            (!reader->isQuicklySeekable() ||
-             normalised ||
-             (targetRate != 0 && fileRate != targetRate))) {
+        SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
 
-            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", creating decoding reader" << endl;
-
-            delete reader;
-            reader = new DecodingWavFileReader
-                (source,
-                 threading ?
-                 DecodingWavFileReader::ResampleThreaded :
-                 DecodingWavFileReader::ResampleAtOnce,
-                 DecodingWavFileReader::CacheInTemporaryFile,
-                 targetRate ? targetRate : fileRate,
-                 normalised,
-                 reporter);
-        }
-
-        if (!reader->isOK()) {
-            delete reader;
-            reader = 0;
-        }
+        delete reader;
+        reader = new DecodingWavFileReader
+            (source,
+             decodeMode, cacheMode,
+             targetRate ? targetRate : fileRate,
+             normalised,
+             reporter);
     }
+
+    CHECK(reader);
     
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
     if (!reader) {
         reader = new OggVorbisFileReader
-            (source,
-             threading ?
-             OggVorbisFileReader::DecodeThreaded :
-             OggVorbisFileReader::DecodeAtOnce,
-             OggVorbisFileReader::CacheInTemporaryFile,
-             targetRate,
-             reporter);
-
-        if (!reader->isOK()) {
-            delete reader;
-            reader = 0;
-        }
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 #endif
@@ -274,76 +216,35 @@ AudioFileReaderFactory::create(FileSource source,
 #ifdef HAVE_MAD
     if (!reader) {
         reader = new MP3FileReader
-            (source,
-             threading ?
-             MP3FileReader::DecodeThreaded :
-             MP3FileReader::DecodeAtOnce,
-             MP3FileReader::CacheInTemporaryFile,
-             targetRate,
-             reporter);
-
-        if (!reader->isOK()) {
-            delete reader;
-            reader = 0;
-        }
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
 #ifdef HAVE_QUICKTIME
     if (!reader) {
         reader = new QuickTimeFileReader
-            (source,
-             threading ?
-             QuickTimeFileReader::DecodeThreaded : 
-             QuickTimeFileReader::DecodeAtOnce,
-             QuickTimeFileReader::CacheInTemporaryFile,
-             targetRate,
-             reporter);
-
-        if (!reader->isOK()) {
-            delete reader;
-            reader = 0;
-        }
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
 #ifdef HAVE_COREAUDIO
     if (!reader) {
         reader = new CoreAudioFileReader
-            (source,
-             threading ?
-             CoreAudioFileReader::DecodeThreaded :
-             CoreAudioFileReader::DecodeAtOnce,
-             CoreAudioFileReader::CacheInTemporaryFile,
-             targetRate,
-             reporter);
-
-        if (!reader->isOK()) {
-            delete reader;
-            reader = 0;
-        }
+            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+        CHECK(reader);
     }
 #endif
 
-    if (reader) {
-        if (reader->isOK()) {
-            SVDEBUG << "AudioFileReaderFactory: Reader is OK" << endl;
-            return reader;
-        }
-        cerr << "AudioFileReaderFactory: Preferred reader for "
-                  << "url \"" << source.getLocation()
-                  << "\" (content type \""
-                  << source.getContentType() << "\") failed";
-
-        if (reader->getError() != "") {
-            cerr << ": \"" << reader->getError() << "\"";
-        }
-        cerr << endl;
-        delete reader;
-        reader = 0;
+    if (!reader) {
+        cerr << "AudioFileReaderFactory::Failed to create a reader for "
+             << "url \"" << source.getLocation()
+             << "\" (content type \""
+             << source.getContentType() << "\")" << endl;
+        return nullptr;
     }
-
-    cerr << "AudioFileReaderFactory: No reader" << endl;
+    
     return reader;
 }
 

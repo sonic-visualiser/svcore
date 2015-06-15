@@ -38,6 +38,11 @@ public:
         CacheInMemory
     };
 
+    enum DecodeMode {
+        DecodeAtOnce, // decode the file on construction, with progress 
+        DecodeThreaded // decode in a background thread after construction
+    };
+
     virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }

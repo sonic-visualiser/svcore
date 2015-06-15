@@ -24,7 +24,7 @@
 using namespace std;
 
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
-                                             ResampleMode resampleMode,
+                                             DecodeMode decodeMode,
                                              CacheMode mode,
                                              sv_samplerate_t targetRate,
                                              bool normalised,
@@ -58,7 +58,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
 
     initialiseDecodeCache();
 
-    if (resampleMode == ResampleAtOnce) {
+    if (decodeMode == DecodeAtOnce) {
 
         if (m_reporter) {
             connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
