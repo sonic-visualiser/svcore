@@ -189,35 +189,55 @@ WaveFileModel::getLocalFilename() const
 vector<float>
 WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
-    // Always read these directly from the file. 
-    // This is used for e.g. audio playback or input to transforms.
+    // Read directly from the file.  This is used for e.g. audio
+    // playback or input to transforms.
 
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "WaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
 
+    int channels = getChannelCount();
+
+    if (channel >= channels) {
+        cerr << "ERROR: WaveFileModel::getData: channel ("
+             << channel << ") >= channel count (" << channels << ")"
+             << endl;
+        return {};
+    }
+
     if (!m_reader || !m_reader->isOK() || count == 0) {
         return {};
     }
 
-    if (channel != -1) {
-        // get a single channel
-        auto data = getMultiChannelData(channel, channel, start, count);
-        if (data.empty()) return {};
-        else return data[0];
+    if (start >= m_startFrame) {
+        start -= m_startFrame;
+    } else {
+        if (count <= m_startFrame - start) {
+            return {};
+        } else {
+            count -= (m_startFrame - start);
+            start = 0;
+        }
     }
 
-    // channel == -1, mix down all channels
+    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    if (channels == 1) return interleaved;
 
-    auto all = getMultiChannelData(0, getChannelCount()-1, start, count);
-    if (all.empty()) return {};
-
-    sv_frame_t n = all[0].size();
-    vector<float> result(n, 0.f);
-
-    for (int c = 0; in_range_for(all, c); ++c) {
-        for (sv_frame_t i = 0; i < n; ++i) {
-            result[i] += all[c][i];
+    sv_frame_t obtained = interleaved.size() / channels;
+    
+    vector<float> result(obtained, 0.f);
+    
+    if (channel != -1) {
+        // get a single channel
+        for (int i = 0; i < obtained; ++i) {
+            result[i] = interleaved[i * channels + channel];
+        }
+    } else {
+        // channel == -1, mix down all channels
+        for (int c = 0; c < channels; ++c) {
+            for (int i = 0; i < obtained; ++i) {
+                result[i] += interleaved[i * channels + c];
+            }
         }
     }
 
@@ -228,6 +248,9 @@ vector<vector<float>>
 WaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
                                    sv_frame_t start, sv_frame_t count) const
 {
+    // Read directly from the file.  This is used for e.g. audio
+    // playback or input to transforms.
+
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif

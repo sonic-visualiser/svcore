@@ -183,8 +183,6 @@ private:
     };
     mutable std::deque<SavedColumn> m_cached;
     size_t m_cacheSize;
-
-    //!!! also optionally cache polar?
 };
 
 #endif

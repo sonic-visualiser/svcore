@@ -111,8 +111,8 @@ AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) con
 
         auto here = m_components[c].model->getData(m_components[c].channel,
                                                    start, count);
-        if (here.size() > longest) {
-            longest = here.size();
+        if (sv_frame_t(here.size()) > longest) {
+            longest = sv_frame_t(here.size());
         }
         for (sv_frame_t i = 0; in_range_for(here, i); ++i) {
             result[i] += here[i];
@@ -133,7 +133,9 @@ AggregateWaveModel::getMultiChannelData(int fromchannel, int tochannel,
 
     for (int c = fromchannel; c <= tochannel; ++c) {
         auto here = getData(c, start, count);
-        if (here.size() < min) min = here.size();
+        if (sv_frame_t(here.size()) < min) {
+            min = sv_frame_t(here.size());
+        }
         result.push_back(here);
     }
 
