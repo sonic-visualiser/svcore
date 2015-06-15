@@ -38,7 +38,7 @@ public:
         CacheInMemory
     };
 
-    virtual SampleBlock getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
 
@@ -60,7 +60,7 @@ protected:
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
-    void addSamplesToDecodeCache(const SampleBlock &interleaved);
+    void addSamplesToDecodeCache(const std::vector<float> &interleaved);
 
     // may throw InsufficientDiscSpace:
     void finishDecodeCache();
@@ -78,7 +78,7 @@ private:
 protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
-    SampleBlock m_data;
+    std::vector<float> m_data;
     mutable QReadWriteLock m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;

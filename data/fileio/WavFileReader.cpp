@@ -20,6 +20,8 @@
 #include <QMutexLocker>
 #include <QFileInfo>
 
+using namespace std;
+
 WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file(0),
     m_source(source),
@@ -119,53 +121,56 @@ WavFileReader::updateDone()
     m_updating = false;
 }
 
-SampleBlock
+vector<float>
 WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
-    if (count == 0) return SampleBlock();
+    if (count == 0) return {};
 
     QMutexLocker locker(&m_mutex);
 
     if (!m_file || !m_channelCount) {
-        return SampleBlock();
+        return {};
     }
 
     if (start >= m_fileInfo.frames) {
 //        SVDEBUG << "WavFileReader::getInterleavedFrames: " << start
 //                  << " > " << m_fileInfo.frames << endl;
-	return SampleBlock();
+	return {};
     }
 
     if (start + count > m_fileInfo.frames) {
 	count = m_fileInfo.frames - start;
     }
 
-    if (start != m_lastStart || count != m_lastCount) {
-
-	if (sf_seek(m_file, start, SEEK_SET) < 0) {
-	    return SampleBlock();
-	}
-
-        sv_frame_t n = count * m_fileInfo.channels;
-        m_buffer.resize(n);
-	
-        sf_count_t readCount = 0;
-
-	if ((readCount = sf_readf_float(m_file, m_buffer.data(), count)) < 0) {
-	    return SampleBlock();
-	}
-
-        m_buffer.resize(readCount * m_fileInfo.channels);
-        
-	m_lastStart = start;
-	m_lastCount = readCount;
+    // Because WaveFileModel::getSummaries() is called separately for
+    // individual channels, it's quite common for us to be called
+    // repeatedly for the same data. So this is worth cacheing.
+    if (start == m_lastStart && count == m_lastCount) {
+        return m_buffer;
+    }
+    
+    if (sf_seek(m_file, start, SEEK_SET) < 0) {
+        return {};
     }
 
-    return m_buffer;
+    vector<float> data;
+    sv_frame_t n = count * m_fileInfo.channels;
+    data.resize(n);
+
+    m_buffer = data;
+    m_lastStart = start;
+    m_lastCount = count;
+    
+    sf_count_t readCount = 0;
+    if ((readCount = sf_readf_float(m_file, data.data(), count)) < 0) {
+        return {};
+    }
+
+    return data;
 }
 
 void
-WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
+WavFileReader::getSupportedExtensions(set<QString> &extensions)
 {
     int count;
 
@@ -196,7 +201,7 @@ WavFileReader::getSupportedExtensions(std::set<QString> &extensions)
 bool
 WavFileReader::supportsExtension(QString extension)
 {
-    std::set<QString> extensions;
+    set<QString> extensions;
     getSupportedExtensions(extensions);
     return (extensions.find(extension.toLower()) != extensions.end());
 }

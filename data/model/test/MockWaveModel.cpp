@@ -24,40 +24,39 @@ MockWaveModel::MockWaveModel(vector<Sort> sorts, int length, int pad)
     }
 }
 
-sv_frame_t
-MockWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-		       float *buffer) const
+vector<float>
+MockWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     sv_frame_t i = 0;
 
 //    cerr << "MockWaveModel::getData(" << channel << "," << start << "," << count << "): ";
 
+    vector<float> data;
+    
     while (i < count) {
 	sv_frame_t idx = start + i;
 	if (!in_range_for(m_data[channel], idx)) break;
-	buffer[i] = m_data[channel][idx];
-//	cerr << buffer[i] << " ";
+	data.push_back(m_data[channel][idx]);
+//	cerr << data[i] << " ";
 	++i;
     }
 
 //    cerr << endl;
     
-    return i;
+    return data;
 }
 
-sv_frame_t
+vector<vector<float>>
 MockWaveModel::getMultiChannelData(int fromchannel, int tochannel,
-				   sv_frame_t start, sv_frame_t count,
-				   float **buffers) const
+				   sv_frame_t start, sv_frame_t count) const
 {
-    sv_frame_t min = count;
-
+    vector<vector<float>> data(tochannel - fromchannel + 1);
+    
     for (int c = fromchannel; c <= tochannel; ++c) {
-	sv_frame_t n = getData(c, start, count, buffers[c]);
-	if (n < min) min = n;
+        data.push_back(getData(c, start, count));
     }
 
-    return min;
+    return data;
 }
 
 vector<float>

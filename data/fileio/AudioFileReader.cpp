@@ -17,15 +17,17 @@
 
 using std::vector;
 
-vector<SampleBlock>
+vector<vector<float>>
 AudioFileReader::getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
-    SampleBlock interleaved = getInterleavedFrames(start, count);
+    vector<float> interleaved = getInterleavedFrames(start, count);
     
     int channels = getChannelCount();
+    if (channels == 1) return { interleaved };
+    
     sv_frame_t rc = interleaved.size() / channels;
 
-    vector<SampleBlock> frames(channels, SampleBlock(rc, 0.f));
+    vector<vector<float>> frames(channels, vector<float>(rc, 0.f));
     
     for (int c = 0; c < channels; ++c) {
         for (sv_frame_t i = 0; i < rc; ++i) {

@@ -21,6 +21,8 @@
 
 #include <QFileInfo>
 
+using namespace std;
+
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
                                              ResampleMode resampleMode,
                                              CacheMode mode,
@@ -67,7 +69,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
         sv_frame_t blockSize = 16384;
         sv_frame_t total = m_original->getFrameCount();
 
-        SampleBlock block;
+        vector<float> block;
 
         for (sv_frame_t i = 0; i < total; i += blockSize) {
 
@@ -124,7 +126,7 @@ DecodingWavFileReader::DecodeThread::run()
     sv_frame_t blockSize = 16384;
     sv_frame_t total = m_reader->m_original->getFrameCount();
     
-    SampleBlock block;
+    vector<float> block;
     
     for (sv_frame_t i = 0; i < total; i += blockSize) {
         
@@ -147,7 +149,7 @@ DecodingWavFileReader::DecodeThread::run()
 } 
 
 void
-DecodingWavFileReader::addBlock(const SampleBlock &frames)
+DecodingWavFileReader::addBlock(const vector<float> &frames)
 {
     addSamplesToDecodeCache(frames);
 
@@ -167,7 +169,7 @@ DecodingWavFileReader::addBlock(const SampleBlock &frames)
 }
 
 void
-DecodingWavFileReader::getSupportedExtensions(std::set<QString> &extensions)
+DecodingWavFileReader::getSupportedExtensions(set<QString> &extensions)
 {
     WavFileReader::getSupportedExtensions(extensions);
 }

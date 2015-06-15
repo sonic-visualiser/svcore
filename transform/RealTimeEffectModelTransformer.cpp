@@ -191,10 +191,14 @@ RealTimeEffectModelTransformer::run()
 
 	if (channelCount == 1) {
             if (inbufs && inbufs[0]) {
-                got = input->getData
-                    (m_input.getChannel(), blockFrame, blockSize, inbufs[0]);
+                auto data = input->getData
+                    (m_input.getChannel(), blockFrame, blockSize);
+                got = data.size();
+                for (sv_frame_t i = 0; i < got; ++i) {
+                    inbufs[0][i] = data[i];
+                }
                 while (got < blockSize) {
-                    inbufs[0][got++] = 0.0;
+                    inbufs[0][got++] = 0.f;
                 }          
                 for (int ch = 1; ch < (int)m_plugin->getAudioInputCount(); ++ch) {
                     for (sv_frame_t i = 0; i < blockSize; ++i) {
@@ -204,9 +208,14 @@ RealTimeEffectModelTransformer::run()
             }
 	} else {
             if (inbufs && inbufs[0]) {
-                got = input->getMultiChannelData(0, channelCount - 1,
-                                                 blockFrame, blockSize,
-                                                 inbufs);
+                auto data = input->getMultiChannelData
+                    (0, channelCount - 1, blockFrame, blockSize);
+                if (!data.empty()) got = data[0].size();
+                for (int ch = 0; ch < channelCount; ++ch) {
+                    for (sv_frame_t i = 0; i < got; ++i) {
+                        inbufs[ch][i] = data[ch][i];
+                    }
+                }
                 while (got < blockSize) {
                     for (int ch = 0; ch < channelCount; ++ch) {
                         inbufs[ch][got] = 0.0;
