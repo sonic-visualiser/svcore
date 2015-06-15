@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-//#define DEBUG_STORAGE_ADVISER 1
+#define DEBUG_STORAGE_ADVISER 1
 
 size_t StorageAdviser::m_discPlanned = 0;
 size_t StorageAdviser::m_memoryPlanned = 0;
@@ -36,9 +36,9 @@ StorageAdviser::recommend(Criteria criteria,
 			  size_t maximumSize)
 {
 #ifdef DEBUG_STORAGE_ADVISER
-    SVDEBUG << "StorageAdviser::recommend: Criteria " << criteria 
-              << ", minimumSize " << minimumSize
-              << ", maximumSize " << maximumSize << endl;
+    cerr << "StorageAdviser::recommend: Criteria " << criteria 
+         << ", minimumSize " << minimumSize
+         << ", maximumSize " << maximumSize << endl;
 #endif
 
     if (m_baseRecommendation != NoRecommendation) {
@@ -181,6 +181,10 @@ StorageAdviser::recommend(Criteria criteria,
         }
     }
 
+#ifdef DEBUG_STORAGE_ADVISER
+    cerr << "StorageAdviser: returning recommendation " << recommendation << endl;
+#endif
+    
     return Recommendation(recommendation);
 }
 
