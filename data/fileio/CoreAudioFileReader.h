@@ -31,17 +31,12 @@ class CoreAudioFileReader : public CodedAudioFileReader
     Q_OBJECT
 
 public:
-    enum DecodeMode {
-        DecodeAtOnce, // decode the file on construction, with progress
-        DecodeThreaded // decode in a background thread after construction
-    };
-
     CoreAudioFileReader(FileSource source,
                         DecodeMode decodeMode,
                         CacheMode cacheMode,
                         sv_samplerate_t targetRate = 0,
                         bool normalised = false,
-                        ProgressReporter *reporter = 0);
+                        ProgressReporter *reporter = nullptr);
     virtual ~CoreAudioFileReader();
 
     virtual QString getError() const { return m_error; }
