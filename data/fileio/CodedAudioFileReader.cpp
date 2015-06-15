@@ -21,6 +21,7 @@
 #include "base/Profiler.h"
 #include "base/Serialiser.h"
 #include "base/Resampler.h"
+#include "base/StorageAdviser.h"
 
 #include <stdint.h>
 #include <iostream>
@@ -59,7 +60,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
     QMutexLocker locker(&m_cacheMutex);
 
     endSerialised();
-
+    
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
     SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
@@ -75,6 +76,12 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     delete m_resampler;
     delete[] m_resampleBuffer;
+
+    if (!m_data.empty()) {
+        StorageAdviser::notifyDoneAllocation
+            (StorageAdviser::MemoryAllocation,
+             (m_data.size() * sizeof(float)) / 1024);
+    }
 }
 
 void
@@ -294,9 +301,16 @@ CodedAudioFileReader::finishDecodeCache()
     m_resampler = 0;
 
     if (m_cacheMode == CacheInTemporaryFile) {
+
         sf_close(m_cacheFileWritePtr);
         m_cacheFileWritePtr = 0;
         if (m_cacheFileReader) m_cacheFileReader->updateFrameCount();
+
+    } else {
+        // I know, I know, we already allocated it...
+        StorageAdviser::notifyPlannedAllocation
+            (StorageAdviser::MemoryAllocation,
+             (m_data.size() * sizeof(float)) / 1024);
     }
 }
 

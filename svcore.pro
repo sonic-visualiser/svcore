@@ -121,6 +121,7 @@ SOURCES += base/AudioLevel.cpp \
 HEADERS += data/fft/FFTapi.h \
            data/fileio/AudioFileReader.h \
            data/fileio/AudioFileReaderFactory.h \
+           data/fileio/AudioFileSizeEstimator.h \
            data/fileio/BZipFileDevice.h \
            data/fileio/CachedFile.h \
            data/fileio/CodedAudioFileReader.h \
@@ -179,6 +180,7 @@ HEADERS += data/fft/FFTapi.h \
 SOURCES += data/fft/FFTapi.cpp \
            data/fileio/AudioFileReader.cpp \
            data/fileio/AudioFileReaderFactory.cpp \
+           data/fileio/AudioFileSizeEstimator.cpp \
            data/fileio/BZipFileDevice.cpp \
            data/fileio/CachedFile.cpp \
            data/fileio/CodedAudioFileReader.cpp \

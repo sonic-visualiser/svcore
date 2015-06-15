@@ -21,6 +21,9 @@
 #include "MP3FileReader.h"
 #include "QuickTimeFileReader.h"
 #include "CoreAudioFileReader.h"
+#include "AudioFileSizeEstimator.h"
+
+#include "base/StorageAdviser.h"
 
 #include <QString>
 #include <QFileInfo>
@@ -98,9 +101,22 @@ AudioFileReaderFactory::create(FileSource source,
 
     AudioFileReader *reader = 0;
 
+    sv_frame_t estimatedSamples = 
+        AudioFileSizeEstimator::estimate(source, targetRate);
+    
     CodedAudioFileReader::CacheMode cacheMode =
         CodedAudioFileReader::CacheInTemporaryFile;
 
+    if (estimatedSamples > 0) {
+        size_t kb = (estimatedSamples * sizeof(float)) / 1024;
+        StorageAdviser::Recommendation rec =
+            StorageAdviser::recommend(StorageAdviser::SpeedCritical, kb, kb);
+        if (rec == StorageAdviser::UseMemory ||
+            rec == StorageAdviser::PreferMemory) {
+            cacheMode = CodedAudioFileReader::CacheInMemory;
+        }
+    }
+    
     CodedAudioFileReader::DecodeMode decodeMode =
         (threading ?
          CodedAudioFileReader::DecodeThreaded :
