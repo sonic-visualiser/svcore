@@ -18,6 +18,8 @@
 
 #include <QFile>
 
+//#define DEBUG_AUDIO_FILE_SIZE_ESTIMATOR 1
+
 sv_frame_t
 AudioFileSizeEstimator::estimate(FileSource source,
 				 sv_samplerate_t targetRate)
@@ -61,7 +63,9 @@ AudioFileSizeEstimator::estimate(FileSource source,
 	{
 	    QFile f(source.getLocalFilename());
 	    if (f.open(QFile::ReadOnly)) {
+#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
 		cerr << "opened file, size is "  << f.size() << endl;
+#endif
 		sz = f.size();
 		f.close();
 	    }
@@ -90,11 +94,14 @@ AudioFileSizeEstimator::estimate(FileSource source,
 	    estimate = sv_frame_t(double(sz) * 1.2 * rateRatio);
 	}
 
+#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
 	cerr << "AudioFileSizeEstimator: for extension " << extension << ", estimate = " << estimate << endl;
-    
+#endif
     }
 
+#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
     cerr << "estimate = " << estimate << endl;
+#endif
     
     return estimate;
 }

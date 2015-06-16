@@ -168,6 +168,31 @@ private slots:
              { { {}, {}, {}, {}, {} } }, 4);
     }
     
+    void twochan_simple_rect() {
+	MockWaveModel mwm({ Sine, Cosine }, 16, 4);
+        // Test that the two channels are read and converted separately
+        test(&mwm, RectangularWindow, 8, 8, 8, 0,
+             {
+                 { {}, {}, {}, {}, {} },
+                 { {}, {}, {}, {}, {} }
+             }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 1,
+             {
+                 { {}, {  0.f, 2.f }, {}, {}, {} },
+                 { {}, { -2.f, 0.f }, {}, {}, {} }
+             }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 2,
+             {
+                 { {}, {  0.f, 2.f }, {}, {}, {} },
+                 { {}, { -2.f, 0.f }, {}, {}, {} }
+             }, 4);
+        test(&mwm, RectangularWindow, 8, 8, 8, 3,
+             {
+                 { {}, {}, {}, {}, {} },
+                 { {}, {}, {}, {}, {} }
+             }, 4);
+    }
+    
     void nyquist_simple_rect() {
 	MockWaveModel mwm({ Nyquist }, 16, 4);
         // Again, the sign is flipped. This has the same amount of
