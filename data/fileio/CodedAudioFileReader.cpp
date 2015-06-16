@@ -467,7 +467,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
     if (m_normalised) {
         for (auto &f: frames) f *= m_gain;
     }
-    
+
     return frames;
 }
 

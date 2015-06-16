@@ -157,7 +157,6 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
     sv_frame_t n = count * m_fileInfo.channels;
     data.resize(n);
 
-    m_buffer = data;
     m_lastStart = start;
     m_lastCount = count;
     
@@ -166,6 +165,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
         return {};
     }
 
+    m_buffer = data;
     return data;
 }
 
