@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-#define DEBUG_STORAGE_ADVISER 1
+//#define DEBUG_STORAGE_ADVISER 1
 
 size_t StorageAdviser::m_discPlanned = 0;
 size_t StorageAdviser::m_memoryPlanned = 0;
