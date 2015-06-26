@@ -59,6 +59,12 @@ PropertyContainer::getPropertyValueLabel(const PropertyName &, int) const
     return QString();
 }
 
+QString
+PropertyContainer::getPropertyValueIconName(const PropertyName &, int) const
+{
+    return QString();
+}
+
 RangeMapper *
 PropertyContainer::getNewPropertyRangeMapper(const PropertyName &) const
 {
