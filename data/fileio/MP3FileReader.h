@@ -32,11 +32,6 @@ class MP3FileReader : public CodedAudioFileReader
     Q_OBJECT
 
 public:
-    enum DecodeMode {
-        DecodeAtOnce, // decode the file on construction, with progress
-        DecodeThreaded // decode in a background thread after construction
-    };
-
     MP3FileReader(FileSource source,
                   DecodeMode decodeMode,
                   CacheMode cacheMode,

@@ -119,15 +119,9 @@ SOURCES += base/AudioLevel.cpp \
            base/XmlExportable.cpp
 
 HEADERS += data/fft/FFTapi.h \
-           data/fft/FFTCacheReader.h \
-           data/fft/FFTCacheStorageType.h \
-           data/fft/FFTCacheWriter.h \
-           data/fft/FFTDataServer.h \
-           data/fft/FFTFileCacheReader.h \
-           data/fft/FFTFileCacheWriter.h \
-           data/fft/FFTMemoryCache.h \
            data/fileio/AudioFileReader.h \
            data/fileio/AudioFileReaderFactory.h \
+           data/fileio/AudioFileSizeEstimator.h \
            data/fileio/BZipFileDevice.h \
            data/fileio/CachedFile.h \
            data/fileio/CodedAudioFileReader.h \
@@ -184,12 +178,9 @@ HEADERS += data/fft/FFTapi.h \
            data/osc/OSCMessage.h \
            data/osc/OSCQueue.h 
 SOURCES += data/fft/FFTapi.cpp \
-           data/fft/FFTDataServer.cpp \
-           data/fft/FFTFileCacheReader.cpp \
-           data/fft/FFTFileCacheWriter.cpp \
-           data/fft/FFTMemoryCache.cpp \
            data/fileio/AudioFileReader.cpp \
            data/fileio/AudioFileReaderFactory.cpp \
+           data/fileio/AudioFileSizeEstimator.cpp \
            data/fileio/BZipFileDevice.cpp \
            data/fileio/CachedFile.cpp \
            data/fileio/CodedAudioFileReader.cpp \

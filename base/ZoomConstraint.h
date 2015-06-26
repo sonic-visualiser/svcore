@@ -58,8 +58,11 @@ public:
 
     /**
      * Return the maximum zoom level within range for this constraint.
+     * This is quite large -- individual views will probably want to
+     * limit how far a user might reasonably zoom out based on other
+     * factors such as the duration of the file.
      */
-    virtual int getMaxZoomLevel() const { return 262144; }
+    virtual int getMaxZoomLevel() const { return 4194304; } // 2^22, arbitrarily
 };
 
 #endif

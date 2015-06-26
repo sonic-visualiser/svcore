@@ -32,6 +32,8 @@
 
 #include <cassert>
 
+using namespace std;
+
 //#define DEBUG_WAVE_FILE_MODEL 1
 
 PowerOfSqrtTwoZoomConstraint
@@ -107,7 +109,7 @@ WaveFileModel::isReady(int *completion) const
         if (m_reader) {
             int decodeCompletion = m_reader->getDecodeCompletion();
             if (decodeCompletion < 90) *completion = decodeCompletion;
-            else *completion = std::min(*completion, decodeCompletion);
+            else *completion = min(*completion, decodeCompletion);
         }
         if (*completion != 0 &&
             *completion != 100 &&
@@ -184,78 +186,71 @@ WaveFileModel::getLocalFilename() const
     return "";
 }
     
-sv_frame_t
-WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                       float *buffer) const
+vector<float>
+WaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
-    // Always read these directly from the file. 
-    // This is used for e.g. audio playback.
-    // Could be much more efficient (although compiler optimisation will help)
+    // Read directly from the file.  This is used for e.g. audio
+    // playback or input to transforms.
 
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "WaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
 
+    int channels = getChannelCount();
+
+    if (channel >= channels) {
+        cerr << "ERROR: WaveFileModel::getData: channel ("
+             << channel << ") >= channel count (" << channels << ")"
+             << endl;
+        return {};
+    }
+
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        return {};
+    }
+
     if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
-        for (sv_frame_t i = 0; i < count; ++i) {
-            buffer[i] = 0.f;
-        }
         if (count <= m_startFrame - start) {
-            return 0;
+            return {};
         } else {
             count -= (m_startFrame - start);
             start = 0;
         }
     }
 
-    if (!m_reader || !m_reader->isOK() || count == 0) {
-        for (sv_frame_t i = 0; i < count; ++i) buffer[i] = 0.f;
-        return 0;
-    }
+    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    if (channels == 1) return interleaved;
 
-#ifdef DEBUG_WAVE_FILE_MODEL
-//    SVDEBUG << "WaveFileModel::getValues(" << channel << ", "
-//              << start << ", " << end << "): calling reader" << endl;
-#endif
-
-    int channels = getChannelCount();
-
-    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
-
-    sv_frame_t i = 0;
-
-    int ch0 = channel, ch1 = channel;
-    if (channel == -1) {
-	ch0 = 0;
-	ch1 = channels - 1;
-    }
+    sv_frame_t obtained = interleaved.size() / channels;
     
-    while (i < count) {
-
-	buffer[i] = 0.0;
-
-	for (int ch = ch0; ch <= ch1; ++ch) {
-
-	    sv_frame_t index = i * channels + ch;
-	    if (index >= (sv_frame_t)frames.size()) break;
-            
-	    float sample = frames[index];
-	    buffer[i] += sample;
-	}
-
-	++i;
+    vector<float> result(obtained, 0.f);
+    
+    if (channel != -1) {
+        // get a single channel
+        for (int i = 0; i < obtained; ++i) {
+            result[i] = interleaved[i * channels + channel];
+        }
+    } else {
+        // channel == -1, mix down all channels
+        for (int c = 0; c < channels; ++c) {
+            for (int i = 0; i < obtained; ++i) {
+                result[i] += interleaved[i * channels + c];
+            }
+        }
     }
 
-    return i;
+    return result;
 }
 
-sv_frame_t
+vector<vector<float>>
 WaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
-                                   sv_frame_t start, sv_frame_t count,
-                                   float **buffer) const
+                                   sv_frame_t start, sv_frame_t count) const
 {
+    // Read directly from the file.  This is used for e.g. audio
+    // playback or input to transforms.
+
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "WaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << endl;
 #endif
@@ -266,73 +261,47 @@ WaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
         cerr << "ERROR: WaveFileModel::getData: fromchannel ("
                   << fromchannel << ") > tochannel (" << tochannel << ")"
                   << endl;
-        return 0;
+        return {};
     }
 
     if (tochannel >= channels) {
         cerr << "ERROR: WaveFileModel::getData: tochannel ("
                   << tochannel << ") >= channel count (" << channels << ")"
                   << endl;
-        return 0;
+        return {};
     }
 
-    if (fromchannel == tochannel) {
-        return getData(fromchannel, start, count, buffer[0]);
+    if (!m_reader || !m_reader->isOK() || count == 0) {
+        return {};
     }
 
     int reqchannels = (tochannel - fromchannel) + 1;
 
-    // Always read these directly from the file. 
-    // This is used for e.g. audio playback.
-    // Could be much more efficient (although compiler optimisation will help)
-
     if (start >= m_startFrame) {
         start -= m_startFrame;
     } else {
-        for (int c = 0; c < reqchannels; ++c) {
-            for (sv_frame_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
-        }
         if (count <= m_startFrame - start) {
-            return 0;
+            return {};
         } else {
             count -= (m_startFrame - start);
             start = 0;
         }
     }
 
-    if (!m_reader || !m_reader->isOK() || count == 0) {
-        for (int c = 0; c < reqchannels; ++c) {
-            for (sv_frame_t i = 0; i < count; ++i) buffer[c][i] = 0.f;
+    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    if (channels == 1) return { interleaved };
+
+    sv_frame_t obtained = interleaved.size() / channels;
+    vector<vector<float>> result(reqchannels, vector<float>(obtained, 0.f));
+
+    for (int c = fromchannel; c <= tochannel; ++c) {
+        int destc = c - fromchannel;
+        for (int i = 0; i < obtained; ++i) {
+            result[destc][i] = interleaved[i * channels + c];
         }
-        return 0;
     }
-
-    SampleBlock frames = m_reader->getInterleavedFrames(start, count);
-
-    sv_frame_t i = 0;
-
-    sv_frame_t index = 0, available = frames.size();
-
-    while (i < count) {
-
-        if (index >= available) break;
-
-        int destc = 0;
-
-        for (int c = 0; c < channels; ++c) {
-            
-            if (c >= fromchannel && c <= tochannel) {
-                buffer[destc][i] = frames[index];
-                ++destc;
-            }
-
-            ++index;
-        }
-
-        ++i;
-    }
-
-    return i;
+    
+    return result;
 }
 
 int
@@ -521,16 +490,16 @@ WaveFileModel::getSummary(int channel, sv_frame_t start, sv_frame_t count) const
 
     if (blockStart > start) {
         Range startRange = getSummary(channel, start, blockStart - start);
-        range.setMin(std::min(range.min(), startRange.min()));
-        range.setMax(std::max(range.max(), startRange.max()));
-        range.setAbsmean(std::min(range.absmean(), startRange.absmean()));
+        range.setMin(min(range.min(), startRange.min()));
+        range.setMax(max(range.max(), startRange.max()));
+        range.setAbsmean(min(range.absmean(), startRange.absmean()));
     }
 
     if (blockEnd < start + count) {
         Range endRange = getSummary(channel, blockEnd, start + count - blockEnd);
-        range.setMin(std::min(range.min(), endRange.min()));
-        range.setMax(std::max(range.max(), endRange.max()));
-        range.setAbsmean(std::min(range.absmean(), endRange.absmean()));
+        range.setMin(min(range.min(), endRange.min()));
+        range.setMax(max(range.max(), endRange.max()));
+        range.setAbsmean(min(range.absmean(), endRange.absmean()));
     }
 
     return range;
@@ -605,7 +574,7 @@ WaveFileModel::RangeCacheFillThread::run()
     
     sv_frame_t frame = 0;
     const sv_frame_t readBlockSize = 16384;
-    SampleBlock block;
+    vector<float> block;
 
     if (!m_model.isOK()) return;
     

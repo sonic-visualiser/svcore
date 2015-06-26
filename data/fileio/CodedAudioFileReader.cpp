@@ -21,11 +21,14 @@
 #include "base/Profiler.h"
 #include "base/Serialiser.h"
 #include "base/Resampler.h"
+#include "base/StorageAdviser.h"
 
 #include <stdint.h>
 #include <iostream>
 #include <QDir>
 #include <QMutexLocker>
+
+using namespace std;
 
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
                                            sv_samplerate_t targetRate,
@@ -57,7 +60,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
     QMutexLocker locker(&m_cacheMutex);
 
     endSerialised();
-
+    
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
     SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
@@ -73,6 +76,12 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     delete m_resampler;
     delete[] m_resampleBuffer;
+
+    if (!m_data.empty()) {
+        StorageAdviser::notifyDoneAllocation
+            (StorageAdviser::MemoryAllocation,
+             (m_data.size() * sizeof(float)) / 1024);
+    }
 }
 
 void
@@ -242,7 +251,7 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(const SampleBlock &samples)
+CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
 {
     QMutexLocker locker(&m_cacheMutex);
 
@@ -292,9 +301,16 @@ CodedAudioFileReader::finishDecodeCache()
     m_resampler = 0;
 
     if (m_cacheMode == CacheInTemporaryFile) {
+
         sf_close(m_cacheFileWritePtr);
         m_cacheFileWritePtr = 0;
         if (m_cacheFileReader) m_cacheFileReader->updateFrameCount();
+
+    } else {
+        // I know, I know, we already allocated it...
+        StorageAdviser::notifyPlannedAllocation
+            (StorageAdviser::MemoryAllocation,
+             (m_data.size() * sizeof(float)) / 1024);
     }
 }
 
@@ -351,10 +367,8 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
         break;
 
     case CacheInMemory:
-        m_dataLock.lockForWrite();
-        for (sv_frame_t s = 0; s < count; ++s) {
-            m_data.push_back(buffer[s]);
-        }
+        m_dataLock.lock();
+        m_data.insert(m_data.end(), buffer, buffer + count);
         m_dataLock.unlock();
         break;
     }
@@ -408,7 +422,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     }
 }
 
-SampleBlock
+vector<float>
 CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
@@ -417,10 +431,10 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
     if (!m_initialised) {
         SVDEBUG << "CodedAudioFileReader::getInterleavedFrames: not initialised" << endl;
-        return SampleBlock();
+        return {};
     }
 
-    SampleBlock frames;
+    vector<float> frames;
     
     switch (m_cacheMode) {
 
@@ -432,22 +446,21 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
     case CacheInMemory:
     {
-        if (!isOK()) return SampleBlock();
-        if (count == 0) return SampleBlock();
+        if (!isOK()) return {};
+        if (count == 0) return {};
 
-        sv_frame_t idx = start * m_channelCount;
-        sv_frame_t i = 0;
-        sv_frame_t n = count * m_channelCount;
+        sv_frame_t ix0 = start * m_channelCount;
+        sv_frame_t ix1 = ix0 + (count * m_channelCount);
 
-        frames.resize(n);
-
-        m_dataLock.lockForRead();
-        while (i < n && in_range_for(m_data, idx)) {
-            frames[i++] = m_data[idx++];
-        }
+        // This lock used to be a QReadWriteLock, but it appears that
+        // its lock mechanism is significantly slower than QMutex so
+        // it's not a good idea in cases like this where we don't
+        // really have threads taking a long time to read concurrently
+        m_dataLock.lock();
+        sv_frame_t n = sv_frame_t(m_data.size());
+        if (ix1 > n) ix1 = n;
+        frames = vector<float>(m_data.begin() + ix0, m_data.begin() + ix1);
         m_dataLock.unlock();
-
-        frames.resize(i);
     }
     }
 

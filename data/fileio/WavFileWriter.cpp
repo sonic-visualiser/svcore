@@ -25,6 +25,8 @@
 #include <iostream>
 #include <cmath>
 
+using namespace std;
+
 WavFileWriter::WavFileWriter(QString path,
 			     sv_samplerate_t sampleRate,
                              int channels,
@@ -129,8 +131,6 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
     }
 
     sv_frame_t bs = 2048;
-    float *ub = new float[bs]; // uninterleaved buffer (one channel)
-    float *ib = new float[bs * m_channels]; // interleaved buffer
 
     for (MultiSelection::SelectionList::iterator i =
 	     selection->getSelections().begin();
@@ -140,16 +140,17 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 
 	for (sv_frame_t f = f0; f < f1; f += bs) {
 	    
-	    sv_frame_t n = std::min(bs, f1 - f);
+	    sv_frame_t n = min(bs, f1 - f);
+            vector<float> interleaved(n * m_channels, 0.f);
 
 	    for (int c = 0; c < int(m_channels); ++c) {
-		source->getData(c, f, n, ub);
-		for (int i = 0; i < n; ++i) {
-		    ib[i * m_channels + c] = ub[i];
+                vector<float> chanbuf = source->getData(c, f, n);
+		for (int i = 0; in_range_for(chanbuf, i); ++i) {
+		    interleaved[i * m_channels + c] = chanbuf[i];
 		}
 	    }	    
 
-	    sf_count_t written = sf_writef_float(m_file, ib, n);
+	    sf_count_t written = sf_writef_float(m_file, interleaved.data(), n);
 
 	    if (written < n) {
 		m_error = QString("Only wrote %1 of %2 frames at file frame %3")
@@ -159,8 +160,6 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 	}
     }
 
-    delete[] ub;
-    delete[] ib;
     if (ownSelection) delete selection;
 
     return isOK();

@@ -15,7 +15,6 @@
 
 #include "FFTModel.h"
 #include "DenseTimeValueModel.h"
-#include "AggregateWaveModel.h"
 
 #include "base/Profiler.h"
 #include "base/Pitch.h"
@@ -23,176 +22,62 @@
 #include <algorithm>
 
 #include <cassert>
+#include <deque>
 
 #ifndef __GNUC__
 #include <alloca.h>
 #endif
+
+using namespace std;
 
 FFTModel::FFTModel(const DenseTimeValueModel *model,
                    int channel,
                    WindowType windowType,
                    int windowSize,
                    int windowIncrement,
-                   int fftSize,
-                   bool polar,
-                   StorageAdviser::Criteria criteria,
-                   sv_frame_t fillFromFrame) :
-    //!!! ZoomConstraint!
-    m_server(0),
-    m_xshift(0),
-    m_yshift(0)
+                   int fftSize) :
+    m_model(model),
+    m_channel(channel),
+    m_windowType(windowType),
+    m_windowSize(windowSize),
+    m_windowIncrement(windowIncrement),
+    m_fftSize(fftSize),
+    m_windower(windowType, windowSize),
+    m_fft(fftSize),
+    m_cacheSize(3)
 {
-    setSourceModel(const_cast<DenseTimeValueModel *>(model)); //!!! hmm.
-
-    m_server = getServer(model,
-                         channel,
-                         windowType,
-                         windowSize,
-                         windowIncrement,
-                         fftSize,
-                         polar,
-                         criteria,
-                         fillFromFrame);
-
-    if (!m_server) return; // caller should check isOK()
-
-    int xratio = windowIncrement / m_server->getWindowIncrement();
-    int yratio = m_server->getFFTSize() / fftSize;
-
-    while (xratio > 1) {
-        if (xratio & 0x1) {
-            cerr << "ERROR: FFTModel: Window increment ratio "
-                      << windowIncrement << " / "
-                      << m_server->getWindowIncrement()
-                      << " must be a power of two" << endl;
-            assert(!(xratio & 0x1));
-        }
-        ++m_xshift;
-        xratio >>= 1;
-    }
-
-    while (yratio > 1) {
-        if (yratio & 0x1) {
-            cerr << "ERROR: FFTModel: FFT size ratio "
-                      << m_server->getFFTSize() << " / " << fftSize
-                      << " must be a power of two" << endl;
-            assert(!(yratio & 0x1));
-        }
-        ++m_yshift;
-        yratio >>= 1;
+    if (m_windowSize > m_fftSize) {
+        cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
+             << ") must be at least FFT size (" << m_fftSize << ")" << endl;
+        throw invalid_argument("FFTModel window size must be at least FFT size");
     }
 }
 
 FFTModel::~FFTModel()
 {
-    if (m_server) FFTDataServer::releaseInstance(m_server);
 }
 
 void
 FFTModel::sourceModelAboutToBeDeleted()
 {
-    if (m_sourceModel) {
-        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_sourceModel << ")" << endl;
-        if (m_server) {
-            FFTDataServer::releaseInstance(m_server);
-            m_server = 0;
-        }
-        FFTDataServer::modelAboutToBeDeleted(m_sourceModel);
+    if (m_model) {
+        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
+        m_model = 0;
     }
 }
 
-FFTDataServer *
-FFTModel::getServer(const DenseTimeValueModel *model,
-                    int channel,
-                    WindowType windowType,
-                    int windowSize,
-                    int windowIncrement,
-                    int fftSize,
-                    bool polar,
-                    StorageAdviser::Criteria criteria,
-                    sv_frame_t fillFromFrame)
+int
+FFTModel::getWidth() const
 {
-    // Obviously, an FFT model of channel C (where C != -1) of an
-    // aggregate model is the same as the FFT model of the appropriate
-    // channel of whichever model that aggregate channel is drawn
-    // from.  We should use that model here, in case we already have
-    // the data for it or will be wanting the same data again later.
-
-    // If the channel is -1 (i.e. mixture of all channels), then we
-    // can't do this shortcut unless the aggregate model only has one
-    // channel or contains exactly all of the channels of a single
-    // other model.  That isn't very likely -- if it were the case,
-    // why would we be using an aggregate model?
-
-    if (channel >= 0) {
-
-        const AggregateWaveModel *aggregate =
-            dynamic_cast<const AggregateWaveModel *>(model);
-
-        if (aggregate && channel < aggregate->getComponentCount()) {
-
-            AggregateWaveModel::ModelChannelSpec spec =
-                aggregate->getComponent(channel);
-
-            return getServer(spec.model,
-                             spec.channel,
-                             windowType,
-                             windowSize,
-                             windowIncrement,
-                             fftSize,
-                             polar,
-                             criteria,
-                             fillFromFrame);
-        }
-    }
-
-    // The normal case
-
-    return FFTDataServer::getFuzzyInstance(model,
-                                           channel,
-                                           windowType,
-                                           windowSize,
-                                           windowIncrement,
-                                           fftSize,
-                                           polar,
-                                           criteria,
-                                           fillFromFrame);
+    if (!m_model) return 0;
+    return int((m_model->getEndFrame() - m_model->getStartFrame())
+               / m_windowIncrement) + 1;
 }
 
-sv_samplerate_t
-FFTModel::getSampleRate() const
+int
+FFTModel::getHeight() const
 {
-    return isOK() ? m_server->getModel()->getSampleRate() : 0;
-}
-
-FFTModel::Column
-FFTModel::getColumn(int x) const
-{
-    Profiler profiler("FFTModel::getColumn", false);
-
-    Column result;
-
-    result.clear();
-    int h = getHeight();
-    result.reserve(h);
-
-#ifdef __GNUC__
-    float magnitudes[h];
-#else
-    float *magnitudes = (float *)alloca(h * sizeof(float));
-#endif
-
-    if (m_server->getMagnitudesAt(x << m_xshift, magnitudes)) {
-
-        for (int y = 0; y < h; ++y) {
-            result.push_back(magnitudes[y]);
-        }
-
-    } else {
-        for (int i = 0; i < h; ++i) result.push_back(0.f);
-    }
-
-    return result;
+    return m_fftSize / 2 + 1;
 }
 
 QString
@@ -204,15 +89,235 @@ FFTModel::getBinName(int n) const
     return name;
 }
 
+FFTModel::Column
+FFTModel::getColumn(int x) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(int(cplx.size()));
+    for (auto c: cplx) col.push_back(abs(c));
+    return col;
+}
+
+float
+FFTModel::getMagnitudeAt(int x, int y) const
+{
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
+    auto col = getFFTColumn(x);
+    return abs(col[y]);
+}
+
+float
+FFTModel::getMaximumMagnitudeAt(int x) const
+{
+    Column col(getColumn(x));
+    float max = 0.f;
+    for (int i = 0; i < col.size(); ++i) {
+        if (col[i] > max) max = col[i];
+    }
+    return max;
+}
+
+float
+FFTModel::getPhaseAt(int x, int y) const
+{
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
+    return arg(getFFTColumn(x)[y]);
+}
+
+void
+FFTModel::getValuesAt(int x, int y, float &re, float &im) const
+{
+    auto col = getFFTColumn(x);
+    re = col[y].real();
+    im = col[y].imag();
+}
+
+bool
+FFTModel::isColumnAvailable(int) const
+{
+    //!!!
+    return true;
+}
+
+bool
+FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        values[i] = abs(col[minbin + i]);
+    }
+    return true;
+}
+
+bool
+FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
+{
+    if (!getMagnitudesAt(x, values, minbin, count)) return false;
+    if (count == 0) count = getHeight();
+    float max = 0.f;
+    for (int i = 0; i < count; ++i) {
+        if (values[i] > max) max = values[i];
+    }
+    if (max > 0.f) {
+        for (int i = 0; i < count; ++i) {
+            values[i] /= max;
+        }
+    }
+    return true;
+}
+
+bool
+FFTModel::getPhasesAt(int x, float *values, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        values[i] = arg(col[minbin + i]);
+    }
+    return true;
+}
+
+bool
+FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) const
+{
+    if (count == 0) count = getHeight();
+    auto col = getFFTColumn(x);
+    for (int i = 0; i < count; ++i) {
+        reals[i] = col[minbin + i].real();
+    }
+    for (int i = 0; i < count; ++i) {
+        imags[i] = col[minbin + i].imag();
+    }
+    return true;
+}
+
+vector<float>
+FFTModel::getSourceSamples(int column) const
+{
+    // m_fftSize may be greater than m_windowSize, but not the reverse
+
+//    cerr << "getSourceSamples(" << column << ")" << endl;
+    
+    auto range = getSourceSampleRange(column);
+    auto data = getSourceData(range);
+
+    int off = (m_fftSize - m_windowSize) / 2;
+
+    if (off == 0) {
+        return data;
+    } else {
+        vector<float> pad(off, 0.f);
+        vector<float> padded;
+        padded.reserve(m_fftSize);
+        padded.insert(padded.end(), pad.begin(), pad.end());
+        padded.insert(padded.end(), data.begin(), data.end());
+        padded.insert(padded.end(), pad.begin(), pad.end());
+        return padded;
+    }
+}
+
+vector<float>
+FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
+{
+//    cerr << "getSourceData(" << range.first << "," << range.second
+//         << "): saved range is (" << m_savedData.range.first
+//         << "," << m_savedData.range.second << ")" << endl;
+
+    if (m_savedData.range == range) {
+        return m_savedData.data;
+    }
+
+    if (range.first < m_savedData.range.second &&
+        range.first >= m_savedData.range.first &&
+        range.second > m_savedData.range.second) {
+
+        sv_frame_t discard = range.first - m_savedData.range.first;
+
+        vector<float> acc(m_savedData.data.begin() + discard,
+                          m_savedData.data.end());
+
+        vector<float> rest =
+            getSourceDataUncached({ m_savedData.range.second, range.second });
+
+        acc.insert(acc.end(), rest.begin(), rest.end());
+        
+        m_savedData = { range, acc };
+        return acc;
+
+    } else {
+
+        auto data = getSourceDataUncached(range);
+        m_savedData = { range, data };
+        return data;
+    }
+}
+
+vector<float>
+FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
+{
+    decltype(range.first) pfx = 0;
+    if (range.first < 0) {
+        pfx = -range.first;
+        range = { 0, range.second };
+    }
+
+    auto data = m_model->getData(m_channel,
+                                 range.first,
+                                 range.second - range.first);
+
+    // don't return a partial frame
+    data.resize(range.second - range.first, 0.f);
+
+    if (pfx > 0) {
+        vector<float> pad(pfx, 0.f);
+        data.insert(data.begin(), pad.begin(), pad.end());
+    }
+    
+    if (m_channel == -1) {
+	int channels = m_model->getChannelCount();
+	if (channels > 1) {
+            int n = int(data.size());
+            float factor = 1.f / float(channels);
+            // use mean instead of sum for fft model input
+	    for (int i = 0; i < n; ++i) {
+		data[i] *= factor;
+	    }
+	}
+    }
+    
+    return data;
+}
+
+vector<complex<float>>
+FFTModel::getFFTColumn(int n) const
+{
+    for (auto &incache : m_cached) {
+        if (incache.n == n) {
+            return incache.col;
+        }
+    }
+    
+    auto samples = getSourceSamples(n);
+    m_windower.cut(samples.data());
+    auto col = m_fft.process(samples);
+
+    SavedColumn sc { n, col };
+    if (m_cached.size() >= m_cacheSize) {
+        m_cached.pop_front();
+    }
+    m_cached.push_back(sc);
+
+    return col;
+}
+
 bool
 FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 {
     if (!isOK()) return false;
 
-    sv_samplerate_t sampleRate = m_server->getModel()->getSampleRate();
-
-    int fftSize = m_server->getFFTSize() >> m_yshift;
-    frequency = double(y * sampleRate) / fftSize;
+    frequency = double(y * getSampleRate()) / m_fftSize;
 
     if (x+1 >= getWidth()) return false;
 
@@ -230,17 +335,15 @@ FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 
     int incr = getResolution();
 
-    double expectedPhase = oldPhase + (2.0 * M_PI * y * incr) / fftSize;
+    double expectedPhase = oldPhase + (2.0 * M_PI * y * incr) / m_fftSize;
 
     double phaseError = princarg(newPhase - expectedPhase);
-
-//    bool stable = (fabsf(phaseError) < (1.1f * (m_windowIncrement * M_PI) / m_fftSize));
 
     // The new frequency estimate based on the phase error resulting
     // from assuming the "native" frequency of this bin
 
     frequency =
-        (sampleRate * (expectedPhase + phaseError - oldPhase)) /
+        (getSampleRate() * (expectedPhase + phaseError - oldPhase)) /
         (2.0 * M_PI * incr);
 
     return true;
@@ -293,8 +396,8 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
 
     sv_samplerate_t sampleRate = getSampleRate();
 
-    std::deque<float> window;
-    std::vector<int> inrange;
+    deque<float> window;
+    vector<int> inrange;
     float dist = 0.5;
 
     int medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin, dist);
@@ -331,8 +434,8 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
             else binmax = values.size()-1;
         }
 
-        std::deque<float> sorted(window);
-        std::sort(sorted.begin(), sorted.end());
+        deque<float> sorted(window);
+        sort(sorted.begin(), sorted.end());
         float median = sorted[int(float(sorted.size()) * dist)];
 
         int centrebin = 0;
@@ -380,11 +483,10 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
     if (type == MajorPeaks) return 10;
     if (bin == 0) return 3;
 
-    int fftSize = m_server->getFFTSize() >> m_yshift;
-    double binfreq = (sampleRate * bin) / fftSize;
+    double binfreq = (sampleRate * bin) / m_fftSize;
     double hifreq = Pitch::getFrequencyForPitch(73, 0, binfreq);
 
-    int hibin = int(lrint((hifreq * fftSize) / sampleRate));
+    int hibin = int(lrint((hifreq * m_fftSize) / sampleRate));
     int medianWinSize = hibin - bin;
     if (medianWinSize < 3) medianWinSize = 3;
 
@@ -404,7 +506,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     PeakLocationSet locations = getPeaks(type, x, ymin, ymax);
 
     sv_samplerate_t sampleRate = getSampleRate();
-    int fftSize = m_server->getFFTSize() >> m_yshift;
     int incr = getResolution();
 
     // This duplicates some of the work of estimateStableFrequency to
@@ -412,7 +513,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     // columns, instead of jumping back and forth between columns x and
     // x+1, which may be significantly slower if re-seeking is needed
 
-    std::vector<float> phases;
+    vector<float> phases;
     for (PeakLocationSet::iterator i = locations.begin();
          i != locations.end(); ++i) {
         phases.push_back(getPhaseAt(x, *i));
@@ -423,26 +524,15 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
          i != locations.end(); ++i) {
         double oldPhase = phases[phaseIndex];
         double newPhase = getPhaseAt(x+1, *i);
-        double expectedPhase = oldPhase + (2.0 * M_PI * *i * incr) / fftSize;
+        double expectedPhase = oldPhase + (2.0 * M_PI * *i * incr) / m_fftSize;
         double phaseError = princarg(newPhase - expectedPhase);
         double frequency =
             (sampleRate * (expectedPhase + phaseError - oldPhase))
             / (2 * M_PI * incr);
-//        bool stable = (fabsf(phaseError) < (1.1f * (incr * M_PI) / fftSize));
-//        if (stable)
         peaks[*i] = frequency;
         ++phaseIndex;
     }
 
     return peaks;
-}
-
-FFTModel::FFTModel(const FFTModel &model) :
-    DenseThreeDimensionalModel(),
-    m_server(model.m_server),
-    m_xshift(model.m_xshift),
-    m_yshift(model.m_yshift)
-{
-    FFTDataServer::claimInstance(m_server);
 }
 

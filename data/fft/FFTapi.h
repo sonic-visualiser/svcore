@@ -50,5 +50,48 @@ void fftf_destroy_plan(fftf_plan p);
 
 #endif
 
+#include <vector>
+#include <complex>
+
+class FFTForward // with fft shift but not window
+{
+public:
+    FFTForward(int size) :
+        m_size(size),
+        m_input((float *)fftf_malloc(size * sizeof(float))),
+        m_output((fftf_complex *)fftf_malloc((size/2 + 1) * sizeof(fftf_complex))),
+        m_plan(fftf_plan_dft_r2c_1d(size, m_input, m_output, FFTW_MEASURE))
+    { }
+
+    ~FFTForward() {
+        fftf_destroy_plan(m_plan);
+        fftf_free(m_input);
+        fftf_free(m_output);
+    }
+
+    std::vector<std::complex<float> > process(std::vector<float> in) const {
+        const int hs = m_size/2;
+        for (int i = 0; i < hs; ++i) {
+            m_input[i] = in[i + hs];
+        }
+        for (int i = 0; i < hs; ++i) {
+            m_input[i + hs] = in[i];
+        }
+        fftf_execute(m_plan);
+        std::vector<std::complex<float> > result;
+        result.reserve(hs + 1);
+        for (int i = 0; i <= hs; ++i) {
+            result.push_back({ m_output[i][0], m_output[i][1] });
+        }
+        return result;
+    }
+
+private:
+    int m_size;
+    float *m_input;
+    fftf_complex *m_output;
+    fftf_plan m_plan;
+};
+
 #endif
 

@@ -29,13 +29,8 @@ class DecodingWavFileReader : public CodedAudioFileReader
 {
     Q_OBJECT
 public:
-    enum ResampleMode {
-        ResampleAtOnce, // resample the file on construction, with progress dialog
-        ResampleThreaded // resample in a background thread after construction
-    };
-
     DecodingWavFileReader(FileSource source,
-                          ResampleMode resampleMode,
+                          DecodeMode decodeMode, // determines when to resample
                           CacheMode cacheMode,
                           sv_samplerate_t targetRate = 0,
                           bool normalised = false,
@@ -69,7 +64,7 @@ protected:
     WavFileReader *m_original;
     ProgressReporter *m_reporter;
 
-    void addBlock(const SampleBlock &frames);
+    void addBlock(const std::vector<float> &frames);
     
     class DecodeThread : public Thread
     {
