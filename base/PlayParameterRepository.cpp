@@ -35,14 +35,14 @@ PlayParameterRepository::~PlayParameterRepository()
 void
 PlayParameterRepository::addPlayable(const Playable *playable)
 {
-    cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  endl;
+//    cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  endl;
 
     if (!getPlayParameters(playable)) {
 
 	// Give all playables the same type of play parameters for the
 	// moment
 
-        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
+//        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
 
         PlayParameters *params = new PlayParameters;
         m_playParameters[playable] = params;
@@ -59,8 +59,8 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         connect(params, SIGNAL(playClipIdChanged(QString)),
                 this, SLOT(playClipIdChanged(QString)));
 
-        cerr << "Connected play parameters " << params << " for playable "
-                     << playable << " to this " << this << endl;
+//        cerr << "Connected play parameters " << params << " for playable "
+//                     << playable << " to this " << this << endl;
     }
 }    
 

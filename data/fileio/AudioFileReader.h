@@ -24,8 +24,6 @@
 #include <vector>
 #include <map>
 
-typedef std::vector<float> SampleBlock;
-
 class AudioFileReader : public QObject
 {
     Q_OBJECT
@@ -85,16 +83,14 @@ public:
 
     /** 
      * Return interleaved samples for count frames from index start.
-     * The resulting sample block will contain count *
-     * getChannelCount() samples (or fewer if end of file is
-     * reached). The caller does not need to allocate space and any
-     * existing content in the SampleBlock will be erased.
+     * The resulting vector will contain count * getChannelCount()
+     * samples (or fewer if end of file is reached).
      *
      * The subclass implementations of this function must be
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual SampleBlock getInterleavedFrames(sv_frame_t start, sv_frame_t count) const = 0;
+    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const = 0;
 
     /**
      * Return de-interleaved samples for count frames from index
@@ -103,7 +99,7 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual std::vector<SampleBlock> getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<std::vector<float> > getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     // only subclasses that do not know exactly how long the audio
     // file is until it's been completely decoded should implement this

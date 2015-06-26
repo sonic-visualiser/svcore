@@ -167,7 +167,8 @@ public:
     QString getContentType() const;
 
     /**
-     * Return the file extension for this file, if any.
+     * Return the file extension for this file, if any. The returned
+     * extension is always lower-case.
      */
     QString getExtension() const;
 

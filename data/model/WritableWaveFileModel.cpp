@@ -28,6 +28,8 @@
 #include <iostream>
 #include <stdint.h>
 
+using namespace std;
+
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
@@ -169,21 +171,19 @@ WritableWaveFileModel::getFrameCount() const
     return m_frameCount;
 }
 
-sv_frame_t
-WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                               float *buffer) const
+vector<float>
+WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(channel, start, count, buffer);
+    if (!m_model || m_model->getChannelCount() == 0) return {};
+    return m_model->getData(channel, start, count);
 }
 
-sv_frame_t
+vector<vector<float>>
 WritableWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
-                                           sv_frame_t start, sv_frame_t count,
-                                           float **buffers) const
+                                           sv_frame_t start, sv_frame_t count) const
 {
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getMultiChannelData(fromchannel, tochannel, start, count, buffers);
+    if (!m_model || m_model->getChannelCount() == 0) return {};
+    return m_model->getMultiChannelData(fromchannel, tochannel, start, count);
 }    
 
 int

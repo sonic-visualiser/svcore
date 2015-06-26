@@ -37,27 +37,19 @@ DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f
 
     if (f1 <= f0) return "";
 
-    float **all = new float *[ch];
-    for (int c = 0; c < ch; ++c) {
-        all[c] = new float[f1 - f0];
-    }
+    auto data = getMultiChannelData(0, ch - 1, f0, f1 - f0);
 
-    sv_frame_t n = getMultiChannelData(0, ch - 1, f0, f1 - f0, all);
-
+    if (data.empty() || data[0].empty()) return "";
+    
     QStringList list;
-    for (sv_frame_t i = 0; i < n; ++i) {
+    for (sv_frame_t i = 0; in_range_for(data[0], i); ++i) {
         QStringList parts;
         parts << QString("%1").arg(f0 + i);
-        for (int c = 0; c < ch; ++c) {
-            parts << QString("%1").arg(all[c][i]);
+        for (int c = 0; in_range_for(data, c); ++c) {
+            parts << QString("%1").arg(data[c][i]);
         }
         list << parts.join(delimiter);
     }
-
-    for (int c = 0; c < ch; ++c) {
-        delete[] all[c];
-    }
-    delete[] all;
 
     return list.join("\n");
 }
