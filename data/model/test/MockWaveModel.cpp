@@ -15,6 +15,8 @@
 
 #include "MockWaveModel.h"
 
+#include <cmath>
+
 using namespace std;
 
 MockWaveModel::MockWaveModel(vector<Sort> sorts, int length, int pad)
