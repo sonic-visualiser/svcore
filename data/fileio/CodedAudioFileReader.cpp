@@ -439,15 +439,15 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         sv_frame_t i = 0;
         sv_frame_t n = count * m_channelCount;
 
-        frames.resize(n);
+        frames.resize(size_t(n));
 
         m_dataLock.lockForRead();
         while (i < n && in_range_for(m_data, idx)) {
-            frames[i++] = m_data[idx++];
+            frames[size_t(i++)] = m_data[size_t(idx++)];
         }
         m_dataLock.unlock();
 
-        frames.resize(i);
+        frames.resize(size_t(i));
     }
     }
 
