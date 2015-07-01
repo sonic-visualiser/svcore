@@ -452,6 +452,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         sv_frame_t ix0 = start * m_channelCount;
         sv_frame_t ix1 = ix0 + (count * m_channelCount);
 
+
         // This lock used to be a QReadWriteLock, but it appears that
         // its lock mechanism is significantly slower than QMutex so
         // it's not a good idea in cases like this where we don't

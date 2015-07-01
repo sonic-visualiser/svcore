@@ -222,8 +222,8 @@ protected:
     float m_maximum;
     bool m_haveExtents;
     bool m_notifyOnAdd;
-    long m_sinceLastNotifyMin;
-    long m_sinceLastNotifyMax;
+    sv_frame_t m_sinceLastNotifyMin;
+    sv_frame_t m_sinceLastNotifyMax;
     int m_completion;
 
     mutable QReadWriteLock m_lock;
