@@ -55,7 +55,7 @@ private:
                     float eRe = expectedValues[ch][i].real();
                     float eIm = expectedValues[ch][i].imag();
                     if (reals[i] != eRe || imags[i] != eIm) {
-                        cerr << "ERROR: output is not as expected for column "
+                        cerr << "NOTE: output is not as expected for column "
                              << i << " in channel " << ch << " (polar store = "
                              << polar << ")" << endl;
                         cerr << "expected : ";
@@ -68,8 +68,8 @@ private:
                         }
                         cerr << endl;
                     }
-                    QCOMPARE(reals[i], eRe);
-                    QCOMPARE(imags[i], eIm);
+                    COMPARE_FUZZIER_F(reals[i], eRe);
+                    COMPARE_FUZZIER_F(imags[i], eIm);
                 }
                 QCOMPARE(reals[hs1], 999.f);
                 QCOMPARE(imags[hs1], 999.f);
