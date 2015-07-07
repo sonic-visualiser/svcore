@@ -133,6 +133,12 @@ public:
      */
     virtual void deletePoint(const PointType &point);
 
+    /**
+     * Return true if the given point is found in this model, false
+     * otherwise.
+     */
+    virtual bool containsPoint(const PointType &point);
+    
     virtual bool isReady(int *completion = 0) const {
         bool ready = isOK() && (m_completion == 100);
         if (completion) *completion = m_completion;
@@ -771,6 +777,27 @@ SparseModel<PointType>::addPoint(const PointType &point)
 	    m_sinceLastNotifyMax = point.frame;
 	}
     }
+}
+
+template <typename PointType>
+bool
+SparseModel<PointType>::containsPoint(const PointType &point)
+{
+    {
+	QMutexLocker locker(&m_mutex);
+
+	PointListIterator i = m_points.lower_bound(point);
+	typename PointType::Comparator comparator;
+	while (i != m_points.end()) {
+	    if (i->frame > point.frame) break;
+	    if (!comparator(*i, point) && !comparator(point, *i)) {
+                return true;
+	    }
+	    ++i;
+	}
+    }
+
+    return false;
 }
 
 template <typename PointType>
