@@ -30,6 +30,7 @@ public:
         ImageFile,
         AnyFile,
         CSVFile,
+        IMAFile
     };
 
     virtual QString getOpenFileName(FileType type, QString fallbackLocation = "") = 0;
