@@ -68,7 +68,7 @@ CSVFileWriter::write()
                 .arg(temp.getTemporaryFilename());
             return;
         }
-    
+
         QTextStream out(&file);
         out << m_model->toDelimitedDataStringWithOptions
             (m_delimiter, m_options);
