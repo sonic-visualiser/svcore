@@ -13,120 +13,36 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAVE_FILE_MODEL_H_
-#define _WAVE_FILE_MODEL_H_
-
-#include "base/Thread.h"
-#include <QMutex>
-#include <QTimer>
-
-#include "data/fileio/FileSource.h"
+#ifndef WAVE_FILE_MODEL_H
+#define WAVE_FILE_MODEL_H
 
 #include "RangeSummarisableTimeValueModel.h"
-#include "PowerOfSqrtTwoZoomConstraint.h"
 
 #include <stdlib.h>
-
-class AudioFileReader;
 
 class WaveFileModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
 
 public:
-    WaveFileModel(FileSource source, sv_samplerate_t targetRate = 0);
-    WaveFileModel(FileSource source, AudioFileReader *reader);
-    ~WaveFileModel();
+    virtual ~WaveFileModel();
 
-    bool isOK() const;
-    bool isReady(int *) const;
+    virtual sv_frame_t getFrameCount() const = 0;
+    virtual int getChannelCount() const = 0;
+    virtual sv_samplerate_t getSampleRate() const = 0;
+    virtual sv_samplerate_t getNativeRate() const = 0;
 
-    const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
+    virtual QString getTitle() const = 0;
+    virtual QString getMaker() const = 0;
+    virtual QString getLocation() const = 0;
 
-    sv_frame_t getFrameCount() const;
-    int getChannelCount() const;
-    sv_samplerate_t getSampleRate() const;
-    sv_samplerate_t getNativeRate() const;
+    virtual sv_frame_t getStartFrame() const = 0;
+    virtual sv_frame_t getEndFrame() const = 0;
 
-    QString getTitle() const;
-    QString getMaker() const;
-    QString getLocation() const;
+    virtual void setStartFrame(sv_frame_t startFrame) = 0;
 
-    QString getLocalFilename() const;
-
-    float getValueMinimum() const { return -1.0f; }
-    float getValueMaximum() const { return  1.0f; }
-
-    virtual sv_frame_t getStartFrame() const { return m_startFrame; }
-    virtual sv_frame_t getEndFrame() const { return m_startFrame + getFrameCount(); }
-
-    void setStartFrame(sv_frame_t startFrame) { m_startFrame = startFrame; }
-
-    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                               float *buffer) const;
-
-    virtual sv_frame_t getMultiChannelData(int fromchannel, int tochannel,
-                                           sv_frame_t start, sv_frame_t count,
-                                           float **buffers) const;
-
-    virtual int getSummaryBlockSize(int desired) const;
-
-    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
-                              RangeBlock &ranges,
-                              int &blockSize) const;
-
-    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
-
-    QString getTypeName() const { return tr("Wave File"); }
-
-    virtual void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const;
-
-protected slots:
-    void fillTimerTimedOut();
-    void cacheFilled();
-    
 protected:
-    void initialize();
-
-    class RangeCacheFillThread : public Thread
-    {
-    public:
-        RangeCacheFillThread(WaveFileModel &model) :
-	    m_model(model), m_fillExtent(0),
-            m_frameCount(model.getFrameCount()) { }
-    
-	sv_frame_t getFillExtent() const { return m_fillExtent; }
-        virtual void run();
-
-    protected:
-        WaveFileModel &m_model;
-	sv_frame_t m_fillExtent;
-        sv_frame_t m_frameCount;
-    };
-         
-    void fillCache();
-
-    FileSource m_source;
-    QString m_path;
-    AudioFileReader *m_reader;
-    bool m_myReader;
-
-    sv_frame_t m_startFrame;
-
-    RangeBlock m_cache[2]; // interleaved at two base resolutions
-    mutable QMutex m_mutex;
-    RangeCacheFillThread *m_fillThread;
-    QTimer *m_updateTimer;
-    sv_frame_t m_lastFillExtent;
-    bool m_exiting;
-    static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
-
-    mutable SampleBlock m_directRead;
-    mutable sv_frame_t m_lastDirectReadStart;
-    mutable sv_frame_t m_lastDirectReadCount;
-    mutable QMutex m_directReadMutex;
+    WaveFileModel() { } // only accessible from subclasses
 };    
 
 #endif

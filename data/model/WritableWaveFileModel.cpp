@@ -15,6 +15,8 @@
 
 #include "WritableWaveFileModel.h"
 
+#include "ReadOnlyWaveFileModel.h"
+
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 
@@ -74,7 +76,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
         return;
     }
     
-    m_model = new WaveFileModel(source, m_reader);
+    m_model = new ReadOnlyWaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
         cerr << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
