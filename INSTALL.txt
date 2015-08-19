@@ -16,7 +16,6 @@ building the SV core libraries:
 
 REQUIRED	Qt v4.4 or newer	http://qt.nokia.com/
 REQUIRED	Vamp Plugin SDK	v2.x	http://www.vamp-plugins.org/
-REQUIRED	Rubber Band Library	http://www.breakfastquay.com/rubberband/
 REQUIRED	libsndfile		http://www.mega-nerd.com/libsndfile/
 REQUIRED	libsamplerate		http://www.mega-nerd.com/SRC/
 REQUIRED	FFTW3 			http://www.fftw.org/
