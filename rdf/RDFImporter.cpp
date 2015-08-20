@@ -30,7 +30,7 @@
 #include "data/model/NoteModel.h"
 #include "data/model/TextModel.h"
 #include "data/model/RegionModel.h"
-#include "data/model/WaveFileModel.h"
+#include "data/model/ReadOnlyWaveFileModel.h"
 
 #include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
@@ -270,7 +270,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
             reporter->setMessage(RDFImporter::tr("Importing audio referenced in RDF..."));
         }
         fs->waitForData();
-        WaveFileModel *newModel = new WaveFileModel(*fs, m_sampleRate);
+        ReadOnlyWaveFileModel *newModel = new ReadOnlyWaveFileModel(*fs, m_sampleRate);
         if (newModel->isOK()) {
             cerr << "Successfully created wave file model from source at \"" << source << "\"" << endl;
             models.push_back(newModel);
