@@ -29,6 +29,10 @@ class TestRealTime : public QObject
 {
     Q_OBJECT
 
+    void compareTexts(string s, const char *e) {
+        QCOMPARE(QString(s.c_str()), QString(e));
+    }
+
 private slots:
 
 #define ONE_MILLION 1000000
@@ -295,6 +299,118 @@ private slots:
                 QCOMPARE(-frame, conv);
             }
         }
+    }
+    
+    void toText()
+    {
+        // we want to use QStrings, because then the Qt test library
+        // will print out any conflicts. The compareTexts function
+        // does this for us
+
+        int halfSec = ONE_BILLION/2; // nsec
+        
+        RealTime rt = RealTime(0, 0);
+        compareTexts(rt.toMSText(false, false), "0");
+        compareTexts(rt.toMSText(true, false), "0.000");
+        compareTexts(rt.toMSText(false, true), "0");
+        compareTexts(rt.toMSText(true, true), "0.000");
+        compareTexts(rt.toFrameText(24, false), "0:00");
+        compareTexts(rt.toFrameText(24, true), "0:00");
+        compareTexts(rt.toSecText(), "0s");
+
+        rt = RealTime(1, halfSec);
+        compareTexts(rt.toMSText(false, false), "1.5");
+        compareTexts(rt.toMSText(true, false), "1.500");
+        compareTexts(rt.toMSText(false, true), "1.5");
+        compareTexts(rt.toMSText(true, true), "1.500");
+        compareTexts(rt.toFrameText(24, false), "1:12");
+        compareTexts(rt.toFrameText(24, true), "1:12");
+        compareTexts(rt.toFrameText(25, false), "1:12");
+        compareTexts(rt.toFrameText(25, true), "1:12");
+        compareTexts(rt.toSecText(), "1s");
+
+        rt = RealTime::fromSeconds(-1.5);
+        compareTexts(rt.toMSText(false, false), "-1.5");
+        compareTexts(rt.toMSText(true, false), "-1.500");
+        compareTexts(rt.toMSText(false, true), "-1.5");
+        compareTexts(rt.toMSText(true, true), "-1.500");
+        compareTexts(rt.toFrameText(24, false), "-1:12");
+        compareTexts(rt.toFrameText(24, true), "-1:12");
+        compareTexts(rt.toSecText(), "-1s");
+
+        rt = RealTime(1, 1000);
+        compareTexts(rt.toMSText(false, false), "1");
+        compareTexts(rt.toFrameText(24, false), "1:00");
+        compareTexts(rt.toFrameText(ONE_MILLION, false), "1:000001");
+        compareTexts(rt.toSecText(), "1s");
+
+        rt = RealTime(1, 100000);
+        compareTexts(rt.toFrameText(ONE_MILLION, false), "1:000100");
+        compareTexts(rt.toSecText(), "1s");
+
+        rt = RealTime::fromSeconds(60);
+        compareTexts(rt.toMSText(false, false), "60");
+        compareTexts(rt.toMSText(true, false), "60.000");
+        compareTexts(rt.toMSText(false, true), "1:00");
+        compareTexts(rt.toMSText(true, true), "1:00.000");
+        compareTexts(rt.toFrameText(24, false), "60:00");
+        compareTexts(rt.toFrameText(24, true), "1:00:00");
+        compareTexts(rt.toSecText(), "1:00");
+
+        rt = RealTime::fromSeconds(61.05);
+        compareTexts(rt.toMSText(false, false), "61.05");
+        compareTexts(rt.toMSText(true, false), "61.050");
+        compareTexts(rt.toMSText(false, true), "1:01.05");
+        compareTexts(rt.toMSText(true, true), "1:01.050");
+        compareTexts(rt.toFrameText(24, false), "61:01");
+        compareTexts(rt.toFrameText(24, true), "1:01:01");
+        compareTexts(rt.toSecText(), "1:01");
+        
+        rt = RealTime::fromSeconds(601.05);
+        compareTexts(rt.toMSText(false, false), "601.05");
+        compareTexts(rt.toMSText(true, false), "601.050");
+        compareTexts(rt.toMSText(false, true), "10:01.05");
+        compareTexts(rt.toMSText(true, true), "10:01.050");
+        compareTexts(rt.toFrameText(24, false), "601:01");
+        compareTexts(rt.toFrameText(24, true), "10:01:01");
+        compareTexts(rt.toSecText(), "10:01");
+        
+        rt = RealTime::fromSeconds(3600);
+        compareTexts(rt.toMSText(false, false), "3600");
+        compareTexts(rt.toMSText(true, false), "3600.000");
+        compareTexts(rt.toMSText(false, true), "1:00:00");
+        compareTexts(rt.toMSText(true, true), "1:00:00.000");
+        compareTexts(rt.toFrameText(24, false), "3600:00");
+        compareTexts(rt.toFrameText(24, true), "1:00:00:00");
+        compareTexts(rt.toSecText(), "1:00:00");
+
+        // For practical reasons our time display always rounds down
+        rt = RealTime(3599, ONE_BILLION-1);
+        compareTexts(rt.toMSText(false, false), "3599.999");
+        compareTexts(rt.toMSText(true, false), "3599.999");
+        compareTexts(rt.toMSText(false, true), "59:59.999");
+        compareTexts(rt.toMSText(true, true), "59:59.999");
+        compareTexts(rt.toFrameText(24, false), "3599:23");
+        compareTexts(rt.toFrameText(24, true), "59:59:23");
+        compareTexts(rt.toSecText(), "59:59");
+
+        rt = RealTime::fromSeconds(3600 * 4 + 60 * 5 + 3 + 0.01);
+        compareTexts(rt.toMSText(false, false), "14703.01");
+        compareTexts(rt.toMSText(true, false), "14703.010");
+        compareTexts(rt.toMSText(false, true), "4:05:03.01");
+        compareTexts(rt.toMSText(true, true), "4:05:03.010");
+        compareTexts(rt.toFrameText(24, false), "14703:00");
+        compareTexts(rt.toFrameText(24, true), "4:05:03:00");
+        compareTexts(rt.toSecText(), "4:05:03");
+
+        rt = RealTime::fromSeconds(-(3600 * 4 + 60 * 5 + 3 + 0.01));
+        compareTexts(rt.toMSText(false, false), "-14703.01");
+        compareTexts(rt.toMSText(true, false), "-14703.010");
+        compareTexts(rt.toMSText(false, true), "-4:05:03.01");
+        compareTexts(rt.toMSText(true, true), "-4:05:03.010");
+        compareTexts(rt.toFrameText(24, false), "-14703:00");
+        compareTexts(rt.toFrameText(24, true), "-4:05:03:00");
+        compareTexts(rt.toSecText(), "-4:05:03");
     }
 };
 

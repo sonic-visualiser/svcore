@@ -1,10 +1,8 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
-
 /*
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006-2009 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,15 +11,34 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FFT_CACHE_STORAGE_TYPE_H_
-#define _FFT_CACHE_STORAGE_TYPE_H_
+#include "TestFFTModel.h"
 
-namespace FFTCache {
-enum StorageType { //!!! dup
-    Compact, // 16 bits normalized polar
-    Rectangular, // floating point real+imag
-    Polar // floating point mag+phase
-};
+#include <QtTest>
+
+#include <iostream>
+
+using namespace std;
+
+int main(int argc, char *argv[])
+{
+    int good = 0, bad = 0;
+
+    QCoreApplication app(argc, argv);
+    app.setOrganizationName("Sonic Visualiser");
+    app.setApplicationName("test-model");
+
+    {
+	TestFFTModel t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+
+    if (bad > 0) {
+	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+	return 1;
+    } else {
+	cerr << "All tests passed" << endl;
+	return 0;
+    }
 }
 
-#endif

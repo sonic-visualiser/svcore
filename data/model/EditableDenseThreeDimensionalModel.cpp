@@ -342,7 +342,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 
 //    assert(values == expandAndRetrieve(index));
 
-    long windowStart = index;
+    sv_frame_t windowStart = index;
     windowStart *= m_resolution;
 
     if (m_notifyOnAdd) {

@@ -24,8 +24,6 @@
 #include "base/BaseTypes.h"
 #include "base/DataExportOptions.h"
 
-typedef std::vector<float> SampleBlock;
-
 class ZoomConstraint;
 class AlignmentModel;
 
@@ -220,10 +218,12 @@ public:
                        QString extraAttributes = "") const;
 
     virtual QString toDelimitedDataString(QString delimiter) const {
-        return toDelimitedDataStringSubset(delimiter, getStartFrame(), getEndFrame());
+        return toDelimitedDataStringSubset
+            (delimiter, getStartFrame(), getEndFrame() + 1);
     }
     virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
-        return toDelimitedDataStringSubsetWithOptions(delimiter, opts, getStartFrame(), getEndFrame());
+        return toDelimitedDataStringSubsetWithOptions
+            (delimiter, opts, getStartFrame(), getEndFrame() + 1);
     }
     virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
         return "";

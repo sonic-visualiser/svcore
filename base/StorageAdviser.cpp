@@ -36,9 +36,9 @@ StorageAdviser::recommend(Criteria criteria,
 			  size_t maximumSize)
 {
 #ifdef DEBUG_STORAGE_ADVISER
-    SVDEBUG << "StorageAdviser::recommend: Criteria " << criteria 
-              << ", minimumSize " << minimumSize
-              << ", maximumSize " << maximumSize << endl;
+    cerr << "StorageAdviser::recommend: Criteria " << criteria 
+         << ", minimumSize " << minimumSize
+         << ", maximumSize " << maximumSize << endl;
 #endif
 
     if (m_baseRecommendation != NoRecommendation) {
@@ -91,7 +91,7 @@ StorageAdviser::recommend(Criteria criteria,
     ssize_t maxmb = ssize_t(maximumSize / 1024 + 1);
 
     if (memoryFree == -1) memoryStatus = Unknown;
-    else if (memoryFree < memoryTotal / 3) memoryStatus = Insufficient;
+    else if (memoryFree < memoryTotal / 3 && memoryFree < 512) memoryStatus = Insufficient;
     else if (minmb > (memoryFree * 3) / 4) memoryStatus = Insufficient;
     else if (maxmb > (memoryFree * 3) / 4) memoryStatus = Marginal;
     else if (minmb > (memoryFree / 3)) memoryStatus = Marginal;
@@ -181,6 +181,10 @@ StorageAdviser::recommend(Criteria criteria,
         }
     }
 
+#ifdef DEBUG_STORAGE_ADVISER
+    cerr << "StorageAdviser: returning recommendation " << recommendation << endl;
+#endif
+    
     return Recommendation(recommendation);
 }
 
