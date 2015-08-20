@@ -181,7 +181,7 @@ public:
         } else {
             QString s;
             for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
-                if (i->frame >= f0 && i->frame <= f1) {
+                if (i->frame >= f0 && i->frame < f1) {
                     s += i->toDelimitedDataString(delimiter, opts, m_sampleRate) + "\n";
                 }
             }
@@ -559,8 +559,8 @@ SparseModel<PointType>::getEndFrame() const
     QMutexLocker locker(&m_mutex);
     sv_frame_t f = 0;
     if (!m_points.empty()) {
-	   PointListConstIterator i(m_points.end());
-	   f = (--i)->frame;
+	PointListConstIterator i(m_points.end());
+	f = (--i)->frame;
     }
     if (m_extendTo > f) return m_extendTo;
     else return f;

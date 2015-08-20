@@ -31,7 +31,6 @@
 #include <QRegExp>
 #include <QStringList>
 #include <QTextStream>
-#include <QIODevice>
 
 #include <iostream>
 #include <map>
