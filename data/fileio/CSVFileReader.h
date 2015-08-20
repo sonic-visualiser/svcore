@@ -27,7 +27,6 @@
 #include <QIODevice>
 
 class QFile;
-class QIODevice;
 
 class CSVFileReader : public DataFileReader
 {
