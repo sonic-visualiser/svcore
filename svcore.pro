@@ -174,6 +174,7 @@ HEADERS += data/fft/FFTapi.h \
            data/model/TabularModel.h \
            data/model/TextModel.h \
            data/model/WaveFileModel.h \
+           data/model/ReadOnlyWaveFileModel.h \
            data/model/WritableWaveFileModel.h \
            data/osc/OSCMessage.h \
            data/osc/OSCQueue.h 
@@ -215,6 +216,7 @@ SOURCES += data/fft/FFTapi.cpp \
            data/model/PowerOfTwoZoomConstraint.cpp \
            data/model/RangeSummarisableTimeValueModel.cpp \
            data/model/WaveFileModel.cpp \
+           data/model/ReadOnlyWaveFileModel.cpp \
            data/model/WritableWaveFileModel.cpp \
            data/osc/OSCMessage.cpp \
            data/osc/OSCQueue.cpp 
