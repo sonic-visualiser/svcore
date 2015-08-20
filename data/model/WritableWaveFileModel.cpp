@@ -15,6 +15,8 @@
 
 #include "WritableWaveFileModel.h"
 
+#include "ReadOnlyWaveFileModel.h"
+
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
 
@@ -27,6 +29,8 @@
 #include <cassert>
 #include <iostream>
 #include <stdint.h>
+
+using namespace std;
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
@@ -74,7 +78,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
         return;
     }
     
-    m_model = new WaveFileModel(source, m_reader);
+    m_model = new ReadOnlyWaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
         cerr << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
@@ -169,29 +173,19 @@ WritableWaveFileModel::getFrameCount() const
     return m_frameCount;
 }
 
-sv_frame_t
-WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                               float *buffer) const
+vector<float>
+WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(channel, start, count, buffer);
+    if (!m_model || m_model->getChannelCount() == 0) return {};
+    return m_model->getData(channel, start, count);
 }
 
-sv_frame_t
-WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                               double *buffer) const
+vector<vector<float>>
+WritableWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
+                                           sv_frame_t start, sv_frame_t count) const
 {
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(channel, start, count, buffer);
-}
-
-sv_frame_t
-WritableWaveFileModel::getData(int fromchannel, int tochannel,
-                               sv_frame_t start, sv_frame_t count,
-                               float **buffers) const
-{
-    if (!m_model || m_model->getChannelCount() == 0) return 0;
-    return m_model->getData(fromchannel, tochannel, start, count, buffers);
+    if (!m_model || m_model->getChannelCount() == 0) return {};
+    return m_model->getMultiChannelData(fromchannel, tochannel, start, count);
 }    
 
 int
@@ -223,15 +217,16 @@ WritableWaveFileModel::toXml(QTextStream &out,
                              QString indent,
                              QString extraAttributes) const
 {
-    // We don't actually write the data to XML.  We just write a brief
-    // description of the model.  Any code that uses this class is
-    // going to need to be aware that it will have to make separate
-    // arrangements for the audio file itself.
+    // The assumption here is that the underlying wave file has
+    // already been saved somewhere (its location is available through
+    // getLocation()) and that the code that uses this class is
+    // dealing with the problem of making sure it remains available.
+    // We just write this out as if it were a normal wave file.
 
     Model::toXml
         (out, indent,
-         QString("type=\"writablewavefile\" file=\"%1\" channels=\"%2\" %3")
+         QString("type=\"wavefile\" file=\"%1\" subtype=\"writable\" %2")
          .arg(encodeEntities(m_writer->getPath()))
-         .arg(m_model->getChannelCount()).arg(extraAttributes));
+         .arg(extraAttributes));
 }
 

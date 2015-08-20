@@ -36,6 +36,8 @@
 #include <iostream>
 #include <map>
 
+using namespace std;
+
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              sv_samplerate_t mainModelSampleRate) :
     m_format(format),
@@ -202,7 +204,7 @@ CSVFileReader::load() const
     sv_frame_t startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
 
-    std::map<QString, int> labelCountMap;
+    map<QString, int> labelCountMap;
     
     int valueColumns = 0;
     for (int i = 0; i < m_format.getColumnCount(); ++i) {
@@ -320,11 +322,12 @@ CSVFileReader::load() const
 
                 case CSVFormat::ColumnLabel:
                     label = s;
-                    ++labelCountMap[label];
                     break;
                 }
             }
 
+            ++labelCountMap[label];
+            
             if (haveEndTime) { // ... calculate duration now all cols read
                 if (endFrame > frameNo) {
                     duration = endFrame - frameNo;
@@ -414,38 +417,51 @@ CSVFileReader::load() const
             // assign values for regions based on label frequency; we
             // have this in our labelCountMap, sort of
 
-            std::map<int, std::map<QString, float> > countLabelValueMap;
-            for (std::map<QString, int>::iterator i = labelCountMap.begin();
+            map<int, map<QString, float> > countLabelValueMap;
+            for (map<QString, int>::iterator i = labelCountMap.begin();
                  i != labelCountMap.end(); ++i) {
-                countLabelValueMap[i->second][i->first] = 0.f;
+                countLabelValueMap[i->second][i->first] = -1.f;
             }
 
             float v = 0.f;
-            for (std::map<int, std::map<QString, float> >::iterator i =
+            for (map<int, map<QString, float> >::iterator i =
                      countLabelValueMap.end(); i != countLabelValueMap.begin(); ) {
                 --i;
-                for (std::map<QString, float>::iterator j = i->second.begin();
+                cerr << "count -> " << i->first << endl;
+                for (map<QString, float>::iterator j = i->second.begin();
                      j != i->second.end(); ++j) {
                     j->second = v;
+                    cerr << "label -> " << j->first << ", value " << v << endl;
                     v = v + 1.f;
                 }
             }
 
-            std::map<RegionModel::Point, RegionModel::Point,
+            map<RegionModel::Point, RegionModel::Point,
                 RegionModel::Point::Comparator> pointMap;
             for (RegionModel::PointList::const_iterator i =
                      model2a->getPoints().begin();
                  i != model2a->getPoints().end(); ++i) {
                 RegionModel::Point p(*i);
-                v = countLabelValueMap[labelCountMap[p.label]][p.label];
+                int count = labelCountMap[p.label];
+                v = countLabelValueMap[count][p.label];
+                cerr << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
                 RegionModel::Point pp(p.frame, v, p.duration, p.label);
                 pointMap[p] = pp;
             }
 
-            for (std::map<RegionModel::Point, RegionModel::Point>::iterator i = 
+            for (map<RegionModel::Point, RegionModel::Point>::iterator i = 
                      pointMap.begin(); i != pointMap.end(); ++i) {
-                model2a->deletePoint(i->first);
-                model2a->addPoint(i->second);
+                // There could be duplicate regions; if so replace
+                // them all -- but we need to check we're not
+                // replacing a region by itself (or else this will
+                // never terminate)
+                if (i->first.value == i->second.value) {
+                    continue;
+                }
+                while (model2a->containsPoint(i->first)) {
+                    model2a->deletePoint(i->first);
+                    model2a->addPoint(i->second);
+                }
             }
         }
     }

@@ -89,6 +89,16 @@ MatrixFile::MatrixFile(QString fileBase, Mode mode,
         throw FileOperationFailed(fileName, "create");
     }
 
+    // Use floating-point here to avoid integer overflow. We can be
+    // approximate so long as we are on the cautious side
+    if ((double(m_width) * m_height) * m_cellSize + m_headerSize + m_width >=
+        pow(2, 31) - 10.0) { // bit of slack there
+        cerr << "ERROR: MatrixFile::MatrixFile: width " << m_width
+             << " is too large for height " << m_height << " and cell size "
+             << m_cellSize << " (should be using multiple files)" << endl;
+        throw FileOperationFailed(fileName, "size");
+    }
+    
     m_flags = 0;
     m_fmode = S_IRUSR | S_IWUSR;
 
@@ -203,7 +213,7 @@ MatrixFile::initialise()
     off_t off = m_headerSize + (m_width * m_height * m_cellSize) + m_width;
 
 #ifdef DEBUG_MATRIX_FILE
-    cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): cell size " << m_cellSize << ", header size " << m_headerSize << ", resizing file" << endl;
+    cerr << "MatrixFile[" << m_fd << "]::initialise(" << m_width << ", " << m_height << "): cell size " << m_cellSize << ", header size " << m_headerSize << ", resizing fd " << m_fd << " to " << off << endl;
 #endif
 
     if (::lseek(m_fd, off - 1, SEEK_SET) < 0) {

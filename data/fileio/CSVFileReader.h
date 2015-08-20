@@ -24,6 +24,7 @@
 
 #include <QList>
 #include <QStringList>
+#include <QIODevice>
 
 class QFile;
 class QIODevice;

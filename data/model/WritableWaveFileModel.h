@@ -13,15 +13,17 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WRITABLE_WAVE_FILE_MODEL_H_
-#define _WRITABLE_WAVE_FILE_MODEL_H_
+#ifndef WRITABLE_WAVE_FILE_MODEL_H
+#define WRITABLE_WAVE_FILE_MODEL_H
 
 #include "WaveFileModel.h"
+#include "ReadOnlyWaveFileModel.h"
+#include "PowerOfSqrtTwoZoomConstraint.h"
 
 class WavFileWriter;
 class WavFileReader;
 
-class WritableWaveFileModel : public RangeSummarisableTimeValueModel
+class WritableWaveFileModel : public WaveFileModel
 {
     Q_OBJECT
 
@@ -51,6 +53,20 @@ public:
     sv_frame_t getFrameCount() const;
     int getChannelCount() const { return m_channels; }
     sv_samplerate_t getSampleRate() const { return m_sampleRate; }
+    sv_samplerate_t getNativeRate() const { return m_sampleRate; }
+
+    QString getTitle() const {
+        if (m_model) return m_model->getTitle();
+        else return "";
+    } 
+    QString getMaker() const {
+        if (m_model) return m_model->getMaker();
+        else return "";
+    }
+    QString getLocation() const {
+        if (m_model) return m_model->getLocation();
+        else return "";
+    }
 
     float getValueMinimum() const { return -1.0f; }
     float getValueMaximum() const { return  1.0f; }
@@ -60,15 +76,9 @@ public:
 
     void setStartFrame(sv_frame_t startFrame);
 
-    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                           float *buffer) const;
+    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const;
 
-    virtual sv_frame_t getData(int channel, sv_frame_t start, sv_frame_t count,
-                           double *buffer) const;
-
-    virtual sv_frame_t getData(int fromchannel, int tochannel,
-                           sv_frame_t start, sv_frame_t count,
-                           float **buffer) const;
+    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
@@ -84,7 +94,7 @@ public:
                        QString extraAttributes = "") const;
 
 protected:
-    WaveFileModel *m_model;
+    ReadOnlyWaveFileModel *m_model;
     WavFileWriter *m_writer;
     WavFileReader *m_reader;
     sv_samplerate_t m_sampleRate;

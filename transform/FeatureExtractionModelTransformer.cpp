@@ -44,7 +44,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transform),
     m_plugin(0)
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
+    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
 
     initialise();
 }
@@ -54,8 +54,12 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     ModelTransformer(in, transforms),
     m_plugin(0)
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << pluginId << ", outputName " << m_transform.getOutput() << endl;
-
+    if (m_transforms.empty()) {
+        SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s)" << endl;
+    } else {
+        SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
+    }
+    
     initialise();
 }
 
@@ -279,6 +283,9 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
         if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
+            modelResolution = 1;
+        } else if (m_descriptors[n]->sampleRate <= 0.0) {
+            cerr << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
             modelResolution = 1;
         } else {
             modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
@@ -599,19 +606,18 @@ FeatureExtractionModelTransformer::run()
                                    primaryTransform.getWindowType(),
                                    blockSize,
                                    stepSize,
-                                   blockSize,
-                                   false,
-                                   StorageAdviser::PrecisionCritical);
-            if (!model->isOK()) {
+                                   blockSize);
+            if (!model->isOK() || model->getError() != "") {
+                QString err = model->getError();
                 delete model;
                 for (int j = 0; j < (int)m_outputNos.size(); ++j) {
                     setCompletion(j, 100);
                 }
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
-                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer");
+                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
             }
-            model->resume();
             fftModels.push_back(model);
+            cerr << "created model for channel " << ch << endl;
         }
     }
 
@@ -694,6 +700,7 @@ FeatureExtractionModelTransformer::run()
                     cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
                     m_abandoned = true;
                     m_message = error;
+                    break;
                 }
             }
         } else {
@@ -780,30 +787,28 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 
     if (channelCount == 1) {
 
-        got = input->getData(m_input.getChannel(), startFrame, size,
-                             buffers[0] + offset);
+        auto data = input->getData(m_input.getChannel(), startFrame, size);
+        got = data.size();
+
+        copy(data.begin(), data.end(), buffers[0] + offset);
 
         if (m_input.getChannel() == -1 && input->getChannelCount() > 1) {
             // use mean instead of sum, as plugin input
             float cc = float(input->getChannelCount());
-            for (sv_frame_t i = 0; i < size; ++i) {
+            for (sv_frame_t i = 0; i < got; ++i) {
                 buffers[0][i + offset] /= cc;
             }
         }
 
     } else {
 
-        float **writebuf = buffers;
-        if (offset > 0) {
-            writebuf = new float *[channelCount];
-            for (int i = 0; i < channelCount; ++i) {
-                writebuf[i] = buffers[i] + offset;
+        auto data = input->getMultiChannelData(0, channelCount-1, startFrame, size);
+        if (!data.empty()) {
+            got = data[0].size();
+            for (int c = 0; in_range_for(data, c); ++c) {
+                copy(data[c].begin(), data[c].end(), buffers[c] + offset);
             }
         }
-
-        got = input->getData(0, channelCount-1, startFrame, size, writebuf);
-
-        if (writebuf != buffers) delete[] writebuf;
     }
 
     while (got < size) {
@@ -842,24 +847,30 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
 	}
 
+//        cerr << "variable sample rate: timestamp = " << feature.timestamp
+//             << " at input rate " << inputRate << " -> " << frame << endl;
+        
     } else if (m_descriptors[n]->sampleType ==
 	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
+        sv_samplerate_t rate = m_descriptors[n]->sampleRate;
+        if (rate <= 0.0) {
+            rate = inputRate;
+        }
+        
         if (!feature.hasTimestamp) {
             ++m_fixedRateFeatureNos[n];
         } else {
             RealTime ts(feature.timestamp.sec, feature.timestamp.nsec);
-            m_fixedRateFeatureNos[n] = (int)
-                lrint(ts.toDouble() * m_descriptors[n]->sampleRate);
+            m_fixedRateFeatureNos[n] = (int)lrint(ts.toDouble() * rate);
         }
 
-//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNo 
-//             << ", m_descriptor->sampleRate = " << m_descriptor->sampleRate
+//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNos[n]
+//             << ", m_descriptor->sampleRate = " << m_descriptors[n]->sampleRate
 //             << ", inputRate = " << inputRate
 //             << " giving frame = ";
-        frame = lrint((double(m_fixedRateFeatureNos[n])
-                       / m_descriptors[n]->sampleRate)
-                      * inputRate);
+        frame = lrint((double(m_fixedRateFeatureNos[n]) / rate) * inputRate);
+//        cerr << frame << endl;
     }
 
     if (frame < 0) {

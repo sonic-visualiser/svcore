@@ -91,6 +91,13 @@ public:
 					  int value) const;
 
     /**
+     * If the given property is a ValueProperty, return the icon to be
+     * used for the given value for that property, if any.
+     */
+    virtual QString getPropertyValueIconName(const PropertyName &,
+                                             int value) const;
+
+    /**
      * If the given property is a RangeProperty, return a new
      * RangeMapper object mapping its integer range onto an underlying
      * floating point value range for human-intelligible display, if

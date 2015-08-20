@@ -1,26 +1,26 @@
 
 TEMPLATE = app
 
-LIBS += -L../.. -L../../../dataquay -L../../release -L../../../dataquay/release -lsvcore -ldataquay
+LIBS += -L../../.. -L../../../../dataquay -L../../../release -L../../../../dataquay/release -lsvcore -ldataquay
 
 win32-g++ {
-    INCLUDEPATH += ../../../sv-dependency-builds/win32-mingw/include
-    LIBS += -L../../../sv-dependency-builds/win32-mingw/lib
+    INCLUDEPATH += ../../../../sv-dependency-builds/win32-mingw/include
+    LIBS += -L../../../../sv-dependency-builds/win32-mingw/lib
 }
 win32-msvc* {
-    INCLUDEPATH += ../../../sv-dependency-builds/win32-msvc/include
-    LIBS += -L../../../sv-dependency-builds/win32-msvc/lib
+    INCLUDEPATH += ../../../../sv-dependency-builds/win32-msvc/include
+    LIBS += -L../../../../sv-dependency-builds/win32-msvc/lib
 }
 mac* {
-    INCLUDEPATH += ../../../sv-dependency-builds/osx/include
-    LIBS += -L../../../sv-dependency-builds/osx/lib
+    INCLUDEPATH += ../../../../sv-dependency-builds/osx/include
+    LIBS += -L../../../../sv-dependency-builds/osx/lib
 }
 
-exists(../../config.pri) {
-    include(../../config.pri)
+exists(../../../config.pri) {
+    include(../../../config.pri)
 }
 
-!exists(../../config.pri) {
+!exists(../../../config.pri) {
 
     CONFIG += release
     DEFINES += NDEBUG BUILD_RELEASE NO_TIMING
@@ -42,21 +42,21 @@ CONFIG += qt thread warn_on stl rtti exceptions console c++11
 QT += network xml testlib
 QT -= gui
 
-TARGET = svcore-base-test
+TARGET = svcore-data-model-test
 
-DEPENDPATH += ../..
-INCLUDEPATH += ../..
+DEPENDPATH += ../../..
+INCLUDEPATH += ../../..
 OBJECTS_DIR = o
 MOC_DIR = o
 
-HEADERS += TestRangeMapper.h TestPitch.h TestRealTime.h TestStringBits.h
-SOURCES += main.cpp
+HEADERS += Compares.h MockWaveModel.h TestFFTModel.h
+SOURCES += MockWaveModel.cpp main.cpp
 
 win* {
-//PRE_TARGETDEPS += ../../svcore.lib
+//PRE_TARGETDEPS += ../../../svcore.lib
 }
 !win* {
-PRE_TARGETDEPS += ../../libsvcore.a
+PRE_TARGETDEPS += ../../../libsvcore.a
 }
 
 !win32 {
