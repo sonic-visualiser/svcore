@@ -52,18 +52,24 @@ void fftf_destroy_plan(fftf_plan p);
 
 #include <vector>
 #include <complex>
+#include <mutex>
 
 class FFTForward // with fft shift but not window
 {
+    static std::mutex m_mutex;
+    
 public:
     FFTForward(int size) :
-        m_size(size),
-        m_input((float *)fftf_malloc(size * sizeof(float))),
-        m_output((fftf_complex *)fftf_malloc((size/2 + 1) * sizeof(fftf_complex))),
-        m_plan(fftf_plan_dft_r2c_1d(size, m_input, m_output, FFTW_MEASURE))
-    { }
+        m_size(size)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_input = (float *)fftf_malloc(size * sizeof(float));
+        m_output = (fftf_complex *)fftf_malloc((size/2 + 1) * sizeof(fftf_complex));
+        m_plan = fftf_plan_dft_r2c_1d(size, m_input, m_output, FFTW_ESTIMATE);
+    }
 
     ~FFTForward() {
+        std::lock_guard<std::mutex> lock(m_mutex);
         fftf_destroy_plan(m_plan);
         fftf_free(m_input);
         fftf_free(m_output);
