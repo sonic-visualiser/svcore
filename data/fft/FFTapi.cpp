@@ -16,6 +16,8 @@
 
 #include "FFTapi.h"
 
+std::mutex FFTForward::m_mutex;
+
 #ifndef HAVE_FFTW3F
 
 #include <cmath>
