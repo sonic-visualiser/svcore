@@ -27,8 +27,12 @@
 
 #include "base/Pitch.h"
 
+#include <QCoreApplication>
+
 #include <algorithm>
 #include <fstream>
+
+//#define DEBUG_MIDI_FILE_WRITER 1
 
 using std::ofstream;
 using std::string;
@@ -320,12 +324,9 @@ MIDIFileWriter::convert()
 
     MIDIEvent *event;
 
-    event = new MIDIEvent(0, MIDI_FILE_META_EVENT, MIDI_CUE_POINT,
-                          "Exported from Sonic Visualiser");
-    m_midiComposition[track].push_back(event);
-
-    event = new MIDIEvent(0, MIDI_FILE_META_EVENT, MIDI_CUE_POINT,
-                          "http://www.sonicvisualiser.org/");
+    event = new MIDIEvent
+        (0, MIDI_FILE_META_EVENT, MIDI_CUE_POINT,
+         ("Exported from " + qApp->applicationName()).toStdString());
     m_midiComposition[track].push_back(event);
 
     long tempoValue = long(60000000.0 / m_tempo + 0.01);
@@ -384,6 +385,10 @@ MIDIFileWriter::convert()
                               127); // loudest silence you can muster
 
         m_midiComposition[track].push_back(event);
+
+#ifdef DEBUG_MIDI_FILE_WRITER
+        cerr << "midiTime = " << midiTime << ", endTime = " << endTime << endl;
+#endif
     }
     
     // Now gnash through the MIDI events and turn the absolute times
@@ -404,6 +409,9 @@ MIDIFileWriter::convert()
         for (MIDITrack::iterator it = m_midiComposition[i].begin();
              it != m_midiComposition[i].end(); it++) {
             unsigned long deltaTime = (*it)->getTime() - lastMidiTime;
+#ifdef DEBUG_MIDI_FILE_WRITER
+            cerr << "time = " << (*it)->getTime() << ", lastMidiTime = " << lastMidiTime << ", deltaTime = " << deltaTime << endl;
+#endif
             lastMidiTime = (*it)->getTime();
             (*it)->setTime(deltaTime);
         }
