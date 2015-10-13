@@ -33,17 +33,51 @@ public:
 
     /**
      * Call addSamples to append a block of samples to the end of the
-     * file.  Caller should also call setCompletion to update the
-     * progress of this file, if it has a known end point, and should
-     * call setCompletion(100) when the file has been written.
+     * file.  Caller should also call setWriteProportion() to update
+     * the progress of this file, if it has a known end point, and
+     * should call writeComplete() when the file has been written.
      */
     virtual bool addSamples(float **samples, sv_frame_t count);
+
+    /**
+     * Set the proportion of the file which has been written so far,
+     * as a percentage. This may be used to indicate progress.
+     *
+     * Note that this differs from the "completion" percentage
+     * reported through isReady()/getCompletion(). That percentage is
+     * updated when "internal processing has advanced... but the model
+     * has not changed externally", i.e. it reports progress in
+     * calculating the initial state of a model. In contrast, an
+     * update to setWriteProportion corresponds to a change in the
+     * externally visible state of the model (i.e. it contains more
+     * data than before).
+     */
+    void setWriteProportion(int proportion);
+
+    /**
+     * Indicate that writing is complete. You should call this even if
+     * you have never called setWriteProportion().
+     */
+    void writeComplete();
+
+    static const int PROPORTION_UNKNOWN;
+    
+    /**
+     * Get the proportion of the file which has been written so far,
+     * as a percentage. Return PROPORTION_UNKNOWN if unknown.
+     */
+    int getWriteProportion() const;
     
     bool isOK() const;
     bool isReady(int *) const;
-
-    virtual void setCompletion(int completion); // percentage
-    virtual int getCompletion() const { return m_completion; }
+    
+    /**
+     * Return the generation completion percentage of this model. This
+     * is always 100, because the model is always in a complete state
+     * -- it just contains varying amounts of data depending on how
+     * much has been written.
+     */
+    virtual int getCompletion() const { return 100; }
 
     const ZoomConstraint *getZoomConstraint() const {
         static PowerOfSqrtTwoZoomConstraint zc;
@@ -101,7 +135,7 @@ protected:
     int m_channels;
     sv_frame_t m_frameCount;
     sv_frame_t m_startFrame;
-    int m_completion;
+    int m_proportion;
 };
 
 #endif

@@ -51,6 +51,10 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
              << ") must be at least FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size must be at least FFT size");
     }
+
+    connect(model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
+    connect(model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+            this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
 }
 
 FFTModel::~FFTModel()

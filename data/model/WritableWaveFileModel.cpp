@@ -32,6 +32,8 @@
 
 using namespace std;
 
+const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
+
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
@@ -44,7 +46,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
     m_channels(channels),
     m_frameCount(0),
     m_startFrame(0),
-    m_completion(0)
+    m_proportion(PROPORTION_UNKNOWN)
 {
     if (path.isEmpty()) {
         try {
@@ -153,17 +155,30 @@ WritableWaveFileModel::isOK() const
 bool
 WritableWaveFileModel::isReady(int *completion) const
 {
-    if (completion) *completion = m_completion;
-    return (m_completion == 100);
+    int c = getCompletion();
+    if (completion) *completion = c;
+    if (!isOK()) return false;
+    return (c == 100);
 }
 
 void
-WritableWaveFileModel::setCompletion(int completion)
+WritableWaveFileModel::setWriteProportion(int proportion)
 {
-    m_completion = completion;
-    if (completion == 100) {
-        if (m_reader) m_reader->updateDone();
-    }
+    m_proportion = proportion;
+}
+
+int
+WritableWaveFileModel::getWriteProportion() const
+{
+    return m_proportion;
+}
+
+void
+WritableWaveFileModel::writeComplete()
+{
+    if (m_reader) m_reader->updateDone();
+    m_proportion = 100;
+    emit modelChanged();
 }
 
 sv_frame_t
