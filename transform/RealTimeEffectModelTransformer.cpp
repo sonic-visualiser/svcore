@@ -282,8 +282,10 @@ RealTimeEffectModelTransformer::run()
         }
 
 	if (blockFrame == contextStart || completion > prevCompletion) {
+            // This setCompletion is probably misusing the completion
+            // terminology, just as it was for WritableWaveFileModel
 	    if (stvm) stvm->setCompletion(completion);
-	    if (wwfm) wwfm->setCompletion(completion);
+	    if (wwfm) wwfm->setWriteProportion(completion);
 	    prevCompletion = completion;
 	}
         
@@ -293,6 +295,6 @@ RealTimeEffectModelTransformer::run()
     if (m_abandoned) return;
     
     if (stvm) stvm->setCompletion(100);
-    if (wwfm) wwfm->setCompletion(100);
+    if (wwfm) wwfm->writeComplete();
 }
 
