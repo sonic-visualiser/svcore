@@ -42,9 +42,11 @@ public:
     virtual string getDescription() const = 0;
 
     struct Parameter { // parameter of the writer, not the plugin
+        Parameter() : hasArg(false), mandatory(false) { }
         string name;
         string description;
         bool hasArg;
+        bool mandatory;
     };
     typedef vector<Parameter> ParameterList;
     virtual ParameterList getSupportedParameters() const {
