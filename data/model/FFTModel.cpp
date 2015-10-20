@@ -155,7 +155,7 @@ FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
     return true;
 }
 
-bool
+float
 FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
 {
     if (!getMagnitudesAt(x, values, minbin, count)) return false;
@@ -169,7 +169,7 @@ FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count)
             values[i] /= max;
         }
     }
-    return true;
+    return max;
 }
 
 bool
