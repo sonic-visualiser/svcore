@@ -67,7 +67,7 @@ public:
     void setIdentifier(TransformId id);
     TransformId getIdentifier() const;
 
-    enum Type { FeatureExtraction, RealTimeEffect };
+    enum Type { FeatureExtraction, RealTimeEffect, UnknownType };
 
     Type getType() const;
     QString getPluginIdentifier() const;
