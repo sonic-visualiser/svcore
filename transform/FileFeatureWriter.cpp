@@ -46,7 +46,7 @@ FileFeatureWriter::FileFeatureWriter(int support,
         } else if (m_support & SupportOneFileTotal) {
             m_singleFileName = QString("output.%1").arg(m_extension);
         } else {
-            SVDEBUG << "FileFeatureWriter::FileFeatureWriter: ERROR: Invalid support specification " << support << endl;
+            cerr << "FileFeatureWriter::FileFeatureWriter: ERROR: Invalid support specification " << support << endl;
         }
     }
 }
@@ -130,7 +130,7 @@ FileFeatureWriter::setParameters(map<string, string> &params)
             if (m_support & SupportOneFilePerTrackTransform &&
                 m_support & SupportOneFilePerTrack) {
                 if (m_singleFileName != "") {
-                    SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both one-file and many-files parameters provided, ignoring many-files" << endl;
+                    cerr << "FileFeatureWriter::setParameters: WARNING: Both one-file and many-files parameters provided, ignoring many-files" << endl;
                 } else {
                     m_manyFiles = true;
                 }
@@ -144,7 +144,7 @@ FileFeatureWriter::setParameters(map<string, string> &params)
                     // OneFilePerTrack), so we need to be able to
                     // override it
 //                    if (m_manyFiles) {
-//                        SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
+//                        cerr << "FileFeatureWriter::setParameters: WARNING: Both many-files and one-file parameters provided, ignoring one-file" << endl;
 //                    } else {
                         m_singleFileName = i->second.c_str();
 //                    }
@@ -153,7 +153,7 @@ FileFeatureWriter::setParameters(map<string, string> &params)
         } else if (i->first == "stdout") {
             if (m_support & SupportStdOut) {
                 if (m_singleFileName != "") {
-                    SVDEBUG << "FileFeatureWriter::setParameters: WARNING: Both stdout and one-file provided, ignoring stdout" << endl;
+                    cerr << "FileFeatureWriter::setParameters: WARNING: Both stdout and one-file provided, ignoring stdout" << endl;
                 } else {
                     m_stdout = true;
                 }
@@ -173,7 +173,7 @@ FileFeatureWriter::createOutputFilename(QString trackId,
     if (m_singleFileName != "") {
         if (QFileInfo(m_singleFileName).exists() && !(m_force || m_append)) {
             cerr << endl << "FileFeatureWriter: ERROR: Specified output file \"" << m_singleFileName << "\" exists and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append flag is specified -- not overwriting" << endl;
-            SVDEBUG << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
+            cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
             return "";
         }
         return m_singleFileName;
@@ -220,7 +220,7 @@ FileFeatureWriter::createOutputFilename(QString trackId,
 
     if (QFileInfo(filename).exists() && !(m_force || m_append)) {
         cerr << endl << "FileFeatureWriter: ERROR: Output file \"" << filename << "\" exists (for input file or URL \"" << trackId << "\" and transform \"" << transformId << "\") and neither --" << getWriterTag() << "-force nor --" << getWriterTag() << "-append is specified -- not overwriting" << endl;
-        SVDEBUG << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
+        cerr << "NOTE: To find out how to fix this problem, read the help for the --" << getWriterTag() << "-force" << endl << "and --" << getWriterTag() << "-append options" << endl;
         return "";
     }
     
