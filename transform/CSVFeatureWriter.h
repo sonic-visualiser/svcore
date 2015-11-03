@@ -74,6 +74,8 @@ private:
                       const Vamp::Plugin::Feature &f,
                       const Vamp::Plugin::Feature *optionalNextFeature,
                       std::string summaryType);
+
+    int m_digits;
 };
 
 #endif
