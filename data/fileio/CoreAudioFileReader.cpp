@@ -57,7 +57,7 @@ codestr(OSStatus err)
 }
 
 CoreAudioFileReader::CoreAudioFileReader(FileSource source,
-                                         DecodeMode decodeMode,
+                                         DecodeMode /* decodeMode */,
                                          CacheMode mode,
                                          sv_samplerate_t targetRate,
                                          bool normalised,
@@ -180,7 +180,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
         // buffers are interleaved unless specified otherwise
         addSamplesToDecodeCache((float *)m_d->buffer.mBuffers[0].mData, framesRead);
 
-        if (framesRead < m_d->blockSize) break;
+        if ((int)framesRead < m_d->blockSize) break;
     }
 
     finishDecodeCache();
@@ -196,7 +196,7 @@ CoreAudioFileReader::~CoreAudioFileReader()
 
     if (m_d->valid) {
         ExtAudioFileDispose(m_d->file);
-        delete[] m_d->buffer.mBuffers[0].mData;
+        delete[] (float *)(m_d->buffer.mBuffers[0].mData);
     }
 
     delete m_d;
