@@ -58,6 +58,8 @@ protected:
     void pluginDeleted(Vamp::Plugin *);
     std::map<Vamp::Plugin *, void *> m_handleMap;
 
+    std::vector<QString> getPluginCandidateFiles();
+    
     void generateTaxonomy();
 };
 
