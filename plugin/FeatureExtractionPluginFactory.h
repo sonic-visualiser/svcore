@@ -57,8 +57,9 @@ protected:
     friend class PluginDeletionNotifyAdapter;
     void pluginDeleted(Vamp::Plugin *);
     std::map<Vamp::Plugin *, void *> m_handleMap;
-
+    
     std::vector<QString> getPluginCandidateFiles();
+    std::vector<QString> winnowPluginCandidates(std::vector<QString> candidates);
     
     void generateTaxonomy();
 };
