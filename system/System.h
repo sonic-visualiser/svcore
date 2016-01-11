@@ -154,6 +154,21 @@ extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
 
+enum PluginLoadStatus {
+    UnknownPluginLoadStatus,
+    PluginLoadOK,
+    PluginLoadFailedToLoadLibrary,
+    PluginLoadFailedToFindDescriptor,
+    PluginLoadFailedElsewhere
+};
+
+// Check whether a plugin library is loadable without crashing (may
+// need to spawn an external process to do it). Descriptor fn is the
+// name of a LADSPA/DSSI/Vamp-style descriptor function to try
+// calling; may be an empty string if the plugin doesn't follow that
+// convention.
+PluginLoadStatus TestPluginLoadability(QString soname, QString descriptorFn);
+
 #include <cmath>
 
 #ifndef M_PI
