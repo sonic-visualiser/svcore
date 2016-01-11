@@ -136,13 +136,59 @@ FeatureExtractionPluginFactory::getPluginCandidateFiles()
 }
 
 vector<QString>
+FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidates)
+{
+    vector<QString> good, bad;
+    vector<PluginLoadStatus> badStatuses;
+    
+    for (QString c: candidates) {
+
+        PluginLoadStatus status =
+            TestPluginLoadability(c, "vampGetPluginDescriptor");
+
+        if (status == PluginLoadOK) {
+            good.push_back(c);
+        } else if (status == UnknownPluginLoadStatus) {
+            cerr << "WARNING: Unknown load status for plugin candidate \""
+                 << c << "\", continuing" << endl;
+            good.push_back(c);
+        } else {
+            bad.push_back(c);
+            badStatuses.push_back(status);
+        }
+    }
+    
+    if (!bad.empty()) {
+        QString warningMessage = "<b>Failed to load plugins</b></p>Failed to load one or more plugin libraries:</p><ul>\n";
+        for (int i = 0; i < bad.size(); ++i) {
+            QString m;
+            if (badStatuses[i] == PluginLoadFailedToLoadLibrary) {
+                m = "Failed to load library";
+            } else if (badStatuses[i] == PluginLoadFailedToFindDescriptor) {
+                m = "Failed to query plugins from library after loading";
+            } else if (badStatuses[i] == PluginLoadFailedElsewhere) {
+                m = "Unknown failure";
+            } else {
+                m = "Success: internal error?";
+            }
+            warningMessage += QString("<li>%1 (%2)</li>\n")
+                .arg(bad[i])
+                .arg(m);
+        }
+        warningMessage += "</ul>";
+        cerr << warningMessage; //!!! for now!
+    }
+    return good;
+}
+
+vector<QString>
 FeatureExtractionPluginFactory::getPluginIdentifiers()
 {
     Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
 
     vector<QString> rv;
-    vector<QString> candidates = getPluginCandidateFiles();
-
+    vector<QString> candidates = winnowPluginCandidates(getPluginCandidateFiles());
+    
     for (QString soname : candidates) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
