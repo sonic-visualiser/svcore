@@ -136,7 +136,8 @@ FeatureExtractionPluginFactory::getPluginCandidateFiles()
 }
 
 vector<QString>
-FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidates)
+FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidates,
+                                                       QString &warningMessage)
 {
     vector<QString> good, bad;
     vector<PluginLoadStatus> badStatuses;
@@ -159,24 +160,26 @@ FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidate
     }
     
     if (!bad.empty()) {
-        QString warningMessage = "<b>Failed to load plugins</b></p>Failed to load one or more plugin libraries:</p><ul>\n";
+        warningMessage =
+            QObject::tr("<b>Failed to load plugins</b>"
+                        "<p>Failed to load one or more plugin libraries:</p>\n");
+        warningMessage += "<ul>";
         for (int i = 0; i < bad.size(); ++i) {
             QString m;
             if (badStatuses[i] == PluginLoadFailedToLoadLibrary) {
-                m = "Failed to load library";
+                m = QObject::tr("Failed to load library");
             } else if (badStatuses[i] == PluginLoadFailedToFindDescriptor) {
-                m = "Failed to query plugins from library after loading";
+                m = QObject::tr("Failed to query plugins from library after loading");
             } else if (badStatuses[i] == PluginLoadFailedElsewhere) {
-                m = "Unknown failure";
+                m = QObject::tr("Unknown failure");
             } else {
-                m = "Success: internal error?";
+                m = QObject::tr("Success: internal error?");
             }
             warningMessage += QString("<li>%1 (%2)</li>\n")
                 .arg(bad[i])
                 .arg(m);
         }
         warningMessage += "</ul>";
-        cerr << warningMessage; //!!! for now!
     }
     return good;
 }
@@ -187,7 +190,8 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
 
     vector<QString> rv;
-    vector<QString> candidates = winnowPluginCandidates(getPluginCandidateFiles());
+    vector<QString> candidates = winnowPluginCandidates(getPluginCandidateFiles(),
+                                                        m_pluginScanError);
     
     for (QString soname : candidates) {
 
@@ -236,7 +240,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                      << descriptor->identifier << "\" at indices "
                      << known[descriptor->identifier] << " and "
                      << index << endl;
-                SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
+                cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
                 ok = false;
                 break;
             } else {

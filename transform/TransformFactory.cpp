@@ -399,6 +399,18 @@ TransformFactory::populateTransforms()
     m_transformsPopulated = true;
 }
 
+QString
+TransformFactory::getPluginPopulationWarning()
+{
+    FeatureExtractionPluginFactory *vfactory =
+        FeatureExtractionPluginFactory::instance("vamp");
+    QString warningMessage;
+    if (vfactory) {
+        warningMessage = vfactory->getPluginPopulationWarning();
+    }
+    return warningMessage;
+}
+
 void
 TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &transforms)
 {
