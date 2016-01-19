@@ -358,6 +358,8 @@ TestPluginLoadability(QString soname, QString descriptorFn)
             exit(2);
         }
 
+//        cerr << "isPluginLibraryLoadable: Successfully loaded library \"" << soname << "\" and retrieved descriptor function" << endl;
+        
         exit(0);
 
     } else { // the parent process
