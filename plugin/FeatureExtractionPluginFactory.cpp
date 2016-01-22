@@ -164,7 +164,7 @@ FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidate
             QObject::tr("<b>Failed to load plugins</b>"
                         "<p>Failed to load one or more plugin libraries:</p>\n");
         warningMessage += "<ul>";
-        for (int i = 0; i < bad.size(); ++i) {
+        for (int i = 0; in_range_for(bad, i); ++i) {
             QString m;
             if (badStatuses[i] == PluginLoadFailedToLoadLibrary) {
                 m = QObject::tr("Failed to load library");
@@ -376,7 +376,9 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     QString type, soname, label;
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
     if (type != "vamp") {
-	cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
+#endif
 	return 0;
     }
 
@@ -439,7 +441,9 @@ done:
         }
     }
 
-//    SVDEBUG << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
+#endif
     
     return rv;
 }
@@ -449,7 +453,9 @@ FeatureExtractionPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
 {
     void *handle = m_handleMap[plugin];
     if (handle) {
-//        SVDEBUG << "unloading library " << handle << " for plugin " << plugin << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        cerr << "unloading library " << handle << " for plugin " << plugin << endl;
+#endif
         DLCLOSE(handle);
     }
     m_handleMap.erase(plugin);
