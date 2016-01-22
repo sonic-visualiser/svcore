@@ -64,7 +64,7 @@ public:
      */
     virtual bool isColumnAvailable(int column) const = 0;
 
-    typedef QVector<float> Column;
+    typedef std::vector<float> Column;
 
     /**
      * Get data from the given column of bin values.
