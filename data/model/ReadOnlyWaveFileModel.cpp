@@ -403,14 +403,12 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
         blockSize = roundedBlockSize;
 
 	sv_frame_t cacheBlock, div;
-        
-	if (cacheType == 0) {
-	    cacheBlock = (1 << m_zoomConstraint.getMinCachePower());
-            div = (1 << power) / cacheBlock;
-	} else {
-	    cacheBlock = sv_frame_t((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2.) + 0.01);
-            div = sv_frame_t(((1 << power) * sqrt(2.) + 0.01) / double(cacheBlock));
+
+        cacheBlock = (sv_frame_t(1) << m_zoomConstraint.getMinCachePower());
+	if (cacheType == 1) {
+	    cacheBlock = sv_frame_t(double(cacheBlock) * sqrt(2.) + 0.01);
 	}
+        div = blockSize / cacheBlock;
 
 	sv_frame_t startIndex = start / cacheBlock;
 	sv_frame_t endIndex = (start + count) / cacheBlock;
@@ -425,7 +423,7 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
 	for (i = 0; i <= endIndex - startIndex; ) {
         
 	    sv_frame_t index = (i + startIndex) * channels + channel;
-	    if (index >= (sv_frame_t)cache.size()) break;
+	    if (!in_range_for(cache, index)) break;
             
             const Range &range = cache[index];
             if (range.max() > max || got == 0) max = range.max();
