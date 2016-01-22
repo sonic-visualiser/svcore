@@ -70,7 +70,6 @@ HEADERS += base/AudioLevel.h \
            base/RealTime.h \
            base/RecentFiles.h \
            base/Resampler.h \
-           base/ResizeableBitset.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
            base/Scavenger.h \
