@@ -105,11 +105,6 @@ public:
     virtual void setMaximumLevel(float sz);
 
     /**
-     * Return true if there are data available for the given column.
-     */
-    virtual bool isColumnAvailable(int x) const { return x < getWidth(); }
-
-    /**
      * Get the set of bin values at the given column.
      */
     virtual Column getColumn(int x) const;

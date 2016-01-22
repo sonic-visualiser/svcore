@@ -100,7 +100,6 @@ public:
     float getMaximumMagnitudeAt(int x) const;
     float getPhaseAt(int x, int y) const;
     void getValuesAt(int x, int y, float &real, float &imaginary) const;
-    bool isColumnAvailable(int x) const;
     bool getMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) const;
     bool getNormalizedMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) const;
     bool getPhasesAt(int x, float *values, int minbin = 0, int count = 0) const;

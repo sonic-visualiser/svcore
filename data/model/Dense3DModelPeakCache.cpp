@@ -41,20 +41,6 @@ Dense3DModelPeakCache::~Dense3DModelPeakCache()
     delete m_cache;
 }
 
-bool
-Dense3DModelPeakCache::isColumnAvailable(int column) const
-{
-    if (!m_source) return false;
-    if (haveColumn(column)) return true;
-    for (int i = m_resolution; i > 0; ) {
-        --i;
-        if (!m_source->isColumnAvailable(column * m_resolution + i)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {

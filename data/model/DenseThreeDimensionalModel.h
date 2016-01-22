@@ -55,15 +55,6 @@ public:
      */
     virtual float getMaximumLevel() const = 0;
 
-    /**
-     * Return true if there are data available for the given column.
-     * This should return true only if getColumn(column) would not
-     * have to do any substantial work to calculate its return values.
-     * If this function returns false, it may still be possible to
-     * retrieve the column, but its values may have to be calculated.
-     */
-    virtual bool isColumnAvailable(int column) const = 0;
-
     typedef std::vector<float> Column;
 
     /**
