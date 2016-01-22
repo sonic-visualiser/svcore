@@ -18,7 +18,6 @@
 
 #include "DenseThreeDimensionalModel.h"
 #include "EditableDenseThreeDimensionalModel.h"
-#include "base/ResizeableBitset.h"
 
 class Dense3DModelPeakCache : public DenseThreeDimensionalModel
 {
@@ -92,7 +91,8 @@ protected slots:
 private:
     DenseThreeDimensionalModel *m_source;
     mutable EditableDenseThreeDimensionalModel *m_cache;
-    mutable ResizeableBitset m_coverage;
+    mutable std::vector<bool> m_coverage; // must be bool, for space efficiency
+                                          // (vector of bool uses 1-bit elements)
     int m_resolution;
 
     bool haveColumn(int column) const;

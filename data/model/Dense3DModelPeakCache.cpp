@@ -22,8 +22,6 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
     m_source(source),
     m_resolution(columnsPerPeak)
 {
-    m_coverage.resize(1); // otherwise it is simply invalid
-
     m_cache = new EditableDenseThreeDimensionalModel
         (source->getSampleRate(),
          getResolution(),
@@ -81,9 +79,9 @@ Dense3DModelPeakCache::sourceModelChanged()
     if (m_coverage.size() > 0) {
         // The last peak may have come from an incomplete read, which
         // may since have been filled, so reset it
-        m_coverage.reset(m_coverage.size()-1);
+        m_coverage[m_coverage.size()-1] = false;
     }
-    m_coverage.resize(getWidth()); // retaining data
+    m_coverage.resize(getWidth(), false); // retaining data
 }
 
 void
@@ -95,7 +93,7 @@ Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 bool
 Dense3DModelPeakCache::haveColumn(int column) const
 {
-    return column < (int)m_coverage.size() && m_coverage.get(column);
+    return in_range_for(m_coverage, column) && m_coverage[column];
 }
 
 void
@@ -103,26 +101,26 @@ Dense3DModelPeakCache::fillColumn(int column) const
 {
     Profiler profiler("Dense3DModelPeakCache::fillColumn");
 
-    if (column >= (int)m_coverage.size()) {
+    if (!in_range_for(m_coverage, column)) {
         // see note in sourceModelChanged
-        if (m_coverage.size() > 0) m_coverage.reset(m_coverage.size()-1);
-        m_coverage.resize(column + 1);
+        if (m_coverage.size() > 0) m_coverage[m_coverage.size()-1] = false;
+        m_coverage.resize(column + 1, false);
     }
 
     Column peak;
-    for (int i = 0; i < int(m_resolution); ++i) {
+    for (int i = 0; i < m_resolution; ++i) {
         Column here = m_source->getColumn(column * m_resolution + i);
         if (i == 0) {
             peak = here;
         } else {
-            for (int j = 0; j < (int)peak.size() && j < (int)here.size(); ++j) {
+            for (int j = 0; in_range_for(peak, j) && in_range_for(here, j); ++j) {
                 if (here[j] > peak[j]) peak[j] = here[j];
             }
         }
     }
 
     m_cache->setColumn(column, peak);
-    m_coverage.set(column);
+    m_coverage[column] = true;
 }
 
 
