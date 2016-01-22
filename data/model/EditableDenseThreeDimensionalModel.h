@@ -194,7 +194,7 @@ public:
                        QString extraAttributes = "") const;
 
 protected:
-    typedef QVector<Column> ValueMatrix;
+    typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
 
     // m_trunc is used for simple compression.  If at least the top N
