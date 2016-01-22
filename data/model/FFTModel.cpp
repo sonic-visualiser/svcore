@@ -139,13 +139,6 @@ FFTModel::getValuesAt(int x, int y, float &re, float &im) const
 }
 
 bool
-FFTModel::isColumnAvailable(int) const
-{
-    //!!!
-    return true;
-}
-
-bool
 FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
 {
     if (count == 0) count = getHeight();

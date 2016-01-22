@@ -64,8 +64,6 @@ public:
         return m_source->getMaximumLevel();
     }
 
-    virtual bool isColumnAvailable(int column) const;
-
     virtual Column getColumn(int column) const;
 
     virtual float getValueAt(int column, int n) const;
