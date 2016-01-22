@@ -94,13 +94,16 @@ Dense3DModelPeakCache::fillColumn(int column) const
     }
 
     Column peak;
+    int n = 0;
     for (int i = 0; i < m_resolution; ++i) {
         Column here = m_source->getColumn(column * m_resolution + i);
         if (i == 0) {
             peak = here;
+            n = int(peak.size());
         } else {
-            for (int j = 0; in_range_for(peak, j) && in_range_for(here, j); ++j) {
-                if (here[j] > peak[j]) peak[j] = here[j];
+            int m = std::min(n, int(here.size()));
+            for (int j = 0; j < m; ++j) {
+                peak[j] = std::max(here[j], peak[j]);
             }
         }
     }
