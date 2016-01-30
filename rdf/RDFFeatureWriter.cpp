@@ -352,7 +352,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
 
     bool wantTrack = (userSpecifiedTrack ||
                       (m_userMakerUri != "") ||
-                      (m_metadata.find(trackId) != m_metadata.end()));
+                      haveTitleArtistMetadata(trackId));
 
 //    cerr << "wantTrack = " << wantTrack << " (userSpecifiedTrack = "
 //         << userSpecifiedTrack << ", m_userMakerUri = " << m_userMakerUri << ", have metadata = " << (m_metadata.find(trackId) != m_metadata.end()) << ")" << endl;
@@ -367,7 +367,7 @@ RDFFeatureWriter::writeSignalDescription(QTextStream *sptr,
         // including a Track would be to assert that this was one,
         // which is the one thing we wouldn't know...
         TrackMetadata tm;
-        if (m_metadata.find(trackId) != m_metadata.end()) {
+        if (haveTitleArtistMetadata(trackId)) {
             tm = m_metadata[trackId];
         }
         stream << trackURI << " a mo:Track ";
