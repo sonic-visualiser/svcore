@@ -794,6 +794,9 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 
     if (t.getType() == Transform::FeatureExtraction) {
 
+//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+//             << identifier << "\" is a feature extraction transform" << endl;
+        
         FeatureExtractionPluginFactory *factory = 
             FeatureExtractionPluginFactory::instanceFor(pluginId);
 
@@ -801,7 +804,10 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
             plugin = factory->instantiatePlugin(pluginId, rate);
         }
 
-    } else {
+    } else if (t.getType() == Transform::RealTimeEffect) {
+
+//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+//             << identifier << "\" is a real-time transform" << endl;
 
         RealTimePluginFactory *factory = 
             RealTimePluginFactory::instanceFor(pluginId);
@@ -809,6 +815,10 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
         if (factory) {
             plugin = factory->instantiatePlugin(pluginId, 0, 0, rate, 1024, 1);
         }
+
+    } else {
+        cerr << "TransformFactory: ERROR: transform id \""
+             << identifier << "\" is of unknown type" << endl;
     }
 
     return plugin;
