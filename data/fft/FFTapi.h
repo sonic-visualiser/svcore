@@ -75,7 +75,7 @@ public:
         fftf_free(m_output);
     }
 
-    std::vector<std::complex<float> > process(std::vector<float> in) const {
+    std::vector<std::complex<float> > process(const std::vector<float> &in) const {
         const int hs = m_size/2;
         for (int i = 0; i < hs; ++i) {
             m_input[i] = in[i + hs];
