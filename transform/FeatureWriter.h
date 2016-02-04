@@ -60,6 +60,7 @@ public:
     struct TrackMetadata {
         QString title;
         QString maker;
+        RealTime duration;
     };
     virtual void setTrackMetadata(QString /* trackid */, TrackMetadata) { }
 

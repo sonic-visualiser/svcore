@@ -119,7 +119,7 @@ FeatureExtractionPluginFactory::getPluginCandidateFiles()
     for (QString dirname : path) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << dirname << endl;
+        cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << dirname << endl;
 #endif
 
 	QDir pluginDir(dirname, PLUGIN_GLOB,
@@ -196,7 +196,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     for (QString soname : candidates) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname << endl;
+            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname << endl;
 #endif
 
         void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
@@ -207,7 +207,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << endl;
+            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << endl;
 #endif
 
         VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
@@ -222,7 +222,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
+            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
 #endif
 
         const VampPluginDescriptor *descriptor = 0;
@@ -240,7 +240,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                      << descriptor->identifier << "\" at indices "
                      << known[descriptor->identifier] << " and "
                      << index << endl;
-                cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
+                    cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
                 ok = false;
                 break;
             } else {
@@ -260,7 +260,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                     ("vamp", soname, descriptor->identifier);
                 rv.push_back(id);
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
+                    cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
 #endif
                 ++index;
             }
@@ -282,7 +282,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
     QString file = "";
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-    SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile(\""
+    cerr << "FeatureExtractionPluginFactory::findPluginFile(\""
               << soname << "\", \"" << inDir << "\")"
               << endl;
 #endif
@@ -299,7 +299,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
         if (QFileInfo(file).exists() && QFileInfo(file).isFile()) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile: "
+            cerr << "FeatureExtractionPluginFactory::findPluginFile: "
                       << "found trivially at " << file << endl;
 #endif
 
@@ -311,7 +311,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
             if (QFileInfo(file).baseName() == QFileInfo(soname).baseName()) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile: "
+                cerr << "FeatureExtractionPluginFactory::findPluginFile: "
                           << "found \"" << soname << "\" at " << file << endl;
 #endif
 
@@ -320,7 +320,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile (with dir): "
+        cerr << "FeatureExtractionPluginFactory::findPluginFile (with dir): "
                   << "not found" << endl;
 #endif
 
@@ -332,7 +332,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
 
         if (fi.isAbsolute() && fi.exists() && fi.isFile()) {
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile: "
+            cerr << "FeatureExtractionPluginFactory::findPluginFile: "
                       << "found trivially at " << soname << endl;
 #endif
             return soname;
@@ -353,7 +353,7 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        SVDEBUG << "FeatureExtractionPluginFactory::findPluginFile: "
+        cerr << "FeatureExtractionPluginFactory::findPluginFile: "
                   << "not found" << endl;
 #endif
 

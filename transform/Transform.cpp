@@ -18,6 +18,7 @@
 #include "plugin/PluginIdentifier.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+#include "plugin/RealTimePluginFactory.h"
 
 #include <QXmlAttributes>
 
@@ -207,10 +208,10 @@ Transform::getType() const
 {
     if (FeatureExtractionPluginFactory::instanceFor(getPluginIdentifier())) {
         return FeatureExtraction;
-    } else {
-        // We don't have an unknown/invalid return value, so always
-        // return this
+    } else if (RealTimePluginFactory::instanceFor(getPluginIdentifier())) {
         return RealTimeEffect;
+    } else {
+        return UnknownType;
     }
 }
 
