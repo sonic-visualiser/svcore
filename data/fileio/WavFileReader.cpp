@@ -60,20 +60,26 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 
         m_seekable = (m_fileInfo.seekable != 0);
 
-        // Our m_seekable reports whether a file is rapidly seekable,
-        // so things like Ogg don't qualify. We cautiously report
-        // every file type of "at least" the historical period of Ogg
-        // or FLAC as non-seekable.
         int type = m_fileInfo.format & SF_FORMAT_TYPEMASK;
-//        cerr << "WavFileReader: format type is " << type << " (flac, ogg are " << SF_FORMAT_FLAC << ", " << SF_FORMAT_OGG << ")" << endl;
+        int subtype = m_fileInfo.format & SF_FORMAT_SUBMASK;
+
         if (type >= SF_FORMAT_FLAC || type >= SF_FORMAT_OGG) {
-//            cerr << "WavFileReader: Recording as non-seekable" << endl;
+            // Our m_seekable reports whether a file is rapidly
+            // seekable, so things like Ogg don't qualify. We
+            // cautiously report every file type of "at least" the
+            // historical period of Ogg or FLAC as non-seekable.
             m_seekable = false;
+        } else if (type == SF_FORMAT_WAV && subtype <= SF_FORMAT_DOUBLE) {
+            // libsndfile 1.0.26 has a bug (subsequently fixed in the
+            // repo) that causes all files to be reported as
+            // non-seekable. We know that certain common file types
+            // are definitely seekable so, again cautiously, identify
+            // and mark those (basically only non-adaptive WAVs).
+            m_seekable = true;
         }
     }
 
-//    cerr << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_seekable << endl;
-
+//    cerr << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << endl;
 }
 
 WavFileReader::~WavFileReader()
