@@ -72,7 +72,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
         }
     }
 
-//    cerr << "WavFileReader: Frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", seekable " << m_seekable << endl;
+//    cerr << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_seekable << endl;
 
 }
 
