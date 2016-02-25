@@ -33,7 +33,7 @@
 #include <id3tag.h>
 #endif
 
-#define DEBUG_ID3TAG 1
+//#define DEBUG_ID3TAG 1
 
 #include <QFileInfo>
 
