@@ -129,7 +129,12 @@ RDFTransformFactoryImpl::RDFTransformFactoryImpl(QString url) :
         }
         m_store->import(qurl, BasicStore::ImportIgnoreDuplicates);
         m_isRDF = true;
-    } catch (...) { }
+    } catch (const std::exception &e) {
+        // The file is not RDF -- we report this by returning false
+        // from isRDF (because we have not reached the m_isRDF = true
+        // line above), but we also set the error string
+        m_errorString = e.what();
+    }
 }
 
 RDFTransformFactoryImpl::~RDFTransformFactoryImpl()
@@ -146,7 +151,7 @@ RDFTransformFactoryImpl::isRDF()
 bool
 RDFTransformFactoryImpl::isOK()
 {
-    return (m_errorString == "");
+    return m_isRDF && (m_errorString == "");
 }
 
 QString
@@ -160,6 +165,8 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
 {
     std::vector<Transform> transforms;
 
+    if (!m_isRDF) return transforms;
+    
     std::map<QString, Transform> uriTransformMap;
 
     Nodes tnodes = m_store->match
