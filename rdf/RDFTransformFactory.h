@@ -36,8 +36,28 @@ public:
     RDFTransformFactory(QString url);
     virtual ~RDFTransformFactory();
 
-    bool isRDF(); // true if the file was parseable and had transforms in it
-    bool isOK();  // true if the transforms could be completely constructed
+    /** isRDF() may be queried at any point after construction. It
+        returns true if the file was parseable as RDF.
+    */
+    bool isRDF();
+
+    /** isOK() may be queried at any point after getTransforms() has
+        been called. It is true if the file was parseable as RDF and
+        any transforms in it could be completely constructed.
+
+        Note that even if isOK() returns true, it is still possible
+        that the file did not define any transforms; in this case,
+        getTransforms() would have returned an empty list.
+
+        If isOK() is called before getTransforms() has been invoked to
+        query the file, it will return true iff isRDF() is true.
+    */
+    bool isOK();
+
+    /** Return any error string resulting from loading or querying the
+        file. This will be non-empty if isRDF() or isOK() returns
+        false.
+     */
     QString getErrorString() const;
 
     std::vector<Transform> getTransforms(ProgressReporter *reporter);

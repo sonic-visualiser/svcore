@@ -54,12 +54,8 @@ Transform::Transform(QString xml) :
     int errorColumn;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        cerr << "Transform::Transform: Error in parsing XML: "
-                  << error << " at line " << errorLine
-                  << ", column " << errorColumn << endl;
-        cerr << "Input follows:" << endl;
-        cerr << xml << endl;
-        cerr << "Input ends." << endl;
+        m_errorString = QString("%1 at line %2, column %3")
+            .arg(error).arg(errorLine).arg(errorColumn);
         return;
     }
     
