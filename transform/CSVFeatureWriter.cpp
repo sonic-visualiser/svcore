@@ -99,10 +99,10 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
     SVDEBUG << "CSVFeatureWriter::setParameters" << endl;
     for (map<string, string>::iterator i = params.begin();
          i != params.end(); ++i) {
-        cerr << i->first << " -> " << i->second << endl;
+        SVDEBUG << i->first << " -> " << i->second << endl;
         if (i->first == "separator") {
             m_separator = i->second.c_str();
-            cerr << "m_separator = " << m_separator << endl;
+            SVDEBUG << "m_separator = " << m_separator << endl;
             if (m_separator == "\\t") {
                 m_separator = QChar::Tabulation;
             }
