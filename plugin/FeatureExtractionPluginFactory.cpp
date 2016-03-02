@@ -195,20 +195,12 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
     
     for (QString soname : candidates) {
 
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname << endl;
-#endif
-
         void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
         if (!libraryHandle) {
             cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
             continue;
         }
-
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << endl;
-#endif
 
         VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
             DLSYM(libraryHandle, "vampGetPluginDescriptor");
@@ -260,7 +252,7 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
                     ("vamp", soname, descriptor->identifier);
                 rv.push_back(id);
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                    cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
+                cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
 #endif
                 ++index;
             }
