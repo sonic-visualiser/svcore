@@ -30,6 +30,8 @@
 
 #include "base/Profiler.h"
 
+using namespace std;
+
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
 class PluginDeletionNotifyAdapter : public Vamp::HostExt::PluginWrapper {
@@ -77,25 +79,25 @@ FeatureExtractionPluginFactory::instanceFor(QString identifier)
     return instance(type);
 }
 
-std::vector<QString>
+vector<QString>
 FeatureExtractionPluginFactory::getPluginPath()
 {
     if (!m_pluginPath.empty()) return m_pluginPath;
 
-    std::vector<std::string> p = Vamp::PluginHostAdapter::getPluginPath();
+    vector<string> p = Vamp::PluginHostAdapter::getPluginPath();
     for (size_t i = 0; i < p.size(); ++i) m_pluginPath.push_back(p[i].c_str());
     return m_pluginPath;
 }
 
-std::vector<QString>
+vector<QString>
 FeatureExtractionPluginFactory::getAllPluginIdentifiers()
 {
     FeatureExtractionPluginFactory *factory;
-    std::vector<QString> rv;
+    vector<QString> rv;
     
     factory = instance("vamp");
     if (factory) {
-	std::vector<QString> tmp = factory->getPluginIdentifiers();
+	vector<QString> tmp = factory->getPluginIdentifiers();
 	for (size_t i = 0; i < tmp.size(); ++i) {
 //            cerr << "identifier: " << tmp[i] << endl;
 	    rv.push_back(tmp[i]);
@@ -108,103 +110,165 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
     return rv;
 }
 
-std::vector<QString>
-FeatureExtractionPluginFactory::getPluginIdentifiers()
+vector<QString>
+FeatureExtractionPluginFactory::getPluginCandidateFiles()
 {
-    Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
+    vector<QString> path = getPluginPath();
+    vector<QString> candidates;
 
-    std::vector<QString> rv;
-    std::vector<QString> path = getPluginPath();
-    
-    for (std::vector<QString>::iterator i = path.begin(); i != path.end(); ++i) {
+    for (QString dirname : path) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << *i << endl;
+        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << dirname << endl;
 #endif
 
-	QDir pluginDir(*i, PLUGIN_GLOB,
+	QDir pluginDir(dirname, PLUGIN_GLOB,
                        QDir::Name | QDir::IgnoreCase,
                        QDir::Files | QDir::Readable);
 
 	for (unsigned int j = 0; j < pluginDir.count(); ++j) {
-
             QString soname = pluginDir.filePath(pluginDir[j]);
+            candidates.push_back(soname);
+        }
+    }
+
+    return candidates;
+}
+
+vector<QString>
+FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidates,
+                                                       QString &warningMessage)
+{
+    vector<QString> good, bad;
+    vector<PluginLoadStatus> badStatuses;
+    
+    for (QString c: candidates) {
+
+        PluginLoadStatus status =
+            TestPluginLoadability(c, "vampGetPluginDescriptor");
+
+        if (status == PluginLoadOK) {
+            good.push_back(c);
+        } else if (status == UnknownPluginLoadStatus) {
+            cerr << "WARNING: Unknown load status for plugin candidate \""
+                 << c << "\", continuing" << endl;
+            good.push_back(c);
+        } else {
+            bad.push_back(c);
+            badStatuses.push_back(status);
+        }
+    }
+    
+    if (!bad.empty()) {
+        warningMessage =
+            QObject::tr("<b>Failed to load plugins</b>"
+                        "<p>Failed to load one or more plugin libraries:</p>\n");
+        warningMessage += "<ul>";
+        for (int i = 0; in_range_for(bad, i); ++i) {
+            QString m;
+            if (badStatuses[i] == PluginLoadFailedToLoadLibrary) {
+                m = QObject::tr("Failed to load library");
+            } else if (badStatuses[i] == PluginLoadFailedToFindDescriptor) {
+                m = QObject::tr("Failed to query plugins from library after loading");
+            } else if (badStatuses[i] == PluginLoadFailedElsewhere) {
+                m = QObject::tr("Unknown failure");
+            } else {
+                m = QObject::tr("Success: internal error?");
+            }
+            warningMessage += QString("<li>%1 (%2)</li>\n")
+                .arg(bad[i])
+                .arg(m);
+        }
+        warningMessage += "</ul>";
+    }
+    return good;
+}
+
+vector<QString>
+FeatureExtractionPluginFactory::getPluginIdentifiers()
+{
+    Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
+
+    vector<QString> rv;
+    vector<QString> candidates = winnowPluginCandidates(getPluginCandidateFiles(),
+                                                        m_pluginScanError);
+    
+    for (QString soname : candidates) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname << endl;
+        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: trying potential library " << soname << endl;
 #endif
 
-            void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
+        void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
-            if (!libraryHandle) {
-                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
-                continue;
-            }
+        if (!libraryHandle) {
+            cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
+            continue;
+        }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << endl;
+        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: It's a library all right, checking for descriptor" << endl;
 #endif
 
-            VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
-                DLSYM(libraryHandle, "vampGetPluginDescriptor");
+        VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)
+            DLSYM(libraryHandle, "vampGetPluginDescriptor");
 
-            if (!fn) {
-                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
-                if (DLCLOSE(libraryHandle) != 0) {
-                    cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
-                }
-                continue;
-            }
-
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
-#endif
-
-            const VampPluginDescriptor *descriptor = 0;
-            int index = 0;
-
-            std::map<std::string, int> known;
-            bool ok = true;
-
-            while ((descriptor = fn(VAMP_API_VERSION, index))) {
-
-                if (known.find(descriptor->identifier) != known.end()) {
-                    cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
-                              << soname
-                              << " returns the same plugin identifier \""
-                              << descriptor->identifier << "\" at indices "
-                              << known[descriptor->identifier] << " and "
-                              << index << endl;
-                    cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
-                    ok = false;
-                    break;
-                } else {
-                    known[descriptor->identifier] = index;
-                }
-
-                ++index;
-            }
-
-            if (ok) {
-
-                index = 0;
-
-                while ((descriptor = fn(VAMP_API_VERSION, index))) {
-
-                    QString id = PluginIdentifier::createIdentifier
-                        ("vamp", soname, descriptor->identifier);
-                    rv.push_back(id);
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                    cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
-#endif
-                    ++index;
-                }
-            }
-            
+        if (!fn) {
+            cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
             if (DLCLOSE(libraryHandle) != 0) {
                 cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
             }
-	}
+            continue;
+        }
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
+#endif
+
+        const VampPluginDescriptor *descriptor = 0;
+        int index = 0;
+
+        map<string, int> known;
+        bool ok = true;
+
+        while ((descriptor = fn(VAMP_API_VERSION, index))) {
+
+            if (known.find(descriptor->identifier) != known.end()) {
+                cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Plugin library "
+                     << soname
+                     << " returns the same plugin identifier \""
+                     << descriptor->identifier << "\" at indices "
+                     << known[descriptor->identifier] << " and "
+                     << index << endl;
+                cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
+                ok = false;
+                break;
+            } else {
+                known[descriptor->identifier] = index;
+            }
+
+            ++index;
+        }
+
+        if (ok) {
+
+            index = 0;
+
+            while ((descriptor = fn(VAMP_API_VERSION, index))) {
+
+                QString id = PluginIdentifier::createIdentifier
+                    ("vamp", soname, descriptor->identifier);
+                rv.push_back(id);
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+                SVDEBUG << "FeatureExtractionPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
+#endif
+                ++index;
+            }
+        }
+            
+        if (DLCLOSE(libraryHandle) != 0) {
+            cerr << "WARNING: FeatureExtractionPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
+        }
     }
 
     generateTaxonomy();
@@ -279,8 +343,8 @@ FeatureExtractionPluginFactory::findPluginFile(QString soname, QString inDir)
             if (file != "") return file;
         }
 
-        std::vector<QString> path = getPluginPath();
-        for (std::vector<QString>::iterator i = path.begin();
+        vector<QString> path = getPluginPath();
+        for (vector<QString>::iterator i = path.begin();
              i != path.end(); ++i) {
             if (*i != "") {
                 file = findPluginFile(soname, *i);
@@ -312,7 +376,9 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     QString type, soname, label;
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
     if (type != "vamp") {
-	cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
+#endif
 	return 0;
     }
 
@@ -375,7 +441,9 @@ done:
         }
     }
 
-//    SVDEBUG << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    cerr << "FeatureExtractionPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
+#endif
     
     return rv;
 }
@@ -385,7 +453,9 @@ FeatureExtractionPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
 {
     void *handle = m_handleMap[plugin];
     if (handle) {
-//        SVDEBUG << "unloading library " << handle << " for plugin " << plugin << endl;
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        cerr << "unloading library " << handle << " for plugin " << plugin << endl;
+#endif
         DLCLOSE(handle);
     }
     m_handleMap.erase(plugin);
@@ -400,8 +470,8 @@ FeatureExtractionPluginFactory::getPluginCategory(QString identifier)
 void
 FeatureExtractionPluginFactory::generateTaxonomy()
 {
-    std::vector<QString> pluginPath = getPluginPath();
-    std::vector<QString> path;
+    vector<QString> pluginPath = getPluginPath();
+    vector<QString> path;
 
     for (size_t i = 0; i < pluginPath.size(); ++i) {
 	if (pluginPath[i].contains("/lib/")) {
