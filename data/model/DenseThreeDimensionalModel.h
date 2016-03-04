@@ -153,12 +153,12 @@ public:
     {
         switch (column) {
         case 0: {
-            RealTime rt = RealTime::frame2RealTime(row * getResolution(),
-                                                   getSampleRate());
+            RealTime rt = RealTime::frame2RealTime
+                (row * getResolution() + getStartFrame(), getSampleRate());
             return rt.toText().c_str();
         }
         case 1:
-            return int(row * getResolution());
+            return int(row * getResolution() + getStartFrame());
         default:
             return getValueAt(row, column - 2);
         }
@@ -172,10 +172,10 @@ public:
     }
 
     virtual sv_frame_t getFrameForRow(int row) const {
-        return sv_frame_t(row) * getResolution();
+        return sv_frame_t(row) * getResolution() + getStartFrame();
     }
     virtual int getRowForFrame(sv_frame_t frame) const {
-        return int(frame / getResolution());
+        return int((frame - getStartFrame()) / getResolution());
     }
 
 protected:
