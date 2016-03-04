@@ -38,6 +38,14 @@ public:
 
     virtual std::vector<QString> getPluginIdentifiers();
 
+    /**
+     * Return any error message arising from the initial plugin
+     * scan. The return value will either be an empty string (nothing
+     * to report) or an HTML string suitable for dropping into a
+     * dialog and showing the user.
+     */
+    virtual QString getPluginPopulationWarning() { return m_pluginScanError; }
+    
     virtual QString findPluginFile(QString soname, QString inDir = "");
 
     // We don't set blockSize or channels on this -- they're
@@ -57,8 +65,14 @@ protected:
     friend class PluginDeletionNotifyAdapter;
     void pluginDeleted(Vamp::Plugin *);
     std::map<Vamp::Plugin *, void *> m_handleMap;
-
+    
+    std::vector<QString> getPluginCandidateFiles();
+    std::vector<QString> winnowPluginCandidates(std::vector<QString> candidates,
+                                                QString &warningMessage);
+    
     void generateTaxonomy();
+
+    QString m_pluginScanError;
 };
 
 #endif

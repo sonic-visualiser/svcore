@@ -137,11 +137,27 @@ CodedAudioFileReader::initialiseDecodeCache()
             }
             fileInfo.samplerate = fileRate;
             fileInfo.channels = m_channelCount;
-            
-            // No point in writing 24-bit or float; generally this
-            // class is used for decoding files that have come from a
-            // 16 bit source or that decode to only 16 bits anyway.
-            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+
+            // Previously we were writing SF_FORMAT_PCM_16 and in a
+            // comment I wrote: "No point in writing 24-bit or float;
+            // generally this class is used for decoding files that
+            // have come from a 16 bit source or that decode to only
+            // 16 bits anyway." That was naive -- we want to preserve
+            // the original values to the same float precision that we
+            // use internally. Saving PCM_16 obviously doesn't
+            // preserve values for sources at bit depths greater than
+            // 16, but it also doesn't always do so for sources at bit
+            // depths less than 16.
+            //
+            // (This came to light with a bug in libsndfile 1.0.26,
+            // which always reports every file as non-seekable, so
+            // that coded readers were being used even for WAV
+            // files. This changed the values that came from PCM_8 WAV
+            // sources, breaking Sonic Annotator's output comparison
+            // tests.)
+            //
+            // So: now we write floats.
+            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
     
             m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
                                           SFM_WRITE, &fileInfo);
