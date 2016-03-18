@@ -325,7 +325,17 @@ float modf(float x, float y) { return x - (y * floorf(x / y)); }
 double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
 float princargf(float a) { return float(princarg(a)); }
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+PluginLoadStatus
+TestPluginLoadability(QString soname, QString descriptorFn)
+{
+    //!!! Can't do the POSIX logic below, but we have no good
+    // alternative here yet
+    return PluginLoadOK;
+}
+
+#else
 
 #include <unistd.h>
 #include <sys/wait.h>
