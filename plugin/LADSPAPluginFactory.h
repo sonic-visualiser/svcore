@@ -65,8 +65,8 @@ protected:
     LADSPAPluginFactory();
     friend class RealTimePluginFactory;
 
-    virtual KnownPlugins::PluginType getPluginType() const {
-        return KnownPlugins::LADSPAPlugin;
+    virtual PluginScan::PluginType getPluginType() const {
+        return PluginScan::LADSPAPlugin;
     }
 
     virtual std::vector<QString> getPluginPath();

@@ -17,9 +17,9 @@
 
 #include <QStringList>
 
-#include "../vamp-plugin-load-checker/knownplugins.h" //!!!
+class KnownPlugins;
 
-class PluginScan : public PluginCandidates::LogCallback
+class PluginScan
 {
 public:
     static PluginScan *getInstance();
@@ -28,21 +28,23 @@ public:
 
     bool scanSucceeded() const;
     
-    QStringList getCandidateVampLibraries() const;
-    QStringList getCandidateLADSPALibraries() const;
-    QStringList getCandidateDSSILibraries() const;
-    QStringList getCandidateLibrariesFor(KnownPlugins::PluginType) const;
+    enum PluginType {
+	VampPlugin,
+	LADSPAPlugin,
+	DSSIPlugin
+    };
+    QStringList getCandidateLibrariesFor(PluginType) const;
 
     QString getStartupFailureReport() const;
-
-protected:
-    void log(std::string);
 
 private:
     PluginScan();
     ~PluginScan();
     KnownPlugins *m_kp;
     bool m_succeeded;
+
+    class Logger;
+    Logger *m_logger;
 };
 
 #endif
