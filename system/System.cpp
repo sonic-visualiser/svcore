@@ -335,6 +335,11 @@ TestPluginLoadability(QString soname, QString descriptorFn)
 {
     //!!! This is POSIX only, no equivalent on Windows, where we'll
     //!!! have to do something completely different
+
+    //!!! update -- this is a bad idea on POSIX systems as well, I
+    //!!! fear, because fork() generally doesn't mix with
+    //!!! multithreaded processes (it forks only one thread but any
+    //!!! locked mutexes from the other threads remain locked).
     
     pid_t pid = fork();
 
@@ -344,6 +349,8 @@ TestPluginLoadability(QString soname, QString descriptorFn)
 
     if (pid == 0) { // the child process
 
+        cerr << "isPluginLibraryLoadable: About to try library \"" << soname << "\"" << endl;
+        
         void *handle = DLOPEN(soname, RTLD_NOW | RTLD_LOCAL);
         if (!handle) {
             cerr << "isPluginLibraryLoadable: Failed to open plugin library \""
@@ -358,7 +365,7 @@ TestPluginLoadability(QString soname, QString descriptorFn)
             exit(2);
         }
 
-//        cerr << "isPluginLibraryLoadable: Successfully loaded library \"" << soname << "\" and retrieved descriptor function" << endl;
+        cerr << "isPluginLibraryLoadable: Successfully loaded library \"" << soname << "\" and retrieved descriptor function" << endl;
         
         exit(0);
 
@@ -367,8 +374,12 @@ TestPluginLoadability(QString soname, QString descriptorFn)
         int status = 0;
 
         do {
+            cerr << "waiting for subprocess with pid " << pid << "..." << endl;
             waitpid(pid, &status, 0);
+            cerr << "waited" << endl;
         } while (WIFSTOPPED(status));
+
+        cerr << "and finished" << endl;
 
         if (WIFEXITED(status)) {
             switch (WEXITSTATUS(status)) {

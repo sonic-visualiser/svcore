@@ -36,6 +36,9 @@ exists(../../../config.pri) {
         DEFINES += HAVE_COREAUDIO
         LIBS += -framework CoreAudio -framework CoreMidi -framework AudioUnit -framework AudioToolbox -framework CoreFoundation -framework CoreServices -framework Accelerate
     }
+    linux* {
+        LIBS += -ldl
+    }
 }
 
 CONFIG += qt thread warn_on stl rtti exceptions console c++11

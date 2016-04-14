@@ -119,7 +119,7 @@ FeatureExtractionPluginFactory::getPluginCandidateFiles()
     for (QString dirname : path) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "FeatureExtractionPluginFactory::getPluginIdentifiers: scanning directory " << dirname << endl;
+        cerr << "FeatureExtractionPluginFactory::getPluginCandidateFiles: scanning directory " << dirname << endl;
 #endif
 
 	QDir pluginDir(dirname, PLUGIN_GLOB,
