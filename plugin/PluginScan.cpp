@@ -29,7 +29,7 @@ PluginScan *PluginScan::getInstance() {
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_kp(0) {
+PluginScan::PluginScan() : m_kp(0), m_succeeded(false) {
 }
 
 PluginScan::~PluginScan() {
@@ -46,44 +46,65 @@ void
 PluginScan::scan()
 {
     delete m_kp;
-    m_kp = new KnownPlugins("./helper", this); //!!!
+    m_succeeded = false;
+    try {
+	m_kp = new KnownPlugins("./helper", this); //!!!
+	m_succeeded = true;
+    } catch (const std::exception &e) {
+	cerr << "ERROR: PluginScan::scan: " << e.what() << endl;
+	m_kp = 0;
+    }
+}
+
+QStringList
+PluginScan::getCandidateLibrariesFor(KnownPlugins::PluginType type) const
+{
+    QStringList candidates;
+    if (!m_kp) return candidates;
+    auto c = m_kp->getCandidateLibrariesFor(type);
+    for (auto s: c) candidates.push_back(s.c_str());
+    return candidates;
 }
 
 QStringList
 PluginScan::getCandidateVampLibraries() const
 {
-    QStringList candidates;
-    if (!m_kp) return candidates;
-    auto c = m_kp->getCandidateLibrariesFor(KnownPlugins::VampPlugin);
-    for (auto s: c) candidates.push_back(s.c_str());
-    return candidates;
+    return getCandidateLibrariesFor(KnownPlugins::VampPlugin);
 }
 
 QStringList
 PluginScan::getCandidateLADSPALibraries() const
 {
-    QStringList candidates;
-    if (!m_kp) return candidates;
-    auto c = m_kp->getCandidateLibrariesFor(KnownPlugins::LADSPAPlugin);
-    for (auto s: c) candidates.push_back(s.c_str());
-    return candidates;
+    return getCandidateLibrariesFor(KnownPlugins::LADSPAPlugin);
 }
 
 QStringList
 PluginScan::getCandidateDSSILibraries() const
 {
-    QStringList candidates;
-    if (!m_kp) return candidates;
-    auto c = m_kp->getCandidateLibrariesFor(KnownPlugins::DSSIPlugin);
-    for (auto s: c) candidates.push_back(s.c_str());
-    return candidates;
+    return getCandidateLibrariesFor(KnownPlugins::DSSIPlugin);
 }
 
 QString
 PluginScan::getStartupFailureReport() const
 {
-    if (!m_kp) return ""; //!!!???
+    if (!m_succeeded) {
+	return QObject::tr("<b>Failed to scan for plugins</b>"
+			   "<p>Failed to scan for plugins at startup "
+			   "(application installation problem?)</p>");
+    }
+    if (!m_kp) {
+	return QObject::tr("<b>Did not scan for plugins</b>"
+			   "<p>Apparently no scan for plugins was attempted "
+			   "(internal error?)</p>");
+    }
+
     string report = m_kp->getFailureReport();
-    return report.c_str(); //!!! wrap?
+    if (report == "") {
+	return QString(report.c_str());
+    }
+
+    return QObject::tr("<b>Failed to load plugins</b>"
+		       "<p>Failed to load one or more plugin libraries:</p>")
+	+ QString(report.c_str());
 }
 

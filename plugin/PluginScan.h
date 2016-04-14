@@ -25,10 +25,13 @@ public:
     static PluginScan *getInstance();
 
     void scan();
+
+    bool scanSucceeded() const;
     
     QStringList getCandidateVampLibraries() const;
     QStringList getCandidateLADSPALibraries() const;
     QStringList getCandidateDSSILibraries() const;
+    QStringList getCandidateLibrariesFor(KnownPlugins::PluginType) const;
 
     QString getStartupFailureReport() const;
 
@@ -39,6 +42,7 @@ private:
     PluginScan();
     ~PluginScan();
     KnownPlugins *m_kp;
+    bool m_succeeded;
 };
 
 #endif

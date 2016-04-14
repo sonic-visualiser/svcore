@@ -24,6 +24,8 @@
 #include "RealTimePluginFactory.h"
 #include "api/ladspa.h"
 
+#include "PluginScan.h"
+
 #include <vector>
 #include <map>
 #include <set>
@@ -62,6 +64,10 @@ public:
 protected:
     LADSPAPluginFactory();
     friend class RealTimePluginFactory;
+
+    virtual KnownPlugins::PluginType getPluginType() const {
+        return KnownPlugins::LADSPAPlugin;
+    }
 
     virtual std::vector<QString> getPluginPath();
 
