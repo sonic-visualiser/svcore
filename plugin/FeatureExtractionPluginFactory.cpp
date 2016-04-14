@@ -21,6 +21,8 @@
 
 #include "system/System.h"
 
+#include "PluginScan.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -111,87 +113,14 @@ FeatureExtractionPluginFactory::getAllPluginIdentifiers()
 }
 
 vector<QString>
-FeatureExtractionPluginFactory::getPluginCandidateFiles()
-{
-    vector<QString> path = getPluginPath();
-    vector<QString> candidates;
-
-    for (QString dirname : path) {
-
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "FeatureExtractionPluginFactory::getPluginCandidateFiles: scanning directory " << dirname << endl;
-#endif
-
-	QDir pluginDir(dirname, PLUGIN_GLOB,
-                       QDir::Name | QDir::IgnoreCase,
-                       QDir::Files | QDir::Readable);
-
-	for (unsigned int j = 0; j < pluginDir.count(); ++j) {
-            QString soname = pluginDir.filePath(pluginDir[j]);
-            candidates.push_back(soname);
-        }
-    }
-
-    return candidates;
-}
-
-vector<QString>
-FeatureExtractionPluginFactory::winnowPluginCandidates(vector<QString> candidates,
-                                                       QString &warningMessage)
-{
-    vector<QString> good, bad;
-    vector<PluginLoadStatus> badStatuses;
-    
-    for (QString c: candidates) {
-
-        PluginLoadStatus status =
-            TestPluginLoadability(c, "vampGetPluginDescriptor");
-
-        if (status == PluginLoadOK) {
-            good.push_back(c);
-        } else if (status == UnknownPluginLoadStatus) {
-            cerr << "WARNING: Unknown load status for plugin candidate \""
-                 << c << "\", continuing" << endl;
-            good.push_back(c);
-        } else {
-            bad.push_back(c);
-            badStatuses.push_back(status);
-        }
-    }
-    
-    if (!bad.empty()) {
-        warningMessage =
-            QObject::tr("<b>Failed to load plugins</b>"
-                        "<p>Failed to load one or more plugin libraries:</p>\n");
-        warningMessage += "<ul>";
-        for (int i = 0; in_range_for(bad, i); ++i) {
-            QString m;
-            if (badStatuses[i] == PluginLoadFailedToLoadLibrary) {
-                m = QObject::tr("Failed to load library");
-            } else if (badStatuses[i] == PluginLoadFailedToFindDescriptor) {
-                m = QObject::tr("Failed to query plugins from library after loading");
-            } else if (badStatuses[i] == PluginLoadFailedElsewhere) {
-                m = QObject::tr("Unknown failure");
-            } else {
-                m = QObject::tr("Success: internal error?");
-            }
-            warningMessage += QString("<li>%1 (%2)</li>\n")
-                .arg(bad[i])
-                .arg(m);
-        }
-        warningMessage += "</ul>";
-    }
-    return good;
-}
-
-vector<QString>
 FeatureExtractionPluginFactory::getPluginIdentifiers()
 {
     Profiler profiler("FeatureExtractionPluginFactory::getPluginIdentifiers");
 
     vector<QString> rv;
-    vector<QString> candidates = winnowPluginCandidates(getPluginCandidateFiles(),
-                                                        m_pluginScanError);
+
+    QStringList candidates =
+        PluginScan::getInstance()->getCandidateVampLibraries();
     
     for (QString soname : candidates) {
 
