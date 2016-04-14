@@ -223,7 +223,8 @@ SOURCES += data/fft/FFTapi.cpp \
            data/osc/OSCMessage.cpp \
            data/osc/OSCQueue.cpp 
 
-HEADERS += plugin/DSSIPluginFactory.h \
+HEADERS += plugin/PluginScan.h \
+           plugin/DSSIPluginFactory.h \
            plugin/DSSIPluginInstance.h \
            plugin/FeatureExtractionPluginFactory.h \
            plugin/LADSPAPluginFactory.h \
@@ -243,7 +244,8 @@ HEADERS += plugin/DSSIPluginFactory.h \
            plugin/api/alsa/sound/asequencer.h
 
 
-SOURCES += plugin/DSSIPluginFactory.cpp \
+SOURCES += plugin/PluginScan.cpp \
+           plugin/DSSIPluginFactory.cpp \
            plugin/DSSIPluginInstance.cpp \
            plugin/FeatureExtractionPluginFactory.cpp \
            plugin/LADSPAPluginFactory.cpp \
