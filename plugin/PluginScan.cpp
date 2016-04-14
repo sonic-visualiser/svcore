@@ -16,11 +16,22 @@
 
 #include "base/Debug.h"
 
+#include "checker/knownplugins.h"
+
 #include <QMutex>
 
 using std::string;
 
-PluginScan *PluginScan::getInstance() {
+class PluginScan::Logger : public PluginCandidates::LogCallback
+{
+protected:
+    void log(std::string message) {
+        SVDEBUG << "PluginScan: " << message;
+    }
+};
+
+PluginScan *PluginScan::getInstance()
+{
     static QMutex mutex;
     static PluginScan *m_instance = 0;
     mutex.lock();
@@ -29,17 +40,12 @@ PluginScan *PluginScan::getInstance() {
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_kp(0), m_succeeded(false) {
+PluginScan::PluginScan() : m_kp(0), m_succeeded(false), m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
     delete m_kp;
-}
-
-void
-PluginScan::log(string message)
-{
-    SVDEBUG << "PluginScan: " << message;
+    delete m_logger;
 }
 
 void
@@ -48,7 +54,7 @@ PluginScan::scan()
     delete m_kp;
     m_succeeded = false;
     try {
-	m_kp = new KnownPlugins("./helper", this); //!!!
+	m_kp = new KnownPlugins("./helper", m_logger); //!!!
 	m_succeeded = true;
     } catch (const std::exception &e) {
 	cerr << "ERROR: PluginScan::scan: " << e.what() << endl;
@@ -57,31 +63,21 @@ PluginScan::scan()
 }
 
 QStringList
-PluginScan::getCandidateLibrariesFor(KnownPlugins::PluginType type) const
+PluginScan::getCandidateLibrariesFor(PluginType type) const
 {
+    KnownPlugins::PluginType kpt;
+    switch (type) {
+    case VampPlugin: kpt = KnownPlugins::VampPlugin; break;
+    case LADSPAPlugin: kpt = KnownPlugins::LADSPAPlugin; break;
+    case DSSIPlugin: kpt = KnownPlugins::DSSIPlugin; break;
+    default: throw std::logic_error("Inconsistency in plugin type enums");
+    }
+    
     QStringList candidates;
     if (!m_kp) return candidates;
-    auto c = m_kp->getCandidateLibrariesFor(type);
+    auto c = m_kp->getCandidateLibrariesFor(kpt);
     for (auto s: c) candidates.push_back(s.c_str());
     return candidates;
-}
-
-QStringList
-PluginScan::getCandidateVampLibraries() const
-{
-    return getCandidateLibrariesFor(KnownPlugins::VampPlugin);
-}
-
-QStringList
-PluginScan::getCandidateLADSPALibraries() const
-{
-    return getCandidateLibrariesFor(KnownPlugins::LADSPAPlugin);
-}
-
-QStringList
-PluginScan::getCandidateDSSILibraries() const
-{
-    return getCandidateLibrariesFor(KnownPlugins::DSSIPlugin);
 }
 
 QString

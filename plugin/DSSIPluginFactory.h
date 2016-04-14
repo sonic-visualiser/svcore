@@ -48,8 +48,8 @@ protected:
     DSSIPluginFactory();
     friend class RealTimePluginFactory;
 
-    virtual KnownPlugins::PluginType getPluginType() const {
-        return KnownPlugins::DSSIPlugin;
+    virtual PluginScan::PluginType getPluginType() const {
+        return PluginScan::DSSIPlugin;
     }
 
     virtual std::vector<QString> getPluginPath();

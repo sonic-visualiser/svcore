@@ -39,7 +39,7 @@ QT -= gui
 TARGET = svcore
 
 DEPENDPATH += . data plugin plugin/api/alsa
-INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay
+INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay ../checker
 OBJECTS_DIR = o
 MOC_DIR = o
 

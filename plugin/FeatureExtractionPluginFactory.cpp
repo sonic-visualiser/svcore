@@ -119,8 +119,8 @@ FeatureExtractionPluginFactory::getPluginIdentifiers()
 
     vector<QString> rv;
 
-    QStringList candidates =
-        PluginScan::getInstance()->getCandidateVampLibraries();
+    QStringList candidates = PluginScan::getInstance()->getCandidateLibrariesFor
+        (PluginScan::VampPlugin);
     
     for (QString soname : candidates) {
 
