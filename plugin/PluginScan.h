@@ -24,7 +24,7 @@ class PluginScan
 public:
     static PluginScan *getInstance();
 
-    void scan();
+    void scan(QString helperExecutablePath);
 
     bool scanSucceeded() const;
     
