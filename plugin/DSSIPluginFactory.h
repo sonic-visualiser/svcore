@@ -48,6 +48,10 @@ protected:
     DSSIPluginFactory();
     friend class RealTimePluginFactory;
 
+    virtual PluginScan::PluginType getPluginType() const {
+        return PluginScan::DSSIPlugin;
+    }
+
     virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
