@@ -19,6 +19,7 @@
 #include "checker/knownplugins.h"
 
 #include <QMutex>
+#include <QCoreApplication>
 
 using std::string;
 
@@ -49,12 +50,12 @@ PluginScan::~PluginScan() {
 }
 
 void
-PluginScan::scan()
+PluginScan::scan(QString helperExecutablePath)
 {
     delete m_kp;
     m_succeeded = false;
     try {
-	m_kp = new KnownPlugins("./helper", m_logger); //!!!
+	m_kp = new KnownPlugins(helperExecutablePath.toStdString(), m_logger);
 	m_succeeded = true;
     } catch (const std::exception &e) {
 	cerr << "ERROR: PluginScan::scan: " << e.what() << endl;
@@ -85,8 +86,10 @@ PluginScan::getStartupFailureReport() const
 {
     if (!m_succeeded) {
 	return QObject::tr("<b>Failed to scan for plugins</b>"
-			   "<p>Failed to scan for plugins at startup "
-			   "(application installation problem?)</p>");
+			   "<p>Failed to scan for plugins at startup. Possibly "
+                           "the plugin checker helper program was not correctly "
+                           "installed alongside %1?</p>")
+            .arg(QCoreApplication::applicationName());
     }
     if (!m_kp) {
 	return QObject::tr("<b>Did not scan for plugins</b>"
@@ -101,6 +104,9 @@ PluginScan::getStartupFailureReport() const
 
     return QObject::tr("<b>Failed to load plugins</b>"
 		       "<p>Failed to load one or more plugin libraries:</p>")
-	+ QString(report.c_str());
+	+ QString(report.c_str())
+        + QObject::tr("<p>These plugins may be incompatible with the system, "
+                      "and will be ignored during this run of %1.</p>")
+        .arg(QCoreApplication::applicationName());
 }
 
