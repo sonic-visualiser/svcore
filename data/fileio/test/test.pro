@@ -1,6 +1,8 @@
 
 TEMPLATE = app
 
+INCLUDEPATH += ../../../../vamp-plugin-sdk
+
 LIBS += -L../../.. -L../../../../dataquay -L../../../release -L../../../../dataquay/release -lsvcore -ldataquay
 
 win32-g++ {
