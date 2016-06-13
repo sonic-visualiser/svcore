@@ -149,23 +149,6 @@ FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
     return true;
 }
 
-float
-FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
-{
-    if (!getMagnitudesAt(x, values, minbin, count)) return false;
-    if (count == 0) count = getHeight();
-    float max = 0.f;
-    for (int i = 0; i < count; ++i) {
-        if (values[i] > max) max = values[i];
-    }
-    if (max > 0.f) {
-        for (int i = 0; i < count; ++i) {
-            values[i] /= max;
-        }
-    }
-    return max;
-}
-
 bool
 FFTModel::getPhasesAt(int x, float *values, int minbin, int count) const
 {
