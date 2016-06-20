@@ -56,6 +56,7 @@ HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
            base/BaseTypes.h \
            base/Clipboard.h \
+           base/ColumnOp.h \
            base/Command.h \
            base/Debug.h \
            base/Exceptions.h \

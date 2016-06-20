@@ -18,6 +18,7 @@
 
 #include "Model.h"
 #include "TabularModel.h"
+#include "base/ColumnOp.h"
 #include "base/ZoomConstraint.h"
 #include "base/RealTime.h"
 
@@ -55,7 +56,7 @@ public:
      */
     virtual float getMaximumLevel() const = 0;
 
-    typedef std::vector<float> Column;
+    typedef ColumnOp::Column Column;
 
     /**
      * Get data from the given column of bin values.
