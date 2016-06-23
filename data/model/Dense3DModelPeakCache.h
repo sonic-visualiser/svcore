@@ -45,11 +45,15 @@ public:
     }
 
     virtual int getResolution() const {
-        return m_source->getResolution() * m_resolution;
+        return m_source->getResolution() * m_columnsPerPeak;
     }
 
+    virtual int getColumnsPerPeak() const {
+        return m_columnsPerPeak;
+    }
+    
     virtual int getWidth() const {
-        return m_source->getWidth() / m_resolution + 1;
+        return m_source->getWidth() / m_columnsPerPeak + 1;
     }
 
     virtual int getHeight() const {
@@ -91,7 +95,7 @@ private:
     mutable EditableDenseThreeDimensionalModel *m_cache;
     mutable std::vector<bool> m_coverage; // must be bool, for space efficiency
                                           // (vector of bool uses 1-bit elements)
-    int m_resolution;
+    int m_columnsPerPeak;
 
     bool haveColumn(int column) const;
     void fillColumn(int column) const;
