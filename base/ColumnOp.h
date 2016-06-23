@@ -20,11 +20,30 @@
 
 #include <cmath>
 
+/**
+ * Class containing static functions for simple operations on data
+ * columns, for use by display layers.
+ */
 class ColumnOp
 {
 public:
+    /** 
+     * Column type. 
+     */
     typedef std::vector<float> Column;
 
+    /**
+     * Normalization types.
+     *
+     * NormalizeColumns means to normalize to max value = 1.
+     * NormalizeHybrid means normalize to max = 1 and then multiply by
+     * log10 of the max value, to retain some difference between
+     * levels of neighbouring columns.
+     *
+     * NormalizeVisibleArea is ignored here and is included only so as
+     * to match the set of normalization options historically provided
+     * in the SV spectrogram layer.
+     */
     enum Normalization {
         NoNormalization,
         NormalizeColumns,
@@ -32,6 +51,9 @@ public:
         NormalizeHybrid
     };
 
+    /**
+     * Scale an FFT output by half the FFT size.
+     */
     static Column fftScale(const Column &in, int fftSize) {
 	
 	Column out;
@@ -44,6 +66,9 @@ public:
 	return out;
     }
 
+    /**
+     * Determine whether an index points to a local peak.
+     */
     static bool isPeak(const Column &in, int ix) {
 	
 	if (!in_range_for(in, ix-1)) return false;
@@ -54,6 +79,10 @@ public:
 	return true;
     }
 
+    /**
+     * Return a column containing only the local peak values (all
+     * others zero).
+     */
     static Column peakPick(const Column &in) {
 	
 	std::vector<float> out(in.size(), 0.f);
@@ -66,6 +95,10 @@ public:
 	return out;
     }
 
+    /**
+     * Return a column normalized from the input column according to
+     * the given normalization scheme.
+     */
     static Column normalize(const Column &in, Normalization n) {
 
 	if (n == NoNormalization || n == NormalizeVisibleArea) {
@@ -98,6 +131,9 @@ public:
 	return out;
     }
 
+    /**
+     * Scale the given column using the given gain multiplier.
+     */
     static Column applyGain(const Column &in, float gain) {
 	
 	if (gain == 1.f) {
@@ -111,6 +147,12 @@ public:
 	return out;
     }
 
+    /**
+     * Distribute the given column into a target vector of a different
+     * size, optionally using linear interpolation. The binfory vector
+     * contains a mapping from y coordinate (i.e. index into the
+     * target vector) to bin (i.e. index into the source column).
+     */
     static Column distribute(const Column &in,
 			     int h,
 			     const std::vector<double> &binfory,

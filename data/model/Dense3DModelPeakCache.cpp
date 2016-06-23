@@ -20,7 +20,7 @@
 Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
 					     int columnsPerPeak) :
     m_source(source),
-    m_resolution(columnsPerPeak)
+    m_columnsPerPeak(columnsPerPeak)
 {
     m_cache = new EditableDenseThreeDimensionalModel
         (source->getSampleRate(),
@@ -95,8 +95,8 @@ Dense3DModelPeakCache::fillColumn(int column) const
 
     Column peak;
     int n = 0;
-    for (int i = 0; i < m_resolution; ++i) {
-        Column here = m_source->getColumn(column * m_resolution + i);
+    for (int i = 0; i < m_columnsPerPeak; ++i) {
+        Column here = m_source->getColumn(column * m_columnsPerPeak + i);
         if (i == 0) {
             peak = here;
             n = int(peak.size());
