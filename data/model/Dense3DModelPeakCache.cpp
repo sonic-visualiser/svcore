@@ -17,7 +17,7 @@
 
 #include "base/Profiler.h"
 
-Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
+Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
 					     int columnsPerPeak) :
     m_source(source),
     m_columnsPerPeak(columnsPerPeak)
