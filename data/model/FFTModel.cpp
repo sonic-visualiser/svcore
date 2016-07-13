@@ -331,7 +331,7 @@ FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 }
 
 FFTModel::PeakLocationSet
-FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
+FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeaks");
 
@@ -479,7 +479,7 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
 
 FFTModel::PeakSet
 FFTModel::getPeakFrequencies(PeakPickType type, int x,
-                             int ymin, int ymax)
+                             int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeakFrequencies");
 

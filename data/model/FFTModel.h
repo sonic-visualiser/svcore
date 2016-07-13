@@ -126,13 +126,13 @@ public:
      * ymax is zero, getHeight()-1 will be used.
      */
     virtual PeakLocationSet getPeaks(PeakPickType type, int x,
-                                     int ymin = 0, int ymax = 0);
+                                     int ymin = 0, int ymax = 0) const;
 
     /**
      * Return locations and estimated stable frequencies of peak bins.
      */
     virtual PeakSet getPeakFrequencies(PeakPickType type, int x,
-                                       int ymin = 0, int ymax = 0);
+                                       int ymin = 0, int ymax = 0) const;
 
     QString getTypeName() const { return tr("FFT"); }
 

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DENSE_3D_MODEL_PEAK_CACHE_H_
-#define _DENSE_3D_MODEL_PEAK_CACHE_H_
+#ifndef DENSE_3D_MODEL_PEAK_CACHE_H
+#define DENSE_3D_MODEL_PEAK_CACHE_H
 
 #include "DenseThreeDimensionalModel.h"
 #include "EditableDenseThreeDimensionalModel.h"
@@ -24,7 +24,7 @@ class Dense3DModelPeakCache : public DenseThreeDimensionalModel
     Q_OBJECT
 
 public:
-    Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
+    Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
                           int columnsPerPeak);
     ~Dense3DModelPeakCache();
 
@@ -91,7 +91,7 @@ protected slots:
     void sourceModelAboutToBeDeleted();
 
 private:
-    DenseThreeDimensionalModel *m_source;
+    const DenseThreeDimensionalModel *m_source;
     mutable EditableDenseThreeDimensionalModel *m_cache;
     mutable std::vector<bool> m_coverage; // must be bool, for space efficiency
                                           // (vector of bool uses 1-bit elements)
