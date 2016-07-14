@@ -21,6 +21,25 @@
 #include <cmath>
 
 /**
+ * Display normalization types for columns in e.g. grid plots.
+ *
+ * Max1 means to normalize to max value = 1.0.
+ * Sum1 means to normalize to sum of values = 1.0.
+ *
+ * Hybrid means normalize to max = 1.0 and then multiply by
+ * log10 of the max value, to retain some difference between
+ * levels of neighbouring columns.
+ *
+ * Area normalization is handled separately.
+ */
+enum class ColumnNormalization {
+    None,
+    Max1,
+    Sum1,
+    Hybrid
+};
+
+/**
  * Class containing static functions for simple operations on data
  * columns, for use by display layers.
  */
@@ -31,25 +50,6 @@ public:
      * Column type. 
      */
     typedef std::vector<float> Column;
-
-    /**
-     * Normalization types.
-     *
-     * NormalizeColumns means to normalize to max value = 1.
-     * NormalizeHybrid means normalize to max = 1 and then multiply by
-     * log10 of the max value, to retain some difference between
-     * levels of neighbouring columns.
-     *
-     * NormalizeVisibleArea is ignored here and is included only so as
-     * to match the set of normalization options historically provided
-     * in the SV spectrogram layer.
-     */
-    enum Normalization {
-        NoNormalization,
-        NormalizeColumns,
-        NormalizeVisibleArea,
-        NormalizeHybrid
-    };
 
     /**
      * Scale an FFT output by half the FFT size.
@@ -99,35 +99,47 @@ public:
      * Return a column normalized from the input column according to
      * the given normalization scheme.
      */
-    static Column normalize(const Column &in, Normalization n) {
+    static Column normalize(const Column &in, ColumnNormalization n) {
 
-	if (n == NoNormalization || n == NormalizeVisibleArea) {
-	    return in;
-	}
-	
-	float max = *max_element(in.begin(), in.end());
-
-	if (n == NormalizeColumns && max == 0.f) {
+	if (n == ColumnNormalization::None) {
 	    return in;
 	}
 
-	if (n == NormalizeHybrid && max <= 0.f) {
-	    return in;
-	}
+        float scale = 1.f;
+        
+        if (n == ColumnNormalization::Sum1) {
+
+            float sum = 0.f;
+
+            for (auto v: in) {
+                sum += v;
+            }
+
+            if (sum != 0.f) {
+                scale = 1.f / sum;
+            }
+        } else {
+        
+            float max = *max_element(in.begin(), in.end());
+
+            if (n == ColumnNormalization::Max1) {
+                if (max != 0.f) {
+                    scale = 1.f / max;
+                }
+            } else if (n == ColumnNormalization::Hybrid) {
+                if (max > 0.f) {
+                    scale = log10f(max + 1.f) / max;
+                }
+            }
+        }
     
 	std::vector<float> out;
 	out.reserve(in.size());
 
-	float scale;
-	if (n == NormalizeHybrid) {
-	    scale = log10f(max + 1.f) / max;
-	} else {
-	    scale = 1.f / max;
-	}
-    
 	for (auto v: in) {
 	    out.push_back(v * scale);
 	}
+        
 	return out;
     }
 
