@@ -53,7 +53,12 @@ public:
     }
     
     virtual int getWidth() const {
-        return m_source->getWidth() / m_columnsPerPeak + 1;
+        int sourceWidth = m_source->getWidth();
+        if ((sourceWidth % m_columnsPerPeak) == 0) {
+            return sourceWidth / m_columnsPerPeak;
+        } else {
+            return sourceWidth / m_columnsPerPeak + 1;
+        }
     }
 
     virtual int getHeight() const {

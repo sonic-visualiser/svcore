@@ -88,15 +88,29 @@ Dense3DModelPeakCache::fillColumn(int column) const
     Profiler profiler("Dense3DModelPeakCache::fillColumn");
 
     if (!in_range_for(m_coverage, column)) {
-        // see note in sourceModelChanged
-        if (m_coverage.size() > 0) m_coverage[m_coverage.size()-1] = false;
+        if (m_coverage.size() > 0) {
+            // The last peak may have come from an incomplete read, which
+            // may since have been filled, so reset it
+            m_coverage[m_coverage.size()-1] = false;
+        }
         m_coverage.resize(column + 1, false);
     }
 
+    int sourceWidth = m_source->getWidth();
+    
     Column peak;
     int n = 0;
     for (int i = 0; i < m_columnsPerPeak; ++i) {
-        Column here = m_source->getColumn(column * m_columnsPerPeak + i);
+
+        int sourceColumn = column * m_columnsPerPeak + i;
+        if (sourceColumn >= sourceWidth) break;
+        
+        Column here = m_source->getColumn(sourceColumn);
+
+//        cerr << "Dense3DModelPeakCache::fillColumn(" << column << "): source col "
+//             << sourceColumn << " of " << sourceWidth
+//             << " returned " << here.size() << " elts" << endl;
+        
         if (i == 0) {
             peak = here;
             n = int(peak.size());
