@@ -16,6 +16,8 @@
 #ifndef MAGNITUDE_RANGE_H
 #define MAGNITUDE_RANGE_H
 
+#include <vector>
+
 /**
  * Maintain a min and max value, and update them when supplied a new
  * data point.
@@ -43,7 +45,16 @@ public:
 	    changed = true;
 	}
 	return changed;
-    }            
+    }
+    bool sample(const std::vector<float> &ff) {
+        bool changed = false;
+        for (auto f: ff) {
+            if (sample(f)) {
+                changed = true;
+            }
+        }
+        return changed;
+    }
     bool sample(const MagnitudeRange &r) {
 	bool changed = false;
 	if (isSet()) {
