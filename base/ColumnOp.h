@@ -54,15 +54,15 @@ public:
     /**
      * Scale the given column using the given gain multiplier.
      */
-    static Column applyGain(const Column &in, float gain) {
+    static Column applyGain(const Column &in, double gain) {
 	
-	if (gain == 1.f) {
+	if (gain == 1.0) {
 	    return in;
 	}
 	Column out;
 	out.reserve(in.size());
 	for (auto v: in) {
-	    out.push_back(v * gain);
+	    out.push_back(float(v * gain));
 	}
 	return out;
     }
@@ -71,7 +71,7 @@ public:
      * Scale an FFT output by half the FFT size.
      */
     static Column fftScale(const Column &in, int fftSize) {
-        return applyGain(in, 2.f / float(fftSize));
+        return applyGain(in, 2.0 / fftSize);
     }
 
     /**
@@ -140,15 +140,8 @@ public:
                 }
             }
         }
-    
-	std::vector<float> out;
-	out.reserve(in.size());
 
-	for (auto v: in) {
-	    out.push_back(v * scale);
-	}
-        
-	return out;
+        return applyGain(in, scale);
     }
 
     /**
