@@ -155,7 +155,7 @@ public:
 			     const std::vector<double> &binfory,
 			     int minbin,
 			     bool interpolate) {
-	
+
 	std::vector<float> out(h, 0.f);
 	int bins = int(in.size());
 
@@ -194,7 +194,8 @@ public:
 		int by0 = int(sy0 + 0.0001);
 		int by1 = int(sy1 + 0.0001);
 		if (by1 < by0 + 1) by1 = by0 + 1;
-
+                if (by1 >= bins) by1 = by1 - 1;
+                
 		for (int bin = by0; bin < by1; ++bin) {
 
 		    float value = in[bin];
