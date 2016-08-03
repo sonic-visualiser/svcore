@@ -26,9 +26,15 @@ class MagnitudeRange
 {
 public:
     MagnitudeRange() : m_min(0), m_max(0) { }
+    MagnitudeRange(float min, float max) : m_min(min), m_max(max) { }
+    
     bool operator==(const MagnitudeRange &r) {
 	return r.m_min == m_min && r.m_max == m_max;
     }
+    bool operator!=(const MagnitudeRange &r) {
+        return !(*this == r);
+    }
+    
     bool isSet() const { return (m_min != 0.f || m_max != 0.f); }
     void set(float min, float max) {
 	m_min = min;
