@@ -103,6 +103,16 @@ FFTModel::getColumn(int x) const
     return move(col);
 }
 
+FFTModel::Column
+FFTModel::getPhases(int x) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(cplx.size());
+    for (auto c: cplx) col.push_back(arg(c));
+    return move(col);
+}
+
 float
 FFTModel::getMagnitudeAt(int x, int y) const
 {
