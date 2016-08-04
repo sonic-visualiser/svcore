@@ -76,6 +76,7 @@ public:
     virtual float getMinimumLevel() const { return 0.f; } // Can't provide
     virtual float getMaximumLevel() const { return 1.f; } // Can't provide
     virtual Column getColumn(int x) const; // magnitudes
+    virtual Column getPhases(int x) const;
     virtual QString getBinName(int n) const;
     virtual bool shouldUseLogValueScale() const { return true; }
     virtual int getCompletion() const {
@@ -95,6 +96,8 @@ public:
     int getWindowSize() const { return m_windowSize; }
     int getWindowIncrement() const { return m_windowIncrement; }
     int getFFTSize() const { return m_fftSize; }
+
+//!!! review which of these are ever actually called
     
     float getMagnitudeAt(int x, int y) const;
     float getMaximumMagnitudeAt(int x) const;
