@@ -109,7 +109,9 @@ FFTModel::getPhases(int x) const
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
-    for (auto c: cplx) col.push_back(arg(c));
+    for (auto c: cplx) {
+        col.push_back(arg(c));
+    }
     return move(col);
 }
 

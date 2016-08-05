@@ -70,7 +70,7 @@ LinearRangeMapper::getValueForPositionUnclamped(int position) const
     double value = m_minval +
         ((double(position - m_minpos) / double(m_maxpos - m_minpos))
          * (m_maxval - m_minval));
-    cerr << "getValueForPositionUnclamped(" << position << "): minval " << m_minval << ", maxval " << m_maxval << ", value " << value << endl;
+//    cerr << "getValueForPositionUnclamped(" << position << "): minval " << m_minval << ", maxval " << m_maxval << ", value " << value << endl;
     return value;
 }
 

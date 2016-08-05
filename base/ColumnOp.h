@@ -200,7 +200,7 @@ public:
 
 		    float value = in[bin];
 
-		    if (value > out[y]) {
+		    if (bin == by0 || value > out[y]) {
 			out[y] = value;
 		    }
 		}
