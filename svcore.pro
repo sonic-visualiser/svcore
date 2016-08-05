@@ -82,6 +82,7 @@ HEADERS += base/AudioLevel.h \
            base/Serialiser.h \
            base/StorageAdviser.h \
            base/StringBits.h \
+           base/Strings.h \
            base/TempDirectory.h \
            base/TempWriteFile.h \
            base/TextMatcher.h \
@@ -114,6 +115,7 @@ SOURCES += base/AudioLevel.cpp \
            base/Serialiser.cpp \
            base/StorageAdviser.cpp \
            base/StringBits.cpp \
+           base/Strings.cpp \
            base/TempDirectory.cpp \
            base/TempWriteFile.cpp \
            base/TextMatcher.cpp \

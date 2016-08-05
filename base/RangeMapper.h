@@ -50,7 +50,7 @@ public:
     virtual double getValueForPosition(int position) const = 0;
 
     /**
-     * Return the value mapped from the given positionq, without
+     * Return the value mapped from the given position, without
      * clamping. That is, whatever mapping function is in use will be
      * projected even outside the minimum and maximum extents of the
      * mapper's value range. (The mapping outside that range is not
@@ -62,6 +62,16 @@ public:
      * Get the unit of the mapper's value range.
      */
     virtual QString getUnit() const { return ""; }
+
+    /**
+     * The mapper may optionally provide special labels for one or
+     * more individual positions (such as the minimum position, the
+     * default, or indeed all positions). These should be used in any
+     * display context in preference to just showing the numerical
+     * value for the position. If a position has such a label, return
+     * it here.
+     */
+    virtual QString getLabel(int position) const { return ""; }
 };
 
 
@@ -76,7 +86,8 @@ public:
      */
     LinearRangeMapper(int minpos, int maxpos,
                       double minval, double maxval,
-                      QString unit = "", bool inverted = false);
+                      QString unit = "", bool inverted = false,
+                      std::map<int, QString> labels = {});
     
     virtual int getPositionForValue(double value) const;
     virtual int getPositionForValueUnclamped(double value) const;
@@ -85,6 +96,7 @@ public:
     virtual double getValueForPositionUnclamped(int position) const;
 
     virtual QString getUnit() const { return m_unit; }
+    virtual QString getLabel(int position) const;
 
 protected:
     int m_minpos;
@@ -93,6 +105,7 @@ protected:
     double m_maxval;
     QString m_unit;
     bool m_inverted;
+    std::map<int, QString> m_labels;
 };
 
 class LogRangeMapper : public RangeMapper
