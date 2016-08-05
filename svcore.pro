@@ -56,10 +56,12 @@ HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
            base/BaseTypes.h \
            base/Clipboard.h \
+           base/ColumnOp.h \
            base/Command.h \
            base/Debug.h \
            base/Exceptions.h \
            base/LogRange.h \
+           base/MagnitudeRange.h \
            base/Pitch.h \
            base/Playable.h \
            base/PlayParameterRepository.h \

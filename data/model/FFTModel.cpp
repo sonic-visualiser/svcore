@@ -103,6 +103,18 @@ FFTModel::getColumn(int x) const
     return move(col);
 }
 
+FFTModel::Column
+FFTModel::getPhases(int x) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(cplx.size());
+    for (auto c: cplx) {
+        col.push_back(arg(c));
+    }
+    return move(col);
+}
+
 float
 FFTModel::getMagnitudeAt(int x, int y) const
 {
@@ -147,23 +159,6 @@ FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
         values[i] = abs(col[minbin + i]);
     }
     return true;
-}
-
-float
-FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
-{
-    if (!getMagnitudesAt(x, values, minbin, count)) return false;
-    if (count == 0) count = getHeight();
-    float max = 0.f;
-    for (int i = 0; i < count; ++i) {
-        if (values[i] > max) max = values[i];
-    }
-    if (max > 0.f) {
-        for (int i = 0; i < count; ++i) {
-            values[i] /= max;
-        }
-    }
-    return max;
 }
 
 bool
@@ -348,7 +343,7 @@ FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 }
 
 FFTModel::PeakLocationSet
-FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
+FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeaks");
 
@@ -496,7 +491,7 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
 
 FFTModel::PeakSet
 FFTModel::getPeakFrequencies(PeakPickType type, int x,
-                             int ymin, int ymax)
+                             int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeakFrequencies");
 

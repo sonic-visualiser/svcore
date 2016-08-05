@@ -571,7 +571,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
         if (m_concertA) {
             ratio *= *m_concertA / 440.f;
         }
-	if (m_basePitch && n != *m_basePitch) {
+	if (m_basePitch && float(n) != *m_basePitch) {
 	    ratio *= powf(1.059463094f, float(n) - *m_basePitch);
 	}
     }

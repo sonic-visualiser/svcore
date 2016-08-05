@@ -76,6 +76,7 @@ public:
     virtual float getMinimumLevel() const { return 0.f; } // Can't provide
     virtual float getMaximumLevel() const { return 1.f; } // Can't provide
     virtual Column getColumn(int x) const; // magnitudes
+    virtual Column getPhases(int x) const;
     virtual QString getBinName(int n) const;
     virtual bool shouldUseLogValueScale() const { return true; }
     virtual int getCompletion() const {
@@ -95,13 +96,14 @@ public:
     int getWindowSize() const { return m_windowSize; }
     int getWindowIncrement() const { return m_windowIncrement; }
     int getFFTSize() const { return m_fftSize; }
+
+//!!! review which of these are ever actually called
     
     float getMagnitudeAt(int x, int y) const;
     float getMaximumMagnitudeAt(int x) const;
     float getPhaseAt(int x, int y) const;
     void getValuesAt(int x, int y, float &real, float &imaginary) const;
     bool getMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) const;
-    float getNormalizedMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) const; // returns maximum of unnormalized magnitudes
     bool getPhasesAt(int x, float *values, int minbin = 0, int count = 0) const;
     bool getValuesAt(int x, float *reals, float *imaginaries, int minbin = 0, int count = 0) const;
 
@@ -127,13 +129,13 @@ public:
      * ymax is zero, getHeight()-1 will be used.
      */
     virtual PeakLocationSet getPeaks(PeakPickType type, int x,
-                                     int ymin = 0, int ymax = 0);
+                                     int ymin = 0, int ymax = 0) const;
 
     /**
      * Return locations and estimated stable frequencies of peak bins.
      */
     virtual PeakSet getPeakFrequencies(PeakPickType type, int x,
-                                       int ymin = 0, int ymax = 0);
+                                       int ymin = 0, int ymax = 0) const;
 
     QString getTypeName() const { return tr("FFT"); }
 
