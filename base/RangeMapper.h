@@ -71,7 +71,7 @@ public:
      * value for the position. If a position has such a label, return
      * it here.
      */
-    virtual QString getLabel(int position) const { return ""; }
+    virtual QString getLabel(int /* position */) const { return ""; }
 };
 
 
