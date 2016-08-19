@@ -98,9 +98,21 @@ FFTModel::getColumn(int x) const
 {
     auto cplx = getFFTColumn(x);
     Column col;
-    col.reserve(int(cplx.size()));
+    col.reserve(cplx.size());
     for (auto c: cplx) col.push_back(abs(c));
-    return col;
+    return move(col);
+}
+
+FFTModel::Column
+FFTModel::getPhases(int x) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(cplx.size());
+    for (auto c: cplx) {
+        col.push_back(arg(c));
+    }
+    return move(col);
 }
 
 float
@@ -116,7 +128,8 @@ FFTModel::getMaximumMagnitudeAt(int x) const
 {
     Column col(getColumn(x));
     float max = 0.f;
-    for (int i = 0; i < col.size(); ++i) {
+    int n = int(col.size());
+    for (int i = 0; i < n; ++i) {
         if (col[i] > max) max = col[i];
     }
     return max;
@@ -138,13 +151,6 @@ FFTModel::getValuesAt(int x, int y, float &re, float &im) const
 }
 
 bool
-FFTModel::isColumnAvailable(int) const
-{
-    //!!!
-    return true;
-}
-
-bool
 FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
 {
     if (count == 0) count = getHeight();
@@ -153,23 +159,6 @@ FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
         values[i] = abs(col[minbin + i]);
     }
     return true;
-}
-
-float
-FFTModel::getNormalizedMagnitudesAt(int x, float *values, int minbin, int count) const
-{
-    if (!getMagnitudesAt(x, values, minbin, count)) return false;
-    if (count == 0) count = getHeight();
-    float max = 0.f;
-    for (int i = 0; i < count; ++i) {
-        if (values[i] > max) max = values[i];
-    }
-    if (max > 0.f) {
-        for (int i = 0; i < count; ++i) {
-            values[i] /= max;
-        }
-    }
-    return max;
 }
 
 bool
@@ -313,7 +302,7 @@ FFTModel::getFFTColumn(int n) const
     }
     m_cached.push_back(sc);
 
-    return col;
+    return move(col);
 }
 
 bool
@@ -354,7 +343,7 @@ FFTModel::estimateStableFrequency(int x, int y, double &frequency)
 }
 
 FFTModel::PeakLocationSet
-FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
+FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeaks");
 
@@ -388,10 +377,11 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
     }
 
     Column values = getColumn(x);
+    int nv = int(values.size());
 
     float mean = 0.f;
-    for (int i = 0; i < values.size(); ++i) mean += values[i];
-    if (values.size() > 0) mean = mean / float(values.size());
+    for (int i = 0; i < nv; ++i) mean += values[i];
+    if (nv > 0) mean = mean / float(values.size());
     
     // For peak picking we use a moving median window, picking the
     // highest value within each continuous region of values that
@@ -412,8 +402,8 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
     else binmin = 0;
 
     int binmax;
-    if (ymax + halfWin < values.size()) binmax = ymax + halfWin;
-    else binmax = values.size()-1;
+    if (ymax + halfWin < nv) binmax = ymax + halfWin;
+    else binmax = nv - 1;
 
     int prevcentre = 0;
 
@@ -434,8 +424,8 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
         int actualSize = int(window.size());
 
         if (type == MajorPitchAdaptivePeaks) {
-            if (ymax + halfWin < values.size()) binmax = ymax + halfWin;
-            else binmax = values.size()-1;
+            if (ymax + halfWin < nv) binmax = ymax + halfWin;
+            else binmax = nv - 1;
         }
 
         deque<float> sorted(window);
@@ -455,7 +445,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax)
                 inrange.push_back(centrebin);
             }
 
-            if (centre <= median || centrebin+1 == values.size()) {
+            if (centre <= median || centrebin+1 == nv) {
                 if (!inrange.empty()) {
                     int peakbin = 0;
                     float peakval = 0.f;
@@ -501,7 +491,7 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
 
 FFTModel::PeakSet
 FFTModel::getPeakFrequencies(PeakPickType type, int x,
-                             int ymin, int ymax)
+                             int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeakFrequencies");
 

@@ -176,8 +176,6 @@ MatrixFile::~MatrixFile()
 
     QMutexLocker locker(&m_createMutex);
 
-    delete m_setColumns;
-
     if (m_fileName != "") {
 
         if (--m_refcount[m_fileName] == 0) {
@@ -208,7 +206,7 @@ MatrixFile::initialise()
 
     assert(m_mode == WriteOnly);
 
-    m_setColumns = new ResizeableBitset(m_width);
+    m_setColumns.resize(m_width, false);
     
     off_t off = m_headerSize + (m_width * m_height * m_cellSize) + m_width;
 
@@ -316,7 +314,7 @@ bool
 MatrixFile::haveSetColumnAt(int x) const
 {
     if (m_mode == WriteOnly) {
-        return m_setColumns->get(x);
+        return m_setColumns[x];
     }
 
     if (m_readyToReadColumn >= 0 &&
@@ -398,9 +396,10 @@ MatrixFile::setColumnAt(int x, const void *data)
         throw FileOperationFailed(m_fileName, "write");
     }
 
-    m_setColumns->set(x);
+    m_setColumns[x] = true;
     if (m_autoClose) {
-        if (m_setColumns->isAllOn()) {
+        if (std::all_of(m_setColumns.begin(), m_setColumns.end(),
+                        [](bool c) { return c; })) {
 #ifdef DEBUG_MATRIX_FILE
             cerr << "MatrixFile[" << m_fd << "]::setColumnAt(" << x << "): All columns set: auto-closing" << endl;
 #endif

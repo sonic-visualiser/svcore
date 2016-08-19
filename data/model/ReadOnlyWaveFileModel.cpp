@@ -193,7 +193,7 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
     // playback or input to transforms.
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << ", " << buffer << endl;
+    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << endl;
 #endif
 
     int channels = getChannelCount();
@@ -252,7 +252,7 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
     // playback or input to transforms.
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << ", " << buffer << endl;
+    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << endl;
 #endif
 
     int channels = getChannelCount();
@@ -322,7 +322,7 @@ ReadOnlyWaveFileModel::getSummaryBlockSize(int desired) const
 
 void
 ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t count,
-                            RangeBlock &ranges, int &blockSize) const
+                                    RangeBlock &ranges, int &blockSize) const
 {
     ranges.clear();
     if (!isOK()) return;
@@ -403,14 +403,12 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
         blockSize = roundedBlockSize;
 
 	sv_frame_t cacheBlock, div;
-        
-	if (cacheType == 0) {
-	    cacheBlock = (1 << m_zoomConstraint.getMinCachePower());
-            div = (1 << power) / cacheBlock;
-	} else {
-	    cacheBlock = sv_frame_t((1 << m_zoomConstraint.getMinCachePower()) * sqrt(2.) + 0.01);
-            div = sv_frame_t(((1 << power) * sqrt(2.) + 0.01) / double(cacheBlock));
+
+        cacheBlock = (sv_frame_t(1) << m_zoomConstraint.getMinCachePower());
+	if (cacheType == 1) {
+	    cacheBlock = sv_frame_t(double(cacheBlock) * sqrt(2.) + 0.01);
 	}
+        div = blockSize / cacheBlock;
 
 	sv_frame_t startIndex = start / cacheBlock;
 	sv_frame_t endIndex = (start + count) / cacheBlock;
@@ -425,7 +423,7 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
 	for (i = 0; i <= endIndex - startIndex; ) {
         
 	    sv_frame_t index = (i + startIndex) * channels + channel;
-	    if (index >= (sv_frame_t)cache.size()) break;
+	    if (!in_range_for(cache, index)) break;
             
             const Range &range = cache[index];
             if (range.max() > max || got == 0) max = range.max();
@@ -448,7 +446,7 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    SVDEBUG << "returning " << ranges.size() << " ranges" << endl;
+    cerr << "returning " << ranges.size() << " ranges" << endl;
 #endif
     return;
 }
@@ -573,7 +571,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
                                         sqrt(2.) + 0.01));
     
     sv_frame_t frame = 0;
-    const sv_frame_t readBlockSize = 16384;
+    const sv_frame_t readBlockSize = 32768;
     vector<float> block;
 
     if (!m_model.isOK()) return;
@@ -583,7 +581,9 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
 
     if (updating) {
         while (channels == 0 && !m_model.m_exiting) {
-//            SVDEBUG << "ReadOnlyWaveFileModel::fill: Waiting for channels..." << endl;
+#ifdef DEBUG_WAVE_FILE_MODEL
+            cerr << "ReadOnlyWaveFileModel::fill: Waiting for channels..." << endl;
+#endif
             sleep(1);
             channels = m_model.getChannelCount();
         }
@@ -604,37 +604,37 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         updating = m_model.m_reader->isUpdating();
         m_frameCount = m_model.getFrameCount();
 
-//        SVDEBUG << "ReadOnlyWaveFileModel::fill: frame = " << frame << ", count = " << m_frameCount << endl;
+        m_model.m_mutex.lock();
 
         while (frame < m_frameCount) {
 
-//            SVDEBUG << "ReadOnlyWaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
+            m_model.m_mutex.unlock();
+
+#ifdef DEBUG_WAVE_FILE_MODEL
+            cerr << "ReadOnlyWaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
+#endif
 
             if (updating && (frame + readBlockSize > m_frameCount)) break;
 
             block = m_model.m_reader->getInterleavedFrames(frame, readBlockSize);
 
-//            cerr << "block is " << block.size() << endl;
+            sv_frame_t gotBlockSize = block.size() / channels;
 
-            for (sv_frame_t i = 0; i < readBlockSize; ++i) {
+            m_model.m_mutex.lock();
+
+            for (sv_frame_t i = 0; i < gotBlockSize; ++i) {
 		
-                if (channels * i + channels > (int)block.size()) break;
-
                 for (int ch = 0; ch < channels; ++ch) {
 
                     sv_frame_t index = channels * i + ch;
                     float sample = block[index];
                     
-                    for (int cacheType = 0; cacheType < 2; ++cacheType) { // cache type
-                        
+                    for (int cacheType = 0; cacheType < 2; ++cacheType) {
                         sv_frame_t rangeIndex = ch * 2 + cacheType;
                         range[rangeIndex].sample(sample);
                         means[rangeIndex] += fabsf(sample);
                     }
                 }
-
-                //!!! this looks like a ludicrous way to do synchronisation
-                QMutexLocker locker(&m_model.m_mutex);
 
                 for (int cacheType = 0; cacheType < 2; ++cacheType) {
 
@@ -655,18 +655,16 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
                 
                 ++frame;
             }
-            
+
             if (m_model.m_exiting) break;
-            
             m_fillExtent = frame;
         }
 
-//        cerr << "ReadOnlyWaveFileModel: inner loop ended" << endl;
-
+        m_model.m_mutex.unlock();
+            
         first = false;
         if (m_model.m_exiting) break;
         if (updating) {
-//            cerr << "sleeping..." << endl;
             sleep(1);
         }
     }

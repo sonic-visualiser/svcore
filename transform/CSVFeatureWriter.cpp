@@ -37,7 +37,8 @@ CSVFeatureWriter::CSVFeatureWriter() :
     m_sampleTiming(false),
     m_endTimes(false),
     m_forceEnd(false),
-    m_omitFilename(false)
+    m_omitFilename(false),
+    m_digits(6)
 {
 }
 
@@ -82,6 +83,11 @@ CSVFeatureWriter::getSupportedParameters() const
     p.hasArg = false;
     pl.push_back(p);
 
+    p.name = "digits";
+    p.description = "Specify the number of significant digits to use when printing transform outputs. Outputs are represented internally using single-precision floating-point, so digits beyond the 8th or 9th place are usually meaningless. The default is 6.";
+    p.hasArg = true;
+    pl.push_back(p);
+
     return pl;
 }
 
@@ -93,10 +99,10 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
     SVDEBUG << "CSVFeatureWriter::setParameters" << endl;
     for (map<string, string>::iterator i = params.begin();
          i != params.end(); ++i) {
-        cerr << i->first << " -> " << i->second << endl;
+        SVDEBUG << i->first << " -> " << i->second << endl;
         if (i->first == "separator") {
             m_separator = i->second.c_str();
-            cerr << "m_separator = " << m_separator << endl;
+            SVDEBUG << "m_separator = " << m_separator << endl;
             if (m_separator == "\\t") {
                 m_separator = QChar::Tabulation;
             }
@@ -108,6 +114,14 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
             m_forceEnd = true;
         } else if (i->first == "omit-filename") {
             m_omitFilename = true;
+        } else if (i->first == "digits") {
+            int digits = atoi(i->second.c_str());
+            if (digits <= 0 || digits > 100) {
+                cerr << "CSVFeatureWriter: ERROR: Invalid or out-of-range value for number of significant digits: " << i->second << endl;
+                cerr << "CSVFeatureWriter: NOTE: Continuing with default settings" << endl;
+            } else {
+                m_digits = digits;
+            }
         }
     }
 }
@@ -262,7 +276,7 @@ CSVFeatureWriter::writeFeature(DataId tt,
     }
     
     for (unsigned int j = 0; j < f.values.size(); ++j) {
-        stream << m_separator << f.values[j];
+        stream << m_separator << QString("%1").arg(f.values[j], 0, 'g', m_digits);
     }
     
     if (f.label != "") {

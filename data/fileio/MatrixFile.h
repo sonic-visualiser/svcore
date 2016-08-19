@@ -13,10 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MATRIX_FILE_CACHE_H_
-#define _MATRIX_FILE_CACHE_H_
-
-#include "base/ResizeableBitset.h"
+#ifndef MATRIX_FILE_H
+#define MATRIX_FILE_H
 
 #include "FileReadThread.h"
 
@@ -91,7 +89,7 @@ protected:
     int     m_headerSize;
     QString m_fileName;
 
-    ResizeableBitset *m_setColumns; // only in writer
+    std::vector<bool> m_setColumns; // only populated in writer
     bool m_autoClose;
 
     // In reader: if this is >= 0, we can read that column directly
