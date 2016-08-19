@@ -37,7 +37,7 @@ public:
     virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getPluginIdentifiers();
-
+    
     virtual QString findPluginFile(QString soname, QString inDir = "");
 
     // We don't set blockSize or channels on this -- they're
@@ -57,7 +57,7 @@ protected:
     friend class PluginDeletionNotifyAdapter;
     void pluginDeleted(Vamp::Plugin *);
     std::map<Vamp::Plugin *, void *> m_handleMap;
-
+    
     void generateTaxonomy();
 };
 

@@ -1,6 +1,9 @@
 
 TEMPLATE = lib
 
+INCLUDEPATH += ../vamp-plugin-sdk
+DEFINES += HAVE_VAMP HAVE_VAMPHOSTSDK
+
 exists(config.pri) {
     include(config.pri)
 }
@@ -22,7 +25,7 @@ exists(config.pri) {
         LIBS += -L../sv-dependency-builds/osx/lib
     }
 
-    DEFINES += HAVE_BZ2 HAVE_FFTW3 HAVE_FFTW3F HAVE_SNDFILE HAVE_SAMPLERATE HAVE_VAMP HAVE_VAMPHOSTSDK HAVE_LIBLO HAVE_MAD HAVE_ID3TAG 
+    DEFINES += HAVE_BZ2 HAVE_FFTW3 HAVE_FFTW3F HAVE_SNDFILE HAVE_SAMPLERATE HAVE_LIBLO HAVE_MAD HAVE_ID3TAG 
 
     macx* {
         DEFINES += HAVE_COREAUDIO
@@ -36,7 +39,7 @@ QT -= gui
 TARGET = svcore
 
 DEPENDPATH += . data plugin plugin/api/alsa
-INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay
+INCLUDEPATH += . data plugin plugin/api/alsa ../dataquay ../checker
 OBJECTS_DIR = o
 MOC_DIR = o
 
@@ -53,10 +56,12 @@ HEADERS += base/AudioLevel.h \
            base/AudioPlaySource.h \
            base/BaseTypes.h \
            base/Clipboard.h \
+           base/ColumnOp.h \
            base/Command.h \
            base/Debug.h \
            base/Exceptions.h \
            base/LogRange.h \
+           base/MagnitudeRange.h \
            base/Pitch.h \
            base/Playable.h \
            base/PlayParameterRepository.h \
@@ -70,7 +75,6 @@ HEADERS += base/AudioLevel.h \
            base/RealTime.h \
            base/RecentFiles.h \
            base/Resampler.h \
-           base/ResizeableBitset.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
            base/Scavenger.h \
@@ -78,6 +82,7 @@ HEADERS += base/AudioLevel.h \
            base/Serialiser.h \
            base/StorageAdviser.h \
            base/StringBits.h \
+           base/Strings.h \
            base/TempDirectory.h \
            base/TempWriteFile.h \
            base/TextMatcher.h \
@@ -110,6 +115,7 @@ SOURCES += base/AudioLevel.cpp \
            base/Serialiser.cpp \
            base/StorageAdviser.cpp \
            base/StringBits.cpp \
+           base/Strings.cpp \
            base/TempDirectory.cpp \
            base/TempWriteFile.cpp \
            base/TextMatcher.cpp \
@@ -221,7 +227,8 @@ SOURCES += data/fft/FFTapi.cpp \
            data/osc/OSCMessage.cpp \
            data/osc/OSCQueue.cpp 
 
-HEADERS += plugin/DSSIPluginFactory.h \
+HEADERS += plugin/PluginScan.h \
+           plugin/DSSIPluginFactory.h \
            plugin/DSSIPluginInstance.h \
            plugin/FeatureExtractionPluginFactory.h \
            plugin/LADSPAPluginFactory.h \
@@ -241,7 +248,8 @@ HEADERS += plugin/DSSIPluginFactory.h \
            plugin/api/alsa/sound/asequencer.h
 
 
-SOURCES += plugin/DSSIPluginFactory.cpp \
+SOURCES += plugin/PluginScan.cpp \
+           plugin/DSSIPluginFactory.cpp \
            plugin/DSSIPluginInstance.cpp \
            plugin/FeatureExtractionPluginFactory.cpp \
            plugin/LADSPAPluginFactory.cpp \

@@ -70,6 +70,19 @@ private:
     typedef map<QString, TrackMetadata> TrackMetadataMap;
     TrackMetadataMap m_metadata;
 
+    bool haveTitleArtistMetadata(QString trackId) const {
+        // Formerly in various places we used to test whether a track
+        // appeared in the metadata map at all, in order to determine
+        // whether it had any associated metadata. That won't work any
+        // more because metadata now includes duration, which can
+        // appear even if no title/artist are given and which is not
+        // something whose presence indicates the involvement of a
+        // "publication Track". So check for artist/title explicitly.
+        auto mitr = m_metadata.find(trackId);
+        if (mitr == m_metadata.end()) return false;
+        return (mitr->second.title != "" || mitr->second.maker != "");
+    }
+
     QString m_fixedEventTypeURI;
 
     virtual void reviewFileForAppending(QString filename);

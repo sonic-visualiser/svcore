@@ -105,11 +105,6 @@ public:
     virtual void setMaximumLevel(float sz);
 
     /**
-     * Return true if there are data available for the given column.
-     */
-    virtual bool isColumnAvailable(int x) const { return x < getWidth(); }
-
-    /**
      * Get the set of bin values at the given column.
      */
     virtual Column getColumn(int x) const;
@@ -194,7 +189,7 @@ public:
                        QString extraAttributes = "") const;
 
 protected:
-    typedef QVector<Column> ValueMatrix;
+    typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
 
     // m_trunc is used for simple compression.  If at least the top N

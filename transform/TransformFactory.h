@@ -195,7 +195,7 @@ public:
      */
     void setParametersFromPluginConfigurationXml(Transform &transform,
                                                  QString xml);
-
+    
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
 

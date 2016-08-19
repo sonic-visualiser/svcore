@@ -18,6 +18,7 @@
 
 #include "Model.h"
 #include "TabularModel.h"
+#include "base/ColumnOp.h"
 #include "base/ZoomConstraint.h"
 #include "base/RealTime.h"
 
@@ -55,16 +56,7 @@ public:
      */
     virtual float getMaximumLevel() const = 0;
 
-    /**
-     * Return true if there are data available for the given column.
-     * This should return true only if getColumn(column) would not
-     * have to do any substantial work to calculate its return values.
-     * If this function returns false, it may still be possible to
-     * retrieve the column, but its values may have to be calculated.
-     */
-    virtual bool isColumnAvailable(int column) const = 0;
-
-    typedef QVector<float> Column;
+    typedef ColumnOp::Column Column;
 
     /**
      * Get data from the given column of bin values.
@@ -153,12 +145,12 @@ public:
     {
         switch (column) {
         case 0: {
-            RealTime rt = RealTime::frame2RealTime(row * getResolution(),
-                                                   getSampleRate());
+            RealTime rt = RealTime::frame2RealTime
+                (row * getResolution() + getStartFrame(), getSampleRate());
             return rt.toText().c_str();
         }
         case 1:
-            return int(row * getResolution());
+            return int(row * getResolution() + getStartFrame());
         default:
             return getValueAt(row, column - 2);
         }
@@ -172,10 +164,10 @@ public:
     }
 
     virtual sv_frame_t getFrameForRow(int row) const {
-        return sv_frame_t(row) * getResolution();
+        return sv_frame_t(row) * getResolution() + getStartFrame();
     }
     virtual int getRowForFrame(sv_frame_t frame) const {
-        return int(frame / getResolution());
+        return int((frame - getStartFrame()) / getResolution());
     }
 
 protected:

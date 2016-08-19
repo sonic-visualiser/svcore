@@ -23,13 +23,15 @@
 
 LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
 				     double minval, double maxval,
-                                     QString unit, bool inverted) :
+                                     QString unit, bool inverted,
+                                     std::map<int, QString> labels) :
     m_minpos(minpos),
     m_maxpos(maxpos),
     m_minval(minval),
     m_maxval(maxval),
     m_unit(unit),
-    m_inverted(inverted)
+    m_inverted(inverted),
+    m_labels(labels)
 {
     assert(m_maxval != m_minval);
     assert(m_maxpos != m_minpos);
@@ -70,7 +72,18 @@ LinearRangeMapper::getValueForPositionUnclamped(int position) const
     double value = m_minval +
         ((double(position - m_minpos) / double(m_maxpos - m_minpos))
          * (m_maxval - m_minval));
+//    cerr << "getValueForPositionUnclamped(" << position << "): minval " << m_minval << ", maxval " << m_maxval << ", value " << value << endl;
     return value;
+}
+
+QString
+LinearRangeMapper::getLabel(int position) const
+{
+    if (m_labels.find(position) != m_labels.end()) {
+        return m_labels.at(position);
+    } else {
+        return "";
+    }
 }
 
 LogRangeMapper::LogRangeMapper(int minpos, int maxpos,

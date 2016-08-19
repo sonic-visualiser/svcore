@@ -46,7 +46,8 @@ public:
 
     /**
      * Construct a Transform by parsing the given XML data string.
-     * This is the inverse of toXml.
+     * This is the inverse of toXml. If this fails, getErrorString()
+     * will return a non-empty string.
      */
     Transform(QString xml);
 
@@ -67,7 +68,7 @@ public:
     void setIdentifier(TransformId id);
     TransformId getIdentifier() const;
 
-    enum Type { FeatureExtraction, RealTimeEffect };
+    enum Type { FeatureExtraction, RealTimeEffect, UnknownType };
 
     Type getType() const;
     QString getPluginIdentifier() const;
@@ -156,6 +157,8 @@ public:
      */
     void setFromXmlAttributes(const QXmlAttributes &);
 
+    QString getErrorString() const { return m_errorString; }
+    
     static SummaryType stringToSummaryType(QString);
     static QString summaryTypeToString(SummaryType);
 
@@ -195,6 +198,7 @@ protected:
     RealTime m_startTime;
     RealTime m_duration;
     sv_samplerate_t m_sampleRate;
+    QString m_errorString;
 };
 
 typedef std::vector<Transform> Transforms;
