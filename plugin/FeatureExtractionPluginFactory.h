@@ -52,6 +52,8 @@ public:
     virtual QString getPluginCategory(QString identifier);
 
 protected:
+    std::string m_serverName;
+    
     piper_vamp::client::ProcessQtTransport m_transport;
     piper_vamp::client::CapnpRRClient m_client;
 

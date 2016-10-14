@@ -23,6 +23,8 @@
 
 #include "PluginScan.h"
 
+#include "vamp-client/AutoPlugin.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -61,7 +63,8 @@ FeatureExtractionPluginFactory::instanceFor(QString identifier)
 }
 
 FeatureExtractionPluginFactory::FeatureExtractionPluginFactory() :
-    m_transport("piper-cpp/bin/piper-vamp-server"),
+    m_serverName("piper-cpp/bin/piper-vamp-server"),
+    m_transport(m_serverName),
     m_client(&m_transport)
 {
 }
@@ -112,17 +115,20 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 						  sv_samplerate_t inputSampleRate)
 {
     Profiler profiler("FeatureExtractionPluginFactory::instantiatePlugin");
-
+    
     QString type, soname, label;
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
+    std::string pluginKey = (soname + ":" + label).toStdString();
 
-    piper_vamp::LoadRequest request;
-    request.pluginKey = (soname + ":" + label).toStdString();
-    request.inputSampleRate = inputSampleRate;
-    request.adapterFlags = 0;
-    piper_vamp::LoadResponse response = m_client.loadPlugin(request);
+    auto ap = new piper_vamp::client::AutoPlugin
+        (m_serverName, pluginKey, inputSampleRate, 0);
 
-    return response.plugin;
+    if (!ap->isOK()) {
+        delete ap;
+        return 0;
+    } else {
+        return ap;
+    }
 }
 
 QString
