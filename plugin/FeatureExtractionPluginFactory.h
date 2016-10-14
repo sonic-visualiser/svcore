@@ -17,6 +17,7 @@
 #define _FEATURE_EXTRACTION_PLUGIN_FACTORY_H_
 
 #include <QString>
+#include <QMutex>
 #include <vector>
 #include <map>
 
@@ -25,20 +26,20 @@
 #include "base/Debug.h"
 #include "base/BaseTypes.h"
 
+#include "vamp-client/ProcessQtTransport.h"
+#include "vamp-client/CapnpRRClient.h"
+
 class FeatureExtractionPluginFactory
 {
 public:
+    FeatureExtractionPluginFactory();
     virtual ~FeatureExtractionPluginFactory() { }
 
     static FeatureExtractionPluginFactory *instance(QString pluginType);
     static FeatureExtractionPluginFactory *instanceFor(QString identifier);
     static std::vector<QString> getAllPluginIdentifiers();
 
-    virtual std::vector<QString> getPluginPath();
-
     virtual std::vector<QString> getPluginIdentifiers();
-    
-    virtual QString findPluginFile(QString soname, QString inDir = "");
 
     // We don't set blockSize or channels on this -- they're
     // negotiated and handled via initialize() on the plugin
@@ -51,14 +52,12 @@ public:
     virtual QString getPluginCategory(QString identifier);
 
 protected:
-    std::vector<QString> m_pluginPath;
-    std::map<QString, QString> m_taxonomy;
+    piper_vamp::client::ProcessQtTransport m_transport;
+    piper_vamp::client::CapnpRRClient m_client;
 
-    friend class PluginDeletionNotifyAdapter;
-    void pluginDeleted(Vamp::Plugin *);
-    std::map<Vamp::Plugin *, void *> m_handleMap;
-    
-    void generateTaxonomy();
+    QMutex m_mutex;
+    std::vector<piper_vamp::PluginStaticData> m_pluginData;
+    void populate();
 };
 
 #endif
