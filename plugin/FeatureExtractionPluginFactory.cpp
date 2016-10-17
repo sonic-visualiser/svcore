@@ -118,7 +118,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     std::string pluginKey = (soname + ":" + label).toStdString();
 
     auto ap = new piper_vamp::client::AutoPlugin
-        (m_serverName, pluginKey, inputSampleRate, 0);
+        (m_serverName, pluginKey, float(inputSampleRate), 0);
 
     if (!ap->isOK()) {
         delete ap;
