@@ -59,6 +59,7 @@ protected:
 
     QMutex m_mutex;
     std::vector<piper_vamp::PluginStaticData> m_pluginData;
+    std::map<QString, QString> m_taxonomy;
     void populate();
 };
 
