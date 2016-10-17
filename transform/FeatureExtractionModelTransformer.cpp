@@ -42,17 +42,19 @@
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
 
-    initialise();
+//    initialise();
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transforms &transforms) :
     ModelTransformer(in, transforms),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     if (m_transforms.empty()) {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s)" << endl;
@@ -60,7 +62,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
     }
     
-    initialise();
+//    initialise();
 }
 
 static bool
@@ -104,6 +106,9 @@ FeatureExtractionModelTransformer::initialise()
         return false;
     }
 
+    cerr << "instantiating plugin for transform in thread "
+         << QThread::currentThreadId() << endl;
+    
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
@@ -219,6 +224,11 @@ FeatureExtractionModelTransformer::initialise()
     for (int j = 0; j < (int)m_transforms.size(); ++j) {
         createOutputModels(j);
     }
+
+    m_outputMutex.lock();
+    m_haveOutputs = true;
+    m_outputsCondition.wakeAll();
+    m_outputMutex.unlock();
 
     return true;
 }
@@ -479,6 +489,16 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     }
 }
 
+void
+FeatureExtractionModelTransformer::awaitOutputModels()
+{
+    m_outputMutex.lock();
+    while (!m_haveOutputs) {
+        m_outputsCondition.wait(&m_outputMutex);
+    }
+    m_outputMutex.unlock();
+}
+
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
 //    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
@@ -566,6 +586,8 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
+    initialise();
+    
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
@@ -709,6 +731,9 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
+    cerr << "calling process() from thread "
+         << QThread::currentThreadId() << endl;
+    
 	Vamp::Plugin::FeatureSet features = m_plugin->process
 	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
 

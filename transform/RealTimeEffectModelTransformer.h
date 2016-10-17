@@ -31,6 +31,8 @@ public:
 protected:
     virtual void run();
 
+    virtual void awaitOutputModels() { } // they're created synchronously
+    
     QString m_units;
     RealTimePluginInstance *m_plugin;
     int m_outputNo;
