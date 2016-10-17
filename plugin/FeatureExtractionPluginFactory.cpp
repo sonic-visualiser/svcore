@@ -16,9 +16,6 @@
 #include "FeatureExtractionPluginFactory.h"
 #include "PluginIdentifier.h"
 
-#include <vamp-hostsdk/PluginHostAdapter.h>
-#include <vamp-hostsdk/PluginWrapper.h>
-
 #include "system/System.h"
 
 #include "PluginScan.h"
@@ -134,9 +131,7 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
 QString
 FeatureExtractionPluginFactory::getPluginCategory(QString identifier)
 {
-    //!!! (re)implement
-//    return m_taxonomy[identifier];
-    return QString();
+    return m_taxonomy[identifier];
 }
 
 void
@@ -144,5 +139,17 @@ FeatureExtractionPluginFactory::populate()
 {
     piper_vamp::ListResponse lr = m_client.listPluginData();
     m_pluginData = lr.available;
+
+    for (const auto &pd: m_pluginData) {
+
+        QString identifier =
+            QString("vamp:") + QString::fromStdString(pd.pluginKey);
+
+        QStringList catlist;
+        for (const auto &cs: pd.category) {
+            catlist.push_back(QString::fromStdString(cs));
+        }
+        m_taxonomy[identifier] = catlist.join(" > ");
+    }
 }
 
