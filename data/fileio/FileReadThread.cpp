@@ -19,7 +19,14 @@
 #include "base/Thread.h"
 
 #include <iostream>
+
+#ifdef _MSC_VER
+#include <io.h>
+#define _lseek lseek
+#else
 #include <unistd.h>
+#endif
+
 #include <cstdio>
 
 //#define DEBUG_FILE_READ_THREAD 1
