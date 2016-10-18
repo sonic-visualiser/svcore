@@ -27,7 +27,7 @@
 #include <iostream>
 
 #include <cstdlib>
-#include <unistd.h>
+//#include <unistd.h>
 
 #ifdef HAVE_ID3TAG
 #include <id3tag.h>
@@ -36,6 +36,11 @@
 //#define DEBUG_ID3TAG 1
 
 #include <QFileInfo>
+
+#ifdef _MSC_VER
+#include <io.h>
+#define open _open
+#endif
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
                              CacheMode mode, sv_samplerate_t targetRate,
