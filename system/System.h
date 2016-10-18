@@ -59,6 +59,11 @@ extern void SystemMemoryBarrier();
 
 #define getpid _getpid
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 extern "C" {
 /* usleep is now in mingw
 void usleep(unsigned long usec);
