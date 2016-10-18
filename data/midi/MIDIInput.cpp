@@ -17,7 +17,7 @@
 
 #include "rtmidi/RtMidi.h"
 
-#include <unistd.h>
+//#include <unistd.h>
 
 MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
     m_rtmidi(),

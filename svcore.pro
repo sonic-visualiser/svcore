@@ -33,7 +33,8 @@ exists(config.pri) {
         DEFINES += HAVE_COREAUDIO
     }
     win32-msvc* {
-        DEFINES += NOMINMAX
+        DEFINES += NOMINMAX _USE_MATH_DEFINES
+        DEFINES -= HAVE_LIBLO
     }
 }
 

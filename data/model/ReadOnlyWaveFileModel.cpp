@@ -26,7 +26,7 @@
 #include <QTextStream>
 
 #include <iostream>
-#include <unistd.h>
+//#include <unistd.h>
 #include <cmath>
 #include <sndfile.h>
 

@@ -65,9 +65,11 @@ typedef SSIZE_T ssize_t;
 #endif
 
 extern "C" {
-/* usleep is now in mingw
+
+#ifdef _MSC_VER
 void usleep(unsigned long usec);
-*/
+#endif
+
 int gettimeofday(struct timeval *p, void *tz);
 }
 
