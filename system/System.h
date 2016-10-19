@@ -82,6 +82,7 @@ int gettimeofday(struct timeval *p, void *tz);
 #include <dlfcn.h>
 #include <stdio.h> // for perror
 #include <cmath>
+#include <unistd.h> // sleep + usleep primarily
 
 #define MLOCK(a,b)   ::mlock((a),(b))
 #define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)

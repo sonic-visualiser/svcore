@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include <cstdlib>
-//#include <unistd.h>
 
 #ifdef HAVE_ID3TAG
 #include <id3tag.h>
