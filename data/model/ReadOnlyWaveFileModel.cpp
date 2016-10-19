@@ -614,7 +614,10 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
             cerr << "ReadOnlyWaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
 #endif
 
-            if (updating && (frame + readBlockSize > m_frameCount)) break;
+            if (updating && (frame + readBlockSize > m_frameCount)) {
+                m_model.m_mutex.lock(); // must be locked on exiting loop
+                break;
+            }
 
             block = m_model.m_reader->getInterleavedFrames(frame, readBlockSize);
 
