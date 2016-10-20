@@ -20,6 +20,11 @@
 
 #include "PluginScan.h"
 
+#ifdef _WIN32
+#undef VOID
+#undef ERROR
+#define CAPNP_LITE 1
+#endif
 #include "vamp-client/AutoPlugin.h"
 
 #include <QDir>
