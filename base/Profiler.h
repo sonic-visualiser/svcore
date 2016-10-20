@@ -25,8 +25,6 @@
 
 #include "system/System.h"
 
-#include <ctime>
-#include <sys/time.h>
 #include <map>
 
 #include "RealTime.h"
@@ -39,6 +37,11 @@
 #ifndef WANT_TIMING
 #define NO_TIMING 1
 #endif
+#endif
+
+#ifndef NO_TIMING
+#include <ctime>
+#include <sys/time.h>
 #endif
 
 /**
@@ -56,12 +59,15 @@ public:
     static Profiles* getInstance();
     ~Profiles();
 
+#ifndef NO_TIMING
     void accumulate(const char* id, clock_t time, RealTime rt);
+#endif
     void dump() const;
 
 protected:
     Profiles();
 
+#ifndef NO_TIMING
     typedef std::pair<clock_t, RealTime> TimePair;
     typedef std::pair<int, TimePair> ProfilePair;
     typedef std::map<const char *, ProfilePair> ProfileMap;
@@ -70,6 +76,7 @@ protected:
     ProfileMap m_profiles;
     LastCallMap m_lastCalls;
     WorstCallMap m_worstCalls;
+#endif
 
     static Profiles* m_instance;
 };

@@ -24,7 +24,6 @@
 #include <sstream>
 
 #include "RealTime.h"
-#include "sys/time.h"
 
 #include "Debug.h"
 

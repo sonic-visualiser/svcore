@@ -17,8 +17,10 @@ exists(config.pri) {
         LIBS += -L../sv-dependency-builds/win32-mingw/lib
     }
     win32-msvc* {
-        INCLUDEPATH += ../sv-dependency-builds/win32-msvc/include
-        LIBS += -L../sv-dependency-builds/win32-msvc/lib
+        # We actually expect MSVC to be used only for 64-bit builds,
+        # though the qmake spec is still called win32-msvc*
+        INCLUDEPATH += ../sv-dependency-builds/win64-msvc/include
+        LIBS += -L../sv-dependency-builds/win64-msvc/lib
     }
     macx* {
         INCLUDEPATH += ../sv-dependency-builds/osx/include
@@ -29,6 +31,10 @@ exists(config.pri) {
 
     macx* {
         DEFINES += HAVE_COREAUDIO
+    }
+    win32-msvc* {
+        DEFINES += NOMINMAX _USE_MATH_DEFINES
+        DEFINES -= HAVE_LIBLO
     }
 }
 
@@ -139,7 +145,6 @@ HEADERS += data/fft/FFTapi.h \
            data/fileio/FileFinder.h \
            data/fileio/FileReadThread.h \
            data/fileio/FileSource.h \
-           data/fileio/MatrixFile.h \
            data/fileio/MIDIFileReader.h \
            data/fileio/MIDIFileWriter.h \
            data/fileio/MP3FileReader.h \
@@ -197,7 +202,6 @@ SOURCES += data/fft/FFTapi.cpp \
            data/fileio/DataFileReaderFactory.cpp \
            data/fileio/FileReadThread.cpp \
            data/fileio/FileSource.cpp \
-           data/fileio/MatrixFile.cpp \
            data/fileio/MIDIFileReader.cpp \
            data/fileio/MIDIFileWriter.cpp \
            data/fileio/MP3FileReader.cpp \
