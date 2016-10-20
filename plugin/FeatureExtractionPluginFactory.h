@@ -26,8 +26,7 @@
 #include "base/Debug.h"
 #include "base/BaseTypes.h"
 
-#include "vamp-client/ProcessQtTransport.h"
-#include "vamp-client/CapnpRRClient.h"
+#include "vamp-support/PluginStaticData.h"
 
 class FeatureExtractionPluginFactory
 {
@@ -41,6 +40,8 @@ public:
 
     virtual std::vector<QString> getPluginIdentifiers();
 
+    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier);
+    
     // We don't set blockSize or channels on this -- they're
     // negotiated and handled via initialize() on the plugin
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
@@ -53,10 +54,6 @@ public:
 
 protected:
     std::string m_serverName;
-    
-    piper_vamp::client::ProcessQtTransport m_transport;
-    piper_vamp::client::CapnpRRClient m_client;
-
     QMutex m_mutex;
     std::vector<piper_vamp::PluginStaticData> m_pluginData;
     std::map<QString, QString> m_taxonomy;
