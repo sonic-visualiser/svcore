@@ -56,12 +56,12 @@ rpl_realloc (void *p, size_t n)
 
 extern "C" {
 
-/* usleep is now in mingw
+#ifdef _MSC_VER
 void usleep(unsigned long usec)
 {
     ::Sleep(usec / 1000);
 }
-*/
+#endif
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
@@ -119,7 +119,7 @@ typedef struct
     DWORDLONG ullAvailVirtual;
     DWORDLONG ullAvailExtendedVirtual;
 } lMEMORYSTATUSEX;
-typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+typedef BOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
 #endif
 
 void
@@ -277,7 +277,7 @@ GetDiscSpaceMBAvailable(const char *path)
 #ifdef _WIN32
 extern void SystemMemoryBarrier()
 {
-#ifdef __MSVC__
+#ifdef _MSC_VER
     MemoryBarrier();
 #else /* mingw */
     LONG Barrier = 0;

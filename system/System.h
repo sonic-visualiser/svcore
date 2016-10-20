@@ -59,10 +59,17 @@ extern void SystemMemoryBarrier();
 
 #define getpid _getpid
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 extern "C" {
-/* usleep is now in mingw
+
+#ifdef _MSC_VER
 void usleep(unsigned long usec);
-*/
+#endif
+
 int gettimeofday(struct timeval *p, void *tz);
 }
 
@@ -75,6 +82,7 @@ int gettimeofday(struct timeval *p, void *tz);
 #include <dlfcn.h>
 #include <stdio.h> // for perror
 #include <cmath>
+#include <unistd.h> // sleep + usleep primarily
 
 #define MLOCK(a,b)   ::mlock((a),(b))
 #define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
