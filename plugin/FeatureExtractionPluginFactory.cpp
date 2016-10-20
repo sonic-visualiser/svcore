@@ -31,6 +31,9 @@
 
 #include "base/Profiler.h"
 
+#include "vamp-client/ProcessQtTransport.h"
+#include "vamp-client/CapnpRRClient.h"
+
 using namespace std;
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
@@ -60,9 +63,7 @@ FeatureExtractionPluginFactory::instanceFor(QString identifier)
 }
 
 FeatureExtractionPluginFactory::FeatureExtractionPluginFactory() :
-    m_serverName("piper-cpp/bin/piper-vamp-server"),
-    m_transport(m_serverName),
-    m_client(&m_transport)
+    m_serverName("piper-cpp/bin/piper-vamp-server") //!!!
 {
 }
 
@@ -128,16 +129,37 @@ FeatureExtractionPluginFactory::instantiatePlugin(QString identifier,
     }
 }
 
+piper_vamp::PluginStaticData
+FeatureExtractionPluginFactory::getPluginStaticData(QString identifier)
+{
+    QString type, soname, label;
+    PluginIdentifier::parseIdentifier(identifier, type, soname, label);
+    std::string pluginKey = (soname + ":" + label).toStdString();
+
+    for (const auto &d: m_pluginData) {
+        if (d.pluginKey == pluginKey) {
+            return d;
+        }
+    }
+    return {};
+}
+
 QString
 FeatureExtractionPluginFactory::getPluginCategory(QString identifier)
 {
-    return m_taxonomy[identifier];
+    if (m_taxonomy.find(identifier) != m_taxonomy.end()) {
+        return m_taxonomy[identifier];
+    } else {
+        return {};
+    }
 }
 
 void
 FeatureExtractionPluginFactory::populate()
 {
-    piper_vamp::ListResponse lr = m_client.listPluginData();
+    piper_vamp::client::ProcessQtTransport transport(m_serverName);
+    piper_vamp::client::CapnpRRClient client(&transport);
+    piper_vamp::ListResponse lr = client.listPluginData();
     m_pluginData = lr.available;
 
     for (const auto &pd: m_pluginData) {
@@ -149,6 +171,7 @@ FeatureExtractionPluginFactory::populate()
         for (const auto &cs: pd.category) {
             catlist.push_back(QString::fromStdString(cs));
         }
+
         m_taxonomy[identifier] = catlist.join(" > ");
     }
 }

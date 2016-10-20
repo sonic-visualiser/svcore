@@ -418,64 +418,62 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 	    continue;
 	}
 
-	Vamp::Plugin *plugin = 
-	    factory->instantiatePlugin(pluginId, 44100);
+        piper_vamp::PluginStaticData psd = factory->getPluginStaticData(pluginId);
 
-	if (!plugin) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId << endl;
-	    continue;
-	}
-		
-	QString pluginName = plugin->getName().c_str();
+        if (psd.pluginKey == "") {
+            cerr << "WARNING: TransformFactory::populateTransforms: No plugin static data available for instance " << pluginId << endl;
+            continue;
+        }
+
+        QString pluginName = QString::fromStdString(psd.basic.name);
         QString category = factory->getPluginCategory(pluginId);
+        
+        const auto &basicOutputs = psd.basicOutputInfo;
 
-	Vamp::Plugin::OutputList outputs =
-	    plugin->getOutputDescriptors();
+        for (const auto &o: basicOutputs) {
 
-	for (int j = 0; j < (int)outputs.size(); ++j) {
+            QString outputName = QString::fromStdString(o.name);
 
 	    QString transformId = QString("%1:%2")
-		    .arg(pluginId).arg(outputs[j].identifier.c_str());
+                .arg(pluginId).arg(QString::fromStdString(o.identifier));
 
 	    QString userName;
             QString friendlyName;
-            QString units = outputs[j].unit.c_str();
-            QString description = plugin->getDescription().c_str();
-            QString maker = plugin->getMaker().c_str();
+//!!! return to this            QString units = outputs[j].unit.c_str();
+            QString description = QString::fromStdString(psd.basic.description);
+            QString maker = QString::fromStdString(psd.maker);
             if (maker == "") maker = tr("<unknown maker>");
 
             QString longDescription = description;
 
             if (longDescription == "") {
-                if (outputs.size() == 1) {
+                if (basicOutputs.size() == 1) {
                     longDescription = tr("Extract features using \"%1\" plugin (from %2)")
                         .arg(pluginName).arg(maker);
                 } else {
                     longDescription = tr("Extract features using \"%1\" output of \"%2\" plugin (from %3)")
-                        .arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
+                        .arg(outputName).arg(pluginName).arg(maker);
                 }
             } else {
-                if (outputs.size() == 1) {
+                if (basicOutputs.size() == 1) {
                     longDescription = tr("%1 using \"%2\" plugin (from %3)")
                         .arg(longDescription).arg(pluginName).arg(maker);
                 } else {
                     longDescription = tr("%1 using \"%2\" output of \"%3\" plugin (from %4)")
-                        .arg(longDescription).arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
+                        .arg(longDescription).arg(outputName).arg(pluginName).arg(maker);
                 }
             }                    
 
-	    if (outputs.size() == 1) {
+	    if (basicOutputs.size() == 1) {
 		userName = pluginName;
                 friendlyName = pluginName;
 	    } else {
-		userName = QString("%1: %2")
-		    .arg(pluginName)
-		    .arg(outputs[j].name.c_str());
-                friendlyName = outputs[j].name.c_str();
+		userName = QString("%1: %2").arg(pluginName).arg(outputName);
+                friendlyName = outputName;
 	    }
 
-            bool configurable = (!plugin->getPrograms().empty() ||
-                                 !plugin->getParameterDescriptors().empty());
+            bool configurable = (!psd.programs.empty() ||
+                                 !psd.parameters.empty());
 
 #ifdef DEBUG_TRANSFORM_FACTORY
             cerr << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
@@ -490,11 +488,10 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                      description,
                                      longDescription,
                                      maker,
-                                     units,
+//!!!                                     units,
+                                     "",
                                      configurable);
 	}
-
-        delete plugin;
     }
 }
 
