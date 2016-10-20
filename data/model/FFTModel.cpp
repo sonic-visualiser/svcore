@@ -24,10 +24,6 @@
 #include <cassert>
 #include <deque>
 
-#ifndef __GNUC__
-#include <alloca.h>
-#endif
-
 using namespace std;
 
 FFTModel::FFTModel(const DenseTimeValueModel *model,
@@ -360,11 +356,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
         int maxbin = ymax;
         if (maxbin < getHeight() - 1) maxbin = maxbin + 1;
         const int n = maxbin - minbin + 1;
-#ifdef __GNUC__
-        float values[n];
-#else
-        float *values = (float *)alloca(n * sizeof(float));
-#endif
+        float *values = new float[n];
         getMagnitudesAt(x, values, minbin, maxbin - minbin + 1);
         for (int bin = ymin; bin <= ymax; ++bin) {
             if (bin == minbin || bin == maxbin) continue;
@@ -373,6 +365,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
                 peaks.insert(bin);
             }
         }
+        delete[] values;
         return peaks;
     }
 

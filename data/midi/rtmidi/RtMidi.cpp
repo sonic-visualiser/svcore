@@ -63,7 +63,7 @@ void RtMidi :: error( RtError::Type type )
 #endif
   }
   else {
-    cerr << '\n' << errorString_ << "\n\n";
+    cerr << "\nRtMidi error: " << errorString_ << "\n\n";
     throw RtError( errorString_, type );
   }
 }

@@ -28,7 +28,11 @@
 
 #include <vamp-hostsdk/RealTime.h>
 
-struct timeval;
+#ifdef _MSC_VER
+#include "winsock.h" // struct timeval is in here
+#else
+#include "sys/time.h"
+#endif
 
 /**
  * RealTime represents time values to nanosecond precision

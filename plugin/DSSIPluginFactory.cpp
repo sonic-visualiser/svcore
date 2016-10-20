@@ -225,7 +225,7 @@ DSSIPluginFactory::getPluginPath()
         }
 
 #ifdef _WIN32
-        char *pfiles = getenv("ProgramFiles");
+        const char *pfiles = getenv("ProgramFiles");
         if (!pfiles) pfiles = "C:\\Program Files";
         {
         std::string::size_type f;
