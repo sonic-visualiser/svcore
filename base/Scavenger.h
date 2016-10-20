@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <list>
-#include <sys/time.h>
 #include <QMutex>
 #include <iostream>
 
