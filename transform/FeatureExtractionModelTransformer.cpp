@@ -16,8 +16,6 @@
 #include "FeatureExtractionModelTransformer.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
-#include "plugin/NativeVampPluginFactory.h"
-#include "plugin/PiperVampPluginFactory.h"
 
 #include "plugin/PluginXml.h"
 #include <vamp-hostsdk/Plugin.h>
@@ -95,7 +93,8 @@ FeatureExtractionModelTransformer::initialise()
 
     QString pluginId = primaryTransform.getPluginIdentifier();
 
-    FeatureExtractionPluginFactory *factory = PiperVampPluginFactory::instance();
+    FeatureExtractionPluginFactory *factory =
+        FeatureExtractionPluginFactory::instance();
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
