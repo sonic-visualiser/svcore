@@ -34,19 +34,20 @@ class NativeVampPluginFactory : public FeatureExtractionPluginFactory
 public:
     virtual ~NativeVampPluginFactory() { }
 
-    virtual std::vector<QString> getPluginIdentifiers();
-    
-    virtual QString findPluginFile(QString soname, QString inDir = "");
+    virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage)
+        override;
 
-    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier);
+    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier)
+        override;
 
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
-                                            sv_samplerate_t inputSampleRate);
+                                            sv_samplerate_t inputSampleRate)
+        override;
 
     /**
      * Get category metadata about a plugin (without instantiating it).
      */
-    virtual QString getPluginCategory(QString identifier);
+    virtual QString getPluginCategory(QString identifier) override;
 
 protected:
     QMutex m_mutex;
@@ -58,7 +59,8 @@ protected:
     friend class PluginDeletionNotifyAdapter;
     void pluginDeleted(Vamp::Plugin *);
     std::map<Vamp::Plugin *, void *> m_handleMap;
-    
+
+    QString findPluginFile(QString soname, QString inDir = "");
     std::vector<QString> getPluginPath();
     void generateTaxonomy();
 };

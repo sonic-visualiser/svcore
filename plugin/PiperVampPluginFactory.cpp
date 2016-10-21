@@ -32,6 +32,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QCoreApplication>
 
 #include <iostream>
 
@@ -45,19 +46,46 @@ using namespace std;
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
 PiperVampPluginFactory::PiperVampPluginFactory() :
-    m_serverName("piper-cpp/bin/piper-vamp-server") //!!!
+    // No server unless we find one - don't run arbitrary stuff from the path:
+    m_serverName()
 {
+    // Server must exist either in the same directory as this one or
+    // (preferably) a subdirectory called "piper-bin".
+    //!!! todo: merge this with plugin scan checker thingy used in main.cpp?
+    QString myDir = QCoreApplication::applicationDirPath();
+    QString name = "piper-vamp-server";
+    QString path = myDir + "/piper-bin/" + name;
+    QString suffix = "";
+#ifdef _WIN32
+    suffix = ".exe";
+#endif
+    if (!QFile(path + suffix).exists()) {
+        cerr << "NOTE: Piper Vamp server not found at " << (path + suffix)
+             << ", trying in my own directory" << endl;
+        path = myDir + "/" + name;
+    }
+    if (!QFile(path + suffix).exists()) {
+        cerr << "NOTE: Piper Vamp server not found at " << (path + suffix)
+             << endl;
+    } else {
+        m_serverName = (path + suffix).toStdString();
+    }
 }
 
 vector<QString>
-PiperVampPluginFactory::getPluginIdentifiers()
+PiperVampPluginFactory::getPluginIdentifiers(QString &errorMessage)
 {
     Profiler profiler("PiperVampPluginFactory::getPluginIdentifiers");
 
     QMutexLocker locker(&m_mutex);
 
+    if (m_serverName == "") {
+        errorMessage = QObject::tr("External plugin host executable does not appear to be installed");
+        return {};
+    }
+    
     if (m_pluginData.empty()) {
-        populate();
+        populate(errorMessage);
     }
 
     vector<QString> rv;
@@ -111,9 +139,16 @@ PiperVampPluginFactory::getPluginCategory(QString identifier)
 }
 
 void
-PiperVampPluginFactory::populate()
+PiperVampPluginFactory::populate(QString &errorMessage)
 {
+    if (m_serverName == "") return;
+
     piper_vamp::client::ProcessQtTransport transport(m_serverName);
+    if (!transport.isOK()) {
+        errorMessage = QObject::tr("Could not start external plugin host");
+        return;
+    }
+            
     piper_vamp::client::CapnpRRClient client(&transport);
     piper_vamp::ListResponse lr = client.listPluginData();
 

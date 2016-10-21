@@ -35,7 +35,8 @@ public:
 
     virtual ~PiperVampPluginFactory() { }
 
-    virtual std::vector<QString> getPluginIdentifiers() override;
+    virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage)
+        override;
 
     virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier)
         override;
@@ -51,7 +52,7 @@ protected:
     std::string m_serverName;
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
-    void populate();
+    void populate(QString &errorMessage);
 };
 
 #endif
