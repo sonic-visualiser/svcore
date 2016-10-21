@@ -237,6 +237,8 @@ HEADERS += plugin/PluginScan.h \
            plugin/FeatureExtractionPluginFactory.h \
            plugin/LADSPAPluginFactory.h \
            plugin/LADSPAPluginInstance.h \
+           plugin/NativeVampPluginFactory.h \
+           plugin/PiperVampPluginFactory.h \
            plugin/PluginIdentifier.h \
            plugin/PluginXml.h \
            plugin/RealTimePluginFactory.h \
@@ -258,6 +260,8 @@ SOURCES += plugin/PluginScan.cpp \
            plugin/FeatureExtractionPluginFactory.cpp \
            plugin/LADSPAPluginFactory.cpp \
            plugin/LADSPAPluginInstance.cpp \
+           plugin/NativeVampPluginFactory.cpp \
+           plugin/PiperVampPluginFactory.cpp \
            plugin/PluginIdentifier.cpp \
            plugin/PluginXml.cpp \
            plugin/RealTimePluginFactory.cpp \
