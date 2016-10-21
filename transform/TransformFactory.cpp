@@ -405,8 +405,12 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 {
     FeatureExtractionPluginFactory *factory =
         FeatureExtractionPluginFactory::instance();
-    
-    std::vector<QString> plugs = factory->getPluginIdentifiers();
+
+    QString errorMessage;
+    std::vector<QString> plugs = factory->getPluginIdentifiers(errorMessage);
+    if (errorMessage != "") {
+        m_errorString = tr("Failed to list Vamp plugins: %1").arg(errorMessage);
+    }
     
     if (m_exiting) return;
 

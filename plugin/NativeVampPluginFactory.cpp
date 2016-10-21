@@ -71,7 +71,7 @@ NativeVampPluginFactory::getPluginPath()
 }
 
 vector<QString>
-NativeVampPluginFactory::getPluginIdentifiers()
+NativeVampPluginFactory::getPluginIdentifiers(QString &)
 {
     Profiler profiler("NativeVampPluginFactory::getPluginIdentifiers");
 
