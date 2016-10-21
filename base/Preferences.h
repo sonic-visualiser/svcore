@@ -53,6 +53,8 @@ public:
     WindowType getWindowType() const { return m_windowType; }
     int getResampleQuality() const { return m_resampleQuality; }
 
+    bool getRunPluginsInProcess() const { return m_runPluginsInProcess; }
+    
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
         VerticallyStacked,
@@ -114,6 +116,7 @@ public slots:
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
     void setResampleQuality(int quality);
+    void setRunPluginsInProcess(bool r);
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
     void setFixedSampleRate(sv_samplerate_t);
@@ -151,6 +154,7 @@ private:
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
     int m_resampleQuality;
+    bool m_runPluginsInProcess;
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
     sv_samplerate_t m_fixedSampleRate;
