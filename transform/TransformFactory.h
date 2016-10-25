@@ -196,6 +196,10 @@ public:
     void setParametersFromPluginConfigurationXml(Transform &transform,
                                                  QString xml);
     
+    QString getStartupFailureReport() const {
+        return m_errorString;
+    }
+    
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
 
@@ -205,6 +209,8 @@ protected:
     TransformDescriptionMap m_uninstalledTransforms;
     bool m_uninstalledTransformsPopulated;
 
+    QString m_errorString;
+    
     void populateTransforms();
     void populateUninstalledTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);

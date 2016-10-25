@@ -16,6 +16,7 @@
 #include "TransformFactory.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/RealTimePluginInstance.h"
 #include "plugin/PluginXml.h"
@@ -402,21 +403,20 @@ TransformFactory::populateTransforms()
 void
 TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &transforms)
 {
-    std::vector<QString> plugs =
-	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
+    FeatureExtractionPluginFactory *factory =
+        FeatureExtractionPluginFactory::instance();
+
+    QString errorMessage;
+    std::vector<QString> plugs = factory->getPluginIdentifiers(errorMessage);
+    if (errorMessage != "") {
+        m_errorString = tr("Failed to list Vamp plugins: %1").arg(errorMessage);
+    }
+    
     if (m_exiting) return;
 
     for (int i = 0; i < (int)plugs.size(); ++i) {
 
 	QString pluginId = plugs[i];
-
-	FeatureExtractionPluginFactory *factory =
-	    FeatureExtractionPluginFactory::instanceFor(pluginId);
-
-	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId << endl;
-	    continue;
-	}
 
         piper_vamp::PluginStaticData psd = factory->getPluginStaticData(pluginId);
 
@@ -794,8 +794,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 //        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
 //             << identifier << "\" is a feature extraction transform" << endl;
         
-        FeatureExtractionPluginFactory *factory = 
-            FeatureExtractionPluginFactory::instanceFor(pluginId);
+        FeatureExtractionPluginFactory *factory =
+            FeatureExtractionPluginFactory::instance();
 
         if (factory) {
             plugin = factory->instantiatePlugin(pluginId, rate);
@@ -914,22 +914,7 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 {
     QString id = identifier.section(':', 0, 2);
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        Vamp::Plugin *plugin = 
-            FeatureExtractionPluginFactory::instanceFor(id)->
-            instantiatePlugin(id, 44100);
-        if (!plugin) return false;
-
-        min = (int)plugin->getMinChannelCount();
-        max = (int)plugin->getMaxChannelCount();
-        delete plugin;
-
-        return true;
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
-
-        // don't need to instantiate
+    if (RealTimePluginFactory::instanceFor(id)) {
 
         const RealTimePluginDescriptor *descriptor = 
             RealTimePluginFactory::instanceFor(id)->
@@ -938,6 +923,17 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
         min = descriptor->audioInputPortCount;
         max = descriptor->audioInputPortCount;
+
+        return true;
+
+    } else {
+
+        auto psd = FeatureExtractionPluginFactory::instance()->
+            getPluginStaticData(id);
+        if (psd.pluginKey == "") return false;
+
+        min = (int)psd.minChannelCount;
+        max = (int)psd.maxChannelCount;
 
         return true;
     }

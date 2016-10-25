@@ -31,3 +31,4 @@ include(files.pri)
 
 HEADERS = $$(SVCORE_HEADERS)
 SOURCES = $$(SVCORE_SOURCES)
+

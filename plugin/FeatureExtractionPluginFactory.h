@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
+    This file copyright 2006-2016 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,51 +13,55 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FEATURE_EXTRACTION_PLUGIN_FACTORY_H_
-#define _FEATURE_EXTRACTION_PLUGIN_FACTORY_H_
-
-#include <QString>
-#include <QMutex>
-#include <vector>
-#include <map>
+#ifndef SV_FEATURE_EXTRACTION_PLUGIN_FACTORY_H
+#define SV_FEATURE_EXTRACTION_PLUGIN_FACTORY_H
 
 #include <vamp-hostsdk/Plugin.h>
 
-#include "base/Debug.h"
+#include "vamp-support/PluginStaticData.h"
+
 #include "base/BaseTypes.h"
 
-#include "vamp-support/PluginStaticData.h"
+#include <QString>
 
 class FeatureExtractionPluginFactory
 {
 public:
-    FeatureExtractionPluginFactory();
+    static FeatureExtractionPluginFactory *instance();
+    
     virtual ~FeatureExtractionPluginFactory() { }
 
-    static FeatureExtractionPluginFactory *instance(QString pluginType);
-    static FeatureExtractionPluginFactory *instanceFor(QString identifier);
-    static std::vector<QString> getAllPluginIdentifiers();
+    /**
+     * Return all installed plugin identifiers.
+     */
+    virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage) {
+        return instance()->getPluginIdentifiers(errorMessage);
+    }
 
-    virtual std::vector<QString> getPluginIdentifiers();
+    /**
+     * Return static data for the given plugin.
+     */
+    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier) {
+        return instance()->getPluginStaticData(identifier);
+    }
 
-    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier);
-    
-    // We don't set blockSize or channels on this -- they're
-    // negotiated and handled via initialize() on the plugin
+    /**
+     * Instantiate (load) and return pointer to the plugin with the
+     * given identifier, at the given sample rate. We don't set
+     * blockSize or channels on this -- they're negotiated and handled
+     * via initialize() on the plugin itself after loading.
+     */
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
-                                            sv_samplerate_t inputSampleRate);
+                                            sv_samplerate_t inputSampleRate) {
+        return instance()->instantiatePlugin(identifier, inputSampleRate);
+    }
 
     /**
      * Get category metadata about a plugin (without instantiating it).
      */
-    virtual QString getPluginCategory(QString identifier);
-
-protected:
-    std::string m_serverName;
-    QMutex m_mutex;
-    std::vector<piper_vamp::PluginStaticData> m_pluginData;
-    std::map<QString, QString> m_taxonomy;
-    void populate();
+    virtual QString getPluginCategory(QString identifier) {
+        return instance()->getPluginCategory(identifier);
+    }
 };
 
 #endif

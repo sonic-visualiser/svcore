@@ -93,17 +93,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
     Vamp::PluginBase *plugin = 0;
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        cerr << "getConfigurationForTransform: instantiating Vamp plugin" << endl;
-
-        Vamp::Plugin *vp =
-            FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
-            (id, float(inputModel->getSampleRate()));
-
-        plugin = vp;
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
+    if (RealTimePluginFactory::instanceFor(id)) {
 
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
@@ -120,6 +110,16 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             (id, 0, 0, sampleRate, blockSize, channels);
 
         plugin = rtp;
+
+    } else {
+
+        cerr << "getConfigurationForTransform: instantiating Vamp plugin" << endl;
+
+        Vamp::Plugin *vp =
+            FeatureExtractionPluginFactory::instance()->instantiatePlugin
+            (id, float(inputModel->getSampleRate()));
+
+        plugin = vp;
     }
 
     if (plugin) {
@@ -171,20 +171,15 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
 
     QString id = transforms[0].getPluginIdentifier();
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        transformer =
-            new FeatureExtractionModelTransformer(input, transforms);
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
+    if (RealTimePluginFactory::instanceFor(id)) {
 
         transformer =
             new RealTimeEffectModelTransformer(input, transforms[0]);
 
     } else {
-        SVDEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transforms[0].getIdentifier() << "\"" << endl;
-        return transformer;
+
+        transformer =
+            new FeatureExtractionModelTransformer(input, transforms);
     }
 
     if (transformer) transformer->setObjectName(transforms[0].getIdentifier());
