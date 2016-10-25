@@ -41,6 +41,7 @@ Preferences::Preferences() :
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
     m_resampleQuality(1),
+    m_runPluginsInProcess(true),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
     m_fixedSampleRate(0),
@@ -65,6 +66,7 @@ Preferences::Preferences() :
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
     m_resampleQuality = settings.value("resample-quality", 1).toInt();
+    m_runPluginsInProcess = settings.value("run-vamp-plugins-in-process", true).toBool();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
@@ -266,6 +268,10 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return m_resampleQuality;
     }
 
+    if (name == "Run Vamp Plugins In Process") {
+        return m_runPluginsInProcess;
+    }
+    
     if (name == "Omit Temporaries from Recent Files") {
         if (deflt) *deflt = 1;
         return m_omitRecentTemps ? 1 : 0;
@@ -414,6 +420,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setWindowType(WindowType(value));
     } else if (name == "Resample Quality") {
         setResampleQuality(value);
+    } else if (name == "Run Vamp Plugins In Process") {
+        setRunPluginsInProcess(value ? true : false);
     } else if (name == "Omit Temporaries from Recent Files") {
         setOmitTempsFromRecentFiles(value ? true : false);
     } else if (name == "Background Mode") {
@@ -515,6 +523,19 @@ Preferences::setResampleQuality(int q)
         settings.setValue("resample-quality", q);
         settings.endGroup();
         emit propertyChanged("Resample Quality");
+    }
+}
+
+void
+Preferences::setRunPluginsInProcess(bool run)
+{
+    if (m_runPluginsInProcess != run) {
+        m_runPluginsInProcess = run;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("run-vamp-plugins-in-process", run);
+        settings.endGroup();
+        emit propertyChanged("Run Vamp Plugins In Process");
     }
 }
 

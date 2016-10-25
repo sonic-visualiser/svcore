@@ -16,6 +16,7 @@
 #include "FeatureExtractionModelTransformer.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
 #include "plugin/PluginXml.h"
 #include <vamp-hostsdk/Plugin.h>
 
@@ -93,7 +94,7 @@ FeatureExtractionModelTransformer::initialise()
     QString pluginId = primaryTransform.getPluginIdentifier();
 
     FeatureExtractionPluginFactory *factory =
-	FeatureExtractionPluginFactory::instanceFor(pluginId);
+        FeatureExtractionPluginFactory::instance();
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
@@ -731,9 +732,6 @@ FeatureExtractionModelTransformer::run()
 
         if (m_abandoned) break;
 
-    cerr << "calling process() from thread "
-         << QThread::currentThreadId() << endl;
-    
 	Vamp::Plugin::FeatureSet features = m_plugin->process
 	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
 
