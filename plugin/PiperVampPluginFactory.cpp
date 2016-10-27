@@ -158,6 +158,10 @@ PiperVampPluginFactory::populate(QString &errorMessage)
         errorMessage = QObject::tr
             ("External plugin host exited unexpectedly while listing plugins");
         return;
+    } catch (const std::exception &e) {
+        errorMessage = QObject::tr("External plugin host invocation failed: %1")
+            .arg(e.what());
+        return;
     }
 
     for (const auto &pd: lr.available) {
