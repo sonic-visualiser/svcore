@@ -143,7 +143,7 @@ PiperVampPluginFactory::populate(QString &errorMessage)
 {
     if (m_serverName == "") return;
 
-    piper_vamp::client::ProcessQtTransport transport(m_serverName);
+    piper_vamp::client::ProcessQtTransport transport(m_serverName, "capnp");
     if (!transport.isOK()) {
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
