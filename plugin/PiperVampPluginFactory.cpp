@@ -148,9 +148,17 @@ PiperVampPluginFactory::populate(QString &errorMessage)
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
     }
-            
+
     piper_vamp::client::CapnpRRClient client(&transport);
-    piper_vamp::ListResponse lr = client.listPluginData();
+    piper_vamp::ListResponse lr;
+
+    try {
+        lr = client.listPluginData();
+    } catch (piper_vamp::client::ServerCrashed) {
+        errorMessage = QObject::tr
+            ("External plugin host exited unexpectedly while listing plugins");
+        return;
+    }
 
     for (const auto &pd: lr.available) {
 
