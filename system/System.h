@@ -64,12 +64,15 @@ extern void SystemMemoryBarrier();
 typedef SSIZE_T ssize_t;
 #endif
 
-extern "C" {
-
 #ifdef _MSC_VER
+extern "C" {
 void usleep(unsigned long usec);
+}
+#else
+#include <unistd.h>
 #endif
 
+extern "C" {
 int gettimeofday(struct timeval *p, void *tz);
 }
 
