@@ -53,7 +53,7 @@ PiperVampPluginFactory::PiperVampPluginFactory() :
     // (preferably) a subdirectory called "piper-bin".
     //!!! todo: merge this with plugin scan checker thingy used in main.cpp?
     QString myDir = QCoreApplication::applicationDirPath();
-    QString name = "piper-vamp-server";
+    QString name = "piper-vamp-simple-server";
     QString path = myDir + "/piper-bin/" + name;
     QString suffix = "";
 #ifdef _WIN32
@@ -143,14 +143,26 @@ PiperVampPluginFactory::populate(QString &errorMessage)
 {
     if (m_serverName == "") return;
 
-    piper_vamp::client::ProcessQtTransport transport(m_serverName);
+    piper_vamp::client::ProcessQtTransport transport(m_serverName, "capnp");
     if (!transport.isOK()) {
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
     }
-            
+
     piper_vamp::client::CapnpRRClient client(&transport);
-    piper_vamp::ListResponse lr = client.listPluginData();
+    piper_vamp::ListResponse lr;
+
+    try {
+        lr = client.listPluginData();
+    } catch (piper_vamp::client::ServerCrashed) {
+        errorMessage = QObject::tr
+            ("External plugin host exited unexpectedly while listing plugins");
+        return;
+    } catch (const std::exception &e) {
+        errorMessage = QObject::tr("External plugin host invocation failed: %1")
+            .arg(e.what());
+        return;
+    }
 
     for (const auto &pd: lr.available) {
 
