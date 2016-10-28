@@ -47,8 +47,6 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     m_haveOutputs(false)
 {
     SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
-
-//    initialise();
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
@@ -62,8 +60,6 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
     }
-    
-//    initialise();
 }
 
 static bool
@@ -77,6 +73,10 @@ areTransformsSimilar(const Transform &t1, const Transform &t2)
 bool
 FeatureExtractionModelTransformer::initialise()
 {
+    // This is (now) called from the run thread. The plugin is
+    // constructed, initialised, used, and destroyed all from a single
+    // thread.
+    
     // All transforms must use the same plugin, parameters, and
     // inputs: they can differ only in choice of plugin output. So we
     // initialise based purely on the first transform in the list (but
@@ -232,6 +232,18 @@ FeatureExtractionModelTransformer::initialise()
     m_outputMutex.unlock();
 
     return true;
+}
+
+void
+FeatureExtractionModelTransformer::deinitialise()
+{
+    cerr << "deleting plugin for transform in thread "
+         << QThread::currentThreadId() << endl;
+    
+    delete m_plugin;
+    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
+        delete m_descriptors[j];
+    }
 }
 
 void
@@ -502,11 +514,9 @@ FeatureExtractionModelTransformer::awaitOutputModels()
 
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
-    delete m_plugin;
-    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
-        delete m_descriptors[j];
-    }
+    // Parent class dtor set the abandoned flag and waited for the run
+    // thread to exit; the run thread owns the plugin, and should have
+    // destroyed it before exiting (via a call to deinitialise)
 }
 
 FeatureExtractionModelTransformer::Models
@@ -781,6 +791,8 @@ FeatureExtractionModelTransformer::run()
         delete[] buffers[ch];
     }
     delete[] buffers;
+
+    deinitialise();
 }
 
 void
