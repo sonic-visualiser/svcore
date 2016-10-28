@@ -52,6 +52,7 @@ public:
 
 protected:
     bool initialise();
+    void deinitialise();
 
     virtual void run();
 
