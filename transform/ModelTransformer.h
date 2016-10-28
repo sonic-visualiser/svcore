@@ -89,16 +89,20 @@ public:
      * be initialised; an error message may be available via
      * getMessage() in this situation.
      */
-    Models getOutputModels() { return m_outputs; }
+    Models getOutputModels() {
+        awaitOutputModels();
+        return m_outputs;
+    }
 
     /**
      * Return the set of output models, also detaching them from the
      * transformer so that they will not be deleted when the
      * transformer is.  The caller takes ownership of the models.
      */
-    Models detachOutputModels() { 
+    Models detachOutputModels() {
+        awaitOutputModels();
         m_detached = true; 
-        return getOutputModels(); 
+        return m_outputs;
     }
 
     /**
@@ -138,6 +142,8 @@ protected:
     ModelTransformer(Input input, const Transform &transform);
     ModelTransformer(Input input, const Transforms &transforms);
 
+    virtual void awaitOutputModels() = 0;
+    
     Transforms m_transforms;
     Input m_input; // I don't own the model in this
     Models m_outputs; // I own this, unless...

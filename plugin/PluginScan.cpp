@@ -23,10 +23,15 @@
 
 using std::string;
 
+//#define DEBUG_PLUGIN_SCAN 1
+
 class PluginScan::Logger : public PluginCandidates::LogCallback
 {
 protected:
     void log(std::string message) {
+#ifdef DEBUG_PLUGIN_SCAN
+        cerr << "PluginScan: " << message;
+#endif
         SVDEBUG << "PluginScan: " << message;
     }
 };

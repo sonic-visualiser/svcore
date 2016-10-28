@@ -16,6 +16,7 @@
 #include "FeatureExtractionModelTransformer.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
 #include "plugin/PluginXml.h"
 #include <vamp-hostsdk/Plugin.h>
 
@@ -42,25 +43,23 @@
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
-
-    initialise();
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transforms &transforms) :
     ModelTransformer(in, transforms),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     if (m_transforms.empty()) {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s)" << endl;
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
     }
-    
-    initialise();
 }
 
 static bool
@@ -74,6 +73,10 @@ areTransformsSimilar(const Transform &t1, const Transform &t2)
 bool
 FeatureExtractionModelTransformer::initialise()
 {
+    // This is (now) called from the run thread. The plugin is
+    // constructed, initialised, used, and destroyed all from a single
+    // thread.
+    
     // All transforms must use the same plugin, parameters, and
     // inputs: they can differ only in choice of plugin output. So we
     // initialise based purely on the first transform in the list (but
@@ -91,7 +94,7 @@ FeatureExtractionModelTransformer::initialise()
     QString pluginId = primaryTransform.getPluginIdentifier();
 
     FeatureExtractionPluginFactory *factory =
-	FeatureExtractionPluginFactory::instanceFor(pluginId);
+        FeatureExtractionPluginFactory::instance();
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
@@ -104,6 +107,9 @@ FeatureExtractionModelTransformer::initialise()
         return false;
     }
 
+    cerr << "instantiating plugin for transform in thread "
+         << QThread::currentThreadId() << endl;
+    
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
@@ -220,7 +226,24 @@ FeatureExtractionModelTransformer::initialise()
         createOutputModels(j);
     }
 
+    m_outputMutex.lock();
+    m_haveOutputs = true;
+    m_outputsCondition.wakeAll();
+    m_outputMutex.unlock();
+
     return true;
+}
+
+void
+FeatureExtractionModelTransformer::deinitialise()
+{
+    cerr << "deleting plugin for transform in thread "
+         << QThread::currentThreadId() << endl;
+    
+    delete m_plugin;
+    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
+        delete m_descriptors[j];
+    }
 }
 
 void
@@ -479,13 +502,21 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     }
 }
 
+void
+FeatureExtractionModelTransformer::awaitOutputModels()
+{
+    m_outputMutex.lock();
+    while (!m_haveOutputs) {
+        m_outputsCondition.wait(&m_outputMutex);
+    }
+    m_outputMutex.unlock();
+}
+
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
-    delete m_plugin;
-    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
-        delete m_descriptors[j];
-    }
+    // Parent class dtor set the abandoned flag and waited for the run
+    // thread to exit; the run thread owns the plugin, and should have
+    // destroyed it before exiting (via a call to deinitialise)
 }
 
 FeatureExtractionModelTransformer::Models
@@ -566,6 +597,8 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
+    initialise();
+    
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
@@ -758,6 +791,8 @@ FeatureExtractionModelTransformer::run()
         delete[] buffers[ch];
     }
     delete[] buffers;
+
+    deinitialise();
 }
 
 void
