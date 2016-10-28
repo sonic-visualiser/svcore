@@ -53,7 +53,7 @@ PiperVampPluginFactory::PiperVampPluginFactory() :
     // (preferably) a subdirectory called "piper-bin".
     //!!! todo: merge this with plugin scan checker thingy used in main.cpp?
     QString myDir = QCoreApplication::applicationDirPath();
-    QString name = "piper-vamp-server";
+    QString name = "piper-vamp-simple-server";
     QString path = myDir + "/piper-bin/" + name;
     QString suffix = "";
 #ifdef _WIN32
