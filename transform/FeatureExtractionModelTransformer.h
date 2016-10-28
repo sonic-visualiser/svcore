@@ -30,7 +30,7 @@
 class DenseTimeValueModel;
 class SparseTimeValueModel;
 
-class FeatureExtractionModelTransformer : public ModelTransformer
+class FeatureExtractionModelTransformer : public ModelTransformer // + is a Thread
 {
     Q_OBJECT
 
