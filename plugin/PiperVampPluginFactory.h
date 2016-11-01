@@ -49,10 +49,15 @@ public:
 
 protected:
     QMutex m_mutex;
-    std::string m_serverName;
+    QStringList m_servers; // executable file paths
+    std::map<QString, QString> m_origins; // plugin identifier -> server path
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
+
     void populate(QString &errorMessage);
+    void populateFrom(QString server, QString &errorMessage);
+
+    static QStringList getServerSuffixes();
 };
 
 #endif
