@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+    This file copyright 2006-2016 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -37,6 +37,7 @@
 #include <iostream>
 
 #include "base/Profiler.h"
+#include "base/HelperExecPath.h"
 
 #include "vamp-client/ProcessQtTransport.h"
 #include "vamp-client/CapnpRRClient.h"
@@ -45,30 +46,28 @@ using namespace std;
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
-PiperVampPluginFactory::PiperVampPluginFactory() :
-    // No server unless we find one - don't run arbitrary stuff from the path:
-    m_serverName()
+PiperVampPluginFactory::PiperVampPluginFactory()
 {
-    // Server must exist either in the same directory as this one or
-    // (preferably) a subdirectory called "piper-bin".
-    //!!! todo: merge this with plugin scan checker thingy used in main.cpp?
-    QString myDir = QCoreApplication::applicationDirPath();
-    QString name = "piper-vamp-simple-server";
-    QString path = myDir + "/piper-bin/" + name;
-    QString suffix = "";
-#ifdef _WIN32
-    suffix = ".exe";
-#endif
-    if (!QFile(path + suffix).exists()) {
-        cerr << "NOTE: Piper Vamp server not found at " << (path + suffix)
-             << ", trying in my own directory" << endl;
-        path = myDir + "/" + name;
+    QString serverName = "piper-vamp-simple-server";
+
+    m_servers = HelperExecPath::getHelperExecutables(serverName);
+
+    if (m_servers.empty()) {
+        cerr << "NOTE: No Piper Vamp servers found in installation;"
+             << " found none of the following:" << endl;
+        for (auto d: HelperExecPath::getHelperCandidatePaths(serverName)) {
+            cerr << "NOTE: " << d << endl;
+        }
     }
-    if (!QFile(path + suffix).exists()) {
-        cerr << "NOTE: Piper Vamp server not found at " << (path + suffix)
-             << endl;
+}
+
+QStringList
+PiperVampPluginFactory::getServerSuffixes()
+{
+    if (sizeof(void *) == 8) {
+        return { "-64", "", "-32" };
     } else {
-        m_serverName = (path + suffix).toStdString();
+        return { "", "-32" };
     }
 }
 
@@ -79,7 +78,7 @@ PiperVampPluginFactory::getPluginIdentifiers(QString &errorMessage)
 
     QMutexLocker locker(&m_mutex);
 
-    if (m_serverName == "") {
+    if (m_servers.empty()) {
         errorMessage = QObject::tr("External plugin host executable does not appear to be installed");
         return {};
     }
@@ -103,13 +102,20 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
 {
     Profiler profiler("PiperVampPluginFactory::instantiatePlugin");
 
+    if (m_origins.find(identifier) == m_origins.end()) {
+        cerr << "ERROR: No known server for identifier " << identifier << endl;
+        return 0;
+    }
+    
     auto psd = getPluginStaticData(identifier);
     if (psd.pluginKey == "") {
         return 0;
     }
     
     auto ap = new piper_vamp::client::AutoPlugin
-        (m_serverName, psd.pluginKey, float(inputSampleRate), 0);
+        (m_origins[identifier].toStdString(),
+         psd.pluginKey, float(inputSampleRate), 0);
+    
     if (!ap->isOK()) {
         delete ap;
         return 0;
@@ -141,9 +147,23 @@ PiperVampPluginFactory::getPluginCategory(QString identifier)
 void
 PiperVampPluginFactory::populate(QString &errorMessage)
 {
-    if (m_serverName == "") return;
+    QString someError;
 
-    piper_vamp::client::ProcessQtTransport transport(m_serverName, "capnp");
+    for (QString s: m_servers) {
+
+        populateFrom(s, someError);
+
+        if (someError != "" && errorMessage == "") {
+            errorMessage = someError;
+        }
+    }
+}
+
+void
+PiperVampPluginFactory::populateFrom(QString server, QString &errorMessage)
+{
+    piper_vamp::client::ProcessQtTransport transport(server.toStdString(),
+                                                     "capnp");
     if (!transport.isOK()) {
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
@@ -165,10 +185,18 @@ PiperVampPluginFactory::populate(QString &errorMessage)
     }
 
     for (const auto &pd: lr.available) {
-
+        
         QString identifier =
             QString("vamp:") + QString::fromStdString(pd.pluginKey);
 
+        if (m_origins.find(identifier) != m_origins.end()) {
+            // have it already, from a higher-priority server
+            // (e.g. 64-bit instead of 32-bit)
+            continue;
+        }
+
+        m_origins[identifier] = server;
+        
         m_pluginData[identifier] = pd;
 
         QStringList catlist;
