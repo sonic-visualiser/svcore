@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+    This file copyright 2006-2016 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -37,6 +37,7 @@
 #include <iostream>
 
 #include "base/Profiler.h"
+#include "base/HelperExecPath.h"
 
 #include "vamp-client/ProcessQtTransport.h"
 #include "vamp-client/CapnpRRClient.h"
@@ -47,41 +48,16 @@ using namespace std;
 
 PiperVampPluginFactory::PiperVampPluginFactory()
 {
-    // Server must exist either in the same directory as this one or
-    // (preferably) a subdirectory called "piper-bin".
-    //!!! todo: merge this with plugin scan checker thingy used in main.cpp?
-    
-    QString myDir = QCoreApplication::applicationDirPath();
-    QString name = "piper-vamp-simple-server";
-    QStringList suffixes = getServerSuffixes();
-    QString extension = "";
-#ifdef _WIN32
-    extension = ".exe";
-#endif
+    QString serverName = "piper-vamp-simple-server";
 
-    for (QString s: suffixes) {
-    
-        QString path = myDir + "/piper-bin/" + name + s + extension;
-        
-        if (QFile(path).exists()) {
-            m_servers.push_back(path);
-        } else {
-            cerr << "NOTE: Piper Vamp server " << name << s
-                 << " not found at " << path
-                 << ", trying in my own directory" << endl;
-            path = myDir + "/" + name + s + extension;
-
-            if (QFile(path).exists()) {
-                m_servers.push_back(path);
-            } else {
-                cerr << "NOTE: Piper Vamp server " << name << s
-                     << " not found at " << path << endl;
-            }
-        }
-    }
+    m_servers = HelperExecPath::getHelperExecutables(serverName);
 
     if (m_servers.empty()) {
-        cerr << "NOTE: No Piper Vamp servers found" << endl;
+        cerr << "NOTE: No Piper Vamp servers found in installation;"
+             << " found none of the following:" << endl;
+        for (auto d: HelperExecPath::getHelperCandidatePaths(serverName)) {
+            cerr << "NOTE: " << d << endl;
+        }
     }
 }
 

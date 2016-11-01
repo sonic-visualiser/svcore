@@ -15,6 +15,7 @@
 #include "PluginScan.h"
 
 #include "base/Debug.h"
+#include "base/HelperExecPath.h"
 
 #include "checker/knownplugins.h"
 
@@ -50,22 +51,36 @@ PluginScan::PluginScan() : m_kp(0), m_succeeded(false), m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
-    delete m_kp;
+    clear();
     delete m_logger;
 }
 
 void
-PluginScan::scan(QString helperExecutablePath)
+PluginScan::scan()
 {
-    delete m_kp;
-    m_succeeded = false;
-    try {
-	m_kp = new KnownPlugins(helperExecutablePath.toStdString(), m_logger);
-	m_succeeded = true;
-    } catch (const std::exception &e) {
-	cerr << "ERROR: PluginScan::scan: " << e.what() << endl;
-	m_kp = 0;
+    QStringList helperPaths =
+        HelperExecPath::getHelperExecutables("plugin-checker-helper");
+
+    clear();
+
+    for (auto p: helperPaths) {
+        try {
+            KnownPlugins *kp = new KnownPlugins(p.toStdString(), m_logger);
+            m_kp.push_back(kp);
+            m_succeeded = true;
+        } catch (const std::exception &e) {
+            cerr << "ERROR: PluginScan::scan: " << e.what()
+                 << " (with helper path = " << p << ")" << endl;
+        }
     }
+}
+
+void
+PluginScan::clear()
+{
+    for (auto &p: m_kp) delete p;
+    m_kp.clear();
+    m_succeeded = false;
 }
 
 QStringList
@@ -80,9 +95,10 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
     }
     
     QStringList candidates;
-    if (!m_kp) return candidates;
-    auto c = m_kp->getCandidateLibrariesFor(kpt);
-    for (auto s: c) candidates.push_back(s.c_str());
+    for (auto kp: m_kp) {
+        auto c = kp->getCandidateLibrariesFor(kpt);
+        for (auto s: c) candidates.push_back(s.c_str());
+    }
     return candidates;
 }
 
@@ -96,20 +112,23 @@ PluginScan::getStartupFailureReport() const
                            "installed alongside %1?</p>")
             .arg(QCoreApplication::applicationName());
     }
-    if (!m_kp) {
+    if (m_kp.empty()) {
 	return QObject::tr("<b>Did not scan for plugins</b>"
 			   "<p>Apparently no scan for plugins was attempted "
 			   "(internal error?)</p>");
     }
 
-    string report = m_kp->getFailureReport();
+    QString report;
+    for (auto kp: m_kp) {
+        report += QString::fromStdString(kp->getFailureReport());
+    }
     if (report == "") {
-	return QString(report.c_str());
+	return report;
     }
 
     return QObject::tr("<b>Failed to load plugins</b>"
 		       "<p>Failed to load one or more plugin libraries:</p>")
-	+ QString(report.c_str())
+	+ report
         + QObject::tr("<p>These plugins may be incompatible with the system, "
                       "and will be ignored during this run of %1.</p>")
         .arg(QCoreApplication::applicationName());
