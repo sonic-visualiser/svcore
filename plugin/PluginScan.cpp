@@ -95,10 +95,29 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
     }
     
     QStringList candidates;
+
     for (auto kp: m_kp) {
+
         auto c = kp->getCandidateLibrariesFor(kpt);
+
+        std::cerr << "PluginScan: helper \"" << kp->getHelperExecutableName()
+                  << "\" likes " << c.size() << " libraries of type "
+                  << kp->getTagFor(kpt) << std::endl;
+
         for (auto s: c) candidates.push_back(s.c_str());
+
+        if (type != VampPlugin) {
+            // We are only interested in querying multiple helpers
+            // when dealing with Vamp plugins, for which we can use
+            // external servers and so in some cases can support
+            // additional architectures. Other plugin formats are
+            // loaded directly and so must match the host, which is
+            // what the first helper is supposed to handle -- so
+            // break after the first one if not querying Vamp
+            break;
+        }
     }
+
     return candidates;
 }
 
