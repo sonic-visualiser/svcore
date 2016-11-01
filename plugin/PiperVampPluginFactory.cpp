@@ -184,6 +184,9 @@ PiperVampPluginFactory::populateFrom(QString server, QString &errorMessage)
         return;
     }
 
+    cerr << "PiperVampPluginFactory: server \"" << server << "\" lists "
+         << lr.available.size() << " plugin(s)" << endl;
+
     for (const auto &pd: lr.available) {
         
         QString identifier =
