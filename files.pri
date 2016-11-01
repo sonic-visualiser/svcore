@@ -7,6 +7,7 @@ SVCORE_HEADERS = \
            base/Command.h \
            base/Debug.h \
            base/Exceptions.h \
+           base/HelperExecPath.h \
            base/LogRange.h \
            base/MagnitudeRange.h \
            base/Pitch.h \
@@ -144,6 +145,7 @@ SVCORE_SOURCES = \
            base/Command.cpp \
            base/Debug.cpp \
            base/Exceptions.cpp \
+           base/HelperExecPath.cpp \
            base/LogRange.cpp \
            base/Pitch.cpp \
            base/PlayParameterRepository.cpp \
