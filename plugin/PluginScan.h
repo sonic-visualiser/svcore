@@ -16,6 +16,7 @@
 #define PLUGIN_SCAN_H
 
 #include <QStringList>
+#include <vector>
 
 class KnownPlugins;
 
@@ -24,7 +25,7 @@ class PluginScan
 public:
     static PluginScan *getInstance();
 
-    void scan(QString helperExecutablePath);
+    void scan();
 
     bool scanSucceeded() const;
     
@@ -40,7 +41,10 @@ public:
 private:
     PluginScan();
     ~PluginScan();
-    KnownPlugins *m_kp;
+
+    void clear();
+    
+    std::vector<KnownPlugins *> m_kp;
     bool m_succeeded;
 
     class Logger;
