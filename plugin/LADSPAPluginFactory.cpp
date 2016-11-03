@@ -668,11 +668,11 @@ LADSPAPluginFactory::discoverPlugins()
 
     generateFallbackCategories();
 
-    QStringList candidates =
+    auto candidates =
         PluginScan::getInstance()->getCandidateLibrariesFor(getPluginType());
 
-    for (QString c: candidates) {
-        discoverPluginsFrom(c);
+    for (auto c: candidates) {
+        discoverPluginsFrom(c.libraryPath);
     }
 }
 

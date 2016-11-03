@@ -20,13 +20,17 @@
 #include <QDir>
 #include <QFileInfo>
 
-static QStringList
-getSuffixes()
+QStringList
+HelperExecPath::getTags()
 {
     if (sizeof(void *) == 8) {
-        return { "-64", "", "-32" };
+        if (m_type == NativeArchitectureOnly) {
+            return { "64", "" };
+        } else {
+            return { "64", "", "32" };
+        }
     } else {
-        return { "", "-32" };
+        return { "", "32" };
     }
 }
 
@@ -36,7 +40,7 @@ isGood(QString path)
     return QFile(path).exists() && QFileInfo(path).isExecutable();
 }
 
-QStringList
+QList<HelperExecPath::HelperExec>
 HelperExecPath::getHelperExecutables(QString basename)
 {
     QStringList dummy;
@@ -46,9 +50,9 @@ HelperExecPath::getHelperExecutables(QString basename)
 QString
 HelperExecPath::getHelperExecutable(QString basename)
 {
-    QStringList execs = getHelperExecutables(basename);
+    auto execs = getHelperExecutables(basename);
     if (execs.empty()) return "";
-    else return execs[0];
+    else return execs[0].executable;
 }
 
 QStringList
@@ -69,7 +73,7 @@ HelperExecPath::getHelperCandidatePaths(QString basename)
     return candidates;
 }
 
-QStringList
+QList<HelperExecPath::HelperExec>
 HelperExecPath::search(QString basename, QStringList &candidates)
 {
     // Helpers are expected to exist either in the same directory as
@@ -80,15 +84,17 @@ HelperExecPath::search(QString basename, QStringList &candidates)
     extension = ".exe";
 #endif
 
-    QStringList executables;
+    QList<HelperExec> executables;
     QStringList dirs = getHelperDirPaths();
     
-    for (QString s: getSuffixes()) {
+    for (QString t: getTags()) {
         for (QString d: dirs) {
-            QString path = d + QDir::separator() + basename + s + extension;
+            QString path = d + QDir::separator() + basename;
+            if (t != QString()) path += "-" + t;
+            path += extension;
             candidates.push_back(path);
             if (isGood(path)) {
-                executables.push_back(path);
+                executables.push_back({ path, t });
                 break;
             }
         }

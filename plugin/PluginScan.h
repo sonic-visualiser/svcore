@@ -16,7 +16,9 @@
 #define PLUGIN_SCAN_H
 
 #include <QStringList>
+#include <QMutex>
 #include <vector>
+#include <map>
 
 class KnownPlugins;
 
@@ -34,7 +36,11 @@ public:
 	LADSPAPlugin,
 	DSSIPlugin
     };
-    QStringList getCandidateLibrariesFor(PluginType) const;
+    struct Candidate {
+        QString libraryPath;
+        QString helperTag;
+    };
+    QList<Candidate> getCandidateLibrariesFor(PluginType) const;
 
     QString getStartupFailureReport() const;
 
@@ -43,8 +49,10 @@ private:
     ~PluginScan();
 
     void clear();
+
+    mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
-    std::vector<KnownPlugins *> m_kp;
+    std::map<QString, KnownPlugins *> m_kp; // tag -> KnownPlugins client
     bool m_succeeded;
 
     class Logger;

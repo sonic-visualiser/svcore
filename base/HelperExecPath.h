@@ -33,35 +33,52 @@
 class HelperExecPath
 {
 public:
+    enum SearchType {
+        NativeArchitectureOnly,
+        AllInstalled
+    };
+    
+    HelperExecPath(SearchType type) : m_type(type) { }
+    
     /**
      * Find a helper executable with the given base name in the bundle
      * directory or installation location, if one exists, and return
      * its full path. Equivalent to calling getHelperExecutables() and
      * taking the first result from the returned list (or "" if empty).
      */
-    static QString getHelperExecutable(QString basename);
+    QString getHelperExecutable(QString basename);
+
+    struct HelperExec {
+        QString executable;
+        QString tag;
+    };
     
     /**
      * Find all helper executables with the given base name in the
      * bundle directory or installation location, and return their
-     * full paths in order of priority.
+     * full paths in order of priority. The "tag" string contains an
+     * identifier for the location or architecture of the helper, for
+     * example "32", "64", "js" etc. An empty tag signifies a default
+     * helper that matches the application's architecture.
      */
-    static QStringList getHelperExecutables(QString basename);
+    QList<HelperExec> getHelperExecutables(QString basename);
 
     /**
      * Return the list of directories searched for helper
      * executables.
      */
-    static QStringList getHelperDirPaths();
+    QStringList getHelperDirPaths();
     
     /**
      * Return the list of executable paths examined in the search for
      * the helper executable with the given basename.
      */
-    static QStringList getHelperCandidatePaths(QString basename);
+    QStringList getHelperCandidatePaths(QString basename);
 
 private:
-    static QStringList search(QString, QStringList &);
+    SearchType m_type;
+    QList<HelperExec> search(QString, QStringList &);
+    QStringList getTags();
 };
 
 #endif
