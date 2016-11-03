@@ -91,7 +91,7 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
         if (!libraryHandle) {
-            cerr << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
             continue;
         }
 
@@ -99,9 +99,9 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
             DLSYM(libraryHandle, "vampGetPluginDescriptor");
 
         if (!fn) {
-            cerr << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
             if (DLCLOSE(libraryHandle) != 0) {
-                cerr << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
+                SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
             }
             continue;
         }
@@ -119,13 +119,13 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         while ((descriptor = fn(VAMP_API_VERSION, index))) {
 
             if (known.find(descriptor->identifier) != known.end()) {
-                cerr << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Plugin library "
+                SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Plugin library "
                      << soname
                      << " returns the same plugin identifier \""
                      << descriptor->identifier << "\" at indices "
                      << known[descriptor->identifier] << " and "
                      << index << endl;
-                    cerr << "NativeVampPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
+                    SVDEBUG << "NativeVampPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
                 ok = false;
                 break;
             } else {
@@ -152,7 +152,7 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         }
             
         if (DLCLOSE(libraryHandle) != 0) {
-            cerr << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
         }
     }
 
@@ -273,7 +273,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
     QString found = findPluginFile(soname);
 
     if (found == "") {
-        cerr << "NativeVampPluginFactory::instantiatePlugin: Failed to find library file " << soname << endl;
+        SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Failed to find library file " << soname << endl;
         return 0;
     } else if (found != soname) {
 
@@ -289,7 +289,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
     void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
     if (!libraryHandle) {
-        cerr << "NativeVampPluginFactory::instantiatePlugin: Failed to load library " << soname << ": " << DLERROR() << endl;
+        SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Failed to load library " << soname << ": " << DLERROR() << endl;
         return 0;
     }
 
@@ -297,7 +297,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
         DLSYM(libraryHandle, "vampGetPluginDescriptor");
     
     if (!fn) {
-        cerr << "NativeVampPluginFactory::instantiatePlugin: No descriptor function in " << soname << endl;
+        SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: No descriptor function in " << soname << endl;
         goto done;
     }
 
@@ -307,7 +307,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
     }
 
     if (!descriptor) {
-        cerr << "NativeVampPluginFactory::instantiatePlugin: Failed to find plugin \"" << label << "\" in library " << soname << endl;
+        SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Failed to find plugin \"" << label << "\" in library " << soname << endl;
         goto done;
     }
 
@@ -325,7 +325,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
 done:
     if (!rv) {
         if (DLCLOSE(libraryHandle) != 0) {
-            cerr << "WARNING: NativeVampPluginFactory::instantiatePlugin: Failed to unload library " << soname << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::instantiatePlugin: Failed to unload library " << soname << endl;
         }
     }
 

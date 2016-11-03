@@ -36,8 +36,6 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-#ifndef NDEBUG
-
 class SVDebug {
 public:
     SVDebug();
@@ -71,24 +69,6 @@ private:
 extern SVDebug &getSVDebug();
 
 #define SVDEBUG getSVDebug()
-
-#else
-
-class NoDebug
-{
-public:
-    inline NoDebug() {}
-    inline ~NoDebug(){}
-
-    template <typename T>
-    inline NoDebug &operator<<(const T &) { return *this; }
-
-    inline NoDebug &operator<<(QTextStreamFunction) { return *this; }
-};
-
-#define SVDEBUG NoDebug()
-
-#endif /* !NDEBUG */
 
 #endif /* !_DEBUG_H_ */
 

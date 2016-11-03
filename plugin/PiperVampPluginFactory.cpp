@@ -54,15 +54,15 @@ PiperVampPluginFactory::PiperVampPluginFactory()
     m_servers = hep.getHelperExecutables(serverName);
 
     for (auto n: m_servers) {
-        cerr << "NOTE: PiperVampPluginFactory: Found server: "
-             << n.executable << endl;
+        SVDEBUG << "NOTE: PiperVampPluginFactory: Found server: "
+                << n.executable << endl;
     }
     
     if (m_servers.empty()) {
-        cerr << "NOTE: No Piper Vamp servers found in installation;"
-             << " found none of the following:" << endl;
+        SVDEBUG << "NOTE: No Piper Vamp servers found in installation;"
+                << " found none of the following:" << endl;
         for (auto d: hep.getHelperCandidatePaths(serverName)) {
-            cerr << "NOTE: " << d << endl;
+            SVDEBUG << "NOTE: " << d << endl;
         }
     }
 }
@@ -100,6 +100,7 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
 
     if (m_origins.find(identifier) == m_origins.end()) {
         cerr << "ERROR: No known server for identifier " << identifier << endl;
+        SVDEBUG << "ERROR: No known server for identifier " << identifier << endl;
         return 0;
     }
     
@@ -170,22 +171,22 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     for (const auto &c: candidateLibraries) {
         if (c.helperTag == tag) {
             string soname = QFileInfo(c.libraryPath).baseName().toStdString();
-            cerr << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
+            SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
             from.push_back(soname);
         }
     }
 
     if (from.empty()) {
-        cerr << "PiperVampPluginFactory: No candidate libraries for tag \""
+        SVDEBUG << "PiperVampPluginFactory: No candidate libraries for tag \""
              << tag << "\"";
         if (scan->scanSucceeded()) {
             // we have to assume that they all failed to load (i.e. we
             // exclude them all) rather than sending an empty list
             // (which would mean no exclusions)
-            cerr << ", skipping" << endl;
+            SVDEBUG << ", skipping" << endl;
             return;
         } else {
-            cerr << ", but it seems the scan failed, so bumbling on anyway" << endl;
+            SVDEBUG << ", but it seems the scan failed, so bumbling on anyway" << endl;
         }
     }
     
@@ -210,8 +211,8 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
         return;
     }
 
-    cerr << "PiperVampPluginFactory: server \"" << executable << "\" lists "
-         << lr.available.size() << " plugin(s)" << endl;
+    SVDEBUG << "PiperVampPluginFactory: server \"" << executable << "\" lists "
+            << lr.available.size() << " plugin(s)" << endl;
 
     for (const auto &pd: lr.available) {
         

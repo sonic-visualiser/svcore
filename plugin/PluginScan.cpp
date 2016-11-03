@@ -25,15 +25,10 @@
 
 using std::string;
 
-//#define DEBUG_PLUGIN_SCAN 1
-
 class PluginScan::Logger : public PluginCandidates::LogCallback
 {
 protected:
     void log(std::string message) {
-#ifdef DEBUG_PLUGIN_SCAN
-        cerr << "PluginScan: " << message;
-#endif
         SVDEBUG << "PluginScan: " << message;
     }
 };
@@ -74,14 +69,14 @@ PluginScan::scan()
     clear();
 
     for (auto p: helpers) {
-        cerr << "NOTE: PluginScan: Found helper: " << p.executable << endl;
+        SVDEBUG << "NOTE: PluginScan: Found helper: " << p.executable << endl;
     }
     
     if (helpers.empty()) {
-        cerr << "NOTE: No plugin checker helpers found in installation;"
+        SVDEBUG << "NOTE: No plugin checker helpers found in installation;"
              << " found none of the following:" << endl;
         for (auto d: hep.getHelperCandidatePaths(helperName)) {
-            cerr << "NOTE: " << d << endl;
+            SVDEBUG << "NOTE: " << d << endl;
         }
     }
 
@@ -90,14 +85,14 @@ PluginScan::scan()
             KnownPlugins *kp = new KnownPlugins
                 (p.executable.toStdString(), m_logger);
             if (m_kp.find(p.tag) != m_kp.end()) {
-                cerr << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
+                SVDEBUG << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
                      << " for helpers" << endl;
                 continue;
             }
             m_kp[p.tag] = kp;
             m_succeeded = true;
         } catch (const std::exception &e) {
-            cerr << "ERROR: PluginScan::scan: " << e.what()
+            SVDEBUG << "ERROR: PluginScan::scan: " << e.what()
                  << " (with helper path = " << p.executable << ")" << endl;
         }
     }
@@ -141,9 +136,9 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
         
         auto c = kp->getCandidateLibrariesFor(kpt);
 
-        std::cerr << "PluginScan: helper \"" << kp->getHelperExecutableName()
-                  << "\" likes " << c.size() << " libraries of type "
-                  << kp->getTagFor(kpt) << std::endl;
+        SVDEBUG << "PluginScan: helper \"" << kp->getHelperExecutableName()
+                << "\" likes " << c.size() << " libraries of type "
+                << kp->getTagFor(kpt) << endl;
 
         for (auto s: c) {
             candidates.push_back({ s.c_str(), rec.first });
