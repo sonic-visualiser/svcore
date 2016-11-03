@@ -197,10 +197,14 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     }
 
     piper_vamp::client::CapnpRRClient client(&transport);
-    piper_vamp::ListResponse lr;
+
+    piper_vamp::ListRequest req;
+    req.from = from;
+    
+    piper_vamp::ListResponse resp;
 
     try {
-        lr = client.listPluginData();
+        resp = client.listPluginData(req);
     } catch (piper_vamp::client::ServerCrashed) {
         errorMessage = QObject::tr
             ("External plugin host exited unexpectedly while listing plugins");
@@ -212,9 +216,9 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     }
 
     SVDEBUG << "PiperVampPluginFactory: server \"" << executable << "\" lists "
-            << lr.available.size() << " plugin(s)" << endl;
+            << resp.available.size() << " plugin(s)" << endl;
 
-    for (const auto &pd: lr.available) {
+    for (const auto &pd: resp.available) {
         
         QString identifier =
             QString("vamp:") + QString::fromStdString(pd.pluginKey);
