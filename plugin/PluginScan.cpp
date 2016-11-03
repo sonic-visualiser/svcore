@@ -15,6 +15,7 @@
 #include "PluginScan.h"
 
 #include "base/Debug.h"
+#include "base/Preferences.h"
 #include "base/HelperExecPath.h"
 
 #include "checker/knownplugins.h"
@@ -47,10 +48,11 @@ PluginScan *PluginScan::getInstance()
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_kp(0), m_succeeded(false), m_logger(new Logger) {
+PluginScan::PluginScan() : m_succeeded(false), m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
+    QMutexLocker locker(&m_mutex);
     clear();
     delete m_logger;
 }
@@ -58,34 +60,71 @@ PluginScan::~PluginScan() {
 void
 PluginScan::scan()
 {
-    QStringList helperPaths =
-        HelperExecPath::getHelperExecutables("plugin-checker-helper");
+    QMutexLocker locker(&m_mutex);
+
+    bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
+
+    HelperExecPath hep(inProcess ?
+                       HelperExecPath::NativeArchitectureOnly :
+                       HelperExecPath::AllInstalled);
+
+    QString helperName("plugin-checker-helper");
+    auto helpers = hep.getHelperExecutables(helperName);
 
     clear();
 
-    for (auto p: helperPaths) {
+    for (auto p: helpers) {
+        cerr << "NOTE: PluginScan: Found helper: " << p.executable << endl;
+    }
+    
+    if (helpers.empty()) {
+        cerr << "NOTE: No plugin checker helpers found in installation;"
+             << " found none of the following:" << endl;
+        for (auto d: hep.getHelperCandidatePaths(helperName)) {
+            cerr << "NOTE: " << d << endl;
+        }
+    }
+
+    for (auto p: helpers) {
         try {
-            KnownPlugins *kp = new KnownPlugins(p.toStdString(), m_logger);
-            m_kp.push_back(kp);
+            KnownPlugins *kp = new KnownPlugins
+                (p.executable.toStdString(), m_logger);
+            if (m_kp.find(p.tag) != m_kp.end()) {
+                cerr << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
+                     << " for helpers" << endl;
+                continue;
+            }
+            m_kp[p.tag] = kp;
             m_succeeded = true;
         } catch (const std::exception &e) {
             cerr << "ERROR: PluginScan::scan: " << e.what()
-                 << " (with helper path = " << p << ")" << endl;
+                 << " (with helper path = " << p.executable << ")" << endl;
         }
     }
+}
+
+bool
+PluginScan::scanSucceeded() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_succeeded;
 }
 
 void
 PluginScan::clear()
 {
-    for (auto &p: m_kp) delete p;
+    for (auto &p: m_kp) {
+        delete p.second;
+    }
     m_kp.clear();
     m_succeeded = false;
 }
 
-QStringList
+QList<PluginScan::Candidate>
 PluginScan::getCandidateLibrariesFor(PluginType type) const
 {
+    QMutexLocker locker(&m_mutex);
+
     KnownPlugins::PluginType kpt;
     switch (type) {
     case VampPlugin: kpt = KnownPlugins::VampPlugin; break;
@@ -94,17 +133,21 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
     default: throw std::logic_error("Inconsistency in plugin type enums");
     }
     
-    QStringList candidates;
+    QList<Candidate> candidates;
 
-    for (auto kp: m_kp) {
+    for (auto rec: m_kp) {
 
+        KnownPlugins *kp = rec.second;
+        
         auto c = kp->getCandidateLibrariesFor(kpt);
 
         std::cerr << "PluginScan: helper \"" << kp->getHelperExecutableName()
                   << "\" likes " << c.size() << " libraries of type "
                   << kp->getTagFor(kpt) << std::endl;
 
-        for (auto s: c) candidates.push_back(s.c_str());
+        for (auto s: c) {
+            candidates.push_back({ s.c_str(), rec.first });
+        }
 
         if (type != VampPlugin) {
             // We are only interested in querying multiple helpers
@@ -124,6 +167,8 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
 QString
 PluginScan::getStartupFailureReport() const
 {
+    QMutexLocker locker(&m_mutex);
+
     if (!m_succeeded) {
 	return QObject::tr("<b>Failed to scan for plugins</b>"
 			   "<p>Failed to scan for plugins at startup. Possibly "
@@ -139,7 +184,7 @@ PluginScan::getStartupFailureReport() const
 
     QString report;
     for (auto kp: m_kp) {
-        report += QString::fromStdString(kp->getFailureReport());
+        report += QString::fromStdString(kp.second->getFailureReport());
     }
     if (report == "") {
 	return report;

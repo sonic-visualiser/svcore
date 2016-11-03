@@ -81,10 +81,12 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         return m_identifiers;
     }
     
-    QStringList candidates = PluginScan::getInstance()->getCandidateLibrariesFor
+    auto candidates = PluginScan::getInstance()->getCandidateLibrariesFor
         (PluginScan::VampPlugin);
     
-    for (QString soname : candidates) {
+    for (auto candidate : candidates) {
+
+        QString soname = candidate.libraryPath;
 
         void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             

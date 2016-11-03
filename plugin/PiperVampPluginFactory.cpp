@@ -50,24 +50,20 @@ PiperVampPluginFactory::PiperVampPluginFactory()
 {
     QString serverName = "piper-vamp-simple-server";
 
-    m_servers = HelperExecPath::getHelperExecutables(serverName);
+    HelperExecPath hep(HelperExecPath::AllInstalled);
+    m_servers = hep.getHelperExecutables(serverName);
 
+    for (auto n: m_servers) {
+        cerr << "NOTE: PiperVampPluginFactory: Found server: "
+             << n.executable << endl;
+    }
+    
     if (m_servers.empty()) {
         cerr << "NOTE: No Piper Vamp servers found in installation;"
              << " found none of the following:" << endl;
-        for (auto d: HelperExecPath::getHelperCandidatePaths(serverName)) {
+        for (auto d: hep.getHelperCandidatePaths(serverName)) {
             cerr << "NOTE: " << d << endl;
         }
-    }
-}
-
-QStringList
-PiperVampPluginFactory::getServerSuffixes()
-{
-    if (sizeof(void *) == 8) {
-        return { "-64", "", "-32" };
-    } else {
-        return { "", "-32" };
     }
 }
 
@@ -149,7 +145,7 @@ PiperVampPluginFactory::populate(QString &errorMessage)
 {
     QString someError;
 
-    for (QString s: m_servers) {
+    for (auto s: m_servers) {
 
         populateFrom(s, someError);
 
@@ -160,10 +156,40 @@ PiperVampPluginFactory::populate(QString &errorMessage)
 }
 
 void
-PiperVampPluginFactory::populateFrom(QString server, QString &errorMessage)
+PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
+                                     QString &errorMessage)
 {
-    piper_vamp::client::ProcessQtTransport transport(server.toStdString(),
-                                                     "capnp");
+    QString tag = server.tag;
+    string executable = server.executable.toStdString();
+
+    PluginScan *scan = PluginScan::getInstance();
+    auto candidateLibraries =
+        scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
+
+    vector<string> from;
+    for (const auto &c: candidateLibraries) {
+        if (c.helperTag == tag) {
+            string soname = QFileInfo(c.libraryPath).baseName().toStdString();
+            cerr << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
+            from.push_back(soname);
+        }
+    }
+
+    if (from.empty()) {
+        cerr << "PiperVampPluginFactory: No candidate libraries for tag \""
+             << tag << "\"";
+        if (scan->scanSucceeded()) {
+            // we have to assume that they all failed to load (i.e. we
+            // exclude them all) rather than sending an empty list
+            // (which would mean no exclusions)
+            cerr << ", skipping" << endl;
+            return;
+        } else {
+            cerr << ", but it seems the scan failed, so bumbling on anyway" << endl;
+        }
+    }
+    
+    piper_vamp::client::ProcessQtTransport transport(executable, "capnp");
     if (!transport.isOK()) {
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
@@ -184,7 +210,7 @@ PiperVampPluginFactory::populateFrom(QString server, QString &errorMessage)
         return;
     }
 
-    cerr << "PiperVampPluginFactory: server \"" << server << "\" lists "
+    cerr << "PiperVampPluginFactory: server \"" << executable << "\" lists "
          << lr.available.size() << " plugin(s)" << endl;
 
     for (const auto &pd: lr.available) {
@@ -198,7 +224,7 @@ PiperVampPluginFactory::populateFrom(QString server, QString &errorMessage)
             continue;
         }
 
-        m_origins[identifier] = server;
+        m_origins[identifier] = server.executable;
         
         m_pluginData[identifier] = pd;
 
