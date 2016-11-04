@@ -16,6 +16,8 @@
 #ifndef SV_PIPER_VAMP_PLUGIN_FACTORY_H
 #define SV_PIPER_VAMP_PLUGIN_FACTORY_H
 
+#ifdef HAVE_PIPER
+
 #include "FeatureExtractionPluginFactory.h"
 
 #include <QMutex>
@@ -23,6 +25,7 @@
 #include <map>
 
 #include "base/Debug.h"
+#include "base/HelperExecPath.h"
 
 /**
  * FeatureExtractionPluginFactory type for Vamp plugins hosted in a
@@ -49,15 +52,15 @@ public:
 
 protected:
     QMutex m_mutex;
-    QStringList m_servers; // executable file paths
+    QList<HelperExecPath::HelperExec> m_servers; // executable file paths
     std::map<QString, QString> m_origins; // plugin identifier -> server path
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
 
     void populate(QString &errorMessage);
-    void populateFrom(QString server, QString &errorMessage);
-
-    static QStringList getServerSuffixes();
+    void populateFrom(const HelperExecPath::HelperExec &, QString &errorMessage);
 };
+
+#endif
 
 #endif

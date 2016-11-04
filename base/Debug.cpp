@@ -21,7 +21,7 @@
 #include <QUrl>
 #include <QCoreApplication>
 
-#ifndef NDEBUG
+#include <stdexcept>
 
 static SVDebug *debug = 0;
 static QMutex mutex;
@@ -40,6 +40,11 @@ SVDebug::SVDebug() :
     m_ok(false),
     m_eol(false)
 {
+    if (qApp->applicationName() == "") {
+        cerr << "ERROR: Can't use SVDEBUG before setting application name" << endl;
+        throw std::logic_error("Can't use SVDEBUG before setting application name");
+    }
+    
     QString pfx = ResourceFinder().getUserResourcePrefix();
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
@@ -75,8 +80,6 @@ operator<<(QDebug &dbg, const std::string &s)
     dbg << QString::fromUtf8(s.c_str());
     return dbg;
 }
-
-#endif
 
 std::ostream &
 operator<<(std::ostream &target, const QString &str)

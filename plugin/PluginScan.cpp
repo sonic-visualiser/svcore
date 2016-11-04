@@ -15,24 +15,27 @@
 #include "PluginScan.h"
 
 #include "base/Debug.h"
+#include "base/Preferences.h"
 #include "base/HelperExecPath.h"
 
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
 #include "checker/knownplugins.h"
+#else
+class KnownPlugins {};
+#endif
 
 #include <QMutex>
 #include <QCoreApplication>
 
 using std::string;
 
-//#define DEBUG_PLUGIN_SCAN 1
-
-class PluginScan::Logger : public PluginCandidates::LogCallback
+class PluginScan::Logger
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    : public PluginCandidates::LogCallback
+#endif
 {
 protected:
     void log(std::string message) {
-#ifdef DEBUG_PLUGIN_SCAN
-        cerr << "PluginScan: " << message;
-#endif
         SVDEBUG << "PluginScan: " << message;
     }
 };
@@ -47,10 +50,11 @@ PluginScan *PluginScan::getInstance()
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_kp(0), m_succeeded(false), m_logger(new Logger) {
+PluginScan::PluginScan() : m_succeeded(false), m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
+    QMutexLocker locker(&m_mutex);
     clear();
     delete m_logger;
 }
@@ -58,34 +62,77 @@ PluginScan::~PluginScan() {
 void
 PluginScan::scan()
 {
-    QStringList helperPaths =
-        HelperExecPath::getHelperExecutables("plugin-checker-helper");
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+
+    QMutexLocker locker(&m_mutex);
+
+    bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
+
+    HelperExecPath hep(inProcess ?
+                       HelperExecPath::NativeArchitectureOnly :
+                       HelperExecPath::AllInstalled);
+
+    QString helperName("plugin-checker-helper");
+    auto helpers = hep.getHelperExecutables(helperName);
 
     clear();
 
-    for (auto p: helperPaths) {
-        try {
-            KnownPlugins *kp = new KnownPlugins(p.toStdString(), m_logger);
-            m_kp.push_back(kp);
-            m_succeeded = true;
-        } catch (const std::exception &e) {
-            cerr << "ERROR: PluginScan::scan: " << e.what()
-                 << " (with helper path = " << p << ")" << endl;
+    for (auto p: helpers) {
+        SVDEBUG << "NOTE: PluginScan: Found helper: " << p.executable << endl;
+    }
+    
+    if (helpers.empty()) {
+        SVDEBUG << "NOTE: No plugin checker helpers found in installation;"
+             << " found none of the following:" << endl;
+        for (auto d: hep.getHelperCandidatePaths(helperName)) {
+            SVDEBUG << "NOTE: " << d << endl;
         }
     }
+
+    for (auto p: helpers) {
+        try {
+            KnownPlugins *kp = new KnownPlugins
+                (p.executable.toStdString(), m_logger);
+            if (m_kp.find(p.tag) != m_kp.end()) {
+                SVDEBUG << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
+                     << " for helpers" << endl;
+                continue;
+            }
+            m_kp[p.tag] = kp;
+            m_succeeded = true;
+        } catch (const std::exception &e) {
+            SVDEBUG << "ERROR: PluginScan::scan: " << e.what()
+                 << " (with helper path = " << p.executable << ")" << endl;
+        }
+    }
+
+#endif
+}
+
+bool
+PluginScan::scanSucceeded() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_succeeded;
 }
 
 void
 PluginScan::clear()
 {
-    for (auto &p: m_kp) delete p;
+    for (auto &p: m_kp) {
+        delete p.second;
+    }
     m_kp.clear();
     m_succeeded = false;
 }
 
-QStringList
+QList<PluginScan::Candidate>
 PluginScan::getCandidateLibrariesFor(PluginType type) const
 {
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    
+    QMutexLocker locker(&m_mutex);
+
     KnownPlugins::PluginType kpt;
     switch (type) {
     case VampPlugin: kpt = KnownPlugins::VampPlugin; break;
@@ -94,17 +141,48 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
     default: throw std::logic_error("Inconsistency in plugin type enums");
     }
     
-    QStringList candidates;
-    for (auto kp: m_kp) {
+    QList<Candidate> candidates;
+
+    for (auto rec: m_kp) {
+
+        KnownPlugins *kp = rec.second;
+        
         auto c = kp->getCandidateLibrariesFor(kpt);
-        for (auto s: c) candidates.push_back(s.c_str());
+
+        SVDEBUG << "PluginScan: helper \"" << kp->getHelperExecutableName()
+                << "\" likes " << c.size() << " libraries of type "
+                << kp->getTagFor(kpt) << endl;
+
+        for (auto s: c) {
+            candidates.push_back({ s.c_str(), rec.first });
+        }
+
+        if (type != VampPlugin) {
+            // We are only interested in querying multiple helpers
+            // when dealing with Vamp plugins, for which we can use
+            // external servers and so in some cases can support
+            // additional architectures. Other plugin formats are
+            // loaded directly and so must match the host, which is
+            // what the first helper is supposed to handle -- so
+            // break after the first one if not querying Vamp
+            break;
+        }
     }
+
     return candidates;
+    
+#else
+    return {};
+#endif
 }
 
 QString
 PluginScan::getStartupFailureReport() const
 {
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    
+    QMutexLocker locker(&m_mutex);
+
     if (!m_succeeded) {
 	return QObject::tr("<b>Failed to scan for plugins</b>"
 			   "<p>Failed to scan for plugins at startup. Possibly "
@@ -120,7 +198,7 @@ PluginScan::getStartupFailureReport() const
 
     QString report;
     for (auto kp: m_kp) {
-        report += QString::fromStdString(kp->getFailureReport());
+        report += QString::fromStdString(kp.second->getFailureReport());
     }
     if (report == "") {
 	return report;
@@ -132,5 +210,9 @@ PluginScan::getStartupFailureReport() const
         + QObject::tr("<p>These plugins may be incompatible with the system, "
                       "and will be ignored during this run of %1.</p>")
         .arg(QCoreApplication::applicationName());
+
+#else
+    return "";
+#endif
 }
 

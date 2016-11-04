@@ -33,6 +33,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 
 /**
    Resource files may be found in three places:
@@ -126,6 +127,11 @@ getOldStyleUserResourcePrefix()
 static QString
 getNewStyleUserResourcePrefix()
 {
+    if (qApp->applicationName() == "") {
+        cerr << "ERROR: Can't use ResourceFinder before setting application name" << endl;
+        throw std::logic_error("Can't use ResourceFinder before setting application name");
+    }
+
 #if QT_VERSION >= 0x050000
     // This is expected to be much more reliable than
     // getOldStyleUserResourcePrefix(), but it returns a different
@@ -133,7 +139,7 @@ getNewStyleUserResourcePrefix()
     // fair enough). Hence migrateOldStyleResources() which moves
     // across any resources found in the old-style path the first time
     // we look for the new-style one
-    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #else
     return getOldStyleUserResourcePrefix();
 #endif

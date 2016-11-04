@@ -16,7 +16,9 @@
 #define PLUGIN_SCAN_H
 
 #include <QStringList>
+#include <QMutex>
 #include <vector>
+#include <map>
 
 class KnownPlugins;
 
@@ -25,8 +27,21 @@ class PluginScan
 public:
     static PluginScan *getInstance();
 
+    /**
+     * Carry out startup scan of available plugins. Do not call
+     * getCandidateLibrariesFor() unless this has been called and
+     * scanSucceeded() is returning true.
+     */
     void scan();
 
+    /**
+     * Return true if scan() completed successfully. If the scan
+     * failed, consider using the normal plugin path to load any
+     * available plugins (as if they had all been found to be
+     * loadable) rather than rejecting all of them -- i.e. consider
+     * falling back on the behaviour of code from before the scan
+     * logic was added.
+     */
     bool scanSucceeded() const;
     
     enum PluginType {
@@ -34,7 +49,21 @@ public:
 	LADSPAPlugin,
 	DSSIPlugin
     };
-    QStringList getCandidateLibrariesFor(PluginType) const;
+    struct Candidate {
+        QString libraryPath;    // full path, not just soname
+        QString helperTag;      // identifies the helper that found it
+                                // (see HelperExecPath) 
+    };
+
+    /**
+     * Return the candidate plugin libraries of the given type that
+     * were found by helpers during the startup scan.
+     *
+     * This could return an empty list for two reasons: the scan
+     * succeeded but no libraries were found; or the scan failed. Call
+     * scanSucceeded() to distinguish between them.
+     */
+    QList<Candidate> getCandidateLibrariesFor(PluginType) const;
 
     QString getStartupFailureReport() const;
 
@@ -43,8 +72,10 @@ private:
     ~PluginScan();
 
     void clear();
+
+    mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
-    std::vector<KnownPlugins *> m_kp;
+    std::map<QString, KnownPlugins *> m_kp; // tag -> KnownPlugins client
     bool m_succeeded;
 
     class Logger;
