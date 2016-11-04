@@ -169,7 +169,8 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     auto candidateLibraries =
         scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
 
-    SVDEBUG << "INFO: Have " << candidates.size() << " candidate Vamp plugin libraries" << endl;
+    SVDEBUG << "INFO: Have " << candidateLibraries.size()
+            << " candidate Vamp plugin libraries" << endl;
         
     vector<string> from;
     for (const auto &c: candidateLibraries) {
