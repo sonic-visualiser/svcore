@@ -44,7 +44,7 @@ public:
 
     EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
 				       int resolution,
-				       int yBinCount,
+				       int height,
                                        CompressionType compression,
 				       bool notifyOnAdd = true);
 
@@ -75,12 +75,19 @@ public:
     virtual int getWidth() const;
 
     /**
-     * Return the number of bins in each set of bins.
+     * Return the number of bins in each column.
      */
     virtual int getHeight() const; 
 
     /**
-     * Set the number of bins in each set of bins.
+     * Set the number of bins in each column.
+     *
+     * You can set (via setColumn) a vector of any length as a column,
+     * but any column being retrieved will be resized to this height
+     * (or the height that was supplied to the constructor, if this is
+     * never called) on retrieval. That is, the model owner determines
+     * the height of the model at a single stroke; the columns
+     * themselves don't have any effect on the height of the model.
      */
     virtual void setHeight(int sz);
 
@@ -203,6 +210,7 @@ protected:
     std::vector<signed char> m_trunc;
     void truncateAndStore(int index, const Column & values);
     Column expandAndRetrieve(int index) const;
+    Column rightHeight(const Column &c) const;
 
     std::vector<QString> m_binNames;
     std::vector<float> m_binValues;

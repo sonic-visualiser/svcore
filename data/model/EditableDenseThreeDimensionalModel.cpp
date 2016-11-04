@@ -265,6 +265,17 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
 }
 
 EditableDenseThreeDimensionalModel::Column
+EditableDenseThreeDimensionalModel::rightHeight(const Column &c) const
+{
+    if (int(c.size()) == m_yBinCount) return c;
+    else {
+        Column cc(c);
+        cc.resize(m_yBinCount, 0.0);
+        return cc;
+    }
+}
+
+EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
 {
     // See comment above m_trunc declaration in header
@@ -272,11 +283,11 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
     assert(index >= 0 && index < int(m_data.size()));
     Column c = m_data.at(index);
     if (index == 0) {
-        return c;
+        return rightHeight(c);
     }
     int trunc = (int)m_trunc[index];
     if (trunc == 0) {
-        return c;
+        return rightHeight(c);
     }
     bool top = true;
     int tdist = trunc;
@@ -315,8 +326,6 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
     }
 
     bool allChange = false;
-
-//    if (values.size() > m_yBinCount) m_yBinCount = values.size();
 
     for (int i = 0; in_range_for(values, i); ++i) {
         float value = values[i];
