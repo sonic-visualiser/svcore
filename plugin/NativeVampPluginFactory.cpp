@@ -70,6 +70,40 @@ NativeVampPluginFactory::getPluginPath()
     return m_pluginPath;
 }
 
+static
+QList<PluginScan::Candidate>
+getCandidateLibraries()
+{
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    return PluginScan::getInstance()->getCandidateLibrariesFor
+        (PluginScan::VampPlugin);
+#else
+    auto path = Vamp::PluginHostAdapter::getPluginPath();
+    QList<PluginScan::Candidate> candidates;
+    for (string dirname: path) {
+        SVDEBUG << "NativeVampPluginFactory: scanning directory myself: "
+                << dirname << endl;
+#if defined(_WIN32)
+#define PLUGIN_GLOB "*.dll"
+#elif defined(__APPLE__)
+#define PLUGIN_GLOB "*.dylib *.so"
+#else
+#define PLUGIN_GLOB "*.so"
+#endif
+        QDir dir(dirname.c_str(), PLUGIN_GLOB,
+                 QDir::Name | QDir::IgnoreCase,
+                 QDir::Files | QDir::Readable);
+
+        for (unsigned int i = 0; i < dir.count(); ++i) {
+            QString soname = dir.filePath(dir[i]);
+            candidates.push_back({ soname, "" });
+        }
+    }
+
+    return candidates;
+#endif
+}
+
 vector<QString>
 NativeVampPluginFactory::getPluginIdentifiers(QString &)
 {
@@ -80,14 +114,17 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
     if (!m_identifiers.empty()) {
         return m_identifiers;
     }
+
+    auto candidates = getCandidateLibraries();
     
-    auto candidates = PluginScan::getInstance()->getCandidateLibrariesFor
-        (PluginScan::VampPlugin);
-    
+    SVDEBUG << "INFO: Have " << candidates.size() << " candidate Vamp plugin libraries" << endl;
+        
     for (auto candidate : candidates) {
 
         QString soname = candidate.libraryPath;
 
+        SVDEBUG << "INFO: Considering candidate Vamp plugin library " << soname << endl;
+        
         void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
             
         if (!libraryHandle) {

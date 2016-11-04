@@ -16,6 +16,8 @@
 #ifndef SV_PIPER_VAMP_PLUGIN_FACTORY_H
 #define SV_PIPER_VAMP_PLUGIN_FACTORY_H
 
+#ifdef HAVE_PIPER
+
 #include "FeatureExtractionPluginFactory.h"
 
 #include <QMutex>
@@ -58,5 +60,7 @@ protected:
     void populate(QString &errorMessage);
     void populateFrom(const HelperExecPath::HelperExec &, QString &errorMessage);
 };
+
+#endif
 
 #endif
