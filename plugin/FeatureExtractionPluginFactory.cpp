@@ -20,6 +20,7 @@
 #include <QMutexLocker>
 
 #include "base/Preferences.h"
+#include "base/Debug.h"
 
 FeatureExtractionPluginFactory *
 FeatureExtractionPluginFactory::instance()
@@ -31,13 +32,21 @@ FeatureExtractionPluginFactory::instance()
     
     if (!instance) {
 
+#ifdef HAVE_PIPER
         if (Preferences::getInstance()->getRunPluginsInProcess()) {
-            cerr << "creating native instance" << endl;
+            SVDEBUG << "FeatureExtractionPluginFactory: creating native instance"
+                    << endl;
             instance = new NativeVampPluginFactory();
         } else {
-            cerr << "creating piper instance" << endl;
+            SVDEBUG << "FeatureExtractionPluginFactory: creating Piper instance"
+                    << endl;
             instance = new PiperVampPluginFactory();
         }
+#else
+        SVDEBUG << "FeatureExtractionPluginFactory: no Piper support enabled,"
+                << " creating native instance" << endl;
+        instance = new NativeVampPluginFactory();
+#endif
     }
 
     return instance;

@@ -13,6 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
+#ifdef HAVE_PIPER
+
 #include "PiperVampPluginFactory.h"
 #include "PluginIdentifier.h"
 
@@ -167,6 +169,8 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     auto candidateLibraries =
         scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
 
+    SVDEBUG << "INFO: Have " << candidates.size() << " candidate Vamp plugin libraries" << endl;
+        
     vector<string> from;
     for (const auto &c: candidateLibraries) {
         if (c.helperTag == tag) {
@@ -242,3 +246,4 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     }
 }
 
+#endif

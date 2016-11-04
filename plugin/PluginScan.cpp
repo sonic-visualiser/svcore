@@ -18,14 +18,21 @@
 #include "base/Preferences.h"
 #include "base/HelperExecPath.h"
 
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
 #include "checker/knownplugins.h"
+#else
+class KnownPlugins {};
+#endif
 
 #include <QMutex>
 #include <QCoreApplication>
 
 using std::string;
 
-class PluginScan::Logger : public PluginCandidates::LogCallback
+class PluginScan::Logger
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    : public PluginCandidates::LogCallback
+#endif
 {
 protected:
     void log(std::string message) {
@@ -55,6 +62,8 @@ PluginScan::~PluginScan() {
 void
 PluginScan::scan()
 {
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+
     QMutexLocker locker(&m_mutex);
 
     bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
@@ -96,6 +105,8 @@ PluginScan::scan()
                  << " (with helper path = " << p.executable << ")" << endl;
         }
     }
+
+#endif
 }
 
 bool
@@ -118,6 +129,8 @@ PluginScan::clear()
 QList<PluginScan::Candidate>
 PluginScan::getCandidateLibrariesFor(PluginType type) const
 {
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    
     QMutexLocker locker(&m_mutex);
 
     KnownPlugins::PluginType kpt;
@@ -157,11 +170,17 @@ PluginScan::getCandidateLibrariesFor(PluginType type) const
     }
 
     return candidates;
+    
+#else
+    return {};
+#endif
 }
 
 QString
 PluginScan::getStartupFailureReport() const
 {
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    
     QMutexLocker locker(&m_mutex);
 
     if (!m_succeeded) {
@@ -191,5 +210,9 @@ PluginScan::getStartupFailureReport() const
         + QObject::tr("<p>These plugins may be incompatible with the system, "
                       "and will be ignored during this run of %1.</p>")
         .arg(QCoreApplication::applicationName());
+
+#else
+    return "";
+#endif
 }
 
