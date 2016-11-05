@@ -277,21 +277,33 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     }
 
     sv_samplerate_t modelRate = input->getSampleRate();
+    sv_samplerate_t outputRate = modelRate;
     int modelResolution = 1;
 
     if (m_descriptors[n]->sampleType != 
         Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
-        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
+
+        outputRate = m_descriptors[n]->sampleRate;
+
+        //!!! SV doesn't actually support display of models that have
+        //!!! different underlying rates together -- so we always set
+        //!!! the model rate to be the input model's rate, and adjust
+        //!!! the resolution appropriately.  We can't properly display
+        //!!! data with a higher resolution than the base model at all
+        if (outputRate > input->getSampleRate()) {
             cerr << "WARNING: plugin reports output sample rate as "
-                      << m_descriptors[n]->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << endl;
+                 << outputRate
+                 << " (can't display features with finer resolution than the input rate of "
+                 << modelRate << ")" << endl;
+            outputRate = modelRate;
         }
     }
 
     switch (m_descriptors[n]->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
-	if (m_descriptors[n]->sampleRate != 0.0) {
-	    modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
+	if (outputRate != 0.0) {
+	    modelResolution = int(round(modelRate / outputRate));
 	}
 	break;
 
@@ -300,18 +312,12 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
-        //!!! SV doesn't actually support display of models that have
-        //!!! different underlying rates together -- so we always set
-        //!!! the model rate to be the input model's rate, and adjust
-        //!!! the resolution appropriately.  We can't properly display
-        //!!! data with a higher resolution than the base model at all
-        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
-            modelResolution = 1;
-        } else if (m_descriptors[n]->sampleRate <= 0.0) {
+        if (outputRate <= 0.0) {
             cerr << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
             modelResolution = 1;
         } else {
-            modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
+            modelResolution = int(round(modelRate / outputRate));
+//            cerr << "modelRate = " << modelRate << ", descriptor rate = " << outputRate << ", modelResolution = " << modelResolution << endl;
         }
 	break;
     }

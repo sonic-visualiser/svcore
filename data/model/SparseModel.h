@@ -332,8 +332,13 @@ public:
     virtual QVariant getData(int row, int column, int role) const
     {
         PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        if (i == m_points.end()) {
+//            cerr << "no iterator for row " << row << " (have " << getRowCount() << " rows)" << endl;
+            return QVariant();
+        }
 
+//        cerr << "returning data for row " << row << " col " << column << endl;
+        
         switch (column) {
         case 0: {
             if (role == SortRole) return int(i->frame);
@@ -411,6 +416,7 @@ protected:
     // This is only used if the model is called on to act in
     // TabularModel mode
     mutable std::vector<sv_frame_t> m_rows; // map from row number to frame
+
     void rebuildRowVector() const
     {
         m_rows.clear();
@@ -458,7 +464,7 @@ protected:
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
         int initialIndexAtFrame = indexAtFrame;
 
-//        std::cerr << "getPointListIteratorForRow " << row << ": initialIndexAtFrame = " << initialIndexAtFrame << std::endl;
+//        std::cerr << "getPointListIteratorForRow " << row << ": initialIndexAtFrame = " << initialIndexAtFrame << " for frame " << frame << std::endl;
 
         PointListConstIterator i0, i1;
         getPointIterators(frame, i0, i1);
@@ -471,9 +477,13 @@ protected:
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
-
-//        std::cerr << "returning i with i->frame = " << i->frame << std::endl;
-
+/*
+        if (i == m_points.end()) {
+            std::cerr << "returning i at end" << std::endl;
+        } else {
+            std::cerr << "returning i with i->frame = " << i->frame << std::endl;
+        }
+*/
         if (indexAtFrame > 0) {
             std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
         }
