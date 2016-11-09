@@ -8,6 +8,7 @@ SVCORE_HEADERS = \
            base/Debug.h \
            base/Exceptions.h \
            base/HelperExecPath.h \
+           base/HitCount.h \
            base/LogRange.h \
            base/MagnitudeRange.h \
            base/Pitch.h \

@@ -15,6 +15,8 @@
 
 #include "WavFileReader.h"
 
+#include "base/HitCount.h"
+
 #include <iostream>
 
 #include <QMutexLocker>
@@ -130,6 +132,8 @@ WavFileReader::updateDone()
 vector<float>
 WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
+    static HitCount lastRead("WavFileReader: last read");
+
     if (count == 0) return {};
 
     QMutexLocker locker(&m_mutex);
@@ -152,7 +156,17 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
     // individual channels, it's quite common for us to be called
     // repeatedly for the same data. So this is worth cacheing.
     if (start == m_lastStart && count == m_lastCount) {
+        lastRead.hit();
         return m_buffer;
+    }
+
+    // We don't actually support partial cache reads, but let's use
+    // the term partial to refer to any forward seek and consider a
+    // backward seek to be a miss
+    if (start >= m_lastStart) {
+        lastRead.partial();
+    } else {
+        lastRead.miss();
     }
     
     if (sf_seek(m_file, start, SEEK_SET) < 0) {

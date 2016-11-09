@@ -18,6 +18,7 @@
 
 #include "base/Profiler.h"
 #include "base/Pitch.h"
+#include "base/HitCount.h"
 
 #include <algorithm>
 
@@ -25,6 +26,9 @@
 #include <deque>
 
 using namespace std;
+
+static HitCount inSmallCache("FFTModel: Small FFT cache");
+static HitCount inSourceCache("FFTModel: Source data cache");
 
 FFTModel::FFTModel(const DenseTimeValueModel *model,
                    int channel,
@@ -215,6 +219,7 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 //         << "," << m_savedData.range.second << ")" << endl;
 
     if (m_savedData.range == range) {
+        inSourceCache.hit();
         return m_savedData.data;
     }
 
@@ -222,6 +227,8 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         range.first >= m_savedData.range.first &&
         range.second > m_savedData.range.second) {
 
+        inSourceCache.partial();
+        
         sv_frame_t discard = range.first - m_savedData.range.first;
 
         vector<float> acc(m_savedData.data.begin() + discard,
@@ -237,6 +244,8 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 
     } else {
 
+        inSourceCache.miss();
+        
         auto data = getSourceDataUncached(range);
         m_savedData = { range, data };
         return data;
@@ -284,9 +293,11 @@ FFTModel::getFFTColumn(int n) const
 {
     for (auto &incache : m_cached) {
         if (incache.n == n) {
+            inSmallCache.hit();
             return incache.col;
         }
     }
+    inSmallCache.miss();
     
     auto samples = getSourceSamples(n);
     m_windower.cut(samples.data());
