@@ -16,6 +16,7 @@
 #include "WavFileReader.h"
 
 #include "base/HitCount.h"
+#include "base/Profiler.h"
 
 #include <iostream>
 
@@ -138,6 +139,8 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 
     QMutexLocker locker(&m_mutex);
 
+    Profiler profiler("WavFileReader::getInterleavedFrames");
+    
     if (!m_file || !m_channelCount) {
         return {};
     }
