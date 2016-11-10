@@ -291,12 +291,12 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 vector<complex<float>>
 FFTModel::getFFTColumn(int n) const
 {
-    // The small cache (i.e. the m_cached deque) is for peak-frequency
-    // spectrograms, where values from two consecutive columns are
+    // The small cache (i.e. the m_cached deque) is for cases where
+    // values are looked up individually, and for e.g. peak-frequency
+    // spectrograms where values from two consecutive columns are
     // needed at once. This cache gets essentially no hits when
-    // scrolling through a magnitude spectrogram but 95%+ hits with a
-    // peak-frequency spectrogram. Since it costs very little, it's
-    // well worth having.
+    // scrolling through a magnitude spectrogram, but 95%+ hits with a
+    // peak-frequency spectrogram.
     for (const auto &incache : m_cached) {
         if (incache.n == n) {
             inSmallCache.hit();
@@ -304,6 +304,8 @@ FFTModel::getFFTColumn(int n) const
         }
     }
     inSmallCache.miss();
+
+    Profiler profiler("FFTModel::getFFTColumn (cache miss)");
     
     auto samples = getSourceSamples(n);
     m_windower.cut(samples.data());
