@@ -54,10 +54,6 @@ INCLUDEPATH += ../../..
 OBJECTS_DIR = o
 MOC_DIR = o
 
-HEADERS += AudioFileReaderTest.h \
-           AudioTestData.h
-SOURCES += main.cpp
-
 win* {
 //PRE_TARGETDEPS += ../../../svcore.lib
 }
