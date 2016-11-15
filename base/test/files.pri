@@ -1,7 +1,8 @@
 TEST_HEADERS = \
 	     TestRangeMapper.h \
 	     TestPitch.h \
-	     TestRealTime.h \
+	     TestOurRealTime.h \
+	     TestVampRealTime.h \
 	     TestStringBits.h
 	     
 TEST_SOURCES += \
