@@ -449,20 +449,21 @@ frame2RealTime_i(sv_frame_t frame, sv_frame_t iSampleRate)
 {
     if (frame < 0) return -frame2RealTime_i(-frame, iSampleRate);
 
-    RealTime rt;
-    sv_frame_t sec = frame / iSampleRate;
-    rt.sec = int(sec);
+    int sec = int(frame / iSampleRate);
     frame -= sec * iSampleRate;
-    rt.nsec = (int)(((double(frame) * 1000000.0) / double(iSampleRate)) * 1000.0);
-    return rt;
+    int nsec = int((double(frame) / double(iSampleRate)) * ONE_BILLION + 0.5);
+    // Use ctor here instead of setting data members directly to
+    // ensure nsec > ONE_BILLION is handled properly.  It's extremely
+    // unlikely, but not impossible.
+    return RealTime(sec, nsec);
 }
 
 sv_frame_t
 RealTime::realTime2Frame(const RealTime &time, sv_samplerate_t sampleRate)
 {
     if (time < zeroTime) return -realTime2Frame(-time, sampleRate);
-    double s = time.sec + double(time.nsec + 1) / 1000000000.0;
-    return sv_frame_t(s * sampleRate);
+    double s = time.sec + double(time.nsec) / 1000000000.0;
+    return sv_frame_t(s * sampleRate + 0.5);
 }
 
 RealTime

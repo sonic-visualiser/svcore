@@ -13,8 +13,9 @@
 
 #include "TestRangeMapper.h"
 #include "TestPitch.h"
-#include "TestRealTime.h"
 #include "TestStringBits.h"
+#include "TestOurRealTime.h"
+#include "TestVampRealTime.h"
 
 #include <QtTest>
 
@@ -39,7 +40,12 @@ int main(int argc, char *argv[])
 	else ++bad;
     }
     {
-	TestRealTime t;
+        TestOurRealTime t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+    {
+        TestVampRealTime t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
