@@ -324,24 +324,17 @@ private slots:
             for (int j = 0; j < m; ++j) {
                 int rate = rates[j];
 
-                cerr << "frame = " << frame << ", rate = " << rate << endl;
-                
                 RealTime rt = RealTime::frame2RealTime(frame, rate);
                 QCOMPARE(rt.sec, realTimes[j][i].sec);
                 QCOMPARE(rt.nsec, realTimes[j][i].nsec);
 
-                cerr << "rt = " << rt << endl;
-                cerr << "rate = " << rate << endl;
-
                 frame_type conv = RealTime::realTime2Frame(rt, rate);
-                cerr << "conv = " << conv << endl;
                 
                 rt = RealTime::frame2RealTime(-frame, rate);
                 frame_type negconv = RealTime::realTime2Frame(rt, rate);
-                cerr << "negconv = " << negconv << endl;
 
                 if (rate > ONE_BILLION) {
-                    // We no longer have enough precision in RealTime
+                    // We don't have enough precision in RealTime
                     // for this absurd sample rate, so a round trip
                     // conversion may round
                     QVERIFY(abs(frame - conv) < 2);
