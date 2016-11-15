@@ -31,7 +31,7 @@
 
 using namespace std;
 
-static QString audioDir = "testfiles";
+static QString audioDir = "svcore/data/fileio/test/testfiles";
 
 class AudioFileReaderTest : public QObject
 {
