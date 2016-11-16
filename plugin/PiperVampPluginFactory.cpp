@@ -48,7 +48,15 @@ using namespace std;
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
-PiperVampPluginFactory::PiperVampPluginFactory()
+class PiperVampPluginFactory::Logger : public piper_vamp::client::LogCallback {
+protected:
+    void log(std::string message) const override {
+        SVDEBUG << "PiperVampPluginFactory: " << message << endl;
+    }
+};
+
+PiperVampPluginFactory::PiperVampPluginFactory() :
+    m_logger(new Logger)
 {
     QString serverName = "piper-vamp-simple-server";
 
@@ -67,6 +75,11 @@ PiperVampPluginFactory::PiperVampPluginFactory()
             SVDEBUG << "NOTE: " << d << endl;
         }
     }
+}
+
+PiperVampPluginFactory::~PiperVampPluginFactory()
+{
+    delete m_logger;
 }
 
 vector<QString>
@@ -110,10 +123,16 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
     if (psd.pluginKey == "") {
         return 0;
     }
+
+    SVDEBUG << "PiperVampPluginFactory: Creating Piper AutoPlugin for server "
+        << m_origins[identifier] << ", identifier " << identifier << endl;
     
     auto ap = new piper_vamp::client::AutoPlugin
         (m_origins[identifier].toStdString(),
-         psd.pluginKey, float(inputSampleRate), 0);
+         psd.pluginKey,
+         float(inputSampleRate),
+         0,
+         m_logger);
     
     if (!ap->isOK()) {
         delete ap;
@@ -169,8 +188,9 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     auto candidateLibraries =
         scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
 
+    SVDEBUG << "PiperVampPluginFactory: Populating from " << executable << endl;
     SVDEBUG << "INFO: Have " << candidateLibraries.size()
-            << " candidate Vamp plugin libraries" << endl;
+            << " candidate Vamp plugin libraries from scanner" << endl;
         
     vector<string> from;
     for (const auto &c: candidateLibraries) {
@@ -195,13 +215,14 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
         }
     }
     
-    piper_vamp::client::ProcessQtTransport transport(executable, "capnp");
+    piper_vamp::client::ProcessQtTransport transport(executable, "capnp", m_logger);
     if (!transport.isOK()) {
+        SVDEBUG << "PiperVampPluginFactory: Failed to start Piper process transport" << endl;
         errorMessage = QObject::tr("Could not start external plugin host");
         return;
     }
 
-    piper_vamp::client::CapnpRRClient client(&transport);
+    piper_vamp::client::CapnpRRClient client(&transport, m_logger);
 
     piper_vamp::ListRequest req;
     req.from = from;
@@ -211,10 +232,12 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     try {
         resp = client.listPluginData(req);
     } catch (piper_vamp::client::ServerCrashed) {
+        SVDEBUG << "PiperVampPluginFactory: Piper server crashed" << endl;
         errorMessage = QObject::tr
             ("External plugin host exited unexpectedly while listing plugins");
         return;
     } catch (const std::exception &e) {
+        SVDEBUG << "PiperVampPluginFactory: Exception caught: " << e.what() << endl;
         errorMessage = QObject::tr("External plugin host invocation failed: %1")
             .arg(e.what());
         return;

@@ -36,7 +36,7 @@ class PluginScan::Logger
 {
 protected:
     void log(std::string message) {
-        SVDEBUG << "PluginScan: " << message;
+        SVDEBUG << "PluginScan: " << message << endl;
     }
 };
 

@@ -35,8 +35,7 @@ class PiperVampPluginFactory : public FeatureExtractionPluginFactory
 {
 public:
     PiperVampPluginFactory();
-
-    virtual ~PiperVampPluginFactory() { }
+    virtual ~PiperVampPluginFactory();
 
     virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage)
         override;
@@ -59,6 +58,9 @@ protected:
 
     void populate(QString &errorMessage);
     void populateFrom(const HelperExecPath::HelperExec &, QString &errorMessage);
+
+    class Logger;
+    Logger *m_logger;
 };
 
 #endif
