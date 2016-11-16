@@ -34,17 +34,14 @@ FeatureExtractionPluginFactory::instance()
 
 #ifdef HAVE_PIPER
         if (Preferences::getInstance()->getRunPluginsInProcess()) {
-            SVDEBUG << "FeatureExtractionPluginFactory: creating native instance"
-                    << endl;
+            SVDEBUG << "FeatureExtractionPluginFactory: in-process preference set, using native factory" << endl;
             instance = new NativeVampPluginFactory();
         } else {
-            SVDEBUG << "FeatureExtractionPluginFactory: creating Piper instance"
-                    << endl;
+            SVDEBUG << "FeatureExtractionPluginFactory: in-process preference not set, using Piper factory" << endl;
             instance = new PiperVampPluginFactory();
         }
 #else
-        SVDEBUG << "FeatureExtractionPluginFactory: no Piper support enabled,"
-                << " creating native instance" << endl;
+        SVDEBUG << "FeatureExtractionPluginFactory: no Piper support compiled in, using native factory" << endl;
         instance = new NativeVampPluginFactory();
 #endif
     }

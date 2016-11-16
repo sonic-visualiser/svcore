@@ -753,6 +753,9 @@ TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
     t.setIdentifier(id);
     if (rate != 0) t.setSampleRate(rate);
 
+    SVDEBUG << "TransformFactory::getDefaultTransformFor: identifier \""
+            << id << "\"" << endl;
+    
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
     if (plugin) {
@@ -768,6 +771,9 @@ TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
 Vamp::PluginBase *
 TransformFactory::instantiatePluginFor(const Transform &transform)
 {
+    SVDEBUG << "TransformFactory::instantiatePluginFor: identifier \""
+            << transform.getIdentifier() << "\"" << endl;
+    
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (transform.getIdentifier(), transform.getSampleRate());
 
@@ -791,8 +797,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 
     if (t.getType() == Transform::FeatureExtraction) {
 
-//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
-//             << identifier << "\" is a feature extraction transform" << endl;
+        SVDEBUG << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+                << identifier << "\" is a feature extraction transform" << endl;
         
         FeatureExtractionPluginFactory *factory =
             FeatureExtractionPluginFactory::instance();
@@ -803,8 +809,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 
     } else if (t.getType() == Transform::RealTimeEffect) {
 
-//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
-//             << identifier << "\" is a real-time transform" << endl;
+        SVDEBUG << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+                << identifier << "\" is a real-time transform" << endl;
 
         RealTimePluginFactory *factory = 
             RealTimePluginFactory::instanceFor(pluginId);
@@ -814,8 +820,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
         }
 
     } else {
-        cerr << "TransformFactory: ERROR: transform id \""
-             << identifier << "\" is of unknown type" << endl;
+        SVDEBUG << "TransformFactory: ERROR: transform id \""
+                << identifier << "\" is of unknown type" << endl;
     }
 
     return plugin;
@@ -884,6 +890,9 @@ TransformFactory::getTransformInputDomain(TransformId identifier)
     Transform transform;
     transform.setIdentifier(identifier);
 
+    SVDEBUG << "TransformFactory::getTransformInputDomain: identifier \""
+            << identifier << "\"" << endl;
+    
     if (transform.getType() != Transform::FeatureExtraction) {
         return Vamp::Plugin::TimeDomain;
     }
@@ -1069,12 +1078,15 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
 {
     QString xml;
 
+    SVDEBUG << "TransformFactory::getPluginConfigurationXml: identifier \""
+            << t.getIdentifier() << "\"" << endl;
+
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::getPluginConfigurationXml: "
-                  << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier() << "\"" << endl;
+        SVDEBUG << "TransformFactory::getPluginConfigurationXml: "
+                << "Unable to instantiate plugin for transform \""
+                << t.getIdentifier() << "\"" << endl;
         return xml;
     }
 
@@ -1091,12 +1103,15 @@ void
 TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
                                                           QString xml)
 {
+    SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: identifier \""
+            << t.getIdentifier() << "\"" << endl;
+
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
-                  << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier() << "\"" << endl;
+        SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: "
+                << "Unable to instantiate plugin for transform \""
+                << t.getIdentifier() << "\"" << endl;
         return;
     }
 
@@ -1150,14 +1165,14 @@ TransformFactory::search(QStringList keywords)
     if (!m_uninstalledTransformsMutex.tryLock()) {
         // uninstalled transforms are being populated; this may take some time,
         // and they aren't critical, but we will speed them up if necessary
-        cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
+        SVDEBUG << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
         m_populatingSlowly = false;
         return results;
     }
 
     if (!m_uninstalledTransformsPopulated) {
-        cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
-                  << "and are not being populated either -- was the thread not started correctly?" << endl;
+        SVDEBUG << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
+                << "and are not being populated either -- was the thread not started correctly?" << endl;
         m_uninstalledTransformsMutex.unlock();
         return results;
     }

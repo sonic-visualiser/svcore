@@ -89,12 +89,14 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    cerr << "last configuration: " << configurationXml << endl;
+    SVDEBUG << "ModelTransformer: last configuration for identifier " << transform.getIdentifier() << ": " << configurationXml << endl;
 
     Vamp::PluginBase *plugin = 0;
 
     if (RealTimePluginFactory::instanceFor(id)) {
 
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: instantiating real-time plugin" << endl;
+        
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
         sv_samplerate_t sampleRate = inputModel->getSampleRate();
@@ -113,7 +115,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
     } else {
 
-        cerr << "getConfigurationForTransform: instantiating Vamp plugin" << endl;
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: instantiating Vamp plugin" << endl;
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instance()->instantiatePlugin
@@ -152,6 +154,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         configurationXml = PluginXml(plugin).toXmlString();
 
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: got configuration, deleting plugin" << endl;
+        
         delete plugin;
     }
 

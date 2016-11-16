@@ -107,8 +107,8 @@ FeatureExtractionModelTransformer::initialise()
         return false;
     }
 
-    cerr << "instantiating plugin for transform in thread "
-         << QThread::currentThreadId() << endl;
+    SVDEBUG << "FeatureExtractionModelTransformer: Instantiating plugin for transform in thread "
+            << QThread::currentThreadId() << endl;
     
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
@@ -136,13 +136,13 @@ FeatureExtractionModelTransformer::initialise()
     }
 
     SVDEBUG << "Initialising feature extraction plugin with channels = "
-              << channelCount << ", step = " << primaryTransform.getStepSize()
-              << ", block = " << primaryTransform.getBlockSize() << endl;
+            << channelCount << ", step = " << primaryTransform.getStepSize()
+            << ", block = " << primaryTransform.getBlockSize() << endl;
 
     if (!m_plugin->initialise(channelCount,
                               primaryTransform.getStepSize(),
                               primaryTransform.getBlockSize())) {
-
+        
         int pstep = primaryTransform.getStepSize();
         int pblock = primaryTransform.getBlockSize();
 
@@ -154,16 +154,24 @@ FeatureExtractionModelTransformer::initialise()
 
         if (primaryTransform.getStepSize() != pstep ||
             primaryTransform.getBlockSize() != pblock) {
+
+            SVDEBUG << "Initialisation failed, trying again with default step = "
+                    << primaryTransform.getStepSize()
+                    << ", block = " << primaryTransform.getBlockSize() << endl;
             
             if (!m_plugin->initialise(channelCount,
                                       primaryTransform.getStepSize(),
                                       primaryTransform.getBlockSize())) {
 
+                SVDEBUG << "Initialisation failed again" << endl;
+                
                 m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
                 return false;
 
             } else {
-
+                
+                SVDEBUG << "Initialisation succeeded this time" << endl;
+                
                 m_message = tr("Feature extraction plugin \"%1\" rejected the given step and block sizes (%2 and %3); using plugin defaults (%4 and %5) instead")
                     .arg(pluginId)
                     .arg(pstep)
@@ -174,9 +182,13 @@ FeatureExtractionModelTransformer::initialise()
 
         } else {
 
+            SVDEBUG << "Initialisation failed" << endl;
+                
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
             return false;
         }
+    } else {
+        SVDEBUG << "Initialisation succeeded" << endl;
     }
 
     if (primaryTransform.getPluginVersion() != "") {
@@ -237,8 +249,8 @@ FeatureExtractionModelTransformer::initialise()
 void
 FeatureExtractionModelTransformer::deinitialise()
 {
-    cerr << "deleting plugin for transform in thread "
-         << QThread::currentThreadId() << endl;
+    SVDEBUG << "FeatureExtractionModelTransformer: deleting plugin for transform in thread "
+            << QThread::currentThreadId() << endl;
     
     delete m_plugin;
     for (int j = 0; j < (int)m_descriptors.size(); ++j) {
@@ -250,8 +262,6 @@ void
 FeatureExtractionModelTransformer::createOutputModels(int n)
 {
     DenseTimeValueModel *input = getConformingInput();
-
-//    cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << endl;
     
     PluginRDFDescription description(m_transforms[n].getPluginIdentifier());
     QString outputId = m_transforms[n].getOutput();
@@ -291,10 +301,10 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         //!!! the resolution appropriately.  We can't properly display
         //!!! data with a higher resolution than the base model at all
         if (outputRate > input->getSampleRate()) {
-            cerr << "WARNING: plugin reports output sample rate as "
-                 << outputRate
-                 << " (can't display features with finer resolution than the input rate of "
-                 << modelRate << ")" << endl;
+            SVDEBUG << "WARNING: plugin reports output sample rate as "
+                    << outputRate
+                    << " (can't display features with finer resolution than the input rate of "
+                    << modelRate << ")" << endl;
             outputRate = modelRate;
         }
     }
@@ -313,7 +323,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
         if (outputRate <= 0.0) {
-            cerr << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
+            SVDEBUG << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
             modelResolution = 1;
         } else {
             modelResolution = int(round(modelRate / outputRate));
@@ -736,7 +746,7 @@ FeatureExtractionModelTransformer::run()
                 }                    
                 error = fftModels[ch]->getError();
                 if (error != "") {
-                    cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
+                    SVDEBUG << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
                     m_abandoned = true;
                     m_message = error;
                     break;
@@ -879,7 +889,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	if (!feature.hasTimestamp) {
-	    cerr
+	    SVDEBUG
 		<< "WARNING: FeatureExtractionModelTransformer::addFeature: "
 		<< "Feature has variable sample rate but no timestamp!"
 		<< endl;
@@ -915,7 +925,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
     }
 
     if (frame < 0) {
-        cerr
+        SVDEBUG
             << "WARNING: FeatureExtractionModelTransformer::addFeature: "
             << "Negative frame counts are not supported (frame = " << frame
             << " from timestamp " << feature.timestamp
