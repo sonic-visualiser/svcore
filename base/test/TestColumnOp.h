@@ -195,7 +195,14 @@ private slots:
     void distribute_simple_interpolated() {
         Column in { 1, 2, 3 };
         BinMapping binfory { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5 };
-        Column expected { 1, 1.5, 2, 2.5, 3, 3 };
+        // There is a 0.5-bin offset from the distribution you might
+        // expect, because this corresponds visually to the way that
+        // bin values are duplicated upwards in simple_distribution.
+        // It means that switching between interpolated and
+        // non-interpolated views retains the visual position of each
+        // bin peak as somewhere in the middle of the scale area for
+        // that bin.
+        Column expected { 1, 1, 1.5, 2, 2.5, 3 };
         Column actual(C::distribute(in, 6, binfory, 0, true));
         report(actual);
         QCOMPARE(actual, expected);
@@ -211,9 +218,10 @@ private slots:
     }
     
     void distribute_nonlinear_interpolated() {
+        // See distribute_simple_interpolated
         Column in { 1, 2, 3 };
         BinMapping binfory { 0.0, 0.2, 0.5, 1.0, 2.0, 2.5 };
-        Column expected { 1, 1.2, 1.5, 2, 3, 3 };
+        Column expected { 1, 1, 1, 1.5, 2.5, 3 };
         Column actual(C::distribute(in, 6, binfory, 0, true));
         report(actual);
         QCOMPARE(actual, expected);
