@@ -31,7 +31,18 @@ class TestColumnOp : public QObject
 
     typedef ColumnOp C;
     typedef ColumnOp::Column Column;
-    
+    typedef vector<double> BinMapping;
+
+    template <typename T>
+    void report(vector<T> v) {
+        cerr << "Vector is: [ ";
+        for (int i = 0; i < int(v.size()); ++i) {
+            if (i > 0) cerr << ", ";
+            cerr << v[i];
+        }
+        cerr << " ]\n";
+    }
+                                     
 private slots:
     void applyGain() {
         QCOMPARE(C::applyGain({}, 1.0), Column());
@@ -129,16 +140,33 @@ private slots:
         QCOMPARE(C::normalize(c, ColumnNormalization::None), c);
     }
 
+    void normalize_none_mixedSign() {
+        Column c { 1, 2, -3, -4 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::None), c);
+    }
+
     void normalize_sum1() {
         Column c { 1, 2, 4, 3 };
         QCOMPARE(C::normalize(c, ColumnNormalization::Sum1),
                  Column({ 0.1, 0.2, 0.4, 0.3 }));
     }
 
+    void normalize_sum1_mixedSign() {
+        Column c { 1, 2, -4, -3 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::Sum1),
+                 Column({ 0.1, 0.2, -0.4, -0.3 }));
+    }
+
     void normalize_max1() {
         Column c { 4, 3, 2, 1 };
         QCOMPARE(C::normalize(c, ColumnNormalization::Max1),
                  Column({ 1.0, 0.75, 0.5, 0.25 }));
+    }
+
+    void normalize_max1_mixedSign() {
+        Column c { -4, -3, 2, 1 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::Max1),
+                 Column({ -1.0, -0.75, 0.5, 0.25 }));
     }
 
     void normalize_hybrid() {
@@ -148,6 +176,68 @@ private slots:
                  Column({ 44.0/99.0, 88.0/99.0, 2.0, 132.0/99.0 }));
     }
 
+    void normalize_hybrid_mixedSign() {
+        // with max == 99, log10(max+1) == 2 so scale factor will be 2/99
+        Column c { 22, 44, -99, -66 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::Hybrid),
+                 Column({ 44.0/99.0, 88.0/99.0, -2.0, -132.0/99.0 }));
+    }
+    
+    void distribute_simple() {
+        Column in { 1, 2, 3 };
+        BinMapping binfory { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5 };
+        Column expected { 1, 1, 2, 2, 3, 3 };
+        Column actual(C::distribute(in, 6, binfory, 0, false));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
+    
+    void distribute_simple_interpolated() {
+        Column in { 1, 2, 3 };
+        BinMapping binfory { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5 };
+        Column expected { 1, 1.5, 2, 2.5, 3, 3 };
+        Column actual(C::distribute(in, 6, binfory, 0, true));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
+    
+    void distribute_nonlinear() {
+        Column in { 1, 2, 3 };
+        BinMapping binfory { 0.0, 0.2, 0.5, 1.0, 2.0, 2.5 };
+        Column expected { 1, 1, 1, 2, 3, 3 };
+        Column actual(C::distribute(in, 6, binfory, 0, false));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
+    
+    void distribute_nonlinear_interpolated() {
+        Column in { 1, 2, 3 };
+        BinMapping binfory { 0.0, 0.2, 0.5, 1.0, 2.0, 2.5 };
+        Column expected { 1, 1.2, 1.5, 2, 3, 3 };
+        Column actual(C::distribute(in, 6, binfory, 0, true));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
+    
+    void distribute_shrinking() {
+        Column in { 4, 1, 2, 3, 5, 6 };
+        BinMapping binfory { 0.0, 2.0, 4.0 };
+        Column expected { 4, 3, 6 };
+        Column actual(C::distribute(in, 3, binfory, 0, false));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
+    
+    void distribute_shrinking_interpolated() {
+        // should be same as distribute_shrinking, we don't
+        // interpolate when resizing down
+        Column in { 4, 1, 2, 3, 5, 6 };
+        BinMapping binfory { 0.0, 2.0, 4.0 };
+        Column expected { 4, 3, 6 };
+        Column actual(C::distribute(in, 3, binfory, 0, true));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
     
         
 };

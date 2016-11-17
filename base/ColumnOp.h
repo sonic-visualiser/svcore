@@ -18,10 +18,7 @@
 
 #include "BaseTypes.h"
 
-#include <cmath>
 #include <vector>
-#include <algorithm>
-#include <iostream>
 
 /**
  * Display normalization types for columns in e.g. grid plots.
@@ -58,24 +55,17 @@ public:
      * Scale the given column using the given gain multiplier.
      */
     static Column applyGain(const Column &in, double gain) {
-	
-	if (gain == 1.0) {
-	    return in;
-	}
+        if (gain == 1.0) return in;
 	Column out;
 	out.reserve(in.size());
-	for (auto v: in) {
-	    out.push_back(float(v * gain));
-	}
+	for (auto v: in) out.push_back(float(v * gain));
 	return out;
     }
 
     /**
      * Scale an FFT output downward by half the FFT size.
      */
-    static Column fftScale(const Column &in, int fftSize) {
-        return applyGain(in, 2.0 / fftSize);
-    }
+    static Column fftScale(const Column &in, int fftSize);
 
     /**
      * Determine whether an index points to a local peak.
@@ -103,59 +93,18 @@ public:
      * Return a column containing only the local peak values (all
      * others zero).
      */
-    static Column peakPick(const Column &in) {
-	
-	std::vector<float> out(in.size(), 0.f);
-	for (int i = 0; in_range_for(in, i); ++i) {
-	    if (isPeak(in, i)) {
-		out[i] = in[i];
-	    }
-	}
-	
-	return out;
-    }
+    static Column peakPick(const Column &in);
 
     /**
      * Return a column normalized from the input column according to
      * the given normalization scheme.
+     *
+     * Note that the sum or max (as appropriate) used for
+     * normalisation will be calculated from the absolute values of
+     * the column elements, should any of them be negative.
      */
-    static Column normalize(const Column &in, ColumnNormalization n) {
-
-	if (n == ColumnNormalization::None || in.empty()) {
-	    return in;
-	}
-
-        float scale = 1.f;
-        
-        if (n == ColumnNormalization::Sum1) {
-
-            float sum = 0.f;
-
-            for (auto v: in) {
-                sum += v;
-            }
-
-            if (sum != 0.f) {
-                scale = 1.f / sum;
-            }
-        } else {
-        
-            float max = *max_element(in.begin(), in.end());
-
-            if (n == ColumnNormalization::Max1) {
-                if (max != 0.f) {
-                    scale = 1.f / max;
-                }
-            } else if (n == ColumnNormalization::Hybrid) {
-                if (max > 0.f) {
-                    scale = log10f(max + 1.f) / max;
-                }
-            }
-        }
-
-        return applyGain(in, scale);
-    }
-
+    static Column normalize(const Column &in, ColumnNormalization n);
+    
     /**
      * Distribute the given column into a target vector of a different
      * size, optionally using linear interpolation. The binfory vector
@@ -169,63 +118,7 @@ public:
 			     int h,
 			     const std::vector<double> &binfory,
 			     int minbin,
-			     bool interpolate) {
-
-	std::vector<float> out(h, 0.f);
-	int bins = int(in.size());
-
-	for (int y = 0; y < h; ++y) {
-        
-	    double sy0 = binfory[y] - minbin;
-	    double sy1 = sy0 + 1;
-	    if (y+1 < h) {
-		sy1 = binfory[y+1] - minbin;
-	    }
-
-            std::cerr << "y = " << y << " of " << h << ", sy0 = " << sy0 << ", sy1 = " << sy1 << std::endl;
-        
-	    if (interpolate && fabs(sy1 - sy0) < 1.0) {
-            
-		double centre = (sy0 + sy1) / 2;
-		double dist = (centre - 0.5) - rint(centre - 0.5);
-		int bin = int(centre);
-
-		int other = (dist < 0 ? (bin-1) : (bin+1));
-
-		if (bin < 0) bin = 0;
-		if (bin >= bins) bin = bins-1;
-
-		if (other < 0 || other >= bins) {
-		    other = bin;
-		}
-
-		double prop = 1.0 - fabs(dist);
-
-		double v0 = in[bin];
-		double v1 = in[other];
-                
-		out[y] = float(prop * v0 + (1.0 - prop) * v1);
-
-	    } else { // not interpolating this one
-
-		int by0 = int(sy0 + 0.0001);
-		int by1 = int(sy1 + 0.0001);
-		if (by1 < by0 + 1) by1 = by0 + 1;
-                if (by1 >= bins) by1 = bins - 1;
-                
-		for (int bin = by0; bin <= by1; ++bin) {
-
-		    float value = in[bin];
-
-		    if (bin == by0 || value > out[y]) {
-			out[y] = value;
-		    }
-		}
-	    }
-	}
-
-	return out;
-    }
+			     bool interpolate);
 
 };
 
