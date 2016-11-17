@@ -19,6 +19,9 @@
 #include "BaseTypes.h"
 
 #include <cmath>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 
 /**
  * Display normalization types for columns in e.g. grid plots.
@@ -68,7 +71,7 @@ public:
     }
 
     /**
-     * Scale an FFT output by half the FFT size.
+     * Scale an FFT output downward by half the FFT size.
      */
     static Column fftScale(const Column &in, int fftSize) {
         return applyGain(in, 2.0 / fftSize);
@@ -78,12 +81,21 @@ public:
      * Determine whether an index points to a local peak.
      */
     static bool isPeak(const Column &in, int ix) {
-	
-	if (!in_range_for(in, ix-1)) return false;
-	if (!in_range_for(in, ix+1)) return false;
-	if (in[ix] < in[ix+1]) return false;
-	if (in[ix] < in[ix-1]) return false;
-	
+        if (!in_range_for(in, ix)) {
+            return false;
+        }
+        if (ix == 0) {
+            return in[0] >= in[1];
+        }
+        if (!in_range_for(in, ix+1)) {
+            return in[ix] > in[ix-1];
+        }
+	if (in[ix] < in[ix+1]) {
+            return false;
+        }
+	if (in[ix] <= in[ix-1]) {
+            return false;
+        }
 	return true;
     }
 
@@ -109,7 +121,7 @@ public:
      */
     static Column normalize(const Column &in, ColumnNormalization n) {
 
-	if (n == ColumnNormalization::None) {
+	if (n == ColumnNormalization::None || in.empty()) {
 	    return in;
 	}
 
@@ -148,7 +160,10 @@ public:
      * Distribute the given column into a target vector of a different
      * size, optionally using linear interpolation. The binfory vector
      * contains a mapping from y coordinate (i.e. index into the
-     * target vector) to bin (i.e. index into the source column).
+     * target vector) to bin (i.e. index into the source column). The
+     * source column ("in") may be a partial column; it's assumed to
+     * contain enough bins to span the destination range, starting
+     * with the bin of index minbin.
      */
     static Column distribute(const Column &in,
 			     int h,
@@ -166,6 +181,8 @@ public:
 	    if (y+1 < h) {
 		sy1 = binfory[y+1] - minbin;
 	    }
+
+            std::cerr << "y = " << y << " of " << h << ", sy0 = " << sy0 << ", sy1 = " << sy1 << std::endl;
         
 	    if (interpolate && fabs(sy1 - sy0) < 1.0) {
             

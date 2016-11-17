@@ -3,7 +3,8 @@ TEST_HEADERS = \
 	     TestPitch.h \
 	     TestOurRealTime.h \
 	     TestVampRealTime.h \
-	     TestStringBits.h
+	     TestStringBits.h \
+	     TestColumnOp.h
 	     
 TEST_SOURCES += \
 	     svcore-base-test.cpp
