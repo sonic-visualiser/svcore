@@ -62,6 +62,9 @@ private slots:
 	QCOMPARE(RealTime(-1, ONE_BILLION), RealTime(0, 0));
 	QCOMPARE(RealTime(-1, -ONE_BILLION), RealTime(-2, 0));
 
+        QCOMPARE(RealTime(1, -ONE_BILLION-ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(-1, ONE_BILLION+ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+            
 	QCOMPARE(RealTime(2, -ONE_BILLION*2), RealTime(0, 0));
 	QCOMPARE(RealTime(2, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
 
