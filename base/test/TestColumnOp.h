@@ -33,6 +33,7 @@ class TestColumnOp : public QObject
     typedef ColumnOp::Column Column;
     typedef vector<double> BinMapping;
 
+#ifdef REPORT
     template <typename T>
     void report(vector<T> v) {
         cerr << "Vector is: [ ";
@@ -42,6 +43,10 @@ class TestColumnOp : public QObject
         }
         cerr << " ]\n";
     }
+#else
+    template <typename T>
+    void report(vector<T> ) { }
+#endif
                                      
 private slots:
     void applyGain() {
