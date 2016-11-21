@@ -21,6 +21,7 @@
 #include "plugin/PluginIdentifier.h"
 
 #include "base/Profiler.h"
+#include "base/Debug.h"
 
 #include <vamp-hostsdk/PluginHostAdapter.h>
 
@@ -84,7 +85,7 @@ PluginRDFIndexer::indexInstalledURLs()
 {
     vector<string> paths = PluginHostAdapter::getPluginPath();
 
-//    cerr << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << endl;
+//    SVDEBUG << "\nPluginRDFIndexer::indexInstalledURLs: pid is " << getpid() << endl;
 
     QStringList filters;
     filters << "*.ttl";
@@ -208,7 +209,7 @@ PluginRDFIndexer::getIdForPluginURI(QString uri)
         // Because we may want to refer to this document again, we
         // cache it locally if it turns out to exist.
 
-        cerr << "PluginRDFIndexer::getIdForPluginURI: NOTE: Failed to find a local RDF document describing plugin <" << uri << ">: attempting to retrieve one remotely by guesswork" << endl;
+        SVDEBUG << "PluginRDFIndexer::getIdForPluginURI: NOTE: Failed to find a local RDF document describing plugin <" << uri << ">: attempting to retrieve one remotely by guesswork" << endl;
 
         QString baseUrl = QUrl(uri).toString(QUrl::RemoveFragment);
 
@@ -261,7 +262,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 {
     Profiler profiler("PluginRDFIndexer::indexURL");
 
-//    cerr << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
+//    SVDEBUG << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
 
     QMutexLocker locker(&m_mutex);
 
@@ -289,14 +290,14 @@ PluginRDFIndexer::pullURL(QString urlString)
     try {
         m_index->import(local, BasicStore::ImportFailOnDuplicates);
     } catch (RDFDuplicateImportException &e) {
-        cerr << e.what() << endl;
-        cerr << "PluginRDFIndexer::pullURL: Document at " << urlString
-             << " duplicates triples found in earlier loaded document -- skipping it" << endl;
+        SVDEBUG << e.what() << endl;
+        SVDEBUG << "PluginRDFIndexer::pullURL: Document at " << urlString
+                 << " duplicates triples found in earlier loaded document -- skipping it" << endl;
         return false;
     } catch (RDFException &e) {
-        cerr << e.what() << endl;
-        cerr << "PluginRDFIndexer::pullURL: Failed to import document from "
-             << urlString << ": " << e.what() << endl;
+        SVDEBUG << e.what() << endl;
+        SVDEBUG << "PluginRDFIndexer::pullURL: Failed to import document from "
+                 << urlString << ": " << e.what() << endl;
         return false;
     }
     return true;
@@ -315,7 +316,7 @@ PluginRDFIndexer::reindex()
     foreach (Node plugin, plugins) {
         
         if (plugin.type != Node::URI) {
-            cerr << "PluginRDFIndexer::reindex: Plugin has no URI: node is "
+            SVDEBUG << "PluginRDFIndexer::reindex: Plugin has no URI: node is "
                  << plugin << endl;
             continue;
         }
@@ -324,7 +325,7 @@ PluginRDFIndexer::reindex()
             (Triple(plugin, m_index->expand("vamp:identifier"), Node()));
 
         if (idn.type != Node::Literal) {
-            cerr << "PluginRDFIndexer::reindex: Plugin " << plugin
+            SVDEBUG << "PluginRDFIndexer::reindex: Plugin " << plugin
                  << " lacks vamp:identifier literal" << endl;
             continue;
         }
@@ -333,7 +334,7 @@ PluginRDFIndexer::reindex()
             (Triple(Node(), m_index->expand("vamp:available_plugin"), plugin));
 
         if (libn.type != Node::URI) {
-            cerr << "PluginRDFIndexer::reindex: Plugin " << plugin 
+            SVDEBUG << "PluginRDFIndexer::reindex: Plugin " << plugin 
                  << " is not vamp:available_plugin in any library" << endl;
             continue;
         }
@@ -342,7 +343,7 @@ PluginRDFIndexer::reindex()
             (Triple(libn, m_index->expand("vamp:identifier"), Node()));
 
         if (son.type != Node::Literal) {
-            cerr << "PluginRDFIndexer::reindex: Library " << libn
+            SVDEBUG << "PluginRDFIndexer::reindex: Library " << libn
                  << " lacks vamp:identifier for soname" << endl;
             continue;
         }
@@ -366,10 +367,10 @@ PluginRDFIndexer::reindex()
 
         if (pluginUri != "") {
             if (m_uriToIdMap.find(pluginUri) != m_uriToIdMap.end()) {
-                cerr << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
-                cerr << "  1. Plugin id \"" << m_uriToIdMap[pluginUri] << "\"" << endl;
-                cerr << "  2. Plugin id \"" << pluginId << "\"" << endl;
-                cerr << "both claim URI <" << pluginUri << ">" << endl;
+                SVDEBUG << "PluginRDFIndexer::reindex: WARNING: Found multiple plugins with the same URI:" << endl;
+                SVDEBUG << "  1. Plugin id \"" << m_uriToIdMap[pluginUri] << "\"" << endl;
+                SVDEBUG << "  2. Plugin id \"" << pluginId << "\"" << endl;
+                SVDEBUG << "both claim URI <" << pluginUri << ">" << endl;
             } else {
                 m_uriToIdMap[pluginUri] = pluginId;
             }
@@ -377,7 +378,7 @@ PluginRDFIndexer::reindex()
     }
 
     if (!foundSomething) {
-        cerr << "PluginRDFIndexer::reindex: NOTE: Plugins found, but none sufficiently described" << endl;
+        SVDEBUG << "PluginRDFIndexer::reindex: NOTE: Plugins found, but none sufficiently described" << endl;
     }
     
     return addedSomething;
