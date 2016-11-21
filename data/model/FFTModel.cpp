@@ -52,6 +52,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
         throw invalid_argument("FFTModel window size must be at least FFT size");
     }
 
+    m_fft.initFloat();
+
     connect(model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
     connect(model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
             this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
@@ -223,6 +225,8 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         return m_savedData.data;
     }
 
+    Profiler profiler("FFTModel::getSourceData (cache miss)");
+    
     if (range.first < m_savedData.range.second &&
         range.first >= m_savedData.range.first &&
         range.second > m_savedData.range.second) {
@@ -309,7 +313,12 @@ FFTModel::getFFTColumn(int n) const
     
     auto samples = getSourceSamples(n);
     m_windower.cut(samples.data());
-    auto col = m_fft.process(samples);
+    breakfastquay::v_fftshift(samples.data(), m_fftSize);
+
+    vector<complex<float>> col(m_fftSize/2 + 1);
+    
+    m_fft.forwardInterleaved(samples.data(),
+                             reinterpret_cast<float *>(col.data()));
 
     SavedColumn sc { n, col };
     if (m_cached.size() >= m_cacheSize) {
