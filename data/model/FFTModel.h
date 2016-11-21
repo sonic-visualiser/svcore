@@ -21,7 +21,7 @@
 
 #include "base/Window.h"
 
-#include "data/fft/FFTapi.h"
+#include <bqfft/FFT.h>
 
 #include <set>
 #include <vector>
@@ -153,7 +153,7 @@ private:
     int m_windowIncrement;
     int m_fftSize;
     Window<float> m_windower;
-    FFTForward m_fft;
+    mutable breakfastquay::FFT m_fft;
     
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                               int bin, float &percentile) const;
