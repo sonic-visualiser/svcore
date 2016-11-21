@@ -32,6 +32,7 @@ public:
     { }
     
     ~HitCount() {
+#ifndef NO_HIT_COUNTS
 	using namespace std;
 	int total = m_hit + m_partial + m_miss;
 	cerr << "Hit count: " << m_name << ": ";
@@ -52,6 +53,7 @@ public:
 	    }
 	}
 	cerr << endl;
+#endif
     }
 
     void hit() { ++m_hit; }
