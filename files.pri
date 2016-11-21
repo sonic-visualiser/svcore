@@ -41,7 +41,6 @@ SVCORE_HEADERS = \
            base/Window.h \
            base/XmlExportable.h \
            base/ZoomConstraint.h \
-	   data/fft/FFTapi.h \
            data/fileio/AudioFileReader.h \
            data/fileio/AudioFileReaderFactory.h \
            data/fileio/AudioFileSizeEstimator.h \
@@ -174,7 +173,6 @@ SVCORE_SOURCES = \
            base/UnitDatabase.cpp \
            base/ViewManagerBase.cpp \
            base/XmlExportable.cpp \
-	   data/fft/FFTapi.cpp \
            data/fileio/AudioFileReader.cpp \
            data/fileio/AudioFileReaderFactory.cpp \
            data/fileio/AudioFileSizeEstimator.cpp \
