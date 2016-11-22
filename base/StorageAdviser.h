@@ -14,10 +14,12 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _STORAGE_ADVISER_H_
-#define _STORAGE_ADVISER_H_
+#ifndef SV_STORAGE_ADVISER_H
+#define SV_STORAGE_ADVISER_H
 
 #include <cstdlib>
+
+#include <QString>
 
 /**
  * A utility class designed to help decide whether to store cache data
@@ -91,6 +93,17 @@ private:
     static size_t m_discPlanned;
     static size_t m_memoryPlanned;
     static Recommendation m_baseRecommendation;
+
+    enum StorageStatus {
+        Unknown,
+        Insufficient,
+        Marginal,
+        Sufficient
+    };
+
+    static QString criteriaToString(int);
+    static QString recommendationToString(int);
+    static QString storageStatusToString(StorageStatus);
 };
 
 #endif
