@@ -22,7 +22,40 @@
 
 #include <iostream>
 
-//#define DEBUG_STORAGE_ADVISER 1
+QString
+StorageAdviser::criteriaToString(int criteria)
+{
+    QStringList labels;
+    if (criteria & SpeedCritical) labels.push_back("SpeedCritical");
+    if (criteria & PrecisionCritical) labels.push_back("PrecisionCritical");
+    if (criteria & LongRetentionLikely) labels.push_back("LongRetentionLikely");
+    if (criteria & FrequentLookupLikely) labels.push_back("FrequentLookupLikely");
+    if (labels.empty()) return "None";
+    else return labels.join("+");
+}
+
+QString
+StorageAdviser::recommendationToString(int recommendation)
+{
+    QStringList labels;
+    if (recommendation & UseMemory) labels.push_back("UseMemory");
+    if (recommendation & PreferMemory) labels.push_back("PreferMemory");
+    if (recommendation & PreferDisc) labels.push_back("PreferDisc");
+    if (recommendation & UseDisc) labels.push_back("UseDisc");
+    if (recommendation & ConserveSpace) labels.push_back("ConserveSpace");
+    if (recommendation & UseAsMuchAsYouLike) labels.push_back("UseAsMuchAsYouLike");
+    if (labels.empty()) return "None";
+    else return labels.join("+");
+}
+
+QString
+StorageAdviser::storageStatusToString(StorageStatus status)
+{
+    if (status == Insufficient) return "Insufficient";
+    if (status == Marginal) return "Marginal";
+    if (status == Sufficient) return "Sufficient";
+    return "Unknown";
+}
 
 size_t StorageAdviser::m_discPlanned = 0;
 size_t StorageAdviser::m_memoryPlanned = 0;
@@ -35,13 +68,15 @@ StorageAdviser::recommend(Criteria criteria,
 			  size_t minimumSize,
 			  size_t maximumSize)
 {
-#ifdef DEBUG_STORAGE_ADVISER
-    cerr << "StorageAdviser::recommend: Criteria " << criteria 
-         << ", minimumSize " << minimumSize
-         << ", maximumSize " << maximumSize << endl;
-#endif
+    SVDEBUG << "StorageAdviser::recommend: criteria " << criteria
+            << " (" + criteriaToString(criteria) + ")"
+            << ", minimumSize " << minimumSize
+            << ", maximumSize " << maximumSize << endl;
 
     if (m_baseRecommendation != NoRecommendation) {
+        SVDEBUG << "StorageAdviser::recommend: Returning fixed recommendation "
+                << m_baseRecommendation << " ("
+                << recommendationToString(m_baseRecommendation) << ")" << endl;
         return m_baseRecommendation; // for now
     }
 
@@ -49,12 +84,23 @@ StorageAdviser::recommend(Criteria criteria,
     try {
         path = TempDirectory::getInstance()->getPath();
     } catch (std::exception e) {
-        cerr << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
-        return Recommendation(UseMemory | ConserveSpace);
+        SVDEBUG << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
+        int r = UseMemory | ConserveSpace;
+        SVDEBUG << "StorageAdviser: returning fallback " << r
+                << " (" << recommendationToString(r) << ")" << endl;
+        return Recommendation(r);
     }
     ssize_t discFree = GetDiscSpaceMBAvailable(path.toLocal8Bit());
     ssize_t memoryFree, memoryTotal;
     GetRealMemoryMBAvailable(memoryFree, memoryTotal);
+
+    SVDEBUG << "StorageAdviser: disc space: " << discFree
+            << "M, memory free: " << memoryFree
+            << "M, memory total: " << memoryTotal << "M" << endl;
+    SVDEBUG << "StorageAdviser: disc planned: " << (m_discPlanned / 1024)
+            << "K, memory planned: " << (m_memoryPlanned / 1024) << "K" << endl;
+    SVDEBUG << "StorageAdviser: min requested: " << minimumSize
+            << "K, max requested: " << maximumSize << "K" << endl;
 
     if (discFree > ssize_t(m_discPlanned / 1024 + 1)) {
         discFree -= m_discPlanned / 1024 + 1;
@@ -68,21 +114,10 @@ StorageAdviser::recommend(Criteria criteria,
         memoryFree = 0;
     }
 
-#ifdef DEBUG_STORAGE_ADVISER
-    cerr << "Disc space: " << discFree << ", memory free: " << memoryFree << ", memory total: " << memoryTotal << ", min " << minimumSize << ", max " << maximumSize << endl;
-#endif
-
     //!!! We have a potentially serious problem here if multiple
     //recommendations are made in advance of any of the resulting
     //allocations, as the allocations that have been recommended for
     //won't be taken into account in subsequent recommendations.
-
-    enum StorageStatus {
-        Unknown,
-        Insufficient,
-        Marginal,
-        Sufficient
-    };
 
     StorageStatus memoryStatus = Unknown;
     StorageStatus discStatus = Unknown;
@@ -105,10 +140,10 @@ StorageAdviser::recommend(Criteria criteria,
     else if (minmb > (discFree / 10)) discStatus = Marginal;
     else discStatus = Sufficient;
 
-#ifdef DEBUG_STORAGE_ADVISER
-    cerr << "Memory status: " << memoryStatus << ", disc status "
-              << discStatus << endl;
-#endif
+    SVDEBUG << "StorageAdviser: memory status: " << memoryStatus
+            << " (" << storageStatusToString(memoryStatus) << ")"
+            << ", disc status " << discStatus
+            << " (" << storageStatusToString(discStatus) << ")" << endl;
 
     int recommendation = NoRecommendation;
 
@@ -181,9 +216,8 @@ StorageAdviser::recommend(Criteria criteria,
         }
     }
 
-#ifdef DEBUG_STORAGE_ADVISER
-    cerr << "StorageAdviser: returning recommendation " << recommendation << endl;
-#endif
+    SVDEBUG << "StorageAdviser: returning recommendation " << recommendation
+            << " (" << recommendationToString(recommendation) << ")" << endl;
     
     return Recommendation(recommendation);
 }
@@ -193,8 +227,8 @@ StorageAdviser::notifyPlannedAllocation(AllocationArea area, size_t size)
 {
     if (area == MemoryAllocation) m_memoryPlanned += size;
     else if (area == DiscAllocation) m_discPlanned += size;
-//    cerr << "storage planned up: memory: " << m_memoryPlanned << ", disc "
-//              << m_discPlanned << endl;
+    SVDEBUG << "StorageAdviser: storage planned up: now memory: " << m_memoryPlanned << ", disc "
+            << m_discPlanned << endl;
 }
 
 void
@@ -207,8 +241,8 @@ StorageAdviser::notifyDoneAllocation(AllocationArea area, size_t size)
         if (m_discPlanned > size) m_discPlanned -= size; 
         else m_discPlanned = 0;
     }
-//    cerr << "storage planned down: memory: " << m_memoryPlanned << ", disc "
-//              << m_discPlanned << endl;
+    SVDEBUG << "StorageAdviser: storage planned down: now memory: " << m_memoryPlanned << ", disc "
+            << m_discPlanned << endl;
 }
 
 void
