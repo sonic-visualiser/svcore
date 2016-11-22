@@ -71,14 +71,14 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_completion(0),
     m_decodeThread(0)
 {
+    SVDEBUG << "CoreAudioFileReader: local path: \"" << m_path << "\"" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
 
     m_d->buffer.mBuffers[0].mData = 0;
 
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
-
-    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path << "\"" << endl;
 
     QByteArray ba = m_path.toLocal8Bit();
 

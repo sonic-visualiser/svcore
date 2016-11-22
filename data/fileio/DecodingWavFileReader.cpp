@@ -39,11 +39,13 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
     m_reporter(reporter),
     m_decodeThread(0)
 {
+    SVDEBUG << "DecodingWavFileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
-
-    SVDEBUG << "DecodingWavFileReader::DecodingWavFileReader(\""
-              << m_path << "\"): rate " << targetRate << endl;
 
     Profiler profiler("DecodingWavFileReader::DecodingWavFileReader", true);
 

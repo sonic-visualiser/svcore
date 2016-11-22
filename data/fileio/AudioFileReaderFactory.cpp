@@ -29,8 +29,6 @@
 #include <QFileInfo>
 #include <iostream>
 
-//#define DEBUG_AUDIO_FILE_READER_FACTORY 1
-
 QString
 AudioFileReaderFactory::getKnownExtensions()
 {
@@ -89,17 +87,15 @@ AudioFileReaderFactory::create(FileSource source,
 {
     QString err;
 
-#ifdef DEBUG_AUDIO_FILE_READER_FACTORY
-    cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << endl;
-#endif
+    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << targetRate << (targetRate == 0 ? " (use source rate)" : "") << endl;
 
     if (!source.isOK()) {
-        cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
         return 0;
     }
 
     if (!source.isAvailable()) {
-        cerr << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
         return 0;
     }
 
@@ -143,9 +139,7 @@ AudioFileReaderFactory::create(FileSource source,
              (cacheMode == CodedAudioFileReader::CacheInMemory) ||
              (targetRate != 0 && fileRate != targetRate))) {
 
-#ifdef DEBUG_AUDIO_FILE_READER_FACTORY
-            cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
-#endif
+            SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
             
             delete reader;
             reader = new DecodingWavFileReader
@@ -214,9 +208,7 @@ AudioFileReaderFactory::create(FileSource source,
          (cacheMode == CodedAudioFileReader::CacheInMemory) ||
          (targetRate != 0 && fileRate != targetRate))) {
 
-#ifdef DEBUG_AUDIO_FILE_READER_FACTORY
-        cerr << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
-#endif
+        SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
 
         delete reader;
         reader = new DecodingWavFileReader
@@ -264,10 +256,10 @@ AudioFileReaderFactory::create(FileSource source,
 #endif
 
     if (!reader) {
-        cerr << "AudioFileReaderFactory::Failed to create a reader for "
-             << "url \"" << source.getLocation()
-             << "\" (content type \""
-             << source.getContentType() << "\")" << endl;
+        SVDEBUG << "AudioFileReaderFactory::Failed to create a reader for "
+                << "url \"" << source.getLocation()
+                << "\" (content type \""
+                << source.getContentType() << "\")" << endl;
         return nullptr;
     }
     
