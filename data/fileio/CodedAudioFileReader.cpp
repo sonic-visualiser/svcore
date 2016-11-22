@@ -49,7 +49,12 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_max(0.f),
     m_gain(1.f)
 {
-    SVDEBUG << "CodedAudioFileReader::CodedAudioFileReader: rate " << targetRate << ", normalised = " << normalised << endl;
+    SVDEBUG << "CodedAudioFileReader:: cache mode: " << cacheMode
+            << " (" << (cacheMode == CacheInTemporaryFile
+                        ? "CacheInTemporaryFile" : "CacheInMemory") << ")"
+            << ", rate: " << targetRate
+            << (targetRate == 0 ? " (use source rate)" : "")
+            << ", normalised: " << normalised << endl;
 
     m_frameCount = 0;
     m_sampleRate = targetRate;
@@ -59,7 +64,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-    endSerialised();
+    if (m_serialiser) endSerialised();
     
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 
@@ -67,10 +72,11 @@ CodedAudioFileReader::~CodedAudioFileReader()
 
     delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
-
+    
     if (m_cacheFileName != "") {
+        SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file " << m_cacheFileName << endl;
         if (!QFile(m_cacheFileName).remove()) {
-            cerr << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << endl;
+            SVDEBUG << "WARNING: CodedAudioFileReader::~CodedAudioFileReader: Failed to delete cache file \"" << m_cacheFileName << "\"" << endl;
         }
     }
 
@@ -87,7 +93,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 void
 CodedAudioFileReader::startSerialised(QString id)
 {
-    SVDEBUG << "CodedAudioFileReader::startSerialised(" << id << ")" << endl;
+    SVDEBUG << "CodedAudioFileReader(" << this << ")::startSerialised: id = " << id << endl;
 
     delete m_serialiser;
     m_serialiser = new Serialiser(id);
@@ -110,7 +116,7 @@ CodedAudioFileReader::initialiseDecodeCache()
     SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
     if (m_fileRate == 0) {
-        cerr << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
+        SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
     }
     if (m_sampleRate == 0) {
@@ -140,7 +146,7 @@ CodedAudioFileReader::initialiseDecodeCache()
             SF_INFO fileInfo;
             int fileRate = int(round(m_sampleRate));
             if (m_sampleRate != sv_samplerate_t(fileRate)) {
-                cerr << "CodedAudioFileReader: WARNING: Non-integer sample rate "
+                SVDEBUG << "CodedAudioFileReader: WARNING: Non-integer sample rate "
                      << m_sampleRate << " presented for writing, rounding to " << fileRate
                      << endl;
             }
@@ -181,7 +187,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheFileReader = new WavFileReader(m_cacheFileName);
 
                 if (!m_cacheFileReader->isOK()) {
-                    cerr << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << endl;
+                    SVDEBUG << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << endl;
                     delete m_cacheFileReader;
                     m_cacheFileReader = 0;
                     m_cacheMode = CacheInMemory;
@@ -189,12 +195,12 @@ CodedAudioFileReader::initialiseDecodeCache()
                 }
 
             } else {
-                cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << endl;
+                SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: failed to open cache file \"" << m_cacheFileName << "\" (" << m_channelCount << " channels, sample rate " << m_sampleRate << " for writing, falling back to in-memory cache" << endl;
                 m_cacheMode = CacheInMemory;
             }
 
         } catch (DirectoryCreationFailed f) {
-            cerr << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
+            SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
             m_cacheMode = CacheInMemory;
         }
     }
@@ -299,7 +305,7 @@ CodedAudioFileReader::finishDecodeCache()
     Profiler profiler("CodedAudioFileReader::finishDecodeCache", true);
 
     if (!m_initialised) {
-        cerr << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << endl;
+        SVDEBUG << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << endl;
         return;
     }
 
@@ -467,7 +473,6 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
         sv_frame_t ix0 = start * m_channelCount;
         sv_frame_t ix1 = ix0 + (count * m_channelCount);
-
 
         // This lock used to be a QReadWriteLock, but it appears that
         // its lock mechanism is significantly slower than QMutex so

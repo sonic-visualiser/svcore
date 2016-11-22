@@ -50,6 +50,11 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_path(source.getLocalFilename()),
     m_decodeThread(0)
 {
+    SVDEBUG << "MP3FileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+    
     m_channelCount = 0;
     m_fileRate = 0;
     m_fileSize = 0;
@@ -143,11 +148,11 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             usleep(10);
         }
         
-        cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << endl;
+        SVDEBUG << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << endl;
     }
 
     if (m_error != "") {
-        cerr << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << endl;
+        SVDEBUG << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << endl;
     }
 }
 
@@ -182,9 +187,7 @@ MP3FileReader::loadTags()
     
     id3_tag *tag = id3_file_tag(file);
     if (!tag) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No ID3 tag found" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTags: No ID3 tag found" << endl;
         id3_file_close(file);
         return;
     }
@@ -205,10 +208,8 @@ MP3FileReader::loadTags()
     id3_file_close(file);
 
 #else
-#ifdef DEBUG_ID3TAG
-    cerr << "MP3FileReader::loadTags: ID3 tag support not compiled in"
-              << endl;
-#endif
+    SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in"
+            << endl;
 #endif
 }
 
@@ -433,15 +434,20 @@ MP3FileReader::accept(struct mad_header const *header,
 }
 
 enum mad_flow
-MP3FileReader::error(void * /* dp */,
-		     struct mad_stream * /* stream */,
+MP3FileReader::error(void *dp,
+		     struct mad_stream *stream,
 		     struct mad_frame *)
 {
-//    DecoderData *data = (DecoderData *)dp;
-
-//    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
-//	    stream->error, mad_stream_errorstr(stream),
-//	    (unsigned long)(stream->this_frame - data->start));
+    static bool errorShown = false;
+    
+    if (!errorShown) {
+        DecoderData *data = (DecoderData *)dp;
+        fprintf(stderr, "Warning: MP3 decoding error 0x%04x (%s) at byte offset %lu\n",
+                stream->error, mad_stream_errorstr(stream),
+                (unsigned long)(stream->this_frame - data->start));
+        fprintf(stderr, "(Suppressing any further errors of this sort)\n");
+        errorShown = true;
+    }
 
     return MAD_FLOW_CONTINUE;
 }

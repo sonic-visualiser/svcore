@@ -48,6 +48,11 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     m_completion(0),
     m_decodeThread(0)
 {
+    SVDEBUG << "OggVorbisFileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
 

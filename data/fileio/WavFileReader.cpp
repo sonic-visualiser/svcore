@@ -43,9 +43,9 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
-	cerr << "WavFileReader::initialize: Failed to open file at \""
-                  << m_path << "\" ("
-		  << sf_strerror(m_file) << ")" << endl;
+	SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
+                << m_path << "\" ("
+                << sf_strerror(m_file) << ")" << endl;
 
 	if (m_file) {
 	    m_error = QString("Couldn't load audio file '%1':\n%2")
@@ -84,7 +84,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
         }
     }
 
-//    cerr << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << endl;
+    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << endl;
 }
 
 WavFileReader::~WavFileReader()
@@ -103,8 +103,8 @@ WavFileReader::updateFrameCount()
         sf_close(m_file);
         m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
         if (!m_file || m_fileInfo.channels <= 0) {
-            cerr << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
-                      << sf_strerror(m_file) << ")" << endl;
+            SVDEBUG << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
+                    << sf_strerror(m_file) << ")" << endl;
         }
     }
 
@@ -118,7 +118,6 @@ WavFileReader::updateFrameCount()
     }
 
     if (m_frameCount != prevCount) {
-//        cerr << "frameCountChanged" << endl;
         emit frameCountChanged();
     }
 }

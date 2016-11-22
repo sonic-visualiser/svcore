@@ -62,12 +62,15 @@ QuickTimeFileReader::QuickTimeFileReader(FileSource source,
     m_completion(0),
     m_decodeThread(0)
 {
+    SVDEBUG << "QuickTimeFileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
 
     Profiler profiler("QuickTimeFileReader::QuickTimeFileReader", true);
-
-SVDEBUG << "QuickTimeFileReader: path is \"" << m_path << "\"" << endl;
 
     long QTversion;
 
