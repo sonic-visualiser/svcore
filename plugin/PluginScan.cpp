@@ -127,7 +127,11 @@ PluginScan::clear()
 }
 
 QList<PluginScan::Candidate>
-PluginScan::getCandidateLibrariesFor(PluginType type) const
+PluginScan::getCandidateLibrariesFor(PluginType
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+                                     type
+#endif
+    ) const
 {
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
     
