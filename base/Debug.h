@@ -43,6 +43,7 @@ public:
 
     template <typename T>
     inline SVDebug &operator<<(const T &t) {
+        if (m_silenced) return *this;
         if (m_ok) {
             if (m_eol) {
                 m_stream << m_prefix << " ";
@@ -54,21 +55,56 @@ public:
     }
 
     inline SVDebug &operator<<(QTextStreamFunction) {
+        if (m_silenced) return *this;
         m_stream << std::endl;
         m_eol = true;
         return *this;
     }
 
+    static void silence() { m_silenced = true; }
+    
 private:
     std::fstream m_stream;
     char *m_prefix;
     bool m_ok;
     bool m_eol;
+    static bool m_silenced;
+};
+
+class SVCerr {
+public:
+    SVCerr(SVDebug &d) : m_d(d) { }
+    
+    template <typename T>
+    inline SVCerr &operator<<(const T &t) {
+        if (m_silenced) return *this;
+        m_d << t;
+        cerr << t;
+        return *this;
+    }
+
+    inline SVCerr &operator<<(QTextStreamFunction f) {
+        if (m_silenced) return *this;
+        m_d << f;
+        cerr << std::endl;
+        return *this;
+    }
+
+    static void silence() { m_silenced = true; }
+    
+private:
+    SVDebug &m_d;
+    static bool m_silenced;
 };
 
 extern SVDebug &getSVDebug();
+extern SVCerr &getSVCerr();
 
+// Writes to debug log only
 #define SVDEBUG getSVDebug()
+
+// Writes to both SVDEBUG and cerr
+#define SVCERR getSVCerr()
 
 #endif /* !_DEBUG_H_ */
 
