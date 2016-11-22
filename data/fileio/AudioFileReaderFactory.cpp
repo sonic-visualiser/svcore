@@ -115,8 +115,8 @@ AudioFileReaderFactory::create(FileSource source,
         size_t kb = (estimatedSamples * sizeof(float)) / 1024;
         StorageAdviser::Recommendation rec =
             StorageAdviser::recommend(StorageAdviser::SpeedCritical, kb, kb);
-        if (rec == StorageAdviser::UseMemory ||
-            rec == StorageAdviser::PreferMemory) {
+        if ((rec & StorageAdviser::UseMemory) ||
+            (rec & StorageAdviser::PreferMemory)) {
             cacheMode = CodedAudioFileReader::CacheInMemory;
         }
     }
