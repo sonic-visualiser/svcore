@@ -32,8 +32,6 @@
 #include <id3tag.h>
 #endif
 
-//#define DEBUG_ID3TAG 1
-
 #include <QFileInfo>
 
 #ifdef _MSC_VER
@@ -195,22 +193,25 @@ MP3FileReader::loadTags()
 
     m_title = loadTag(tag, "TIT2"); // work title
     if (m_title == "") m_title = loadTag(tag, "TIT1");
+    if (m_title == "") SVDEBUG << "MP3FileReader::loadTags: No title found" << endl;
 
     m_maker = loadTag(tag, "TPE1"); // "lead artist"
     if (m_maker == "") m_maker = loadTag(tag, "TPE2");
+    if (m_maker == "") SVDEBUG << "MP3FileReader::loadTags: No artist/maker found" << endl;
 
     for (unsigned int i = 0; i < tag->nframes; ++i) {
         if (tag->frames[i]) {
             QString value = loadTag(tag, tag->frames[i]->id);
-            if (value != "") m_tags[tag->frames[i]->id] = value;
+            if (value != "") {
+                m_tags[tag->frames[i]->id] = value;
+            }
         }
     }
 
     id3_file_close(file);
 
 #else
-    SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in"
-            << endl;
+    SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in" << endl;
 #endif
 }
 
@@ -222,47 +223,38 @@ MP3FileReader::loadTag(void *vtag, const char *name)
 
     id3_frame *frame = id3_tag_findframe(tag, name, 0);
     if (!frame) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: No \"" << name << "\" frame found in ID3 tag" << endl;
         return "";
     }
         
     if (frame->nfields < 2) {
-        cerr << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
+        cerr << "MP3FileReader::loadTag: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 
     unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
     if (nstrings == 0) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: No strings for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 
     id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
     if (!ustr) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: Invalid or absent data for \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: Invalid or absent data for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
         
     id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
     if (!u8str) {
-        cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << endl;
+        SVDEBUG << "MP3FileReader::loadTag: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 tag" << endl;
         return "";
     }
         
     QString rv = QString::fromUtf8((const char *)u8str);
     free(u8str);
 
-#ifdef DEBUG_ID3TAG
-	cerr << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
-	<< rv << "\"" << endl;
-#endif
-
+    SVDEBUG << "MP3FileReader::loadTag: Tag \"" << name << "\" -> \""
+            << rv << "\"" << endl;
 
     return rv;
 
@@ -329,7 +321,7 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
     if (length > ID3_TAG_QUERYSIZE) {
         ssize_t taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
         if (taglen > 0) {
-//            cerr << "ID3 tag length to skip: " << taglen << endl;
+            SVDEBUG << "MP3FileReader: ID3 tag length to skip: " << taglen << endl;
             start += taglen;
             length -= taglen;
         }
