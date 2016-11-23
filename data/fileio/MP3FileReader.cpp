@@ -48,6 +48,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_decodeErrorShown(false),
     m_decodeThread(0)
 {
     SVDEBUG << "MP3FileReader: local path: \"" << m_path
@@ -438,15 +439,16 @@ MP3FileReader::error(void *dp,
 		     struct mad_stream *stream,
 		     struct mad_frame *)
 {
-    static bool errorShown = false;
-    
-    if (!errorShown) {
-        DecoderData *data = (DecoderData *)dp;
-        fprintf(stderr, "Warning: MP3 decoding error 0x%04x (%s) at byte offset %lu\n",
-                stream->error, mad_stream_errorstr(stream),
-                (unsigned long)(stream->this_frame - data->start));
-        fprintf(stderr, "(Suppressing any further errors of this sort)\n");
-        errorShown = true;
+    DecoderData *data = (DecoderData *)dp;
+    if (!data->reader->m_decodeErrorShown) {
+        char buffer[256];
+        snprintf(buffer, 255,
+                 "MP3 decoding error 0x%04x (%s) at byte offset %lu",
+                 stream->error, mad_stream_errorstr(stream),
+                 (unsigned long)(stream->this_frame - data->start));
+        SVCERR << "Warning: in file \"" << data->reader->m_path << "\": "
+               << buffer << " (continuing; will not report any further decode errors for this file)" << endl;
+        data->reader->m_decodeErrorShown = true;
     }
 
     return MAD_FLOW_CONTINUE;
