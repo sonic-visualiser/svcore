@@ -234,8 +234,8 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
         }
     } else {
         // channel == -1, mix down all channels
-        for (int c = 0; c < channels; ++c) {
-            for (int i = 0; i < obtained; ++i) {
+        for (int i = 0; i < obtained; ++i) {
+            for (int c = 0; c < channels; ++c) {
                 result[i] += interleaved[i * channels + c];
             }
         }
