@@ -269,6 +269,12 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
                                  range.first,
                                  range.second - range.first);
 
+    if (data.empty()) {
+        SVDEBUG << "NOTE: empty source data for range (" << range.first << ","
+                << range.second << ") (model end frame "
+                << m_model->getEndFrame() << ")" << endl;
+    }
+    
     // don't return a partial frame
     data.resize(range.second - range.first, 0.f);
 
