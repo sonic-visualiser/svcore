@@ -47,7 +47,9 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_fileFrameCount(0),
     m_normalised(normalised),
     m_max(0.f),
-    m_gain(1.f)
+    m_gain(1.f),
+    m_clippedCount(0),
+    m_firstNonzero(0)
 {
     SVDEBUG << "CodedAudioFileReader:: cache mode: " << cacheMode
             << " (" << (cacheMode == CacheInTemporaryFile
@@ -334,6 +336,20 @@ CodedAudioFileReader::finishDecodeCache()
             (StorageAdviser::MemoryAllocation,
              (m_data.size() * sizeof(float)) / 1024);
     }
+
+    SVDEBUG << "CodedAudioFileReader: File decodes to " << m_fileFrameCount
+            << " frames" << endl;
+    if (m_fileFrameCount != m_frameCount) {
+        SVDEBUG << "CodedAudioFileReader: Resampled to " << m_frameCount
+                << " frames" << endl;
+    }
+    SVDEBUG << "CodedAudioFileReader: Signal abs max is " << m_max
+            << ", " << m_clippedCount
+            << " samples clipped, first non-zero frame is at "
+            << m_firstNonzero << endl;
+    if (m_normalised) {
+        SVDEBUG << "CodedAudioFileReader: Normalising, gain is " << m_gain << endl;
+    }
 }
 
 void
@@ -362,6 +378,9 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     if (m_normalised) {
         for (sv_frame_t i = 0; i < count; ++i) {
             float v = fabsf(buffer[i]);
+            if (m_firstNonzero == 0 && v != 0.f) {
+                m_firstNonzero = m_frameCount + i;
+            }
             if (v > m_max) {
                 m_max = v;
                 m_gain = 1.f / m_max;
@@ -369,10 +388,21 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
         }
     } else {
         for (sv_frame_t i = 0; i < count; ++i) {
-            if (buffer[i] >  clip) buffer[i] =  clip;
-        }
-        for (sv_frame_t i = 0; i < count; ++i) {
-            if (buffer[i] < -clip) buffer[i] = -clip;
+            float v = buffer[i];
+            if (v > clip) {
+                buffer[i] = clip;
+                ++m_clippedCount;
+            } else if (v < -clip) {
+                buffer[i] = -clip;
+                ++m_clippedCount;
+            }
+            v = fabsf(v);
+            if (m_firstNonzero == 0 && v != 0.f) {
+                m_firstNonzero = m_frameCount + i;
+            }
+            if (v > m_max) {
+                m_max = v;
+            }
         }
     }
 
@@ -390,6 +420,16 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 
     case CacheInMemory:
         m_dataLock.lock();
+        /*
+        if (m_data.size() < 5120) {
+            for (int i = 0; i < count && i < 5120; ++i) {
+                if (i % 8 == 0) cerr << i << ": ";
+                cerr << buffer[i] << " ";
+                if (i % 8 == 7) cerr << endl;
+            }
+        }
+        cerr << endl;
+        */
         m_data.insert(m_data.end(), buffer, buffer + count);
         m_dataLock.unlock();
         break;
