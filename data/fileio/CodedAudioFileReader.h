@@ -106,6 +106,7 @@ protected:
 
     sv_frame_t m_clippedCount;
     sv_frame_t m_firstNonzero;
+    sv_frame_t m_lastNonzero;
 };
 
 #endif

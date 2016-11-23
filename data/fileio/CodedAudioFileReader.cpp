@@ -49,7 +49,8 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_max(0.f),
     m_gain(1.f),
     m_clippedCount(0),
-    m_firstNonzero(0)
+    m_firstNonzero(0),
+    m_lastNonzero(0)
 {
     SVDEBUG << "CodedAudioFileReader:: cache mode: " << cacheMode
             << " (" << (cacheMode == CacheInTemporaryFile
@@ -346,7 +347,7 @@ CodedAudioFileReader::finishDecodeCache()
     SVDEBUG << "CodedAudioFileReader: Signal abs max is " << m_max
             << ", " << m_clippedCount
             << " samples clipped, first non-zero frame is at "
-            << m_firstNonzero << endl;
+            << m_firstNonzero << ", last at " << m_lastNonzero << endl;
     if (m_normalised) {
         SVDEBUG << "CodedAudioFileReader: Normalising, gain is " << m_gain << endl;
     }
@@ -375,38 +376,36 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     float clip = 1.0;
     sv_frame_t count = sz * m_channelCount;
 
-    if (m_normalised) {
-        for (sv_frame_t i = 0; i < count; ++i) {
-            float v = fabsf(buffer[i]);
-            if (m_firstNonzero == 0 && v != 0.f) {
-                m_firstNonzero = m_frameCount + i;
-            }
-            if (v > m_max) {
-                m_max = v;
-                m_gain = 1.f / m_max;
-            }
-        }
-    } else {
-        for (sv_frame_t i = 0; i < count; ++i) {
+    for (sv_frame_t j = 0; j < sz; ++j) {
+        for (int c = 0; c < m_channelCount; ++c) {
+            sv_frame_t i = j * m_channelCount + c;
             float v = buffer[i];
-            if (v > clip) {
-                buffer[i] = clip;
-                ++m_clippedCount;
-            } else if (v < -clip) {
-                buffer[i] = -clip;
-                ++m_clippedCount;
+            if (!m_normalised) {
+                if (v > clip) {
+                    buffer[i] = clip;
+                    ++m_clippedCount;
+                } else if (v < -clip) {
+                    buffer[i] = -clip;
+                    ++m_clippedCount;
+                }
             }
             v = fabsf(v);
-            if (m_firstNonzero == 0 && v != 0.f) {
-                m_firstNonzero = m_frameCount + i;
-            }
-            if (v > m_max) {
-                m_max = v;
+            if (v != 0.f) {
+                if (m_firstNonzero == 0) {
+                    m_firstNonzero = m_frameCount;
+                }
+                m_lastNonzero = m_frameCount;
+                if (v > m_max) {
+                    m_max = v;
+                }
             }
         }
+        ++m_frameCount;
     }
 
-    m_frameCount += sz;
+    if (m_max > 0.f) {
+        m_gain = 1.f / m_max; // used when normalising only
+    }
 
     switch (m_cacheMode) {
 
