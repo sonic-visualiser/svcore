@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "base/Debug.h"
+
 using namespace std;
 
 ColumnOp::Column
@@ -146,6 +148,11 @@ ColumnOp::distribute(const Column &in,
 
             int by0 = int(sy0 + 0.0001);
             int by1 = int(sy1 + 0.0001);
+
+            if (by0 < 0 || by0 >= bins || by1 > bins) {
+                SVCERR << "ERROR: bin index out of range in ColumnOp::distribute: by0 = " << by0 << ", by1 = " << by1 << ", sy0 = " << sy0 << ", sy1 = " << sy1 << ", y = " << y << ", binfory[y] = " << binfory[y] << ", minbin = " << minbin << ", bins = " << bins << endl;
+                continue;
+            }
                 
             for (int bin = by0; bin == by0 || bin < by1; ++bin) {
 
