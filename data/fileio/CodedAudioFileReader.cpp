@@ -480,9 +480,11 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         // really have threads taking a long time to read concurrently
         m_dataLock.lock();
         sv_frame_t n = sv_frame_t(m_data.size());
+        if (ix0 > n) ix0 = n;
         if (ix1 > n) ix1 = n;
         frames = vector<float>(m_data.begin() + ix0, m_data.begin() + ix1);
         m_dataLock.unlock();
+        break;
     }
     }
 
