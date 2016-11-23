@@ -103,6 +103,9 @@ protected:
     bool m_normalised;
     float m_max;
     float m_gain;
+
+    sv_frame_t m_clippedCount;
+    sv_frame_t m_firstNonzero;
 };
 
 #endif
