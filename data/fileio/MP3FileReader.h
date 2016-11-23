@@ -81,6 +81,8 @@ protected:
     ProgressReporter *m_reporter;
     bool m_cancelled;
 
+    bool m_decodeErrorShown;
+
     struct DecoderData
     {
 	unsigned char const *start;
