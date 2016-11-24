@@ -360,18 +360,22 @@ enum mad_flow
 MP3FileReader::filter(struct mad_stream const *stream,
                       struct mad_frame *)
 {
-    struct mad_bitptr ptr = stream->anc_ptr;
-    unsigned long fourcc = mad_bit_read(&ptr, 32);
-    std::string magic("....");
-    for (int i = 0; i < 4; ++i) {
-        magic[3-i] = char((fourcc >> (8*i)) & 0xff);
-    }
-    if (magic == "Xing" || magic == "Info" || magic == "LAME") {
-        SVDEBUG << "MP3FileReader: Discarding metadata frame (magic = \""
-                << magic << "\")" << " at frame " << m_mp3FrameCount << endl;
-        return MAD_FLOW_IGNORE;
-    } else {
+    if (m_mp3FrameCount > 0) {
         return MAD_FLOW_CONTINUE;
+    } else {
+        struct mad_bitptr ptr = stream->anc_ptr;
+        unsigned long fourcc = mad_bit_read(&ptr, 32);
+        std::string magic("....");
+        for (int i = 0; i < 4; ++i) {
+            magic[3-i] = char((fourcc >> (8*i)) & 0xff);
+        }
+        if (magic == "Xing" || magic == "Info" || magic == "LAME") {
+            SVDEBUG << "MP3FileReader: Discarding metadata frame (magic = \""
+                    << magic << "\")" << endl;
+            return MAD_FLOW_IGNORE;
+        } else {
+            return MAD_FLOW_CONTINUE;
+        }
     }
 }
 
