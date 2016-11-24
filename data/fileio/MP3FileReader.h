@@ -71,6 +71,7 @@ protected:
     sv_frame_t m_fileSize;
     double m_bitrateNum;
     int m_bitrateDenom;
+    int m_mp3FrameCount;
     int m_completion;
     bool m_done;
 
@@ -86,16 +87,21 @@ protected:
     struct DecoderData
     {
 	unsigned char const *start;
-	unsigned long length;
+	sv_frame_t length;
 	MP3FileReader *reader;
     };
 
     bool decode(void *mm, sv_frame_t sz);
+    enum mad_flow filter(struct mad_stream const *, struct mad_frame *);
     enum mad_flow accept(struct mad_header const *, struct mad_pcm *);
 
-    static enum mad_flow input(void *, struct mad_stream *);
-    static enum mad_flow output(void *, struct mad_header const *, struct mad_pcm *);
-    static enum mad_flow error(void *, struct mad_stream *, struct mad_frame *);
+    static enum mad_flow input_callback(void *, struct mad_stream *);
+    static enum mad_flow output_callback(void *, struct mad_header const *,
+                                         struct mad_pcm *);
+    static enum mad_flow filter_callback(void *, struct mad_stream const *,
+                                         struct mad_frame *);
+    static enum mad_flow error_callback(void *, struct mad_stream *,
+                                        struct mad_frame *);
 
     class DecodeThread : public Thread
     {

@@ -60,6 +60,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_bitrateNum = 0;
     m_bitrateDenom = 0;
     m_cancelled = false;
+    m_mp3FrameCount = 0;
     m_completion = 0;
     m_done = false;
     m_reporter = reporter;
@@ -147,7 +148,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             usleep(10);
         }
         
-        SVDEBUG << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << endl;
+        SVDEBUG << "MP3FileReader: decoding startup complete, file rate = " << m_fileRate << endl;
     }
 
     if (m_error != "") {
@@ -296,35 +297,47 @@ MP3FileReader::decode(void *mm, sv_frame_t sz)
     struct mad_decoder decoder;
 
     data.start = (unsigned char const *)mm;
-    data.length = (unsigned long)sz;
+    data.length = sz;
     data.reader = this;
 
-    mad_decoder_init(&decoder, &data, input, 0, 0, output, error, 0);
+    mad_decoder_init(&decoder,          // decoder to initialise
+                     &data,             // our own data block for callbacks
+                     input_callback,    // provides (entire) input to mad
+                     0,                 // checks header
+                     filter_callback,   // filters frame before decoding
+                     output_callback,   // receives decoded output
+                     error_callback,    // handles decode errors
+                     0);                // "message_func"
+
     mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
     mad_decoder_finish(&decoder);
 
+    SVDEBUG << "MP3FileReader: Decoding complete, decoded " << m_mp3FrameCount
+            << " mp3 frames" << endl;
+    
     m_done = true;
     return true;
 }
 
 enum mad_flow
-MP3FileReader::input(void *dp, struct mad_stream *stream)
+MP3FileReader::input_callback(void *dp, struct mad_stream *stream)
 {
     DecoderData *data = (DecoderData *)dp;
 
     if (!data->length) return MAD_FLOW_STOP;
 
     unsigned char const *start = data->start;
-    unsigned long length = data->length;
+    sv_frame_t length = data->length;
 
 #ifdef HAVE_ID3TAG
-    if (length > ID3_TAG_QUERYSIZE) {
+    while (length > ID3_TAG_QUERYSIZE) {
         ssize_t taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
-        if (taglen > 0) {
-            SVDEBUG << "MP3FileReader: ID3 tag length to skip: " << taglen << endl;
-            start += taglen;
-            length -= taglen;
+        if (taglen <= 0) {
+            break;
         }
+        SVDEBUG << "MP3FileReader: ID3 tag length to skip: " << taglen << endl;
+        start += taglen;
+        length -= taglen;
     }
 #endif
 
@@ -335,9 +348,37 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
 }
 
 enum mad_flow
-MP3FileReader::output(void *dp,
-		      struct mad_header const *header,
-		      struct mad_pcm *pcm)
+MP3FileReader::filter_callback(void *dp,
+                               struct mad_stream const *stream,
+                               struct mad_frame *frame)
+{
+    DecoderData *data = (DecoderData *)dp;
+    return data->reader->filter(stream, frame);
+}
+
+enum mad_flow
+MP3FileReader::filter(struct mad_stream const *stream,
+                      struct mad_frame *)
+{
+    struct mad_bitptr ptr = stream->anc_ptr;
+    unsigned long fourcc = mad_bit_read(&ptr, 32);
+    std::string magic("....");
+    for (int i = 0; i < 4; ++i) {
+        magic[3-i] = char((fourcc >> (8*i)) & 0xff);
+    }
+    if (magic == "Xing" || magic == "Info" || magic == "LAME") {
+        SVDEBUG << "MP3FileReader: Discarding metadata frame (magic = \""
+                << magic << "\")" << " at frame " << m_mp3FrameCount << endl;
+        return MAD_FLOW_IGNORE;
+    } else {
+        return MAD_FLOW_CONTINUE;
+    }
+}
+
+enum mad_flow
+MP3FileReader::output_callback(void *dp,
+                               struct mad_header const *header,
+                               struct mad_pcm *pcm)
 {
     DecoderData *data = (DecoderData *)dp;
     return data->reader->accept(header, pcm);
@@ -349,7 +390,7 @@ MP3FileReader::accept(struct mad_header const *header,
 {
     int channels = pcm->channels;
     int frames = pcm->length;
-
+    
     if (header) {
         m_bitrateNum = m_bitrateNum + double(header->bitrate);
         m_bitrateDenom ++;
@@ -423,13 +464,15 @@ MP3FileReader::accept(struct mad_header const *header,
 
     addSamplesToDecodeCache(m_samplebuffer, frames);
 
+    ++m_mp3FrameCount;
+
     return MAD_FLOW_CONTINUE;
 }
 
 enum mad_flow
-MP3FileReader::error(void *dp,
-		     struct mad_stream *stream,
-		     struct mad_frame *)
+MP3FileReader::error_callback(void *dp,
+                              struct mad_stream *stream,
+                              struct mad_frame *)
 {
     DecoderData *data = (DecoderData *)dp;
     if (!data->reader->m_decodeErrorShown) {
