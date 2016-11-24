@@ -75,17 +75,18 @@ protected:
     int m_completion;
     bool m_done;
 
-    unsigned char *m_filebuffer;
-    float **m_samplebuffer;
-    int m_samplebuffersize;
+    unsigned char *m_fileBuffer;
+    size_t m_fileBufferSize;
+    
+    float **m_sampleBuffer;
+    size_t m_sampleBufferSize;
 
     ProgressReporter *m_reporter;
     bool m_cancelled;
 
     bool m_decodeErrorShown;
 
-    struct DecoderData
-    {
+    struct DecoderData {
 	unsigned char const *start;
 	sv_frame_t length;
 	MP3FileReader *reader;
