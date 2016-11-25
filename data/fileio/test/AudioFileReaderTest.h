@@ -123,7 +123,7 @@ private slots:
         }
         if (extension == "ogg" || extension == "mp3" ||
             extension == "aac" || extension == "m4a") {
-            limit = 0.2;
+            limit = 0.1;
             edgeLimit = limit * 3;
         }
 
@@ -139,18 +139,17 @@ private slots:
         }
 
         if (extension == "mp3") {
-            // while mp3s appear to vary
-            for (int i = 0; i < read; ++i) {
-                bool any = false;
-                double thresh = 0.01;
-                for (int c = 0; c < channels; ++c) {
-                    if (fabs(test[i * channels + c]) > thresh) {
-                        any = true;
-                        break;
-                    }
-                }
-                if (any) {
-                    offset = i;
+            // ...while mp3s appear to vary. What we're looking for is
+            // the first peak of the sinusoid in the first channel
+            // (since we may have only the one channel). This should
+            // appear at 0.4ms (see AudioTestData.h)
+            int expectedPeak = int(0.0004 * readRate);
+//            std::cerr << "expectedPeak = " << expectedPeak << std::endl;
+            for (int i = 1; i < read; ++i) {
+                if (test[i * channels] > 0.8 &&
+                    test[(i+1) * channels] < test[i * channels]) {
+                    offset = i - expectedPeak - 1;
+//                    std::cerr << "actual peak = " << i-1 << std::endl;
                     break;
                 }
             }
@@ -161,8 +160,18 @@ private slots:
 	    float maxdiff = 0.f;
 	    int maxAt = 0;
 	    float totdiff = 0.f;
-	    for (int i = 0; i < read - offset - discard && i < refFrames; ++i) {
-		float diff = fabsf(test[(i + offset) * channels + c] -
+	    for (int i = 0; i < refFrames; ++i) {
+                int ix = i + offset;
+                if (ix >= read) {
+                    cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward are lost)" << endl;
+                    QVERIFY(ix < read);
+                }
+                if (ix + discard >= read) {
+                    // we forgive the very edge samples when
+                    // resampling (discard > 0)
+                    continue;
+                }
+		float diff = fabsf(test[(ix) * channels + c] -
 				   reference[i * channels + c]);
 		totdiff += diff;
                 // in edge areas, record this only if it exceeds edgeLimit
