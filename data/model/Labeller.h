@@ -171,8 +171,14 @@ public:
         }
     }
         
+    /**
+     * Relabel all points in the given model that lie within the given
+     * multi-selection, according to the labelling properties of this
+     * labeller.  Return a command that has been executed but not yet
+     * added to the history.
+     */
     template <typename PointType>
-    void labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
+    Command *labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
 
         typename SparseModel<PointType>::PointList::iterator i;
         typename SparseModel<PointType>::PointList pl(model.getPoints());
@@ -215,7 +221,61 @@ public:
             prevPoint = p;
         }
 
-        command->finish();
+        return command->finish();
+    }
+
+    /**
+     * For each point in the given model (except the last), if that
+     * point lies within the given multi-selection, add n-1 new points
+     * at equally spaced intervals between it and the following point.
+     * Return a command that has been executed but not yet added to
+     * the history.
+     */
+    template <typename PointType>
+    Command *subdivide(SparseModel<PointType> &model, MultiSelection *ms, int n) {
+        
+        typename SparseModel<PointType>::PointList::iterator i;
+        typename SparseModel<PointType>::PointList pl(model.getPoints());
+
+        typename SparseModel<PointType>::EditCommand *command =
+            new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Subdivide"));
+
+        for (i = pl.begin(); i != pl.end(); ++i) {
+
+            auto j = i;
+            // require a "next point" even if it's not in selection
+            if (++j == pl.end()) {
+                break;
+            }
+
+            bool inRange = true;
+            if (ms) {
+                Selection s(ms->getContainingSelection(i->frame, false));
+                if (s.isEmpty() || !s.contains(i->frame)) {
+                    inRange = false;
+                }
+            }
+            if (!inRange) {
+                continue;
+            }
+
+            PointType p(*i);
+            PointType nextP(*j);
+
+            // n is the number of subdivisions, so we add n-1 new
+            // points equally spaced between p and nextP
+
+            for (int m = 1; m < n; ++m) {
+                sv_frame_t f = p.frame + (m * (nextP.frame - p.frame)) / n;
+                PointType newPoint(p);
+                newPoint.frame = f;
+                newPoint.label = tr("%1.%2").arg(p.label).arg(m+1);
+                command->addPoint(newPoint);
+            }
+        }
+
+        return command->finish();
     }
 
     template <typename PointType>
