@@ -58,7 +58,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
 //    SVDEBUG << "OggVorbisFileReader::OggVorbisFileReader(" << m_path << "): now have " << (++instances) << " instances" << endl;
 
-    Profiler profiler("OggVorbisFileReader::OggVorbisFileReader", true);
+    Profiler profiler("OggVorbisFileReader::OggVorbisFileReader");
 
     QFileInfo info(m_path);
     m_fileSize = info.size();
