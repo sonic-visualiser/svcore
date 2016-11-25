@@ -305,7 +305,7 @@ CodedAudioFileReader::finishDecodeCache()
 {
     QMutexLocker locker(&m_cacheMutex);
 
-    Profiler profiler("CodedAudioFileReader::finishDecodeCache", true);
+    Profiler profiler("CodedAudioFileReader::finishDecodeCache");
 
     if (!m_initialised) {
         SVDEBUG << "WARNING: CodedAudioFileReader::finishDecodeCache: Cache was never initialised!" << endl;
