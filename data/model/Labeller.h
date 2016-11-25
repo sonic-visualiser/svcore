@@ -278,6 +278,50 @@ public:
         return command->finish();
     }
 
+    /**
+     * Return a command that has been executed but not yet added to
+     * the history.
+     */
+    template <typename PointType>
+    Command *winnow(SparseModel<PointType> &model, MultiSelection *ms, int n) {
+        
+        typename SparseModel<PointType>::PointList::iterator i;
+        typename SparseModel<PointType>::PointList pl(model.getPoints());
+
+        typename SparseModel<PointType>::EditCommand *command =
+            new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Subdivide"));
+
+        int counter = 0;
+        
+        for (i = pl.begin(); i != pl.end(); ++i) {
+
+            bool inRange = true;
+            if (ms) {
+                Selection s(ms->getContainingSelection(i->frame, false));
+                if (s.isEmpty() || !s.contains(i->frame)) {
+                    inRange = false;
+                }
+            }
+            if (!inRange) {
+                counter = 0;
+                continue;
+            }
+
+            ++counter;
+
+            if (counter == n+1) counter = 1;
+            if (counter == 1) {
+                // this is an Nth instant, don't remove it
+                continue;
+            }
+            
+            command->deletePoint(*i);
+        }
+
+        return command->finish();
+    }
+
     template <typename PointType>
     void setValue(PointType &newPoint, PointType *prevPoint = 0) {
         if (m_type == ValueFromExistingNeighbour) {
