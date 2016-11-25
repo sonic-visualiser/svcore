@@ -47,7 +47,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
     m_channelCount = 0;
     m_fileRate = 0;
 
-    Profiler profiler("DecodingWavFileReader::DecodingWavFileReader", true);
+    Profiler profiler("DecodingWavFileReader::DecodingWavFileReader");
 
     m_original = new WavFileReader(m_path);
     if (!m_original->isOK()) {
