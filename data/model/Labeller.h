@@ -180,34 +180,26 @@ public:
     template <typename PointType>
     Command *labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
 
-        typename SparseModel<PointType>::PointList::iterator i;
-        typename SparseModel<PointType>::PointList pl(model.getPoints());
-
-        typename SparseModel<PointType>::EditCommand *command =
-            new typename SparseModel<PointType>::EditCommand
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
             (&model, tr("Label Points"));
 
         PointType prevPoint(0);
+        bool havePrevPoint(false);
 
-        for (i = pl.begin(); i != pl.end(); ++i) {
+        for (auto p: points) {
 
-            bool inRange = true;
             if (ms) {
-                Selection s(ms->getContainingSelection(i->frame, false));
-                if (s.isEmpty() || !s.contains(i->frame)) {
-                    inRange = false;
+                Selection s(ms->getContainingSelection(p.frame, false));
+                if (!s.contains(p.frame)) {
+                    prevPoint = p;
+                    havePrevPoint = true;
+                    continue;
                 }
             }
 
-            PointType p(*i);
-
-            if (!inRange) {
-                prevPoint = p;
-                continue;
-            }
-
             if (actingOnPrevPoint()) {
-                if (i != pl.begin()) {
+                if (havePrevPoint) {
                     command->deletePoint(prevPoint);
                     label<PointType>(p, &prevPoint);
                     command->addPoint(prevPoint);
@@ -219,6 +211,7 @@ public:
             }
 
             prevPoint = p;
+            havePrevPoint = true;
         }
 
         return command->finish();
@@ -234,30 +227,23 @@ public:
     template <typename PointType>
     Command *subdivide(SparseModel<PointType> &model, MultiSelection *ms, int n) {
         
-        typename SparseModel<PointType>::PointList::iterator i;
-        typename SparseModel<PointType>::PointList pl(model.getPoints());
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Subdivide Points"));
 
-        typename SparseModel<PointType>::EditCommand *command =
-            new typename SparseModel<PointType>::EditCommand
-            (&model, tr("Subdivide"));
-
-        for (i = pl.begin(); i != pl.end(); ++i) {
+        for (auto i = points.begin(); i != points.end(); ++i) {
 
             auto j = i;
             // require a "next point" even if it's not in selection
-            if (++j == pl.end()) {
+            if (++j == points.end()) {
                 break;
             }
 
-            bool inRange = true;
             if (ms) {
                 Selection s(ms->getContainingSelection(i->frame, false));
-                if (s.isEmpty() || !s.contains(i->frame)) {
-                    inRange = false;
+                if (!s.contains(i->frame)) {
+                    continue;
                 }
-            }
-            if (!inRange) {
-                continue;
             }
 
             PointType p(*i);
@@ -285,27 +271,20 @@ public:
     template <typename PointType>
     Command *winnow(SparseModel<PointType> &model, MultiSelection *ms, int n) {
         
-        typename SparseModel<PointType>::PointList::iterator i;
-        typename SparseModel<PointType>::PointList pl(model.getPoints());
-
-        typename SparseModel<PointType>::EditCommand *command =
-            new typename SparseModel<PointType>::EditCommand
-            (&model, tr("Subdivide"));
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Winnow Points"));
 
         int counter = 0;
         
-        for (i = pl.begin(); i != pl.end(); ++i) {
+        for (auto p: points) {
 
-            bool inRange = true;
             if (ms) {
-                Selection s(ms->getContainingSelection(i->frame, false));
-                if (s.isEmpty() || !s.contains(i->frame)) {
-                    inRange = false;
+                Selection s(ms->getContainingSelection(p.frame, false));
+                if (!s.contains(p.frame)) {
+                    counter = 0;
+                    continue;
                 }
-            }
-            if (!inRange) {
-                counter = 0;
-                continue;
             }
 
             ++counter;
@@ -316,7 +295,7 @@ public:
                 continue;
             }
             
-            command->deletePoint(*i);
+            command->deletePoint(p);
         }
 
         return command->finish();
