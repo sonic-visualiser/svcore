@@ -101,7 +101,7 @@ ColumnOp::distribute(const Column &in,
 
     for (int y = 0; y < h; ++y) {
 
-        if (interpolate && h > bins) {
+        if (interpolate) {
 
             double sy = binfory[y] - minbin - 0.5;
             double syf = floor(sy);
