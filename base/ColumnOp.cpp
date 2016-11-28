@@ -99,6 +99,22 @@ ColumnOp::distribute(const Column &in,
     vector<float> out(h, 0.f);
     int bins = int(in.size());
 
+    if (interpolate) {
+        // If the bins are all closer together than the target y
+        // coordinate increments, then we don't want to interpolate
+        // after all. But because the binfory mapping isn't
+        // necessarily linear, just checking e.g. whether bins > h is
+        // not enough -- the bins could still be spaced more widely at
+        // either end of the scale. We are prepared to assume however
+        // that if the bins are closer at both ends of the scale, they
+        // aren't going to diverge mysteriously in the middle.
+        if (h > 1 &&
+            fabs(binfory[1] - binfory[0]) >= 1.0 &&
+            fabs(binfory[h-1] - binfory[h-2]) >= 1.0) {
+            interpolate = false;
+        }
+    }
+    
     for (int y = 0; y < h; ++y) {
 
         if (interpolate) {
