@@ -82,7 +82,7 @@ SVDebug::SVDebug() :
                              << "Failed to open debug log file "
                              << fileName << " for writing";
     } else {
-        cerr << m_prefix << ": Log file is " << fileName << endl;
+//        cerr << m_prefix << ": Log file is " << fileName << endl;
         m_ok = true;
     }
 }
