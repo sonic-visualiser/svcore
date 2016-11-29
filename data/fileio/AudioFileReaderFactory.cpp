@@ -165,7 +165,8 @@ AudioFileReaderFactory::create(FileSource source,
 #ifdef HAVE_MAD
     if (!reader && MP3FileReader::supports(source)) {
         reader = new MP3FileReader
-            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+            (source, decodeMode, cacheMode, MP3FileReader::Gapless,
+             targetRate, normalised, reporter);
         CHECK(reader);
     }
 #endif
@@ -234,7 +235,8 @@ AudioFileReaderFactory::create(FileSource source,
 #ifdef HAVE_MAD
     if (!reader) {
         reader = new MP3FileReader
-            (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+            (source, decodeMode, cacheMode, MP3FileReader::Gapless,
+             targetRate, normalised, reporter);
         CHECK(reader);
     }
 #endif
