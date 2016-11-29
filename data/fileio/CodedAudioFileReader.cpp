@@ -48,6 +48,8 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_normalised(normalised),
     m_max(0.f),
     m_gain(1.f),
+    m_trimFromStart(0),
+    m_trimFromEnd(0),
     m_clippedCount(0),
     m_firstNonzero(0),
     m_lastNonzero(0)
@@ -91,6 +93,13 @@ CodedAudioFileReader::~CodedAudioFileReader()
             (StorageAdviser::MemoryAllocation,
              (m_data.size() * sizeof(float)) / 1024);
     }
+}
+
+void
+CodedAudioFileReader::setSamplesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd)
+{
+    m_trimFromStart = fromStart;
+    m_trimFromEnd = fromEnd;
 }
 
 void
@@ -223,6 +232,11 @@ CodedAudioFileReader::addSamplesToDecodeCache(float **samples, sv_frame_t nframe
     if (!m_initialised) return;
 
     for (sv_frame_t i = 0; i < nframes; ++i) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         for (int c = 0; c < m_channelCount; ++c) {
 
@@ -253,6 +267,11 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
     if (!m_initialised) return;
 
     for (sv_frame_t i = 0; i < nframes; ++i) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         for (int c = 0; c < m_channelCount; ++c) {
 
@@ -283,6 +302,11 @@ CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
     if (!m_initialised) return;
 
     for (float sample: samples) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
@@ -376,6 +400,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     float clip = 1.0;
     sv_frame_t count = sz * m_channelCount;
 
+    // statistics
     for (sv_frame_t j = 0; j < sz; ++j) {
         for (int c = 0; c < m_channelCount; ++c) {
             sv_frame_t i = j * m_channelCount + c;

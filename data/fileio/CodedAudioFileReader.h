@@ -62,6 +62,9 @@ protected:
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
+    // compensation for encoder delays:
+    void setSamplesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd);
+    
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
@@ -104,6 +107,9 @@ protected:
     float m_max;
     float m_gain;
 
+    sv_frame_t m_trimFromStart;
+    sv_frame_t m_trimFromEnd;
+    
     sv_frame_t m_clippedCount;
     sv_frame_t m_firstNonzero;
     sv_frame_t m_lastNonzero;
