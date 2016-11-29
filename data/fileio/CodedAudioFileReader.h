@@ -79,8 +79,14 @@ protected:
     void endSerialised();
 
 private:
-    void pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+    void pushCacheWriteBufferMaybe(bool final);
+    
+    sv_frame_t pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+
+    // to be called only by pushBuffer
     void pushBufferResampling(float *interleaved, sv_frame_t sz, double ratio, bool final);
+
+    // to be called only by pushBuffer and pushBufferResampling
     void pushBufferNonResampling(float *interleaved, sv_frame_t sz);
 
 protected:

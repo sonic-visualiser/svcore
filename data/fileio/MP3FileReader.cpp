@@ -448,8 +448,8 @@ MP3FileReader::filter(struct mad_stream const *stream,
                     << ", padding = " << padding << endl;
 
             SVDEBUG << "MP3FileReader: Will be trimming " << delayToDrop
-                    << " samples at start and " << paddingToDrop
-                    << " at end" << endl;
+                    << " samples from start and " << paddingToDrop
+                    << " from end" << endl;
 
             CodedAudioFileReader::setSamplesToTrim(delayToDrop, paddingToDrop);
             
