@@ -124,6 +124,7 @@ protected:
     struct DecoderData {
 	unsigned char const *start;
 	sv_frame_t length;
+        bool finished;
 	MP3FileReader *reader;
     };
 
