@@ -32,9 +32,43 @@ class MP3FileReader : public CodedAudioFileReader
     Q_OBJECT
 
 public:
+    /**
+     * How the MP3FileReader should handle leading and trailing gaps.
+     * See http://lame.sourceforge.net/tech-FAQ.txt for a technical
+     * explanation of the numbers here.
+     */
+    enum GaplessMode {
+        /**
+         * Trim unwanted samples from the start and end of the decoded
+         * audio. From the start, trim a number of samples equal to
+         * the decoder delay (a fixed 529 samples) plus any encoder
+         * delay that may be specified in Xing/LAME metadata. From the
+         * end, trim any padding specified in Xing/LAME metadata, less
+         * the fixed decoder delay. This usually results in "gapless"
+         * audio, i.e. with no spurious zero padding at either end.
+         */
+        Gapless,
+
+        /**
+         * Do not trim any samples. Also do not suppress any frames
+         * from being passed to the mp3 decoder, even Xing/LAME
+         * metadata frames. This will result in the audio being padded
+         * with zeros at either end: at the start, typically
+         * 529+576+1152 = 2257 samples for LAME-encoded mp3s; at the
+         * end an unknown number depending on the fill ratio of the
+         * final coded frame, but typically less than 1152-529 = 623.
+         *
+         * This mode produces the same output as produced by older
+         * versions of this code before the gapless option was added,
+         * and is present mostly for backward compatibility.
+         */
+        Gappy
+    };
+    
     MP3FileReader(FileSource source,
                   DecodeMode decodeMode,
                   CacheMode cacheMode,
+                  GaplessMode gaplessMode,
                   sv_samplerate_t targetRate = 0,
                   bool normalised = false,
                   ProgressReporter *reporter = 0);
@@ -68,6 +102,7 @@ protected:
     QString m_title;
     QString m_maker;
     TagMap m_tags;
+    GaplessMode m_gaplessMode;
     sv_frame_t m_fileSize;
     double m_bitrateNum;
     int m_bitrateDenom;
