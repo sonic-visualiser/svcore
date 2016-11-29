@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+//#define REPORT 1
+
 using namespace std;
 
 class TestColumnOp : public QObject
@@ -252,7 +254,22 @@ private slots:
         QCOMPARE(actual, expected);
     }
     
-        
+    void distribute_nonlinear_someshrinking_interpolated() {
+        // But we *should* interpolate if the mapping involves
+        // shrinking some bins but expanding others.  See
+        // distribute_simple_interpolated for note on 0.5 offset
+        Column in { 4, 1, 2, 3, 5, 6 };
+        BinMapping binfory { 0.0, 3.0, 4.0, 4.5 };
+        Column expected { 4.0, 2.5, 4.0, 5.0 };
+        Column actual(C::distribute(in, 4, binfory, 0, true));
+        report(actual);
+        QCOMPARE(actual, expected);
+        binfory = BinMapping { 0.5, 1.0, 2.0, 5.0 };
+        expected = { 4.0, 2.5, 1.5, 5.5 };
+        actual = (C::distribute(in, 4, binfory, 0, true));
+        report(actual);
+        QCOMPARE(actual, expected);
+    }
 };
     
 #endif
