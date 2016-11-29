@@ -120,16 +120,16 @@ private slots:
         int edgeSize = 100; 
 
         if (nominalDepth < 16) {
-            maxLimit *= 2;
-            meanLimit *= 20;
+            maxLimit = 0.02;
+            meanLimit = 0.02;
         } else if (extension == "ogg" || extension == "mp3") {
-            maxLimit *= 10;
-            meanLimit *= 10;
+            maxLimit = 0.1;
+            meanLimit = 0.035;
             edgeLimit = maxLimit * 3;
         } else if (extension == "aac" || extension == "m4a") {
-            maxLimit *= 30; // seems max diff can be quite large here
+            maxLimit = 0.3; // seems max diff can be quite large here
                             // even when mean is fairly small
-            meanLimit *= 10;
+            meanLimit = 0.01;
             edgeLimit = maxLimit * 3;
         }
 
@@ -198,9 +198,9 @@ private slots:
 	    }
 
             // check for spurious material at end
-            for (int i = refFrames; i + offset < read; ++i) {
-                int ix = i + offset;
-                float quiet = 1e-6;
+            for (sv_frame_t i = refFrames; i + offset < read; ++i) {
+                sv_frame_t ix = i + offset;
+                float quiet = 1e-6f;
                 float mag = fabsf(test[ix * channels + c]);
                 if (mag > quiet) {
                     cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << ")" << endl;
