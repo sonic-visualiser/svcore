@@ -41,13 +41,15 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_cacheFileReader(0),
     m_cacheWriteBuffer(0),
     m_cacheWriteBufferIndex(0),
-    m_cacheWriteBufferSize(16384),
+    m_cacheWriteBufferSize(65536),
     m_resampler(0),
     m_resampleBuffer(0),
     m_fileFrameCount(0),
     m_normalised(normalised),
     m_max(0.f),
     m_gain(1.f),
+    m_trimFromStart(0),
+    m_trimFromEnd(0),
     m_clippedCount(0),
     m_firstNonzero(0),
     m_lastNonzero(0)
@@ -94,6 +96,13 @@ CodedAudioFileReader::~CodedAudioFileReader()
 }
 
 void
+CodedAudioFileReader::setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd)
+{
+    m_trimFromStart = fromStart;
+    m_trimFromEnd = fromEnd;
+}
+
+void
 CodedAudioFileReader::startSerialised(QString id)
 {
     SVDEBUG << "CodedAudioFileReader(" << this << ")::startSerialised: id = " << id << endl;
@@ -118,6 +127,11 @@ CodedAudioFileReader::initialiseDecodeCache()
 
     SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
+    if (m_channelCount == 0) {
+        SVCERR << "CodedAudioFileReader::initialiseDecodeCache: No channel count set!" << endl;
+        throw std::logic_error("No channel count set");
+    }
+    
     if (m_fileRate == 0) {
         SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
@@ -212,6 +226,11 @@ CodedAudioFileReader::initialiseDecodeCache()
         m_data.clear();
     }
 
+    if (m_trimFromEnd >= (m_cacheWriteBufferSize * m_channelCount)) {
+        SVCERR << "WARNING: CodedAudioFileReader::setSamplesToTrim: Can't handle trimming more frames from end (" << m_trimFromEnd << ") than can be stored in cache-write buffer (" << (m_cacheWriteBufferSize * m_channelCount) << "), won't trim anything from the end after all";
+        m_trimFromEnd = 0;
+    }
+
     m_initialised = true;
 }
 
@@ -223,25 +242,20 @@ CodedAudioFileReader::addSamplesToDecodeCache(float **samples, sv_frame_t nframe
     if (!m_initialised) return;
 
     for (sv_frame_t i = 0; i < nframes; ++i) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         for (int c = 0; c < m_channelCount; ++c) {
 
             float sample = samples[c][i];
-        
             m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
-            if (m_cacheWriteBufferIndex ==
-                m_cacheWriteBufferSize * m_channelCount) {
-
-                pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
-                m_cacheWriteBufferIndex = 0;
-            }
-
-            if (m_cacheWriteBufferIndex % 10240 == 0 &&
-                m_cacheFileReader) {
-                m_cacheFileReader->updateFrameCount();
-            }
         }
+
+        pushCacheWriteBufferMaybe(false);
     }
 }
 
@@ -253,25 +267,20 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
     if (!m_initialised) return;
 
     for (sv_frame_t i = 0; i < nframes; ++i) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         for (int c = 0; c < m_channelCount; ++c) {
 
             float sample = samples[i * m_channelCount + c];
         
             m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
-
-            if (m_cacheWriteBufferIndex ==
-                m_cacheWriteBufferSize * m_channelCount) {
-
-                pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
-                m_cacheWriteBufferIndex = 0;
-            }
-
-            if (m_cacheWriteBufferIndex % 10240 == 0 &&
-                m_cacheFileReader) {
-                m_cacheFileReader->updateFrameCount();
-            }
         }
+
+        pushCacheWriteBufferMaybe(false);
     }
 }
 
@@ -283,20 +292,15 @@ CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
     if (!m_initialised) return;
 
     for (float sample: samples) {
+
+        if (m_trimFromStart > 0) {
+            --m_trimFromStart;
+            continue;
+        }
         
         m_cacheWriteBuffer[m_cacheWriteBufferIndex++] = sample;
 
-        if (m_cacheWriteBufferIndex ==
-            m_cacheWriteBufferSize * m_channelCount) {
-
-            pushBuffer(m_cacheWriteBuffer, m_cacheWriteBufferSize, false);
-            m_cacheWriteBufferIndex = 0;
-        }
-
-        if (m_cacheWriteBufferIndex % 10240 == 0 &&
-            m_cacheFileReader) {
-            m_cacheFileReader->updateFrameCount();
-        }
+        pushCacheWriteBufferMaybe(false);
     }
 }
 
@@ -312,9 +316,7 @@ CodedAudioFileReader::finishDecodeCache()
         return;
     }
 
-    pushBuffer(m_cacheWriteBuffer,
-               m_cacheWriteBufferIndex / m_channelCount,
-               true);
+    pushCacheWriteBufferMaybe(true);
 
     delete[] m_cacheWriteBuffer;
     m_cacheWriteBuffer = 0;
@@ -354,6 +356,48 @@ CodedAudioFileReader::finishDecodeCache()
 }
 
 void
+CodedAudioFileReader::pushCacheWriteBufferMaybe(bool final)
+{
+    if (final ||
+        (m_cacheWriteBufferIndex ==
+         m_cacheWriteBufferSize * m_channelCount)) {
+
+        if (m_trimFromEnd > 0) {
+        
+            sv_frame_t framesToPush =
+                (m_cacheWriteBufferIndex / m_channelCount) - m_trimFromEnd;
+
+            if (framesToPush <= 0 && !final) {
+                // This won't do, the buffer is full so we have to push
+                // something. Should have checked for this earlier
+                throw std::logic_error("Buffer full but nothing to push");
+            }
+
+            pushBuffer(m_cacheWriteBuffer, framesToPush, final);
+            
+            m_cacheWriteBufferIndex -= framesToPush * m_channelCount;
+
+            for (sv_frame_t i = 0; i < m_cacheWriteBufferIndex; ++i) {
+                m_cacheWriteBuffer[i] =
+                    m_cacheWriteBuffer[framesToPush * m_channelCount + i];
+            }
+
+        } else {
+
+            pushBuffer(m_cacheWriteBuffer,
+                       m_cacheWriteBufferIndex / m_channelCount,
+                       final);
+
+            m_cacheWriteBufferIndex = 0;
+        }
+
+        if (m_cacheFileReader) {
+            m_cacheFileReader->updateFrameCount();
+        }
+    }
+}
+
+sv_frame_t
 CodedAudioFileReader::pushBuffer(float *buffer, sv_frame_t sz, bool final)
 {
     m_fileFrameCount += sz;
@@ -368,6 +412,8 @@ CodedAudioFileReader::pushBuffer(float *buffer, sv_frame_t sz, bool final)
     } else {
         pushBufferNonResampling(buffer, sz);
     }
+
+    return sz;
 }
 
 void
@@ -376,6 +422,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     float clip = 1.0;
     sv_frame_t count = sz * m_channelCount;
 
+    // statistics
     for (sv_frame_t j = 0; j < sz; ++j) {
         for (int c = 0; c < m_channelCount; ++c) {
             sv_frame_t i = j * m_channelCount + c;
@@ -419,16 +466,6 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 
     case CacheInMemory:
         m_dataLock.lock();
-        /*
-        if (m_data.size() < 5120) {
-            for (int i = 0; i < count && i < 5120; ++i) {
-                if (i % 8 == 0) cerr << i << ": ";
-                cerr << buffer[i] << " ";
-                if (i % 8 == 7) cerr << endl;
-            }
-        }
-        cerr << endl;
-        */
         m_data.insert(m_data.end(), buffer, buffer + count);
         m_dataLock.unlock();
         break;
@@ -439,7 +476,7 @@ void
 CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
                                            double ratio, bool final)
 {
-    SVDEBUG << "pushBufferResampling: ratio = " << ratio << ", sz = " << sz << ", final = " << final << endl;
+//    SVDEBUG << "pushBufferResampling: ratio = " << ratio << ", sz = " << sz << ", final = " << final << endl;
 
     if (sz > 0) {
 
@@ -462,7 +499,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
 
         sv_frame_t padSamples = padFrames * m_channelCount;
 
-        SVDEBUG << "frameCount = " << m_frameCount << ", equivFileFrames = " << double(m_frameCount) / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames= " << padFrames << ", padSamples = " << padSamples << endl;
+        SVDEBUG << "CodedAudioFileReader::pushBufferResampling: frameCount = " << m_frameCount << ", equivFileFrames = " << double(m_frameCount) / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames = " << padFrames << ", padSamples = " << padSamples << endl;
 
         float *padding = new float[padSamples];
         for (sv_frame_t i = 0; i < padSamples; ++i) padding[i] = 0.f;

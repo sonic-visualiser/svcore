@@ -62,6 +62,9 @@ protected:
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
+    // compensation for encoder delays:
+    void setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd);
+    
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
@@ -76,8 +79,14 @@ protected:
     void endSerialised();
 
 private:
-    void pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+    void pushCacheWriteBufferMaybe(bool final);
+    
+    sv_frame_t pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+
+    // to be called only by pushBuffer
     void pushBufferResampling(float *interleaved, sv_frame_t sz, double ratio, bool final);
+
+    // to be called only by pushBuffer and pushBufferResampling
     void pushBufferNonResampling(float *interleaved, sv_frame_t sz);
 
 protected:
@@ -93,7 +102,7 @@ protected:
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    sv_frame_t m_cacheWriteBufferIndex;
+    sv_frame_t m_cacheWriteBufferIndex; // samples
     sv_frame_t m_cacheWriteBufferSize; // frames
 
     Resampler *m_resampler;
@@ -104,6 +113,9 @@ protected:
     float m_max;
     float m_gain;
 
+    sv_frame_t m_trimFromStart;
+    sv_frame_t m_trimFromEnd;
+    
     sv_frame_t m_clippedCount;
     sv_frame_t m_firstNonzero;
     sv_frame_t m_lastNonzero;

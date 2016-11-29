@@ -39,13 +39,19 @@
 #define open _open
 #endif
 
+using std::string;
+
+static sv_frame_t DEFAULT_DECODER_DELAY = 529;
+
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
-                             CacheMode mode, sv_samplerate_t targetRate,
+                             CacheMode mode, GaplessMode gaplessMode,
+                             sv_samplerate_t targetRate,
                              bool normalised,
                              ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_gaplessMode(gaplessMode),
     m_decodeErrorShown(false),
     m_decodeThread(0)
 {
@@ -65,6 +71,10 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_done = false;
     m_reporter = reporter;
 
+    if (m_gaplessMode == Gapless) {
+        CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
+    }
+    
     struct stat stat;
     if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
 	m_error = QString("File %1 does not exist.").arg(m_path);
@@ -307,6 +317,7 @@ MP3FileReader::decode(void *mm, sv_frame_t sz)
 
     data.start = (unsigned char const *)mm;
     data.length = sz;
+    data.finished = false;
     data.reader = this;
 
     mad_decoder_init(&decoder,          // decoder to initialise
@@ -333,7 +344,10 @@ MP3FileReader::input_callback(void *dp, struct mad_stream *stream)
 {
     DecoderData *data = (DecoderData *)dp;
 
-    if (!data->length) return MAD_FLOW_STOP;
+    if (!data->length) {
+        data->finished = true;
+        return MAD_FLOW_STOP;
+    }
 
     unsigned char const *start = data->start;
     sv_frame_t length = data->length;
@@ -365,26 +379,92 @@ MP3FileReader::filter_callback(void *dp,
     return data->reader->filter(stream, frame);
 }
 
+static string toMagic(unsigned long fourcc)
+{
+    string magic("....");
+    for (int i = 0; i < 4; ++i) {
+        magic[3-i] = char((fourcc >> (8*i)) & 0xff);
+    }
+    return magic;
+}
+
 enum mad_flow
 MP3FileReader::filter(struct mad_stream const *stream,
                       struct mad_frame *)
 {
     if (m_mp3FrameCount > 0) {
+        // only handle info frame if it appears as first mp3 frame
         return MAD_FLOW_CONTINUE;
-    } else {
-        struct mad_bitptr ptr = stream->anc_ptr;
-        unsigned long fourcc = mad_bit_read(&ptr, 32);
-        std::string magic("....");
-        for (int i = 0; i < 4; ++i) {
-            magic[3-i] = char((fourcc >> (8*i)) & 0xff);
+    }
+
+    if (m_gaplessMode == Gappy) {
+        // Our non-gapless mode does not even filter out the Xing/LAME
+        // frame. That's because the main reason non-gapless mode
+        // exists is for backward compatibility with MP3FileReader
+        // behaviour before the gapless support was added, so we even
+        // need to keep the spurious 1152 samples resulting from
+        // feeding Xing/LAME frame to the decoder as otherwise we'd
+        // have different output from before.
+        SVDEBUG << "MP3FileReader: Not gapless mode, not checking Xing/LAME frame"
+                << endl;
+        return MAD_FLOW_CONTINUE;
+    }
+    
+    struct mad_bitptr ptr = stream->anc_ptr;
+    string magic = toMagic(mad_bit_read(&ptr, 32));
+
+    if (magic == "Xing" || magic == "Info") {
+
+        SVDEBUG << "MP3FileReader: Found Xing/LAME metadata frame (magic = \""
+                << magic << "\")" << endl;
+
+        // All we want at this point is the LAME encoder delay and
+        // padding values. We expect to see the Xing/Info magic (which
+        // we've already read), then 116 bytes of Xing data, then LAME
+        // magic, 5 byte version string, 12 bytes of LAME data that we
+        // aren't currently interested in, then the delays encoded as
+        // two 12-bit numbers into three bytes.
+        //
+        // (See gabriel.mp3-tech.org/mp3infotag.html)
+        
+        for (int skip = 0; skip < 116; ++skip) {
+            (void)mad_bit_read(&ptr, 8);
         }
-        if (magic == "Xing" || magic == "Info" || magic == "LAME") {
-            SVDEBUG << "MP3FileReader: Discarding metadata frame (magic = \""
-                    << magic << "\")" << endl;
-            return MAD_FLOW_IGNORE;
+
+        magic = toMagic(mad_bit_read(&ptr, 32));
+
+        if (magic == "LAME") {
+
+            SVDEBUG << "MP3FileReader: Found LAME-specific metadata" << endl;
+
+            for (int skip = 0; skip < 5 + 12; ++skip) {
+                (void)mad_bit_read(&ptr, 8);
+            }
+
+            auto delay = mad_bit_read(&ptr, 12);
+            auto padding = mad_bit_read(&ptr, 12);
+
+            sv_frame_t delayToDrop = DEFAULT_DECODER_DELAY + delay;
+            sv_frame_t paddingToDrop = padding - DEFAULT_DECODER_DELAY;
+            if (paddingToDrop < 0) paddingToDrop = 0;
+
+            SVDEBUG << "MP3FileReader: LAME encoder delay = " << delay
+                    << ", padding = " << padding << endl;
+
+            SVDEBUG << "MP3FileReader: Will be trimming " << delayToDrop
+                    << " samples from start and " << paddingToDrop
+                    << " from end" << endl;
+
+            CodedAudioFileReader::setFramesToTrim(delayToDrop, paddingToDrop);
+            
         } else {
-            return MAD_FLOW_CONTINUE;
+            SVDEBUG << "MP3FileReader: Xing frame has no LAME metadata" << endl;
         }
+            
+        return MAD_FLOW_IGNORE;
+        
+    } else {
+        return MAD_FLOW_CONTINUE;
     }
 }
 
@@ -493,8 +573,9 @@ MP3FileReader::error_callback(void *dp,
     DecoderData *data = (DecoderData *)dp;
 
     if (stream->error == MAD_ERROR_LOSTSYNC &&
-        data->length == 0) {
-        // We are at end of file, losing sync is expected behaviour
+        data->finished) {
+        // We are at end of file, losing sync is expected behaviour,
+        // don't report it
         return MAD_FLOW_CONTINUE;
     }
     
