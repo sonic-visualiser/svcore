@@ -317,6 +317,7 @@ MP3FileReader::decode(void *mm, sv_frame_t sz)
 
     data.start = (unsigned char const *)mm;
     data.length = sz;
+    data.finished = false;
     data.reader = this;
 
     mad_decoder_init(&decoder,          // decoder to initialise
@@ -343,7 +344,10 @@ MP3FileReader::input_callback(void *dp, struct mad_stream *stream)
 {
     DecoderData *data = (DecoderData *)dp;
 
-    if (!data->length) return MAD_FLOW_STOP;
+    if (!data->length) {
+        data->finished = true;
+        return MAD_FLOW_STOP;
+    }
 
     unsigned char const *start = data->start;
     sv_frame_t length = data->length;
@@ -569,8 +573,9 @@ MP3FileReader::error_callback(void *dp,
     DecoderData *data = (DecoderData *)dp;
 
     if (stream->error == MAD_ERROR_LOSTSYNC &&
-        data->length == 0) {
-        // We are at end of file, losing sync is expected behaviour
+        data->finished) {
+        // We are at end of file, losing sync is expected behaviour,
+        // don't report it
         return MAD_FLOW_CONTINUE;
     }
     
