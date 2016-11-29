@@ -63,7 +63,7 @@ protected:
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
     // compensation for encoder delays:
-    void setSamplesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd);
+    void setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd);
     
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
@@ -102,7 +102,7 @@ protected:
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    sv_frame_t m_cacheWriteBufferIndex;
+    sv_frame_t m_cacheWriteBufferIndex; // samples
     sv_frame_t m_cacheWriteBufferSize; // frames
 
     Resampler *m_resampler;

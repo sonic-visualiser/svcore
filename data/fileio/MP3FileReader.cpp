@@ -72,7 +72,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_reporter = reporter;
 
     if (m_gaplessMode == Gapless) {
-        CodedAudioFileReader::setSamplesToTrim(DEFAULT_DECODER_DELAY, 0);
+        CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
     struct stat stat;
@@ -375,7 +375,7 @@ MP3FileReader::filter_callback(void *dp,
     return data->reader->filter(stream, frame);
 }
 
-static string toMagic(uint32_t fourcc)
+static string toMagic(unsigned long fourcc)
 {
     string magic("....");
     for (int i = 0; i < 4; ++i) {
@@ -437,8 +437,8 @@ MP3FileReader::filter(struct mad_stream const *stream,
                 (void)mad_bit_read(&ptr, 8);
             }
 
-            uint32_t delay = mad_bit_read(&ptr, 12);
-            uint32_t padding = mad_bit_read(&ptr, 12);
+            auto delay = mad_bit_read(&ptr, 12);
+            auto padding = mad_bit_read(&ptr, 12);
 
             sv_frame_t delayToDrop = DEFAULT_DECODER_DELAY + delay;
             sv_frame_t paddingToDrop = padding - DEFAULT_DECODER_DELAY;
@@ -451,7 +451,7 @@ MP3FileReader::filter(struct mad_stream const *stream,
                     << " samples from start and " << paddingToDrop
                     << " from end" << endl;
 
-            CodedAudioFileReader::setSamplesToTrim(delayToDrop, paddingToDrop);
+            CodedAudioFileReader::setFramesToTrim(delayToDrop, paddingToDrop);
             
         } else {
             SVDEBUG << "MP3FileReader: Xing frame has no LAME metadata" << endl;
