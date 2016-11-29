@@ -572,8 +572,10 @@ MP3FileReader::error_callback(void *dp,
 {
     DecoderData *data = (DecoderData *)dp;
 
+    sv_frame_t ix = stream->this_frame - data->start;
+    
     if (stream->error == MAD_ERROR_LOSTSYNC &&
-        data->finished) {
+        (data->finished || ix >= data->length)) {
         // We are at end of file, losing sync is expected behaviour,
         // don't report it
         return MAD_FLOW_CONTINUE;
@@ -583,8 +585,7 @@ MP3FileReader::error_callback(void *dp,
         char buffer[256];
         snprintf(buffer, 255,
                  "MP3 decoding error 0x%04x (%s) at byte offset %lu",
-                 stream->error, mad_stream_errorstr(stream),
-                 (unsigned long)(stream->this_frame - data->start));
+                 stream->error, mad_stream_errorstr(stream), ix);
         SVCERR << "Warning: in file \"" << data->reader->m_path << "\": "
                << buffer << " (continuing; will not report any further decode errors for this file)" << endl;
         data->reader->m_decodeErrorShown = true;
