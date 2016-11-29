@@ -41,7 +41,7 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_cacheFileReader(0),
     m_cacheWriteBuffer(0),
     m_cacheWriteBufferIndex(0),
-    m_cacheWriteBufferSize(16384),
+    m_cacheWriteBufferSize(65536),
     m_resampler(0),
     m_resampleBuffer(0),
     m_fileFrameCount(0),
@@ -96,7 +96,7 @@ CodedAudioFileReader::~CodedAudioFileReader()
 }
 
 void
-CodedAudioFileReader::setSamplesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd)
+CodedAudioFileReader::setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd)
 {
     m_trimFromStart = fromStart;
     m_trimFromEnd = fromEnd;
@@ -127,6 +127,11 @@ CodedAudioFileReader::initialiseDecodeCache()
 
     SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: file rate = " << m_fileRate << endl;
 
+    if (m_channelCount == 0) {
+        SVCERR << "CodedAudioFileReader::initialiseDecodeCache: No channel count set!" << endl;
+        throw std::logic_error("No channel count set");
+    }
+    
     if (m_fileRate == 0) {
         SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
         throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
@@ -219,6 +224,11 @@ CodedAudioFileReader::initialiseDecodeCache()
 
     if (m_cacheMode == CacheInMemory) {
         m_data.clear();
+    }
+
+    if (m_trimFromEnd >= (m_cacheWriteBufferSize * m_channelCount)) {
+        SVCERR << "WARNING: CodedAudioFileReader::setSamplesToTrim: Can't handle trimming more frames from end (" << m_trimFromEnd << ") than can be stored in cache-write buffer (" << (m_cacheWriteBufferSize * m_channelCount) << "), won't trim anything from the end after all";
+        m_trimFromEnd = 0;
     }
 
     m_initialised = true;
@@ -351,12 +361,35 @@ CodedAudioFileReader::pushCacheWriteBufferMaybe(bool final)
     if (final ||
         (m_cacheWriteBufferIndex ==
          m_cacheWriteBufferSize * m_channelCount)) {
+
+        if (m_trimFromEnd > 0) {
         
-        pushBuffer(m_cacheWriteBuffer,
-                   m_cacheWriteBufferIndex / m_channelCount,
-                   final);
-        
-        m_cacheWriteBufferIndex = 0;
+            sv_frame_t framesToPush =
+                (m_cacheWriteBufferIndex / m_channelCount) - m_trimFromEnd;
+
+            if (framesToPush <= 0 && !final) {
+                // This won't do, the buffer is full so we have to push
+                // something. Should have checked for this earlier
+                throw std::logic_error("Buffer full but nothing to push");
+            }
+
+            pushBuffer(m_cacheWriteBuffer, framesToPush, final);
+            
+            m_cacheWriteBufferIndex -= framesToPush * m_channelCount;
+
+            for (sv_frame_t i = 0; i < m_cacheWriteBufferIndex; ++i) {
+                m_cacheWriteBuffer[i] =
+                    m_cacheWriteBuffer[framesToPush * m_channelCount + i];
+            }
+
+        } else {
+
+            pushBuffer(m_cacheWriteBuffer,
+                       m_cacheWriteBufferIndex / m_channelCount,
+                       final);
+
+            m_cacheWriteBufferIndex = 0;
+        }
 
         if (m_cacheFileReader) {
             m_cacheFileReader->updateFrameCount();
@@ -466,7 +499,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
 
         sv_frame_t padSamples = padFrames * m_channelCount;
 
-        SVDEBUG << "pushBufferResampling: frameCount = " << m_frameCount << ", equivFileFrames = " << double(m_frameCount) / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames = " << padFrames << ", padSamples = " << padSamples << endl;
+        SVDEBUG << "CodedAudioFileReader::pushBufferResampling: frameCount = " << m_frameCount << ", equivFileFrames = " << double(m_frameCount) / ratio << ", m_fileFrameCount = " << m_fileFrameCount << ", padFrames = " << padFrames << ", padSamples = " << padSamples << endl;
 
         float *padding = new float[padSamples];
         for (sv_frame_t i = 0; i < padSamples; ++i) padding[i] = 0.f;
