@@ -112,19 +112,25 @@ private slots:
 
         // Our limits are pretty relaxed -- we're not testing decoder
         // or resampler quality here, just whether the results are
-        // plainly wrong (e.g. at wrong samplerate or with an offset)
+        // plainly wrong (e.g. at wrong samplerate or with an offset).
 
-	double limit = 0.01;
-        double edgeLimit = limit * 10; // in first or final edgeSize frames
+	double maxLimit = 0.01;
+        double meanLimit = 0.001;
+        double edgeLimit = maxLimit * 10; // in first or final edgeSize frames
         int edgeSize = 100; 
 
         if (nominalDepth < 16) {
-            limit = 0.02;
-        }
-        if (extension == "ogg" || extension == "mp3" ||
-            extension == "aac" || extension == "m4a") {
-            limit = 0.1;
-            edgeLimit = limit * 3;
+            maxLimit *= 2;
+            meanLimit *= 20;
+        } else if (extension == "ogg" || extension == "mp3") {
+            maxLimit *= 10;
+            meanLimit *= 10;
+            edgeLimit = maxLimit * 3;
+        } else if (extension == "aac" || extension == "m4a") {
+            maxLimit *= 30; // seems max diff can be quite large here
+                            // even when mean is fairly small
+            meanLimit *= 10;
+            edgeLimit = maxLimit * 3;
         }
 
         // And we ignore completely the last few frames when upsampling
@@ -135,7 +141,8 @@ private slots:
         if (extension == "aac" || extension == "m4a") {
             // our m4a file appears to have a fixed offset of 1024 (at
             // file sample rate)
-            offset = int(round((1024 / nominalRate) * readRate));
+            //            offset = int(round((1024 / nominalRate) * readRate));
+            offset = 0;
         }
 
         if (extension == "mp3") {
@@ -157,13 +164,15 @@ private slots:
         }
 
 	for (int c = 0; c < channels; ++c) {
+            
 	    float maxdiff = 0.f;
 	    int maxAt = 0;
 	    float totdiff = 0.f;
+
 	    for (int i = 0; i < refFrames; ++i) {
                 int ix = i + offset;
                 if (ix >= read) {
-                    cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward are lost)" << endl;
+                    cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward, of " << refFrames << ", are lost)" << endl;
                     QVERIFY(ix < read);
                 }
                 if (ix + discard >= read) {
@@ -171,7 +180,7 @@ private slots:
                     // resampling (discard > 0)
                     continue;
                 }
-		float diff = fabsf(test[(ix) * channels + c] -
+		float diff = fabsf(test[ix * channels + c] -
 				   reference[i * channels + c]);
 		totdiff += diff;
                 // in edge areas, record this only if it exceeds edgeLimit
@@ -187,16 +196,28 @@ private slots:
                     }
 		}
 	    }
+
+            // check for spurious material at end
+            for (int i = refFrames; i + offset < read; ++i) {
+                int ix = i + offset;
+                float quiet = 1e-6;
+                float mag = fabsf(test[ix * channels + c]);
+                if (mag > quiet) {
+                    cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << ")" << endl;
+                    QVERIFY(mag < quiet);
+                }
+            }
+                
 	    float meandiff = totdiff / float(read);
 //	    cerr << "meandiff on channel " << c << ": " << meandiff << endl;
 //	    cerr << "maxdiff on channel " << c << ": " << maxdiff << " at " << maxAt << endl;
-            if (meandiff >= limit) {
+            if (meandiff >= meanLimit) {
 		cerr << "ERROR: for audiofile " << audiofile << ": mean diff = " << meandiff << " for channel " << c << endl;
-                QVERIFY(meandiff < limit);
+                QVERIFY(meandiff < meanLimit);
             }
-	    if (maxdiff >= limit) {
+	    if (maxdiff >= maxLimit) {
 		cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxdiff << " at frame " << maxAt << " of " << read << " on channel " << c << " (mean diff = " << meandiff << ")" << endl;
-		QVERIFY(maxdiff < limit);
+		QVERIFY(maxdiff < maxLimit);
 	    }
 	}
     }
