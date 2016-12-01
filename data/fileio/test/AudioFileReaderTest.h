@@ -86,9 +86,10 @@ class AudioFileReaderTest : public QObject
 
             } else if (extension == "m4a" || extension == "aac") {
 
-                //!!! to be worked out
-                maxLimit = 1e-10;
-                rmsLimit = 1e-10;
+                // Like ogg but more so, quite far off in signal terms
+                // and even worse if normalised
+                maxLimit = 0.1;
+                rmsLimit = 0.1;
 
             } else if (extension == "mp3") {
 
@@ -131,9 +132,8 @@ class AudioFileReaderTest : public QObject
 
             } else if (extension == "m4a" || extension == "aac") {
 
-                //!!! to be worked out
-                maxLimit = 1e-10;
-                rmsLimit = 1e-10;
+                maxLimit = 0.06;
+                rmsLimit = 0.03;
 
             } else if (extension == "mp3") {
 
@@ -301,22 +301,44 @@ private slots:
 
         if (perceptual) {
 
-            // Look for an initial offset. What we're looking for is
-            // the first peak of the sinusoid in the first channel
-            // (since we may have only the one channel). This should
-            // appear at 0.4ms (see AudioTestData.h).
-            
+            // Look for an initial offset.
+            //
+            // We know the first channel has a sinusoid in it. It
+            // should have a peak at 0.4ms (see AudioTestData.h) but
+            // that might have been clipped, which would make it
+            // imprecise. We can tell if it's clipped, though, as
+            // there will be samples having exactly identical
+            // values. So what we look for is the peak if it's not
+            // clipped and, if it is, the first zero crossing after
+            // the peak, which should be at 0.8ms.
+
             int expectedPeak = int(0.0004 * readRate);
-            for (int i = 1; i < read; ++i) {
-                if (test[i * channels] > 0.8 &&
-                    test[(i+1) * channels] < test[i * channels]) {
-                    offset = i - expectedPeak - 1;
+            int expectedZC = int(0.0008 * readRate);
+            bool foundPeak = false;
+            for (int i = 1; i+1 < read; ++i) {
+                float prevSample = test[(i-1) * channels];
+                float thisSample = test[i * channels];
+                float nextSample = test[(i+1) * channels];
+                if (thisSample > 0.8 && nextSample < thisSample) {
+                    foundPeak = true;
+                    if (thisSample > prevSample) {
+                        // not clipped
+                        offset = i - expectedPeak - 1;
+                        break;
+                    }
+                }
+                if (foundPeak && (thisSample >= 0.0 && nextSample < 0.0)) {
+                    cerr << "thisSample = " << thisSample << ", nextSample = "
+                         << nextSample << endl;
+                    offset = i - expectedZC - 1;
                     break;
                 }
             }
 
+            int fileRateEquivalent = int((offset / readRate) * fileRate);
+            
             std::cerr << "offset = " << offset << std::endl;
-            std::cerr << "at file rate would be " << (offset / readRate) * fileRate << std::endl;
+            std::cerr << "at file rate would be " << fileRateEquivalent << std::endl;
 
             // Previously our m4a test file had a fixed offset of 1024
             // at the file sample rate -- this may be because it was
@@ -341,8 +363,6 @@ private slots:
             double totalSqrDiff = 0.0;
 	    int maxIndex = 0;
 
-//            cerr << "\nchannel " << c << ": ";
-            
 	    for (int i = 0; i < refFrames; ++i) {
                 int ix = i + offset;
                 if (ix >= read) {
@@ -384,10 +404,11 @@ private slots:
 	    double meanDiff = totalDiff / double(refFrames);
             double rmsDiff = sqrt(totalSqrDiff / double(refFrames));
 
+            /*
 	    cerr << "channel " << c << ": mean diff " << meanDiff << endl;
 	    cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
 	    cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
-            
+            */            
             if (rmsDiff >= rmsLimit) {
 		cerr << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
                 QVERIFY(rmsDiff < rmsLimit);
