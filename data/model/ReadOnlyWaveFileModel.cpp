@@ -53,15 +53,31 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     m_lastDirectReadCount(0)
 {
     m_source.waitForData();
+
     if (m_source.isOK()) {
-        bool normalise = Preferences::getInstance()->getNormaliseAudio();
-        m_reader = AudioFileReaderFactory::createThreadingReader
-            (m_source, targetRate, normalise);
+
+        Preferences *prefs = Preferences::getInstance();
+        
+        AudioFileReaderFactory::Parameters params;
+        params.targetRate = targetRate;
+
+        params.normalisation = prefs->getNormaliseAudio() ?
+            AudioFileReaderFactory::Normalisation::Peak :
+            AudioFileReaderFactory::Normalisation::None;
+
+        params.gaplessMode = prefs->getUseGaplessMode() ?
+            AudioFileReaderFactory::GaplessMode::Gapless :
+            AudioFileReaderFactory::GaplessMode::Gappy;
+        
+        params.threadingMode = AudioFileReaderFactory::ThreadingMode::Threaded;
+
+        m_reader = AudioFileReaderFactory::createReader(m_source, params);
         if (m_reader) {
             SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << endl;
         }
     }
+    
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     if (isOK()) fillCache();
