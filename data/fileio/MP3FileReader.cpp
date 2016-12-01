@@ -71,7 +71,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_done = false;
     m_reporter = reporter;
 
-    if (m_gaplessMode == Gapless) {
+    if (m_gaplessMode == GaplessMode::Gapless) {
         CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
@@ -397,7 +397,7 @@ MP3FileReader::filter(struct mad_stream const *stream,
         return MAD_FLOW_CONTINUE;
     }
 
-    if (m_gaplessMode == Gappy) {
+    if (m_gaplessMode == GaplessMode::Gappy) {
         // Our non-gapless mode does not even filter out the Xing/LAME
         // frame. That's because the main reason non-gapless mode
         // exists is for backward compatibility with MP3FileReader

@@ -37,7 +37,7 @@ public:
      * See http://lame.sourceforge.net/tech-FAQ.txt for a technical
      * explanation of the numbers here.
      */
-    enum GaplessMode {
+    enum class GaplessMode {
         /**
          * Trim unwanted samples from the start and end of the decoded
          * audio. From the start, trim a number of samples equal to

@@ -46,6 +46,7 @@ Preferences::Preferences() :
     m_tempDirRoot(""),
     m_fixedSampleRate(0),
     m_resampleOnLoad(false),
+    m_gapless(true),
     m_normaliseAudio(false),
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
@@ -69,6 +70,7 @@ Preferences::Preferences() :
     m_runPluginsInProcess = settings.value("run-vamp-plugins-in-process", true).toBool();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
+    m_gapless = settings.value("gapless", true).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
@@ -101,6 +103,7 @@ Preferences::getProperties() const
     props.push_back("Resample Quality");
     props.push_back("Omit Temporaries from Recent Files");
     props.push_back("Resample On Load");
+    props.push_back("Use Gapless Mode");
     props.push_back("Normalise Audio");
     props.push_back("Fixed Sample Rate");
     props.push_back("Temporary Directory Root");
@@ -142,6 +145,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Resample On Load") {
         return tr("Resample mismatching files on import");
+    }
+    if (name == "Use Gapless Mode") {
+        return tr("Load mp3 files in gapless mode");
     }
     if (name == "Fixed Sample Rate") {
         return tr("Single fixed sample rate to resample all files to");
@@ -198,6 +204,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ToggleProperty;
     }
     if (name == "Resample On Load") {
+        return ToggleProperty;
+    }
+    if (name == "Use Gapless Mode") {
         return ToggleProperty;
     }
     if (name == "Fixed Sample Rate") {
@@ -578,6 +587,19 @@ Preferences::setResampleOnLoad(bool resample)
         settings.setValue("resample-on-load", resample);
         settings.endGroup();
         emit propertyChanged("Resample On Load");
+    }
+}
+
+void
+Preferences::setUseGaplessMode(bool gapless)
+{
+    if (m_gapless != gapless) {
+        m_gapless = gapless;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("gapless", gapless);
+        settings.endGroup();
+        emit propertyChanged("Use Gapless Mode");
     }
 }
 

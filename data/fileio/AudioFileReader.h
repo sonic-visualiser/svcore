@@ -31,15 +31,42 @@ class AudioFileReader : public QObject
 public:
     virtual ~AudioFileReader() { }
 
+    /**
+     * Return true if the file was opened successfully and no error
+     * has subsequently occurred.
+     */
     bool isOK() const { return (m_channelCount > 0); }
 
+    /**
+     * If isOK() is false, return an error string.
+     */
     virtual QString getError() const { return ""; }
 
+    /**
+     * Return the number of audio sample frames (i.e. samples per
+     * channel) in the file.
+     */
     sv_frame_t getFrameCount() const { return m_frameCount; }
+
+    /**
+     * Return the number of channels in the file.
+     */
     int getChannelCount() const { return m_channelCount; }
+
+    /**
+     * Return the samplerate at which the file is being read. This is
+     * the rate requested when the file was opened, which may differ
+     * from the native rate of the file (in which case the file will
+     * be resampled as it is read).
+     */
     sv_samplerate_t getSampleRate() const { return m_sampleRate; }
 
-    virtual sv_samplerate_t getNativeRate() const { return m_sampleRate; } // if resampled
+    /**
+     * Return the native samplerate of the file. This will differ from
+     * getSampleRate() if the file is being resampled because it was
+     * requested to open at a different rate from native.
+     */
+    virtual sv_samplerate_t getNativeRate() const { return m_sampleRate; }
 
     /**
      * Return the location of the audio data in the reader (as passed
@@ -90,7 +117,8 @@ public:
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const = 0;
+    virtual std::vector<float> getInterleavedFrames(sv_frame_t start,
+                                                    sv_frame_t count) const = 0;
 
     /**
      * Return de-interleaved samples for count frames from index
@@ -99,7 +127,8 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual std::vector<std::vector<float> > getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<std::vector<float> > getDeInterleavedFrames(sv_frame_t start,
+                                                                    sv_frame_t count) const;
 
     // only subclasses that do not know exactly how long the audio
     // file is until it's been completely decoded should implement this

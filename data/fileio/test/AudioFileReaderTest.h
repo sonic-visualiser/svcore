@@ -18,6 +18,7 @@
 
 #include "../AudioFileReaderFactory.h"
 #include "../AudioFileReader.h"
+#include "../WavFileWriter.h"
 
 #include "AudioTestData.h"
 
@@ -32,6 +33,7 @@
 using namespace std;
 
 static QString audioDir = "svcore/data/fileio/test/testfiles";
+static QString diffDir  = "svcore/data/fileio/test/diffs";
 
 class AudioFileReaderTest : public QObject
 {
@@ -41,6 +43,127 @@ class AudioFileReaderTest : public QObject
         return strdup(s.toLocal8Bit().data());
     }
 
+    void getFileMetadata(QString filename,
+                         QString &extension,
+                         sv_samplerate_t &rate,
+                         int &channels,
+                         int &bitdepth) {
+
+        QStringList fileAndExt = filename.split(".");
+        QStringList bits = fileAndExt[0].split("-");
+
+        extension = fileAndExt[1];
+        rate = bits[0].toInt();
+        channels = bits[1].toInt();
+        bitdepth = 16;
+        if (bits.length() > 2) {
+            bitdepth = bits[2].toInt();
+        }
+    }
+    
+    void getExpectedThresholds(QString filename,
+                               bool resampled,
+                               bool gapless,
+                               bool normalised,
+                               double &maxLimit,
+                               double &rmsLimit) {
+
+        QString extension;
+        sv_samplerate_t fileRate;
+        int channels;
+        int bitdepth;
+        getFileMetadata(filename, extension, fileRate, channels, bitdepth);
+        
+        if (normalised) {
+
+            if (extension == "ogg") {
+
+                // Our ogg is not especially high quality and is
+                // actually further from the original if normalised
+
+                maxLimit = 0.1;
+                rmsLimit = 0.03;
+
+            } else if (extension == "m4a" || extension == "aac") {
+
+                //!!! to be worked out
+                maxLimit = 1e-10;
+                rmsLimit = 1e-10;
+
+            } else if (extension == "mp3") {
+
+                if (resampled && !gapless) {
+
+                    // We expect worse figures here, because the
+                    // combination of uncompensated encoder delay +
+                    // resampling results in a fractional delay which
+                    // means the decoded signal is slightly out of
+                    // phase compared to the test signal
+
+                    maxLimit = 0.1;
+                    rmsLimit = 0.05;
+
+                } else {
+
+                    maxLimit = 0.05;
+                    rmsLimit = 0.01;
+                }
+
+            } else {
+
+                // supposed to be lossless then (wav, aiff, flac)
+                
+                if (bitdepth >= 16 && !resampled) {
+                    maxLimit = 1e-3;
+                    rmsLimit = 3e-4;
+                } else {
+                    maxLimit = 0.01;
+                    rmsLimit = 5e-3;
+                }
+            }
+            
+        } else { // !normalised
+            
+            if (extension == "ogg") {
+
+                maxLimit = 0.06;
+                rmsLimit = 0.03;
+
+            } else if (extension == "m4a" || extension == "aac") {
+
+                //!!! to be worked out
+                maxLimit = 1e-10;
+                rmsLimit = 1e-10;
+
+            } else if (extension == "mp3") {
+
+                // all mp3 figures are worse when not normalising
+                maxLimit = 0.1;
+                rmsLimit = 0.05;
+
+            } else {
+
+                // supposed to be lossless then (wav, aiff, flac)
+                
+                if (bitdepth >= 16 && !resampled) {
+                    maxLimit = 1e-3;
+                    rmsLimit = 3e-4;
+                } else {
+                    maxLimit = 0.02;
+                    rmsLimit = 0.01;
+                }
+            }
+        }
+    }
+
+    QString testName(QString filename, int rate, bool norm, bool gapless) {
+        return QString("%1 at %2%3%4")
+            .arg(filename)
+            .arg(rate)
+            .arg(norm ? " normalised": "")
+            .arg(gapless ? "" : " non-gapless");
+    }
+
 private slots:
     void init()
     {
@@ -48,35 +171,66 @@ private slots:
             cerr << "ERROR: Audio test file directory \"" << audioDir << "\" does not exist" << endl;
             QVERIFY2(QDir(audioDir).exists(), "Audio test file directory not found");
         }
+        if (!QDir(diffDir).exists() && !QDir().mkpath(diffDir)) {
+            cerr << "ERROR: Audio diff directory \"" << diffDir << "\" does not exist and could not be created" << endl;
+            QVERIFY2(QDir(diffDir).exists(), "Audio diff directory not found and could not be created");
+        }
     }
 
     void read_data()
     {
         QTest::addColumn<QString>("audiofile");
+        QTest::addColumn<int>("rate");
+        QTest::addColumn<bool>("normalised");
+        QTest::addColumn<bool>("gapless");
         QStringList files = QDir(audioDir).entryList(QDir::Files);
+        int readRates[] = { 44100, 48000 };
+        bool norms[] = { false, true };
+        bool gaplesses[] = { true, false };
         foreach (QString filename, files) {
-            QTest::newRow(strOf(filename)) << filename;
+            for (int rate: readRates) {
+                for (bool norm: norms) {
+                    for (bool gapless: gaplesses) {
+
+                        if (QFileInfo(filename).suffix() != "mp3" &&
+                            !gapless) {
+                            continue;
+                        }
+                        
+                        QString desc = testName(filename, rate, norm, gapless);
+
+                        QTest::newRow(strOf(desc))
+                            << filename << rate << norm << gapless;
+                    }
+                }
+            }
         }
     }
 
     void read()
     {
         QFETCH(QString, audiofile);
+        QFETCH(int, rate);
+        QFETCH(bool, normalised);
+        QFETCH(bool, gapless);
 
-        sv_samplerate_t readRate = 48000;
+        sv_samplerate_t readRate(rate);
+        
+        cerr << "\naudiofile = " << audiofile << endl;
+
+        AudioFileReaderFactory::Parameters params;
+        params.targetRate = readRate;
+        params.normalisation = (normalised ?
+                                AudioFileReaderFactory::Normalisation::Peak :
+                                AudioFileReaderFactory::Normalisation::None);
+        params.gaplessMode = (gapless ?
+                              AudioFileReaderFactory::GaplessMode::Gapless :
+                              AudioFileReaderFactory::GaplessMode::Gappy);
 
 	AudioFileReader *reader =
 	    AudioFileReaderFactory::createReader
-	    (audioDir + "/" + audiofile, readRate);
-
-        QStringList fileAndExt = audiofile.split(".");
-        QStringList bits = fileAndExt[0].split("-");
-        QString extension = fileAndExt[1];
-        sv_samplerate_t nominalRate = bits[0].toInt();
-        int nominalChannels = bits[1].toInt();
-        int nominalDepth = 16;
-        if (bits.length() > 2) nominalDepth = bits[2].toInt();
-
+	    (audioDir + "/" + audiofile, params);
+        
 	if (!reader) {
 #if ( QT_VERSION >= 0x050000 )
 	    QSKIP("Unsupported file, skipping");
@@ -85,11 +239,25 @@ private slots:
 #endif
 	}
 
-        QCOMPARE((int)reader->getChannelCount(), nominalChannels);
-        QCOMPARE(reader->getNativeRate(), nominalRate);
+        QString extension;
+        sv_samplerate_t fileRate;
+        int channels;
+        int fileBitdepth;
+        getFileMetadata(audiofile, extension, fileRate, channels, fileBitdepth);
+
+        QString diffFile = testName(audiofile, rate, normalised, gapless);
+        diffFile.replace(".", "_");
+        diffFile.replace(" ", "_");
+        diffFile += ".wav";
+        diffFile = QDir(diffDir).filePath(diffFile);
+        WavFileWriter diffWriter(diffFile, readRate, channels,
+                                 WavFileWriter::WriteToTarget); //!!! NB WriteToTemporary not working, why?
+        QVERIFY(diffWriter.isOK());
+        
+        QCOMPARE((int)reader->getChannelCount(), channels);
+        QCOMPARE(reader->getNativeRate(), fileRate);
         QCOMPARE(reader->getSampleRate(), readRate);
 
-	int channels = reader->getChannelCount();
 	AudioTestData tdata(readRate, channels);
 	
 	float *reference = tdata.getInterleavedData();
@@ -103,123 +271,151 @@ private slots:
 	vector<float> test = reader->getInterleavedFrames(0, refFrames + 5000);
 	sv_frame_t read = test.size() / channels;
 
-        if (extension == "mp3" || extension == "aac" || extension == "m4a") {
-            // mp3s and aacs can have silence at start and end
+        bool perceptual = (extension == "mp3" ||
+                           extension == "aac" ||
+                           extension == "m4a");
+        
+        if (perceptual && !gapless) {
+            // allow silence at start and end
             QVERIFY(read >= refFrames);
         } else {
             QCOMPARE(read, refFrames);
         }
 
-        // Our limits are pretty relaxed -- we're not testing decoder
-        // or resampler quality here, just whether the results are
-        // plainly wrong (e.g. at wrong samplerate or with an offset).
-
-	double maxLimit = 0.01;
-        double meanLimit = 0.001;
-        double edgeLimit = maxLimit * 10; // in first or final edgeSize frames
+        bool resampled = readRate != fileRate;
+        double maxLimit, rmsLimit;
+        getExpectedThresholds(audiofile,
+                              resampled,
+                              gapless,
+                              normalised,
+                              maxLimit, rmsLimit);
+        
+        double edgeLimit = maxLimit * 3; // in first or final edgeSize frames
+        if (resampled && edgeLimit < 0.1) edgeLimit = 0.1;
         int edgeSize = 100; 
 
-        if (nominalDepth < 16) {
-            maxLimit = 0.02;
-            meanLimit = 0.02;
-        } else if (extension == "ogg" || extension == "mp3") {
-            maxLimit = 0.1;
-            meanLimit = 0.035;
-            edgeLimit = maxLimit * 3;
-        } else if (extension == "aac" || extension == "m4a") {
-            maxLimit = 0.3; // seems max diff can be quite large here
-                            // even when mean is fairly small
-            meanLimit = 0.01;
-            edgeLimit = maxLimit * 3;
-        }
-
         // And we ignore completely the last few frames when upsampling
-        int discard = 1 + int(round(readRate / nominalRate));
+        int discard = 1 + int(round(readRate / fileRate));
 
         int offset = 0;
 
-        if (extension == "aac" || extension == "m4a") {
-            // our m4a file appears to have a fixed offset of 1024 (at
-            // file sample rate)
-            //            offset = int(round((1024 / nominalRate) * readRate));
-            offset = 0;
-        }
+        if (perceptual) {
 
-        if (extension == "mp3") {
-            // ...while mp3s appear to vary. What we're looking for is
+            // Look for an initial offset. What we're looking for is
             // the first peak of the sinusoid in the first channel
             // (since we may have only the one channel). This should
-            // appear at 0.4ms (see AudioTestData.h)
+            // appear at 0.4ms (see AudioTestData.h).
+            
             int expectedPeak = int(0.0004 * readRate);
-//            std::cerr << "expectedPeak = " << expectedPeak << std::endl;
             for (int i = 1; i < read; ++i) {
                 if (test[i * channels] > 0.8 &&
                     test[(i+1) * channels] < test[i * channels]) {
                     offset = i - expectedPeak - 1;
-//                    std::cerr << "actual peak = " << i-1 << std::endl;
                     break;
                 }
             }
-//            std::cerr << "offset = " << offset << std::endl;
+
+            std::cerr << "offset = " << offset << std::endl;
+            std::cerr << "at file rate would be " << (offset / readRate) * fileRate << std::endl;
+
+            // Previously our m4a test file had a fixed offset of 1024
+            // at the file sample rate -- this may be because it was
+            // produced by FAAC which did not write in the delay as
+            // metadata? We now have an m4a produced by Core Audio
+            // which gives a 0 offset. What to do...
+
+            // Anyway, mp3s should have 0 offset in gapless mode and
+            // "something else" otherwise.
+            
+            if (gapless) {
+                QCOMPARE(offset, 0);
+            }
         }
 
-	for (int c = 0; c < channels; ++c) {
+        vector<vector<float>> diffs(channels);
             
-	    float maxdiff = 0.f;
-	    int maxAt = 0;
-	    float totdiff = 0.f;
+	for (int c = 0; c < channels; ++c) {
 
+            double maxDiff = 0.0;
+            double totalDiff = 0.0;
+            double totalSqrDiff = 0.0;
+	    int maxIndex = 0;
+
+//            cerr << "\nchannel " << c << ": ";
+            
 	    for (int i = 0; i < refFrames; ++i) {
                 int ix = i + offset;
                 if (ix >= read) {
                     cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward, of " << refFrames << ", are lost)" << endl;
                     QVERIFY(ix < read);
                 }
+
+                float signeddiff =
+                    test[ix * channels + c] -
+                    reference[i * channels + c];
+                    
+                diffs[c].push_back(signeddiff);
+
                 if (ix + discard >= read) {
                     // we forgive the very edge samples when
                     // resampling (discard > 0)
                     continue;
                 }
-		float diff = fabsf(test[ix * channels + c] -
-				   reference[i * channels + c]);
-		totdiff += diff;
+                
+		double diff = fabs(signeddiff);
+
+		totalDiff += diff;
+                totalSqrDiff += diff * diff;
+                
                 // in edge areas, record this only if it exceeds edgeLimit
-                if (i < edgeSize || i + edgeSize >= read - offset) {
-                    if (diff > edgeLimit && diff > maxdiff) {
-                        maxdiff = diff;
-                        maxAt = i;
+                if (i < edgeSize || i + edgeSize >= refFrames) {
+                    if (diff > edgeLimit && diff > maxDiff) {
+                        maxDiff = diff;
+                        maxIndex = i;
                     }
                 } else {
-                    if (diff > maxdiff) {
-                        maxdiff = diff;
-                        maxAt = i;
+                    if (diff > maxDiff) {
+                        maxDiff = diff;
+                        maxIndex = i;
                     }
 		}
 	    }
+                
+	    double meanDiff = totalDiff / double(refFrames);
+            double rmsDiff = sqrt(totalSqrDiff / double(refFrames));
 
-            // check for spurious material at end
+	    cerr << "channel " << c << ": mean diff " << meanDiff << endl;
+	    cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
+	    cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
+            
+            if (rmsDiff >= rmsLimit) {
+		cerr << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
+                QVERIFY(rmsDiff < rmsLimit);
+            }
+	    if (maxDiff >= maxLimit) {
+		cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxDiff << " at frame " << maxIndex << " of " << read << " on channel " << c << " (limit = " << maxLimit << ", edge limit = " << edgeLimit << ", mean diff = " << meanDiff << ", rms = " << rmsDiff << ")" << endl;
+		QVERIFY(maxDiff < maxLimit);
+	    }
+
+            // and check for spurious material at end
+            
             for (sv_frame_t i = refFrames; i + offset < read; ++i) {
                 sv_frame_t ix = i + offset;
-                float quiet = 1e-6f;
+                float quiet = 0.1; //!!! allow some ringing - but let's come back to this, it should tail off
                 float mag = fabsf(test[ix * channels + c]);
                 if (mag > quiet) {
-                    cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << ")" << endl;
+                    cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << " after reference+offset ended at " << refFrames+offset << ")" << endl;
                     QVERIFY(mag < quiet);
                 }
             }
-                
-	    float meandiff = totdiff / float(read);
-//	    cerr << "meandiff on channel " << c << ": " << meandiff << endl;
-//	    cerr << "maxdiff on channel " << c << ": " << maxdiff << " at " << maxAt << endl;
-            if (meandiff >= meanLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": mean diff = " << meandiff << " for channel " << c << endl;
-                QVERIFY(meandiff < meanLimit);
-            }
-	    if (maxdiff >= maxLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxdiff << " at frame " << maxAt << " of " << read << " on channel " << c << " (mean diff = " << meandiff << ")" << endl;
-		QVERIFY(maxdiff < maxLimit);
-	    }
 	}
+
+        float **ptrs = new float*[channels];
+        for (int c = 0; c < channels; ++c) {
+            ptrs[c] = diffs[c].data();
+        }
+        diffWriter.writeSamples(ptrs, refFrames);
+        delete[] ptrs;
     }
 };
 
