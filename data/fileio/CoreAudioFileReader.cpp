@@ -125,7 +125,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_fileRate = m_d->asbd.mSampleRate;
 
-    cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_fileRate << " Hz" << endl;
+    SVDEBUG << "CoreAudioFileReader: " << m_channelCount << " channels, " << m_fileRate << " Hz" << endl;
 
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
@@ -192,7 +192,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
 CoreAudioFileReader::~CoreAudioFileReader()
 {
-    cerr << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
+    SVDEBUG << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
 
     if (m_d->valid) {
         ExtAudioFileDispose(m_d->file);
