@@ -51,7 +51,6 @@ public:
     SpectrogramXSmoothing getSpectrogramXSmoothing() const { return m_spectrogramXSmoothing; }
     double getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
-    int getResampleQuality() const { return m_resampleQuality; }
 
     bool getRunPluginsInProcess() const { return m_runPluginsInProcess; }
     
@@ -118,7 +117,6 @@ public slots:
     void setTuningFrequency(double freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
-    void setResampleQuality(int quality);
     void setRunPluginsInProcess(bool r);
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
@@ -157,7 +155,6 @@ private:
     double m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
-    int m_resampleQuality;
     bool m_runPluginsInProcess;
     bool m_omitRecentTemps;
     QString m_tempDirRoot;

@@ -40,7 +40,6 @@ Preferences::Preferences() :
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
-    m_resampleQuality(1),
     m_runPluginsInProcess(true),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
@@ -66,7 +65,6 @@ Preferences::Preferences() :
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
-    m_resampleQuality = settings.value("resample-quality", 1).toInt();
     m_runPluginsInProcess = settings.value("run-vamp-plugins-in-process", true).toBool();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
@@ -270,13 +268,6 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return int(m_windowType);
     }
 
-    if (name == "Resample Quality") {
-        if (min) *min = 0;
-        if (max) *max = 2;
-        if (deflt) *deflt = 1;
-        return m_resampleQuality;
-    }
-
     if (name == "Run Vamp Plugins In Process") {
         return m_runPluginsInProcess;
     }
@@ -427,8 +418,6 @@ Preferences::setProperty(const PropertyName &name, int value)
         setPropertyBoxLayout(value == 0 ? VerticallyStacked : Layered);
     } else if (name == "Window Type") {
         setWindowType(WindowType(value));
-    } else if (name == "Resample Quality") {
-        setResampleQuality(value);
     } else if (name == "Run Vamp Plugins In Process") {
         setRunPluginsInProcess(value ? true : false);
     } else if (name == "Omit Temporaries from Recent Files") {
@@ -519,19 +508,6 @@ Preferences::setWindowType(WindowType type)
         settings.setValue("window-type", int(type));
         settings.endGroup();
         emit propertyChanged("Window Type");
-    }
-}
-
-void
-Preferences::setResampleQuality(int q)
-{
-    if (m_resampleQuality != q) {
-        m_resampleQuality = q;
-        QSettings settings;
-        settings.beginGroup("Preferences");
-        settings.setValue("resample-quality", q);
-        settings.endGroup();
-        emit propertyChanged("Resample Quality");
     }
 }
 
