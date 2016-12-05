@@ -24,7 +24,10 @@
 
 class WavFileReader;
 class Serialiser;
-class Resampler;
+
+namespace breakfastquay {
+    class Resampler;
+}
 
 class CodedAudioFileReader : public AudioFileReader
 {
@@ -105,7 +108,7 @@ protected:
     sv_frame_t m_cacheWriteBufferIndex; // samples
     sv_frame_t m_cacheWriteBufferSize; // frames
 
-    Resampler *m_resampler;
+    breakfastquay::Resampler *m_resampler;
     float *m_resampleBuffer;
     sv_frame_t m_fileFrameCount;
 

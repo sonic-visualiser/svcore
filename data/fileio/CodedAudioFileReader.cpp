@@ -20,8 +20,9 @@
 #include "base/Exceptions.h"
 #include "base/Profiler.h"
 #include "base/Serialiser.h"
-#include "base/Resampler.h"
 #include "base/StorageAdviser.h"
+
+#include <bqresample/Resampler.h>
 
 #include <stdint.h>
 #include <iostream>
@@ -142,9 +143,10 @@ CodedAudioFileReader::initialiseDecodeCache()
     }
     if (m_fileRate != m_sampleRate) {
         SVDEBUG << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << endl;
-        m_resampler = new Resampler(Resampler::FastestTolerable,
-                                    m_channelCount,
-                                    m_cacheWriteBufferSize);
+        m_resampler = new breakfastquay::Resampler
+            (breakfastquay::Resampler::FastestTolerable,
+             m_channelCount,
+             m_cacheWriteBufferSize);
         double ratio = m_sampleRate / m_fileRate;
         m_resampleBuffer = new float
             [lrint(ceil(double(m_cacheWriteBufferSize) * m_channelCount * ratio + 1))];

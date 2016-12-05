@@ -23,7 +23,6 @@ SVCORE_HEADERS = \
            base/RangeMapper.h \
            base/RealTime.h \
            base/RecentFiles.h \
-           base/Resampler.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
            base/Scavenger.h \
@@ -159,7 +158,6 @@ SVCORE_SOURCES = \
            base/RangeMapper.cpp \
            base/RealTimeSV.cpp \
            base/RecentFiles.cpp \
-           base/ResamplerSV.cpp \
            base/ResourceFinder.cpp \
            base/Selection.cpp \
            base/Serialiser.cpp \
