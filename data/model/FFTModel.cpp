@@ -102,7 +102,7 @@ FFTModel::getColumn(int x) const
     Column col;
     col.reserve(cplx.size());
     for (auto c: cplx) col.push_back(abs(c));
-    return move(col);
+    return col;
 }
 
 FFTModel::Column
@@ -114,7 +114,7 @@ FFTModel::getPhases(int x) const
     for (auto c: cplx) {
         col.push_back(arg(c));
     }
-    return move(col);
+    return col;
 }
 
 float
@@ -332,7 +332,7 @@ FFTModel::getFFTColumn(int n) const
     }
     m_cached.push_back(sc);
 
-    return move(col);
+    return col;
 }
 
 bool
