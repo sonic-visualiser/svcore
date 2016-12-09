@@ -70,11 +70,16 @@ public:
     virtual sv_samplerate_t getSourceSampleRate() const = 0;
 
     /**
-     * Return the sample rate set by the target audio device (or the
-     * source sample rate if the target hasn't set one).  If the
-     * source and target sample rates differ, resampling will occur.
+     * Return the sample rate set by the target audio device (or 0 if
+     * the target hasn't told us yet).  If the source and target
+     * sample rates differ, resampling will occur.
+     *
+     * Note that we don't actually do any processing at the device
+     * sample rate. All processing happens at the source sample rate,
+     * and then a resampler is applied if necessary at the interface
+     * between application and driver layer.
      */
-    virtual sv_samplerate_t getTargetSampleRate() const = 0;
+    virtual sv_samplerate_t getDeviceSampleRate() const = 0;
 
     /**
      * Get the block size of the target audio device.  This may be an

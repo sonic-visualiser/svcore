@@ -103,7 +103,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         int blockSize = 1024;
         int channels = 1;
         if (source) {
-            sampleRate = source->getTargetSampleRate();
+            sampleRate = source->getSourceSampleRate();
             blockSize = source->getTargetBlockSize();
             channels = source->getTargetChannelCount();
         }
