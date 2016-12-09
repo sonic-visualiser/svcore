@@ -42,9 +42,10 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_cacheFileReader(0),
     m_cacheWriteBuffer(0),
     m_cacheWriteBufferIndex(0),
-    m_cacheWriteBufferSize(65536),
+    m_cacheWriteBufferFrames(65536),
     m_resampler(0),
     m_resampleBuffer(0),
+    m_resampleBufferFrames(0),
     m_fileFrameCount(0),
     m_normalised(normalised),
     m_max(0.f),
@@ -146,13 +147,14 @@ CodedAudioFileReader::initialiseDecodeCache()
         m_resampler = new breakfastquay::Resampler
             (breakfastquay::Resampler::FastestTolerable,
              m_channelCount,
-             m_cacheWriteBufferSize);
+             int(m_cacheWriteBufferFrames));
         double ratio = m_sampleRate / m_fileRate;
-        m_resampleBuffer = new float
-            [lrint(ceil(double(m_cacheWriteBufferSize) * m_channelCount * ratio + 1))];
+        m_resampleBufferFrames = int(ceil(double(m_cacheWriteBufferFrames) *
+                                          ratio + 1));
+        m_resampleBuffer = new float[m_resampleBufferFrames * m_channelCount];
     }
 
-    m_cacheWriteBuffer = new float[m_cacheWriteBufferSize * m_channelCount];
+    m_cacheWriteBuffer = new float[m_cacheWriteBufferFrames * m_channelCount];
     m_cacheWriteBufferIndex = 0;
 
     if (m_cacheMode == CacheInTemporaryFile) {
@@ -228,8 +230,8 @@ CodedAudioFileReader::initialiseDecodeCache()
         m_data.clear();
     }
 
-    if (m_trimFromEnd >= (m_cacheWriteBufferSize * m_channelCount)) {
-        SVCERR << "WARNING: CodedAudioFileReader::setSamplesToTrim: Can't handle trimming more frames from end (" << m_trimFromEnd << ") than can be stored in cache-write buffer (" << (m_cacheWriteBufferSize * m_channelCount) << "), won't trim anything from the end after all";
+    if (m_trimFromEnd >= (m_cacheWriteBufferFrames * m_channelCount)) {
+        SVCERR << "WARNING: CodedAudioFileReader::setSamplesToTrim: Can't handle trimming more frames from end (" << m_trimFromEnd << ") than can be stored in cache-write buffer (" << (m_cacheWriteBufferFrames * m_channelCount) << "), won't trim anything from the end after all";
         m_trimFromEnd = 0;
     }
 
@@ -362,7 +364,7 @@ CodedAudioFileReader::pushCacheWriteBufferMaybe(bool final)
 {
     if (final ||
         (m_cacheWriteBufferIndex ==
-         m_cacheWriteBufferSize * m_channelCount)) {
+         m_cacheWriteBufferFrames * m_channelCount)) {
 
         if (m_trimFromEnd > 0) {
         
@@ -483,8 +485,9 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     if (sz > 0) {
 
         sv_frame_t out = m_resampler->resampleInterleaved
-            (buffer,
-             m_resampleBuffer,
+            (m_resampleBuffer,
+             m_resampleBufferFrames,
+             buffer,
              sz,
              ratio,
              false);
@@ -507,8 +510,9 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
         for (sv_frame_t i = 0; i < padSamples; ++i) padding[i] = 0.f;
 
         sv_frame_t out = m_resampler->resampleInterleaved
-            (padding,
-             m_resampleBuffer,
+            (m_resampleBuffer,
+             m_resampleBufferFrames,
+             padding,
              padFrames,
              ratio,
              true);

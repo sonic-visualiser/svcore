@@ -105,11 +105,12 @@ protected:
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    sv_frame_t m_cacheWriteBufferIndex; // samples
-    sv_frame_t m_cacheWriteBufferSize; // frames
+    sv_frame_t m_cacheWriteBufferIndex;  // buffer write pointer in samples
+    sv_frame_t m_cacheWriteBufferFrames; // buffer size in frames
 
     breakfastquay::Resampler *m_resampler;
     float *m_resampleBuffer;
+    int m_resampleBufferFrames;
     sv_frame_t m_fileFrameCount;
 
     bool m_normalised;
