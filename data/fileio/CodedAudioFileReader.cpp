@@ -488,7 +488,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
             (m_resampleBuffer,
              m_resampleBufferFrames,
              buffer,
-             sz,
+             int(sz),
              ratio,
              false);
 
@@ -513,7 +513,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
             (m_resampleBuffer,
              m_resampleBufferFrames,
              padding,
-             padFrames,
+             int(padFrames),
              ratio,
              true);
 

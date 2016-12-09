@@ -459,7 +459,7 @@ private slots:
             
             for (sv_frame_t i = refFrames; i + offset < read; ++i) {
                 sv_frame_t ix = i + offset;
-                float quiet = 0.1; //!!! allow some ringing - but let's come back to this, it should tail off
+                float quiet = 0.1f; //!!! allow some ringing - but let's come back to this, it should tail off
                 float mag = fabsf(test[ix * channels + c]);
                 if (mag > quiet) {
                     cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << " after reference+offset ended at " << refFrames+offset << ")" << endl;
