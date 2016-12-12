@@ -327,6 +327,7 @@ ReadOnlyWaveFileModel::getSummaryBlockSize(int desired) const
     int power = m_zoomConstraint.getMinCachePower();
     int roundedBlockSize = m_zoomConstraint.getNearestBlockSize
         (desired, cacheType, power, ZoomConstraint::RoundDown);
+
     if (cacheType != 0 && cacheType != 1) {
         // We will be reading directly from file, so can satisfy any
         // blocksize requirement

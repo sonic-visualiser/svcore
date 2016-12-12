@@ -21,17 +21,17 @@
 class PowerOfSqrtTwoZoomConstraint : virtual public ZoomConstraint
 {
 public:
-    virtual int getNearestBlockSize(int requestedBlockSize,
-				       RoundingDirection dir = RoundNearest)
-	const;
-    
-    virtual int getNearestBlockSize(int requestedBlockSize,
-				       int &type,
-				       int &power,
-				       RoundingDirection dir = RoundNearest)
-	const;
+    virtual ZoomLevel getNearestZoomLevel(ZoomLevel requested,
+                                          RoundingDirection dir = RoundNearest)
+	const override;
 	
     virtual int getMinCachePower() const { return 6; }
+
+    virtual int getNearestBlockSize(int requestedBlockSize,
+                                    int &type,
+                                    int &power,
+                                    RoundingDirection dir = RoundNearest)
+	const;
 };
 
 #endif

@@ -13,10 +13,12 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _ZOOM_CONSTRAINT_H_
-#define _ZOOM_CONSTRAINT_H_
+#ifndef SV_ZOOM_CONSTRAINT_H
+#define SV_ZOOM_CONSTRAINT_H
 
 #include <stdlib.h>
+
+#include "BaseTypes.h"
 
 /**
  * ZoomConstraint is a simple interface that describes a limitation on
@@ -39,30 +41,42 @@ public:
     };
 
     /**
-     * Given the "ideal" block size (frames per pixel) for a given
-     * zoom level, return the nearest viable block size for this
-     * constraint.
+     * Given an "ideal" zoom level (frames per pixel or pixels per
+     * frame) for a given zoom level, return the nearest viable block
+     * size for this constraint.
      *
      * For example, if a block size of 1523 frames per pixel is
      * requested but the underlying model only supports value
      * summaries at powers-of-two block sizes, return 1024 or 2048
      * depending on the rounding direction supplied.
      */
-    virtual int getNearestBlockSize(int requestedBlockSize,
-				       RoundingDirection = RoundNearest)
+    virtual ZoomLevel getNearestZoomLevel(ZoomLevel requestedZoomLevel,
+                                          RoundingDirection = RoundNearest)
 	const
     {
-	if (requestedBlockSize > getMaxZoomLevel()) return getMaxZoomLevel();
-	else return requestedBlockSize;
+        if (getMaxZoomLevel() < requestedZoomLevel) return getMaxZoomLevel();
+	else return requestedZoomLevel;
     }
 
+    /**
+     * Return the minimum zoom level within range for this constraint.
+     * Individual views will probably want to limit this, for example
+     * in order to ensure that at least one or two samples fit in the
+     * current window size, or in order to save on interpolation cost.
+     */
+    virtual ZoomLevel getMinZoomLevel() const {
+        return { ZoomLevel::PixelsPerFrame, 16384 };
+    }
+    
     /**
      * Return the maximum zoom level within range for this constraint.
      * This is quite large -- individual views will probably want to
      * limit how far a user might reasonably zoom out based on other
      * factors such as the duration of the file.
      */
-    virtual int getMaxZoomLevel() const { return 4194304; } // 2^22, arbitrarily
+    virtual ZoomLevel getMaxZoomLevel() const {
+        return { ZoomLevel::FramesPerPixel, 4194304 }; // 2^22, arbitrarily
+    }
 };
 
 #endif

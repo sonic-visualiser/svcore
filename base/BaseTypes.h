@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef BASE_TYPES_H
-#define BASE_TYPES_H
+#ifndef SV_BASE_TYPES_H
+#define SV_BASE_TYPES_H
 
 #include <cstdint>
 
@@ -45,6 +45,58 @@ bool in_range_for(const C &container, T i)
     represent both. Storage size isn't an issue anyway.
 */
 typedef double sv_samplerate_t;
+
+
+/** Display zoom level. Can be an integer number of samples per pixel,
+ *  or an integer number of pixels per sample.
+ */
+struct ZoomLevel {
+
+    enum Zone {
+        FramesPerPixel, // zoomed out (as in classic SV)
+        PixelsPerFrame  // zoomed in beyond 1-1 (interpolating the waveform)
+    };
+    Zone zone;
+    int level;
+
+    bool operator<(const ZoomLevel &other) const {
+        if (zone == FramesPerPixel) {
+            if (other.zone == zone) {
+                return level < other.level;
+            } else {
+                return false;
+            }
+        } else {
+            if (other.zone == zone) {
+                return level > other.level;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    ZoomLevel incremented() const {
+        if (zone == FramesPerPixel) {
+            return { zone, level + 1 };
+        } else if (level == 1) {
+            return { FramesPerPixel, 2 };
+        } else if (level == 2) {
+            return { FramesPerPixel, 1 };
+        } else {
+            return { zone, level - 1 };
+        }
+    }
+
+    ZoomLevel decremented() const {
+        if (zone == PixelsPerFrame) {
+            return { zone, level + 1 };
+        } else if (level == 1) {
+            return { PixelsPerFrame, 2 };
+        } else {
+            return { zone, level - 1 };
+        }
+    }
+};
 
 #endif
 

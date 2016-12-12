@@ -19,13 +19,30 @@
 #include <cmath>
 
 
-int
-PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
+ZoomLevel
+PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
 						  RoundingDirection dir) const
 {
     int type, power;
-    int rv = getNearestBlockSize(blockSize, type, power, dir);
-    return rv;
+    int blockSize;
+
+    if (requested.zone == ZoomLevel::FramesPerPixel) {
+        blockSize = getNearestBlockSize(requested.level, type, power, dir);
+        return { requested.zone, blockSize };
+    } else {
+        RoundingDirection opposite = dir;
+        if (dir == RoundUp) opposite = RoundDown;
+        else if (dir == RoundDown) opposite = RoundUp;
+        blockSize = getNearestBlockSize(requested.level, type, power, opposite);
+        if (blockSize > getMinZoomLevel().level) {
+            blockSize = getMinZoomLevel().level;
+        }
+        if (blockSize == 1) {
+            return { ZoomLevel::FramesPerPixel, 1 };
+        } else {
+            return { requested.zone, blockSize };
+        }
+    }
 }
 
 int
@@ -106,6 +123,9 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 	prevBase = base;
     }
 
-    if (result > getMaxZoomLevel()) result = getMaxZoomLevel();
+    if (result > getMaxZoomLevel().level) {
+        result = getMaxZoomLevel().level;
+    }
+
     return result;
 }   
