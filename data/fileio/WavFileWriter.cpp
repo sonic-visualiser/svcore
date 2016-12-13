@@ -166,7 +166,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 }
 	
 bool
-WavFileWriter::writeSamples(float **samples, sv_frame_t count)
+WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")

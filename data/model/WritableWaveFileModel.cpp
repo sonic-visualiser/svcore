@@ -111,7 +111,7 @@ WritableWaveFileModel::setStartFrame(sv_frame_t startFrame)
 }
 
 bool
-WritableWaveFileModel::addSamples(float **samples, sv_frame_t count)
+WritableWaveFileModel::addSamples(const float *const *samples, sv_frame_t count)
 {
     if (!m_writer) return false;
 

@@ -59,7 +59,7 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(float **samples, sv_frame_t count); // count per channel
+    bool writeSamples(const float *const *samples, sv_frame_t count); // count per channel
 
     bool close();
 
