@@ -37,7 +37,7 @@ public:
      * the progress of this file, if it has a known end point, and
      * should call writeComplete() when the file has been written.
      */
-    virtual bool addSamples(float **samples, sv_frame_t count);
+    virtual bool addSamples(const float *const *samples, sv_frame_t count);
 
     /**
      * Set the proportion of the file which has been written so far,
