@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RANGE_SUMMARISABLE_TIME_VALUE_MODEL_H_
-#define _RANGE_SUMMARISABLE_TIME_VALUE_MODEL_H_
+#ifndef SV_RANGE_SUMMARISABLE_TIME_VALUE_MODEL_H
+#define SV_RANGE_SUMMARISABLE_TIME_VALUE_MODEL_H
 
 #include <QObject>
 

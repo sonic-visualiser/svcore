@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DENSE_TIME_VALUE_MODEL_H_
-#define _DENSE_TIME_VALUE_MODEL_H_
+#ifndef SV_DENSE_TIME_VALUE_MODEL_H
+#define SV_DENSE_TIME_VALUE_MODEL_H
 
 #include <QObject>
 
@@ -64,7 +64,8 @@ public:
      * If the channel is given as -1, mix all available channels and
      * return the result.
      */
-    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const = 0;
+    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count)
+        const = 0;
 
     /**
      * Get the specified set of samples from given contiguous range of
@@ -72,12 +73,18 @@ public:
      * format. Returned vector may have fewer samples than requested,
      * if the end of file was reached.
      */
-    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const = 0;
+    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel,
+                                                        int tochannel,
+                                                        sv_frame_t start,
+                                                        sv_frame_t count)
+        const = 0;
 
     virtual bool canPlay() const { return true; }
     virtual QString getDefaultPlayClipId() const { return ""; }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const;
+    virtual QString toDelimitedDataStringSubset(QString delimiter,
+                                                sv_frame_t f0, sv_frame_t f1)
+        const;
 
     QString getTypeName() const { return tr("Dense Time-Value"); }
 };

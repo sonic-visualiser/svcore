@@ -22,6 +22,7 @@
 #include "base/Window.h"
 
 #include <bqfft/FFT.h>
+#include <bqvec/Allocators.h>
 
 #include <set>
 #include <vector>
@@ -167,20 +168,24 @@ private:
         return { startFrame, endFrame };
     }
 
-    std::vector<std::complex<float> > getFFTColumn(int column) const;
-    std::vector<float> getSourceSamples(int column) const;
-    std::vector<float> getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
-    std::vector<float> getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
+    typedef std::vector<float, breakfastquay::StlAllocator<float>> fvec;
+    typedef std::vector<std::complex<float>,
+                        breakfastquay::StlAllocator<std::complex<float>>> cvec;
+    
+    cvec getFFTColumn(int column) const;
+    fvec getSourceSamples(int column) const;
+    fvec getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
+    fvec getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
 
     struct SavedSourceData {
         std::pair<sv_frame_t, sv_frame_t> range;
-        std::vector<float> data;
+        fvec data;
     };
     mutable SavedSourceData m_savedData;
     
     struct SavedColumn {
         int n;
-        std::vector<std::complex<float> > col;
+        cvec col;
     };
     mutable std::deque<SavedColumn> m_cached;
     size_t m_cacheSize;

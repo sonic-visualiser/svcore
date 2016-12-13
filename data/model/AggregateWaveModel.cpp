@@ -94,7 +94,7 @@ AggregateWaveModel::getSampleRate() const
     return m_components.begin()->model->getSampleRate();
 }
 
-vector<float>
+floatvec_t
 AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     int ch0 = channel, ch1 = channel;
@@ -103,8 +103,7 @@ AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) con
         ch1 = getChannelCount()-1;
     }
 
-    vector<float> result(count, 0.f);
-
+    floatvec_t result(count, 0.f);
     sv_frame_t longest = 0;
     
     for (int c = ch0; c <= ch1; ++c) {
@@ -123,13 +122,13 @@ AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) con
     return result;
 }
 
-vector<vector<float>>
+vector<floatvec_t>
 AggregateWaveModel::getMultiChannelData(int fromchannel, int tochannel,
                                         sv_frame_t start, sv_frame_t count) const
 {
     sv_frame_t min = count;
 
-    vector<vector<float>> result;
+    vector<floatvec_t> result;
 
     for (int c = fromchannel; c <= tochannel; ++c) {
         auto here = getData(c, start, count);

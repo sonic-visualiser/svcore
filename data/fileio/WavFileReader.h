@@ -50,7 +50,7 @@ public:
      * Must be safe to call from multiple threads with different
      * arguments on the same object at the same time.
      */
-    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
@@ -75,7 +75,7 @@ protected:
     bool m_seekable;
 
     mutable QMutex m_mutex;
-    mutable std::vector<float> m_buffer;
+    mutable floatvec_t m_buffer;
     mutable sv_frame_t m_lastStart;
     mutable sv_frame_t m_lastCount;
 

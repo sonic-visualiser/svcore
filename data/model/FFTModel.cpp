@@ -188,7 +188,7 @@ FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) 
     return true;
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceSamples(int column) const
 {
     // m_fftSize may be greater than m_windowSize, but not the reverse
@@ -204,7 +204,7 @@ FFTModel::getSourceSamples(int column) const
         return data;
     } else {
         vector<float> pad(off, 0.f);
-        vector<float> padded;
+        fvec padded;
         padded.reserve(m_fftSize);
         padded.insert(padded.end(), pad.begin(), pad.end());
         padded.insert(padded.end(), data.begin(), data.end());
@@ -213,7 +213,7 @@ FFTModel::getSourceSamples(int column) const
     }
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 {
 //    cerr << "getSourceData(" << range.first << "," << range.second
@@ -235,11 +235,9 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         
         sv_frame_t discard = range.first - m_savedData.range.first;
 
-        vector<float> acc(m_savedData.data.begin() + discard,
-                          m_savedData.data.end());
+        fvec acc(m_savedData.data.begin() + discard, m_savedData.data.end());
 
-        vector<float> rest =
-            getSourceDataUncached({ m_savedData.range.second, range.second });
+        fvec rest = getSourceDataUncached({ m_savedData.range.second, range.second });
 
         acc.insert(acc.end(), rest.begin(), rest.end());
         
@@ -256,7 +254,7 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
     }
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
     decltype(range.first) pfx = 0;
@@ -298,7 +296,7 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-vector<complex<float>>
+FFTModel::cvec
 FFTModel::getFFTColumn(int n) const
 {
     // The small cache (i.e. the m_cached deque) is for cases where
@@ -321,7 +319,7 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data());
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    vector<complex<float>> col(m_fftSize/2 + 1);
+    cvec col(m_fftSize/2 + 1);
     
     m_fft.forwardInterleaved(samples.data(),
                              reinterpret_cast<float *>(col.data()));

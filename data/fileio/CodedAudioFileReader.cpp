@@ -289,7 +289,7 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
+CodedAudioFileReader::addSamplesToDecodeCache(const floatvec_t &samples)
 {
     QMutexLocker locker(&m_cacheMutex);
 
@@ -526,7 +526,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     }
 }
 
-vector<float>
+floatvec_t
 CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
@@ -538,7 +538,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         return {};
     }
 
-    vector<float> frames;
+    floatvec_t frames;
     
     switch (m_cacheMode) {
 
@@ -564,7 +564,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         sv_frame_t n = sv_frame_t(m_data.size());
         if (ix0 > n) ix0 = n;
         if (ix1 > n) ix1 = n;
-        frames = vector<float>(m_data.begin() + ix0, m_data.begin() + ix1);
+        frames = floatvec_t(m_data.begin() + ix0, m_data.begin() + ix1);
         m_dataLock.unlock();
         break;
     }

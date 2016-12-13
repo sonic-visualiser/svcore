@@ -202,7 +202,7 @@ ReadOnlyWaveFileModel::getLocalFilename() const
     return "";
 }
     
-vector<float>
+floatvec_t
 ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     // Read directly from the file.  This is used for e.g. audio
@@ -236,12 +236,12 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
         }
     }
 
-    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    floatvec_t interleaved = m_reader->getInterleavedFrames(start, count);
     if (channels == 1) return interleaved;
 
     sv_frame_t obtained = interleaved.size() / channels;
     
-    vector<float> result(obtained, 0.f);
+    floatvec_t result(obtained, 0.f);
     
     if (channel != -1) {
         // get a single channel
@@ -260,7 +260,7 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
     return result;
 }
 
-vector<vector<float>>
+vector<floatvec_t>
 ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
                                            sv_frame_t start, sv_frame_t count) const
 {
@@ -304,11 +304,11 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
         }
     }
 
-    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    floatvec_t interleaved = m_reader->getInterleavedFrames(start, count);
     if (channels == 1) return { interleaved };
 
     sv_frame_t obtained = interleaved.size() / channels;
-    vector<vector<float>> result(reqchannels, vector<float>(obtained, 0.f));
+    vector<floatvec_t> result(reqchannels, floatvec_t(obtained, 0.f));
 
     for (int c = fromchannel; c <= tochannel; ++c) {
         int destc = c - fromchannel;
@@ -588,7 +588,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
     
     sv_frame_t frame = 0;
     const sv_frame_t readBlockSize = 32768;
-    vector<float> block;
+    floatvec_t block;
 
     if (!m_model.isOK()) return;
     

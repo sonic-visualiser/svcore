@@ -129,7 +129,7 @@ WavFileReader::updateDone()
     m_updating = false;
 }
 
-vector<float>
+floatvec_t
 WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     static HitCount lastRead("WavFileReader: last read");
@@ -175,7 +175,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
         return {};
     }
 
-    vector<float> data;
+    floatvec_t data;
     sv_frame_t n = count * m_fileInfo.channels;
     data.resize(n);
 

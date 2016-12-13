@@ -141,10 +141,10 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 	for (sv_frame_t f = f0; f < f1; f += bs) {
 	    
 	    sv_frame_t n = min(bs, f1 - f);
-            vector<float> interleaved(n * m_channels, 0.f);
+            floatvec_t interleaved(n * m_channels, 0.f);
 
 	    for (int c = 0; c < int(m_channels); ++c) {
-                vector<float> chanbuf = source->getData(c, f, n);
+                auto chanbuf = source->getData(c, f, n);
 		for (int i = 0; in_range_for(chanbuf, i); ++i) {
 		    interleaved[i * m_channels + c] = chanbuf[i];
 		}

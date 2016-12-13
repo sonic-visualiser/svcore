@@ -117,8 +117,8 @@ public:
      * thread-safe -- that is, safe to call from multiple threads with
      * different arguments on the same object at the same time.
      */
-    virtual std::vector<float> getInterleavedFrames(sv_frame_t start,
-                                                    sv_frame_t count) const = 0;
+    virtual floatvec_t getInterleavedFrames(sv_frame_t start,
+                                            sv_frame_t count) const = 0;
 
     /**
      * Return de-interleaved samples for count frames from index
@@ -127,8 +127,8 @@ public:
      * will contain getChannelCount() sample blocks of count samples
      * each (or fewer if end of file is reached).
      */
-    virtual std::vector<std::vector<float> > getDeInterleavedFrames(sv_frame_t start,
-                                                                    sv_frame_t count) const;
+    virtual std::vector<floatvec_t> getDeInterleavedFrames(sv_frame_t start,
+                                                           sv_frame_t count) const;
 
     // only subclasses that do not know exactly how long the audio
     // file is until it's been completely decoded should implement this
