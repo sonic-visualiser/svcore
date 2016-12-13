@@ -110,9 +110,9 @@ public:
 
     void setStartFrame(sv_frame_t startFrame);
 
-    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
 
-    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
