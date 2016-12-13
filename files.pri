@@ -59,7 +59,6 @@ SVCORE_HEADERS = \
            data/fileio/MP3FileReader.h \
            data/fileio/OggVorbisFileReader.h \
            data/fileio/PlaylistFileReader.h \
-           data/fileio/QuickTimeFileReader.h \
            data/fileio/CoreAudioFileReader.h \
            data/fileio/DecodingWavFileReader.h \
            data/fileio/WavFileReader.h \
@@ -188,7 +187,6 @@ SVCORE_SOURCES = \
            data/fileio/MP3FileReader.cpp \
            data/fileio/OggVorbisFileReader.cpp \
            data/fileio/PlaylistFileReader.cpp \
-           data/fileio/QuickTimeFileReader.cpp \
            data/fileio/CoreAudioFileReader.cpp \
            data/fileio/DecodingWavFileReader.cpp \
            data/fileio/WavFileReader.cpp \

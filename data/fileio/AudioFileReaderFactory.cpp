@@ -19,7 +19,6 @@
 #include "DecodingWavFileReader.h"
 #include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
-#include "QuickTimeFileReader.h"
 #include "CoreAudioFileReader.h"
 #include "AudioFileSizeEstimator.h"
 
@@ -42,9 +41,6 @@ AudioFileReaderFactory::getKnownExtensions()
 #ifdef HAVE_FISHSOUND
     OggVorbisFileReader::getSupportedExtensions(extensions);
 #endif
-#endif
-#ifdef HAVE_QUICKTIME
-    QuickTimeFileReader::getSupportedExtensions(extensions);
 #endif
 #ifdef HAVE_COREAUDIO
     CoreAudioFileReader::getSupportedExtensions(extensions);
@@ -175,20 +171,6 @@ AudioFileReaderFactory::createReader(FileSource source,
             reader = new MP3FileReader
                 (source, decodeMode, cacheMode, gapless,
                  targetRate, normalised, reporter);
-
-            if (reader->isOK()) {
-                return reader;
-            } else {
-                delete reader;
-            }
-        }
-#endif
-
-#ifdef HAVE_QUICKTIME
-        if (anyReader || QuickTimeFileReader::supports(source)) {
-
-            reader = new QuickTimeFileReader
-                (source, decodeMode, cacheMode, targetRate, normalised, reporter);
 
             if (reader->isOK()) {
                 return reader;
