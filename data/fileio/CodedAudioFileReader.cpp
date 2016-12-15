@@ -144,10 +144,13 @@ CodedAudioFileReader::initialiseDecodeCache()
     }
     if (m_fileRate != m_sampleRate) {
         SVDEBUG << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << endl;
-        m_resampler = new breakfastquay::Resampler
-            (breakfastquay::Resampler::FastestTolerable,
-             m_channelCount,
-             int(m_cacheWriteBufferFrames));
+
+        breakfastquay::Resampler::Parameters params;
+        params.quality = breakfastquay::Resampler::FastestTolerable;
+        params.maxBufferSize = int(m_cacheWriteBufferFrames);
+        params.initialSampleRate = m_fileRate;
+        m_resampler = new breakfastquay::Resampler(params, m_channelCount);
+
         double ratio = m_sampleRate / m_fileRate;
         m_resampleBufferFrames = int(ceil(double(m_cacheWriteBufferFrames) *
                                           ratio + 1));
