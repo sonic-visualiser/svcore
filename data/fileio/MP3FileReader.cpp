@@ -584,7 +584,7 @@ MP3FileReader::error_callback(void *dp,
     if (!data->reader->m_decodeErrorShown) {
         char buffer[256];
         snprintf(buffer, 255,
-                 "MP3 decoding error 0x%04x (%s) at byte offset %lu",
+                 "MP3 decoding error 0x%04x (%s) at byte offset %lld",
                  stream->error, mad_stream_errorstr(stream), ix);
         SVCERR << "Warning: in file \"" << data->reader->m_path << "\": "
                << buffer << " (continuing; will not report any further decode errors for this file)" << endl;
