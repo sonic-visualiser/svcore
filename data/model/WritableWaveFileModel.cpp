@@ -176,6 +176,7 @@ WritableWaveFileModel::getWriteProportion() const
 void
 WritableWaveFileModel::writeComplete()
 {
+    m_writer->close();
     if (m_reader) m_reader->updateDone();
     m_proportion = 100;
     emit modelChanged();
