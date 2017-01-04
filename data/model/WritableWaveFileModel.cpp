@@ -120,28 +120,25 @@ WritableWaveFileModel::addSamples(const float *const *samples, sv_frame_t count)
 #endif
 
     if (!m_writer->writeSamples(samples, count)) {
-        cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << endl;
+        SVCERR << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << endl;
         return false;
     }
 
     m_frameCount += count;
 
-    static int updateCounter = 0;
-
     if (m_reader && m_reader->getChannelCount() == 0) {
-#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << endl;
-#endif
         m_reader->updateFrameCount();
-    } else if (++updateCounter == 100) {
-#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << endl;
-#endif
-        if (m_reader) m_reader->updateFrameCount();
-        updateCounter = 0;
     }
 
     return true;
+}
+
+void
+WritableWaveFileModel::updateModel()
+{
+    if (m_reader) {
+        m_reader->updateFrameCount();
+    }
 }
 
 bool

@@ -33,12 +33,35 @@ public:
 
     /**
      * Call addSamples to append a block of samples to the end of the
-     * file.  Caller should also call setWriteProportion() to update
-     * the progress of this file, if it has a known end point, and
-     * should call writeComplete() when the file has been written.
+     * file.
+     *
+     * This function only appends the samples to the file being
+     * written; it does not update the model's view of the samples in
+     * that file. That is, it updates the file on disc but the model
+     * itself does not change its content. This is because re-reading
+     * the file to update the model may be more expensive than adding
+     * the samples in the first place. If you are writing small
+     * numbers of samples repeatedly, you probably only want the model
+     * to update periodically rather than after every write.
+     *
+     * Call updateModel() periodically to tell the model to update its
+     * own view of the samples in the file being written.
+     *
+     * Call setWriteProportion() periodically if the file being
+     * written has known duration and you want the model to be able to
+     * report the write progress as a percentage.
+     *
+     * Call writeComplete() when the file has been completely written.
      */
     virtual bool addSamples(const float *const *samples, sv_frame_t count);
 
+    /**
+     * Tell the model to update its own (read) view of the (written)
+     * file. May cause modelChanged() and modelChangedWithin() to be
+     * emitted. See the comment to addSamples above for rationale.
+     */
+    void updateModel();
+    
     /**
      * Set the proportion of the file which has been written so far,
      * as a percentage. This may be used to indicate progress.
@@ -56,7 +79,7 @@ public:
 
     /**
      * Indicate that writing is complete. You should call this even if
-     * you have never called setWriteProportion().
+     * you have never called setWriteProportion() or updateModel().
      */
     void writeComplete();
 
