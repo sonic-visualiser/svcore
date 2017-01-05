@@ -73,9 +73,15 @@ public:
         return m_source->getMaximumLevel();
     }
 
-    virtual Column getColumn(int column) const;
+    /**
+     * Retrieve the peaks column at peak-cache column number col. This
+     * will consist of the peak values in the underlying model from
+     * columns (col * getColumnsPerPeak()) to ((col+1) *
+     * getColumnsPerPeak() - 1) inclusive.
+     */
+    virtual Column getColumn(int col) const;
 
-    virtual float getValueAt(int column, int n) const;
+    virtual float getValueAt(int col, int n) const;
 
     virtual QString getBinName(int n) const {
         return m_source->getBinName(n);
