@@ -18,7 +18,7 @@
 
 #include <QFile>
 
-//#define DEBUG_AUDIO_FILE_SIZE_ESTIMATOR 1
+#include "base/Debug.h"
 
 sv_frame_t
 AudioFileSizeEstimator::estimate(FileSource source,
@@ -26,6 +26,9 @@ AudioFileSizeEstimator::estimate(FileSource source,
 {
     sv_frame_t estimate = 0;
     
+    SVDEBUG << "AudioFileSizeEstimator: Sample count estimate requested for file \""
+            << source.getLocalFilename() << "\"" << endl;
+
     // Most of our file readers don't know the sample count until
     // after they've finished decoding. This is an exception:
 
@@ -40,7 +43,12 @@ AudioFileSizeEstimator::estimate(FileSource source,
             samples = sv_frame_t(double(samples) * targetRate / rate);
         }
         delete reader;
+        SVDEBUG << "AudioFileSizeEstimator: WAV file reader accepts this file, reports "
+                << samples << " samples" << endl;
         estimate = samples;
+    } else {
+        SVDEBUG << "AudioFileSizeEstimator: WAV file reader doesn't like this file, "
+                << "estimating from file size and extension instead" << endl;
     }
 
     if (estimate == 0) {
@@ -60,12 +68,12 @@ AudioFileSizeEstimator::estimate(FileSource source,
         if (!source.isOK()) return 0;
 
         sv_frame_t sz = 0;
+
         {
             QFile f(source.getLocalFilename());
             if (f.open(QFile::ReadOnly)) {
-#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
-                cerr << "opened file, size is "  << f.size() << endl;
-#endif
+                SVDEBUG << "AudioFileSizeEstimator: opened file, size is "
+                        << f.size() << endl;
                 sz = f.size();
                 f.close();
             }
@@ -94,14 +102,9 @@ AudioFileSizeEstimator::estimate(FileSource source,
             estimate = sv_frame_t(double(sz) * 1.2 * rateRatio);
         }
 
-#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
-        cerr << "AudioFileSizeEstimator: for extension " << extension << ", estimate = " << estimate << endl;
-#endif
+        SVDEBUG << "AudioFileSizeEstimator: for extension \""
+                << extension << "\", estimate = " << estimate << " samples" << endl;
     }
-
-#ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
-    cerr << "estimate = " << estimate << endl;
-#endif
     
     return estimate;
 }
