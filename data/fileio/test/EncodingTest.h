@@ -33,7 +33,7 @@ using namespace std;
 
 const char utf8_name_cdp_1[] = "Caf\303\251 de Paris";
 const char utf8_name_cdp_2[] = "Caf\303\251 de \351\207\215\345\272\206";
-const char utf8_name_tsprk[] = "T\303\253mple of Sp\303\253rks";
+const char utf8_name_tsprk[] = "T\303\253mple of Sp\303\266rks";
 const char utf8_name_sprkt[] = "\343\202\271\343\203\235\343\203\274\343\202\257\343\201\256\345\257\272\351\231\242";
 
 static const char *mapping[][2] = {
