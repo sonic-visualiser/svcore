@@ -35,15 +35,16 @@ WavFileWriter::WavFileWriter(QString path,
     m_sampleRate(sampleRate),
     m_channels(channels),
     m_temp(0),
-    m_file(0)
+    m_sndfile(0),
+    m_qfile(0)
 {
     SF_INFO fileInfo;
 
     int fileRate = int(round(m_sampleRate));
     if (m_sampleRate != sv_samplerate_t(fileRate)) {
-        cerr << "WavFileWriter: WARNING: Non-integer sample rate "
-             << m_sampleRate << " presented, rounding to " << fileRate
-             << endl;
+        SVCERR << "WavFileWriter: WARNING: Non-integer sample rate "
+               << m_sampleRate << " presented, rounding to " << fileRate
+               << endl;
     }
     fileInfo.samplerate = fileRate;
     fileInfo.channels = m_channels;
@@ -52,33 +53,35 @@ WavFileWriter::WavFileWriter(QString path,
     try {
         if (mode == WriteToTemporary) {
             m_temp = new TempWriteFile(m_path);
-            m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
-                             SFM_WRITE, &fileInfo);
-            if (!m_file) {
-                cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << endl;
-                m_error = QString("Failed to open audio file '%1' for writing")
-                    .arg(m_temp->getTemporaryFilename());
-            }
+            m_qfile = new QFile(m_temp->getTemporaryFilename());
         } else {
-            m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
-            if (!m_file) {
-                cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << endl;
+            m_qfile = new QFile(m_path);
+        }
+        if (!m_qfile->open(QIODevice::WriteOnly)) {
+            SVCERR << "WavFileWriter: Failed to open file for writing" << endl;
+            m_error = QString("Failed to open audio file '%1' for writing")
+                .arg(m_qfile->fileName());
+        } else {
+            m_sndfile = sf_open_fd(m_qfile->handle(),
+                                   SFM_WRITE, &fileInfo, false);
+            if (!m_sndfile) {
+                SVCERR << "WavFileWriter: Failed to open file ("
+                       << sf_strerror(m_sndfile) << ")" << endl;
                 m_error = QString("Failed to open audio file '%1' for writing")
-                    .arg(m_path);
+                    .arg(m_qfile->fileName());
             }
-        }            
+        }
     } catch (FileOperationFailed &f) {
         m_error = f.what();
         m_temp = 0;
-        m_file = 0;
+        m_qfile = 0;
+        m_sndfile = 0;
     }
 }
 
 WavFileWriter::~WavFileWriter()
 {
-    if (m_file) close();
+    if (m_sndfile) close();
 }
 
 bool
@@ -116,7 +119,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
         return false;
     }
 
-    if (!m_file) {
+    if (!m_sndfile) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
 	return false;
@@ -150,7 +153,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 		}
 	    }	    
 
-	    sf_count_t written = sf_writef_float(m_file, interleaved.data(), n);
+	    sf_count_t written = sf_writef_float(m_sndfile, interleaved.data(), n);
 
 	    if (written < n) {
 		m_error = QString("Only wrote %1 of %2 frames at file frame %3")
@@ -168,7 +171,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 bool
 WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {
-    if (!m_file) {
+    if (!m_sndfile) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
 	return false;
@@ -181,7 +184,7 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
         }
     }
 
-    sv_frame_t written = sf_writef_float(m_file, b, count);
+    sv_frame_t written = sf_writef_float(m_sndfile, b, count);
 
     delete[] b;
 
@@ -196,15 +199,20 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 bool
 WavFileWriter::close()
 {
-    if (m_file) {
-        sf_close(m_file);
-        m_file = 0;
+    if (m_sndfile) {
+        sf_close(m_sndfile);
+        m_sndfile = 0;
     }
+
+    delete m_qfile;
+    m_qfile = 0;
+
     if (m_temp) {
         m_temp->moveToTarget();
         delete m_temp;
         m_temp = 0;
     }
+    
     return true;
 }
 

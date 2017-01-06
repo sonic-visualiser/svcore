@@ -152,7 +152,7 @@ protected:
 
     DecodeThread *m_decodeThread;
 
-    void loadTags();
+    void loadTags(int fd);
     QString loadTag(void *vtag, const char *name);
 };
 

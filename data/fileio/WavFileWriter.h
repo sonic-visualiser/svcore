@@ -13,10 +13,11 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAV_FILE_WRITER_H_
-#define _WAV_FILE_WRITER_H_
+#ifndef SV_WAV_FILE_WRITER_H
+#define SV_WAV_FILE_WRITER_H
 
 #include <QString>
+#include <QFile>
 
 #include <sndfile.h>
 
@@ -68,8 +69,9 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_channels;
     TempWriteFile *m_temp;
-    SNDFILE *m_file;
+    SNDFILE *m_sndfile;
     QString m_error;
+    QFile *m_qfile;
 
     QString getWriteFilename() const;
 };
