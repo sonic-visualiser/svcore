@@ -23,6 +23,7 @@
 
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
+    m_qfile(fileName),
     m_file(0),
     m_bzFile(0),
     m_atEnd(true),
@@ -72,9 +73,16 @@ BZipFileDevice::open(OpenMode mode)
 
     if (mode & WriteOnly) {
 
-        m_file = fopen(m_fileName.toLocal8Bit().data(), "wb");
-        if (!m_file) {
+        if (!m_qfile.open(QIODevice::WriteOnly)) {
             setErrorString(tr("Failed to open file for writing"));
+            m_ok = false;
+            return false;
+        }
+        
+        m_file = fdopen(m_qfile.handle(), "wb");
+        if (!m_file) {
+            setErrorString(tr("Failed to open file handle for writing"));
+            m_qfile.close();
             m_ok = false;
             return false;
         }
@@ -85,6 +93,7 @@ BZipFileDevice::open(OpenMode mode)
         if (!m_bzFile) {
             fclose(m_file);
             m_file = 0;
+            m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for writing"));
             m_ok = false;
             return false;
@@ -99,9 +108,15 @@ BZipFileDevice::open(OpenMode mode)
 
     if (mode & ReadOnly) {
 
-        m_file = fopen(m_fileName.toLocal8Bit().data(), "rb");
-        if (!m_file) {
+        if (!m_qfile.open(QIODevice::ReadOnly)) {
             setErrorString(tr("Failed to open file for reading"));
+            m_ok = false;
+            return false;
+        }
+        
+        m_file = fdopen(m_qfile.handle(), "rb");
+        if (!m_file) {
+            setErrorString(tr("Failed to open file handle for reading"));
             m_ok = false;
             return false;
         }
@@ -112,6 +127,7 @@ BZipFileDevice::open(OpenMode mode)
         if (!m_bzFile) {
             fclose(m_file);
             m_file = 0;
+            m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for reading"));
             m_ok = false;
             return false;
@@ -150,6 +166,7 @@ BZipFileDevice::close()
 	    setErrorString(tr("bzip2 stream write close error"));
 	}
         fclose(m_file);
+        m_qfile.close();
         m_bzFile = 0;
         m_file = 0;
         m_ok = false;
@@ -162,6 +179,7 @@ BZipFileDevice::close()
             setErrorString(tr("bzip2 stream read close error"));
         }
         fclose(m_file);
+        m_qfile.close();
         m_bzFile = 0;
         m_file = 0;
         m_ok = false;

@@ -13,10 +13,11 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _BZIP_FILE_DEVICE_H_
-#define _BZIP_FILE_DEVICE_H_
+#ifndef SV_BZIP_FILE_DEVICE_H
+#define SV_BZIP_FILE_DEVICE_H
 
 #include <QIODevice>
+#include <QFile>
 
 #include <bzlib.h>
 
@@ -41,6 +42,7 @@ protected:
 
     QString m_fileName;
 
+    QFile m_qfile;
     FILE *m_file;
     BZFILE *m_bzFile;
     bool m_atEnd;

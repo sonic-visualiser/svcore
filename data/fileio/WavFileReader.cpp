@@ -26,9 +26,10 @@
 using namespace std;
 
 WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
-    m_file(0),
+    m_sndfile(0),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_qfile(m_path),
     m_seekable(false),
     m_lastStart(0),
     m_lastCount(0),
@@ -40,19 +41,24 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
-    m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
-    if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
+    if (!m_qfile.open(QIODevice::ReadOnly)) {
         SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
-                << m_path << "\" ("
-                << sf_strerror(m_file) << ")" << endl;
+                << m_path << "\"" << endl;
+        m_error = QString("Failed to open audio file '%1'").arg(m_path);
+        return;
+    }
+    
+    m_sndfile = sf_open_fd(m_qfile.handle(), SFM_READ, &m_fileInfo, false);
 
-        if (m_file) {
+    if (!m_sndfile || (!fileUpdating && m_fileInfo.channels <= 0)) {
+        SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
+                << m_path << "\" (" << sf_strerror(m_sndfile) << ")" << endl;
+        if (m_sndfile) {
             m_error = QString("Couldn't load audio file '%1':\n%2")
-                .arg(m_path).arg(sf_strerror(m_file));
+                .arg(m_path).arg(sf_strerror(m_sndfile));
         } else {
-            m_error = QString("Failed to open audio file '%1'")
-                .arg(m_path);
+            m_error = QString("Failed to open audio file '%1'").arg(m_path);
         }
         return;
     }
@@ -89,7 +95,7 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 
 WavFileReader::~WavFileReader()
 {
-    if (m_file) sf_close(m_file);
+    if (m_sndfile) sf_close(m_sndfile);
 }
 
 void
@@ -99,12 +105,12 @@ WavFileReader::updateFrameCount()
 
     sv_frame_t prevCount = m_fileInfo.frames;
 
-    if (m_file) {
-        sf_close(m_file);
-        m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
-        if (!m_file || m_fileInfo.channels <= 0) {
-            SVDEBUG << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
-                    << sf_strerror(m_file) << ")" << endl;
+    if (m_sndfile) {
+        sf_close(m_sndfile);
+        m_sndfile = sf_open_fd(m_qfile.handle(), SFM_READ, &m_fileInfo, false);
+        if (!m_sndfile || m_fileInfo.channels <= 0) {
+            SVCERR << "WavFileReader::updateFrameCount: Failed to reopen file at \"" << m_path << "\" ("
+                    << sf_strerror(m_sndfile) << ")" << endl;
         }
     }
 
@@ -140,7 +146,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 
     Profiler profiler("WavFileReader::getInterleavedFrames");
     
-    if (!m_file || !m_channelCount) {
+    if (!m_sndfile || !m_channelCount) {
         return {};
     }
 
@@ -171,7 +177,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
         lastRead.miss();
     }
     
-    if (sf_seek(m_file, start, SEEK_SET) < 0) {
+    if (sf_seek(m_sndfile, start, SEEK_SET) < 0) {
         return {};
     }
 
@@ -183,7 +189,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
     m_lastCount = count;
     
     sf_count_t readCount = 0;
-    if ((readCount = sf_readf_float(m_file, data.data(), count)) < 0) {
+    if ((readCount = sf_readf_float(m_sndfile, data.data(), count)) < 0) {
         return {};
     }
 

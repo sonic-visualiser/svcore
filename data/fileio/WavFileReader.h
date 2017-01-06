@@ -13,13 +13,14 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAV_FILE_READER_H_
-#define _WAV_FILE_READER_H_
+#ifndef SV_WAV_FILE_READER_H
+#define SV_WAV_FILE_READER_H
 
 #include "AudioFileReader.h"
 
 #include <sndfile.h>
 #include <QMutex>
+#include <QFile>
 
 #include <set>
 
@@ -66,11 +67,12 @@ public:
 
 protected:
     SF_INFO m_fileInfo;
-    SNDFILE *m_file;
+    SNDFILE *m_sndfile;
 
     FileSource m_source;
     QString m_path;
     QString m_error;
+    QFile m_qfile;
 
     bool m_seekable;
 

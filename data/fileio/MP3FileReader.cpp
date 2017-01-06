@@ -77,16 +77,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
-    SVDEBUG << "Codec for locale is " << (const char *)(QTextCodec::codecForLocale()->name().data()) << endl;
-
-    struct stat stat;
-    if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
-        m_error = QString("File %1 does not exist.").arg(m_path);
-        SVDEBUG << "MP3FileReader: " << m_error << endl;
-        return;
-    }
-
-    m_fileSize = stat.st_size;
+    m_fileSize = 0;
 
     m_fileBuffer = 0;
     m_fileBufferSize = 0;
@@ -94,17 +85,15 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_sampleBuffer = 0;
     m_sampleBufferSize = 0;
 
-    int fd = -1;
-    if ((fd = ::open(m_path.toLocal8Bit().data(), O_RDONLY
-#ifdef _WIN32
-                     | O_BINARY
-#endif
-                     , 0)) < 0) {
+    QFile qfile(m_path);
+    if (!qfile.open(QIODevice::ReadOnly)) {
         m_error = QString("Failed to open file %1 for reading.").arg(m_path);
         SVDEBUG << "MP3FileReader: " << m_error << endl;
         return;
     }   
 
+    m_fileSize = qfile.size();
+    
     try {
         // We need a mysterious MAD_BUFFER_GUARD (== 8) zero bytes at
         // end of input, to ensure libmad decodes the last frame
@@ -115,35 +104,22 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     } catch (...) {
         m_error = QString("Out of memory");
         SVDEBUG << "MP3FileReader: " << m_error << endl;
-        ::close(fd);
         return;
     }
-    
-    ssize_t sz = 0;
-    ssize_t offset = 0;
-    while (offset < m_fileSize) {
-        sz = ::read(fd, m_fileBuffer + offset, m_fileSize - offset);
-        if (sz < 0) {
-            m_error = QString("Read error for file %1 (after %2 bytes)")
-                .arg(m_path).arg(offset);
-            delete[] m_fileBuffer;
-            ::close(fd);
-            SVDEBUG << "MP3FileReader: " << m_error << endl;
-            return;
-        } else if (sz == 0) {
-            SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
-                .arg(offset).arg(m_fileSize) << endl;
-            m_fileSize = offset;
-            m_fileBufferSize = m_fileSize + MAD_BUFFER_GUARD;
-            memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
-            break;
-        }
-        offset += sz;
+
+    auto amountRead = qfile.read(reinterpret_cast<char *>(m_fileBuffer),
+                                 m_fileSize);
+
+    if (amountRead < m_fileSize) {
+        SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
+            .arg(amountRead).arg(m_fileSize) << endl;
+        memset(m_fileBuffer + amountRead, 0, m_fileSize - amountRead);
+        m_fileSize = amountRead;
     }
+        
+    loadTags(qfile.handle());
 
-    ::close(fd);
-
-    loadTags();
+    qfile.close();
 
     if (decodeMode == DecodeAtOnce) {
 
@@ -199,14 +175,13 @@ MP3FileReader::cancelled()
 }
 
 void
-MP3FileReader::loadTags()
+MP3FileReader::loadTags(int fd)
 {
     m_title = "";
 
 #ifdef HAVE_ID3TAG
 
-    id3_file *file = id3_file_open(m_path.toLocal8Bit().data(),
-                                   ID3_FILE_MODE_READONLY);
+    id3_file *file = id3_file_fdopen(fd, ID3_FILE_MODE_READONLY);
     if (!file) return;
 
     // We can do this a lot more elegantly, but we'll leave that for
@@ -236,7 +211,8 @@ MP3FileReader::loadTags()
         }
     }
 
-    id3_file_close(file);
+    // We don't id3_file_close(file) because that closes the fd, which
+    // was only lent to us
 
 #else
     SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in" << endl;
