@@ -34,6 +34,8 @@
 
 #include <QFileInfo>
 
+#include <QTextCodec>
+
 #ifdef _MSC_VER
 #include <io.h>
 #define open _open
@@ -75,6 +77,8 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
+    SVDEBUG << "Codec for locale is " << (const char *)(QTextCodec::codecForLocale()->name().data()) << endl;
+
     struct stat stat;
     if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
         m_error = QString("File %1 does not exist.").arg(m_path);

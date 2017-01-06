@@ -32,13 +32,26 @@
 
 using namespace std;
 
-static QString audioDir = "svcore/data/fileio/test/testfiles";
-static QString diffDir  = "svcore/data/fileio/test/diffs";
-
 class AudioFileReaderTest : public QObject
 {
     Q_OBJECT
 
+private:
+    QString testDirBase;
+    QString audioDir;
+    QString diffDir;
+
+public:
+    AudioFileReaderTest(QString base) {
+        if (base == "") {
+            base = "svcore/data/fileio/test";
+        }
+        testDirBase = base;
+        audioDir = base + "/testfiles";
+        diffDir = base + "/diffs";
+    }
+
+private:
     const char *strOf(QString s) {
         return strdup(s.toLocal8Bit().data());
     }
@@ -174,7 +187,8 @@ private slots:
     void init()
     {
         if (!QDir(audioDir).exists()) {
-            cerr << "ERROR: Audio test file directory \"" << audioDir << "\" does not exist" << endl;
+            QString cwd = QDir::currentPath();
+            cerr << "ERROR: Audio test file directory \"" << audioDir << "\" does not exist (cwd = " << cwd << ")" << endl;
             QVERIFY2(QDir(audioDir).exists(), "Audio test file directory not found");
         }
         if (!QDir(diffDir).exists() && !QDir().mkpath(diffDir)) {
@@ -398,14 +412,14 @@ private slots:
             delete[] ptrs;
         }
             
-	for (int c = 0; c < channels; ++c) {
+        for (int c = 0; c < channels; ++c) {
 
             double maxDiff = 0.0;
             double totalDiff = 0.0;
             double totalSqrDiff = 0.0;
-	    int maxIndex = 0;
+            int maxIndex = 0;
 
-	    for (int i = 0; i < refFrames; ++i) {
+            for (int i = 0; i < refFrames; ++i) {
                 int ix = i + offset;
                 if (ix >= read) {
                     cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward, of " << refFrames << ", are lost)" << endl;
@@ -418,10 +432,10 @@ private slots:
                     continue;
                 }
                 
-		double diff = fabs(test[ix * channels + c] -
+                double diff = fabs(test[ix * channels + c] -
                                    reference[i * channels + c]);
 
-		totalDiff += diff;
+                totalDiff += diff;
                 totalSqrDiff += diff * diff;
                 
                 // in edge areas, record this only if it exceeds edgeLimit
@@ -435,25 +449,25 @@ private slots:
                         maxDiff = diff;
                         maxIndex = i;
                     }
-		}
-	    }
+                }
+            }
                 
-	    double meanDiff = totalDiff / double(refFrames);
+            double meanDiff = totalDiff / double(refFrames);
             double rmsDiff = sqrt(totalSqrDiff / double(refFrames));
 
             /*
-	    cerr << "channel " << c << ": mean diff " << meanDiff << endl;
+        cerr << "channel " << c << ": mean diff " << meanDiff << endl;
 	    cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
 	    cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
             */            
             if (rmsDiff >= rmsLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
+                cerr << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
                 QVERIFY(rmsDiff < rmsLimit);
             }
-	    if (maxDiff >= maxLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxDiff << " at frame " << maxIndex << " of " << read << " on channel " << c << " (limit = " << maxLimit << ", edge limit = " << edgeLimit << ", mean diff = " << meanDiff << ", rms = " << rmsDiff << ")" << endl;
-		QVERIFY(maxDiff < maxLimit);
-	    }
+            if (maxDiff >= maxLimit) {
+                cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxDiff << " at frame " << maxIndex << " of " << read << " on channel " << c << " (limit = " << maxLimit << ", edge limit = " << edgeLimit << ", mean diff = " << meanDiff << ", rms = " << rmsDiff << ")" << endl;
+                QVERIFY(maxDiff < maxLimit);
+            }
 
             // and check for spurious material at end
             
