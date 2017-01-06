@@ -1,7 +1,8 @@
 
 TEST_HEADERS += \
 	     AudioFileReaderTest.h \
-	     AudioTestData.h
+	     AudioTestData.h \
+             EncodingTest.h
 	     
 TEST_SOURCES += \
 	     svcore-data-fileio-test.cpp
