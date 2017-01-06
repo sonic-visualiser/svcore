@@ -99,7 +99,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         m_error = QString("Failed to open file %1 for reading.").arg(m_path);
         SVDEBUG << "MP3FileReader: " << m_error << endl;
         return;
-    }	
+    }   
 
     try {
         // We need a mysterious MAD_BUFFER_GUARD (== 8) zero bytes at
@@ -483,7 +483,7 @@ MP3FileReader::output_callback(void *dp,
 
 enum mad_flow
 MP3FileReader::accept(struct mad_header const *header,
-		      struct mad_pcm *pcm)
+                      struct mad_pcm *pcm)
 {
     int channels = pcm->channels;
     int frames = pcm->length;
@@ -552,14 +552,14 @@ MP3FileReader::accept(struct mad_header const *header,
 
         for (int i = 0; i < frames; ++i) {
 
-	    mad_fixed_t sample = 0;
-	    if (ch < activeChannels) {
-		sample = pcm->samples[ch][i];
-	    }
-	    float fsample = float(sample) / float(MAD_F_ONE);
+            mad_fixed_t sample = 0;
+            if (ch < activeChannels) {
+                sample = pcm->samples[ch][i];
+            }
+            float fsample = float(sample) / float(MAD_F_ONE);
             
             m_sampleBuffer[ch][i] = fsample;
-	}
+        }
     }
 
     addSamplesToDecodeCache(m_sampleBuffer, frames);
