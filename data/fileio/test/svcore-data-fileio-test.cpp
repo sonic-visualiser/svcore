@@ -13,6 +13,7 @@
 */
 
 #include "AudioFileReaderTest.h"
+#include "EncodingTest.h"
 
 #include <QtTest>
 
@@ -28,6 +29,12 @@ int main(int argc, char *argv[])
 
     {
 	AudioFileReaderTest t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+
+    {
+	EncodingTest t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
