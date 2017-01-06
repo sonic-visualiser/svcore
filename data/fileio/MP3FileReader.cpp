@@ -36,11 +36,6 @@
 
 #include <QTextCodec>
 
-#ifdef _MSC_VER
-#include <io.h>
-#define open _open
-#endif
-
 using std::string;
 
 static sv_frame_t DEFAULT_DECODER_DELAY = 529;

@@ -18,9 +18,10 @@
 
 #include "AudioFileReader.h"
 
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+
 #include <sndfile.h>
 #include <QMutex>
-#include <QFile>
 
 #include <set>
 
@@ -67,12 +68,11 @@ public:
 
 protected:
     SF_INFO m_fileInfo;
-    SNDFILE *m_sndfile;
+    SNDFILE *m_file;
 
     FileSource m_source;
     QString m_path;
     QString m_error;
-    QFile m_qfile;
 
     bool m_seekable;
 
