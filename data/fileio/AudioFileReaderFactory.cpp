@@ -63,15 +63,16 @@ AudioFileReaderFactory::createReader(FileSource source,
 {
     QString err;
 
-    SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\"): Requested rate: " << params.targetRate << (params.targetRate == 0 ? " (use source rate)" : "") << endl;
+    SVDEBUG << "AudioFileReaderFactory: url \"" << source.getLocation() << "\": requested rate: " << params.targetRate << (params.targetRate == 0 ? " (use source rate)" : "") << endl;
+    SVDEBUG << "AudioFileReaderFactory: local filename \"" << source.getLocalFilename() << "\", content type \"" << source.getContentType() << "\"" << endl;
 
     if (!source.isOK()) {
-        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
+        SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
         return 0;
     }
 
     if (!source.isAvailable()) {
-        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
+        SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
         return 0;
     }
 
@@ -88,11 +89,16 @@ AudioFileReaderFactory::createReader(FileSource source,
 
     if (estimatedSamples > 0) {
         size_t kb = (estimatedSamples * sizeof(float)) / 1024;
+        SVDEBUG << "AudioFileReaderFactory: checking where to potentially cache "
+                << kb << "K of sample data" << endl;
         StorageAdviser::Recommendation rec =
             StorageAdviser::recommend(StorageAdviser::SpeedCritical, kb, kb);
         if ((rec & StorageAdviser::UseMemory) ||
             (rec & StorageAdviser::PreferMemory)) {
+            SVDEBUG << "AudioFileReaderFactory: cacheing (if at all) in memory" << endl;
             cacheMode = CodedAudioFileReader::CacheInMemory;
+        } else {
+            SVDEBUG << "AudioFileReaderFactory: cacheing (if at all) on disc" << endl;
         }
     }
     
@@ -114,6 +120,13 @@ AudioFileReaderFactory::createReader(FileSource source,
 
         bool anyReader = (any > 0);
 
+        if (!anyReader) {
+            SVDEBUG << "AudioFileReaderFactory: Checking whether any reader officially handles this source" << endl;
+        } else {
+            SVDEBUG << "AudioFileReaderFactory: Source not officially handled by any reader, trying again with each reader in turn"
+                    << endl;
+        }
+
         if (anyReader || WavFileReader::supports(source)) {
 
             reader = new WavFileReader(source);
@@ -126,7 +139,7 @@ AudioFileReaderFactory::createReader(FileSource source,
                  (cacheMode == CodedAudioFileReader::CacheInMemory) ||
                  (targetRate != 0 && fileRate != targetRate))) {
 
-                SVDEBUG << "AudioFileReaderFactory::createReader: WAV file rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
+                SVDEBUG << "AudioFileReaderFactory: WAV file reader rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
             
                 delete reader;
                 reader = new DecodingWavFileReader
@@ -138,6 +151,7 @@ AudioFileReaderFactory::createReader(FileSource source,
             }
 
             if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: WAV file reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
@@ -152,6 +166,7 @@ AudioFileReaderFactory::createReader(FileSource source,
                 (source, decodeMode, cacheMode, targetRate, normalised, reporter);
 
             if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: Ogg file reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
@@ -173,6 +188,7 @@ AudioFileReaderFactory::createReader(FileSource source,
                  targetRate, normalised, reporter);
 
             if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
@@ -187,6 +203,7 @@ AudioFileReaderFactory::createReader(FileSource source,
                 (source, decodeMode, cacheMode, targetRate, normalised, reporter);
 
             if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: CoreAudio reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
@@ -196,10 +213,11 @@ AudioFileReaderFactory::createReader(FileSource source,
 
     }
     
-    SVDEBUG << "AudioFileReaderFactory::Failed to create a reader for "
-            << "url \"" << source.getLocation()
-            << "\" (content type \""
-            << source.getContentType() << "\")" << endl;
+    SVCERR << "AudioFileReaderFactory::Failed to create a reader for "
+           << "url \"" << source.getLocation()
+           << "\" (local filename \"" << source.getLocalFilename()
+           << "\", content type \""
+           << source.getContentType() << "\")" << endl;
     return nullptr;
 }
 

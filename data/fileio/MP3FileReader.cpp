@@ -77,8 +77,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     
     struct stat stat;
     if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
-	m_error = QString("File %1 does not exist.").arg(m_path);
-	return;
+        m_error = QString("File %1 does not exist.").arg(m_path);
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
     }
 
     m_fileSize = stat.st_size;
@@ -95,8 +96,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                      | O_BINARY
 #endif
                      , 0)) < 0) {
-	m_error = QString("Failed to open file %1 for reading.").arg(m_path);
-	return;
+        m_error = QString("Failed to open file %1 for reading.").arg(m_path);
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
     }	
 
     try {
@@ -108,8 +110,9 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
     } catch (...) {
         m_error = QString("Out of memory");
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
         ::close(fd);
-	return;
+        return;
     }
     
     ssize_t sz = 0;
@@ -121,6 +124,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                 .arg(m_path).arg(offset);
             delete[] m_fileBuffer;
             ::close(fd);
+            SVDEBUG << "MP3FileReader: " << m_error << endl;
             return;
         } else if (sz == 0) {
             SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
