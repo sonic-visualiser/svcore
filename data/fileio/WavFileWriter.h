@@ -17,7 +17,11 @@
 #define SV_WAV_FILE_WRITER_H
 
 #include <QString>
-#include <QFile>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
 
 #include <sndfile.h>
 
@@ -69,9 +73,8 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_channels;
     TempWriteFile *m_temp;
-    SNDFILE *m_sndfile;
+    SNDFILE *m_file;
     QString m_error;
-    QFile *m_qfile;
 
     QString getWriteFilename() const;
 };

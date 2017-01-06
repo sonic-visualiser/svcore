@@ -28,60 +28,54 @@
 using namespace std;
 
 WavFileWriter::WavFileWriter(QString path,
-			     sv_samplerate_t sampleRate,
+                             sv_samplerate_t sampleRate,
                              int channels,
                              FileWriteMode mode) :
     m_path(path),
     m_sampleRate(sampleRate),
     m_channels(channels),
     m_temp(0),
-    m_sndfile(0),
-    m_qfile(0)
+    m_file(0)
 {
     SF_INFO fileInfo;
 
     int fileRate = int(round(m_sampleRate));
     if (m_sampleRate != sv_samplerate_t(fileRate)) {
-        SVCERR << "WavFileWriter: WARNING: Non-integer sample rate "
-               << m_sampleRate << " presented, rounding to " << fileRate
-               << endl;
+        cerr << "WavFileWriter: WARNING: Non-integer sample rate "
+             << m_sampleRate << " presented, rounding to " << fileRate
+             << endl;
     }
     fileInfo.samplerate = fileRate;
     fileInfo.channels = m_channels;
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
     try {
+        QString writePath = m_path;
         if (mode == WriteToTemporary) {
             m_temp = new TempWriteFile(m_path);
-            m_qfile = new QFile(m_temp->getTemporaryFilename());
-        } else {
-            m_qfile = new QFile(m_path);
+            writePath = m_temp->getTemporaryFilename();
         }
-        if (!m_qfile->open(QIODevice::WriteOnly)) {
-            SVCERR << "WavFileWriter: Failed to open file for writing" << endl;
+#ifdef Q_OS_WIN
+        m_file = sf_wchar_open((LPCWSTR)writePath.utf16(), SFM_WRITE, &fileInfo);
+#else
+        m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
+#endif
+        if (!m_file) {
+            cerr << "WavFileWriter: Failed to open file ("
+                 << sf_strerror(m_file) << ")" << endl;
             m_error = QString("Failed to open audio file '%1' for writing")
-                .arg(m_qfile->fileName());
-        } else {
-            m_sndfile = sf_open_fd(m_qfile->handle(),
-                                   SFM_WRITE, &fileInfo, false);
-            if (!m_sndfile) {
-                SVCERR << "WavFileWriter: Failed to open file ("
-                       << sf_strerror(m_sndfile) << ")" << endl;
-                m_error = QString("Failed to open audio file '%1' for writing")
-                    .arg(m_qfile->fileName());
-            }
+                .arg(writePath);
         }
     } catch (FileOperationFailed &f) {
         m_error = f.what();
         m_temp = 0;
-        m_qfile = 0;
-        m_sndfile = 0;
+        m_file = 0;
     }
 }
 
 WavFileWriter::~WavFileWriter()
 {
-    if (m_sndfile) close();
+    if (m_file) close();
 }
 
 bool
@@ -119,48 +113,48 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
         return false;
     }
 
-    if (!m_sndfile) {
+    if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
-	return false;
+        return false;
     }
 
     bool ownSelection = false;
     if (!selection) {
-	selection = new MultiSelection;
-	selection->setSelection(Selection(source->getStartFrame(),
-					  source->getEndFrame()));
+        selection = new MultiSelection;
+        selection->setSelection(Selection(source->getStartFrame(),
+                                          source->getEndFrame()));
         ownSelection = true;
     }
 
     sv_frame_t bs = 2048;
 
     for (MultiSelection::SelectionList::iterator i =
-	     selection->getSelections().begin();
-	 i != selection->getSelections().end(); ++i) {
+         selection->getSelections().begin();
+         i != selection->getSelections().end(); ++i) {
 	
-	sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
+        sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
 
-	for (sv_frame_t f = f0; f < f1; f += bs) {
+        for (sv_frame_t f = f0; f < f1; f += bs) {
 	    
-	    sv_frame_t n = min(bs, f1 - f);
+            sv_frame_t n = min(bs, f1 - f);
             floatvec_t interleaved(n * m_channels, 0.f);
 
-	    for (int c = 0; c < int(m_channels); ++c) {
+            for (int c = 0; c < int(m_channels); ++c) {
                 auto chanbuf = source->getData(c, f, n);
-		for (int i = 0; in_range_for(chanbuf, i); ++i) {
-		    interleaved[i * m_channels + c] = chanbuf[i];
-		}
-	    }	    
+                for (int i = 0; in_range_for(chanbuf, i); ++i) {
+                    interleaved[i * m_channels + c] = chanbuf[i];
+                }
+            }
 
-	    sf_count_t written = sf_writef_float(m_sndfile, interleaved.data(), n);
+            sf_count_t written = sf_writef_float(m_file, interleaved.data(), n);
 
-	    if (written < n) {
-		m_error = QString("Only wrote %1 of %2 frames at file frame %3")
-		    .arg(written).arg(n).arg(f);
-		break;
-	    }
-	}
+            if (written < n) {
+                m_error = QString("Only wrote %1 of %2 frames at file frame %3")
+                        .arg(written).arg(n).arg(f);
+                break;
+            }
+        }
     }
 
     if (ownSelection) delete selection;
@@ -171,10 +165,10 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 bool
 WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {
-    if (!m_sndfile) {
+    if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
-	return false;
+        return false;
     }
 
     float *b = new float[count * m_channels];
@@ -184,7 +178,7 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
         }
     }
 
-    sv_frame_t written = sf_writef_float(m_sndfile, b, count);
+    sv_frame_t written = sf_writef_float(m_file, b, count);
 
     delete[] b;
 
@@ -199,20 +193,15 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 bool
 WavFileWriter::close()
 {
-    if (m_sndfile) {
-        sf_close(m_sndfile);
-        m_sndfile = 0;
+    if (m_file) {
+        sf_close(m_file);
+        m_file = 0;
     }
-
-    delete m_qfile;
-    m_qfile = 0;
-
     if (m_temp) {
         m_temp->moveToTarget();
         delete m_temp;
         m_temp = 0;
     }
-    
     return true;
 }
 
