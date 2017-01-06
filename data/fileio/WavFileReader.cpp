@@ -43,18 +43,18 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
-	SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
+        SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
                 << m_path << "\" ("
                 << sf_strerror(m_file) << ")" << endl;
 
-	if (m_file) {
-	    m_error = QString("Couldn't load audio file '%1':\n%2")
-		.arg(m_path).arg(sf_strerror(m_file));
-	} else {
-	    m_error = QString("Failed to open audio file '%1'")
-		.arg(m_path);
-	}
-	return;
+        if (m_file) {
+            m_error = QString("Couldn't load audio file '%1':\n%2")
+                .arg(m_path).arg(sf_strerror(m_file));
+        } else {
+            m_error = QString("Failed to open audio file '%1'")
+                .arg(m_path);
+        }
+        return;
     }
 
     if (m_fileInfo.channels > 0) {
@@ -147,11 +147,11 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
     if (start >= m_fileInfo.frames) {
 //        SVDEBUG << "WavFileReader::getInterleavedFrames: " << start
 //                  << " > " << m_fileInfo.frames << endl;
-	return {};
+        return {};
     }
 
     if (start + count > m_fileInfo.frames) {
-	count = m_fileInfo.frames - start;
+        count = m_fileInfo.frames - start;
     }
 
     // Because WaveFileModel::getSummaries() is called separately for

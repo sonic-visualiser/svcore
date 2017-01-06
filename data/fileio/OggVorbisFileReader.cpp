@@ -64,8 +64,8 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     m_fileSize = info.size();
 
     if (!(m_oggz = oggz_open(m_path.toLocal8Bit().data(), OGGZ_READ))) {
-	m_error = QString("File %1 is not an OGG file.").arg(m_path);
-	return;
+        m_error = QString("File %1 is not an OGG file.").arg(m_path);
+        return;
     }
 
     FishSoundInfo fsinfo;
@@ -172,7 +172,7 @@ OggVorbisFileReader::readPacket(OGGZ *, ogg_packet *packet, long, void *data)
 
 int
 OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
-				  void *data)
+                                  void *data)
 {
     OggVorbisFileReader *reader = (OggVorbisFileReader *)data;
 
@@ -196,11 +196,11 @@ OggVorbisFileReader::acceptFrames(FishSound *fs, float **frames, long nframes,
     }
 
     if (reader->m_channelCount == 0) {
-	FishSoundInfo fsinfo;
-	fish_sound_command(fs, FISH_SOUND_GET_INFO,
-			   &fsinfo, sizeof(FishSoundInfo));
-	reader->m_fileRate = fsinfo.samplerate;
-	reader->m_channelCount = fsinfo.channels;
+        FishSoundInfo fsinfo;
+        fish_sound_command(fs, FISH_SOUND_GET_INFO,
+                           &fsinfo, sizeof(FishSoundInfo));
+        reader->m_fileRate = fsinfo.samplerate;
+        reader->m_channelCount = fsinfo.channels;
         reader->initialiseDecodeCache();
     }
 
