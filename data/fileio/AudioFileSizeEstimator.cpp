@@ -22,7 +22,7 @@
 
 sv_frame_t
 AudioFileSizeEstimator::estimate(FileSource source,
-				 sv_samplerate_t targetRate)
+                                 sv_samplerate_t targetRate)
 {
     sv_frame_t estimate = 0;
     
@@ -31,71 +31,71 @@ AudioFileSizeEstimator::estimate(FileSource source,
 
     WavFileReader *reader = new WavFileReader(source);
     if (reader->isOK() &&
-	reader->getChannelCount() > 0 &&
-	reader->getFrameCount() > 0) {
-	sv_frame_t samples =
-	    reader->getFrameCount() * reader->getChannelCount();
-	sv_samplerate_t rate = reader->getSampleRate();
-	if (targetRate != 0.0 && targetRate != rate) {
-	    samples = sv_frame_t(double(samples) * targetRate / rate);
-	}
-	delete reader;
-	estimate = samples;
+        reader->getChannelCount() > 0 &&
+        reader->getFrameCount() > 0) {
+        sv_frame_t samples =
+            reader->getFrameCount() * reader->getChannelCount();
+        sv_samplerate_t rate = reader->getSampleRate();
+        if (targetRate != 0.0 && targetRate != rate) {
+            samples = sv_frame_t(double(samples) * targetRate / rate);
+        }
+        delete reader;
+        estimate = samples;
     }
 
     if (estimate == 0) {
 
-	// The remainder just makes an estimate based on the file size
-	// and extension. We don't even know its sample rate at this
-	// point, so the following is a wild guess.
-	
-	double rateRatio = 1.0;
-	if (targetRate != 0.0) {
-	    rateRatio = targetRate / 44100.0;
-	}
+        // The remainder just makes an estimate based on the file size
+        // and extension. We don't even know its sample rate at this
+        // point, so the following is a wild guess.
+        
+        double rateRatio = 1.0;
+        if (targetRate != 0.0) {
+            rateRatio = targetRate / 44100.0;
+        }
     
-	QString extension = source.getExtension();
+        QString extension = source.getExtension();
 
-	source.waitForData();
-	if (!source.isOK()) return 0;
+        source.waitForData();
+        if (!source.isOK()) return 0;
 
-	sv_frame_t sz = 0;
-	{
-	    QFile f(source.getLocalFilename());
-	    if (f.open(QFile::ReadOnly)) {
+        sv_frame_t sz = 0;
+        {
+            QFile f(source.getLocalFilename());
+            if (f.open(QFile::ReadOnly)) {
 #ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
-		cerr << "opened file, size is "  << f.size() << endl;
+                cerr << "opened file, size is "  << f.size() << endl;
 #endif
-		sz = f.size();
-		f.close();
-	    }
-	}
+                sz = f.size();
+                f.close();
+            }
+        }
 
-	if (extension == "ogg" || extension == "oga" ||
-	    extension == "m4a" || extension == "mp3" ||
-	    extension == "wma") {
+        if (extension == "ogg" || extension == "oga" ||
+            extension == "m4a" || extension == "mp3" ||
+            extension == "wma") {
 
-	    // Usually a lossy file. Compression ratios can vary
-	    // dramatically, but don't usually exceed about 20x compared
-	    // to 16-bit PCM (e.g. a 128kbps mp3 has 11x ratio over WAV at
-	    // 44.1kHz). We can estimate the number of samples to be file
-	    // size x 20, divided by 2 as we're comparing with 16-bit PCM.
+            // Usually a lossy file. Compression ratios can vary
+            // dramatically, but don't usually exceed about 20x compared
+            // to 16-bit PCM (e.g. a 128kbps mp3 has 11x ratio over WAV at
+            // 44.1kHz). We can estimate the number of samples to be file
+            // size x 20, divided by 2 as we're comparing with 16-bit PCM.
 
-	    estimate = sv_frame_t(double(sz) * 10 * rateRatio);
-	}
+            estimate = sv_frame_t(double(sz) * 10 * rateRatio);
+        }
 
-	if (extension == "flac") {
-	
-	    // FLAC usually takes up a bit more than half the space of
-	    // 16-bit PCM. So the number of 16-bit samples is roughly the
-	    // same as the file size in bytes. As above, let's be
-	    // conservative.
+        if (extension == "flac") {
+        
+            // FLAC usually takes up a bit more than half the space of
+            // 16-bit PCM. So the number of 16-bit samples is roughly the
+            // same as the file size in bytes. As above, let's be
+            // conservative.
 
-	    estimate = sv_frame_t(double(sz) * 1.2 * rateRatio);
-	}
+            estimate = sv_frame_t(double(sz) * 1.2 * rateRatio);
+        }
 
 #ifdef DEBUG_AUDIO_FILE_SIZE_ESTIMATOR
-	cerr << "AudioFileSizeEstimator: for extension " << extension << ", estimate = " << estimate << endl;
+        cerr << "AudioFileSizeEstimator: for extension " << extension << ", estimate = " << estimate << endl;
 #endif
     }
 
