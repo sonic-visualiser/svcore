@@ -23,20 +23,37 @@ int main(int argc, char *argv[])
 {
     int good = 0, bad = 0;
 
+    QString testDir;
+
+#ifdef Q_OS_WIN
+    // incredible to have to hardcode this, but I just can't figure out how to
+    // get QMAKE_POST_LINK to add an arg to its command successfully on Windows
+    testDir = "../sonic-visualiser/svcore/data/fileio/test";
+#endif
+
+    if (argc > 1) {
+        cerr << "argc = " << argc << endl;
+        testDir = argv[1];
+    }
+
+    if (testDir != "") {
+        cerr << "Setting test directory base path to \"" << testDir << "\"" << endl;
+    }
+
     QCoreApplication app(argc, argv);
     app.setOrganizationName("Sonic Visualiser");
     app.setApplicationName("test-fileio");
 
     {
-	AudioFileReaderTest t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        AudioFileReaderTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
 
     {
-	EncodingTest t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        EncodingTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
 
     if (bad > 0) {
