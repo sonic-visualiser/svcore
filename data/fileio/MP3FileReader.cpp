@@ -475,6 +475,10 @@ MP3FileReader::accept(struct mad_header const *header,
         m_fileRate = pcm->samplerate;
         m_channelCount = channels;
 
+        SVDEBUG << "MP3FileReader::accept: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
+
         initialiseDecodeCache();
 
         if (m_cacheMode == CacheInTemporaryFile) {
@@ -504,6 +508,9 @@ MP3FileReader::accept(struct mad_header const *header,
     }
 
     if (!isDecodeCacheInitialised()) {
+        SVDEBUG << "MP3FileReader::accept: fallback case: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
         initialiseDecodeCache();
     }
 
