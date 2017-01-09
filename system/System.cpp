@@ -286,7 +286,7 @@ extern void SystemMemoryBarrier()
 #endif
 }
 #else /* !_WIN32 */
-#if !defined(__APPLE__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
+#if !defined(__APPLE__) && defined(__GNUC__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
 void
 SystemMemoryBarrier()
 {
