@@ -131,7 +131,7 @@ private slots:
         QCOMPARE(RealTime::fromMilliseconds(-1500), RealTime(-1, -ONE_BILLION/2));
     }
 
-#ifndef _WIN32
+#ifndef Q_OS_WIN
     void fromTimeval()
     {
         struct timeval tv;
