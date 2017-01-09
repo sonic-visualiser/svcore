@@ -32,7 +32,6 @@ class TestVampRealTime : public QObject
     Q_OBJECT
 
     void compareTexts(string s, const char *e) {
-        cerr << "string obtained: \"" << s << "\"" << endl;
         QString actual(s.c_str());
         QString expected(e);
         QCOMPARE(actual, expected);
