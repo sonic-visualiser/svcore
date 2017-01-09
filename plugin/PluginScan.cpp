@@ -72,7 +72,7 @@ PluginScan::scan()
                        HelperExecPath::NativeArchitectureOnly :
                        HelperExecPath::AllInstalled);
 
-    QString helperName("plugin-checker-helper");
+    QString helperName("vamp-plugin-load-checker");
     auto helpers = hep.getHelperExecutables(helperName);
 
     clear();
@@ -190,7 +190,7 @@ PluginScan::getStartupFailureReport() const
     if (!m_succeeded) {
 	return QObject::tr("<b>Failed to scan for plugins</b>"
 			   "<p>Failed to scan for plugins at startup. Possibly "
-                           "the plugin checker helper program was not correctly "
+                           "the plugin checker program was not correctly "
                            "installed alongside %1?</p>")
             .arg(QCoreApplication::applicationName());
     }
