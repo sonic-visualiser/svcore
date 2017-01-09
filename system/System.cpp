@@ -1,16 +1,16 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Sonic Visualiser
-    An audio file viewer and annotation editor.
-    Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+  Sonic Visualiser
+  An audio file viewer and annotation editor.
+  Centre for Digital Music, Queen Mary, University of London.
+  This file copyright 2006 Chris Cannam and QMUL.
     
-    This program is free software; you can redistribute it and/or
-    modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation; either version 2 of the
-    License, or (at your option) any later version.  See the file
-    COPYING included with this distribution for more information.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2 of the
+  License, or (at your option) any later version.  See the file
+  COPYING included with this distribution for more information.
 */
 
 #include "System.h"
@@ -39,16 +39,16 @@
 
 #ifdef __APPLE__
 extern "C" {
-void *
-rpl_realloc (void *p, size_t n)
-{
-    p = realloc(p, n);
-    if (p == 0 && n == 0)
+    void *
+    rpl_realloc (void *p, size_t n)
     {
-    p = malloc(0);
+        p = realloc(p, n);
+        if (p == 0 && n == 0)
+        {
+            p = malloc(0);
+        }
+        return p;
     }
-    return p;
-}
 }
 #endif
 
@@ -57,24 +57,24 @@ rpl_realloc (void *p, size_t n)
 extern "C" {
 
 #ifdef _MSC_VER
-void usleep(unsigned long usec)
-{
-    ::Sleep(usec / 1000);
-}
+    void usleep(unsigned long usec)
+    {
+        ::Sleep(usec / 1000);
+    }
 #endif
 
-int gettimeofday(struct timeval *tv, void *tz)
-{
-    union { 
-	long long ns100;  
-	FILETIME ft; 
-    } now; 
+    int gettimeofday(struct timeval *tv, void *tz)
+    {
+        union { 
+            long long ns100;  
+            FILETIME ft; 
+        } now; 
     
-    ::GetSystemTimeAsFileTime(&now.ft); 
-    tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
-    tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
-    return 0;
-}
+        ::GetSystemTimeAsFileTime(&now.ft); 
+        tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
+        tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
+        return 0;
+    }
 
 }
 
@@ -153,10 +153,10 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
     if (exFound) {
 
         lMEMORYSTATUSEX lms;
-	lms.dwLength = sizeof(lms);
-	if (!ex(&lms)) {
+        lms.dwLength = sizeof(lms);
+        if (!ex(&lms)) {
             cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                      << GetLastError() << endl;
+                 << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -167,9 +167,9 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         /* Fall back to GlobalMemoryStatus which is always available.
            but returns wrong results for physical memory > 4GB  */
 
-	MEMORYSTATUS ms;
-	GlobalMemoryStatus(&ms);
-	wavail = ms.dwAvailPhys;
+        MEMORYSTATUS ms;
+        GlobalMemoryStatus(&ms);
+        wavail = ms.dwAvailPhys;
         wtotal = ms.dwTotalPhys;
     }
 
@@ -249,13 +249,13 @@ GetDiscSpaceMBAvailable(const char *path)
 #ifdef _WIN32
     ULARGE_INTEGER available, total, totalFree;
     if (GetDiskFreeSpaceExA(path, &available, &total, &totalFree)) {
-	  __int64 a = available.QuadPart;
+        __int64 a = available.QuadPart;
         a /= 1048576;
         if (a > INT_MAX) a = INT_MAX;
         return ssize_t(a);
     } else {
         cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-                  << GetLastError() << endl;
+             << GetLastError() << endl;
         return -1;
     }
 #else
