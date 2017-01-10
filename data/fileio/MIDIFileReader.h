@@ -12,15 +12,14 @@
     COPYING included with this distribution for more information.
 */
 
-
 /*
    This is a modified version of a source file from the 
    Rosegarden MIDI and audio sequencer and notation editor.
    This file copyright 2000-2006 Richard Bown and Chris Cannam.
 */
 
-#ifndef _MIDI_FILE_READER_H_
-#define _MIDI_FILE_READER_H_
+#ifndef SV_MIDI_FILE_READER_H
+#define SV_MIDI_FILE_READER_H
 
 #include "DataFileReader.h"
 #include "base/RealTime.h"
@@ -61,7 +60,7 @@ class MIDIFileReader : public DataFileReader
 
 public:
     MIDIFileReader(QString path,
-                   MIDIFileImportPreferenceAcquirer *pref,
+                   MIDIFileImportPreferenceAcquirer *pref, // may be null
                    sv_samplerate_t mainModelSampleRate);
     virtual ~MIDIFileReader();
 

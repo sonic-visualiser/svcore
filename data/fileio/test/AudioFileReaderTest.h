@@ -47,7 +47,7 @@ public:
             base = "svcore/data/fileio/test";
         }
         testDirBase = base;
-        audioDir = base + "/testfiles";
+        audioDir = base + "/audio";
         diffDir = base + "/diffs";
     }
 
@@ -389,7 +389,7 @@ private slots:
             diffFile += ".wav";
             diffFile = QDir(diffDir).filePath(diffFile);
             WavFileWriter diffWriter(diffFile, readRate, channels,
-                                     WavFileWriter::WriteToTarget); //!!! NB WriteToTemporary not working, why?
+                                     WavFileWriter::WriteToTemporary);
             QVERIFY(diffWriter.isOK());
 
             vector<vector<float>> diffs(channels);

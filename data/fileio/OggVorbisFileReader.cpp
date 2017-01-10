@@ -40,6 +40,10 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_qfile(0),
+    m_ffile(0),
+    m_oggz(0),
+    m_fishSound(0),
     m_reporter(reporter),
     m_fileSize(0),
     m_bytesRead(0),
@@ -60,11 +64,35 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
 
     Profiler profiler("OggVorbisFileReader::OggVorbisFileReader");
 
-    QFileInfo info(m_path);
-    m_fileSize = info.size();
+    // These shenanigans are to avoid using oggz_open(..) with a local
+    // codepage on Windows (make sure proper filename encoding is used)
+    
+    m_qfile = new QFile(m_path);
+    if (!m_qfile->open(QIODevice::ReadOnly)) {
+        m_error = QString("Failed to open file %1 for reading.").arg(m_path);
+        SVDEBUG << "OggVorbisFileReader: " << m_error << endl;
+        delete m_qfile;
+        m_qfile = 0;
+        return;
+    }
+    
+    m_fileSize = m_qfile->size();
 
-    if (!(m_oggz = oggz_open(m_path.toLocal8Bit().data(), OGGZ_READ))) {
+    m_ffile = fdopen(dup(m_qfile->handle()), "r");
+    if (!m_ffile) {
+        m_error = QString("Failed to open file pointer for file %1").arg(m_path);
+        SVDEBUG << "OggVorbisFileReader: " << m_error << endl;
+        delete m_qfile;
+        m_qfile = 0;
+        return;
+    }
+    
+    if (!(m_oggz = oggz_open_stdio(m_ffile, OGGZ_READ))) {
         m_error = QString("File %1 is not an OGG file.").arg(m_path);
+        fclose(m_ffile);
+        m_ffile = 0;
+        delete m_qfile;
+        m_qfile = 0;
         return;
     }
 
@@ -114,6 +142,11 @@ OggVorbisFileReader::~OggVorbisFileReader()
         m_decodeThread->wait();
         delete m_decodeThread;
     }
+    if (m_qfile) {
+        // don't fclose m_ffile; oggz_close did that
+        delete m_qfile;
+        m_qfile = 0;
+    }
 }
 
 void
@@ -134,8 +167,14 @@ OggVorbisFileReader::DecodeThread::run()
         
     fish_sound_delete(m_reader->m_fishSound);
     m_reader->m_fishSound = 0;
+
     oggz_close(m_reader->m_oggz);
     m_reader->m_oggz = 0;
+
+    // don't fclose m_ffile; oggz_close did that
+
+    delete m_reader->m_qfile;
+    m_reader->m_qfile = 0;
     
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
     m_reader->m_completion = 100;

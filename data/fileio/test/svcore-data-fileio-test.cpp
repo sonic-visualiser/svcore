@@ -13,7 +13,9 @@
 */
 
 #include "AudioFileReaderTest.h"
+#include "AudioFileWriterTest.h"
 #include "EncodingTest.h"
+#include "MIDIFileReaderTest.h"
 
 #include <QtTest>
 
@@ -51,7 +53,19 @@ int main(int argc, char *argv[])
     }
 
     {
+        AudioFileWriterTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
         EncodingTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        MIDIFileReaderTest t(testDir);
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }

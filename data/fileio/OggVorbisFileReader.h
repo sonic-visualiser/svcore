@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _OGG_VORBIS_FILE_READER_H_
-#define _OGG_VORBIS_FILE_READER_H_
+#ifndef SV_OGG_VORBIS_FILE_READER_H
+#define SV_OGG_VORBIS_FILE_READER_H
 
 #ifdef HAVE_OGGZ
 #ifdef HAVE_FISHSOUND
@@ -24,6 +24,8 @@
 #include "base/Thread.h"
 #include <oggz/oggz.h>
 #include <fishsound/fishsound.h>
+
+#include <cstdio>
 
 #include <set>
 
@@ -71,6 +73,8 @@ protected:
     QString m_maker;
     TagMap m_tags;
 
+    QFile *m_qfile;
+    FILE *m_ffile;
     OGGZ *m_oggz;
     FishSound *m_fishSound;
     ProgressReporter *m_reporter;
