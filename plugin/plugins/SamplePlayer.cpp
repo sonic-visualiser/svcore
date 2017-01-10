@@ -401,7 +401,7 @@ SamplePlayer::loadSampleData(QString path)
 
     info.format = 0;
 #ifdef Q_OS_WIN
-    file = sf_wchar_open((LPCWSTR)path.utf16(), SFM_READ, &m_fileInfo);
+    file = sf_wchar_open((LPCWSTR)path.utf16(), SFM_READ, &info);
 #else
     file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
 #endif

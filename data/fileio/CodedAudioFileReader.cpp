@@ -200,7 +200,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 
 #ifdef Q_OS_WIN
             m_cacheFileWritePtr = sf_wchar_open
-                ((LPCWSTR)m_cacheFileName.utf16(), SFM_WRITE, &m_fileInfo);
+                ((LPCWSTR)m_cacheFileName.utf16(), SFM_WRITE, &fileInfo);
 #else
             m_cacheFileWritePtr = sf_open
                 (m_cacheFileName.toLocal8Bit(), SFM_WRITE, &fileInfo);
