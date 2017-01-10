@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+#include "base/Debug.h"
+
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
     m_sampleRate(44100),
@@ -92,7 +94,6 @@ CSVFormat::guessSeparator(QString line)
             return;
         }
     }
-    m_separator = " ";
 }
 
 void
@@ -100,7 +101,7 @@ CSVFormat::guessQualities(QString line, int lineno)
 {
     if (m_separator == "") guessSeparator(line);
 
-    QStringList list = StringBits::split(line, m_separator[0], m_allowQuoting);
+    QStringList list = StringBits::split(line, getSeparator(), m_allowQuoting);
 
     int cols = list.size();
     if (lineno == 0 || (cols > m_columnCount)) m_columnCount = cols;
@@ -182,11 +183,13 @@ CSVFormat::guessQualities(QString line, int lineno)
         }
     }
 
-//    cerr << "Estimated column qualities: ";
-//    for (int i = 0; i < m_columnCount; ++i) {
-//        cerr << int(m_columnQualities[i]) << " ";
-//    }
-//    cerr << endl;
+    if (lineno < 10) {
+        SVDEBUG << "Estimated column qualities for line " << lineno << " (reporting up to first 10): ";
+        for (int i = 0; i < m_columnCount; ++i) {
+            SVDEBUG << int(m_columnQualities[i]) << " ";
+        }
+        SVDEBUG << endl;
+    }
 }
 
 void
@@ -314,15 +317,15 @@ CSVFormat::guessPurposes()
         }
     }
 
-//    cerr << "Estimated column purposes: ";
-//    for (int i = 0; i < m_columnCount; ++i) {
-//        cerr << int(m_columnPurposes[i]) << " ";
-//    }
-//    cerr << endl;
+    SVDEBUG << "Estimated column purposes: ";
+    for (int i = 0; i < m_columnCount; ++i) {
+        SVDEBUG << int(m_columnPurposes[i]) << " ";
+    }
+    SVDEBUG << endl;
 
-//    cerr << "Estimated model type: " << m_modelType << endl;
-//    cerr << "Estimated timing type: " << m_timingType << endl;
-//    cerr << "Estimated units: " << m_timeUnits << endl;
+    SVDEBUG << "Estimated model type: " << m_modelType << endl;
+    SVDEBUG << "Estimated timing type: " << m_timingType << endl;
+    SVDEBUG << "Estimated units: " << m_timeUnits << endl;
 }
 
 CSVFormat::ColumnPurpose
