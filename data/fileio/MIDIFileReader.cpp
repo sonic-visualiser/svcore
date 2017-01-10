@@ -53,7 +53,7 @@ using std::set;
 
 using namespace MIDIConstants;
 
-//#define MIDI_SVDEBUG 1
+//#define MIDI_DEBUG 1
 
 
 MIDIFileReader::MIDIFileReader(QString path,
@@ -323,7 +323,7 @@ MIDIFileReader::parseFile()
 
 	    if (!skipToNextTrack()) {
 #ifdef MIDI_DEBUG
-		cerr << "Couldn't find Track " << j << endl;
+		SVDEBUG << "Couldn't find Track " << j << endl;
 #endif
 		m_error = "File corrupted or in non-standard format?";
 		m_format = MIDI_FILE_BAD_FORMAT;
@@ -331,14 +331,14 @@ MIDIFileReader::parseFile()
 	    }
 
 #ifdef MIDI_DEBUG
-	    cerr << "Track has " << m_trackByteCount << " bytes" << endl;
+	    SVDEBUG << "Track has " << m_trackByteCount << " bytes" << endl;
 #endif
 
 	    // Run through the events taking them into our internal
 	    // representation.
 	    if (!parseTrack(i)) {
 #ifdef MIDI_DEBUG
-		cerr << "Track " << j << " parsing failed" << endl;
+		SVDEBUG << "Track " << j << " parsing failed" << endl;
 #endif
 		m_error = "File corrupted or in non-standard format?";
 		m_format = MIDI_FILE_BAD_FORMAT;
@@ -476,7 +476,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 
 	if (eventCode < 0x80) {
 #ifdef MIDI_DEBUG
-	    cerr << "WARNING: Invalid event code " << eventCode
+	    SVDEBUG << "WARNING: Invalid event code " << eventCode
 		 << " in MIDI file" << endl;
 #endif
 	    throw MIDIException(tr("Invalid event code %1 found").arg(int(eventCode)));
@@ -485,7 +485,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
         deltaTime = getNumberFromMIDIBytes();
 
 #ifdef MIDI_DEBUG
-	cerr << "read delta time " << deltaTime << endl;
+	SVDEBUG << "read delta time " << deltaTime << endl;
 #endif
 
         // Get a single byte
@@ -505,7 +505,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 #endif
         } else {
 #ifdef MIDI_DEBUG
-	    cerr << "have new event code " << int(midiByte) << endl;
+	    SVDEBUG << "have new event code " << int(midiByte) << endl;
 #endif
             eventCode = midiByte;
 	    data1 = getMIDIByte();
@@ -517,7 +517,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
             messageLength = getNumberFromMIDIBytes();
 
 //#ifdef MIDI_DEBUG
-		cerr << "Meta event of type " << int(metaEventCode) << " and " << messageLength << " bytes found, putting on track " << metaTrack << endl;
+		SVDEBUG << "Meta event of type " << int(metaEventCode) << " and " << messageLength << " bytes found, putting on track " << metaTrack << endl;
 //#endif
             metaMessage = getMIDIBytes(messageLength);
 
@@ -572,7 +572,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                 midiEvent = new MIDIEvent(deltaTime, eventCode, data1, data2);
 
                 /*
-		cerr << "MIDI event for channel " << channel << " (track "
+		SVDEBUG << "MIDI event for channel " << channel << " (track "
 			  << trackNum << ")" << endl;
 		midiEvent->print();
                           */
@@ -605,7 +605,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                 messageLength = getNumberFromMIDIBytes(data1);
 
 #ifdef MIDI_DEBUG
-		cerr << "SysEx of " << messageLength << " bytes found" << endl;
+		SVDEBUG << "SysEx of " << messageLength << " bytes found" << endl;
 #endif
 
                 metaMessage= getMIDIBytes(messageLength);
@@ -709,7 +709,7 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
 void
 MIDIFileReader::updateTempoMap(unsigned int track)
 {
-    cerr << "updateTempoMap for track " << track << " (" << m_midiComposition[track].size() << " events)" << endl;
+    SVDEBUG << "updateTempoMap for track " << track << " (" << m_midiComposition[track].size() << " events)" << endl;
 
     for (MIDITrack::iterator i = m_midiComposition[track].begin();
 	 i != m_midiComposition[track].end(); ++i) {
@@ -723,7 +723,7 @@ MIDIFileReader::updateTempoMap(unsigned int track)
 	    
 	    long tempo = (((m0 << 8) + m1) << 8) + m2;
 
-	    cerr << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << endl;
+	    SVDEBUG << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << endl;
 
 	    if (tempo != 0) {
 		double qpm = 60000000.0 / double(tempo);
@@ -786,11 +786,11 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
     SVDEBUG << "MIDIFileReader::getTimeForMIDITime(" << midiTime << ")"
 	      << endl;
     SVDEBUG << "timing division = " << td << endl;
-    cerr << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
+    SVDEBUG << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
 	      << tempoRealTime << ")" << endl;
-    cerr << "quarters since then = " << quarters << endl;
-    cerr << "tempo = " << tempo << " quarters per minute" << endl;
-    cerr << "seconds since then = " << seconds << endl;
+    SVDEBUG << "quarters since then = " << quarters << endl;
+    SVDEBUG << "tempo = " << tempo << " quarters per minute" << endl;
+    SVDEBUG << "seconds since then = " << seconds << endl;
     SVDEBUG << "resulting time = " << (tempoRealTime + RealTime::fromSeconds(seconds)) << endl;
 */
 
@@ -928,7 +928,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
     if (existingModel) {
 	model = dynamic_cast<NoteModel *>(existingModel);
 	if (!model) {
-	    cerr << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << endl;
+	    SVDEBUG << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << endl;
 	}
     }
 

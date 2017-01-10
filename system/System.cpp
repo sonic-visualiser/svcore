@@ -211,7 +211,9 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
 
     char buf[256];
     while (!feof(meminfo)) {
-        fgets(buf, 256, meminfo);
+        if (!fgets(buf, 256, meminfo)) {
+            return;
+        }
         bool isMemFree = (strncmp(buf, "MemFree:", 8) == 0);
         bool isMemTotal = (!isMemFree && (strncmp(buf, "MemTotal:", 9) == 0));
         if (isMemFree || isMemTotal) {
