@@ -164,7 +164,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 
         try {
             QDir dir(TempDirectory::getInstance()->getPath());
-            m_cacheFileName = dir.filePath(QString("decoded_%1.wav")
+            m_cacheFileName = dir.filePath(QString("decoded_%1.w64")
                                            .arg((intptr_t)this));
 
             SF_INFO fileInfo;
@@ -196,10 +196,15 @@ CodedAudioFileReader::initialiseDecodeCache()
             // tests.)
             //
             // So: now we write floats.
-            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-    
-            m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
-                                          SFM_WRITE, &fileInfo);
+            fileInfo.format = SF_FORMAT_W64 | SF_FORMAT_FLOAT;
+
+#ifdef Q_OS_WIN
+            m_cacheFileWritePtr = sf_wchar_open
+                ((LPCWSTR)m_cacheFileName.utf16(), SFM_WRITE, &m_fileInfo);
+#else
+            m_cacheFileWritePtr = sf_open
+                (m_cacheFileName.toLocal8Bit(), SFM_WRITE, &fileInfo);
+#endif
 
             if (m_cacheFileWritePtr) {
 

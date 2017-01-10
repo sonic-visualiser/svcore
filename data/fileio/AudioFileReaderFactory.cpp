@@ -126,6 +126,27 @@ AudioFileReaderFactory::createReader(FileSource source,
             SVDEBUG << "AudioFileReaderFactory: Source not officially handled by any reader, trying again with each reader in turn"
                     << endl;
         }
+    
+#ifdef HAVE_OGGZ
+#ifdef HAVE_FISHSOUND
+        // If we have the "real" Ogg reader, use that first. Otherwise
+        // the WavFileReader will likely accept Ogg files (as
+        // libsndfile supports them) but it has no ability to return
+        // file metadata, so we get a slightly less useful result.
+        if (anyReader || OggVorbisFileReader::supports(source)) {
+
+            reader = new OggVorbisFileReader
+                (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+
+            if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: Ogg file reader is OK, returning it" << endl;
+                return reader;
+            } else {
+                delete reader;
+            }
+        }
+#endif
+#endif
 
         if (anyReader || WavFileReader::supports(source)) {
 
@@ -157,23 +178,6 @@ AudioFileReaderFactory::createReader(FileSource source,
                 delete reader;
             }
         }
-    
-#ifdef HAVE_OGGZ
-#ifdef HAVE_FISHSOUND
-        if (anyReader || OggVorbisFileReader::supports(source)) {
-
-            reader = new OggVorbisFileReader
-                (source, decodeMode, cacheMode, targetRate, normalised, reporter);
-
-            if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: Ogg file reader is OK, returning it" << endl;
-                return reader;
-            } else {
-                delete reader;
-            }
-        }
-#endif
-#endif
 
 #ifdef HAVE_MAD
         if (anyReader || MP3FileReader::supports(source)) {

@@ -13,14 +13,20 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CODED_AUDIO_FILE_READER_H_
-#define _CODED_AUDIO_FILE_READER_H_
+#ifndef SV_CODED_AUDIO_FILE_READER_H
+#define SV_CODED_AUDIO_FILE_READER_H
 
 #include "AudioFileReader.h"
 
-#include <sndfile.h>
 #include <QMutex>
 #include <QReadWriteLock>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
+#include <sndfile.h>
 
 class WavFileReader;
 class Serialiser;

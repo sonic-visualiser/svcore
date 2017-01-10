@@ -29,6 +29,11 @@
 #include <QDir>
 #include <QFileInfo>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
 #include <sndfile.h>
 #include <samplerate.h>
 #include <iostream>
@@ -395,7 +400,11 @@ SamplePlayer::loadSampleData(QString path)
     size_t i;
 
     info.format = 0;
+#ifdef Q_OS_WIN
+    file = sf_wchar_open((LPCWSTR)path.utf16(), SFM_READ, &m_fileInfo);
+#else
     file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
+#endif
     if (!file) {
 	cerr << "SamplePlayer::loadSampleData: Failed to open file "
 		  << path << ": "

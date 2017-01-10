@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TEMP_WRITE_FILE_H_
-#define _TEMP_WRITE_FILE_H_
+#ifndef SV_TEMP_WRITE_FILE_H
+#define SV_TEMP_WRITE_FILE_H
 
 #include <QTemporaryFile>
 
@@ -23,7 +23,6 @@
  * use when saving a file over an existing one, to avoid clobbering
  * the original before the save is complete.
  */
-
 class TempWriteFile
 {
 public:
