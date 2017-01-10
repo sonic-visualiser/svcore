@@ -134,6 +134,12 @@ private slots:
 
         if (extension != "wav") {
 
+#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
+            if (extension == "ogg") {
+                QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
+            }
+#endif
+            
             auto blah = reader->getInterleavedFrames(0, 10);
             
             QString title = reader->getTitle();
@@ -198,6 +204,12 @@ private slots:
         if (extension == "wav") {
             return;
         }
+
+#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
+        if (extension == "ogg") {
+            QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
+        }
+#endif
 
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
