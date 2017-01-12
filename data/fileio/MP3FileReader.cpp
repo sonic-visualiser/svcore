@@ -32,6 +32,14 @@
 #include <id3tag.h>
 #endif
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include <QFileInfo>
 
 #include <QTextCodec>
@@ -176,7 +184,13 @@ MP3FileReader::loadTags(int fd)
 
 #ifdef HAVE_ID3TAG
 
-    id3_file *file = id3_file_fdopen(fd, ID3_FILE_MODE_READONLY);
+#ifdef _WIN32
+    int id3fd = _dup(fd);
+#else
+    int id3fd = dup(fd);
+#endif
+
+    id3_file *file = id3_file_fdopen(id3fd, ID3_FILE_MODE_READONLY);
     if (!file) return;
 
     // We can do this a lot more elegantly, but we'll leave that for
@@ -185,7 +199,7 @@ MP3FileReader::loadTags(int fd)
     id3_tag *tag = id3_file_tag(file);
     if (!tag) {
         SVDEBUG << "MP3FileReader::loadTags: No ID3 tag found" << endl;
-        id3_file_close(file);
+        id3_file_close(file); // also closes our dup'd fd
         return;
     }
 
@@ -206,8 +220,7 @@ MP3FileReader::loadTags(int fd)
         }
     }
 
-    // We don't id3_file_close(file) because that closes the fd, which
-    // was only lent to us
+    id3_file_close(file); // also closes our dup'd fd
 
 #else
     SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in" << endl;
