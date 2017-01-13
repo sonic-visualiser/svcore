@@ -59,10 +59,20 @@ extern void SystemMemoryBarrier();
 
 #define getpid _getpid
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
+#ifdef _MSC_VER
 extern "C" {
-/* usleep is now in mingw
 void usleep(unsigned long usec);
-*/
+}
+#else
+#include <unistd.h>
+#endif
+
+extern "C" {
 int gettimeofday(struct timeval *p, void *tz);
 }
 
@@ -75,6 +85,7 @@ int gettimeofday(struct timeval *p, void *tz);
 #include <dlfcn.h>
 #include <stdio.h> // for perror
 #include <cmath>
+#include <unistd.h> // sleep + usleep primarily
 
 #define MLOCK(a,b)   ::mlock((a),(b))
 #define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
@@ -153,21 +164,6 @@ extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
-
-enum PluginLoadStatus {
-    UnknownPluginLoadStatus,
-    PluginLoadOK,
-    PluginLoadFailedToLoadLibrary,
-    PluginLoadFailedToFindDescriptor,
-    PluginLoadFailedElsewhere
-};
-
-// Check whether a plugin library is loadable without crashing (may
-// need to spawn an external process to do it). Descriptor fn is the
-// name of a LADSPA/DSSI/Vamp-style descriptor function to try
-// calling; may be an empty string if the plugin doesn't follow that
-// convention.
-PluginLoadStatus TestPluginLoadability(QString soname, QString descriptorFn);
 
 #include <cmath>
 

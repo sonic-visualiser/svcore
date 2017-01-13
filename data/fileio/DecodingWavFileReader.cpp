@@ -21,8 +21,10 @@
 
 #include <QFileInfo>
 
+using namespace std;
+
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
-                                             ResampleMode resampleMode,
+                                             DecodeMode decodeMode,
                                              CacheMode mode,
                                              sv_samplerate_t targetRate,
                                              bool normalised,
@@ -37,13 +39,15 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
     m_reporter(reporter),
     m_decodeThread(0)
 {
+    SVDEBUG << "DecodingWavFileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
 
-    SVDEBUG << "DecodingWavFileReader::DecodingWavFileReader(\""
-              << m_path << "\"): rate " << targetRate << endl;
-
-    Profiler profiler("DecodingWavFileReader::DecodingWavFileReader", true);
+    Profiler profiler("DecodingWavFileReader::DecodingWavFileReader");
 
     m_original = new WavFileReader(m_path);
     if (!m_original->isOK()) {
@@ -56,7 +60,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
 
     initialiseDecodeCache();
 
-    if (resampleMode == ResampleAtOnce) {
+    if (decodeMode == DecodeAtOnce) {
 
         if (m_reporter) {
             connect(m_reporter, SIGNAL(cancelled()), this, SLOT(cancelled()));
@@ -67,7 +71,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
         sv_frame_t blockSize = 16384;
         sv_frame_t total = m_original->getFrameCount();
 
-        SampleBlock block;
+        floatvec_t block;
 
         for (sv_frame_t i = 0; i < total; i += blockSize) {
 
@@ -124,7 +128,7 @@ DecodingWavFileReader::DecodeThread::run()
     sv_frame_t blockSize = 16384;
     sv_frame_t total = m_reader->m_original->getFrameCount();
     
-    SampleBlock block;
+    floatvec_t block;
     
     for (sv_frame_t i = 0; i < total; i += blockSize) {
         
@@ -147,7 +151,7 @@ DecodingWavFileReader::DecodeThread::run()
 } 
 
 void
-DecodingWavFileReader::addBlock(const SampleBlock &frames)
+DecodingWavFileReader::addBlock(const floatvec_t &frames)
 {
     addSamplesToDecodeCache(frames);
 
@@ -167,7 +171,7 @@ DecodingWavFileReader::addBlock(const SampleBlock &frames)
 }
 
 void
-DecodingWavFileReader::getSupportedExtensions(std::set<QString> &extensions)
+DecodingWavFileReader::getSupportedExtensions(set<QString> &extensions)
 {
     WavFileReader::getSupportedExtensions(extensions);
 }

@@ -40,11 +40,12 @@ Preferences::Preferences() :
     m_tuningFrequency(440),
     m_propertyBoxLayout(VerticallyStacked),
     m_windowType(HanningWindow),
-    m_resampleQuality(1),
+    m_runPluginsInProcess(true),
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
     m_fixedSampleRate(0),
     m_resampleOnLoad(false),
+    m_gapless(true),
     m_normaliseAudio(false),
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
@@ -64,9 +65,10 @@ Preferences::Preferences() :
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
     m_windowType = WindowType
         (settings.value("window-type", int(HanningWindow)).toInt());
-    m_resampleQuality = settings.value("resample-quality", 1).toInt();
+    m_runPluginsInProcess = settings.value("run-vamp-plugins-in-process", true).toBool();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
+    m_gapless = settings.value("gapless", true).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
@@ -99,6 +101,7 @@ Preferences::getProperties() const
     props.push_back("Resample Quality");
     props.push_back("Omit Temporaries from Recent Files");
     props.push_back("Resample On Load");
+    props.push_back("Use Gapless Mode");
     props.push_back("Normalise Audio");
     props.push_back("Fixed Sample Rate");
     props.push_back("Temporary Directory Root");
@@ -140,6 +143,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Resample On Load") {
         return tr("Resample mismatching files on import");
+    }
+    if (name == "Use Gapless Mode") {
+        return tr("Load mp3 files in gapless mode");
     }
     if (name == "Fixed Sample Rate") {
         return tr("Single fixed sample rate to resample all files to");
@@ -196,6 +202,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ToggleProperty;
     }
     if (name == "Resample On Load") {
+        return ToggleProperty;
+    }
+    if (name == "Use Gapless Mode") {
         return ToggleProperty;
     }
     if (name == "Fixed Sample Rate") {
@@ -259,13 +268,10 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
         return int(m_windowType);
     }
 
-    if (name == "Resample Quality") {
-        if (min) *min = 0;
-        if (max) *max = 2;
-        if (deflt) *deflt = 1;
-        return m_resampleQuality;
+    if (name == "Run Vamp Plugins In Process") {
+        return m_runPluginsInProcess;
     }
-
+    
     if (name == "Omit Temporaries from Recent Files") {
         if (deflt) *deflt = 1;
         return m_omitRecentTemps ? 1 : 0;
@@ -412,8 +418,8 @@ Preferences::setProperty(const PropertyName &name, int value)
         setPropertyBoxLayout(value == 0 ? VerticallyStacked : Layered);
     } else if (name == "Window Type") {
         setWindowType(WindowType(value));
-    } else if (name == "Resample Quality") {
-        setResampleQuality(value);
+    } else if (name == "Run Vamp Plugins In Process") {
+        setRunPluginsInProcess(value ? true : false);
     } else if (name == "Omit Temporaries from Recent Files") {
         setOmitTempsFromRecentFiles(value ? true : false);
     } else if (name == "Background Mode") {
@@ -506,15 +512,15 @@ Preferences::setWindowType(WindowType type)
 }
 
 void
-Preferences::setResampleQuality(int q)
+Preferences::setRunPluginsInProcess(bool run)
 {
-    if (m_resampleQuality != q) {
-        m_resampleQuality = q;
+    if (m_runPluginsInProcess != run) {
+        m_runPluginsInProcess = run;
         QSettings settings;
         settings.beginGroup("Preferences");
-        settings.setValue("resample-quality", q);
+        settings.setValue("run-vamp-plugins-in-process", run);
         settings.endGroup();
-        emit propertyChanged("Resample Quality");
+        emit propertyChanged("Run Vamp Plugins In Process");
     }
 }
 
@@ -557,6 +563,19 @@ Preferences::setResampleOnLoad(bool resample)
         settings.setValue("resample-on-load", resample);
         settings.endGroup();
         emit propertyChanged("Resample On Load");
+    }
+}
+
+void
+Preferences::setUseGaplessMode(bool gapless)
+{
+    if (m_gapless != gapless) {
+        m_gapless = gapless;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("gapless", gapless);
+        settings.endGroup();
+        emit propertyChanged("Use Gapless Mode");
     }
 }
 

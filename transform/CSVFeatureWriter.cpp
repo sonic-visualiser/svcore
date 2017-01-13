@@ -276,7 +276,20 @@ CSVFeatureWriter::writeFeature(DataId tt,
     }
     
     for (unsigned int j = 0; j < f.values.size(); ++j) {
-        stream << m_separator << QString("%1").arg(f.values[j], 0, 'g', m_digits);
+
+        QString number = QString("%1").arg(f.values[j], 0, 'g', m_digits);
+
+        // Qt pre-5.6 zero pads single-digit exponents to two digits;
+        // Qt 5.7+ doesn't by default. But we want both to produce the
+        // same output. Getting the new behaviour from standard APIs
+        // in Qt 5.6 isn't possible I think; getting the old behaviour
+        // from Qt 5.7 is possible but fiddly, involving setting up an
+        // appropriate locale and using the %L specifier. We could
+        // doubtless do it with sprintf but Qt is a known quantity at
+        // this point. Let's just convert the old format to the new.
+        number.replace("e-0", "e-");
+        
+        stream << m_separator << number;
     }
     
     if (f.label != "") {

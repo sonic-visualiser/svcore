@@ -20,6 +20,7 @@
 #include "TabularModel.h"
 #include "base/Command.h"
 #include "base/RealTime.h"
+#include "system/System.h"
 
 #include <iostream>
 
@@ -331,8 +332,13 @@ public:
     virtual QVariant getData(int row, int column, int role) const
     {
         PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        if (i == m_points.end()) {
+//            cerr << "no iterator for row " << row << " (have " << getRowCount() << " rows)" << endl;
+            return QVariant();
+        }
 
+//        cerr << "returning data for row " << row << " col " << column << endl;
+        
         switch (column) {
         case 0: {
             if (role == SortRole) return int(i->frame);
@@ -410,6 +416,7 @@ protected:
     // This is only used if the model is called on to act in
     // TabularModel mode
     mutable std::vector<sv_frame_t> m_rows; // map from row number to frame
+
     void rebuildRowVector() const
     {
         m_rows.clear();
@@ -457,7 +464,7 @@ protected:
         while (ri > 0 && m_rows[ri-1] == m_rows[row]) { --ri; ++indexAtFrame; }
         int initialIndexAtFrame = indexAtFrame;
 
-//        std::cerr << "getPointListIteratorForRow " << row << ": initialIndexAtFrame = " << initialIndexAtFrame << std::endl;
+//        std::cerr << "getPointListIteratorForRow " << row << ": initialIndexAtFrame = " << initialIndexAtFrame << " for frame " << frame << std::endl;
 
         PointListConstIterator i0, i1;
         getPointIterators(frame, i0, i1);
@@ -470,9 +477,13 @@ protected:
             if (indexAtFrame > 0) { --indexAtFrame; continue; }
             return i;
         }
-
-//        std::cerr << "returning i with i->frame = " << i->frame << std::endl;
-
+/*
+        if (i == m_points.end()) {
+            std::cerr << "returning i at end" << std::endl;
+        } else {
+            std::cerr << "returning i with i->frame = " << i->frame << std::endl;
+        }
+*/
         if (indexAtFrame > 0) {
             std::cerr << "WARNING: SparseModel::getPointListIteratorForRow: No iterator available for row " << row << " (frame = " << frame << ", index at frame = " << initialIndexAtFrame << ", leftover index " << indexAtFrame << ")" << std::endl;
         }
@@ -729,8 +740,8 @@ SparseModel<PointType>::setResolution(int resolution)
     {
 	QMutexLocker locker(&m_mutex);
 	m_resolution = resolution;
+        m_rows.clear();
     }
-    m_rows.clear();
     emit modelChanged();
 }
 
@@ -742,8 +753,8 @@ SparseModel<PointType>::clear()
 	QMutexLocker locker(&m_mutex);
 	m_points.clear();
         m_pointCount = 0;
+        m_rows.clear();
     }
-    m_rows.clear();
     emit modelChanged();
 }
 
@@ -751,12 +762,11 @@ template <typename PointType>
 void
 SparseModel<PointType>::addPoint(const PointType &point)
 {
-    {
-	QMutexLocker locker(&m_mutex);
-	m_points.insert(point);
-        m_pointCount++;
-        if (point.getLabel() != "") m_hasTextLabels = true;
-    }
+    QMutexLocker locker(&m_mutex);
+
+    m_points.insert(point);
+    m_pointCount++;
+    if (point.getLabel() != "") m_hasTextLabels = true;
 
     // Even though this model is nominally sparse, there may still be
     // too many signals going on here (especially as they'll probably
@@ -783,18 +793,16 @@ template <typename PointType>
 bool
 SparseModel<PointType>::containsPoint(const PointType &point)
 {
-    {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_mutex);
 
-	PointListIterator i = m_points.lower_bound(point);
-	typename PointType::Comparator comparator;
-	while (i != m_points.end()) {
-	    if (i->frame > point.frame) break;
-	    if (!comparator(*i, point) && !comparator(point, *i)) {
-                return true;
-	    }
-	    ++i;
-	}
+    PointListIterator i = m_points.lower_bound(point);
+    typename PointType::Comparator comparator;
+    while (i != m_points.end()) {
+        if (i->frame > point.frame) break;
+        if (!comparator(*i, point) && !comparator(point, *i)) {
+            return true;
+        }
+        ++i;
     }
 
     return false;
@@ -804,21 +812,20 @@ template <typename PointType>
 void
 SparseModel<PointType>::deletePoint(const PointType &point)
 {
-    {
-	QMutexLocker locker(&m_mutex);
+    QMutexLocker locker(&m_mutex);
 
-	PointListIterator i = m_points.lower_bound(point);
-	typename PointType::Comparator comparator;
-	while (i != m_points.end()) {
-	    if (i->frame > point.frame) break;
-	    if (!comparator(*i, point) && !comparator(point, *i)) {
-		m_points.erase(i);
-                m_pointCount--;
-		break;
+    PointListIterator i = m_points.lower_bound(point);
+    typename PointType::Comparator comparator;
+    while (i != m_points.end()) {
+        if (i->frame > point.frame) break;
+        if (!comparator(*i, point) && !comparator(point, *i)) {
+            m_points.erase(i);
+            m_pointCount--;
+            break;
 	    }
-	    ++i;
-	}
+        ++i;
     }
+
 //    std::cout << "SparseOneDimensionalModel: emit modelChanged("
 //	      << point.frame << ")" << std::endl;
     m_rows.clear(); //!!! inefficient
@@ -830,6 +837,8 @@ void
 SparseModel<PointType>::setCompletion(int completion, bool update)
 {
 //    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
+
+    QMutexLocker locker(&m_mutex);
 
     if (m_completion != completion) {
 	m_completion = completion;

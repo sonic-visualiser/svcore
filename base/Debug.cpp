@@ -21,25 +21,48 @@
 #include <QUrl>
 #include <QCoreApplication>
 
-#ifndef NDEBUG
+#include <stdexcept>
 
-static SVDebug *debug = 0;
+static SVDebug *svdebug = 0;
+static SVCerr *svcerr = 0;
 static QMutex mutex;
 
 SVDebug &getSVDebug() {
     mutex.lock();
-    if (!debug) {
-        debug = new SVDebug();
+    if (!svdebug) {
+        svdebug = new SVDebug();
     }
     mutex.unlock();
-    return *debug;
+    return *svdebug;
 }
+
+SVCerr &getSVCerr() {
+    mutex.lock();
+    if (!svcerr) {
+        if (!svdebug) {
+            svdebug = new SVDebug();
+        }
+        svcerr = new SVCerr(*svdebug);
+    }
+    mutex.unlock();
+    return *svcerr;
+}
+
+bool SVDebug::m_silenced = false;
+bool SVCerr::m_silenced = false;
 
 SVDebug::SVDebug() :
     m_prefix(0),
     m_ok(false),
-    m_eol(false)
+    m_eol(true)
 {
+    if (m_silenced) return;
+    
+    if (qApp->applicationName() == "") {
+        cerr << "ERROR: Can't use SVDEBUG before setting application name" << endl;
+        throw std::logic_error("Can't use SVDEBUG before setting application name");
+    }
+    
     QString pfx = ResourceFinder().getUserResourcePrefix();
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
@@ -59,14 +82,14 @@ SVDebug::SVDebug() :
                              << "Failed to open debug log file "
                              << fileName << " for writing";
     } else {
-        cerr << m_prefix << ": Log file is " << fileName << endl;
+//        cerr << m_prefix << ": Log file is " << fileName << endl;
         m_ok = true;
     }
 }
 
 SVDebug::~SVDebug()
 {
-    m_stream.close();
+    if (m_stream) m_stream.close();
 }
 
 QDebug &
@@ -75,8 +98,6 @@ operator<<(QDebug &dbg, const std::string &s)
     dbg << QString::fromUtf8(s.c_str());
     return dbg;
 }
-
-#endif
 
 std::ostream &
 operator<<(std::ostream &target, const QString &str)

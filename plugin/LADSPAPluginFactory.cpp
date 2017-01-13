@@ -579,7 +579,7 @@ LADSPAPluginFactory::getPluginPath()
         }
 
 #ifdef _WIN32
-        char *pfiles = getenv("ProgramFiles");
+        const char *pfiles = getenv("ProgramFiles");
         if (!pfiles) pfiles = "C:\\Program Files";
         {
         std::string::size_type f;
@@ -668,14 +668,11 @@ LADSPAPluginFactory::discoverPlugins()
 
     generateFallbackCategories();
 
-    for (std::vector<QString>::iterator i = pathList.begin();
-	 i != pathList.end(); ++i) {
+    auto candidates =
+        PluginScan::getInstance()->getCandidateLibrariesFor(getPluginType());
 
-	QDir pluginDir(*i, PLUGIN_GLOB);
-
-	for (unsigned int j = 0; j < pluginDir.count(); ++j) {
-	    discoverPluginsFrom(QString("%1/%2").arg(*i).arg(pluginDir[j]));
-	}
+    for (auto c: candidates) {
+        discoverPluginsFrom(c.libraryPath);
     }
 }
 

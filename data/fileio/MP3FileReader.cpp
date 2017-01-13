@@ -27,87 +27,102 @@
 #include <iostream>
 
 #include <cstdlib>
-#include <unistd.h>
 
 #ifdef HAVE_ID3TAG
 #include <id3tag.h>
 #endif
 
-//#define DEBUG_ID3TAG 1
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 #include <QFileInfo>
 
+#include <QTextCodec>
+
+using std::string;
+
+static sv_frame_t DEFAULT_DECODER_DELAY = 529;
+
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
-                             CacheMode mode, sv_samplerate_t targetRate,
+                             CacheMode mode, GaplessMode gaplessMode,
+                             sv_samplerate_t targetRate,
                              bool normalised,
                              ProgressReporter *reporter) :
     CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
+    m_gaplessMode(gaplessMode),
+    m_decodeErrorShown(false),
     m_decodeThread(0)
 {
+    SVDEBUG << "MP3FileReader: local path: \"" << m_path
+            << "\", decode mode: " << decodeMode << " ("
+            << (decodeMode == DecodeAtOnce ? "DecodeAtOnce" : "DecodeThreaded")
+            << ")" << endl;
+    
     m_channelCount = 0;
     m_fileRate = 0;
     m_fileSize = 0;
     m_bitrateNum = 0;
     m_bitrateDenom = 0;
     m_cancelled = false;
+    m_mp3FrameCount = 0;
     m_completion = 0;
     m_done = false;
     m_reporter = reporter;
 
-    struct stat stat;
-    if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
-	m_error = QString("File %1 does not exist.").arg(m_path);
-	return;
-    }
-
-    m_fileSize = stat.st_size;
-
-    m_filebuffer = 0;
-    m_samplebuffer = 0;
-    m_samplebuffersize = 0;
-
-    int fd = -1;
-    if ((fd = ::open(m_path.toLocal8Bit().data(), O_RDONLY
-#ifdef _WIN32
-                     | O_BINARY
-#endif
-                     , 0)) < 0) {
-	m_error = QString("Failed to open file %1 for reading.").arg(m_path);
-	return;
-    }	
-
-    try {
-        m_filebuffer = new unsigned char[m_fileSize];
-    } catch (...) {
-        m_error = QString("Out of memory");
-        ::close(fd);
-	return;
+    if (m_gaplessMode == GaplessMode::Gapless) {
+        CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
-    ssize_t sz = 0;
-    ssize_t offset = 0;
-    while (offset < m_fileSize) {
-        sz = ::read(fd, m_filebuffer + offset, m_fileSize - offset);
-        if (sz < 0) {
-            m_error = QString("Read error for file %1 (after %2 bytes)")
-                .arg(m_path).arg(offset);
-            delete[] m_filebuffer;
-            ::close(fd);
-            return;
-        } else if (sz == 0) {
-            cerr << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
-                .arg(offset).arg(m_fileSize) << endl;
-            m_fileSize = offset;
-            break;
-        }
-        offset += sz;
+    m_fileSize = 0;
+
+    m_fileBuffer = 0;
+    m_fileBufferSize = 0;
+
+    m_sampleBuffer = 0;
+    m_sampleBufferSize = 0;
+
+    QFile qfile(m_path);
+    if (!qfile.open(QIODevice::ReadOnly)) {
+        m_error = QString("Failed to open file %1 for reading.").arg(m_path);
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
+    }   
+
+    m_fileSize = qfile.size();
+    
+    try {
+        // We need a mysterious MAD_BUFFER_GUARD (== 8) zero bytes at
+        // end of input, to ensure libmad decodes the last frame
+        // correctly. Otherwise the decoded audio is truncated.
+        m_fileBufferSize = m_fileSize + MAD_BUFFER_GUARD;
+        m_fileBuffer = new unsigned char[m_fileBufferSize];
+        memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
+    } catch (...) {
+        m_error = QString("Out of memory");
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
     }
 
-    ::close(fd);
+    auto amountRead = qfile.read(reinterpret_cast<char *>(m_fileBuffer),
+                                 m_fileSize);
 
-    loadTags();
+    if (amountRead < m_fileSize) {
+        SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
+            .arg(amountRead).arg(m_fileSize) << endl;
+        memset(m_fileBuffer + amountRead, 0, m_fileSize - amountRead);
+        m_fileSize = amountRead;
+    }
+        
+    loadTags(qfile.handle());
+
+    qfile.close();
 
     if (decodeMode == DecodeAtOnce) {
 
@@ -117,12 +132,12 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                 (tr("Decoding %1...").arg(QFileInfo(m_path).fileName()));
         }
 
-        if (!decode(m_filebuffer, m_fileSize)) {
+        if (!decode(m_fileBuffer, m_fileBufferSize)) {
             m_error = QString("Failed to decode file %1.").arg(m_path);
         }
         
-        delete[] m_filebuffer;
-        m_filebuffer = 0;
+        delete[] m_fileBuffer;
+        m_fileBuffer = 0;
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
         endSerialised();
@@ -139,11 +154,11 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
             usleep(10);
         }
         
-        cerr << "MP3FileReader ctor: exiting with file rate = " << m_fileRate << endl;
+        SVDEBUG << "MP3FileReader: decoding startup complete, file rate = " << m_fileRate << endl;
     }
 
     if (m_error != "") {
-        cerr << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << endl;
+        SVDEBUG << "MP3FileReader::MP3FileReader(\"" << m_path << "\"): ERROR: " << m_error << endl;
     }
 }
 
@@ -163,14 +178,19 @@ MP3FileReader::cancelled()
 }
 
 void
-MP3FileReader::loadTags()
+MP3FileReader::loadTags(int fd)
 {
     m_title = "";
 
 #ifdef HAVE_ID3TAG
 
-    id3_file *file = id3_file_open(m_path.toLocal8Bit().data(),
-                                   ID3_FILE_MODE_READONLY);
+#ifdef _WIN32
+    int id3fd = _dup(fd);
+#else
+    int id3fd = dup(fd);
+#endif
+
+    id3_file *file = id3_file_fdopen(id3fd, ID3_FILE_MODE_READONLY);
     if (!file) return;
 
     // We can do this a lot more elegantly, but we'll leave that for
@@ -178,33 +198,32 @@ MP3FileReader::loadTags()
     
     id3_tag *tag = id3_file_tag(file);
     if (!tag) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No ID3 tag found" << endl;
-#endif
-        id3_file_close(file);
+        SVDEBUG << "MP3FileReader::loadTags: No ID3 tag found" << endl;
+        id3_file_close(file); // also closes our dup'd fd
         return;
     }
 
     m_title = loadTag(tag, "TIT2"); // work title
     if (m_title == "") m_title = loadTag(tag, "TIT1");
+    if (m_title == "") SVDEBUG << "MP3FileReader::loadTags: No title found" << endl;
 
     m_maker = loadTag(tag, "TPE1"); // "lead artist"
     if (m_maker == "") m_maker = loadTag(tag, "TPE2");
+    if (m_maker == "") SVDEBUG << "MP3FileReader::loadTags: No artist/maker found" << endl;
 
     for (unsigned int i = 0; i < tag->nframes; ++i) {
         if (tag->frames[i]) {
             QString value = loadTag(tag, tag->frames[i]->id);
-            if (value != "") m_tags[tag->frames[i]->id] = value;
+            if (value != "") {
+                m_tags[tag->frames[i]->id] = value;
+            }
         }
     }
 
-    id3_file_close(file);
+    id3_file_close(file); // also closes our dup'd fd
 
 #else
-#ifdef DEBUG_ID3TAG
-    cerr << "MP3FileReader::loadTags: ID3 tag support not compiled in"
-              << endl;
-#endif
+    SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in" << endl;
 #endif
 }
 
@@ -216,47 +235,38 @@ MP3FileReader::loadTag(void *vtag, const char *name)
 
     id3_frame *frame = id3_tag_findframe(tag, name, 0);
     if (!frame) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: No \"" << name << "\" frame found in ID3 tag" << endl;
         return "";
     }
         
     if (frame->nfields < 2) {
-        cerr << "MP3FileReader::loadTags: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
+        cerr << "MP3FileReader::loadTag: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 
     unsigned int nstrings = id3_field_getnstrings(&frame->fields[1]);
     if (nstrings == 0) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: No strings for \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: No strings for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 
     id3_ucs4_t const *ustr = id3_field_getstrings(&frame->fields[1], 0);
     if (!ustr) {
-#ifdef DEBUG_ID3TAG
-        cerr << "MP3FileReader::loadTags: Invalid or absent data for \"" << name << "\" in ID3 tag" << endl;
-#endif
+        SVDEBUG << "MP3FileReader::loadTag: Invalid or absent data for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
         
     id3_utf8_t *u8str = id3_ucs4_utf8duplicate(ustr);
     if (!u8str) {
-        cerr << "MP3FileReader::loadTags: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 title" << endl;
+        SVDEBUG << "MP3FileReader::loadTag: ERROR: Internal error: Failed to convert UCS4 to UTF8 in ID3 tag" << endl;
         return "";
     }
         
     QString rv = QString::fromUtf8((const char *)u8str);
     free(u8str);
 
-#ifdef DEBUG_ID3TAG
-	cerr << "MP3FileReader::loadTags: tag \"" << name << "\" -> \""
-	<< rv << "\"" << endl;
-#endif
-
+    SVDEBUG << "MP3FileReader::loadTag: Tag \"" << name << "\" -> \""
+            << rv << "\"" << endl;
 
     return rv;
 
@@ -268,19 +278,19 @@ MP3FileReader::loadTag(void *vtag, const char *name)
 void
 MP3FileReader::DecodeThread::run()
 {
-    if (!m_reader->decode(m_reader->m_filebuffer, m_reader->m_fileSize)) {
+    if (!m_reader->decode(m_reader->m_fileBuffer, m_reader->m_fileBufferSize)) {
         m_reader->m_error = QString("Failed to decode file %1.").arg(m_reader->m_path);
     }
 
-    delete[] m_reader->m_filebuffer;
-    m_reader->m_filebuffer = 0;
+    delete[] m_reader->m_fileBuffer;
+    m_reader->m_fileBuffer = 0;
 
-    if (m_reader->m_samplebuffer) {
+    if (m_reader->m_sampleBuffer) {
         for (int c = 0; c < m_reader->m_channelCount; ++c) {
-            delete[] m_reader->m_samplebuffer[c];
+            delete[] m_reader->m_sampleBuffer[c];
         }
-        delete[] m_reader->m_samplebuffer;
-        m_reader->m_samplebuffer = 0;
+        delete[] m_reader->m_sampleBuffer;
+        m_reader->m_sampleBuffer = 0;
     }
 
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
@@ -298,35 +308,51 @@ MP3FileReader::decode(void *mm, sv_frame_t sz)
     struct mad_decoder decoder;
 
     data.start = (unsigned char const *)mm;
-    data.length = (unsigned long)sz;
+    data.length = sz;
+    data.finished = false;
     data.reader = this;
 
-    mad_decoder_init(&decoder, &data, input, 0, 0, output, error, 0);
+    mad_decoder_init(&decoder,          // decoder to initialise
+                     &data,             // our own data block for callbacks
+                     input_callback,    // provides (entire) input to mad
+                     0,                 // checks header
+                     filter_callback,   // filters frame before decoding
+                     output_callback,   // receives decoded output
+                     error_callback,    // handles decode errors
+                     0);                // "message_func"
+
     mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
     mad_decoder_finish(&decoder);
 
+    SVDEBUG << "MP3FileReader: Decoding complete, decoded " << m_mp3FrameCount
+            << " mp3 frames" << endl;
+    
     m_done = true;
     return true;
 }
 
 enum mad_flow
-MP3FileReader::input(void *dp, struct mad_stream *stream)
+MP3FileReader::input_callback(void *dp, struct mad_stream *stream)
 {
     DecoderData *data = (DecoderData *)dp;
 
-    if (!data->length) return MAD_FLOW_STOP;
+    if (!data->length) {
+        data->finished = true;
+        return MAD_FLOW_STOP;
+    }
 
     unsigned char const *start = data->start;
-    unsigned long length = data->length;
+    sv_frame_t length = data->length;
 
 #ifdef HAVE_ID3TAG
-    if (length > ID3_TAG_QUERYSIZE) {
+    while (length > ID3_TAG_QUERYSIZE) {
         ssize_t taglen = id3_tag_query(start, ID3_TAG_QUERYSIZE);
-        if (taglen > 0) {
-//            cerr << "ID3 tag length to skip: " << taglen << endl;
-            start += taglen;
-            length -= taglen;
+        if (taglen <= 0) {
+            break;
         }
+        SVDEBUG << "MP3FileReader: ID3 tag length to skip: " << taglen << endl;
+        start += taglen;
+        length -= taglen;
     }
 #endif
 
@@ -337,9 +363,107 @@ MP3FileReader::input(void *dp, struct mad_stream *stream)
 }
 
 enum mad_flow
-MP3FileReader::output(void *dp,
-		      struct mad_header const *header,
-		      struct mad_pcm *pcm)
+MP3FileReader::filter_callback(void *dp,
+                               struct mad_stream const *stream,
+                               struct mad_frame *frame)
+{
+    DecoderData *data = (DecoderData *)dp;
+    return data->reader->filter(stream, frame);
+}
+
+static string toMagic(unsigned long fourcc)
+{
+    string magic("....");
+    for (int i = 0; i < 4; ++i) {
+        magic[3-i] = char((fourcc >> (8*i)) & 0xff);
+    }
+    return magic;
+}
+
+enum mad_flow
+MP3FileReader::filter(struct mad_stream const *stream,
+                      struct mad_frame *)
+{
+    if (m_mp3FrameCount > 0) {
+        // only handle info frame if it appears as first mp3 frame
+        return MAD_FLOW_CONTINUE;
+    }
+
+    if (m_gaplessMode == GaplessMode::Gappy) {
+        // Our non-gapless mode does not even filter out the Xing/LAME
+        // frame. That's because the main reason non-gapless mode
+        // exists is for backward compatibility with MP3FileReader
+        // behaviour before the gapless support was added, so we even
+        // need to keep the spurious 1152 samples resulting from
+        // feeding Xing/LAME frame to the decoder as otherwise we'd
+        // have different output from before.
+        SVDEBUG << "MP3FileReader: Not gapless mode, not checking Xing/LAME frame"
+                << endl;
+        return MAD_FLOW_CONTINUE;
+    }
+    
+    struct mad_bitptr ptr = stream->anc_ptr;
+    string magic = toMagic(mad_bit_read(&ptr, 32));
+
+    if (magic == "Xing" || magic == "Info") {
+
+        SVDEBUG << "MP3FileReader: Found Xing/LAME metadata frame (magic = \""
+                << magic << "\")" << endl;
+
+        // All we want at this point is the LAME encoder delay and
+        // padding values. We expect to see the Xing/Info magic (which
+        // we've already read), then 116 bytes of Xing data, then LAME
+        // magic, 5 byte version string, 12 bytes of LAME data that we
+        // aren't currently interested in, then the delays encoded as
+        // two 12-bit numbers into three bytes.
+        //
+        // (See gabriel.mp3-tech.org/mp3infotag.html)
+        
+        for (int skip = 0; skip < 116; ++skip) {
+            (void)mad_bit_read(&ptr, 8);
+        }
+
+        magic = toMagic(mad_bit_read(&ptr, 32));
+
+        if (magic == "LAME") {
+
+            SVDEBUG << "MP3FileReader: Found LAME-specific metadata" << endl;
+
+            for (int skip = 0; skip < 5 + 12; ++skip) {
+                (void)mad_bit_read(&ptr, 8);
+            }
+
+            auto delay = mad_bit_read(&ptr, 12);
+            auto padding = mad_bit_read(&ptr, 12);
+
+            sv_frame_t delayToDrop = DEFAULT_DECODER_DELAY + delay;
+            sv_frame_t paddingToDrop = padding - DEFAULT_DECODER_DELAY;
+            if (paddingToDrop < 0) paddingToDrop = 0;
+
+            SVDEBUG << "MP3FileReader: LAME encoder delay = " << delay
+                    << ", padding = " << padding << endl;
+
+            SVDEBUG << "MP3FileReader: Will be trimming " << delayToDrop
+                    << " samples from start and " << paddingToDrop
+                    << " from end" << endl;
+
+            CodedAudioFileReader::setFramesToTrim(delayToDrop, paddingToDrop);
+            
+        } else {
+            SVDEBUG << "MP3FileReader: Xing frame has no LAME metadata" << endl;
+        }
+            
+        return MAD_FLOW_IGNORE;
+        
+    } else {
+        return MAD_FLOW_CONTINUE;
+    }
+}
+
+enum mad_flow
+MP3FileReader::output_callback(void *dp,
+                               struct mad_header const *header,
+                               struct mad_pcm *pcm)
 {
     DecoderData *data = (DecoderData *)dp;
     return data->reader->accept(header, pcm);
@@ -347,11 +471,11 @@ MP3FileReader::output(void *dp,
 
 enum mad_flow
 MP3FileReader::accept(struct mad_header const *header,
-		      struct mad_pcm *pcm)
+                      struct mad_pcm *pcm)
 {
     int channels = pcm->channels;
     int frames = pcm->length;
-
+    
     if (header) {
         m_bitrateNum = m_bitrateNum + double(header->bitrate);
         m_bitrateDenom ++;
@@ -363,6 +487,10 @@ MP3FileReader::accept(struct mad_header const *header,
 
         m_fileRate = pcm->samplerate;
         m_channelCount = channels;
+
+        SVDEBUG << "MP3FileReader::accept: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
 
         initialiseDecodeCache();
 
@@ -387,24 +515,30 @@ MP3FileReader::accept(struct mad_header const *header,
         }
     }
 
-    if (m_cancelled) return MAD_FLOW_STOP;
+    if (m_cancelled) {
+        SVDEBUG << "MP3FileReader: Decoding cancelled" << endl;
+        return MAD_FLOW_STOP;
+    }
 
     if (!isDecodeCacheInitialised()) {
+        SVDEBUG << "MP3FileReader::accept: fallback case: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
         initialiseDecodeCache();
     }
 
-    if (int(m_samplebuffersize) < frames) {
-        if (!m_samplebuffer) {
-            m_samplebuffer = new float *[channels];
+    if (m_sampleBufferSize < size_t(frames)) {
+        if (!m_sampleBuffer) {
+            m_sampleBuffer = new float *[channels];
             for (int c = 0; c < channels; ++c) {
-                m_samplebuffer[c] = 0;
+                m_sampleBuffer[c] = 0;
             }
         }
         for (int c = 0; c < channels; ++c) {
-            delete[] m_samplebuffer[c];
-            m_samplebuffer[c] = new float[frames];
+            delete[] m_sampleBuffer[c];
+            m_sampleBuffer[c] = new float[frames];
         }
-        m_samplebuffersize = frames;
+        m_sampleBufferSize = frames;
     }
 
     int activeChannels = int(sizeof(pcm->samples) / sizeof(pcm->samples[0]));
@@ -413,31 +547,48 @@ MP3FileReader::accept(struct mad_header const *header,
 
         for (int i = 0; i < frames; ++i) {
 
-	    mad_fixed_t sample = 0;
-	    if (ch < activeChannels) {
-		sample = pcm->samples[ch][i];
-	    }
-	    float fsample = float(sample) / float(MAD_F_ONE);
+            mad_fixed_t sample = 0;
+            if (ch < activeChannels) {
+                sample = pcm->samples[ch][i];
+            }
+            float fsample = float(sample) / float(MAD_F_ONE);
             
-            m_samplebuffer[ch][i] = fsample;
-	}
+            m_sampleBuffer[ch][i] = fsample;
+        }
     }
 
-    addSamplesToDecodeCache(m_samplebuffer, frames);
+    addSamplesToDecodeCache(m_sampleBuffer, frames);
+
+    ++m_mp3FrameCount;
 
     return MAD_FLOW_CONTINUE;
 }
 
 enum mad_flow
-MP3FileReader::error(void * /* dp */,
-		     struct mad_stream * /* stream */,
-		     struct mad_frame *)
+MP3FileReader::error_callback(void *dp,
+                              struct mad_stream *stream,
+                              struct mad_frame *)
 {
-//    DecoderData *data = (DecoderData *)dp;
+    DecoderData *data = (DecoderData *)dp;
 
-//    fprintf(stderr, "decoding error 0x%04x (%s) at byte offset %lu\n",
-//	    stream->error, mad_stream_errorstr(stream),
-//	    (unsigned long)(stream->this_frame - data->start));
+    sv_frame_t ix = stream->this_frame - data->start;
+    
+    if (stream->error == MAD_ERROR_LOSTSYNC &&
+        (data->finished || ix >= data->length)) {
+        // We are at end of file, losing sync is expected behaviour,
+        // don't report it
+        return MAD_FLOW_CONTINUE;
+    }
+    
+    if (!data->reader->m_decodeErrorShown) {
+        char buffer[256];
+        snprintf(buffer, 255,
+                 "MP3 decoding error 0x%04x (%s) at byte offset %lld",
+                 stream->error, mad_stream_errorstr(stream), (long long int)ix);
+        SVCERR << "Warning: in file \"" << data->reader->m_path << "\": "
+               << buffer << " (continuing; will not report any further decode errors for this file)" << endl;
+        data->reader->m_decodeErrorShown = true;
+    }
 
     return MAD_FLOW_CONTINUE;
 }

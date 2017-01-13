@@ -22,6 +22,9 @@
 #include <map>
 #include <cstdlib>
 
+#include <bqvec/VectorOps.h>
+#include <bqvec/Allocators.h>
+
 #include "system/System.h"
 
 enum WindowType {
@@ -47,8 +50,12 @@ public:
      * than symmetrical. (A window of size N is equivalent to a
      * symmetrical window of size N+1 with the final element missing.)
      */
-    Window(WindowType type, int size) : m_type(type), m_size(size) { encache(); }
-    Window(const Window &w) : m_type(w.m_type), m_size(w.m_size) { encache(); }
+    Window(WindowType type, int size) : m_type(type), m_size(size), m_cache(0) {
+        encache();
+    }
+    Window(const Window &w) : m_type(w.m_type), m_size(w.m_size), m_cache(0) {
+        encache();
+    }
     Window &operator=(const Window &w) {
 	if (&w == this) return *this;
 	m_type = w.m_type;
@@ -56,11 +63,16 @@ public:
 	encache();
 	return *this;
     }
-    virtual ~Window() { delete[] m_cache; }
+    virtual ~Window() {
+        breakfastquay::deallocate(m_cache);
+    }
     
-    void cut(T *src) const { cut(src, src); }
-    void cut(T *src, T *dst) const {
-	for (int i = 0; i < m_size; ++i) dst[i] = src[i] * m_cache[i];
+    inline void cut(T *const BQ_R__ block) const {
+        breakfastquay::v_multiply(block, m_cache, m_size);
+    }
+
+    inline void cut(const T *const BQ_R__ src, T *const BQ_R__ dst) const {
+        breakfastquay::v_multiply(dst, src, m_cache, m_size);
     }
 
     T getArea() { return m_area; }
@@ -78,7 +90,7 @@ public:
 protected:
     WindowType m_type;
     int m_size;
-    T *m_cache;
+    T *BQ_R__ m_cache;
     T m_area;
     
     void encache();
@@ -88,41 +100,42 @@ protected:
 template <typename T>
 void Window<T>::encache()
 {
+    if (!m_cache) m_cache = breakfastquay::allocate<T>(m_size);
+
     const int n = m_size;
-    T *mult = new T[n];
+    breakfastquay::v_set(m_cache, T(1.0), n);
     int i;
-    for (i = 0; i < n; ++i) mult[i] = 1.0;
 
     switch (m_type) {
 		
     case RectangularWindow:
 	for (i = 0; i < n; ++i) {
-	    mult[i] *= T(0.5);
+	    m_cache[i] *= T(0.5);
 	}
 	break;
 	    
     case BartlettWindow:
 	for (i = 0; i < n/2; ++i) {
-	    mult[i] *= T(i) / T(n/2);
-	    mult[i + n/2] *= T(1.0) - T(i) / T(n/2);
+	    m_cache[i] *= T(i) / T(n/2);
+	    m_cache[i + n/2] *= T(1.0) - T(i) / T(n/2);
 	}
 	break;
 	    
     case HammingWindow:
-        cosinewin(mult, 0.54, 0.46, 0.0, 0.0);
+        cosinewin(m_cache, 0.54, 0.46, 0.0, 0.0);
 	break;
 	    
     case HanningWindow:
-        cosinewin(mult, 0.50, 0.50, 0.0, 0.0);
+        cosinewin(m_cache, 0.50, 0.50, 0.0, 0.0);
 	break;
 	    
     case BlackmanWindow:
-        cosinewin(mult, 0.42, 0.50, 0.08, 0.0);
+        cosinewin(m_cache, 0.42, 0.50, 0.08, 0.0);
 	break;
 	    
     case GaussianWindow:
 	for (i = 0; i < n; ++i) {
-            mult[i] *= T(pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2)));
+            m_cache[i] *= T(pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2)));
 	}
 	break;
 	    
@@ -131,29 +144,27 @@ void Window<T>::encache()
         int N = n-1;
         for (i = 0; i < N/4; ++i) {
             T m = T(2 * pow(1.0 - (T(N)/2 - T(i)) / (T(N)/2), 3));
-            mult[i] *= m;
-            mult[N-i] *= m;
+            m_cache[i] *= m;
+            m_cache[N-i] *= m;
         }
         for (i = N/4; i <= N/2; ++i) {
             int wn = i - N/2;
             T m = T(1.0 - 6 * pow(T(wn) / (T(N)/2), 2) * (1.0 - T(abs(wn)) / (T(N)/2)));
-            mult[i] *= m;
-            mult[N-i] *= m;
+            m_cache[i] *= m;
+            m_cache[N-i] *= m;
         }            
         break;
     }
 
     case NuttallWindow:
-        cosinewin(mult, 0.3635819, 0.4891775, 0.1365995, 0.0106411);
+        cosinewin(m_cache, 0.3635819, 0.4891775, 0.1365995, 0.0106411);
 	break;
 
     case BlackmanHarrisWindow:
-        cosinewin(mult, 0.35875, 0.48829, 0.14128, 0.01168);
+        cosinewin(m_cache, 0.35875, 0.48829, 0.14128, 0.01168);
         break;
     }
 	
-    m_cache = mult;
-
     m_area = 0;
     for (int i = 0; i < n; ++i) {
         m_area += m_cache[i];

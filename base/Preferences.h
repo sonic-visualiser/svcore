@@ -51,8 +51,9 @@ public:
     SpectrogramXSmoothing getSpectrogramXSmoothing() const { return m_spectrogramXSmoothing; }
     double getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
-    int getResampleQuality() const { return m_resampleQuality; }
 
+    bool getRunPluginsInProcess() const { return m_runPluginsInProcess; }
+    
     //!!! harmonise with PaneStack
     enum PropertyBoxLayout {
         VerticallyStacked,
@@ -70,7 +71,10 @@ public:
     sv_samplerate_t getFixedSampleRate() const { return m_fixedSampleRate; }
 
     /// True if we should resample second or subsequent audio file to match first audio file's rate
-    bool getResampleOnLoad() const { return m_resampleOnLoad; }    
+    bool getResampleOnLoad() const { return m_resampleOnLoad; }
+
+    /// True if mp3 files should be loaded "gaplessly", i.e. compensating for encoder/decoder delay and padding
+    bool getUseGaplessMode() const { return m_gapless; }
     
     /// True if audio files should be loaded with normalisation (max == 1)
     bool getNormaliseAudio() const { return m_normaliseAudio; }
@@ -113,11 +117,12 @@ public slots:
     void setTuningFrequency(double freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
-    void setResampleQuality(int quality);
+    void setRunPluginsInProcess(bool r);
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
     void setFixedSampleRate(sv_samplerate_t);
     void setResampleOnLoad(bool);
+    void setUseGaplessMode(bool);
     void setNormaliseAudio(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
@@ -150,11 +155,12 @@ private:
     double m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
-    int m_resampleQuality;
+    bool m_runPluginsInProcess;
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
     sv_samplerate_t m_fixedSampleRate;
     bool m_resampleOnLoad;
+    bool m_gapless;
     bool m_normaliseAudio;
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;

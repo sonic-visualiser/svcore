@@ -25,8 +25,10 @@
 #include <iostream>
 #include <cmath>
 
+using namespace std;
+
 WavFileWriter::WavFileWriter(QString path,
-			     sv_samplerate_t sampleRate,
+                             sv_samplerate_t sampleRate,
                              int channels,
                              FileWriteMode mode) :
     m_path(path),
@@ -48,25 +50,22 @@ WavFileWriter::WavFileWriter(QString path,
     fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
     try {
+        QString writePath = m_path;
         if (mode == WriteToTemporary) {
             m_temp = new TempWriteFile(m_path);
-            m_file = sf_open(m_temp->getTemporaryFilename().toLocal8Bit(),
-                             SFM_WRITE, &fileInfo);
-            if (!m_file) {
-                cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << endl;
-                m_error = QString("Failed to open audio file '%1' for writing")
-                    .arg(m_temp->getTemporaryFilename());
-            }
-        } else {
-            m_file = sf_open(m_path.toLocal8Bit(), SFM_WRITE, &fileInfo);
-            if (!m_file) {
-                cerr << "WavFileWriter: Failed to open file ("
-                          << sf_strerror(m_file) << ")" << endl;
-                m_error = QString("Failed to open audio file '%1' for writing")
-                    .arg(m_path);
-            }
-        }            
+            writePath = m_temp->getTemporaryFilename();
+        }
+#ifdef Q_OS_WIN
+        m_file = sf_wchar_open((LPCWSTR)writePath.utf16(), SFM_WRITE, &fileInfo);
+#else
+        m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
+#endif
+        if (!m_file) {
+            cerr << "WavFileWriter: Failed to open file ("
+                 << sf_strerror(m_file) << ")" << endl;
+            m_error = QString("Failed to open audio file '%1' for writing")
+                .arg(writePath);
+        }
     } catch (FileOperationFailed &f) {
         m_error = f.what();
         m_temp = 0;
@@ -117,62 +116,59 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
-	return false;
+        return false;
     }
 
     bool ownSelection = false;
     if (!selection) {
-	selection = new MultiSelection;
-	selection->setSelection(Selection(source->getStartFrame(),
-					  source->getEndFrame()));
+        selection = new MultiSelection;
+        selection->setSelection(Selection(source->getStartFrame(),
+                                          source->getEndFrame()));
         ownSelection = true;
     }
 
     sv_frame_t bs = 2048;
-    float *ub = new float[bs]; // uninterleaved buffer (one channel)
-    float *ib = new float[bs * m_channels]; // interleaved buffer
 
     for (MultiSelection::SelectionList::iterator i =
-	     selection->getSelections().begin();
-	 i != selection->getSelections().end(); ++i) {
+         selection->getSelections().begin();
+         i != selection->getSelections().end(); ++i) {
 	
-	sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
+        sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
 
-	for (sv_frame_t f = f0; f < f1; f += bs) {
+        for (sv_frame_t f = f0; f < f1; f += bs) {
 	    
-	    sv_frame_t n = std::min(bs, f1 - f);
+            sv_frame_t n = min(bs, f1 - f);
+            floatvec_t interleaved(n * m_channels, 0.f);
 
-	    for (int c = 0; c < int(m_channels); ++c) {
-		source->getData(c, f, n, ub);
-		for (int i = 0; i < n; ++i) {
-		    ib[i * m_channels + c] = ub[i];
-		}
-	    }	    
+            for (int c = 0; c < int(m_channels); ++c) {
+                auto chanbuf = source->getData(c, f, n);
+                for (int i = 0; in_range_for(chanbuf, i); ++i) {
+                    interleaved[i * m_channels + c] = chanbuf[i];
+                }
+            }
 
-	    sf_count_t written = sf_writef_float(m_file, ib, n);
+            sf_count_t written = sf_writef_float(m_file, interleaved.data(), n);
 
-	    if (written < n) {
-		m_error = QString("Only wrote %1 of %2 frames at file frame %3")
-		    .arg(written).arg(n).arg(f);
-		break;
-	    }
-	}
+            if (written < n) {
+                m_error = QString("Only wrote %1 of %2 frames at file frame %3")
+                        .arg(written).arg(n).arg(f);
+                break;
+            }
+        }
     }
 
-    delete[] ub;
-    delete[] ib;
     if (ownSelection) delete selection;
 
     return isOK();
 }
 	
 bool
-WavFileWriter::writeSamples(float **samples, sv_frame_t count)
+WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {
     if (!m_file) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
-	return false;
+        return false;
     }
 
     float *b = new float[count * m_channels];

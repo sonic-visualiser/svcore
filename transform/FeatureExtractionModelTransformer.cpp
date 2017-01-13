@@ -16,6 +16,7 @@
 #include "FeatureExtractionModelTransformer.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
 #include "plugin/PluginXml.h"
 #include <vamp-hostsdk/Plugin.h>
 
@@ -42,25 +43,23 @@
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
-
-    initialise();
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transforms &transforms) :
     ModelTransformer(in, transforms),
-    m_plugin(0)
+    m_plugin(0),
+    m_haveOutputs(false)
 {
     if (m_transforms.empty()) {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s)" << endl;
     } else {
         SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: " << transforms.size() << " transform(s), first has plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
     }
-    
-    initialise();
 }
 
 static bool
@@ -74,6 +73,10 @@ areTransformsSimilar(const Transform &t1, const Transform &t2)
 bool
 FeatureExtractionModelTransformer::initialise()
 {
+    // This is (now) called from the run thread. The plugin is
+    // constructed, initialised, used, and destroyed all from a single
+    // thread.
+    
     // All transforms must use the same plugin, parameters, and
     // inputs: they can differ only in choice of plugin output. So we
     // initialise based purely on the first transform in the list (but
@@ -91,7 +94,7 @@ FeatureExtractionModelTransformer::initialise()
     QString pluginId = primaryTransform.getPluginIdentifier();
 
     FeatureExtractionPluginFactory *factory =
-	FeatureExtractionPluginFactory::instanceFor(pluginId);
+        FeatureExtractionPluginFactory::instance();
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
@@ -104,6 +107,9 @@ FeatureExtractionModelTransformer::initialise()
         return false;
     }
 
+    SVDEBUG << "FeatureExtractionModelTransformer: Instantiating plugin for transform in thread "
+            << QThread::currentThreadId() << endl;
+    
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
@@ -130,13 +136,13 @@ FeatureExtractionModelTransformer::initialise()
     }
 
     SVDEBUG << "Initialising feature extraction plugin with channels = "
-              << channelCount << ", step = " << primaryTransform.getStepSize()
-              << ", block = " << primaryTransform.getBlockSize() << endl;
+            << channelCount << ", step = " << primaryTransform.getStepSize()
+            << ", block = " << primaryTransform.getBlockSize() << endl;
 
     if (!m_plugin->initialise(channelCount,
                               primaryTransform.getStepSize(),
                               primaryTransform.getBlockSize())) {
-
+        
         int pstep = primaryTransform.getStepSize();
         int pblock = primaryTransform.getBlockSize();
 
@@ -148,16 +154,24 @@ FeatureExtractionModelTransformer::initialise()
 
         if (primaryTransform.getStepSize() != pstep ||
             primaryTransform.getBlockSize() != pblock) {
+
+            SVDEBUG << "Initialisation failed, trying again with default step = "
+                    << primaryTransform.getStepSize()
+                    << ", block = " << primaryTransform.getBlockSize() << endl;
             
             if (!m_plugin->initialise(channelCount,
                                       primaryTransform.getStepSize(),
                                       primaryTransform.getBlockSize())) {
 
+                SVDEBUG << "Initialisation failed again" << endl;
+                
                 m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
                 return false;
 
             } else {
-
+                
+                SVDEBUG << "Initialisation succeeded this time" << endl;
+                
                 m_message = tr("Feature extraction plugin \"%1\" rejected the given step and block sizes (%2 and %3); using plugin defaults (%4 and %5) instead")
                     .arg(pluginId)
                     .arg(pstep)
@@ -168,9 +182,13 @@ FeatureExtractionModelTransformer::initialise()
 
         } else {
 
+            SVDEBUG << "Initialisation failed" << endl;
+                
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
             return false;
         }
+    } else {
+        SVDEBUG << "Initialisation succeeded" << endl;
     }
 
     if (primaryTransform.getPluginVersion() != "") {
@@ -220,15 +238,30 @@ FeatureExtractionModelTransformer::initialise()
         createOutputModels(j);
     }
 
+    m_outputMutex.lock();
+    m_haveOutputs = true;
+    m_outputsCondition.wakeAll();
+    m_outputMutex.unlock();
+
     return true;
+}
+
+void
+FeatureExtractionModelTransformer::deinitialise()
+{
+    SVDEBUG << "FeatureExtractionModelTransformer: deleting plugin for transform in thread "
+            << QThread::currentThreadId() << endl;
+    
+    delete m_plugin;
+    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
+        delete m_descriptors[j];
+    }
 }
 
 void
 FeatureExtractionModelTransformer::createOutputModels(int n)
 {
     DenseTimeValueModel *input = getConformingInput();
-
-//    cerr << "FeatureExtractionModelTransformer::createOutputModel: sample type " << m_descriptor->sampleType << ", rate " << m_descriptor->sampleRate << endl;
     
     PluginRDFDescription description(m_transforms[n].getPluginIdentifier());
     QString outputId = m_transforms[n].getOutput();
@@ -254,21 +287,33 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     }
 
     sv_samplerate_t modelRate = input->getSampleRate();
+    sv_samplerate_t outputRate = modelRate;
     int modelResolution = 1;
 
     if (m_descriptors[n]->sampleType != 
         Vamp::Plugin::OutputDescriptor::OneSamplePerStep) {
-        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
-            cerr << "WARNING: plugin reports output sample rate as "
-                      << m_descriptors[n]->sampleRate << " (can't display features with finer resolution than the input rate of " << input->getSampleRate() << ")" << endl;
+
+        outputRate = m_descriptors[n]->sampleRate;
+
+        //!!! SV doesn't actually support display of models that have
+        //!!! different underlying rates together -- so we always set
+        //!!! the model rate to be the input model's rate, and adjust
+        //!!! the resolution appropriately.  We can't properly display
+        //!!! data with a higher resolution than the base model at all
+        if (outputRate > input->getSampleRate()) {
+            SVDEBUG << "WARNING: plugin reports output sample rate as "
+                    << outputRate
+                    << " (can't display features with finer resolution than the input rate of "
+                    << modelRate << ")" << endl;
+            outputRate = modelRate;
         }
     }
 
     switch (m_descriptors[n]->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
-	if (m_descriptors[n]->sampleRate != 0.0) {
-	    modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
+	if (outputRate != 0.0) {
+	    modelResolution = int(round(modelRate / outputRate));
 	}
 	break;
 
@@ -277,18 +322,12 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 	break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
-        //!!! SV doesn't actually support display of models that have
-        //!!! different underlying rates together -- so we always set
-        //!!! the model rate to be the input model's rate, and adjust
-        //!!! the resolution appropriately.  We can't properly display
-        //!!! data with a higher resolution than the base model at all
-        if (m_descriptors[n]->sampleRate > input->getSampleRate()) {
-            modelResolution = 1;
-        } else if (m_descriptors[n]->sampleRate <= 0.0) {
-            cerr << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
+        if (outputRate <= 0.0) {
+            SVDEBUG << "WARNING: Fixed sample-rate plugin reports invalid sample rate " << m_descriptors[n]->sampleRate << "; defaulting to input rate of " << input->getSampleRate() << endl;
             modelResolution = 1;
         } else {
-            modelResolution = int(round(modelRate / m_descriptors[n]->sampleRate));
+            modelResolution = int(round(modelRate / outputRate));
+//            cerr << "modelRate = " << modelRate << ", descriptor rate = " << outputRate << ", modelResolution = " << modelResolution << endl;
         }
 	break;
     }
@@ -479,13 +518,21 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     }
 }
 
+void
+FeatureExtractionModelTransformer::awaitOutputModels()
+{
+    m_outputMutex.lock();
+    while (!m_haveOutputs) {
+        m_outputsCondition.wait(&m_outputMutex);
+    }
+    m_outputMutex.unlock();
+}
+
 FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::~FeatureExtractionModelTransformer()" << endl;
-    delete m_plugin;
-    for (int j = 0; j < (int)m_descriptors.size(); ++j) {
-        delete m_descriptors[j];
-    }
+    // Parent class dtor set the abandoned flag and waited for the run
+    // thread to exit; the run thread owns the plugin, and should have
+    // destroyed it before exiting (via a call to deinitialise)
 }
 
 FeatureExtractionModelTransformer::Models
@@ -566,6 +613,8 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
+    initialise();
+    
     DenseTimeValueModel *input = getConformingInput();
     if (!input) return;
 
@@ -606,9 +655,7 @@ FeatureExtractionModelTransformer::run()
                                    primaryTransform.getWindowType(),
                                    blockSize,
                                    stepSize,
-                                   blockSize,
-                                   false,
-                                   StorageAdviser::PrecisionCritical);
+                                   blockSize);
             if (!model->isOK() || model->getError() != "") {
                 QString err = model->getError();
                 delete model;
@@ -618,7 +665,6 @@ FeatureExtractionModelTransformer::run()
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
                 throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
             }
-            model->resume();
             fftModels.push_back(model);
             cerr << "created model for channel " << ch << endl;
         }
@@ -700,7 +746,7 @@ FeatureExtractionModelTransformer::run()
                 }                    
                 error = fftModels[ch]->getError();
                 if (error != "") {
-                    cerr << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
+                    SVDEBUG << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
                     m_abandoned = true;
                     m_message = error;
                     break;
@@ -761,6 +807,8 @@ FeatureExtractionModelTransformer::run()
         delete[] buffers[ch];
     }
     delete[] buffers;
+
+    deinitialise();
 }
 
 void
@@ -790,31 +838,28 @@ FeatureExtractionModelTransformer::getFrames(int channelCount,
 
     if (channelCount == 1) {
 
-        got = input->getData(m_input.getChannel(), startFrame, size,
-                             buffers[0] + offset);
+        auto data = input->getData(m_input.getChannel(), startFrame, size);
+        got = data.size();
+
+        copy(data.begin(), data.end(), buffers[0] + offset);
 
         if (m_input.getChannel() == -1 && input->getChannelCount() > 1) {
             // use mean instead of sum, as plugin input
             float cc = float(input->getChannelCount());
-            for (sv_frame_t i = 0; i < size; ++i) {
+            for (sv_frame_t i = 0; i < got; ++i) {
                 buffers[0][i + offset] /= cc;
             }
         }
 
     } else {
 
-        float **writebuf = buffers;
-        if (offset > 0) {
-            writebuf = new float *[channelCount];
-            for (int i = 0; i < channelCount; ++i) {
-                writebuf[i] = buffers[i] + offset;
+        auto data = input->getMultiChannelData(0, channelCount-1, startFrame, size);
+        if (!data.empty()) {
+            got = data[0].size();
+            for (int c = 0; in_range_for(data, c); ++c) {
+                copy(data[c].begin(), data[c].end(), buffers[c] + offset);
             }
         }
-
-        got = input->getMultiChannelData
-            (0, channelCount-1, startFrame, size, writebuf);
-
-        if (writebuf != buffers) delete[] writebuf;
     }
 
     while (got < size) {
@@ -844,7 +889,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
 	if (!feature.hasTimestamp) {
-	    cerr
+	    SVDEBUG
 		<< "WARNING: FeatureExtractionModelTransformer::addFeature: "
 		<< "Feature has variable sample rate but no timestamp!"
 		<< endl;
@@ -880,7 +925,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
     }
 
     if (frame < 0) {
-        cerr
+        SVDEBUG
             << "WARNING: FeatureExtractionModelTransformer::addFeature: "
             << "Negative frame counts are not supported (frame = " << frame
             << " from timestamp " << feature.timestamp
@@ -1013,8 +1058,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 	
     } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
 	
-	DenseThreeDimensionalModel::Column values =
-            DenseThreeDimensionalModel::Column::fromStdVector(feature.values);
+	DenseThreeDimensionalModel::Column values = feature.values;
 	
 	EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);

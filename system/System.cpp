@@ -1,16 +1,16 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Sonic Visualiser
-    An audio file viewer and annotation editor.
-    Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+  Sonic Visualiser
+  An audio file viewer and annotation editor.
+  Centre for Digital Music, Queen Mary, University of London.
+  This file copyright 2006 Chris Cannam and QMUL.
     
-    This program is free software; you can redistribute it and/or
-    modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation; either version 2 of the
-    License, or (at your option) any later version.  See the file
-    COPYING included with this distribution for more information.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2 of the
+  License, or (at your option) any later version.  See the file
+  COPYING included with this distribution for more information.
 */
 
 #include "System.h"
@@ -39,16 +39,16 @@
 
 #ifdef __APPLE__
 extern "C" {
-void *
-rpl_realloc (void *p, size_t n)
-{
-    p = realloc(p, n);
-    if (p == 0 && n == 0)
+    void *
+    rpl_realloc (void *p, size_t n)
     {
-    p = malloc(0);
+        p = realloc(p, n);
+        if (p == 0 && n == 0)
+        {
+            p = malloc(0);
+        }
+        return p;
     }
-    return p;
-}
 }
 #endif
 
@@ -56,25 +56,25 @@ rpl_realloc (void *p, size_t n)
 
 extern "C" {
 
-/* usleep is now in mingw
-void usleep(unsigned long usec)
-{
-    ::Sleep(usec / 1000);
-}
-*/
+#ifdef _MSC_VER
+    void usleep(unsigned long usec)
+    {
+        ::Sleep(usec / 1000);
+    }
+#endif
 
-int gettimeofday(struct timeval *tv, void *tz)
-{
-    union { 
-	long long ns100;  
-	FILETIME ft; 
-    } now; 
+    int gettimeofday(struct timeval *tv, void *tz)
+    {
+        union { 
+            long long ns100;  
+            FILETIME ft; 
+        } now; 
     
-    ::GetSystemTimeAsFileTime(&now.ft); 
-    tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
-    tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
-    return 0;
-}
+        ::GetSystemTimeAsFileTime(&now.ft); 
+        tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
+        tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
+        return 0;
+    }
 
 }
 
@@ -119,7 +119,7 @@ typedef struct
     DWORDLONG ullAvailVirtual;
     DWORDLONG ullAvailExtendedVirtual;
 } lMEMORYSTATUSEX;
-typedef WINBOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
+typedef BOOL (WINAPI *PFN_MS_EX) (lMEMORYSTATUSEX*);
 #endif
 
 void
@@ -153,10 +153,10 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
     if (exFound) {
 
         lMEMORYSTATUSEX lms;
-	lms.dwLength = sizeof(lms);
-	if (!ex(&lms)) {
+        lms.dwLength = sizeof(lms);
+        if (!ex(&lms)) {
             cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                      << GetLastError() << endl;
+                 << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -167,9 +167,9 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         /* Fall back to GlobalMemoryStatus which is always available.
            but returns wrong results for physical memory > 4GB  */
 
-	MEMORYSTATUS ms;
-	GlobalMemoryStatus(&ms);
-	wavail = ms.dwAvailPhys;
+        MEMORYSTATUS ms;
+        GlobalMemoryStatus(&ms);
+        wavail = ms.dwAvailPhys;
         wtotal = ms.dwTotalPhys;
     }
 
@@ -211,7 +211,9 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
 
     char buf[256];
     while (!feof(meminfo)) {
-        fgets(buf, 256, meminfo);
+        if (!fgets(buf, 256, meminfo)) {
+            return;
+        }
         bool isMemFree = (strncmp(buf, "MemFree:", 8) == 0);
         bool isMemTotal = (!isMemFree && (strncmp(buf, "MemTotal:", 9) == 0));
         if (isMemFree || isMemTotal) {
@@ -249,13 +251,13 @@ GetDiscSpaceMBAvailable(const char *path)
 #ifdef _WIN32
     ULARGE_INTEGER available, total, totalFree;
     if (GetDiskFreeSpaceExA(path, &available, &total, &totalFree)) {
-	  __int64 a = available.QuadPart;
+        __int64 a = available.QuadPart;
         a /= 1048576;
         if (a > INT_MAX) a = INT_MAX;
         return ssize_t(a);
     } else {
         cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-                  << GetLastError() << endl;
+             << GetLastError() << endl;
         return -1;
     }
 #else
@@ -277,7 +279,7 @@ GetDiscSpaceMBAvailable(const char *path)
 #ifdef _WIN32
 extern void SystemMemoryBarrier()
 {
-#ifdef __MSVC__
+#ifdef _MSC_VER
     MemoryBarrier();
 #else /* mingw */
     LONG Barrier = 0;
@@ -286,7 +288,7 @@ extern void SystemMemoryBarrier()
 #endif
 }
 #else /* !_WIN32 */
-#if !defined(__APPLE__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
+#if !defined(__APPLE__) && defined(__GNUC__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
 void
 SystemMemoryBarrier()
 {
@@ -325,76 +327,4 @@ float modf(float x, float y) { return x - (y * floorf(x / y)); }
 double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
 float princargf(float a) { return float(princarg(a)); }
 
-#ifdef _WIN32
 
-PluginLoadStatus
-TestPluginLoadability(QString soname, QString descriptorFn)
-{
-    //!!! Can't do the POSIX logic below, but we have no good
-    // alternative here yet
-    return PluginLoadOK;
-}
-
-#else
-
-#include <unistd.h>
-#include <sys/wait.h>
-
-PluginLoadStatus
-TestPluginLoadability(QString soname, QString descriptorFn)
-{
-    //!!! This is POSIX only, no equivalent on Windows, where we'll
-    //!!! have to do something completely different
-    
-    pid_t pid = fork();
-
-    if (pid < 0) {
-        return UnknownPluginLoadStatus; // fork failed
-    }
-
-    if (pid == 0) { // the child process
-
-        void *handle = DLOPEN(soname, RTLD_NOW | RTLD_LOCAL);
-        if (!handle) {
-            cerr << "isPluginLibraryLoadable: Failed to open plugin library \""
-                 << soname << "\": " << dlerror() << "\n";
-            cerr << "exiting with status 1" << endl;
-            exit(1);
-        }
-
-        void *fn = DLSYM(handle, descriptorFn.toLocal8Bit().data());
-        if (!fn) {
-            cerr << "isPluginLibraryLoadable: Failed to find plugin descriptor function \"" << descriptorFn << "\" in library \"" << soname << "\": " << dlerror() << "\n";
-            exit(2);
-        }
-
-//        cerr << "isPluginLibraryLoadable: Successfully loaded library \"" << soname << "\" and retrieved descriptor function" << endl;
-        
-        exit(0);
-
-    } else { // the parent process
-
-        int status = 0;
-
-        do {
-            waitpid(pid, &status, 0);
-        } while (WIFSTOPPED(status));
-
-        if (WIFEXITED(status)) {
-            switch (WEXITSTATUS(status)) {
-            case 0: return PluginLoadOK; // success
-            case 1: return PluginLoadFailedToLoadLibrary;
-            case 2: return PluginLoadFailedToFindDescriptor;
-            default: return PluginLoadFailedElsewhere;
-            }
-        }
-
-        if (WIFSIGNALED(status)) { 
-            return PluginLoadFailedElsewhere;
-        }
-
-        return UnknownPluginLoadStatus;
-    }
-}
-
-#endif

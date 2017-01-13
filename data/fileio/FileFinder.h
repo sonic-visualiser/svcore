@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FILE_FINDER_H_
-#define _FILE_FINDER_H_
+#ifndef SV_FILE_FINDER_H
+#define SV_FILE_FINDER_H
 
 #include <QString>
 
@@ -28,6 +28,7 @@ public:
         LayerFileNoMidi,
         SessionOrAudioFile,
         ImageFile,
+        SVGFile,
         AnyFile,
         CSVFile,
         LayerFileNonSV,

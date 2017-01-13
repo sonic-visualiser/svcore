@@ -59,6 +59,12 @@ PropertyContainer::getPropertyValueLabel(const PropertyName &, int) const
     return QString();
 }
 
+QString
+PropertyContainer::getPropertyValueIconName(const PropertyName &, int) const
+{
+    return QString();
+}
+
 RangeMapper *
 PropertyContainer::getNewPropertyRangeMapper(const PropertyName &) const
 {
@@ -172,6 +178,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
 
     case ValueProperty:
     case ColourProperty:
+    case ColourMapProperty:
     {
         int min, max;
         getPropertyRangeAndValue(name, &min, &max, 0);

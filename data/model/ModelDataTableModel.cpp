@@ -47,7 +47,8 @@ ModelDataTableModel::data(const QModelIndex &index, int role) const
     if (!m_model) return QVariant();
     if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
     if (!index.isValid()) return QVariant();
-    return m_model->getData(getUnsorted(index.row()), index.column(), role);
+    QVariant d = m_model->getData(getUnsorted(index.row()), index.column(), role);
+    return d;
 }
 
 bool
