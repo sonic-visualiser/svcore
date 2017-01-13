@@ -19,6 +19,8 @@
 
 #include <QTextStream>
 
+using namespace std;
+
 PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 
@@ -92,65 +94,55 @@ AggregateWaveModel::getSampleRate() const
     return m_components.begin()->model->getSampleRate();
 }
 
-sv_frame_t
-AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count,
-                            float *buffer) const
+floatvec_t
+AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     int ch0 = channel, ch1 = channel;
-    bool mixing = false;
     if (channel == -1) {
         ch0 = 0;
         ch1 = getChannelCount()-1;
-        mixing = true;
     }
 
-    float *readbuf = buffer;
-    if (mixing) {
-        readbuf = new float[count];
-        for (sv_frame_t i = 0; i < count; ++i) {
-            buffer[i] = 0.f;
-        }
-    }
-
+    floatvec_t result(count, 0.f);
     sv_frame_t longest = 0;
     
     for (int c = ch0; c <= ch1; ++c) {
-        sv_frame_t here = 
-            m_components[c].model->getData(m_components[c].channel,
-                                           start, count,
-                                           readbuf);
-        if (here > longest) {
-            longest = here;
+
+        auto here = m_components[c].model->getData(m_components[c].channel,
+                                                   start, count);
+        if (sv_frame_t(here.size()) > longest) {
+            longest = sv_frame_t(here.size());
         }
-        if (here < count) {
-            for (sv_frame_t i = here; i < count; ++i) {
-                readbuf[i] = 0.f;
-            }
-        }
-        if (mixing) {
-            for (sv_frame_t i = 0; i < count; ++i) {
-                buffer[i] += readbuf[i];
-            }
+        for (sv_frame_t i = 0; in_range_for(here, i); ++i) {
+            result[i] += here[i];
         }
     }
 
-    if (mixing) delete[] readbuf;
-    return longest;
+    result.resize(longest);
+    return result;
 }
 
-sv_frame_t
+vector<floatvec_t>
 AggregateWaveModel::getMultiChannelData(int fromchannel, int tochannel,
-                                        sv_frame_t start, sv_frame_t count,
-                                        float **buffer) const
+                                        sv_frame_t start, sv_frame_t count) const
 {
     sv_frame_t min = count;
 
+    vector<floatvec_t> result;
+
     for (int c = fromchannel; c <= tochannel; ++c) {
-        sv_frame_t here = getData(c, start, count, buffer[c - fromchannel]);
-        if (here < min) min = here;
+        auto here = getData(c, start, count);
+        if (sv_frame_t(here.size()) < min) {
+            min = sv_frame_t(here.size());
+        }
+        result.push_back(here);
+    }
+
+    if (min < count) {
+        for (auto &v : result) v.resize(min);
     }
     
-    return min;
+    return result;
 }
 
 int

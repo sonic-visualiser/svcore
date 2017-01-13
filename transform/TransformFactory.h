@@ -195,14 +195,10 @@ public:
      */
     void setParametersFromPluginConfigurationXml(Transform &transform,
                                                  QString xml);
-
-    /**
-     * Return any error message arising from the initial plugin
-     * scan. The return value will either be an empty string (nothing
-     * to report) or an HTML string suitable for dropping into a
-     * dialog and showing the user.
-     */
-    QString getPluginPopulationWarning();
+    
+    QString getStartupFailureReport() const {
+        return m_errorString;
+    }
     
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
@@ -213,6 +209,8 @@ protected:
     TransformDescriptionMap m_uninstalledTransforms;
     bool m_uninstalledTransformsPopulated;
 
+    QString m_errorString;
+    
     void populateTransforms();
     void populateUninstalledTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);

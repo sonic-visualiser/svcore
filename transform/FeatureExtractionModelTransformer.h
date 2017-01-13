@@ -19,6 +19,8 @@
 #include "ModelTransformer.h"
 
 #include <QString>
+#include <QMutex>
+#include <QWaitCondition>
 
 #include <vamp-hostsdk/Plugin.h>
 
@@ -28,7 +30,7 @@
 class DenseTimeValueModel;
 class SparseTimeValueModel;
 
-class FeatureExtractionModelTransformer : public ModelTransformer
+class FeatureExtractionModelTransformer : public ModelTransformer // + is a Thread
 {
     Q_OBJECT
 
@@ -50,6 +52,7 @@ public:
 
 protected:
     bool initialise();
+    void deinitialise();
 
     virtual void run();
 
@@ -74,7 +77,12 @@ protected:
     void getFrames(int channelCount, sv_frame_t startFrame, sv_frame_t size,
                    float **buffer);
 
-    // just casts
+    bool m_haveOutputs;
+    QMutex m_outputMutex;
+    QWaitCondition m_outputsCondition;
+    void awaitOutputModels();
+    
+    // just casts:
 
     DenseTimeValueModel *getConformingInput();
 

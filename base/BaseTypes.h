@@ -16,6 +16,10 @@
 #define BASE_TYPES_H
 
 #include <cstdint>
+#include <complex>
+#include <vector>
+
+#include <bqvec/Allocators.h>
 
 /** Frame index, the unit of our time axis. This is signed because the
     axis conceptually extends below zero: zero represents the start of
@@ -45,6 +49,11 @@ bool in_range_for(const C &container, T i)
     represent both. Storage size isn't an issue anyway.
 */
 typedef double sv_samplerate_t;
+
+typedef std::vector<float, breakfastquay::StlAllocator<float>> floatvec_t;
+
+typedef std::vector<std::complex<float>,
+                    breakfastquay::StlAllocator<std::complex<float>>> complexvec_t;
 
 #endif
 

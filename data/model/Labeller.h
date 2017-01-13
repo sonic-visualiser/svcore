@@ -171,37 +171,35 @@ public:
         }
     }
         
+    /**
+     * Relabel all points in the given model that lie within the given
+     * multi-selection, according to the labelling properties of this
+     * labeller.  Return a command that has been executed but not yet
+     * added to the history.
+     */
     template <typename PointType>
-    void labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
+    Command *labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
 
-        typename SparseModel<PointType>::PointList::iterator i;
-        typename SparseModel<PointType>::PointList pl(model.getPoints());
-
-        typename SparseModel<PointType>::EditCommand *command =
-            new typename SparseModel<PointType>::EditCommand
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
             (&model, tr("Label Points"));
 
         PointType prevPoint(0);
+        bool havePrevPoint(false);
 
-        for (i = pl.begin(); i != pl.end(); ++i) {
+        for (auto p: points) {
 
-            bool inRange = true;
             if (ms) {
-                Selection s(ms->getContainingSelection(i->frame, false));
-                if (s.isEmpty() || !s.contains(i->frame)) {
-                    inRange = false;
+                Selection s(ms->getContainingSelection(p.frame, false));
+                if (!s.contains(p.frame)) {
+                    prevPoint = p;
+                    havePrevPoint = true;
+                    continue;
                 }
             }
 
-            PointType p(*i);
-
-            if (!inRange) {
-                prevPoint = p;
-                continue;
-            }
-
             if (actingOnPrevPoint()) {
-                if (i != pl.begin()) {
+                if (havePrevPoint) {
                     command->deletePoint(prevPoint);
                     label<PointType>(p, &prevPoint);
                     command->addPoint(prevPoint);
@@ -213,9 +211,94 @@ public:
             }
 
             prevPoint = p;
+            havePrevPoint = true;
         }
 
-        command->finish();
+        return command->finish();
+    }
+
+    /**
+     * For each point in the given model (except the last), if that
+     * point lies within the given multi-selection, add n-1 new points
+     * at equally spaced intervals between it and the following point.
+     * Return a command that has been executed but not yet added to
+     * the history.
+     */
+    template <typename PointType>
+    Command *subdivide(SparseModel<PointType> &model, MultiSelection *ms, int n) {
+        
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Subdivide Points"));
+
+        for (auto i = points.begin(); i != points.end(); ++i) {
+
+            auto j = i;
+            // require a "next point" even if it's not in selection
+            if (++j == points.end()) {
+                break;
+            }
+
+            if (ms) {
+                Selection s(ms->getContainingSelection(i->frame, false));
+                if (!s.contains(i->frame)) {
+                    continue;
+                }
+            }
+
+            PointType p(*i);
+            PointType nextP(*j);
+
+            // n is the number of subdivisions, so we add n-1 new
+            // points equally spaced between p and nextP
+
+            for (int m = 1; m < n; ++m) {
+                sv_frame_t f = p.frame + (m * (nextP.frame - p.frame)) / n;
+                PointType newPoint(p);
+                newPoint.frame = f;
+                newPoint.label = tr("%1.%2").arg(p.label).arg(m+1);
+                command->addPoint(newPoint);
+            }
+        }
+
+        return command->finish();
+    }
+
+    /**
+     * Return a command that has been executed but not yet added to
+     * the history.
+     */
+    template <typename PointType>
+    Command *winnow(SparseModel<PointType> &model, MultiSelection *ms, int n) {
+        
+        auto points(model.getPoints());
+        auto command = new typename SparseModel<PointType>::EditCommand
+            (&model, tr("Winnow Points"));
+
+        int counter = 0;
+        
+        for (auto p: points) {
+
+            if (ms) {
+                Selection s(ms->getContainingSelection(p.frame, false));
+                if (!s.contains(p.frame)) {
+                    counter = 0;
+                    continue;
+                }
+            }
+
+            ++counter;
+
+            if (counter == n+1) counter = 1;
+            if (counter == 1) {
+                // this is an Nth instant, don't remove it
+                continue;
+            }
+            
+            command->deletePoint(p);
+        }
+
+        return command->finish();
     }
 
     template <typename PointType>

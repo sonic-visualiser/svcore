@@ -17,13 +17,13 @@
 
 #include "base/Profiler.h"
 
-Dense3DModelPeakCache::Dense3DModelPeakCache(DenseThreeDimensionalModel *source,
+#include "base/HitCount.h"
+
+Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
 					     int columnsPerPeak) :
     m_source(source),
-    m_resolution(columnsPerPeak)
+    m_columnsPerPeak(columnsPerPeak)
 {
-    m_coverage.resize(1); // otherwise it is simply invalid
-
     m_cache = new EditableDenseThreeDimensionalModel
         (source->getSampleRate(),
          getResolution(),
@@ -43,24 +43,9 @@ Dense3DModelPeakCache::~Dense3DModelPeakCache()
     delete m_cache;
 }
 
-bool
-Dense3DModelPeakCache::isColumnAvailable(int column) const
-{
-    if (!m_source) return false;
-    if (haveColumn(column)) return true;
-    for (int i = m_resolution; i > 0; ) {
-        --i;
-        if (!m_source->isColumnAvailable(column * m_resolution + i)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
-    Profiler profiler("Dense3DModelPeakCache::getColumn");
     if (!m_source) return Column();
     if (!haveColumn(column)) fillColumn(column);
     return m_cache->getColumn(column);
@@ -81,9 +66,9 @@ Dense3DModelPeakCache::sourceModelChanged()
     if (m_coverage.size() > 0) {
         // The last peak may have come from an incomplete read, which
         // may since have been filled, so reset it
-        m_coverage.reset(m_coverage.size()-1);
+        m_coverage[m_coverage.size()-1] = false;
     }
-    m_coverage.resize(getWidth()); // retaining data
+    m_coverage.resize(getWidth(), false); // retaining data
 }
 
 void
@@ -95,7 +80,14 @@ Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 bool
 Dense3DModelPeakCache::haveColumn(int column) const
 {
-    return column < (int)m_coverage.size() && m_coverage.get(column);
+    static HitCount count("Dense3DModelPeakCache");
+    if (in_range_for(m_coverage, column) && m_coverage[column]) {
+        count.hit();
+        return true;
+    } else {
+        count.miss();
+        return false;
+    }
 }
 
 void
@@ -103,26 +95,43 @@ Dense3DModelPeakCache::fillColumn(int column) const
 {
     Profiler profiler("Dense3DModelPeakCache::fillColumn");
 
-    if (column >= (int)m_coverage.size()) {
-        // see note in sourceModelChanged
-        if (m_coverage.size() > 0) m_coverage.reset(m_coverage.size()-1);
-        m_coverage.resize(column + 1);
+    if (!in_range_for(m_coverage, column)) {
+        if (m_coverage.size() > 0) {
+            // The last peak may have come from an incomplete read, which
+            // may since have been filled, so reset it
+            m_coverage[m_coverage.size()-1] = false;
+        }
+        m_coverage.resize(column + 1, false);
     }
 
+    int sourceWidth = m_source->getWidth();
+    
     Column peak;
-    for (int i = 0; i < int(m_resolution); ++i) {
-        Column here = m_source->getColumn(column * m_resolution + i);
+    int n = 0;
+    for (int i = 0; i < m_columnsPerPeak; ++i) {
+
+        int sourceColumn = column * m_columnsPerPeak + i;
+        if (sourceColumn >= sourceWidth) break;
+        
+        Column here = m_source->getColumn(sourceColumn);
+
+//        cerr << "Dense3DModelPeakCache::fillColumn(" << column << "): source col "
+//             << sourceColumn << " of " << sourceWidth
+//             << " returned " << here.size() << " elts" << endl;
+        
         if (i == 0) {
             peak = here;
+            n = int(peak.size());
         } else {
-            for (int j = 0; j < (int)peak.size() && j < (int)here.size(); ++j) {
-                if (here[j] > peak[j]) peak[j] = here[j];
+            int m = std::min(n, int(here.size()));
+            for (int j = 0; j < m; ++j) {
+                peak[j] = std::max(here[j], peak[j]);
             }
         }
     }
 
     m_cache->setColumn(column, peak);
-    m_coverage.set(column);
+    m_coverage[column] = true;
 }
 
 

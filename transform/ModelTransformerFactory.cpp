@@ -89,29 +89,21 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     bool ok = true;
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
 
-    cerr << "last configuration: " << configurationXml << endl;
+    SVDEBUG << "ModelTransformer: last configuration for identifier " << transform.getIdentifier() << ": " << configurationXml << endl;
 
     Vamp::PluginBase *plugin = 0;
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
+    if (RealTimePluginFactory::instanceFor(id)) {
 
-        cerr << "getConfigurationForTransform: instantiating Vamp plugin" << endl;
-
-        Vamp::Plugin *vp =
-            FeatureExtractionPluginFactory::instanceFor(id)->instantiatePlugin
-            (id, float(inputModel->getSampleRate()));
-
-        plugin = vp;
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
-
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: instantiating real-time plugin" << endl;
+        
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
         sv_samplerate_t sampleRate = inputModel->getSampleRate();
         int blockSize = 1024;
         int channels = 1;
         if (source) {
-            sampleRate = source->getTargetSampleRate();
+            sampleRate = source->getSourceSampleRate();
             blockSize = source->getTargetBlockSize();
             channels = source->getTargetChannelCount();
         }
@@ -120,6 +112,16 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             (id, 0, 0, sampleRate, blockSize, channels);
 
         plugin = rtp;
+
+    } else {
+
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: instantiating Vamp plugin" << endl;
+
+        Vamp::Plugin *vp =
+            FeatureExtractionPluginFactory::instance()->instantiatePlugin
+            (id, float(inputModel->getSampleRate()));
+
+        plugin = vp;
     }
 
     if (plugin) {
@@ -152,6 +154,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         configurationXml = PluginXml(plugin).toXmlString();
 
+        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: got configuration, deleting plugin" << endl;
+        
         delete plugin;
     }
 
@@ -171,20 +175,15 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
 
     QString id = transforms[0].getPluginIdentifier();
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        transformer =
-            new FeatureExtractionModelTransformer(input, transforms);
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
+    if (RealTimePluginFactory::instanceFor(id)) {
 
         transformer =
             new RealTimeEffectModelTransformer(input, transforms[0]);
 
     } else {
-        SVDEBUG << "ModelTransformerFactory::createTransformer: Unknown transform \""
-                  << transforms[0].getIdentifier() << "\"" << endl;
-        return transformer;
+
+        transformer =
+            new FeatureExtractionModelTransformer(input, transforms);
     }
 
     if (transformer) transformer->setObjectName(transforms[0].getIdentifier());

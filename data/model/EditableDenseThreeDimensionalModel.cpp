@@ -96,7 +96,7 @@ EditableDenseThreeDimensionalModel::setResolution(int sz)
 int
 EditableDenseThreeDimensionalModel::getWidth() const
 {
-    return m_data.size();
+    return int(m_data.size());
 }
 
 int
@@ -139,15 +139,15 @@ EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::getColumn(int index) const
 {
     QReadLocker locker(&m_lock);
-    if (index < 0 || index >= m_data.size()) return Column();
-    return expandAndRetrieve(index);
+    if (in_range_for(m_data, index)) return expandAndRetrieve(index);
+    else return Column();
 }
 
 float
 EditableDenseThreeDimensionalModel::getValueAt(int index, int n) const
 {
     Column c = getColumn(index);
-    if (int(n) < c.size()) return c.at(n);
+    if (in_range_for(c, n)) return c.at(n);
     return m_minimum;
 }
 
@@ -157,7 +157,7 @@ void
 EditableDenseThreeDimensionalModel::truncateAndStore(int index,
                                                      const Column &values)
 {
-    assert(int(index) < m_data.size());
+    assert(in_range_for(m_data, index));
 
     //cout << "truncateAndStore(" << index << ", " << values.size() << ")" << endl;
 
@@ -169,7 +169,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
     m_trunc[index] = 0;
     if (index == 0 ||
         m_compression == NoCompression ||
-        values.size() != int(m_yBinCount)) {
+        int(values.size()) != m_yBinCount) {
 //        given += values.size();
 //        stored += values.size();
         m_data[index] = values;
@@ -206,7 +206,7 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
     Column p = expandAndRetrieve(index - tdist);
     int h = m_yBinCount;
 
-    if (p.size() == h && tdist <= maxdist) {
+    if (int(p.size()) == h && tdist <= maxdist) {
 
         int bcount = 0, tcount = 0;
         if (!known || !top) {
@@ -265,6 +265,17 @@ EditableDenseThreeDimensionalModel::truncateAndStore(int index,
 }
 
 EditableDenseThreeDimensionalModel::Column
+EditableDenseThreeDimensionalModel::rightHeight(const Column &c) const
+{
+    if (int(c.size()) == m_yBinCount) return c;
+    else {
+        Column cc(c);
+        cc.resize(m_yBinCount, 0.0);
+        return cc;
+    }
+}
+
+EditableDenseThreeDimensionalModel::Column
 EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
 {
     // See comment above m_trunc declaration in header
@@ -272,17 +283,17 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
     assert(index >= 0 && index < int(m_data.size()));
     Column c = m_data.at(index);
     if (index == 0) {
-        return c;
+        return rightHeight(c);
     }
     int trunc = (int)m_trunc[index];
     if (trunc == 0) {
-        return c;
+        return rightHeight(c);
     }
     bool top = true;
     int tdist = trunc;
     if (trunc < 0) { top = false; tdist = -trunc; }
     Column p = expandAndRetrieve(index - tdist);
-    int psize = p.size(), csize = c.size();
+    int psize = int(p.size()), csize = int(c.size());
     if (psize != m_yBinCount) {
         cerr << "WARNING: EditableDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
@@ -291,10 +302,6 @@ EditableDenseThreeDimensionalModel::expandAndRetrieve(int index) const
             c.push_back(p.at(i));
         }
     } else {
-        // push_front is very slow on QVector -- but not enough to
-        // make it desirable to choose a different container, since
-        // QVector has all the other advantages for us.  easier to
-        // write the whole array out to a new vector
         Column cc(psize);
         for (int i = 0; i < psize - csize; ++i) {
             cc[i] = p.at(i);
@@ -313,16 +320,14 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 {
     QWriteLocker locker(&m_lock);
 
-    while (int(index) >= m_data.size()) {
+    while (index >= int(m_data.size())) {
 	m_data.push_back(Column());
         m_trunc.push_back(0);
     }
 
     bool allChange = false;
 
-//    if (values.size() > m_yBinCount) m_yBinCount = values.size();
-
-    for (int i = 0; i < values.size(); ++i) {
+    for (int i = 0; in_range_for(values, i); ++i) {
         float value = values[i];
         if (ISNAN(value) || ISINF(value)) {
             continue;
@@ -432,13 +437,13 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
     
     for (int i = 0; i < 10; ++i) {
         int index = i * 10;
-        if (index < m_data.size()) {
+        if (in_range_for(m_data, index)) {
             const Column &c = m_data.at(index);
-            while (c.size() > int(sample.size())) {
+            while (c.size() > sample.size()) {
                 sample.push_back(0.0);
                 n.push_back(0);
             }
-            for (int j = 0; j < c.size(); ++j) {
+            for (int j = 0; in_range_for(c, j); ++j) {
                 sample[j] += c.at(j);
                 ++n[j];
             }
@@ -486,9 +491,9 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
 {
     QReadLocker locker(&m_lock);
     QString s;
-    for (int i = 0; i < m_data.size(); ++i) {
+    for (int i = 0; in_range_for(m_data, i); ++i) {
         QStringList list;
-	for (int j = 0; j < m_data.at(i).size(); ++j) {
+	for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
             list << QString("%1").arg(m_data.at(i).at(j));
         }
         s += list.join(delimiter) + "\n";
@@ -501,11 +506,11 @@ EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimite
 {
     QReadLocker locker(&m_lock);
     QString s;
-    for (int i = 0; i < m_data.size(); ++i) {
+    for (int i = 0; in_range_for(m_data, i); ++i) {
         sv_frame_t fr = m_startFrame + i * m_resolution;
         if (fr >= f0 && fr < f1) {
             QStringList list;
-            for (int j = 0; j < m_data.at(i).size(); ++j) {
+            for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));
             }
             s += list.join(delimiter) + "\n";

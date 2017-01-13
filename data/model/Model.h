@@ -24,8 +24,6 @@
 #include "base/BaseTypes.h"
 #include "base/DataExportOptions.h"
 
-typedef std::vector<float> SampleBlock;
-
 class ZoomConstraint;
 class AlignmentModel;
 
@@ -123,7 +121,8 @@ public:
      * through it an estimated percentage value showing how far
      * through the background operation it thinks it is (for progress
      * reporting).  If it has no way to calculate progress, it may
-     * return the special value COMPLETION_UNKNOWN.
+     * return the special value COMPLETION_UNKNOWN.  See also
+     * getCompletion().
      */
     virtual bool isReady(int *completion = 0) const {
 	bool ok = isOK();

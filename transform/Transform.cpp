@@ -202,12 +202,10 @@ Transform::parseIdentifier(QString identifier,
 Transform::Type
 Transform::getType() const
 {
-    if (FeatureExtractionPluginFactory::instanceFor(getPluginIdentifier())) {
-        return FeatureExtraction;
-    } else if (RealTimePluginFactory::instanceFor(getPluginIdentifier())) {
+    if (RealTimePluginFactory::instanceFor(getPluginIdentifier())) {
         return RealTimeEffect;
     } else {
-        return UnknownType;
+        return FeatureExtraction;
     }
 }
 

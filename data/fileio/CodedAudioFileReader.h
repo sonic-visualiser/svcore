@@ -13,18 +13,27 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CODED_AUDIO_FILE_READER_H_
-#define _CODED_AUDIO_FILE_READER_H_
+#ifndef SV_CODED_AUDIO_FILE_READER_H
+#define SV_CODED_AUDIO_FILE_READER_H
 
 #include "AudioFileReader.h"
 
-#include <sndfile.h>
 #include <QMutex>
 #include <QReadWriteLock>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
+#include <sndfile.h>
+
 class WavFileReader;
 class Serialiser;
-class Resampler;
+
+namespace breakfastquay {
+    class Resampler;
+}
 
 class CodedAudioFileReader : public AudioFileReader
 {
@@ -38,7 +47,12 @@ public:
         CacheInMemory
     };
 
-    virtual SampleBlock getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    enum DecodeMode {
+        DecodeAtOnce, // decode the file on construction, with progress 
+        DecodeThreaded // decode in a background thread after construction
+    };
+
+    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
 
@@ -57,10 +71,13 @@ protected:
 
     void initialiseDecodeCache(); // samplerate, channels must have been set
 
+    // compensation for encoder delays:
+    void setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd);
+    
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
-    void addSamplesToDecodeCache(const SampleBlock &interleaved);
+    void addSamplesToDecodeCache(const floatvec_t &interleaved);
 
     // may throw InsufficientDiscSpace:
     void finishDecodeCache();
@@ -71,15 +88,21 @@ protected:
     void endSerialised();
 
 private:
-    void pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+    void pushCacheWriteBufferMaybe(bool final);
+    
+    sv_frame_t pushBuffer(float *interleaved, sv_frame_t sz, bool final);
+
+    // to be called only by pushBuffer
     void pushBufferResampling(float *interleaved, sv_frame_t sz, double ratio, bool final);
+
+    // to be called only by pushBuffer and pushBufferResampling
     void pushBufferNonResampling(float *interleaved, sv_frame_t sz);
 
 protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
-    SampleBlock m_data;
-    mutable QReadWriteLock m_dataLock;
+    floatvec_t m_data;
+    mutable QMutex m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;
     sv_samplerate_t m_fileRate;
@@ -88,16 +111,24 @@ protected:
     SNDFILE *m_cacheFileWritePtr;
     WavFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
-    sv_frame_t m_cacheWriteBufferIndex;
-    sv_frame_t m_cacheWriteBufferSize; // frames
+    sv_frame_t m_cacheWriteBufferIndex;  // buffer write pointer in samples
+    sv_frame_t m_cacheWriteBufferFrames; // buffer size in frames
 
-    Resampler *m_resampler;
+    breakfastquay::Resampler *m_resampler;
     float *m_resampleBuffer;
+    int m_resampleBufferFrames;
     sv_frame_t m_fileFrameCount;
 
     bool m_normalised;
     float m_max;
     float m_gain;
+
+    sv_frame_t m_trimFromStart;
+    sv_frame_t m_trimFromEnd;
+    
+    sv_frame_t m_clippedCount;
+    sv_frame_t m_firstNonzero;
+    sv_frame_t m_lastNonzero;
 };
 
 #endif

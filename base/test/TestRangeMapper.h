@@ -77,7 +77,7 @@ private slots:
 	QCOMPARE(rm.getValueForPosition(0), rm.getValueForPosition(1));
 	QCOMPARE(rm.getValueForPosition(9), rm.getValueForPosition(8));
 	QCOMPARE(rm.getValueForPositionUnclamped(6), 3.0);
-	QCOMPARE(rm.getValueForPositionUnclamped(0), 0.0);
+	QCOMPARE(rm.getValueForPositionUnclamped(0) + 1.0, 0.0 + 1.0);
 	QCOMPARE(rm.getValueForPositionUnclamped(-24), -12.0);
 	QCOMPARE(rm.getValueForPositionUnclamped(12), 6.0);
     }
@@ -93,7 +93,7 @@ private slots:
 	QCOMPARE(rm.getValueForPosition(0), rm.getValueForPosition(1));
 	QCOMPARE(rm.getValueForPosition(9), rm.getValueForPosition(8));
 	QCOMPARE(rm.getValueForPositionUnclamped(3), 3.0);
-	QCOMPARE(rm.getValueForPositionUnclamped(9), 0.0);
+	QCOMPARE(rm.getValueForPositionUnclamped(9) + 1.0, 0.0 + 1.0);
 	QCOMPARE(rm.getValueForPositionUnclamped(33), -12.0);
 	QCOMPARE(rm.getValueForPositionUnclamped(-3), 6.0);
     }

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PROPERTY_CONTAINER_H_
-#define _PROPERTY_CONTAINER_H_
+#ifndef SV_PROPERTY_CONTAINER_H
+#define SV_PROPERTY_CONTAINER_H
 
 #include "Command.h"
 
@@ -40,6 +40,7 @@ public:
 	RangeProperty, // range of integers
 	ValueProperty, // range of integers given string labels
 	ColourProperty, // colours, get/set as ColourDatabase indices
+        ColourMapProperty, // colour maps, get/set as ColourMapper::StandardMap enum
         UnitsProperty, // unit from UnitDatabase, get/set unit id
 	InvalidProperty, // property not found!
     };
@@ -89,6 +90,13 @@ public:
      */
     virtual QString getPropertyValueLabel(const PropertyName &,
 					  int value) const;
+
+    /**
+     * If the given property is a ValueProperty, return the icon to be
+     * used for the given value for that property, if any.
+     */
+    virtual QString getPropertyValueIconName(const PropertyName &,
+                                             int value) const;
 
     /**
      * If the given property is a RangeProperty, return a new

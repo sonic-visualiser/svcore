@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _AUDIO_FILE_READER_FACTORY_H_
-#define _AUDIO_FILE_READER_FACTORY_H_
+#ifndef AUDIO_FILE_READER_FACTORY_H
+#define AUDIO_FILE_READER_FACTORY_H
 
 #include <QString>
 
@@ -34,65 +34,113 @@ public:
      */
     static QString getKnownExtensions();
 
+    enum class Normalisation {
+
+        /**
+         * Do not normalise file data.
+         */
+        None,
+
+        /**
+         * Normalise file data to abs(max) == 1.0.
+         */
+        Peak
+    };
+
+    enum class GaplessMode {
+
+        /** 
+         * Any encoder delay and padding found in file metadata will
+         * be compensated for, giving gapless decoding (assuming the
+         * metadata are correct). This is currently only applicable to
+         * mp3 files: all other supported files are always gapless
+         * where the file metadata provides for it. See documentation
+         * for MP3FileReader::GaplessMode for details of the specific
+         * implementation.
+         */
+        Gapless,
+
+        /**
+         * No delay compensation will happen and the results will be
+         * equivalent to the behaviour of audio readers before the
+         * compensation logic was implemented. This is currently only
+         * applicable to mp3 files: all other supported files are
+         * always gapless where the file metadata provides for it. See
+         * documentation for MP3FileReader::GaplessMode for details of
+         * the specific implementation.
+         */
+        Gappy
+    };
+
+    enum class ThreadingMode {
+        
+        /** 
+         * Any necessary decoding will happen synchronously when the
+         * reader is created.
+         */
+        NotThreaded,
+        
+        /**        
+         * If the reader supports threaded decoding, it will be used
+         * and the file will be decoded in a background thread. If the
+         * reader does not support threaded decoding, behaviour will
+         * be as for NotThreaded.
+         */
+        Threaded
+    };
+
+    struct Parameters {
+
+        /**
+         * Sample rate to open the file at. If zero (the default), the
+         * file's native rate will be used. If non-zero, the file will
+         * be automatically resampled to that rate.  You can query
+         * reader->getNativeRate() if you want to find out whether the
+         * file needed to be resampled.
+         */
+        sv_samplerate_t targetRate;
+
+        /**
+         * Normalisation to use. The default is Normalisation::None.
+         */
+        Normalisation normalisation;
+
+        /**
+         * Gapless mode to use. The default is GaplessMode::Gapless.
+         */
+        GaplessMode gaplessMode;
+
+        /**
+         * Threading mode. The default is ThreadingMode::NotThreaded.
+         */
+        ThreadingMode threadingMode;
+        
+        Parameters() :
+            targetRate(0),
+            normalisation(Normalisation::None),
+            gaplessMode(GaplessMode::Gapless),
+            threadingMode(ThreadingMode::NotThreaded)
+        { }
+    };
+    
     /**
      * Return an audio file reader initialised to the file at the
      * given path, or NULL if no suitable reader for this path is
      * available or the file cannot be opened.
      *
-     * If targetRate is non-zero, the file will be resampled to that
-     * rate (transparently).  You can query reader->getNativeRate()
-     * if you want to find out whether the file is being resampled
-     * or not.
-     *
-     * If normalised is true, the file data will be normalised to
-     * abs(max) == 1.0. Otherwise the file will not be normalised.
-     *
      * If a ProgressReporter is provided, it will be updated with
-     * progress status.  Caller retains ownership of the reporter
-     * object.
+     * progress status. This will only be meaningful if decoding is
+     * being carried out in non-threaded mode (either because the
+     * threaded parameter was not supplied or because the specific
+     * file reader used does not support it); in threaded mode,
+     * reported progress will jump straight to 100% before threading
+     * takes over. Caller retains ownership of the reporter object.
      *
      * Caller owns the returned object and must delete it after use.
      */
     static AudioFileReader *createReader(FileSource source,
-                                         sv_samplerate_t targetRate = 0,
-                                         bool normalised = false,
+                                         Parameters parameters,
                                          ProgressReporter *reporter = 0);
-
-    /**
-     * Return an audio file reader initialised to the file at the
-     * given path, or NULL if no suitable reader for this path is
-     * available or the file cannot be opened.  If the reader supports
-     * threaded decoding, it will be used and the file decoded in a
-     * background thread.
-     *
-     * If targetRate is non-zero, the file will be resampled to that
-     * rate (transparently).  You can query reader->getNativeRate()
-     * if you want to find out whether the file is being resampled
-     * or not.
-     *
-     * If normalised is true, the file data will be normalised to
-     * abs(max) == 1.0. Otherwise the file will not be normalised.
-     *
-     * If a ProgressReporter is provided, it will be updated with
-     * progress status.  This will only be meaningful if threading
-     * mode is not used because the file reader in use does not
-     * support it; otherwise progress as reported will jump straight
-     * to 100% before threading mode takes over.  Caller retains
-     * ownership of the reporter object.
-     *
-     * Caller owns the returned object and must delete it after use.
-     */
-    static AudioFileReader *createThreadingReader(FileSource source,
-                                                  sv_samplerate_t targetRate = 0,
-                                                  bool normalised = false,
-                                                  ProgressReporter *reporter = 0);
-
-protected:
-    static AudioFileReader *create(FileSource source,
-                                   sv_samplerate_t targetRate,
-                                   bool normalised,
-                                   bool threading,
-                                   ProgressReporter *reporter);
 };
 
 #endif

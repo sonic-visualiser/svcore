@@ -16,6 +16,7 @@
 #include "TransformFactory.h"
 
 #include "plugin/FeatureExtractionPluginFactory.h"
+
 #include "plugin/RealTimePluginFactory.h"
 #include "plugin/RealTimePluginInstance.h"
 #include "plugin/PluginXml.h"
@@ -399,95 +400,80 @@ TransformFactory::populateTransforms()
     m_transformsPopulated = true;
 }
 
-QString
-TransformFactory::getPluginPopulationWarning()
-{
-    FeatureExtractionPluginFactory *vfactory =
-        FeatureExtractionPluginFactory::instance("vamp");
-    QString warningMessage;
-    if (vfactory) {
-        warningMessage = vfactory->getPluginPopulationWarning();
-    }
-    return warningMessage;
-}
-
 void
 TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &transforms)
 {
-    std::vector<QString> plugs =
-	FeatureExtractionPluginFactory::getAllPluginIdentifiers();
+    FeatureExtractionPluginFactory *factory =
+        FeatureExtractionPluginFactory::instance();
+
+    QString errorMessage;
+    std::vector<QString> plugs = factory->getPluginIdentifiers(errorMessage);
+    if (errorMessage != "") {
+        m_errorString = tr("Failed to list Vamp plugins: %1").arg(errorMessage);
+    }
+    
     if (m_exiting) return;
 
     for (int i = 0; i < (int)plugs.size(); ++i) {
 
 	QString pluginId = plugs[i];
 
-	FeatureExtractionPluginFactory *factory =
-	    FeatureExtractionPluginFactory::instanceFor(pluginId);
+        piper_vamp::PluginStaticData psd = factory->getPluginStaticData(pluginId);
 
-	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No feature extraction plugin factory for instance " << pluginId << endl;
-	    continue;
-	}
+        if (psd.pluginKey == "") {
+            cerr << "WARNING: TransformFactory::populateTransforms: No plugin static data available for instance " << pluginId << endl;
+            continue;
+        }
 
-	Vamp::Plugin *plugin = 
-	    factory->instantiatePlugin(pluginId, 44100);
-
-	if (!plugin) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to instantiate plugin " << pluginId << endl;
-	    continue;
-	}
-		
-	QString pluginName = plugin->getName().c_str();
+        QString pluginName = QString::fromStdString(psd.basic.name);
         QString category = factory->getPluginCategory(pluginId);
+        
+        const auto &basicOutputs = psd.basicOutputInfo;
 
-	Vamp::Plugin::OutputList outputs =
-	    plugin->getOutputDescriptors();
+        for (const auto &o: basicOutputs) {
 
-	for (int j = 0; j < (int)outputs.size(); ++j) {
+            QString outputName = QString::fromStdString(o.name);
 
 	    QString transformId = QString("%1:%2")
-		    .arg(pluginId).arg(outputs[j].identifier.c_str());
+                .arg(pluginId).arg(QString::fromStdString(o.identifier));
 
 	    QString userName;
             QString friendlyName;
-            QString units = outputs[j].unit.c_str();
-            QString description = plugin->getDescription().c_str();
-            QString maker = plugin->getMaker().c_str();
+//!!! return to this            QString units = outputs[j].unit.c_str();
+            QString description = QString::fromStdString(psd.basic.description);
+            QString maker = QString::fromStdString(psd.maker);
             if (maker == "") maker = tr("<unknown maker>");
 
             QString longDescription = description;
 
             if (longDescription == "") {
-                if (outputs.size() == 1) {
+                if (basicOutputs.size() == 1) {
                     longDescription = tr("Extract features using \"%1\" plugin (from %2)")
                         .arg(pluginName).arg(maker);
                 } else {
                     longDescription = tr("Extract features using \"%1\" output of \"%2\" plugin (from %3)")
-                        .arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
+                        .arg(outputName).arg(pluginName).arg(maker);
                 }
             } else {
-                if (outputs.size() == 1) {
+                if (basicOutputs.size() == 1) {
                     longDescription = tr("%1 using \"%2\" plugin (from %3)")
                         .arg(longDescription).arg(pluginName).arg(maker);
                 } else {
                     longDescription = tr("%1 using \"%2\" output of \"%3\" plugin (from %4)")
-                        .arg(longDescription).arg(outputs[j].name.c_str()).arg(pluginName).arg(maker);
+                        .arg(longDescription).arg(outputName).arg(pluginName).arg(maker);
                 }
             }                    
 
-	    if (outputs.size() == 1) {
+	    if (basicOutputs.size() == 1) {
 		userName = pluginName;
                 friendlyName = pluginName;
 	    } else {
-		userName = QString("%1: %2")
-		    .arg(pluginName)
-		    .arg(outputs[j].name.c_str());
-                friendlyName = outputs[j].name.c_str();
+		userName = QString("%1: %2").arg(pluginName).arg(outputName);
+                friendlyName = outputName;
 	    }
 
-            bool configurable = (!plugin->getPrograms().empty() ||
-                                 !plugin->getParameterDescriptors().empty());
+            bool configurable = (!psd.programs.empty() ||
+                                 !psd.parameters.empty());
 
 #ifdef DEBUG_TRANSFORM_FACTORY
             cerr << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
@@ -502,11 +488,10 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                      description,
                                      longDescription,
                                      maker,
-                                     units,
+//!!!                                     units,
+                                     "",
                                      configurable);
 	}
-
-        delete plugin;
     }
 }
 
@@ -768,6 +753,9 @@ TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
     t.setIdentifier(id);
     if (rate != 0) t.setSampleRate(rate);
 
+    SVDEBUG << "TransformFactory::getDefaultTransformFor: identifier \""
+            << id << "\"" << endl;
+    
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
 
     if (plugin) {
@@ -783,6 +771,9 @@ TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
 Vamp::PluginBase *
 TransformFactory::instantiatePluginFor(const Transform &transform)
 {
+    SVDEBUG << "TransformFactory::instantiatePluginFor: identifier \""
+            << transform.getIdentifier() << "\"" << endl;
+    
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (transform.getIdentifier(), transform.getSampleRate());
 
@@ -806,11 +797,11 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 
     if (t.getType() == Transform::FeatureExtraction) {
 
-//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
-//             << identifier << "\" is a feature extraction transform" << endl;
+        SVDEBUG << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+                << identifier << "\" is a feature extraction transform" << endl;
         
-        FeatureExtractionPluginFactory *factory = 
-            FeatureExtractionPluginFactory::instanceFor(pluginId);
+        FeatureExtractionPluginFactory *factory =
+            FeatureExtractionPluginFactory::instance();
 
         if (factory) {
             plugin = factory->instantiatePlugin(pluginId, rate);
@@ -818,8 +809,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
 
     } else if (t.getType() == Transform::RealTimeEffect) {
 
-//        cerr << "TransformFactory::instantiateDefaultPluginFor: identifier \""
-//             << identifier << "\" is a real-time transform" << endl;
+        SVDEBUG << "TransformFactory::instantiateDefaultPluginFor: identifier \""
+                << identifier << "\" is a real-time transform" << endl;
 
         RealTimePluginFactory *factory = 
             RealTimePluginFactory::instanceFor(pluginId);
@@ -829,8 +820,8 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
         }
 
     } else {
-        cerr << "TransformFactory: ERROR: transform id \""
-             << identifier << "\" is of unknown type" << endl;
+        SVDEBUG << "TransformFactory: ERROR: transform id \""
+                << identifier << "\" is of unknown type" << endl;
     }
 
     return plugin;
@@ -899,6 +890,9 @@ TransformFactory::getTransformInputDomain(TransformId identifier)
     Transform transform;
     transform.setIdentifier(identifier);
 
+    SVDEBUG << "TransformFactory::getTransformInputDomain: identifier \""
+            << identifier << "\"" << endl;
+    
     if (transform.getType() != Transform::FeatureExtraction) {
         return Vamp::Plugin::TimeDomain;
     }
@@ -929,22 +923,7 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 {
     QString id = identifier.section(':', 0, 2);
 
-    if (FeatureExtractionPluginFactory::instanceFor(id)) {
-
-        Vamp::Plugin *plugin = 
-            FeatureExtractionPluginFactory::instanceFor(id)->
-            instantiatePlugin(id, 44100);
-        if (!plugin) return false;
-
-        min = (int)plugin->getMinChannelCount();
-        max = (int)plugin->getMaxChannelCount();
-        delete plugin;
-
-        return true;
-
-    } else if (RealTimePluginFactory::instanceFor(id)) {
-
-        // don't need to instantiate
+    if (RealTimePluginFactory::instanceFor(id)) {
 
         const RealTimePluginDescriptor *descriptor = 
             RealTimePluginFactory::instanceFor(id)->
@@ -953,6 +932,17 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
         min = descriptor->audioInputPortCount;
         max = descriptor->audioInputPortCount;
+
+        return true;
+
+    } else {
+
+        auto psd = FeatureExtractionPluginFactory::instance()->
+            getPluginStaticData(id);
+        if (psd.pluginKey == "") return false;
+
+        min = (int)psd.minChannelCount;
+        max = (int)psd.maxChannelCount;
 
         return true;
     }
@@ -1088,12 +1078,15 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
 {
     QString xml;
 
+    SVDEBUG << "TransformFactory::getPluginConfigurationXml: identifier \""
+            << t.getIdentifier() << "\"" << endl;
+
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::getPluginConfigurationXml: "
-                  << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier() << "\"" << endl;
+        SVDEBUG << "TransformFactory::getPluginConfigurationXml: "
+                << "Unable to instantiate plugin for transform \""
+                << t.getIdentifier() << "\"" << endl;
         return xml;
     }
 
@@ -1110,12 +1103,15 @@ void
 TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
                                                           QString xml)
 {
+    SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: identifier \""
+            << t.getIdentifier() << "\"" << endl;
+
     Vamp::PluginBase *plugin = instantiateDefaultPluginFor
         (t.getIdentifier(), 0);
     if (!plugin) {
-        cerr << "TransformFactory::setParametersFromPluginConfigurationXml: "
-                  << "Unable to instantiate plugin for transform \""
-                  << t.getIdentifier() << "\"" << endl;
+        SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: "
+                << "Unable to instantiate plugin for transform \""
+                << t.getIdentifier() << "\"" << endl;
         return;
     }
 
@@ -1169,14 +1165,14 @@ TransformFactory::search(QStringList keywords)
     if (!m_uninstalledTransformsMutex.tryLock()) {
         // uninstalled transforms are being populated; this may take some time,
         // and they aren't critical, but we will speed them up if necessary
-        cerr << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
+        SVDEBUG << "TransformFactory::search: Uninstalled transforms mutex is held, skipping" << endl;
         m_populatingSlowly = false;
         return results;
     }
 
     if (!m_uninstalledTransformsPopulated) {
-        cerr << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
-                  << "and are not being populated either -- was the thread not started correctly?" << endl;
+        SVDEBUG << "WARNING: TransformFactory::search: Uninstalled transforms are not populated yet" << endl
+                << "and are not being populated either -- was the thread not started correctly?" << endl;
         m_uninstalledTransformsMutex.unlock();
         return results;
     }

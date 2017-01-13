@@ -71,14 +71,14 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_completion(0),
     m_decodeThread(0)
 {
+    SVDEBUG << "CoreAudioFileReader: local path: \"" << m_path << "\"" << endl;
+
     m_channelCount = 0;
     m_fileRate = 0;
 
     m_d->buffer.mBuffers[0].mData = 0;
 
     Profiler profiler("CoreAudioFileReader::CoreAudioFileReader", true);
-
-    SVDEBUG << "CoreAudioFileReader: path is \"" << m_path << "\"" << endl;
 
     QByteArray ba = m_path.toLocal8Bit();
 
@@ -114,18 +114,18 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     
     UInt32 propsize = sizeof(AudioStreamBasicDescription);
     m_d->err = ExtAudioFileGetProperty
-	(m_d->file, kExtAudioFileProperty_FileDataFormat, &propsize, &m_d->asbd);
+        (m_d->file, kExtAudioFileProperty_FileDataFormat, &propsize, &m_d->asbd);
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in getting basic description: code " + codestr(m_d->err);
         ExtAudioFileDispose(m_d->file);
         return;
     }
-	
+        
     m_channelCount = m_d->asbd.mChannelsPerFrame;
     m_fileRate = m_d->asbd.mSampleRate;
 
-    cerr << "CoreAudioReadStream: " << m_channelCount << " channels, " << m_fileRate << " Hz" << endl;
+    SVDEBUG << "CoreAudioFileReader: " << m_channelCount << " channels, " << m_fileRate << " Hz" << endl;
 
     m_d->asbd.mFormatID = kAudioFormatLinearPCM;
     m_d->asbd.mFormatFlags =
@@ -137,9 +137,9 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
     m_d->asbd.mBytesPerPacket = sizeof(float) * m_channelCount;
     m_d->asbd.mFramesPerPacket = 1;
     m_d->asbd.mReserved = 0;
-	
+        
     m_d->err = ExtAudioFileSetProperty
-	(m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
+        (m_d->file, kExtAudioFileProperty_ClientDataFormat, propsize, &m_d->asbd);
     
     if (m_d->err) {
         m_error = "CoreAudioReadStream: Error in setting client format: code " + codestr(m_d->err);
@@ -192,7 +192,7 @@ CoreAudioFileReader::CoreAudioFileReader(FileSource source,
 
 CoreAudioFileReader::~CoreAudioFileReader()
 {
-    cerr << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
+    SVDEBUG << "CoreAudioFileReader::~CoreAudioFileReader" << endl;
 
     if (m_d->valid) {
         ExtAudioFileDispose(m_d->file);

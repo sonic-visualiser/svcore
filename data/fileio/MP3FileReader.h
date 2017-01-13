@@ -32,14 +32,43 @@ class MP3FileReader : public CodedAudioFileReader
     Q_OBJECT
 
 public:
-    enum DecodeMode {
-        DecodeAtOnce, // decode the file on construction, with progress
-        DecodeThreaded // decode in a background thread after construction
-    };
+    /**
+     * How the MP3FileReader should handle leading and trailing gaps.
+     * See http://lame.sourceforge.net/tech-FAQ.txt for a technical
+     * explanation of the numbers here.
+     */
+    enum class GaplessMode {
+        /**
+         * Trim unwanted samples from the start and end of the decoded
+         * audio. From the start, trim a number of samples equal to
+         * the decoder delay (a fixed 529 samples) plus any encoder
+         * delay that may be specified in Xing/LAME metadata. From the
+         * end, trim any padding specified in Xing/LAME metadata, less
+         * the fixed decoder delay. This usually results in "gapless"
+         * audio, i.e. with no spurious zero padding at either end.
+         */
+        Gapless,
 
+        /**
+         * Do not trim any samples. Also do not suppress any frames
+         * from being passed to the mp3 decoder, even Xing/LAME
+         * metadata frames. This will result in the audio being padded
+         * with zeros at either end: at the start, typically
+         * 529+576+1152 = 2257 samples for LAME-encoded mp3s; at the
+         * end an unknown number depending on the fill ratio of the
+         * final coded frame, but typically less than 1152-529 = 623.
+         *
+         * This mode produces the same output as produced by older
+         * versions of this code before the gapless option was added,
+         * and is present mostly for backward compatibility.
+         */
+        Gappy
+    };
+    
     MP3FileReader(FileSource source,
                   DecodeMode decodeMode,
                   CacheMode cacheMode,
+                  GaplessMode gaplessMode,
                   sv_samplerate_t targetRate = 0,
                   bool normalised = false,
                   ProgressReporter *reporter = 0);
@@ -73,32 +102,43 @@ protected:
     QString m_title;
     QString m_maker;
     TagMap m_tags;
+    GaplessMode m_gaplessMode;
     sv_frame_t m_fileSize;
     double m_bitrateNum;
     int m_bitrateDenom;
+    int m_mp3FrameCount;
     int m_completion;
     bool m_done;
 
-    unsigned char *m_filebuffer;
-    float **m_samplebuffer;
-    int m_samplebuffersize;
+    unsigned char *m_fileBuffer;
+    size_t m_fileBufferSize;
+    
+    float **m_sampleBuffer;
+    size_t m_sampleBufferSize;
 
     ProgressReporter *m_reporter;
     bool m_cancelled;
 
-    struct DecoderData
-    {
+    bool m_decodeErrorShown;
+
+    struct DecoderData {
 	unsigned char const *start;
-	unsigned long length;
+	sv_frame_t length;
+        bool finished;
 	MP3FileReader *reader;
     };
 
     bool decode(void *mm, sv_frame_t sz);
+    enum mad_flow filter(struct mad_stream const *, struct mad_frame *);
     enum mad_flow accept(struct mad_header const *, struct mad_pcm *);
 
-    static enum mad_flow input(void *, struct mad_stream *);
-    static enum mad_flow output(void *, struct mad_header const *, struct mad_pcm *);
-    static enum mad_flow error(void *, struct mad_stream *, struct mad_frame *);
+    static enum mad_flow input_callback(void *, struct mad_stream *);
+    static enum mad_flow output_callback(void *, struct mad_header const *,
+                                         struct mad_pcm *);
+    static enum mad_flow filter_callback(void *, struct mad_stream const *,
+                                         struct mad_frame *);
+    static enum mad_flow error_callback(void *, struct mad_stream *,
+                                        struct mad_frame *);
 
     class DecodeThread : public Thread
     {
@@ -112,7 +152,7 @@ protected:
 
     DecodeThread *m_decodeThread;
 
-    void loadTags();
+    void loadTags(int fd);
     QString loadTag(void *vtag, const char *name);
 };
 
