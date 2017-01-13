@@ -86,22 +86,22 @@ private slots:
     {
 	double centsOffset = 0.0;
 	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
-	QCOMPARE(centsOffset, 0.0);
+	QCOMPARE(centsOffset + 1.0, 1.0); // avoid ineffective fuzzy-compare to 0
 	QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
 	QCOMPARE(int(centsOffset), -4);
 	QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
-	QCOMPARE(centsOffset, 0.0);
+	QCOMPARE(centsOffset + 1.0, 1.0);
     }
 
     void pitchForFrequencyF()
     {
 	float centsOffset = 0.f;
 	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
-	QCOMPARE(centsOffset, 0.f);
+	QCOMPARE(centsOffset + 1.f, 1.f); // avoid ineffective fuzzy-compare to 0
 	QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
 	QCOMPARE(int(centsOffset), -4);
 	QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
-	QCOMPARE(centsOffset, 0.f);
+	QCOMPARE(centsOffset + 1.f, 1.f);
     }
 };
 
