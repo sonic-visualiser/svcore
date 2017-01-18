@@ -85,6 +85,7 @@ FeatureExtractionModelTransformer::initialise()
     for (int j = 1; j < (int)m_transforms.size(); ++j) {
         if (!areTransformsSimilar(m_transforms[0], m_transforms[j])) {
             m_message = tr("Transforms supplied to a single FeatureExtractionModelTransformer instance must be similar in every respect except plugin output");
+            SVCERR << m_message << endl;
             return false;
         }
     }
@@ -98,12 +99,14 @@ FeatureExtractionModelTransformer::initialise()
 
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
+        SVCERR << m_message << endl;
 	return false;
     }
 
     DenseTimeValueModel *input = getConformingInput();
     if (!input) {
         m_message = tr("Input model for feature extraction plugin \"%1\" is of wrong type (internal error?)").arg(pluginId);
+        SVCERR << m_message << endl;
         return false;
     }
 
@@ -113,15 +116,16 @@ FeatureExtractionModelTransformer::initialise()
     m_plugin = factory->instantiatePlugin(pluginId, input->getSampleRate());
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
+        SVCERR << m_message << endl;
 	return false;
     }
 
     TransformFactory::getInstance()->makeContextConsistentWithPlugin
         (primaryTransform, m_plugin);
-
+    
     TransformFactory::getInstance()->setPluginParameters
         (primaryTransform, m_plugin);
-
+    
     int channelCount = input->getChannelCount();
     if ((int)m_plugin->getMaxChannelCount() < channelCount) {
 	channelCount = 1;
@@ -132,9 +136,10 @@ FeatureExtractionModelTransformer::initialise()
             .arg(m_plugin->getMinChannelCount())
             .arg(m_plugin->getMaxChannelCount())
             .arg(input->getChannelCount());
+        SVCERR << m_message << endl;
 	return false;
     }
-
+    
     SVDEBUG << "Initialising feature extraction plugin with channels = "
             << channelCount << ", step = " << primaryTransform.getStepSize()
             << ", block = " << primaryTransform.getBlockSize() << endl;
@@ -166,6 +171,7 @@ FeatureExtractionModelTransformer::initialise()
                 SVDEBUG << "Initialisation failed again" << endl;
                 
                 m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
+                SVCERR << m_message << endl;
                 return false;
 
             } else {
@@ -178,6 +184,7 @@ FeatureExtractionModelTransformer::initialise()
                     .arg(pblock)
                     .arg(primaryTransform.getStepSize())
                     .arg(primaryTransform.getBlockSize());
+                SVCERR << m_message << endl;
             }
 
         } else {
@@ -185,6 +192,7 @@ FeatureExtractionModelTransformer::initialise()
             SVDEBUG << "Initialisation failed" << endl;
                 
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
+            SVCERR << m_message << endl;
             return false;
         }
     } else {
@@ -203,6 +211,7 @@ FeatureExtractionModelTransformer::initialise()
             } else {
                 m_message = vm;
             }
+            SVCERR << m_message << endl;
         }
     }
 
@@ -210,6 +219,7 @@ FeatureExtractionModelTransformer::initialise()
 
     if (outputs.empty()) {
         m_message = tr("Plugin \"%1\" has no outputs").arg(pluginId);
+        SVCERR << m_message << endl;
 	return false;
     }
 
@@ -230,6 +240,7 @@ FeatureExtractionModelTransformer::initialise()
             m_message = tr("Plugin \"%1\" has no output named \"%2\"")
                 .arg(pluginId)
                 .arg(m_transforms[j].getOutput());
+            SVCERR << m_message << endl;
             return false;
         }
     }
@@ -522,8 +533,8 @@ void
 FeatureExtractionModelTransformer::awaitOutputModels()
 {
     m_outputMutex.lock();
-    while (!m_haveOutputs) {
-        m_outputsCondition.wait(&m_outputMutex);
+    while (!m_haveOutputs && !m_abandoned) {
+        m_outputsCondition.wait(&m_outputMutex, 500);
     }
     m_outputMutex.unlock();
 }
@@ -613,12 +624,21 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
-    initialise();
+    if (initialise()) {
+        abandon();
+        return;
+    }
     
     DenseTimeValueModel *input = getConformingInput();
-    if (!input) return;
+    if (!input) {
+        abandon();
+        return;
+    }
 
-    if (m_outputs.empty()) return;
+    if (m_outputs.empty()) {
+        abandon();
+        return;
+    }
 
     Transform primaryTransform = m_transforms[0];
 
