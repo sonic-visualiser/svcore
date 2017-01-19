@@ -624,7 +624,7 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
-    if (initialise()) {
+    if (!initialise()) {
         abandon();
         return;
     }
