@@ -28,7 +28,9 @@
 #define CAPNP_LITE 1
 #endif
 
-#include "vamp-client/AutoPlugin.h"
+#include "vamp-client/qt/AutoPlugin.h"
+#include "vamp-client/qt/ProcessQtTransport.h"
+#include "vamp-client/CapnpRRClient.h"
 
 #include <QDir>
 #include <QFile>
@@ -40,9 +42,6 @@
 
 #include "base/Profiler.h"
 #include "base/HelperExecPath.h"
-
-#include "vamp-client/ProcessQtTransport.h"
-#include "vamp-client/CapnpRRClient.h"
 
 using namespace std;
 
