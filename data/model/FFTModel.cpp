@@ -44,8 +44,13 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     m_fftSize(fftSize),
     m_windower(windowType, windowSize),
     m_fft(fftSize),
+    m_cacheWriteIndex(0),
     m_cacheSize(3)
 {
+    while (m_cached.size() < m_cacheSize) {
+        m_cached.push_back({ -1, cvec(m_fftSize / 2 + 1) });
+    }
+    
     if (m_windowSize > m_fftSize) {
         cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
              << ") must be at least FFT size (" << m_fftSize << ")" << endl;
@@ -296,7 +301,7 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-FFTModel::cvec
+const FFTModel::cvec &
 FFTModel::getFFTColumn(int n) const
 {
     // The small cache (i.e. the m_cached deque) is for cases where
@@ -319,16 +324,14 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data());
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    cvec col(m_fftSize/2 + 1);
+    cvec &col = m_cached[m_cacheWriteIndex].col;
     
     m_fft.forwardInterleaved(samples.data(),
                              reinterpret_cast<float *>(col.data()));
 
-    SavedColumn sc { n, col };
-    if (m_cached.size() >= m_cacheSize) {
-        m_cached.pop_front();
-    }
-    m_cached.push_back(sc);
+    m_cached[m_cacheWriteIndex].n = n;
+
+    m_cacheWriteIndex = (m_cacheWriteIndex + 1) % m_cacheSize;
 
     return col;
 }
