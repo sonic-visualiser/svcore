@@ -27,7 +27,6 @@
 #include <set>
 #include <vector>
 #include <complex>
-#include <deque>
 
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
@@ -172,7 +171,7 @@ private:
     typedef std::vector<std::complex<float>,
                         breakfastquay::StlAllocator<std::complex<float>>> cvec;
     
-    cvec getFFTColumn(int column) const;
+    const cvec &getFFTColumn(int column) const; // returns ref for immediate use only
     fvec getSourceSamples(int column) const;
     fvec getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
     fvec getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
@@ -182,12 +181,13 @@ private:
         fvec data;
     };
     mutable SavedSourceData m_savedData;
-    
+
     struct SavedColumn {
         int n;
         cvec col;
     };
-    mutable std::deque<SavedColumn> m_cached;
+    mutable std::vector<SavedColumn> m_cached;
+    mutable size_t m_cacheWriteIndex;
     size_t m_cacheSize;
 };
 
