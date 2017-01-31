@@ -262,8 +262,18 @@ FeatureExtractionModelTransformer::deinitialise()
 {
     SVDEBUG << "FeatureExtractionModelTransformer: deleting plugin for transform in thread "
             << QThread::currentThreadId() << endl;
-    
-    delete m_plugin;
+
+    try {
+        delete m_plugin;
+    } catch (const std::exception &e) {
+        // A destructor shouldn't throw an exception. But at one point
+        // (now fixed) our plugin stub destructor could have
+        // accidentally done so, so just in case:
+        SVCERR << "FeatureExtractionModelTransformer: caught exception while deleting plugin: " << e.what() << endl;
+        m_message = e.what();
+    }
+    m_plugin = 0;
+        
     for (int j = 0; j < (int)m_descriptors.size(); ++j) {
         delete m_descriptors[j];
     }
@@ -730,85 +740,93 @@ FeatureExtractionModelTransformer::run()
 
     QString error = "";
 
-    while (!m_abandoned) {
+    try {
+        while (!m_abandoned) {
 
-        if (frequencyDomain) {
-            if (blockFrame - int(blockSize)/2 >
-                contextStart + contextDuration) break;
-        } else {
-            if (blockFrame >= 
-                contextStart + contextDuration) break;
-        }
+            if (frequencyDomain) {
+                if (blockFrame - int(blockSize)/2 >
+                    contextStart + contextDuration) break;
+            } else {
+                if (blockFrame >= 
+                    contextStart + contextDuration) break;
+            }
 
 //	SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
 //		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
 //                  << blockSize << endl;
 
-	int completion = int
-	    ((((blockFrame - contextStart) / stepSize) * 99) /
-             (contextDuration / stepSize + 1));
+            int completion = int
+                ((((blockFrame - contextStart) / stepSize) * 99) /
+                 (contextDuration / stepSize + 1));
 
-	// channelCount is either m_input.getModel()->channelCount or 1
+            // channelCount is either m_input.getModel()->channelCount or 1
 
-        if (frequencyDomain) {
-            for (int ch = 0; ch < channelCount; ++ch) {
-                int column = int((blockFrame - startFrame) / stepSize);
-                if (fftModels[ch]->getValuesAt(column, reals, imaginaries)) {
-                    for (int i = 0; i <= blockSize/2; ++i) {
-                        buffers[ch][i*2] = reals[i];
-                        buffers[ch][i*2+1] = imaginaries[i];
+            if (frequencyDomain) {
+                for (int ch = 0; ch < channelCount; ++ch) {
+                    int column = int((blockFrame - startFrame) / stepSize);
+                    if (fftModels[ch]->getValuesAt(column, reals, imaginaries)) {
+                        for (int i = 0; i <= blockSize/2; ++i) {
+                            buffers[ch][i*2] = reals[i];
+                            buffers[ch][i*2+1] = imaginaries[i];
+                        }
+                    } else {
+                        for (int i = 0; i <= blockSize/2; ++i) {
+                            buffers[ch][i*2] = 0.f;
+                            buffers[ch][i*2+1] = 0.f;
+                        }
+                    }                    
+                    error = fftModels[ch]->getError();
+                    if (error != "") {
+                        SVCERR << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
+                        m_abandoned = true;
+                        m_message = error;
+                        break;
                     }
-                } else {
-                    for (int i = 0; i <= blockSize/2; ++i) {
-                        buffers[ch][i*2] = 0.f;
-                        buffers[ch][i*2+1] = 0.f;
-                    }
-                }                    
-                error = fftModels[ch]->getError();
-                if (error != "") {
-                    SVDEBUG << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
-                    m_abandoned = true;
-                    m_message = error;
-                    break;
+                }
+            } else {
+                getFrames(channelCount, blockFrame, blockSize, buffers);
+            }
+
+            if (m_abandoned) break;
+
+            Vamp::Plugin::FeatureSet features = m_plugin->process
+                (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
+
+            if (m_abandoned) break;
+
+            for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
+                    Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                    addFeature(j, blockFrame, feature);
                 }
             }
-        } else {
-            getFrames(channelCount, blockFrame, blockSize, buffers);
-        }
 
-        if (m_abandoned) break;
-
-	Vamp::Plugin::FeatureSet features = m_plugin->process
-	    (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
-
-        if (m_abandoned) break;
-
-        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
-            for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
-                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
-                addFeature(j, blockFrame, feature);
+            if (blockFrame == contextStart || completion > prevCompletion) {
+                for (int j = 0; j < (int)m_outputNos.size(); ++j) {
+                    setCompletion(j, completion);
+                }
+                prevCompletion = completion;
             }
+
+            blockFrame += stepSize;
+
         }
 
-	if (blockFrame == contextStart || completion > prevCompletion) {
+        if (!m_abandoned) {
+            Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
+
             for (int j = 0; j < (int)m_outputNos.size(); ++j) {
-                setCompletion(j, completion);
-            }
-	    prevCompletion = completion;
-	}
-
-	blockFrame += stepSize;
-    }
-
-    if (!m_abandoned) {
-        Vamp::Plugin::FeatureSet features = m_plugin->getRemainingFeatures();
-
-        for (int j = 0; j < (int)m_outputNos.size(); ++j) {
-            for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
-                Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
-                addFeature(j, blockFrame, feature);
+                for (int fi = 0; fi < (int)features[m_outputNos[j]].size(); ++fi) {
+                    Vamp::Plugin::Feature feature = features[m_outputNos[j]][fi];
+                    addFeature(j, blockFrame, feature);
+                }
             }
         }
+    } catch (const std::exception &e) {
+        SVCERR << "FeatureExtractionModelTransformer::run: Exception caught: "
+               << e.what() << endl;
+        m_abandoned = true;
+        m_message = e.what();
     }
 
     for (int j = 0; j < (int)m_outputNos.size(); ++j) {
