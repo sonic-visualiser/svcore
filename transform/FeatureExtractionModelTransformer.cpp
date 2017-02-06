@@ -634,8 +634,14 @@ FeatureExtractionModelTransformer::getConformingInput()
 void
 FeatureExtractionModelTransformer::run()
 {
-    if (!initialise()) {
+    try {
+        if (!initialise()) {
+            abandon();
+            return;
+        }
+    } catch (const std::exception &e) {
         abandon();
+        m_message = e.what();
         return;
     }
     
