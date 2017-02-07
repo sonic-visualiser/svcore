@@ -139,34 +139,25 @@ FeatureExtractionModelTransformer::initialise()
         SVCERR << m_message << endl;
 	return false;
     }
+
+    int step = primaryTransform.getStepSize();
+    int block = primaryTransform.getBlockSize();
     
     SVDEBUG << "Initialising feature extraction plugin with channels = "
-            << channelCount << ", step = " << primaryTransform.getStepSize()
-            << ", block = " << primaryTransform.getBlockSize() << endl;
+            << channelCount << ", step = " << step
+            << ", block = " << block << endl;
 
-    if (!m_plugin->initialise(channelCount,
-                              primaryTransform.getStepSize(),
-                              primaryTransform.getBlockSize())) {
+    if (!m_plugin->initialise(channelCount, step, block)) {
+
+        int preferredStep = int(m_plugin->getPreferredStepSize());
+        int preferredBlock = int(m_plugin->getPreferredBlockSize());
         
-        int pstep = primaryTransform.getStepSize();
-        int pblock = primaryTransform.getBlockSize();
+        if (step != preferredStep || block != preferredBlock) {
 
-///!!! hang on, this isn't right -- we're modifying a copy
-        primaryTransform.setStepSize(0);
-        primaryTransform.setBlockSize(0);
-        TransformFactory::getInstance()->makeContextConsistentWithPlugin
-            (primaryTransform, m_plugin);
-
-        if (primaryTransform.getStepSize() != pstep ||
-            primaryTransform.getBlockSize() != pblock) {
-
-            SVDEBUG << "Initialisation failed, trying again with default step = "
-                    << primaryTransform.getStepSize()
-                    << ", block = " << primaryTransform.getBlockSize() << endl;
+            SVDEBUG << "Initialisation failed, trying again with preferred step = "
+                    << preferredStep << ", block = " << preferredBlock << endl;
             
-            if (!m_plugin->initialise(channelCount,
-                                      primaryTransform.getStepSize(),
-                                      primaryTransform.getBlockSize())) {
+            if (!m_plugin->initialise(channelCount, preferredStep, preferredBlock)) {
 
                 SVDEBUG << "Initialisation failed again" << endl;
                 
@@ -177,19 +168,25 @@ FeatureExtractionModelTransformer::initialise()
             } else {
                 
                 SVDEBUG << "Initialisation succeeded this time" << endl;
+
+                // Set these values into the primary transform in the list
+                m_transforms[0].setStepSize(preferredStep);
+                m_transforms[0].setBlockSize(preferredBlock);
                 
                 m_message = tr("Feature extraction plugin \"%1\" rejected the given step and block sizes (%2 and %3); using plugin defaults (%4 and %5) instead")
                     .arg(pluginId)
-                    .arg(pstep)
-                    .arg(pblock)
-                    .arg(primaryTransform.getStepSize())
-                    .arg(primaryTransform.getBlockSize());
+                    .arg(step)
+                    .arg(block)
+                    .arg(preferredStep)
+                    .arg(preferredBlock);
                 SVCERR << m_message << endl;
             }
 
         } else {
 
-            SVDEBUG << "Initialisation failed" << endl;
+            SVDEBUG << "Initialisation failed (with step = " << step
+                    << " and block = " << block
+                    << ", both matching the plugin's preference)" << endl;
                 
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
             SVCERR << m_message << endl;
