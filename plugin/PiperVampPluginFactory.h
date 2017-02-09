@@ -35,6 +35,7 @@ class PiperVampPluginFactory : public FeatureExtractionPluginFactory
 {
 public:
     PiperVampPluginFactory();
+    PiperVampPluginFactory(std::initializer_list<QString> servers);
     virtual ~PiperVampPluginFactory();
 
     virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage)

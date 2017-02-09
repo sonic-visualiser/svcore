@@ -54,27 +54,33 @@ protected:
     }
 };
 
-PiperVampPluginFactory::PiperVampPluginFactory() :
+PiperVampPluginFactory::PiperVampPluginFactory(std::initializer_list<QString> servers) :
     m_logger(new Logger)
 {
-    QString serverName = "piper-vamp-simple-server";
-
     HelperExecPath hep(HelperExecPath::AllInstalled);
-    m_servers = hep.getHelperExecutables(serverName);
+
+    for (auto server: servers) {
+        for (auto platformHelper: hep.getHelperExecutables(server))
+            m_servers.push_back(platformHelper);
+    }
 
     for (auto n: m_servers) {
-        SVDEBUG << "NOTE: PiperVampPluginFactory: Found server: "
+        SVDEBUG << "NOTE: PiperVampPluginFactory: Found server: " 
                 << n.executable << endl;
     }
-    
+
     if (m_servers.empty()) {
-        SVDEBUG << "NOTE: No Piper Vamp servers found in installation;"
+        SVDEBUG << "NOTE: No Piper Vamp servers found in installation;" 
                 << " found none of the following:" << endl;
-        for (auto d: hep.getHelperCandidatePaths(serverName)) {
-            SVDEBUG << "NOTE: " << d << endl;
-        }
+        for (auto serverName: servers)
+            for (auto d: hep.getHelperCandidatePaths(serverName)) {
+                SVDEBUG << "NOTE: " << d << endl;
+            }
     }
 }
+
+PiperVampPluginFactory::PiperVampPluginFactory() :
+    PiperVampPluginFactory({"piper-vamp-simple-server"}) {}
 
 PiperVampPluginFactory::~PiperVampPluginFactory()
 {
