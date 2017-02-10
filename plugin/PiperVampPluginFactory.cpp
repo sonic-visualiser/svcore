@@ -39,6 +39,7 @@
 #include <QCoreApplication>
 
 #include <iostream>
+#include <algorithm>
 
 #include "base/Profiler.h"
 #include "base/HelperExecPath.h"
@@ -54,14 +55,17 @@ protected:
     }
 };
 
-PiperVampPluginFactory::PiperVampPluginFactory(std::initializer_list<QString> servers) :
+PiperVampPluginFactory::PiperVampPluginFactory(std::initializer_list<ServerDescription> servers) :
     m_logger(new Logger)
 {
     HelperExecPath hep(HelperExecPath::AllInstalled);
 
     for (auto server: servers) {
-        for (auto platformHelper: hep.getHelperExecutables(server))
+        for (auto platformHelper: hep.getHelperExecutables(QString::fromStdString(server.name)))
             m_servers.push_back(platformHelper);
+        if (server.hasDesiredExtractors) {
+            setDesiredExtractors(server.name, server.extractors);
+        }
     }
 
     for (auto n: m_servers) {
@@ -72,19 +76,34 @@ PiperVampPluginFactory::PiperVampPluginFactory(std::initializer_list<QString> se
     if (m_servers.empty()) {
         SVDEBUG << "NOTE: No Piper Vamp servers found in installation;" 
                 << " found none of the following:" << endl;
-        for (auto serverName: servers)
-            for (auto d: hep.getHelperCandidatePaths(serverName)) {
+        for (auto server: servers)
+            for (auto d: hep.getHelperCandidatePaths(QString::fromStdString(server.name))) {
                 SVDEBUG << "NOTE: " << d << endl;
             }
     }
 }
 
 PiperVampPluginFactory::PiperVampPluginFactory() :
-    PiperVampPluginFactory({"piper-vamp-simple-server"}) {}
+    PiperVampPluginFactory({{"piper-vamp-simple-server"}}) {}
 
 PiperVampPluginFactory::~PiperVampPluginFactory()
 {
     delete m_logger;
+}
+
+void 
+PiperVampPluginFactory::setDesiredExtractors(ServerName name, 
+                                             DesiredExtractors extractors)
+{
+    const bool isValidServerName = std::find_if(
+        m_servers.begin(), 
+        m_servers.end(), 
+        [&name](const HelperExecPath::HelperExec &h) -> bool {
+            return QFileInfo(h.executable).fileName().toStdString() == name;       
+        }) != m_servers.end();
+    if ( isValidServerName ) {
+        m_overrideDesiredExtractors[name] = extractors;
+    }
 }
 
 vector<QString>
@@ -188,35 +207,55 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
 {
     QString tag = server.tag;
     string executable = server.executable.toStdString();
-
-    PluginScan *scan = PluginScan::getInstance();
-    auto candidateLibraries =
-        scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
-
-    SVDEBUG << "PiperVampPluginFactory: Populating from " << executable << endl;
-    SVDEBUG << "INFO: Have " << candidateLibraries.size()
-            << " candidate Vamp plugin libraries from scanner" << endl;
+    const string serverName = QFileInfo(server.executable).fileName().toStdString();
         
-    vector<string> from;
-    for (const auto &c: candidateLibraries) {
-        if (c.helperTag == tag) {
-            string soname = QFileInfo(c.libraryPath).baseName().toStdString();
-            SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
-            from.push_back(soname);
-        }
-    }
-
-    if (from.empty()) {
-        SVDEBUG << "PiperVampPluginFactory: No candidate libraries for tag \""
-             << tag << "\"";
-        if (scan->scanSucceeded()) {
-            // we have to assume that they all failed to load (i.e. we
-            // exclude them all) rather than sending an empty list
-            // (which would mean no exclusions)
-            SVDEBUG << ", skipping" << endl;
-            return;
+    DesiredSubset from;
+    
+    if (m_overrideDesiredExtractors.find(serverName) != m_overrideDesiredExtractors.end()) {
+        const auto desired = m_overrideDesiredExtractors.at(serverName);
+        if (desired.allAvailable) {
+            if (desired.from.empty()) {
+                from = {};
+            } else {
+                // ambiguous struct
+                return;
+            }
         } else {
-            SVDEBUG << ", but it seems the scan failed, so bumbling on anyway" << endl;
+            if (desired.from.empty()) {
+                // ambigous
+                return;
+            } else {
+                from = desired.from;
+            }
+        }
+    } else {
+        PluginScan *scan = PluginScan::getInstance();
+        auto candidateLibraries =
+            scan->getCandidateLibrariesFor(PluginScan::VampPlugin);
+
+        SVDEBUG << "PiperVampPluginFactory: Populating from " << executable << endl;
+        SVDEBUG << "INFO: Have " << candidateLibraries.size()
+                << " candidate Vamp plugin libraries from scanner" << endl;
+        for (const auto &c: candidateLibraries) {
+            if (c.helperTag == tag) {
+                string soname = QFileInfo(c.libraryPath).baseName().toStdString();
+                SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
+                from.push_back(soname);
+            }
+        }
+
+        if (from.empty()) {
+            SVDEBUG << "PiperVampPluginFactory: No candidate libraries for tag \""
+                 << tag << "\"";
+            if (scan->scanSucceeded()) {
+                // we have to assume that they all failed to load (i.e. we
+                // exclude them all) rather than sending an empty list
+                // (which would mean no exclusions)
+                SVDEBUG << ", skipping" << endl;
+                return;
+            } else {
+                SVDEBUG << ", but it seems the scan failed, so bumbling on anyway" << endl;
+            }
         }
     }
     

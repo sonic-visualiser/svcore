@@ -34,8 +34,35 @@
 class PiperVampPluginFactory : public FeatureExtractionPluginFactory
 {
 public:
+    using ServerName = std::string;
+    using DesiredSubset = std::vector<std::string>;
+    struct DesiredExtractors 
+    {
+        DesiredExtractors() : allAvailable(false) {} // filtered, but invalid, by default (from should not be empty)
+        
+        DesiredExtractors(DesiredSubset subset) 
+            : allAvailable(subset.empty()), from(subset) {} // if empty assume all available are wanted, can populate struct manually if not
+        
+        bool allAvailable; // used to disambiguate an empty filter list from wanting all available extractors, client code should inspect both to determine validity 
+        DesiredSubset from; // this should only be populated if allAvailable is false
+    };
+    
+    struct ServerDescription 
+    {
+        ServerDescription(ServerName n) 
+            : name(n), hasDesiredExtractors(false) {} // fall back to populating using PluginScan internally
+        ServerDescription(ServerName n, DesiredSubset desired) 
+            : name(n), hasDesiredExtractors(true), extractors(desired) {}
+        ServerName name;
+        bool hasDesiredExtractors; // indicates whether to override the ListRequest made internally
+        DesiredExtractors extractors; // for populating the from field in a ListRequest
+    };
+    
     PiperVampPluginFactory();
-    PiperVampPluginFactory(std::initializer_list<QString> servers);
+    PiperVampPluginFactory(std::initializer_list<ServerDescription> servers);
+    
+    virtual void setDesiredExtractors(ServerName name, DesiredExtractors extractors);
+    
     virtual ~PiperVampPluginFactory();
 
     virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage)
@@ -56,6 +83,7 @@ protected:
     std::map<QString, QString> m_origins; // plugin identifier -> server path
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
+    std::map<ServerName, DesiredExtractors> m_overrideDesiredExtractors;
 
     void populate(QString &errorMessage);
     void populateFrom(const HelperExecPath::HelperExec &, QString &errorMessage);
