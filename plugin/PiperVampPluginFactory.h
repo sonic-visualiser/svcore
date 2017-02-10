@@ -61,7 +61,7 @@ public:
     PiperVampPluginFactory();
     PiperVampPluginFactory(std::initializer_list<ServerDescription> servers);
     
-    virtual void setDesiredExtractors(ServerName name, DesiredExtractors extractors);
+    virtual void setDesiredExtractors(ServerDescription description);
     
     virtual ~PiperVampPluginFactory();
 

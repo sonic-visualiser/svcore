@@ -64,7 +64,7 @@ PiperVampPluginFactory::PiperVampPluginFactory(std::initializer_list<ServerDescr
         for (auto platformHelper: hep.getHelperExecutables(QString::fromStdString(server.name)))
             m_servers.push_back(platformHelper);
         if (server.hasDesiredExtractors) {
-            setDesiredExtractors(server.name, server.extractors);
+            setDesiredExtractors(server);
         }
     }
 
@@ -92,17 +92,16 @@ PiperVampPluginFactory::~PiperVampPluginFactory()
 }
 
 void 
-PiperVampPluginFactory::setDesiredExtractors(ServerName name, 
-                                             DesiredExtractors extractors)
+PiperVampPluginFactory::setDesiredExtractors(ServerDescription description)
 {
     const bool isValidServerName = std::find_if(
         m_servers.begin(), 
         m_servers.end(), 
-        [&name](const HelperExecPath::HelperExec &h) -> bool {
-            return QFileInfo(h.executable).fileName().toStdString() == name;       
+        [&description](const HelperExecPath::HelperExec &h) -> bool {
+            return QFileInfo(h.executable).fileName().toStdString() == description.name;       
         }) != m_servers.end();
-    if ( isValidServerName ) {
-        m_overrideDesiredExtractors[name] = extractors;
+    if ( isValidServerName && description.hasDesiredExtractors ) {
+        m_overrideDesiredExtractors[description.name] = description.extractors;
     }
 }
 
