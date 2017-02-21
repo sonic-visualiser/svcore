@@ -78,7 +78,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     
     m_fileSize = m_qfile->size();
 
-    m_ffile = fdopen(dup(m_qfile->handle()), "r");
+    m_ffile = fdopen(dup(m_qfile->handle()), "rb");
     if (!m_ffile) {
         m_error = QString("Failed to open file pointer for file %1").arg(m_path);
         SVDEBUG << "OggVorbisFileReader: " << m_error << endl;
