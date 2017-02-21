@@ -28,7 +28,7 @@
 #define CAPNP_LITE 1
 #endif
 
-#include "vamp-client/qt/AutoPlugin.h"
+#include "vamp-client/qt/PiperAutoPlugin.h"
 #include "vamp-client/qt/ProcessQtTransport.h"
 #include "vamp-client/CapnpRRClient.h"
 
@@ -123,10 +123,10 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
         return 0;
     }
 
-    SVDEBUG << "PiperVampPluginFactory: Creating Piper AutoPlugin for server "
+    SVDEBUG << "PiperVampPluginFactory: Creating PiperAutoPlugin for server "
         << m_origins[identifier] << ", identifier " << identifier << endl;
     
-    auto ap = new piper_vamp::client::AutoPlugin
+    auto ap = new piper_vamp::client::PiperAutoPlugin
         (m_origins[identifier].toStdString(),
          psd.pluginKey,
          float(inputSampleRate),
@@ -229,7 +229,7 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     piper_vamp::ListResponse resp;
 
     try {
-        resp = client.listPluginData(req);
+        resp = client.list(req);
     } catch (piper_vamp::client::ServerCrashed) {
         SVDEBUG << "PiperVampPluginFactory: Piper server crashed" << endl;
         errorMessage = QObject::tr

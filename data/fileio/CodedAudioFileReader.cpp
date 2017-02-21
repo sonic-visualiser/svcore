@@ -525,8 +525,12 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
              ratio,
              true);
 
-        if (m_frameCount + out > sv_frame_t(double(m_fileFrameCount) * ratio)) {
-            out = sv_frame_t(double(m_fileFrameCount) * ratio) - m_frameCount;
+        SVDEBUG << "CodedAudioFileReader::pushBufferResampling: resampled padFrames to " << out << " frames" << endl;
+
+        sv_frame_t expected = sv_frame_t(round(double(m_fileFrameCount) * ratio));
+        if (m_frameCount + out > expected) {
+            out = expected - m_frameCount;
+            SVDEBUG << "CodedAudioFileReader::pushBufferResampling: clipping that to " << out << " to avoid producing more samples than desired" << endl;
         }
 
         pushBufferNonResampling(m_resampleBuffer, out);
