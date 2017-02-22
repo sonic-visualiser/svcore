@@ -21,8 +21,11 @@
 
 #include "base/Debug.h"
 
+// for dup:
 #ifdef _MSC_VER
 #include <io.h>
+#else
+#include <unistd.h>
 #endif
 
 BZipFileDevice::BZipFileDevice(QString fileName) :
