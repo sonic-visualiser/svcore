@@ -27,9 +27,11 @@ Model::~Model()
 //    SVDEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
-        SVDEBUG << "NOTE: Model::~Model(" << this << ", \""
-                  << objectName() << "\"): Model deleted "
-                  << "with no aboutToDelete notification" << endl;
+        SVDEBUG << "NOTE: Model(" << this << ", \""
+                << objectName() << "\", type uri <"
+                << m_typeUri << ">)::~Model(): Model deleted "
+                << "with no aboutToDelete notification"
+                << endl;
     }
 
     if (m_alignment) {
@@ -59,13 +61,16 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-//    cerr << "Model(" << this << ")::aboutToDelete()" << endl;
+//    SVDEBUG << "Model(" << this << ", \""
+//            << objectName() << "\", type uri <"
+//            << m_typeUri << ">)::aboutToDelete()" << endl;
 
     if (m_aboutToDelete) {
-        cerr << "WARNING: Model(" << this << ", \""
-                  << objectName() << "\")::aboutToDelete: "
-                  << "aboutToDelete called more than once for the same model"
-                  << endl;
+        SVDEBUG << "WARNING: Model(" << this << ", \""
+                << objectName() << "\", type uri <"
+                << m_typeUri << ">)::aboutToDelete: "
+                << "aboutToDelete called more than once for the same model"
+                << endl;
     }
 
     emit aboutToBeDeleted();
