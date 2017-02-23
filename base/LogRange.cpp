@@ -23,25 +23,30 @@
 void
 LogRange::mapRange(double &min, double &max, double logthresh)
 {
+    // ensure that max > min:
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
 
 //    cerr << "LogRange::mapRange: min = " << min << ", max = " << max << endl;
     
-    if (min >= 0.f) {
+    if (min >= 0.0) {
 
-        max = log10(max); // we know max != 0
+        // and max > min, so we know min >= 0 and max > 0
+        
+        max = log10(max);
 
-        if (min == 0.f) min = std::min(logthresh, max);
+        if (min == 0.0) min = std::min(logthresh, max);
         else min = log10(min);
 
 //        cerr << "LogRange::mapRange: positive: min = " << min << ", max = " << max << endl;
 
-    } else if (max <= 0.f) {
+    } else if (max <= 0.0) {
+
+        // and max > min, so we know min < 0 and max <= 0
         
-        min = log10(-min); // we know min != 0
-        
-        if (max == 0.f) max = std::min(logthresh, min);
+        min = log10(-min);
+
+        if (max == 0.0) max = std::min(logthresh, min);
         else max = log10(-max);
         
         std::swap(min, max);
@@ -64,7 +69,7 @@ LogRange::mapRange(double &min, double &max, double logthresh)
 double
 LogRange::map(double value, double thresh)
 {
-    if (value == 0.f) return thresh;
+    if (value == 0.0) return thresh;
     return log10(fabs(value));
 }
 
@@ -77,7 +82,7 @@ LogRange::unmap(double value)
 static double
 sd(const std::vector<double> &values, int start, int n)
 {
-    double sum = 0.f, mean = 0.f, variance = 0.f;
+    double sum = 0.0, mean = 0.0, variance = 0.0;
     for (int i = 0; i < n; ++i) {
         sum += values[start + i];
     }
