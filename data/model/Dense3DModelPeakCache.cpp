@@ -35,11 +35,11 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *s
             this, SLOT(sourceModelChanged()));
     connect(source, SIGNAL(aboutToBeDeleted()),
             this, SLOT(sourceModelAboutToBeDeleted()));
-
 }
 
 Dense3DModelPeakCache::~Dense3DModelPeakCache()
 {
+    if (m_cache) m_cache->aboutToDelete();
     delete m_cache;
 }
 

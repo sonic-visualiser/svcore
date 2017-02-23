@@ -1,6 +1,6 @@
 #!/bin/bash
 
-audio=/share/music
+audio=/data/Music
 preferred=$audio/free
 list=audiofiles.txt
 used=audiofiles-used.txt
