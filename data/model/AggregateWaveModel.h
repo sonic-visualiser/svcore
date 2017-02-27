@@ -84,10 +84,12 @@ protected slots:
     void componentModelChanged();
     void componentModelChangedWithin(sv_frame_t, sv_frame_t);
     void componentModelCompletionChanged();
+    void componentModelAboutToBeDeleted();
 
 protected:
     ChannelSpecList m_components;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
+    bool m_invalidated; // because one of its component models is aboutToBeDeleted
 };
 
 #endif
