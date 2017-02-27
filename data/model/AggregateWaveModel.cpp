@@ -25,10 +25,15 @@ PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 
 AggregateWaveModel::AggregateWaveModel(ChannelSpecList channelSpecs) :
-    m_components(channelSpecs)
+    m_components(channelSpecs),
+    m_invalidated(false)
 {
     for (ChannelSpecList::const_iterator i = channelSpecs.begin();
          i != channelSpecs.end(); ++i) {
+
+        connect(i->model, SIGNAL(aboutToBeDeleted()),
+                this, SLOT(componentModelAboutToBeDeleted()));
+        
         if (i->model->getSampleRate() !=
             channelSpecs.begin()->model->getSampleRate()) {
             SVDEBUG << "AggregateWaveModel::AggregateWaveModel: WARNING: Component models do not all have the same sample rate" << endl;
@@ -41,12 +46,26 @@ AggregateWaveModel::~AggregateWaveModel()
 {
 }
 
+void
+AggregateWaveModel::componentModelAboutToBeDeleted()
+{
+    SVDEBUG << "AggregateWaveModel::componentModelAboutToBeDeleted: invalidating"
+            << endl;
+    m_components.clear();
+    m_invalidated = true;
+}
+
 bool
 AggregateWaveModel::isOK() const
 {
+    if (m_invalidated) {
+        return false;
+    }
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
-        if (!i->model->isOK()) return false;
+        if (!i->model->isOK()) {
+            return false;
+        }
     }
     return true;
 }
@@ -55,6 +74,7 @@ bool
 AggregateWaveModel::isReady(int *completion) const
 {
     if (completion) *completion = 100;
+
     bool ready = true;
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
@@ -71,13 +91,12 @@ sv_frame_t
 AggregateWaveModel::getFrameCount() const
 {
     sv_frame_t count = 0;
-
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
-        sv_frame_t thisCount = i->model->getEndFrame() - i->model->getStartFrame();
+        sv_frame_t thisCount =
+            i->model->getEndFrame() - i->model->getStartFrame();
         if (thisCount > count) count = thisCount;
     }
-
     return count;
 }
 
