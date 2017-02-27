@@ -217,10 +217,17 @@ AggregateWaveModel::componentModelCompletionChanged()
 }
 
 void
-AggregateWaveModel::toXml(QTextStream &,
-                          QString ,
-                          QString ) const
+AggregateWaveModel::toXml(QTextStream &out,
+                          QString indent,
+                          QString extraAttributes) const
 {
-    //!!! complete
+    QStringList componentStrings;
+    for (const auto &c: m_components) {
+        componentStrings.push_back(QString("%1").arg(getObjectExportId(c.model)));
+    }
+    Model::toXml(out, indent,
+                 QString("type=\"aggregatewave\" components=\"%1\" %2")
+                 .arg(componentStrings.join(","))
+                 .arg(extraAttributes));
 }
 
