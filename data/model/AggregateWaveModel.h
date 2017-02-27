@@ -79,6 +79,7 @@ signals:
     void modelChanged();
     void modelChangedWithin(sv_frame_t, sv_frame_t);
     void completionChanged();
+    void modelInvalidated();
 
 protected slots:
     void componentModelChanged();

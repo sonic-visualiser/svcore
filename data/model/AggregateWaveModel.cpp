@@ -53,6 +53,7 @@ AggregateWaveModel::componentModelAboutToBeDeleted()
             << endl;
     m_components.clear();
     m_invalidated = true;
+    emit modelInvalidated();
 }
 
 bool
