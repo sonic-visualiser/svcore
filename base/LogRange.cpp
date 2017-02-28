@@ -27,8 +27,6 @@ LogRange::mapRange(double &min, double &max, double logthresh)
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
 
-//    cerr << "LogRange::mapRange: min = " << min << ", max = " << max << endl;
-    
     if (min >= 0.0) {
 
         // and max > min, so we know min >= 0 and max > 0
@@ -37,8 +35,6 @@ LogRange::mapRange(double &min, double &max, double logthresh)
 
         if (min == 0.0) min = std::min(logthresh, max);
         else min = log10(min);
-
-//        cerr << "LogRange::mapRange: positive: min = " << min << ", max = " << max << endl;
 
     } else if (max <= 0.0) {
 
@@ -50,8 +46,6 @@ LogRange::mapRange(double &min, double &max, double logthresh)
         else max = log10(-max);
         
         std::swap(min, max);
-        
-//        cerr << "LogRange::mapRange: negative: min = " << min << ", max = " << max << endl;
 
     } else {
         
@@ -59,8 +53,6 @@ LogRange::mapRange(double &min, double &max, double logthresh)
         
         max = log10(std::max(max, -min));
         min = std::min(logthresh, max);
-
-//        cerr << "LogRange::mapRange: spanning: min = " << min << ", max = " << max << endl;
     }
 
     if (min == max) min = max - 1;
