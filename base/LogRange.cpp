@@ -23,6 +23,8 @@
 void
 LogRange::mapRange(double &min, double &max, double logthresh)
 {
+    static double eps = 1e-10;
+    
     // ensure that max > min:
     if (min > max) std::swap(min, max);
     if (max == min) max = min + 1;
@@ -55,7 +57,7 @@ LogRange::mapRange(double &min, double &max, double logthresh)
         min = std::min(logthresh, max);
     }
 
-    if (min == max) min = max - 1;
+    if (fabs(max - min) < eps) min = max - 1;
 }        
 
 double
