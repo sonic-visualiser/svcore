@@ -11,6 +11,7 @@
     COPYING included with this distribution for more information.
 */
 
+#include "TestLogRange.h"
 #include "TestRangeMapper.h"
 #include "TestPitch.h"
 #include "TestStringBits.h"
@@ -27,7 +28,7 @@ int main(int argc, char *argv[])
     int good = 0, bad = 0;
 
     QCoreApplication app(argc, argv);
-    app.setOrganizationName("Sonic Visualiser");
+    app.setOrganizationName("sonic-visualiser");
     app.setApplicationName("test-svcore-base");
 
     {
@@ -57,6 +58,11 @@ int main(int argc, char *argv[])
     }
     {
 	TestColumnOp t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+    {
+	TestLogRange t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }

@@ -455,7 +455,7 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
         if (n[j]) sample[j] /= n[j];
     }
     
-    return LogRange::useLogScale(sample);
+    return LogRange::shouldUseLogScale(sample);
 }
 
 void
