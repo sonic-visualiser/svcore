@@ -96,7 +96,7 @@ sd(const std::vector<double> &values, int start, int n)
 }
 
 bool
-LogRange::useLogScale(std::vector<double> values)
+LogRange::shouldUseLogScale(std::vector<double> values)
 {
     // Principle: Partition the data into two sets around the median;
     // calculate the standard deviation of each set; if the two SDs

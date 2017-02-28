@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     }
 
     QCoreApplication app(argc, argv);
-    app.setOrganizationName("Sonic Visualiser");
+    app.setOrganizationName("sonic-visualiser");
     app.setApplicationName("test-fileio");
 
     {

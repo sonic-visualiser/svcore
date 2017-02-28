@@ -23,14 +23,6 @@ class LogRange
 {
 public:
     /**
-     * Map a linear range onto a logarithmic range.  min and max are
-     * passed as the extents of the linear range and returned as the
-     * extents of the logarithmic range.  thresh is the minimum value
-     * for the log range, to be used if the linear range spans zero.
-     */
-    static void mapRange(double &min, double &max, double thresh = -10);
-
-    /**
      * Map a value onto a logarithmic range.  This just means taking
      * the base-10 log of the absolute value, or using the threshold
      * value if the absolute value is zero.
@@ -44,11 +36,19 @@ public:
     static double unmap(double value);
 
     /**
+     * Map a linear range onto a logarithmic range.  min and max are
+     * passed as the extents of the linear range and returned as the
+     * extents of the logarithmic range.  thresh is the minimum value
+     * for the log range, to be used if the linear range spans zero.
+     */
+    static void mapRange(double &min, double &max, double thresh = -10);
+
+    /**
      * Estimate whether a set of values would be more properly shown
      * using a logarithmic than a linear scale.  This is only ever
      * going to be a rough guess.
      */
-    static bool useLogScale(std::vector<double> values);
+    static bool shouldUseLogScale(std::vector<double> values);
 
 };
 
