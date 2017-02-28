@@ -49,10 +49,33 @@ ColumnOp::normalize(const Column &in, ColumnNormalization n) {
     if (n == ColumnNormalization::None || in.empty()) {
         return in;
     }
-
+    
+    float shift = 0.f;
     float scale = 1.f;
-        
-    if (n == ColumnNormalization::Sum1) {
+
+    if (n == ColumnNormalization::Range01) {
+
+        float min = 0.f;
+        float max = 0.f;
+        bool have = false;
+        for (auto v: in) {
+            if (v < min || !have) {
+                min = v;
+            }
+            if (v > max || !have) {
+                max = v;
+            }
+            have = true;
+        }
+        if (min != 0.f) {
+            shift = -min;
+            max -= min;
+        }
+        if (max != 0.f) {
+            scale = 1.f / max;
+        }
+
+    } else if (n == ColumnNormalization::Sum1) {
 
         float sum = 0.f;
 
@@ -86,7 +109,7 @@ ColumnOp::normalize(const Column &in, ColumnNormalization n) {
         }
     }
 
-    return applyGain(in, scale);
+    return applyGain(applyShift(in, shift), scale);
 }
 
 ColumnOp::Column

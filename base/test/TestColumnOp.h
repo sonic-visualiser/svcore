@@ -139,6 +139,7 @@ private slots:
         QCOMPARE(C::normalize({}, ColumnNormalization::None), Column());
         QCOMPARE(C::normalize({}, ColumnNormalization::Sum1), Column());
         QCOMPARE(C::normalize({}, ColumnNormalization::Max1), Column());
+        QCOMPARE(C::normalize({}, ColumnNormalization::Range01), Column());
         QCOMPARE(C::normalize({}, ColumnNormalization::Hybrid), Column());
     }
 
@@ -174,6 +175,18 @@ private slots:
         Column c { -4, -3, 2, 1 };
         QCOMPARE(C::normalize(c, ColumnNormalization::Max1),
                  Column({ -1.0f, -0.75f, 0.5f, 0.25f }));
+    }
+
+    void normalize_range01() {
+        Column c { 4, 3, 2, 1 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::Range01),
+                 Column({ 1.0f, 2.f/3.f, 1.f/3.f, 0.0f }));
+    }
+
+    void normalize_range01_mixedSign() {
+        Column c { -2, -3, 2, 1 };
+        QCOMPARE(C::normalize(c, ColumnNormalization::Range01),
+                 Column({ 0.2f, 0.0f, 1.0f, 0.8f }));
     }
 
     void normalize_hybrid() {
