@@ -26,6 +26,9 @@
  * Max1 means to normalize to max value = 1.0.
  * Sum1 means to normalize to sum of values = 1.0.
  *
+ * Range01 means to normalize such that the max value = 1.0 and the
+ * min value (if different from the max value) = 0.0.
+ *
  * Hybrid means normalize to max = 1.0 and then multiply by
  * log10 of the max value, to retain some difference between
  * levels of neighbouring columns.
@@ -36,6 +39,7 @@ enum class ColumnNormalization {
     None,
     Max1,
     Sum1,
+    Range01,
     Hybrid
 };
 
@@ -59,6 +63,17 @@ public:
 	Column out;
 	out.reserve(in.size());
 	for (auto v: in) out.push_back(float(v * gain));
+	return out;
+    }
+
+    /**
+     * Shift the values in the given column by the given offset.
+     */
+    static Column applyShift(const Column &in, float offset) {
+        if (offset == 0.f) return in;
+	Column out;
+	out.reserve(in.size());
+	for (auto v: in) out.push_back(v + offset);
 	return out;
     }
 
