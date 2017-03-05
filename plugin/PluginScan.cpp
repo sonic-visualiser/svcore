@@ -57,6 +57,7 @@ PluginScan::~PluginScan() {
     QMutexLocker locker(&m_mutex);
     clear();
     delete m_logger;
+    SVDEBUG << "PluginScan::~PluginScan completed" << endl;
 }
 
 void
@@ -106,6 +107,7 @@ PluginScan::scan()
         }
     }
 
+    SVDEBUG << "PluginScan::scan complete" << endl;
 #endif
 }
 
