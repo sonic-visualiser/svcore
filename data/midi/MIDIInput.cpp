@@ -20,15 +20,21 @@
 #include "system/System.h"
 
 MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
-    m_rtmidi(),
+    m_rtmidi(0),
     m_frameTimer(timer),
     m_buffer(1023)
 {
     try {
-        m_rtmidi = new RtMidiIn(name.toStdString());
-        m_rtmidi->setCallback(staticCallback, this);
-        m_rtmidi->openPort(0, tr("Input").toStdString());
-    } catch (RtError e) {
+        std::vector<RtMidi::Api> apis;
+        RtMidi::getCompiledApi(apis);
+        if (apis.empty()) {
+            SVDEBUG << "MIDIInput: No RtMidi APIs compiled in" << endl;
+        } else {
+            m_rtmidi = new RtMidiIn(apis[0], name.toStdString());
+            m_rtmidi->setCallback(staticCallback, this);
+            m_rtmidi->openPort(0, tr("Input").toStdString());
+        }
+    } catch (RtMidiError e) {
         e.printMessage();
         delete m_rtmidi;
         m_rtmidi = 0;
