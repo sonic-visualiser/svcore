@@ -66,7 +66,6 @@ SVCORE_HEADERS = \
            data/fileio/WavFileWriter.h \
            data/midi/MIDIEvent.h \
            data/midi/MIDIInput.h \
-           data/midi/rtmidi/RtError.h \
            data/midi/rtmidi/RtMidi.h \
            data/model/AggregateWaveModel.h \
            data/model/AlignmentModel.h \
