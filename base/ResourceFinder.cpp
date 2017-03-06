@@ -133,14 +133,22 @@ getNewStyleUserResourcePrefix()
     }
 
 #if QT_VERSION >= 0x050000
+
     // This is expected to be much more reliable than
     // getOldStyleUserResourcePrefix(), but it returns a different
     // directory because it includes the organisation name (which is
     // fair enough). Hence migrateOldStyleResources() which moves
     // across any resources found in the old-style path the first time
     // we look for the new-style one
+#if QT_VERSION >= 0x050400
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #else
+    cerr << "WARNING: ResourceFinder::getOldStyleUserResourcePrefix: Building with older version of Qt (pre 5.4), resource location may be incompatible with future versions" << endl;
+    return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#endif
+    
+#else
+    cerr << "WARNING: ResourceFinder::getOldStyleUserResourcePrefix: Building with very old version of Qt (pre 5.0?), resource location may be incompatible with future versions" << endl;
     return getOldStyleUserResourcePrefix();
 #endif
 }
@@ -239,12 +247,12 @@ ResourceFinder::getResourcePath(QString resourceCat, QString fileName)
         
         QString prefix = *i;
 
-        SVDEBUG << "ResourceFinder::getResourcePath: Looking up file \"" << fileName << "\" for category \"" << resourceCat << "\" in prefix \"" << prefix << "\"" << endl;
+//        cerr << "ResourceFinder::getResourcePath: Looking up file \"" << fileName << "\" for category \"" << resourceCat << "\" in prefix \"" << prefix << "\"" << endl;
 
         QString path =
             QString("%1%2/%3").arg(prefix).arg(resourceCat).arg(fileName);
         if (QFileInfo(path).exists() && QFileInfo(path).isReadable()) {
-            cerr << "Found it!" << endl;
+//            cerr << "Found it!" << endl;
             return path;
         }
     }
