@@ -27,15 +27,45 @@ MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
     try {
         std::vector<RtMidi::Api> apis;
         RtMidi::getCompiledApi(apis);
-        if (apis.empty()) {
-            SVDEBUG << "MIDIInput: No RtMidi APIs compiled in" << endl;
-        } else {
-            m_rtmidi = new RtMidiIn(apis[0], name.toStdString());
-            m_rtmidi->setCallback(staticCallback, this);
-            m_rtmidi->openPort(0, tr("Input").toStdString());
+        RtMidi::Api preferredApi = RtMidi::UNSPECIFIED;
+        for (auto a: apis) {
+            if (a == RtMidi::UNSPECIFIED || a == RtMidi::RTMIDI_DUMMY) {
+                continue;
+            }
+            preferredApi = a;
+            break;
         }
+        if (preferredApi == RtMidi::UNSPECIFIED) {
+            SVCERR << "ERROR: MIDIInput: No RtMidi APIs compiled in" << endl;
+        } else {
+
+            m_rtmidi = new RtMidiIn(preferredApi, name.toStdString());
+
+            int n = m_rtmidi->getPortCount();
+
+            if (n == 0) {
+
+                SVDEBUG << "NOTE: MIDIInput: No input ports available" << endl;
+                delete m_rtmidi;
+                m_rtmidi = 0;
+
+            } else {
+
+                m_rtmidi->setCallback(staticCallback, this);
+
+                SVDEBUG << "MIDIInput: Available ports are:" << endl;
+                for (int i = 0; i < n; ++i) {
+                    SVDEBUG << i << ". " << m_rtmidi->getPortName(i) << endl;
+                }
+                SVDEBUG << "MIDIInput: Using first port (\""
+                        << m_rtmidi->getPortName(0) << "\")" << endl;
+            
+                m_rtmidi->openPort(0, tr("Input").toStdString());
+            }
+        }
+        
     } catch (RtMidiError e) {
-        e.printMessage();
+        SVCERR << "ERROR: RtMidi error: " << e.getMessage() << endl;
         delete m_rtmidi;
         m_rtmidi = 0;
     }
@@ -86,10 +116,10 @@ MIDIInput::postEvent(MIDIEvent e)
     int count = 0, max = 5;
     while (m_buffer.getWriteSpace() == 0) {
         if (count == max) {
-            cerr << "ERROR: MIDIInput::postEvent: MIDI event queue is full and not clearing -- abandoning incoming event" << endl;
+            SVCERR << "ERROR: MIDIInput::postEvent: MIDI event queue is full and not clearing -- abandoning incoming event" << endl;
             return;
         }
-        cerr << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << endl;
+        SVCERR << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << endl;
         SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
