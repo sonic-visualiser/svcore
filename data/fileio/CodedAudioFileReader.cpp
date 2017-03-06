@@ -478,7 +478,13 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 
     case CacheInMemory:
         m_dataLock.lock();
-        m_data.insert(m_data.end(), buffer, buffer + count);
+        try {
+            m_data.insert(m_data.end(), buffer, buffer + count);
+        } catch (const std::bad_alloc &e) {
+            m_data.clear();
+            m_dataLock.unlock();
+            throw e;
+        }
         m_dataLock.unlock();
         break;
     }

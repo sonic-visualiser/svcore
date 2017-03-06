@@ -101,6 +101,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         // We need a mysterious MAD_BUFFER_GUARD (== 8) zero bytes at
         // end of input, to ensure libmad decodes the last frame
         // correctly. Otherwise the decoded audio is truncated.
+        SVDEBUG << "file size = " << m_fileSize << ", buffer guard = " << MAD_BUFFER_GUARD << endl;
         m_fileBufferSize = m_fileSize + MAD_BUFFER_GUARD;
         m_fileBuffer = new unsigned char[m_fileBufferSize];
         memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
