@@ -42,7 +42,6 @@ AudioFileSizeEstimator::estimate(FileSource source,
         if (targetRate != 0.0 && targetRate != rate) {
             samples = sv_frame_t(double(samples) * targetRate / rate);
         }
-        delete reader;
         SVDEBUG << "AudioFileSizeEstimator: WAV file reader accepts this file, reports "
                 << samples << " samples" << endl;
         estimate = samples;
@@ -50,6 +49,9 @@ AudioFileSizeEstimator::estimate(FileSource source,
         SVDEBUG << "AudioFileSizeEstimator: WAV file reader doesn't like this file, "
                 << "estimating from file size and extension instead" << endl;
     }
+
+    delete reader;
+    reader = 0;
 
     if (estimate == 0) {
 

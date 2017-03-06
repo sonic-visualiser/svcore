@@ -107,6 +107,8 @@ private slots:
             (encodingDir + "/" + audiofile, params);
 
         QVERIFY(reader != nullptr);
+
+        delete reader;
     }
 
     void readMetadata_data() {
@@ -132,7 +134,13 @@ private slots:
         QString file = fileAndExt[0];
         QString extension = fileAndExt[1];
 
-        if (extension != "wav") {
+        if (extension == "wav") {
+
+            // Nothing
+            
+            delete reader;
+
+        } else {
 
 #if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
             if (extension == "ogg") {
@@ -144,6 +152,8 @@ private slots:
             
             QString title = reader->getTitle();
             QVERIFY(title != QString());
+
+            delete reader;
 
             bool found = false;
             for (int m = 0; m < mappingCount; ++m) {

@@ -287,6 +287,10 @@ private slots:
 	// expected number back (if this is not mp3/aac) or (b) take
 	// into account silence at beginning and end (if it is).
 	floatvec_t test = reader->getInterleavedFrames(0, refFrames + 5000);
+
+        delete reader;
+        reader = 0;
+        
 	sv_frame_t read = test.size() / channels;
 
         bool perceptual = (extension == "mp3" ||

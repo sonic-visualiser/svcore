@@ -136,6 +136,14 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         if (!decode(m_fileBuffer, m_fileBufferSize)) {
             m_error = QString("Failed to decode file %1.").arg(m_path);
         }
+
+        if (m_sampleBuffer) {
+            for (int c = 0; c < m_channelCount; ++c) {
+                delete[] m_sampleBuffer[c];
+            }
+            delete[] m_sampleBuffer;
+            m_sampleBuffer = 0;
+        }
         
         delete[] m_fileBuffer;
         m_fileBuffer = 0;

@@ -39,6 +39,9 @@
 #include "RtMidi.h"
 #include <sstream>
 
+// CC be gung-ho about this here, assume upstream has it in hand
+#pragma GCC diagnostic ignored "-Wconversion"
+
 #if defined(__MACOSX_CORE__)
   #if TARGET_OS_IPHONE
     #define AudioGetCurrentHostTime CAHostTimeBase::GetCurrentTime
