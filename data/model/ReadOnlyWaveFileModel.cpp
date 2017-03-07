@@ -106,6 +106,10 @@ ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
     if (m_fillThread) m_fillThread->wait();
     if (m_myReader) delete m_reader;
     m_reader = 0;
+
+    SVDEBUG << "ReadOnlyWaveFileModel: Destructor exiting; we had caches of "
+            << (m_cache[0].size() * sizeof(Range)) << " and "
+            << (m_cache[1].size() * sizeof(Range)) << " bytes" << endl;
 }
 
 bool
