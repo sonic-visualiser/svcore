@@ -482,6 +482,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
             m_data.insert(m_data.end(), buffer, buffer + count);
         } catch (const std::bad_alloc &e) {
             m_data.clear();
+            SVCERR << "CodedAudioFileReader: Caught bad_alloc when trying to add " << count << " elements to buffer" << endl;
             m_dataLock.unlock();
             throw e;
         }
