@@ -181,24 +181,6 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
     if (size > INT_MAX) size = INT_MAX;
     total = ssize_t(size);
 
-    // In 32-bit addressing mode we can't address more than 4Gb.
-    // If the total memory is reported as more than 4Gb, we should
-    // reduce the available amount by the difference between 4Gb
-    // and the total. This won't give us an accurate idea of the
-    // amount of memory available any more, but it should be enough
-    // to prevent us from trying to allocate more for our own use
-    // than can be addressed at all!
-    if (sizeof(void *) < 8) {
-        if (total > 4096) {
-            ssize_t excess = total - 4096;
-            if (available > excess) {
-                available -= excess;
-            } else {
-                available = 0;
-            }
-        }
-    }
-
     return;
 
 #else
