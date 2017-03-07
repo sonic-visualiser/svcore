@@ -93,15 +93,15 @@ protected:
     {
     public:
         RangeCacheFillThread(ReadOnlyWaveFileModel &model) :
-	    m_model(model), m_fillExtent(0),
+            m_model(model), m_fillExtent(0),
             m_frameCount(model.getFrameCount()) { }
     
-	sv_frame_t getFillExtent() const { return m_fillExtent; }
+        sv_frame_t getFillExtent() const { return m_fillExtent; }
         virtual void run();
 
     protected:
         ReadOnlyWaveFileModel &m_model;
-	sv_frame_t m_fillExtent;
+        sv_frame_t m_fillExtent;
         sv_frame_t m_frameCount;
     };
          
