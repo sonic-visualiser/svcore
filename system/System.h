@@ -154,7 +154,8 @@ enum ProcessStatus { ProcessRunning, ProcessNotRunning, UnknownProcessStatus };
 extern ProcessStatus GetProcessStatus(int pid);
 
 // Return a vague approximation to the number of free megabytes of real memory.
-// Return -1 if unknown. (Hence signed args)
+// Return -1 if unknown. (Hence signed args.) Note that this could be more than
+// is actually addressable, e.g. for a 32-bit process on a 64-bit system.
 extern void GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total);
 
 // Return a vague approximation to the number of free megabytes of
