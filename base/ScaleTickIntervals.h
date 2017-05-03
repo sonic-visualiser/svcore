@@ -84,9 +84,10 @@ public:
         int prec = 1;
         
         if (fixed) {
-            prec = precInc;
-            if (prec < 0) {
-                prec = -prec;
+            if (precInc < 0) {
+                prec = -precInc;
+            } else if (precInc > 0) {
+                prec = 0;
             }
         } else {
             prec = precRange;
