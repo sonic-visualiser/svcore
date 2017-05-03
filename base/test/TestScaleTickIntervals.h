@@ -47,16 +47,20 @@ class TestScaleTickIntervals : public QObject
     void compareTicks(vector<ScaleTickIntervals::Tick> ticks,
 		      vector<ScaleTickIntervals::Tick> expected)
     {
+        double eps = 1e-7;
 	for (int i = 0; i < int(expected.size()); ++i) {
 	    if (i < int(ticks.size())) {
 		if (ticks[i].label != expected[i].label ||
-		    ticks[i].value != expected[i].value) {
+		    fabs(ticks[i].value - expected[i].value) > eps) {
 		    printDiff(ticks, expected);
 		}
 		QCOMPARE(ticks[i].label, expected[i].label);
 		QCOMPARE(ticks[i].value, expected[i].value);
 	    }
 	}
+        if (ticks.size() != expected.size()) {
+            printDiff(ticks, expected);
+        }
 	QCOMPARE(ticks.size(), expected.size());
     }
     
