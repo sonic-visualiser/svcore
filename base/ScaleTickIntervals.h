@@ -20,8 +20,11 @@
 #include <vector>
 #include <cmath>
 
-#include <iostream>
+//#define DEBUG_SCALE_TICK_INTERVALS 1
 
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+#include <iostream>
+#endif
 
 class ScaleTickIntervals
 {
@@ -29,7 +32,7 @@ public:
     struct Range {
 	double min;        // start of value range
 	double max;        // end of value range
-	int n;             // number of divisions requested (will be n+1 ticks)
+	int n;             // number of divisions (will be at most n+1 ticks)
     };
 
     struct Tick {
@@ -57,7 +60,14 @@ public:
 	
 	double inc = (r.max - r.min) / r.n;
 	if (inc == 0) {
-	    Ticks t { r.min, 1.0, r.min, false, 1, {} };
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            std::cerr << "inc == 0, using trivial range" << std::endl;
+#endif
+            double roundTo = r.min;
+            if (roundTo <= 0.0) {
+                roundTo = 1.0;
+            }
+	    Ticks t { r.min, 1.0, roundTo, true, 1, {} };
 	    explode(r, t);
 	    return t;
 	}
@@ -93,6 +103,9 @@ public:
             prec = precRange;
         }
 
+	double roundTo = pow(10.0, precInc);
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
         std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
                   << ", inc = " << inc << std::endl;
         std::cerr << "digMax = " << digMax << ", digInc = " << digInc
@@ -100,10 +113,8 @@ public:
         std::cerr << "fixed = " << fixed << ", inc = " << inc
                   << ", precInc = " << precInc << ", precRange = " << precRange
                   << ", prec = " << prec << std::endl;
-
-	double roundTo = pow(10.0, precInc);
-
         std::cerr << "roundTo = " << roundTo << std::endl;
+#endif
         
 	inc = round(inc / roundTo) * roundTo;
         if (inc < roundTo) inc = roundTo;
@@ -118,9 +129,11 @@ public:
 
 private:
     static void explode(const Range &r, Ticks &t) {
+#ifdef DEBUG_SCALE_TICK_INTERVALS
 	std::cerr << "initial = " << t.initial << ", spacing = " << t.spacing
 		  << ", roundTo = " << t.roundTo << ", fixed = " << t.fixed
 		  << ", precision = " << t.precision << std::endl;
+#endif
 	auto makeTick = [&](double value) {
 	    const int buflen = 40;
 	    char buffer[buflen];
@@ -129,9 +142,11 @@ private:
 		     t.precision, value);
 	    return Tick({ value, std::string(buffer) });
 	};
-	for (double value = t.initial;
-             value < r.max + t.spacing/2;
-             value += t.spacing) {
+        double eps = 1e-7;
+        if (t.spacing < eps * 10.0) {
+            eps = t.spacing / 10.0;
+        }
+	for (double value = t.initial; value < r.max + eps; value += t.spacing) {
 	    value = t.roundTo * round(value / t.roundTo);
 	    t.ticks.push_back(makeTick(value));
 	}

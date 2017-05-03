@@ -34,12 +34,14 @@ class TestScaleTickIntervals : public QObject
 
 	cerr << "Have " << ticks.size() << " ticks, expected "
 	     << expected.size() << endl;
-	for (int i = 0; i < int(expected.size()); ++i) {
-	    if (i < int(ticks.size())) {
-		cerr << i << ": have " << ticks[i].value << " \""
-		     << ticks[i].label << "\", expected "
-		     << expected[i].value << " \"" << expected[i].label
+	for (int i = 0; i < int(ticks.size()); ++i) {
+            cerr << i << ": have " << ticks[i].value << " \""
+                 << ticks[i].label << "\", expected ";
+	    if (i < int(expected.size())) {
+                cerr << expected[i].value << " \"" << expected[i].label
 		     << "\"" << endl;
+            } else {
+                cerr << "(n/a)" << endl;
 	    }
 	}
     }
@@ -111,6 +113,48 @@ private slots:
 	    { 6, "6.0" },
 	    { 8, "8.0" },
 	    { 10, "10.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_10_0_5()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 10, 0, 5 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 0, "0.0" },
+	    { 2, "2.0" },
+	    { 4, "4.0" },
+	    { 6, "6.0" },
+	    { 8, "8.0" },
+	    { 10, "10.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_m10_0_5()
+    {
+	auto ticks = ScaleTickIntervals::linear({ -10, 0, 5 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { -10, "-10.0" },
+	    { -8, "-8.0" },
+	    { -6, "-6.0" },
+	    { -4, "-4.0" },
+	    { -2, "-2.0" },
+	    { 0, "0.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_0_m10_5()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0, -10, 5 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { -10, "-10.0" },
+	    { -8, "-8.0" },
+	    { -6, "-6.0" },
+	    { -4, "-4.0" },
+	    { -2, "-2.0" },
+	    { 0, "0.0" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -228,6 +272,64 @@ private slots:
 	    { 0.6, "0.6" },
 	    { 0.8, "0.8" },
 	    { 1.0, "1.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_221p23_623p7_57p4()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 221.23, 623.7, 4 });
+        // only 4 ticks, not 5, because none of the rounded tick
+        // values lies on an end value
+	vector<ScaleTickIntervals::Tick> expected {
+            { 230, "230" },
+            { 330, "330" },
+            { 430, "430" },
+            { 530, "530" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_1_1_10()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 1, 1, 10 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 1.0, "1.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+    
+    void linear_0_0_10()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0, 0, 10 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 0.0, "0.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+    
+    void linear_0_1_1()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0, 1, 1 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 0.0, "0.0" },
+	    { 1.0, "1.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+    
+    void linear_0_1_0()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0, 1, 0 });
+	vector<ScaleTickIntervals::Tick> expected {
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+    
+    void linear_0_1_m1()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0, 1, -1 });
+	vector<ScaleTickIntervals::Tick> expected {
 	};
 	compareTicks(ticks.ticks, expected);
     }
