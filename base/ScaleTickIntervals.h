@@ -61,9 +61,44 @@ public:
 	    explode(r, t);
 	    return t;
 	}
-	
-	double ilg = log10(inc);
-	int prec = int((ilg > 0.0) ? round(ilg) : trunc(ilg)) - 1;
+
+        double digInc = log10(inc);
+        double digMax = log10(fabs(r.max));
+        double digMin = log10(fabs(r.min));
+
+        int precInc = int(trunc(digInc)) - 1;
+
+        bool fixed = false;
+        if (precInc > -4 && precInc < 4) {
+            fixed = true;
+        } else if ((digMax >= -3.0 && digMax <= 2.0) &&
+                   (digMin >= -3.0 && digMin <= 3.0)) {
+            fixed = true;
+        }
+        
+        int precRange = int(ceil(digMax - digInc));
+
+        int prec = 1;
+        
+        if (fixed) {
+            prec = precInc;
+            if (prec < 0) {
+                prec = -prec;
+            }
+        } else {
+            prec = precRange;
+        }
+
+        std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
+                  << ", inc = " << inc << std::endl;
+        std::cerr << "digMax = " << digMax << ", digInc = " << digInc
+                  << std::endl;
+        std::cerr << "fixed = " << fixed << ", inc = " << inc
+                  << ", precInc = " << precInc << ", precRange = " << precRange
+                  << ", prec = " << prec << std::endl;
+        
+//	int prec = int((ilg > 0.0) ? round(ilg) : trunc(ilg)) - 1;
+/*
 	int dp = 0, sf = 0;
 	bool fixed = false;
 	if (prec < 0) {
@@ -78,13 +113,22 @@ public:
 	if (prec > -4 && prec < 4) {
 	    fixed = true;
 	}
+*/
+/*        bool fixed = true;
+        int dp = sig;
+        int sf = prec;
+*/      
+	double roundTo = pow(10.0, precInc);
 
-	double roundTo = pow(10.0, prec);
+        std::cerr << "roundTo = " << roundTo << std::endl;
+        
 	inc = round(inc / roundTo) * roundTo;
+        if (inc < roundTo) inc = roundTo;
+        
 	double min = ceil(r.min / roundTo) * roundTo;
 	if (min > r.max) min = r.max;
 
-	Ticks t { min, inc, roundTo, fixed, fixed ? dp : sf, {} };
+	Ticks t { min, inc, roundTo, fixed, prec, {} };
 	explode(r, t);
 	return t;
     }
@@ -102,7 +146,9 @@ private:
 		     t.precision, value);
 	    return Tick({ value, std::string(buffer) });
 	};
-	for (double value = t.initial; value <= r.max; value += t.spacing) {
+	for (double value = t.initial;
+             value < r.max + t.spacing/2;
+             value += t.spacing) {
 	    value = t.roundTo * round(value / t.roundTo);
 	    t.ticks.push_back(makeTick(value));
 	}
