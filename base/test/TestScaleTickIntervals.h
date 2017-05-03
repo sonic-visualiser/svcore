@@ -87,13 +87,16 @@ private slots:
     void linear_0_5_5()
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, 5, 5 });
+        // generally if we have some activity in the units column, we
+        // should add .0 to satisfy the human worry that we aren't
+        // being told the whole story...
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0, "0" },
-	    { 1, "1" },
-	    { 2, "2" },
-	    { 3, "3" },
-	    { 4, "4" },
-	    { 5, "5" },
+	    { 0, "0.0" },
+	    { 1, "1.0" },
+	    { 2, "2.0" },
+	    { 3, "3.0" },
+	    { 4, "4.0" },
+	    { 5, "5.0" },
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -102,12 +105,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, 10, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0, "0" },
-	    { 2, "2" },
-	    { 4, "4" },
-	    { 6, "6" },
-	    { 8, "8" },
-	    { 10, "10" }
+	    { 0, "0.0" },
+	    { 2, "2.0" },
+	    { 4, "4.0" },
+	    { 6, "6.0" },
+	    { 8, "8.0" },
+	    { 10, "10.0" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -186,12 +189,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 10000, 10010, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 10000, "10000" },
-	    { 10002, "10002" },
-	    { 10004, "10004" },
-	    { 10006, "10006" },
-	    { 10008, "10008" },
-	    { 10010, "10010" },
+	    { 10000, "10000.0" },
+	    { 10002, "10002.0" },
+	    { 10004, "10004.0" },
+	    { 10006, "10006.0" },
+	    { 10008, "10008.0" },
+	    { 10010, "10010.0" },
 	};
 	compareTicks(ticks.ticks, expected);
     }
