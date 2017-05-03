@@ -66,7 +66,10 @@ public:
         double digMax = log10(fabs(r.max));
         double digMin = log10(fabs(r.min));
 
-        int precInc = int(trunc(digInc)) - 1;
+        int precInc = int(trunc(digInc));
+        if (double(precInc) != digInc) {
+            precInc -= 1;
+        }
 
         bool fixed = false;
         if (precInc > -4 && precInc < 4) {
@@ -96,28 +99,7 @@ public:
         std::cerr << "fixed = " << fixed << ", inc = " << inc
                   << ", precInc = " << precInc << ", precRange = " << precRange
                   << ", prec = " << prec << std::endl;
-        
-//	int prec = int((ilg > 0.0) ? round(ilg) : trunc(ilg)) - 1;
-/*
-	int dp = 0, sf = 0;
-	bool fixed = false;
-	if (prec < 0) {
-	    dp = -prec;
-	    sf = 1; // was 2, but should probably vary
-	} else {
-	    sf = prec;
-	}
-	if (sf == 0) {
-	    sf = 1;
-	}
-	if (prec > -4 && prec < 4) {
-	    fixed = true;
-	}
-*/
-/*        bool fixed = true;
-        int dp = sig;
-        int sf = prec;
-*/      
+
 	double roundTo = pow(10.0, precInc);
 
         std::cerr << "roundTo = " << roundTo << std::endl;
