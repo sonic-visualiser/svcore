@@ -14,6 +14,7 @@
 #include "TestLogRange.h"
 #include "TestRangeMapper.h"
 #include "TestPitch.h"
+#include "TestScaleTickIntervals.h"
 #include "TestStringBits.h"
 #include "TestOurRealTime.h"
 #include "TestVampRealTime.h"
@@ -63,6 +64,11 @@ int main(int argc, char *argv[])
     }
     {
 	TestLogRange t;
+	if (QTest::qExec(&t, argc, argv) == 0) ++good;
+	else ++bad;
+    }
+    {
+	TestScaleTickIntervals t;
 	if (QTest::qExec(&t, argc, argv) == 0) ++good;
 	else ++bad;
     }
