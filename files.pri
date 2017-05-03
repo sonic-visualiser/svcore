@@ -26,6 +26,7 @@ SVCORE_HEADERS = \
            base/RecentFiles.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
+           base/ScaleTickIntervals.h \
            base/Scavenger.h \
            base/Selection.h \
            base/Serialiser.h \

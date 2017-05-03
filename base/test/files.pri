@@ -4,6 +4,7 @@ TEST_HEADERS = \
 	     TestRangeMapper.h \
 	     TestOurRealTime.h \
 	     TestPitch.h \
+	     TestScaleTickIntervals.h \
 	     TestStringBits.h \
 	     TestVampRealTime.h
 	     
