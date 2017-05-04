@@ -26,6 +26,8 @@
 #include <iostream>
 #endif
 
+#include "LogRange.h"
+
 class ScaleTickIntervals
 {
 public:
@@ -50,12 +52,21 @@ public:
     };
     
     static Ticks linear(Range r) {
+        return linearTicks(r);
+    }
 
+    static Ticks logarithmic(Range r) {
+        return logTicks(r);
+    }
+
+private:
+    static Ticks unexplodedTicks(Range r)
+    {
 	if (r.n < 1) {
 	    return {};
 	}
 	if (r.max < r.min) {
-	    return linear({ r.max, r.min, r.n });
+	    return unexplodedTicks({ r.max, r.min, r.n });
 	}
 	
 	double inc = (r.max - r.min) / r.n;
@@ -68,7 +79,6 @@ public:
                 roundTo = 1.0;
             }
 	    Ticks t { r.min, 1.0, roundTo, true, 1, {} };
-	    explode(r, t);
 	    return t;
 	}
 
@@ -134,37 +144,60 @@ public:
         }
         
 	Ticks t { min, inc, roundTo, fixed, prec, {} };
-	explode(r, t);
 	return t;
     }
 
-private:
-    static void explode(const Range &r, Ticks &t) {
+    static Ticks linearTicks(Range r) {
+        Ticks t = unexplodedTicks(r);
+        explode(r, t, false);
+        return t;
+    }
+
+    static Ticks logTicks(Range r) {
+        Range mapped(r);
+        LogRange::mapRange(mapped.min, mapped.max);
+        Ticks t = unexplodedTicks(mapped);
+        if (fabs(mapped.min - mapped.max) > 3) {
+            t.fixed = false;
+        }
+        explode(mapped, t, true);
+        return t;
+    }
+
+    static Tick makeTick(bool fixed, int precision, double value) {
+        const int buflen = 40;
+        char buffer[buflen];
+        snprintf(buffer, buflen,
+                 fixed ? "%.*f" : "%.*e",
+                 precision, value);
+        return Tick({ value, std::string(buffer) });
+    }
+    
+    static void explode(const Range &r, Ticks &t, bool logUnmap) {
 #ifdef DEBUG_SCALE_TICK_INTERVALS
 	std::cerr << "initial = " << t.initial << ", spacing = " << t.spacing
 		  << ", roundTo = " << t.roundTo << ", fixed = " << t.fixed
 		  << ", precision = " << t.precision << std::endl;
 #endif
-	auto makeTick = [&](double value) {
-	    const int buflen = 40;
-	    char buffer[buflen];
-	    snprintf(buffer, buflen,
-		     t.fixed ? "%.*f" : "%.*e",
-		     t.precision, value);
-	    return Tick({ value, std::string(buffer) });
-	};
+        if (t.spacing == 0.0) {
+            return;
+        }
         double eps = 1e-7;
         if (t.spacing < eps * 10.0) {
             eps = t.spacing / 10.0;
         }
+        double max = std::max(r.min, r.max);
         int n = 0;
         while (true) {
             double value = t.initial + n * t.spacing;
 	    value = t.roundTo * round(value / t.roundTo);
-            if (value >= r.max + eps) {
+            if (value >= max + eps) {
                 break;
             }
-	    t.ticks.push_back(makeTick(value));
+            if (logUnmap) {
+                value = pow(10.0, value);
+            }
+	    t.ticks.push_back(makeTick(t.fixed, t.precision, value));
             ++n;
 	}
     }

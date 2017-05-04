@@ -455,6 +455,28 @@ private slots:
 	};
 	compareTicks(ticks.ticks, expected);
     }
+
+    void log_1_10_2()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 1, 10, 2 });
+	vector<ScaleTickIntervals::Tick> expected {
+            { 1.0, "1.0" },
+            { pow(10.0, 0.5), "3.2" },
+            { 10.0, "10.0" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+    
+    void log_0_10_2()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 0, 10, 2 });
+	vector<ScaleTickIntervals::Tick> expected {
+            { 1e-10, "1.0e-10" },
+            { pow(10.0, -4.5), "3.2e-05" },
+            { 10.0, "1.0e+01" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
 };
 
 #endif
