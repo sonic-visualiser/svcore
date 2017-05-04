@@ -20,7 +20,7 @@
 #include <vector>
 #include <cmath>
 
-//#define DEBUG_SCALE_TICK_INTERVALS 1
+#define DEBUG_SCALE_TICK_INTERVALS 1
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
 #include <iostream>
@@ -42,14 +42,7 @@ public:
 	std::string label; // value as written 
     };
 
-    struct Ticks {
-	double initial;    // value of first tick
-	double spacing;    // increment between ticks
-	double roundTo;    // what all displayed values should be rounded to
-	bool fixed;        // whether to use fixed precision (%f rather than %e)
-	int precision;     // number of dp (%f) or sf (%e)
-	std::vector<Tick> ticks;  // computed tick values and labels
-    };
+    typedef std::vector<Tick> Ticks;
     
     static Ticks linear(Range r) {
         return linearTicks(r);
@@ -60,13 +53,23 @@ public:
     }
 
 private:
-    static Ticks unexplodedTicks(Range r)
+    struct Instruction {
+	double initial;    // value of first tick
+        double limit;      // max from original range
+	double spacing;    // increment between ticks
+	double roundTo;    // what all displayed values should be rounded to
+	bool fixed;        // whether to use fixed precision (%f rather than %e)
+	int precision;     // number of dp (%f) or sf (%e)
+        bool logUnmap;     // true if values represent logs of display values
+    };
+    
+    static Instruction linearInstruction(Range r)
     {
 	if (r.n < 1) {
 	    return {};
 	}
 	if (r.max < r.min) {
-	    return unexplodedTicks({ r.max, r.min, r.n });
+	    return linearInstruction({ r.max, r.min, r.n });
 	}
 	
 	double inc = (r.max - r.min) / r.n;
@@ -78,8 +81,7 @@ private:
             if (roundTo <= 0.0) {
                 roundTo = 1.0;
             }
-	    Ticks t { r.min, 1.0, roundTo, true, 1, {} };
-	    return t;
+	    return { r.min, r.max, 1.0, roundTo, true, 1, false };
 	}
 
         double digInc = log10(inc);
@@ -143,25 +145,25 @@ private:
             }
         }
         
-	Ticks t { min, inc, roundTo, fixed, prec, {} };
-	return t;
+        return { min, r.max, inc, roundTo, fixed, prec, false };
     }
 
     static Ticks linearTicks(Range r) {
-        Ticks t = unexplodedTicks(r);
-        explode(r, t, false);
-        return t;
+        Instruction instruction = linearInstruction(r);
+        Ticks ticks = explode(instruction);
+        return ticks;
     }
 
     static Ticks logTicks(Range r) {
         Range mapped(r);
         LogRange::mapRange(mapped.min, mapped.max);
-        Ticks t = unexplodedTicks(mapped);
+        Instruction instruction = linearInstruction(mapped);
+        instruction.logUnmap = true;
         if (fabs(mapped.min - mapped.max) > 3) {
-            t.fixed = false;
+            instruction.fixed = false;
         }
-        explode(mapped, t, true);
-        return t;
+        Ticks ticks = explode(instruction);
+        return ticks;
     }
 
     static Tick makeTick(bool fixed, int precision, double value) {
@@ -173,33 +175,49 @@ private:
         return Tick({ value, std::string(buffer) });
     }
     
-    static void explode(const Range &r, Ticks &t, bool logUnmap) {
+    static Ticks explode(Instruction instruction) {
+
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-	std::cerr << "initial = " << t.initial << ", spacing = " << t.spacing
-		  << ", roundTo = " << t.roundTo << ", fixed = " << t.fixed
-		  << ", precision = " << t.precision << std::endl;
+	std::cerr << "initial = " << instruction.initial
+                  << ", limit = " << instruction.limit
+                  << ", spacing = " << instruction.spacing
+		  << ", roundTo = " << instruction.roundTo
+                  << ", fixed = " << instruction.fixed
+		  << ", precision = " << instruction.precision
+                  << ", logUnmap = " << instruction.logUnmap
+                  << std::endl;
 #endif
-        if (t.spacing == 0.0) {
-            return;
+
+        if (instruction.spacing == 0.0) {
+            return {};
         }
+
         double eps = 1e-7;
-        if (t.spacing < eps * 10.0) {
-            eps = t.spacing / 10.0;
+        if (instruction.spacing < eps * 10.0) {
+            eps = instruction.spacing / 10.0;
         }
-        double max = std::max(r.min, r.max);
+
+        double max = instruction.limit;
         int n = 0;
+
+        Ticks ticks;
+        
         while (true) {
-            double value = t.initial + n * t.spacing;
-	    value = t.roundTo * round(value / t.roundTo);
+            double value = instruction.initial + n * instruction.spacing;
+	    value = instruction.roundTo * round(value / instruction.roundTo);
             if (value >= max + eps) {
                 break;
             }
-            if (logUnmap) {
+            if (instruction.logUnmap) {
                 value = pow(10.0, value);
             }
-	    t.ticks.push_back(makeTick(t.fixed, t.precision, value));
+	    ticks.push_back(makeTick(instruction.fixed,
+                                     instruction.precision,
+                                     value));
             ++n;
 	}
+
+        return ticks;
     }
 };
 
