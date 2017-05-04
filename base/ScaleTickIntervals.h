@@ -20,13 +20,11 @@
 #include <vector>
 #include <cmath>
 
-#define DEBUG_SCALE_TICK_INTERVALS 1
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-#include <iostream>
-#endif
-
 #include "LogRange.h"
+#include "Debug.h"
+
+// Can't have this on by default, as we're called on every refresh
+//#define DEBUG_SCALE_TICK_INTERVALS 1
 
 class ScaleTickIntervals
 {
@@ -134,14 +132,16 @@ private:
         }
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
-                  << ", inc = " << inc << std::endl;
-        std::cerr << "digMax = " << digMax << ", digInc = " << digInc
-                  << std::endl;
-        std::cerr << "display = " << display << ", inc = " << inc
-                  << ", precInc = " << precInc << ", precRange = " << precRange
-                  << ", prec = " << prec << std::endl;
-        std::cerr << "roundTo = " << roundTo << std::endl;
+        SVDEBUG << "ScaleTickIntervals: calculating linearInstruction" << endl
+                << "ScaleTickIntervals: min = " << r.min << ", max = " << r.max
+                << ", n = " << r.n << ", inc = " << inc << endl;
+        SVDEBUG << "ScaleTickIntervals: digMax = " << digMax
+                << ", digInc = " << digInc << endl;
+        SVDEBUG << "ScaleTickIntervals: display = " << display
+                << ", inc = " << inc << ", precInc = " << precInc
+                << ", precRange = " << precRange
+                << ", prec = " << prec << ", roundTo = " << roundTo
+                << endl;
 #endif
 
         double min = r.min;
@@ -158,8 +158,7 @@ private:
             if (digNewMin < digInc) {
                 prec = int(ceil(digMax - digNewMin));
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-                std::cerr << "min is smaller than increment, adjusting prec to "
-                          << prec << std::endl;
+                SVDEBUG << "ScaleTickIntervals: min is smaller than increment, adjusting prec to " << prec << endl;
 #endif
             }
         }
@@ -213,15 +212,17 @@ private:
             display = Fixed;
             if (prec == 0) prec = 1;
         }
-        
+
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
-                  << ", inc = " << inc << ", minDispInc = " << minDispInc
-                  << ", digInc = " << digInc << std::endl;
-        std::cerr << "display = " << display << ", inc = " << inc
-                  << ", precInc = " << precInc
-                  << ", prec = " << prec << std::endl;
-        std::cerr << "roundTo = " << roundTo << std::endl;
+        SVDEBUG << "ScaleTickIntervals: calculating logInstruction" << endl
+                << "ScaleTickIntervals: min = " << r.min << ", max = " << r.max
+                << ", n = " << r.n << ", inc = " << inc
+                << ", minDispInc = " << minDispInc << ", digInc = " << digInc
+                << endl;
+        SVDEBUG << "ScaleTickIntervals: display = " << display
+                << ", inc = " << inc << ", precInc = " << precInc
+                << ", prec = " << prec << endl;
+        SVDEBUG << "ScaleTickIntervals: roundTo = " << roundTo << endl;
 #endif
         
 	double min = r.min;
@@ -259,14 +260,15 @@ private:
     static Ticks explode(Instruction instruction) {
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-	std::cerr << "initial = " << instruction.initial
-                  << ", limit = " << instruction.limit
-                  << ", spacing = " << instruction.spacing
-		  << ", roundTo = " << instruction.roundTo
-                  << ", display = " << instruction.display
-		  << ", precision = " << instruction.precision
-                  << ", logUnmap = " << instruction.logUnmap
-                  << std::endl;
+	SVDEBUG << "ScaleTickIntervals::explode:" << endl
+                << "initial = " << instruction.initial
+                << ", limit = " << instruction.limit
+                << ", spacing = " << instruction.spacing
+                << ", roundTo = " << instruction.roundTo
+                << ", display = " << instruction.display
+                << ", precision = " << instruction.precision
+                << ", logUnmap = " << instruction.logUnmap
+                << endl;
 #endif
 
         if (instruction.spacing == 0.0) {
