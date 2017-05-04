@@ -43,69 +43,87 @@ public:
     };
 
     typedef std::vector<Tick> Ticks;
-    
+
+    /**
+     * Return a set of ticks that divide the range r linearly into
+     * roughly r.n equal divisions, in such a way as to yield
+     * reasonably human-readable labels.
+     */
     static Ticks linear(Range r) {
         return linearTicks(r);
     }
 
+    /**
+     * Return a set of ticks that divide the range r into roughly r.n
+     * logarithmic divisions, in such a way as to yield reasonably
+     * human-readable labels.
+     */
     static Ticks logarithmic(Range r) {
-        return logTicks(r);
+        LogRange::mapRange(r.min, r.max);
+        return logarithmicAlready(r);
     }
 
+    /**
+     * Return a set of ticks that divide the range r into roughly r.n
+     * logarithmic divisions, on the asssumption that r.min and r.max
+     * already represent the logarithms of the boundary values rather
+     * than the values themselves.
+     */
+    static Ticks logarithmicAlready(Range r) {
+        return logTicks(r);
+    }
+    
 private:
+    enum Display {
+        Fixed,
+        Scientific,
+        Auto
+    };
+    
     struct Instruction {
 	double initial;    // value of first tick
         double limit;      // max from original range
 	double spacing;    // increment between ticks
 	double roundTo;    // what all displayed values should be rounded to
-	bool fixed;        // whether to use fixed precision (%f rather than %e)
+	Display display;   // whether to use fixed precision (%e, %f, or %g)
 	int precision;     // number of dp (%f) or sf (%e)
         bool logUnmap;     // true if values represent logs of display values
     };
     
     static Instruction linearInstruction(Range r)
     {
-	if (r.n < 1) {
-	    return {};
-	}
+        Display display = Auto;
+
 	if (r.max < r.min) {
 	    return linearInstruction({ r.max, r.min, r.n });
 	}
+	if (r.n < 1 || r.max == r.min) {
+            return { r.min, r.min, 1.0, r.min, display, 1, false };
+        }
 	
 	double inc = (r.max - r.min) / r.n;
-	if (inc == 0) {
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-            std::cerr << "inc == 0, using trivial range" << std::endl;
-#endif
-            double roundTo = r.min;
-            if (roundTo <= 0.0) {
-                roundTo = 1.0;
-            }
-	    return { r.min, r.max, 1.0, roundTo, true, 1, false };
-	}
 
         double digInc = log10(inc);
         double digMax = log10(fabs(r.max));
         double digMin = log10(fabs(r.min));
 
-        int precInc = int(trunc(digInc));
-        if (double(precInc) != digInc) {
-            precInc -= 1;
-        }
+        int precInc = int(floor(digInc));
+	double roundTo = pow(10.0, precInc);
 
-        bool fixed = false;
         if (precInc > -4 && precInc < 4) {
-            fixed = true;
-        } else if ((digMax >= -3.0 && digMax <= 2.0) &&
+            display = Fixed;
+        } else if ((digMax >= -2.0 && digMax <= 3.0) &&
                    (digMin >= -3.0 && digMin <= 3.0)) {
-            fixed = true;
+            display = Fixed;
+        } else {
+            display = Scientific;
         }
         
         int precRange = int(ceil(digMax - digInc));
 
         int prec = 1;
         
-        if (fixed) {
+        if (display == Fixed) {
             if (digInc < 0) {
                 prec = -precInc;
             } else {
@@ -115,26 +133,27 @@ private:
             prec = precRange;
         }
 
-	double roundTo = pow(10.0, precInc);
-
 #ifdef DEBUG_SCALE_TICK_INTERVALS
         std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
                   << ", inc = " << inc << std::endl;
         std::cerr << "digMax = " << digMax << ", digInc = " << digInc
                   << std::endl;
-        std::cerr << "fixed = " << fixed << ", inc = " << inc
+        std::cerr << "display = " << display << ", inc = " << inc
                   << ", precInc = " << precInc << ", precRange = " << precRange
                   << ", prec = " << prec << std::endl;
         std::cerr << "roundTo = " << roundTo << std::endl;
 #endif
-        
-	inc = round(inc / roundTo) * roundTo;
-        if (inc < roundTo) inc = roundTo;
-        
-	double min = ceil(r.min / roundTo) * roundTo;
-	if (min > r.max) min = r.max;
 
-        if (!fixed && min != 0.0) {
+        double min = r.min;
+        
+        if (roundTo != 0.0) {
+            inc = round(inc / roundTo) * roundTo;
+            if (inc < roundTo) inc = roundTo;
+            min = ceil(min / roundTo) * roundTo;
+            if (min > r.max) min = r.max;
+        }
+
+        if (display == Scientific && min != 0.0) {
             double digNewMin = log10(fabs(min));
             if (digNewMin < digInc) {
                 prec = int(ceil(digMax - digNewMin));
@@ -145,7 +164,73 @@ private:
             }
         }
         
-        return { min, r.max, inc, roundTo, fixed, prec, false };
+        return { min, r.max, inc, roundTo, display, prec, false };
+    }
+    
+    static Instruction logInstruction(Range r)
+    {
+        Display display = Auto;
+
+	if (r.n < 1) {
+	    return {};
+	}
+	if (r.max < r.min) {
+	    return logInstruction({ r.max, r.min, r.n });
+	}
+        if (r.max == r.min) {
+            return { r.min, r.max, 1.0, r.min, display, 1, true };
+        }
+	
+	double inc = (r.max - r.min) / r.n;
+
+        double digInc = log10(inc);
+        int precInc = int(floor(digInc));
+	double roundTo = pow(10.0, precInc);
+
+        if (roundTo != 0.0) {
+            inc = round(inc / roundTo) * roundTo;
+            if (inc < roundTo) inc = roundTo;
+        }
+
+        // if inc is close to giving us powers of two, nudge it
+        if (fabs(inc - 0.301) < 0.01) {
+            inc = log10(2.0);
+        }
+
+        // smallest increment as displayed
+        double minDispInc =
+            LogRange::unmap(r.min + inc) - LogRange::unmap(r.min);
+
+        int prec = 1;
+
+        if (minDispInc > 0.0) {
+            prec = int(floor(log10(minDispInc)));
+            if (prec < 0) prec = -prec;
+        }
+
+        if (r.max >= -2.0 && r.max <= 3.0 &&
+            r.min >= -3.0 && r.min <= 3.0) {
+            display = Fixed;
+            if (prec == 0) prec = 1;
+        }
+        
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        std::cerr << "\nmin = " << r.min << ", max = " << r.max << ", n = " << r.n
+                  << ", inc = " << inc << ", minDispInc = " << minDispInc
+                  << ", digInc = " << digInc << std::endl;
+        std::cerr << "display = " << display << ", inc = " << inc
+                  << ", precInc = " << precInc
+                  << ", prec = " << prec << std::endl;
+        std::cerr << "roundTo = " << roundTo << std::endl;
+#endif
+        
+	double min = r.min;
+        if (inc != 0.0) {
+            min = ceil(r.min / inc) * inc;
+            if (min > r.max) min = r.max;
+        }
+
+        return { min, r.max, inc, 0.0, display, prec, true };
     }
 
     static Ticks linearTicks(Range r) {
@@ -155,22 +240,18 @@ private:
     }
 
     static Ticks logTicks(Range r) {
-        Range mapped(r);
-        LogRange::mapRange(mapped.min, mapped.max);
-        Instruction instruction = linearInstruction(mapped);
-        instruction.logUnmap = true;
-        if (fabs(mapped.min - mapped.max) > 3) {
-            instruction.fixed = false;
-        }
+        Instruction instruction = logInstruction(r);
         Ticks ticks = explode(instruction);
         return ticks;
     }
-
-    static Tick makeTick(bool fixed, int precision, double value) {
+    
+    static Tick makeTick(Display display, int precision, double value) {
         const int buflen = 40;
         char buffer[buflen];
         snprintf(buffer, buflen,
-                 fixed ? "%.*f" : "%.*e",
+                 display == Auto ? "%.*g" :
+                 display == Fixed ? "%.*f" :
+                 "%.*e",
                  precision, value);
         return Tick({ value, std::string(buffer) });
     }
@@ -182,7 +263,7 @@ private:
                   << ", limit = " << instruction.limit
                   << ", spacing = " << instruction.spacing
 		  << ", roundTo = " << instruction.roundTo
-                  << ", fixed = " << instruction.fixed
+                  << ", display = " << instruction.display
 		  << ", precision = " << instruction.precision
                   << ", logUnmap = " << instruction.logUnmap
                   << std::endl;
@@ -204,14 +285,16 @@ private:
         
         while (true) {
             double value = instruction.initial + n * instruction.spacing;
-	    value = instruction.roundTo * round(value / instruction.roundTo);
             if (value >= max + eps) {
                 break;
             }
             if (instruction.logUnmap) {
                 value = pow(10.0, value);
             }
-	    ticks.push_back(makeTick(instruction.fixed,
+            if (instruction.roundTo != 0.0) {
+                value = instruction.roundTo * round(value / instruction.roundTo);
+            }
+	    ticks.push_back(makeTick(instruction.display,
                                      instruction.precision,
                                      value));
             ++n;

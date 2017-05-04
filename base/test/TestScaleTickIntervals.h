@@ -305,10 +305,10 @@ private slots:
         // only 4 ticks, not 5, because none of the rounded tick
         // values lies on an end value
 	ScaleTickIntervals::Ticks expected {
-            { 230, "230" },
-            { 330, "330" },
-            { 430, "430" },
-            { 530, "530" },
+            { 300, "300" },
+            { 400, "400" },
+            { 500, "500" },
+            { 600, "600" },
 	};
 	compareTicks(ticks, expected);
     }
@@ -336,13 +336,14 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ M_PI, 6.022140857e23, 7 });
 	ScaleTickIntervals::Ticks expected {
-            { 1e+21, "1.000e+21" },
-            { 8.7e+22, "8.700e+22" },
-            { 1.73e+23, "1.730e+23" },
-            { 2.59e+23, "2.590e+23" },
-            { 3.45e+23, "3.450e+23" },
-            { 4.31e+23, "4.310e+23" },
-            { 5.17e+23, "5.170e+23" },
+            // not perfect, but ok-ish
+            { 1e+22, "1.00e+22" },
+            { 1e+23, "1.00e+23" },
+            { 1.9e+23, "1.90e+23" },
+            { 2.8e+23, "2.80e+23" },
+            { 3.7e+23, "3.70e+23" },
+            { 4.6e+23, "4.60e+23" },
+            { 5.5e+23, "5.50e+23" },
 	};
 	compareTicks(ticks, expected);
     }
@@ -427,7 +428,7 @@ private slots:
         // pathological range
 	auto ticks = ScaleTickIntervals::linear({ 1, 1, 10 });
 	ScaleTickIntervals::Ticks expected {
-	    { 1.0, "1.0" }
+	    { 1.0, "1" }
 	};
 	compareTicks(ticks, expected);
     }
@@ -437,7 +438,7 @@ private slots:
         // pathological range
 	auto ticks = ScaleTickIntervals::linear({ 0, 0, 10 });
 	ScaleTickIntervals::Ticks expected {
-	    { 0.0, "0.0" }
+	    { 0.0, "0" }
 	};
 	compareTicks(ticks, expected);
     }
@@ -457,6 +458,7 @@ private slots:
         // senseless input
 	auto ticks = ScaleTickIntervals::linear({ 0, 1, 0 });
 	ScaleTickIntervals::Ticks expected {
+	    { 0.0, "0" },
 	};
 	compareTicks(ticks, expected);
     }
@@ -466,6 +468,7 @@ private slots:
         // senseless input
 	auto ticks = ScaleTickIntervals::linear({ 0, 1, -1 });
 	ScaleTickIntervals::Ticks expected {
+	    { 0.0, "0" },
 	};
 	compareTicks(ticks, expected);
     }
@@ -473,8 +476,19 @@ private slots:
     void linear_0p465_778_10()
     {
         // a case that gave unsatisfactory results in real life
+        // (initially it had the first tick at 1)
         auto ticks = ScaleTickIntervals::linear({ 0.465, 778.08, 10 });
         ScaleTickIntervals::Ticks expected {
+            { 10, "10" },
+            { 90, "90" },
+            { 170, "170" },
+            { 250, "250" },
+            { 330, "330" },
+            { 410, "410" },
+            { 490, "490" },
+            { 570, "570" },
+            { 650, "650" },
+            { 730, "730" },
         };
         compareTicks(ticks, expected);
     }
@@ -494,9 +508,8 @@ private slots:
     {
         auto ticks = ScaleTickIntervals::logarithmic({ 0, 10, 2 });
 	ScaleTickIntervals::Ticks expected {
-            { 1e-10, "1e-10" },
-            { pow(10.0, -4.5), "3e-05" },
-            { 10.0, "1e+01" },
+            { 1e-6, "1e-06" },
+            { 1, "1" },
 	};
 	compareTicks(ticks, expected);
     }
@@ -505,17 +518,36 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::logarithmic({ M_PI, 6.022140857e23, 7 });
 	ScaleTickIntervals::Ticks expected {
-            { 3.16228, "3e+00" },
-            { 6309.57, "6e+03" },
-            { 1.25893e+07, "1e+07" },
-            { 2.51189e+10, "3e+10" },
-            { 5.01187e+13, "5e+13" },
-            { 1e+17, "1e+17" },
-            { 1.99526e+20, "2e+20" },
-            { 3.98107e+23, "4e+23" },
+            { 1000, "1e+03" },
+            { 1e+06, "1e+06" },
+            { 1e+09, "1e+09" },
+            { 1e+12, "1e+12" },
+            { 1e+15, "1e+15" },
+            { 1e+18, "1e+18" },
+            { 1e+21, "1e+21" },
 	};
 	compareTicks(ticks, expected, true);
     }
+    
+    void log_0p465_778_10()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 0.465, 778.08, 10 });
+        ScaleTickIntervals::Ticks expected {
+            { 0.5, "0.5" },
+            { 1, "1.0" },
+            { 2, "2.0" },
+            { 4, "4.0" },
+            { 8, "8.0" },
+            { 16, "16.0" },
+            { 32, "32.0" },
+            { 64, "64.0" },
+            { 128, "128.0" },
+            { 256, "256.0" },
+            { 512, "512.0" },
+        };
+        compareTicks(ticks, expected);
+    }
+    
 };
 
 #endif
