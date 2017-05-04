@@ -290,6 +290,115 @@ private slots:
 	compareTicks(ticks.ticks, expected);
     }
 
+    void linear_sqrt2_pi_7()
+    {
+	auto ticks = ScaleTickIntervals::linear({ sqrt(2.0), M_PI, 7 });
+        // This would be better in steps of 0.25, but we only round to
+        // integral powers of ten
+	vector<ScaleTickIntervals::Tick> expected {
+            { 1.5, "1.5" },
+            { 1.7, "1.7" },
+            { 1.9, "1.9" },
+            { 2.1, "2.1" },
+            { 2.3, "2.3" },
+            { 2.5, "2.5" },
+            { 2.7, "2.7" },
+            { 2.9, "2.9" },
+            { 3.1, "3.1" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_pi_avogadro_7()
+    {
+	auto ticks = ScaleTickIntervals::linear({ M_PI, 6.022140857e23, 7 });
+	vector<ScaleTickIntervals::Tick> expected {
+            { 1e+21, "1.0e+21" },
+            { 8.7e+22, "8.7e+22" },
+            { 1.73e+23, "1.73e+23" },
+            { 2.59e+23, "2.59e+23" },
+            { 3.45e+23, "3.45e+23" },
+            { 4.31e+23, "4.31e+23" },
+            { 5.17e+23, "5.17e+23" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_1()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 1 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 3.0, "3.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_2()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 2 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 2.5, "2.5" },
+	    { 3.0, "3.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_3()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 3 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 2.3, "2.3" },
+	    { 2.6, "2.6" },
+	    { 2.9, "2.9" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_4()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 4 });
+        // This would be better in steps of 0.25, but we only round to
+        // integral powers of ten
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 2.3, "2.3" },
+	    { 2.6, "2.6" },
+	    { 2.9, "2.9" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_5()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 5 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 2.2, "2.2" },
+	    { 2.4, "2.4" },
+	    { 2.6, "2.6" },
+	    { 2.8, "2.8" },
+	    { 3.0, "3.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
+    void linear_2_3_6()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 2, 3, 6 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 2.0, "2.0" },
+	    { 2.2, "2.2" },
+	    { 2.4, "2.4" },
+	    { 2.6, "2.6" },
+	    { 2.8, "2.8" },
+	    { 3.0, "3.0" }
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+
     void linear_1_1_10()
     {
 	auto ticks = ScaleTickIntervals::linear({ 1, 1, 10 });

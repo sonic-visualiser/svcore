@@ -20,7 +20,7 @@
 #include <vector>
 #include <cmath>
 
-//#define DEBUG_SCALE_TICK_INTERVALS 1
+#define DEBUG_SCALE_TICK_INTERVALS 1
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
 #include <iostream>
@@ -32,7 +32,7 @@ public:
     struct Range {
 	double min;        // start of value range
 	double max;        // end of value range
-	int n;             // number of divisions (will be at most n+1 ticks)
+	int n;             // number of divisions (approximate only)
     };
 
     struct Tick {
@@ -146,9 +146,15 @@ private:
         if (t.spacing < eps * 10.0) {
             eps = t.spacing / 10.0;
         }
-	for (double value = t.initial; value < r.max + eps; value += t.spacing) {
+        int n = 0;
+        while (true) {
+            double value = t.initial + n * t.spacing;
 	    value = t.roundTo * round(value / t.roundTo);
+            if (value >= r.max + eps) {
+                break;
+            }
 	    t.ticks.push_back(makeTick(value));
+            ++n;
 	}
     }
 };
