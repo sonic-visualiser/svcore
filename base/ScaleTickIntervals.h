@@ -104,9 +104,9 @@ private:
         int prec = 1;
         
         if (fixed) {
-            if (precInc < 0) {
+            if (digInc < 0) {
                 prec = -precInc;
-            } else if (precInc > 0) {
+            } else {
                 prec = 0;
             }
         } else {

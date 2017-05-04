@@ -47,17 +47,30 @@ class TestScaleTickIntervals : public QObject
     }
     
     void compareTicks(vector<ScaleTickIntervals::Tick> ticks,
-		      vector<ScaleTickIntervals::Tick> expected)
+		      vector<ScaleTickIntervals::Tick> expected,
+                      bool fuzzier = false)
     {
         double eps = 1e-7;
 	for (int i = 0; i < int(expected.size()); ++i) {
 	    if (i < int(ticks.size())) {
-		if (ticks[i].label != expected[i].label ||
-		    fabs(ticks[i].value - expected[i].value) > eps) {
+                bool pass = true;
+		if (ticks[i].label != expected[i].label) {
+                    pass = false;
+                } else if (!fuzzier) {
+		    if (fabs(ticks[i].value - expected[i].value) > eps) {
+                        pass = false;
+                    }
+                } else {
+		    if (fabs(ticks[i].value - expected[i].value) >
+                        fabs(ticks[i].value) * 1e-5) {
+                        pass = false;
+                    }
+                }
+                if (!pass) {
 		    printDiff(ticks, expected);
-		}
-		QCOMPARE(ticks[i].label, expected[i].label);
-		QCOMPARE(ticks[i].value, expected[i].value);
+                    QCOMPARE(ticks[i].label, expected[i].label);
+                    QCOMPARE(ticks[i].value, expected[i].value);
+                }
 	    }
 	}
         if (ticks.size() != expected.size()) {
@@ -89,16 +102,13 @@ private slots:
     void linear_0_5_5()
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, 5, 5 });
-        // generally if we have some activity in the units column, we
-        // should add .0 to satisfy the human worry that we aren't
-        // being told the whole story...
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0, "0.0" },
-	    { 1, "1.0" },
-	    { 2, "2.0" },
-	    { 3, "3.0" },
-	    { 4, "4.0" },
-	    { 5, "5.0" },
+	    { 0, "0" },
+	    { 1, "1" },
+	    { 2, "2" },
+	    { 3, "3" },
+	    { 4, "4" },
+	    { 5, "5" },
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -107,12 +117,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, 10, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0, "0.0" },
-	    { 2, "2.0" },
-	    { 4, "4.0" },
-	    { 6, "6.0" },
-	    { 8, "8.0" },
-	    { 10, "10.0" }
+	    { 0, "0" },
+	    { 2, "2" },
+	    { 4, "4" },
+	    { 6, "6" },
+	    { 8, "8" },
+	    { 10, "10" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -121,12 +131,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 10, 0, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0, "0.0" },
-	    { 2, "2.0" },
-	    { 4, "4.0" },
-	    { 6, "6.0" },
-	    { 8, "8.0" },
-	    { 10, "10.0" }
+	    { 0, "0" },
+	    { 2, "2" },
+	    { 4, "4" },
+	    { 6, "6" },
+	    { 8, "8" },
+	    { 10, "10" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -135,12 +145,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ -10, 0, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { -10, "-10.0" },
-	    { -8, "-8.0" },
-	    { -6, "-6.0" },
-	    { -4, "-4.0" },
-	    { -2, "-2.0" },
-	    { 0, "0.0" }
+	    { -10, "-10" },
+	    { -8, "-8" },
+	    { -6, "-6" },
+	    { -4, "-4" },
+	    { -2, "-2" },
+	    { 0, "0" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -149,12 +159,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, -10, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { -10, "-10.0" },
-	    { -8, "-8.0" },
-	    { -6, "-6.0" },
-	    { -4, "-4.0" },
-	    { -2, "-2.0" },
-	    { 0, "0.0" }
+	    { -10, "-10" },
+	    { -8, "-8" },
+	    { -6, "-6" },
+	    { -4, "-4" },
+	    { -2, "-2" },
+	    { 0, "0" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -246,12 +256,12 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 10000, 10010, 5 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 10000, "10000.0" },
-	    { 10002, "10002.0" },
-	    { 10004, "10004.0" },
-	    { 10006, "10006.0" },
-	    { 10008, "10008.0" },
-	    { 10010, "10010.0" },
+	    { 10000, "10000" },
+	    { 10002, "10002" },
+	    { 10004, "10004" },
+	    { 10006, "10006" },
+	    { 10008, "10008" },
+	    { 10010, "10010" },
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -341,8 +351,8 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 2, 3, 1 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 2.0, "2.0" },
-	    { 3.0, "3.0" }
+	    { 2.0, "2" },
+	    { 3.0, "3" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -414,6 +424,7 @@ private slots:
 
     void linear_1_1_10()
     {
+        // pathological range
 	auto ticks = ScaleTickIntervals::linear({ 1, 1, 10 });
 	vector<ScaleTickIntervals::Tick> expected {
 	    { 1.0, "1.0" }
@@ -423,6 +434,7 @@ private slots:
     
     void linear_0_0_10()
     {
+        // pathological range
 	auto ticks = ScaleTickIntervals::linear({ 0, 0, 10 });
 	vector<ScaleTickIntervals::Tick> expected {
 	    { 0.0, "0.0" }
@@ -434,8 +446,8 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ 0, 1, 1 });
 	vector<ScaleTickIntervals::Tick> expected {
-	    { 0.0, "0.0" },
-	    { 1.0, "1.0" }
+	    { 0.0, "0" },
+	    { 1.0, "1" }
 	};
 	compareTicks(ticks.ticks, expected);
     }
@@ -471,11 +483,27 @@ private slots:
     {
         auto ticks = ScaleTickIntervals::logarithmic({ 0, 10, 2 });
 	vector<ScaleTickIntervals::Tick> expected {
-            { 1e-10, "1.0e-10" },
-            { pow(10.0, -4.5), "3.2e-05" },
-            { 10.0, "1.0e+01" },
+            { 1e-10, "1e-10" },
+            { pow(10.0, -4.5), "3e-05" },
+            { 10.0, "1e+01" },
 	};
 	compareTicks(ticks.ticks, expected);
+    }
+
+    void log_pi_avogadro_7()
+    {
+	auto ticks = ScaleTickIntervals::logarithmic({ M_PI, 6.022140857e23, 7 });
+	vector<ScaleTickIntervals::Tick> expected {
+            { 3.16228, "3e+00" },
+            { 6309.57, "6e+03" },
+            { 1.25893e+07, "1e+07" },
+            { 2.51189e+10, "3e+10" },
+            { 5.01187e+13, "5e+13" },
+            { 1e+17, "1e+17" },
+            { 1.99526e+20, "2e+20" },
+            { 3.98107e+23, "4e+23" },
+	};
+	compareTicks(ticks.ticks, expected, true);
     }
 };
 
