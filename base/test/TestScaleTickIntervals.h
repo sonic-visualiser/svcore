@@ -454,6 +454,7 @@ private slots:
     
     void linear_0_1_0()
     {
+        // senseless input
 	auto ticks = ScaleTickIntervals::linear({ 0, 1, 0 });
 	vector<ScaleTickIntervals::Tick> expected {
 	};
@@ -462,12 +463,22 @@ private slots:
     
     void linear_0_1_m1()
     {
+        // senseless input
 	auto ticks = ScaleTickIntervals::linear({ 0, 1, -1 });
 	vector<ScaleTickIntervals::Tick> expected {
 	};
 	compareTicks(ticks.ticks, expected);
     }
 
+    void linear_0p465_778_10()
+    {
+        // a case that gave unsatisfactory results in real life
+        auto ticks = ScaleTickIntervals::linear({ 0.465, 778.08, 10 });
+        vector<ScaleTickIntervals::Tick> expected {
+        };
+        compareTicks(ticks.ticks, expected);
+    }
+    
     void log_1_10_2()
     {
         auto ticks = ScaleTickIntervals::logarithmic({ 1, 10, 2 });
