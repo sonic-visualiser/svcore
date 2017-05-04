@@ -20,7 +20,7 @@
 #include <vector>
 #include <cmath>
 
-#define DEBUG_SCALE_TICK_INTERVALS 1
+//#define DEBUG_SCALE_TICK_INTERVALS 1
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
 #include <iostream>
@@ -122,6 +122,17 @@ public:
 	double min = ceil(r.min / roundTo) * roundTo;
 	if (min > r.max) min = r.max;
 
+        if (!fixed && min != 0.0) {
+            double digNewMin = log10(fabs(min));
+            if (digNewMin < digInc) {
+                prec = int(ceil(digMax - digNewMin));
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+                std::cerr << "min is smaller than increment, adjusting prec to "
+                          << prec << std::endl;
+#endif
+            }
+        }
+        
 	Ticks t { min, inc, roundTo, fixed, prec, {} };
 	explode(r, t);
 	return t;

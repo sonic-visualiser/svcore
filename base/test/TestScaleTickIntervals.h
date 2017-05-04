@@ -229,6 +229,19 @@ private slots:
 	compareTicks(ticks.ticks, expected);
     }
     
+    void linear_0p001_1_5()
+    {
+	auto ticks = ScaleTickIntervals::linear({ 0.001, 1, 5 });
+	vector<ScaleTickIntervals::Tick> expected {
+	    { 0.1, "0.1" },
+	    { 0.3, "0.3" },
+	    { 0.5, "0.5" },
+	    { 0.7, "0.7" },
+	    { 0.9, "0.9" },
+	};
+	compareTicks(ticks.ticks, expected);
+    }
+        
     void linear_10000_10010_5()
     {
 	auto ticks = ScaleTickIntervals::linear({ 10000, 10010, 5 });
@@ -313,13 +326,13 @@ private slots:
     {
 	auto ticks = ScaleTickIntervals::linear({ M_PI, 6.022140857e23, 7 });
 	vector<ScaleTickIntervals::Tick> expected {
-            { 1e+21, "1.0e+21" },
-            { 8.7e+22, "8.7e+22" },
-            { 1.73e+23, "1.73e+23" },
-            { 2.59e+23, "2.59e+23" },
-            { 3.45e+23, "3.45e+23" },
-            { 4.31e+23, "4.31e+23" },
-            { 5.17e+23, "5.17e+23" },
+            { 1e+21, "1.000e+21" },
+            { 8.7e+22, "8.700e+22" },
+            { 1.73e+23, "1.730e+23" },
+            { 2.59e+23, "2.590e+23" },
+            { 3.45e+23, "3.450e+23" },
+            { 4.31e+23, "4.310e+23" },
+            { 5.17e+23, "5.170e+23" },
 	};
 	compareTicks(ticks.ticks, expected);
     }
