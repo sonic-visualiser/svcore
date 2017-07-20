@@ -147,10 +147,22 @@ private:
         double min = r.min;
         
         if (roundTo != 0.0) {
-            inc = round(inc / roundTo) * roundTo;
+            // Round inc to the nearest multiple of roundTo, and min
+            // to the next multiple of roundTo up. The small offset of
+            // eps is included to avoid inc of 2.49999999999 rounding
+            // to 2 or a min of -0.9999999999 rounding to 0, both of
+            // which would prevent some of our test cases from getting
+            // the most natural results.
+            double eps = 1e-8;
+            inc = round(inc / roundTo + eps) * roundTo;
             if (inc < roundTo) inc = roundTo;
-            min = ceil(min / roundTo) * roundTo;
+            min = ceil(min / roundTo - eps) * roundTo;
             if (min > r.max) min = r.max;
+            if (min == -0.0) min = 0.0;
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            SVDEBUG << "ScaleTickIntervals: rounded inc to " << inc
+                    << " and min to " << min << endl;
+#endif
         }
 
         if (display == Scientific && min != 0.0) {
