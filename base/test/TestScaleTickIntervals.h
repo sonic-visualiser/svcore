@@ -337,13 +337,13 @@ private slots:
 	auto ticks = ScaleTickIntervals::linear({ M_PI, 6.022140857e23, 7 });
 	ScaleTickIntervals::Ticks expected {
             // not perfect, but ok-ish
-            { 1e+22, "1.00e+22" },
-            { 1e+23, "1.00e+23" },
-            { 1.9e+23, "1.90e+23" },
-            { 2.8e+23, "2.80e+23" },
-            { 3.7e+23, "3.70e+23" },
-            { 4.6e+23, "4.60e+23" },
-            { 5.5e+23, "5.50e+23" },
+            { 0, "0.0e+00" },
+            { 9e+22, "9.0e+22" },
+            { 1.8e+23, "1.8e+23" },
+            { 2.7e+23, "2.7e+23" },
+            { 3.6e+23, "3.6e+23" },
+            { 4.5e+23, "4.5e+23" },
+            { 5.4e+23, "5.4e+23" },
 	};
 	compareTicks(ticks, expected);
     }
