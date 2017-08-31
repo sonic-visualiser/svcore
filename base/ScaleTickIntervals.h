@@ -247,6 +247,9 @@ private:
     }
     
     static Tick makeTick(Display display, int precision, double value) {
+        if (value == -0.0) {
+            value = 0.0;
+        }
         const int buflen = 40;
         char buffer[buflen];
         snprintf(buffer, buflen,
