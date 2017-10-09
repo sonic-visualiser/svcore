@@ -129,7 +129,7 @@ public:
 
     static void convertMinMax(int minpos, int maxpos,
                               double minval, double maxval,
-                              double &ratio, double &minlog);
+                              double &minlog, double &ratio);
 
     virtual int getPositionForValue(double value) const;
     virtual int getPositionForValueUnclamped(double value) const;
