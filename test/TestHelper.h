@@ -60,10 +60,10 @@ auto startTestRunner(
     }
 
     if (bad > 0) {
-        cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        std::cerr << "\n********* " << bad << " test suite(s) failed!\n" << std::endl;
         return 1;
     } else {
-        cerr << "All tests passed" << endl;
+        std::cerr << "All tests passed" << std::endl;
         return 0;
     }
 }
