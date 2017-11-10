@@ -12,19 +12,15 @@
     COPYING included with this distribution for more information.
 */
 
+#include "../../../test/TestHelper.h"
 #include "AudioFileReaderTest.h"
 #include "AudioFileWriterTest.h"
 #include "EncodingTest.h"
 #include "MIDIFileReaderTest.h"
-
-#include <QtTest>
-
-#include <iostream>
+#include "CSVStreamWriterTest.h"
 
 int main(int argc, char *argv[])
 {
-    int good = 0, bad = 0;
-
     QString testDir;
 
 #ifdef Q_OS_WIN
@@ -42,40 +38,16 @@ int main(int argc, char *argv[])
         cerr << "Setting test directory base path to \"" << testDir << "\"" << endl;
     }
 
-    QCoreApplication app(argc, argv);
-    app.setOrganizationName("sonic-visualiser");
-    app.setApplicationName("test-fileio");
-
-    {
-        AudioFileReaderTest t(testDir);
-        if (QTest::qExec(&t, argc, argv) == 0) ++good;
-        else ++bad;
-    }
-
-    {
-        AudioFileWriterTest t(testDir);
-        if (QTest::qExec(&t, argc, argv) == 0) ++good;
-        else ++bad;
-    }
-
-    {
-        EncodingTest t(testDir);
-        if (QTest::qExec(&t, argc, argv) == 0) ++good;
-        else ++bad;
-    }
-
-    {
-        MIDIFileReaderTest t(testDir);
-        if (QTest::qExec(&t, argc, argv) == 0) ++good;
-        else ++bad;
-    }
-
-    if (bad > 0) {
-	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	return 1;
-    } else {
-	cerr << "All tests passed" << endl;
-	return 0;
-    }
+    return Test::startTestRunner(
+        {
+            Test::createFactory<AudioFileReaderTest>(testDir),
+            Test::createFactory<AudioFileWriterTest>(testDir),
+            Test::createFactory<EncodingTest>(testDir),
+            Test::createFactory<MIDIFileReaderTest>(testDir),
+            Test::createFactory<CSVStreamWriterTest>()
+        },
+        argc,
+        argv,
+        "test-fileio"
+    );
 }
-
