@@ -32,17 +32,17 @@ using Factory = std::function<std::unique_ptr<T>()>;
 template <class T, typename... Args>
 auto createFactory(Args... FArgs) -> Factory<T>
 {
-  return [&]() { return std::unique_ptr<T> { new T {FArgs...} }; };
+    return [&]() { return std::unique_ptr<T> { new T {FArgs...} }; };
 }
 
 using TestStatus = int;
 
 auto startTestRunner(
-  std::initializer_list<Factory<QObject>> tests,
-  int argc,
-  char *argv[],
-  QString testName,
-  QString orgName = "sonic-visualiser"
+    std::initializer_list<Factory<QObject>> tests,
+    int argc,
+    char *argv[],
+    QString testName,
+    QString orgName = "sonic-visualiser"
 ) -> TestStatus
 {
     int good = 0, bad = 0;
@@ -60,11 +60,11 @@ auto startTestRunner(
     }
 
     if (bad > 0) {
-	    cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	    return 1;
+        cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        return 1;
     } else {
-	    cerr << "All tests passed" << endl;
-	    return 0;
+        cerr << "All tests passed" << endl;
+        return 0;
     }
 }
 
