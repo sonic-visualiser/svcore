@@ -55,7 +55,7 @@ MockWaveModel::getMultiChannelData(int fromchannel, int tochannel,
     vector<floatvec_t> data(tochannel - fromchannel + 1);
     
     for (int c = fromchannel; c <= tochannel; ++c) {
-        data.push_back(getData(c, start, count));
+        data[c] = getData(c, start, count);
     }
 
     return data;
