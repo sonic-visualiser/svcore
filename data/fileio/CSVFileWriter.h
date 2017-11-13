@@ -23,6 +23,7 @@
 
 class Model;
 class MultiSelection;
+class ProgressReporter;
 
 class CSVFileWriter : public QObject
 {
@@ -33,6 +34,17 @@ public:
                   Model *model,
                   QString delimiter = ",",
                   DataExportOptions options = DataExportDefaults);
+
+    CSVFileWriter(
+        QString path,
+        Model *model,
+        ProgressReporter *reporter,
+        QString delimiter = ",",
+        DataExportOptions options = DataExportDefaults
+    ) : CSVFileWriter(path, model, delimiter, options)
+    {
+        m_reporter = reporter;
+    }
     virtual ~CSVFileWriter();
 
     virtual bool isOK() const;
@@ -47,6 +59,7 @@ protected:
     QString m_error;
     QString m_delimiter;
     DataExportOptions m_options;
+    ProgressReporter *m_reporter;
 };
 
 #endif
