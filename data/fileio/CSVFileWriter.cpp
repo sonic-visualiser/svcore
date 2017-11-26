@@ -29,6 +29,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <exception>
+#include <numeric>
 
 CSVFileWriter::CSVFileWriter(QString path,
                              Model *model,
@@ -87,14 +88,44 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
 
         bool completed = false;
 
+        const auto nFramesToWrite = std::accumulate(
+            selection->getSelections().begin(),
+            selection->getSelections().end(),
+            0,
+            [](sv_frame_t acc, const Selection& current) -> sv_frame_t {
+                return acc + (current.getEndFrame() - current.getStartFrame());
+            }
+        );
+
+        sv_frame_t nFramesWritten = 0;
+        const auto createProgressCalculator = [
+            &nFramesWritten,
+            &nFramesToWrite
+        ](sv_frame_t nFramesToWriteForSelection) {
+            const auto nFramesWrittenAtSelectionStart = nFramesWritten;
+            nFramesWritten += nFramesToWriteForSelection;
+            return [
+                &nFramesWritten,
+                &nFramesToWrite,
+                nFramesWrittenAtSelectionStart
+            ] (sv_frame_t nFramesWrittenForSelection) {
+                const auto nFramesWrittenSoFar = (
+                    nFramesWrittenAtSelectionStart + nFramesWrittenForSelection
+                );
+                return 100 * nFramesWrittenSoFar / nFramesToWrite;
+            };
+        };
+
         for (const auto& bounds : selection->getSelections()) {
-            completed = CSVStreamWriter::writeInChunks(
+            completed = CSV::writeToStreamInChunks(
                 out,
                 *m_model,
                 bounds,
                 m_reporter,
                 m_delimiter,
-                m_options
+                m_options,
+                16384,
+                createProgressCalculator
             );
             if (!completed) {
                 break;
