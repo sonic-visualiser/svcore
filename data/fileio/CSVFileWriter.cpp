@@ -117,7 +117,7 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
         };
 
         for (const auto& bounds : selection->getSelections()) {
-            completed = CSV::writeToStreamInChunks(
+            completed = CSVStreamWriter::writeInChunks(
                 out,
                 *m_model,
                 bounds,
