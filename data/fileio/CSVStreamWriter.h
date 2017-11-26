@@ -101,7 +101,7 @@ writeInChunks(OutStream& oss,
               const sv_frame_t blockSize = 16384)
 {
     const Selection empty;
-    return CSV::writeInChunks(
+    return CSVStreamWriter::writeInChunks(
         oss,
         model,
         empty,
