@@ -38,17 +38,19 @@ writeInChunks(OutStream& oss,
               DataExportOptions options = DataExportDefaults,
               const sv_frame_t blockSize = 16384)
 {
-    if (blockSize <= 0) return false;
+    const auto selections = regions.getSelections();
+    if (blockSize <= 0 || selections.empty()) return false;
 
     // TODO, some form of checking validity of selections?
     const auto nFramesToWrite = std::accumulate(
-        regions.getSelections().begin(),
-        regions.getSelections().end(),
+        selections.begin(),
+        selections.end(),
         0,
         [](sv_frame_t acc, const Selection& current) -> sv_frame_t {
             return acc + (current.getEndFrame() - current.getStartFrame());
         }
     );
+    const auto finalFrameOfLastRegion = (*selections.crbegin()).getEndFrame();
 
     const auto wasCancelled = [&reporter]() { 
         return reporter && reporter->wasCancelled(); 
@@ -57,7 +59,7 @@ writeInChunks(OutStream& oss,
     sv_frame_t nFramesWritten = 0;
     int previousProgress = 0;
 
-    for (const auto& extents : regions.getSelections()) {
+    for (const auto& extents : selections) {
         const auto startFrame = extents.getStartFrame();
         const auto endFrame = extents.getEndFrame();
         auto readPtr = startFrame;
@@ -72,7 +74,7 @@ writeInChunks(OutStream& oss,
                 options,
                 start,
                 end
-            ) << (end < endFrame ? "\n" : "");
+            ) << (end < finalFrameOfLastRegion ? "\n" : "");
             nFramesWritten += end - start;
             const auto currentProgress = 100 * nFramesWritten / nFramesToWrite;
             const bool hasIncreased = currentProgress > previousProgress;
