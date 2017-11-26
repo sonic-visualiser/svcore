@@ -23,6 +23,7 @@
 
 #include "base/ProgressReporter.h"
 #include "base/DataExportOptions.h"
+#include "base/Selection.h"
 #include "../CSVStreamWriter.h"
 #include "../../model/test/MockWaveModel.h"
 
@@ -245,6 +246,40 @@ private slots:
           "18,1,1\n"
           "19,1,1"
         };
+        QVERIFY( oss.str() == expectedOutput );
+    }
+
+    void multipleSelectionOutput()
+    {
+        MockWaveModel mwm({ DC, DC }, 16, 4);
+        StubReporter reporter { []() -> bool { return false; } };
+        std::ostringstream oss;
+        MultiSelection regions;
+        regions.addSelection({0, 2});
+        regions.addSelection({4, 6});
+        regions.addSelection({16, 18});
+        const std::string expectedOutput {
+          "0,0,0\n"
+          "1,0,0\n"
+          "4,1,1\n"
+          "5,1,1\n"
+          "16,1,1\n"
+          "17,1,1"
+        };
+        const auto wroteMultiSection = CSVStreamWriter::writeInChunks(
+            oss,
+            mwm,
+            regions,
+            &reporter,
+            ",",
+            DataExportDefaults,
+            2
+        );
+        QVERIFY( wroteMultiSection == true );
+        QVERIFY( reporter.getCallCount() == 3 );
+        const std::vector<int> expectedCallLog { 33, 66, 100 };
+        QVERIFY( reporter.getPercentageLog() == expectedCallLog );
+        qDebug("%s", oss.str().c_str());
         QVERIFY( oss.str() == expectedOutput );
     }
 };
