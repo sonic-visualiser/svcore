@@ -23,23 +23,70 @@
 #include "data/model/Model.h"
 #include <QString>
 #include <algorithm>
-
-namespace 
-{
-    const auto initProgressCalculator = [](sv_frame_t nFramesToWrite) {
-        return [nFramesToWrite](sv_frame_t nFramesWritten) {
-            return 100 * nFramesWritten / nFramesToWrite;
-        };
-    };
-} // namespace
+#include <numeric>
 
 namespace CSVStreamWriter
 {
 
-template <
-    class OutStream,
-    class ProgressCalculatorInit = decltype(initProgressCalculator)
->
+template <class OutStream>
+bool
+writeInChunks(OutStream& oss,
+              const Model& model,
+              const MultiSelection& regions,
+              ProgressReporter* reporter = nullptr,
+              QString delimiter = ",",
+              DataExportOptions options = DataExportDefaults,
+              const sv_frame_t blockSize = 16384)
+{
+    if (blockSize <= 0) return false;
+
+    // TODO, some form of checking validity of selections?
+    const auto nFramesToWrite = std::accumulate(
+        regions.getSelections().begin(),
+        regions.getSelections().end(),
+        0,
+        [](sv_frame_t acc, const Selection& current) -> sv_frame_t {
+            return acc + (current.getEndFrame() - current.getStartFrame());
+        }
+    );
+
+    const auto wasCancelled = [&reporter]() { 
+        return reporter && reporter->wasCancelled(); 
+    };
+
+    sv_frame_t nFramesWritten = 0;
+    int previousProgress = 0;
+
+    for (const auto& extents : regions.getSelections()) {
+        const auto startFrame = extents.getStartFrame();
+        const auto endFrame = extents.getEndFrame();
+        auto readPtr = startFrame;
+        while (readPtr < endFrame) {
+            if (wasCancelled()) return false;
+
+            const auto start = readPtr;
+            const auto end = std::min(start + blockSize, endFrame);
+
+            oss << model.toDelimitedDataStringSubsetWithOptions(
+                delimiter,
+                options,
+                start,
+                end
+            ) << (end < endFrame ? "\n" : "");
+            nFramesWritten += end - start;
+            const auto currentProgress = 100 * nFramesWritten / nFramesToWrite;
+            const bool hasIncreased = currentProgress > previousProgress;
+            if (hasIncreased) {
+                if (reporter) reporter->setProgress(currentProgress);
+                previousProgress = currentProgress;
+            }
+            readPtr = end;
+        }
+    }
+    return !wasCancelled(); // setProgress could process event loop
+}
+
+template <class OutStream>
 bool 
 writeInChunks(OutStream& oss,
               const Model& model,
@@ -47,48 +94,29 @@ writeInChunks(OutStream& oss,
               ProgressReporter* reporter = nullptr,
               QString delimiter = ",",
               DataExportOptions options = DataExportDefaults,
-              const sv_frame_t blockSize = 16384,
-              const ProgressCalculatorInit& initCalc = initProgressCalculator)
+              const sv_frame_t blockSize = 16384)
 {
-    if (blockSize <= 0) return false;
     const auto startFrame = extents.isEmpty() ?
         model.getStartFrame() : extents.getStartFrame();
     const auto endFrame = extents.isEmpty() ?
         model.getEndFrame() : extents.getEndFrame();
     const auto hasValidExtents = startFrame >= 0 && endFrame > startFrame;
     if (!hasValidExtents) return false;
-    const auto calculateProgress = initCalc(endFrame - startFrame);
-
-    auto readPtr = startFrame;
-    int previousPercentagePoint = 0;
-
-    const auto wasCancelled = [&reporter]() { 
-        return reporter && reporter->wasCancelled(); 
+    Selection all {
+        startFrame,
+        endFrame
     };
-
-    while (readPtr < endFrame) {
-        if (wasCancelled()) return false;
-
-        const auto start = readPtr;
-        const auto end = std::min(start + blockSize, endFrame);
-
-        oss << model.toDelimitedDataStringSubsetWithOptions(
-            delimiter,
-            options,
-            start,
-            end
-        ) << (end < endFrame ? "\n" : "");
-        const auto nFramesWritten = end - startFrame;
-        const auto currentPercentage = calculateProgress(nFramesWritten);
-        const bool hasIncreased = currentPercentage > previousPercentagePoint;
-
-        if (hasIncreased) {
-            if (reporter) reporter->setProgress(currentPercentage);
-            previousPercentagePoint = currentPercentage;
-        }
-        readPtr = end;
-    }
-    return !wasCancelled(); // setProgress could process event loop
+    MultiSelection regions;
+    regions.addSelection(all);
+    return CSVStreamWriter::writeInChunks(
+        oss,
+        model,
+        regions,
+        reporter,
+        delimiter,
+        options,
+        blockSize
+    );
 }
 
 template <class OutStream>
