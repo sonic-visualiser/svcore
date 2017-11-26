@@ -35,13 +35,12 @@ public:
                   QString delimiter = ",",
                   DataExportOptions options = DataExportDefaults);
 
-    CSVFileWriter(
-        QString path,
-        Model *model,
-        ProgressReporter *reporter,
-        QString delimiter = ",",
-        DataExportOptions options = DataExportDefaults
-    ) : CSVFileWriter(path, model, delimiter, options)
+    CSVFileWriter(QString path,
+                  Model *model,
+                  ProgressReporter *reporter,
+                  QString delimiter = ",",
+                  DataExportOptions options = DataExportDefaults) 
+    : CSVFileWriter(path, model, delimiter, options)
     {
         m_reporter = reporter;
     }

@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2017 Lucas Thompson.
+    This file copyright 2017 Queen Mary, University of London.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_STREAM_WRITER_H_
-#define _CSV_STREAM_WRITER_H_
+#ifndef CSV_STREAM_WRITER_H
+#define CSV_STREAM_WRITER_H
 
 #include "base/BaseTypes.h"
 #include "base/Selection.h"
@@ -24,20 +24,17 @@
 #include <QString>
 #include <algorithm>
 
-namespace CSV
+namespace CSVStreamWriter
 {
-using Completed = bool;
 
 template <class OutStream>
-auto writeToStreamInChunks(
-    OutStream& oss,
-    const Model& model,
-    const Selection& extents,
-    ProgressReporter* reporter = nullptr,
-    QString delimiter = ",",
-    DataExportOptions options = DataExportDefaults,
-    const sv_frame_t blockSize = 16384
-) -> Completed
+bool writeInChunks(OutStream& oss,
+                   const Model& model,
+                   const Selection& extents,
+                   ProgressReporter* reporter = nullptr,
+                   QString delimiter = ",",
+                   DataExportOptions options = DataExportDefaults,
+                   const sv_frame_t blockSize = 16384)
 {
     if (blockSize <= 0) return false;
     sv_frame_t readPtr = extents.isEmpty() ?
@@ -76,17 +73,15 @@ auto writeToStreamInChunks(
 }
 
 template <class OutStream>
-auto writeToStreamInChunks(
-    OutStream& oss,
-    const Model& model,
-    ProgressReporter* reporter = nullptr,
-    QString delimiter = ",",
-    DataExportOptions options = DataExportDefaults,
-    const sv_frame_t blockSize = 16384
-) -> Completed
+bool writeInChunks(OutStream& oss,
+                   const Model& model,
+                   ProgressReporter* reporter = nullptr,
+                   QString delimiter = ",",
+                   DataExportOptions options = DataExportDefaults,
+                   const sv_frame_t blockSize = 16384)
 {
     const Selection empty;
-    return CSV::writeToStreamInChunks(
+    return CSV::writeInChunks(
         oss,
         model,
         empty,
@@ -96,5 +91,5 @@ auto writeToStreamInChunks(
         blockSize
     );
 }
-} // namespace
+} // namespace CSVStreamWriter
 #endif

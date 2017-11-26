@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2017 Lucas Thompson.
+    This file copyright 2017 Queen Mary, University of London.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -87,7 +87,7 @@ private slots:
         MockWaveModel mwm({ DC, DC }, 16, 4);
 
         std::ostringstream oss;
-        const auto result = CSV::writeToStreamInChunks(oss, mwm);
+        const auto result = CSVStreamWriter::writeInChunks(oss, mwm);
         QVERIFY( oss.str() == getExpectedString() );
         QVERIFY( result );
     }
@@ -100,7 +100,7 @@ private slots:
 
         std::ostringstream oss;
         const auto writeStreamWithBlockSize = [&](int blockSize) {
-            return CSV::writeToStreamInChunks(
+            return CSVStreamWriter::writeInChunks(
                 oss,
                 mwm,
                 &reporter,
@@ -144,7 +144,7 @@ private slots:
         StubReporter reporter { []() -> bool { return true; } };
 
         std::ostringstream oss;
-        const auto cancelImmediately = CSV::writeToStreamInChunks(
+        const auto cancelImmediately = CSVStreamWriter::writeInChunks(
             oss,
             mwm,
             &reporter,
@@ -158,7 +158,7 @@ private slots:
         StubReporter cancelMidway { 
             [&]() { return cancelMidway.getCallCount() == 3; } 
         };
-        const auto cancelledMidway = CSV::writeToStreamInChunks(
+        const auto cancelledMidway = CSVStreamWriter::writeInChunks(
             oss,
             mwm,
             &cancelMidway,
