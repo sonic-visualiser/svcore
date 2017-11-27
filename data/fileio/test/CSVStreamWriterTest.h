@@ -27,32 +27,29 @@
 #include "../CSVStreamWriter.h"
 #include "../../model/test/MockWaveModel.h"
 
-namespace
+class StubReporter : public ProgressReporter
 {
-    class StubReporter : public ProgressReporter
+public:
+    StubReporter( std::function<bool()> isCancelled )
+        : m_isCancelled(isCancelled) {}
+    bool isDefinite() const override { return true; }
+    void setDefinite(bool) override {}
+    bool wasCancelled() const override { return m_isCancelled(); }
+    void setMessage(QString) override {}
+    void setProgress(int p) override
     {
-    public:
-        StubReporter( std::function<bool()> isCancelled )
-            : m_isCancelled(isCancelled) {}
-        bool isDefinite() const override { return true; }
-        void setDefinite(bool) override {}
-        bool wasCancelled() const override { return m_isCancelled(); }
-        void setMessage(QString) override {}
-        void setProgress(int p) override
-        { 
-            ++m_calls;
-            m_percentageLog.push_back(p);
-        }
+        ++m_calls;
+        m_percentageLog.push_back(p);
+    }
 
-        size_t getCallCount() const { return m_calls; }
-        std::vector<int> getPercentageLog() const { return m_percentageLog; }
-        void reset() { m_calls = 0; }
-    private:
-        size_t m_calls = 0;
-        std::function<bool()> m_isCancelled;
-        std::vector<int> m_percentageLog;
-    };
-} // namespace
+    size_t getCallCount() const { return m_calls; }
+    std::vector<int> getPercentageLog() const { return m_percentageLog; }
+    void reset() { m_calls = 0; }
+private:
+    size_t m_calls = 0;
+    std::function<bool()> m_isCancelled;
+    std::vector<int> m_percentageLog;
+};
 
 class CSVStreamWriterTest : public QObject
 {
