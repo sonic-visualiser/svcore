@@ -24,6 +24,7 @@
 #include "base/ProgressReporter.h"
 #include "base/DataExportOptions.h"
 #include "base/Selection.h"
+#include "data/model/NoteModel.h"
 #include "../CSVStreamWriter.h"
 #include "../../model/test/MockWaveModel.h"
 
@@ -37,7 +38,7 @@ public:
     bool wasCancelled() const override { return m_isCancelled(); }
     void setMessage(QString) override {}
     void setProgress(int p) override
-    {
+    { 
         ++m_calls;
         m_percentageLog.push_back(p);
     }
@@ -255,6 +256,7 @@ private slots:
         regions.addSelection({0, 2});
         regions.addSelection({4, 6});
         regions.addSelection({16, 18});
+        qDebug("End frame: %lld", mwm.getEndFrame());
         const std::string expectedOutput {
           "0,0,0\n"
           "1,0,0\n"
@@ -278,6 +280,48 @@ private slots:
         QVERIFY( reporter.getPercentageLog() == expectedCallLog );
         qDebug("%s", oss.str().c_str());
         QVERIFY( oss.str() == expectedOutput );
+    }
+
+    void writeSparseModel()
+    {
+        const auto pentatonicFromRoot = [](float midiPitch) {
+            return std::vector<float> {
+                0 + midiPitch,
+                2 + midiPitch,
+                4 + midiPitch,
+                7 + midiPitch,
+                9 + midiPitch
+            };
+        };
+        const auto cMajorPentatonic = pentatonicFromRoot(60.0);
+        NoteModel notes(8 /* sampleRate */, 4 /* resolution */);
+        sv_frame_t startFrame = 0;
+        for (const auto& note : cMajorPentatonic) {
+            notes.addPoint({startFrame, note, 4, 1.f, ""});
+            startFrame += 8;
+        }
+        qDebug("Create Expected Output\n");
+
+        // NB. removed end line break
+        const auto expectedOutput = notes.toDelimitedDataString(",").trimmed();
+
+        StubReporter reporter { []() -> bool { return false; } };
+        std::ostringstream oss;
+        qDebug("End frame: %lld", notes.getEndFrame());
+        qDebug("Write streaming\n");
+        const auto wroteSparseModel = CSVStreamWriter::writeInChunks(
+            oss,
+            notes,
+            &reporter,
+            ",",
+            DataExportDefaults,
+            2
+        );
+
+        qDebug("\n%s\n", expectedOutput.toLocal8Bit().data());
+        qDebug("\n%s\n", oss.str().c_str());
+        QVERIFY( wroteSparseModel == true );
+        QVERIFY( oss.str() == expectedOutput.toStdString() );
     }
 };
 
