@@ -1226,7 +1226,7 @@ static void *alsaMidiHandler( void *ptr )
       if ( !( data->ignoreFlags & 0x04 ) ) doDecode = true;
       break;
 
-		case SND_SEQ_EVENT_SYSEX:
+    case SND_SEQ_EVENT_SYSEX:
       if ( (data->ignoreFlags & 0x01) ) break;
       if ( ev->data.ext.len > apiData->bufferSize ) {
         apiData->bufferSize = ev->data.ext.len;
@@ -1238,6 +1238,8 @@ static void *alsaMidiHandler( void *ptr )
           break;
         }
       }
+      doDecode = true;
+      break;
 
     default:
       doDecode = true;
