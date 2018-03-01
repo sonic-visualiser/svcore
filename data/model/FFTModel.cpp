@@ -19,6 +19,7 @@
 #include "base/Profiler.h"
 #include "base/Pitch.h"
 #include "base/HitCount.h"
+#include "base/Debug.h"
 
 #include <algorithm>
 
@@ -52,8 +53,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     }
     
     if (m_windowSize > m_fftSize) {
-        cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
-             << ") must be at least FFT size (" << m_fftSize << ")" << endl;
+        SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
+               << ") must be at least FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size must be at least FFT size");
     }
 
@@ -72,7 +73,7 @@ void
 FFTModel::sourceModelAboutToBeDeleted()
 {
     if (m_model) {
-        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
+        SVDEBUG << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
         m_model = 0;
     }
 }

@@ -55,7 +55,7 @@ private slots:
     void init()
     {
         if (!QDir(midiDir).exists()) {
-            cerr << "ERROR: MIDI file directory \"" << midiDir << "\" does not exist" << endl;
+            SVCERR << "ERROR: MIDI file directory \"" << midiDir << "\" does not exist" << endl;
             QVERIFY2(QDir(midiDir).exists(), "MIDI file directory not found");
         }
     }
@@ -76,7 +76,7 @@ private slots:
         MIDIFileReader reader(path, nullptr, 44100);
         Model *m = reader.load();
         if (!m) {
-            cerr << "MIDI load failed for path: \"" << path << "\"" << endl;
+            SVCERR << "MIDI load failed for path: \"" << path << "\"" << endl;
         }
         QVERIFY(m != nullptr);
         //!!! Ah, now here we could do something a bit more informative

@@ -219,7 +219,7 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
     int channels = getChannelCount();
 
     if (channel >= channels) {
-        cerr << "ERROR: WaveFileModel::getData: channel ("
+        SVCERR << "ERROR: WaveFileModel::getData: channel ("
              << channel << ") >= channel count (" << channels << ")"
              << endl;
         return {};
@@ -278,14 +278,14 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
     int channels = getChannelCount();
 
     if (fromchannel > tochannel) {
-        cerr << "ERROR: ReadOnlyWaveFileModel::getData: fromchannel ("
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getData: fromchannel ("
                   << fromchannel << ") > tochannel (" << tochannel << ")"
                   << endl;
         return {};
     }
 
     if (tochannel >= channels) {
-        cerr << "ERROR: ReadOnlyWaveFileModel::getData: tochannel ("
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getData: tochannel ("
                   << tochannel << ") >= channel count (" << channels << ")"
                   << endl;
         return {};

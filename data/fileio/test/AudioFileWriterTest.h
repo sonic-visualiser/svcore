@@ -69,7 +69,7 @@ private slots:
     void init()
     {
         if (!QDir(outDir).exists() && !QDir().mkpath(outDir)) {
-            cerr << "ERROR: Audio out directory \"" << outDir << "\" does not exist and could not be created" << endl;
+            SVCERR << "ERROR: Audio out directory \"" << outDir << "\" does not exist and could not be created" << endl;
             QVERIFY2(QDir(outDir).exists(), "Audio out directory not found and could not be created");
         }
     }

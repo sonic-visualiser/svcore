@@ -32,16 +32,16 @@ class TestScaleTickIntervals : public QObject
     void printDiff(vector<ScaleTickIntervals::Tick> ticks,
 		   vector<ScaleTickIntervals::Tick> expected) {
 
-	cerr << "Have " << ticks.size() << " ticks, expected "
+    SVCERR << "Have " << ticks.size() << " ticks, expected "
 	     << expected.size() << endl;
 	for (int i = 0; i < int(ticks.size()); ++i) {
-            cerr << i << ": have " << ticks[i].value << " \""
+            SVCERR << i << ": have " << ticks[i].value << " \""
                  << ticks[i].label << "\", expected ";
 	    if (i < int(expected.size())) {
-                cerr << expected[i].value << " \"" << expected[i].label
+                SVCERR << expected[i].value << " \"" << expected[i].label
 		     << "\"" << endl;
             } else {
-                cerr << "(n/a)" << endl;
+                SVCERR << "(n/a)" << endl;
 	    }
 	}
     }

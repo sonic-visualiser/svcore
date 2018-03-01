@@ -66,18 +66,18 @@ private:
                     float thresh = 1e-5f;
                     if (abs(reals[i] - eRe) > thresh ||
                         abs(imags[i] - eIm) > thresh) {
-                        cerr << "ERROR: output is not as expected for column "
+                        SVCERR << "ERROR: output is not as expected for column "
                              << i << " in channel " << ch << " (stepThrough = "
                              << stepThrough << ")" << endl;
-                        cerr << "expected : ";
+                        SVCERR << "expected : ";
                         for (int j = 0; j < hs1; ++j) {
-                            cerr << expectedValues[ch][j] << " ";
+                            SVCERR << expectedValues[ch][j] << " ";
                         }
-                        cerr << "\nactual   : ";
+                        SVCERR << "\nactual   : ";
                         for (int j = 0; j < hs1; ++j) {
-                            cerr << complex<float>(reals[j], imags[j]) << " ";
+                            SVCERR << complex<float>(reals[j], imags[j]) << " ";
                         }
-                        cerr << endl;
+                        SVCERR << endl;
                     }
                     COMPARE_FUZZIER_F(reals[i], eRe);
                     COMPARE_FUZZIER_F(imags[i], eIm);

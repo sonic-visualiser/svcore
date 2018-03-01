@@ -34,6 +34,7 @@
 
 #include <iostream>
 #include <map>
+#include <string>
 
 using namespace std;
 
@@ -137,12 +138,12 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
     
     if (!ok) {
         if (m_warnings < warnLimit) {
-            cerr << "WARNING: CSVFileReader::load: "
+            SVCERR << "WARNING: CSVFileReader::load: "
                       << "Bad time format (\"" << s
                       << "\") in data line "
                       << lineno+1 << endl;
         } else if (m_warnings == warnLimit) {
-            cerr << "WARNING: Too many warnings" << endl;
+            SVCERR << "WARNING: Too many warnings" << endl;
         }
         ++m_warnings;
     }
@@ -384,15 +385,15 @@ CSVFileReader::load() const
 
                     if (!ok) {
                         if (warnings < warnLimit) {
-                            cerr << "WARNING: CSVFileReader::load: "
+                            SVCERR << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
                                       << list[i]
                                       << "\" in data line " << lineno+1
                                       << ":" << endl;
-                            cerr << line << endl;
+                            SVCERR << line << endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
-//                            cerr << "WARNING: Too many warnings" << endl;
+//                            SVCERR << "WARNING: Too many warnings" << endl;
                         }
                     }
                 }
@@ -426,11 +427,11 @@ CSVFileReader::load() const
             for (map<int, map<QString, float> >::iterator i =
                      countLabelValueMap.end(); i != countLabelValueMap.begin(); ) {
                 --i;
-                cerr << "count -> " << i->first << endl;
+                SVCERR << "count -> " << i->first << endl;
                 for (map<QString, float>::iterator j = i->second.begin();
                      j != i->second.end(); ++j) {
                     j->second = v;
-                    cerr << "label -> " << j->first << ", value " << v << endl;
+                    SVCERR << "label -> " << j->first << ", value " << v << endl;
                     v = v + 1.f;
                 }
             }
@@ -443,7 +444,7 @@ CSVFileReader::load() const
                 RegionModel::Point p(*i);
                 int count = labelCountMap[p.label];
                 v = countLabelValueMap[count][p.label];
-                cerr << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
+              //  SVCERR << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
                 RegionModel::Point pp(p.frame, v, p.duration, p.label);
                 pointMap[p] = pp;
             }

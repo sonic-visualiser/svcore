@@ -117,8 +117,8 @@ CSVFeatureWriter::setParameters(map<string, string> &params)
         } else if (i->first == "digits") {
             int digits = atoi(i->second.c_str());
             if (digits <= 0 || digits > 100) {
-                cerr << "CSVFeatureWriter: ERROR: Invalid or out-of-range value for number of significant digits: " << i->second << endl;
-                cerr << "CSVFeatureWriter: NOTE: Continuing with default settings" << endl;
+                SVCERR << "CSVFeatureWriter: ERROR: Invalid or out-of-range value for number of significant digits: " << i->second << endl;
+                SVCERR << "CSVFeatureWriter: NOTE: Continuing with default settings" << endl;
             } else {
                 m_digits = digits;
             }
