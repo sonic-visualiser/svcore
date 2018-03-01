@@ -210,7 +210,7 @@ RingBuffer<T, N>::~RingBuffer()
     delete[] m_readers;
 
     if (m_mlocked) {
-	MUNLOCK((void *)m_buffer, m_size * sizeof(T));
+        MUNLOCK((void *)m_buffer, m_size * sizeof(T));
     }
     delete[] m_buffer;
 }
@@ -293,15 +293,15 @@ RingBuffer<T, N>::getWriteSpace() const
 {
     int space = 0;
     for (int i = 0; i < N; ++i) {
-	int here = (m_readers[i] + m_size - m_writer - 1) % m_size;
-	if (i == 0 || here < space) space = here;
+        int here = (m_readers[i] + m_size - m_writer - 1) % m_size;
+        if (i == 0 || here < space) space = here;
     }
 
 #ifdef DEBUG_RINGBUFFER
     int rs(getReadSpace()), rp(m_readers[0]);
 
     std::cerr << "RingBuffer: write space " << space << ", read space "
-	      << rs << ", total " << (space + rs) << ", m_size " << m_size << std::endl;
+              << rs << ", total " << (space + rs) << ", m_size " << m_size << std::endl;
     std::cerr << "RingBuffer: reader " << rp << ", writer " << m_writer << std::endl;
 #endif
 
@@ -323,20 +323,20 @@ RingBuffer<T, N>::read(T *destination, int n, int R)
     int available = getReadSpace(R);
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only " << available << " samples available"
-		  << std::endl;
+        std::cerr << "WARNING: Only " << available << " samples available"
+                  << std::endl;
 #endif
-	memset(destination + available, 0, (n - available) * sizeof(T));
-	n = available;
+        memset(destination + available, 0, (n - available) * sizeof(T));
+        n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_readers[R];
     if (here >= n) {
-	memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
+        memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
     } else {
-	memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
-	memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
+        memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
+        memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
     }
 
     MBARRIER();
@@ -360,26 +360,26 @@ RingBuffer<T, N>::readAdding(T *destination, int n, int R)
     int available = getReadSpace(R);
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only " << available << " samples available"
-		  << std::endl;
+        std::cerr << "WARNING: Only " << available << " samples available"
+                  << std::endl;
 #endif
-	n = available;
+        n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_readers[R];
 
     if (here >= n) {
-	for (int i = 0; i < n; ++i) {
-	    destination[i] += (m_buffer + m_readers[R])[i];
-	}
+        for (int i = 0; i < n; ++i) {
+            destination[i] += (m_buffer + m_readers[R])[i];
+        }
     } else {
-	for (int i = 0; i < here; ++i) {
-	    destination[i] += (m_buffer + m_readers[R])[i];
-	}
-	for (int i = 0; i < (n - here); ++i) {
-	    destination[i + here] += m_buffer[i];
-	}
+        for (int i = 0; i < here; ++i) {
+            destination[i] += (m_buffer + m_readers[R])[i];
+        }
+        for (int i = 0; i < (n - here); ++i) {
+            destination[i + here] += m_buffer[i];
+        }
     }
 
     MBARRIER();
@@ -397,12 +397,12 @@ RingBuffer<T, N>::readOne(int R)
 
     if (m_writer == m_readers[R]) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: No sample available"
-		  << std::endl;
+        std::cerr << "WARNING: No sample available"
+                  << std::endl;
 #endif
-	T t;
-	memset(&t, 0, sizeof(T));
-	return t;
+        T t;
+        memset(&t, 0, sizeof(T));
+        return t;
     }
     T value = m_buffer[m_readers[R]];
     MBARRIER();
@@ -421,20 +421,20 @@ RingBuffer<T, N>::peek(T *destination, int n, int R) const
     int available = getReadSpace(R);
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only " << available << " samples available"
-		  << std::endl;
+        std::cerr << "WARNING: Only " << available << " samples available"
+                  << std::endl;
 #endif
-	memset(destination + available, 0, (n - available) * sizeof(T));
-	n = available;
+        memset(destination + available, 0, (n - available) * sizeof(T));
+        n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_readers[R];
     if (here >= n) {
-	memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
+        memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
     } else {
-	memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
-	memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
+        memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
+        memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
     }
 
 #ifdef DEBUG_RINGBUFFER
@@ -454,12 +454,12 @@ RingBuffer<T, N>::peekOne(int R) const
 
     if (m_writer == m_readers[R]) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: No sample available"
-		  << std::endl;
+        std::cerr << "WARNING: No sample available"
+                  << std::endl;
 #endif
-	T t;
-	memset(&t, 0, sizeof(T));
-	return t;
+        T t;
+        memset(&t, 0, sizeof(T));
+        return t;
     }
     T value = m_buffer[m_readers[R]];
     return value;
@@ -476,10 +476,10 @@ RingBuffer<T, N>::skip(int n, int R)
     int available = getReadSpace(R);
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only " << available << " samples available"
-		  << std::endl;
+        std::cerr << "WARNING: Only " << available << " samples available"
+                  << std::endl;
 #endif
-	n = available;
+        n = available;
     }
     if (n == 0) return n;
     m_readers[R] = (m_readers[R] + n) % m_size;
@@ -497,19 +497,19 @@ RingBuffer<T, N>::write(const T *source, int n)
     int available = getWriteSpace();
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only room for " << available << " samples"
-		  << std::endl;
+        std::cerr << "WARNING: Only room for " << available << " samples"
+                  << std::endl;
 #endif
-	n = available;
+        n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_writer;
     if (here >= n) {
-	memcpy(m_buffer + m_writer, source, n * sizeof(T));
+        memcpy(m_buffer + m_writer, source, n * sizeof(T));
     } else {
-	memcpy(m_buffer + m_writer, source, here * sizeof(T));
-	memcpy(m_buffer, source + here, (n - here) * sizeof(T));
+        memcpy(m_buffer + m_writer, source, here * sizeof(T));
+        memcpy(m_buffer, source + here, (n - here) * sizeof(T));
     }
 
     MBARRIER();
@@ -533,19 +533,19 @@ RingBuffer<T, N>::zero(int n)
     int available = getWriteSpace();
     if (n > available) {
 #ifdef DEBUG_RINGBUFFER
-	std::cerr << "WARNING: Only room for " << available << " samples"
-		  << std::endl;
+        std::cerr << "WARNING: Only room for " << available << " samples"
+                  << std::endl;
 #endif
-	n = available;
+        n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_writer;
     if (here >= n) {
-	memset(m_buffer + m_writer, 0, n * sizeof(T));
+        memset(m_buffer + m_writer, 0, n * sizeof(T));
     } else {
-	memset(m_buffer + m_writer, 0, here * sizeof(T));
-	memset(m_buffer, 0, (n - here) * sizeof(T));
+        memset(m_buffer + m_writer, 0, here * sizeof(T));
+        memset(m_buffer, 0, (n - here) * sizeof(T));
     }
     
     MBARRIER();

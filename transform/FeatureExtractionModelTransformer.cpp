@@ -100,7 +100,7 @@ FeatureExtractionModelTransformer::initialise()
     if (!factory) {
         m_message = tr("No factory available for feature extraction plugin id \"%1\" (unknown plugin type, or internal error?)").arg(pluginId);
         SVCERR << m_message << endl;
-	return false;
+        return false;
     }
 
     DenseTimeValueModel *input = getConformingInput();
@@ -117,7 +117,7 @@ FeatureExtractionModelTransformer::initialise()
     if (!m_plugin) {
         m_message = tr("Failed to instantiate plugin \"%1\"").arg(pluginId);
         SVCERR << m_message << endl;
-	return false;
+        return false;
     }
 
     TransformFactory::getInstance()->makeContextConsistentWithPlugin
@@ -128,7 +128,7 @@ FeatureExtractionModelTransformer::initialise()
     
     int channelCount = input->getChannelCount();
     if ((int)m_plugin->getMaxChannelCount() < channelCount) {
-	channelCount = 1;
+        channelCount = 1;
     }
     if ((int)m_plugin->getMinChannelCount() > channelCount) {
         m_message = tr("Cannot provide enough channels to feature extraction plugin \"%1\" (plugin min is %2, max %3; input model has %4)")
@@ -137,7 +137,7 @@ FeatureExtractionModelTransformer::initialise()
             .arg(m_plugin->getMaxChannelCount())
             .arg(input->getChannelCount());
         SVCERR << m_message << endl;
-	return false;
+        return false;
     }
 
     int step = primaryTransform.getStepSize();
@@ -217,7 +217,7 @@ FeatureExtractionModelTransformer::initialise()
     if (outputs.empty()) {
         m_message = tr("Plugin \"%1\" has no outputs").arg(pluginId);
         SVCERR << m_message << endl;
-	return false;
+        return false;
     }
 
     for (int j = 0; j < (int)m_transforms.size(); ++j) {
@@ -290,17 +290,17 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     bool haveBinCount = m_descriptors[n]->hasFixedBinCount;
 
     if (haveBinCount) {
-	binCount = (int)m_descriptors[n]->binCount;
+        binCount = (int)m_descriptors[n]->binCount;
     }
 
     m_needAdditionalModels[n] = false;
 
 //    cerr << "FeatureExtractionModelTransformer: output bin count "
-//	      << binCount << endl;
+//              << binCount << endl;
 
     if (binCount > 0 && m_descriptors[n]->hasKnownExtents) {
-	minValue = m_descriptors[n]->minValue;
-	maxValue = m_descriptors[n]->maxValue;
+        minValue = m_descriptors[n]->minValue;
+        maxValue = m_descriptors[n]->maxValue;
         haveExtents = true;
     }
 
@@ -330,14 +330,14 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
     switch (m_descriptors[n]->sampleType) {
 
     case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
-	if (outputRate != 0.0) {
-	    modelResolution = int(round(modelRate / outputRate));
-	}
-	break;
+        if (outputRate != 0.0) {
+            modelResolution = int(round(modelRate / outputRate));
+        }
+        break;
 
     case Vamp::Plugin::OutputDescriptor::OneSamplePerStep:
-	modelResolution = m_transforms[n].getStepSize();
-	break;
+        modelResolution = m_transforms[n].getStepSize();
+        break;
 
     case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
         if (outputRate <= 0.0) {
@@ -347,7 +347,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
             modelResolution = int(round(modelRate / outputRate));
 //            cerr << "modelRate = " << modelRate << ", descriptor rate = " << outputRate << ", modelResolution = " << modelResolution << endl;
         }
-	break;
+        break;
     }
 
     bool preDurationPlugin = (m_plugin->getVampApiVersion() < 2);
@@ -516,13 +516,13 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
              EditableDenseThreeDimensionalModel::BasicMultirateCompression,
              false);
 
-	if (!m_descriptors[n]->binNames.empty()) {
-	    std::vector<QString> names;
-	    for (int i = 0; i < (int)m_descriptors[n]->binNames.size(); ++i) {
-		names.push_back(m_descriptors[n]->binNames[i].c_str());
-	    }
-	    model->setBinNames(names);
-	}
+        if (!m_descriptors[n]->binNames.empty()) {
+            std::vector<QString> names;
+            for (int i = 0; i < (int)m_descriptors[n]->binNames.size(); ++i) {
+                names.push_back(m_descriptors[n]->binNames[i].c_str());
+            }
+            model->setBinNames(names);
+        }
         
         out = model;
 
@@ -621,9 +621,9 @@ FeatureExtractionModelTransformer::getConformingInput()
 //    SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: input model is " << getInputModel() << endl;
 
     DenseTimeValueModel *dtvm =
-	dynamic_cast<DenseTimeValueModel *>(getInputModel());
+        dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -665,12 +665,12 @@ FeatureExtractionModelTransformer::run()
 
     int channelCount = input->getChannelCount();
     if ((int)m_plugin->getMaxChannelCount() < channelCount) {
-	channelCount = 1;
+        channelCount = 1;
     }
 
     float **buffers = new float*[channelCount];
     for (int ch = 0; ch < channelCount; ++ch) {
-	buffers[ch] = new float[primaryTransform.getBlockSize() + 2];
+        buffers[ch] = new float[primaryTransform.getBlockSize() + 2];
     }
 
     int stepSize = primaryTransform.getStepSize();
@@ -754,8 +754,8 @@ FeatureExtractionModelTransformer::run()
                     contextStart + contextDuration) break;
             }
 
-//	SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
-//		  << blockFrame << ", endFrame " << endFrame << ", blockSize "
+//        SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
+//                  << blockFrame << ", endFrame " << endFrame << ", blockSize "
 //                  << blockSize << endl;
 
             int completion = int
@@ -927,23 +927,23 @@ FeatureExtractionModelTransformer::addFeature(int n,
     sv_frame_t frame = blockFrame;
 
     if (m_descriptors[n]->sampleType ==
-	Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
+        Vamp::Plugin::OutputDescriptor::VariableSampleRate) {
 
-	if (!feature.hasTimestamp) {
-	    SVDEBUG
-		<< "WARNING: FeatureExtractionModelTransformer::addFeature: "
-		<< "Feature has variable sample rate but no timestamp!"
-		<< endl;
-	    return;
-	} else {
-	    frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
-	}
+        if (!feature.hasTimestamp) {
+            SVDEBUG
+                << "WARNING: FeatureExtractionModelTransformer::addFeature: "
+                << "Feature has variable sample rate but no timestamp!"
+                << endl;
+            return;
+        } else {
+            frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
+        }
 
 //        cerr << "variable sample rate: timestamp = " << feature.timestamp
 //             << " at input rate " << inputRate << " -> " << frame << endl;
         
     } else if (m_descriptors[n]->sampleType ==
-	       Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
+               Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
 
         sv_samplerate_t rate = m_descriptors[n]->sampleRate;
         if (rate <= 0.0) {
@@ -984,16 +984,16 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
         SparseOneDimensionalModel *model =
             getConformingOutput<SparseOneDimensionalModel>(n);
-	if (!model) return;
+        if (!model) return;
 
         model->addPoint(SparseOneDimensionalModel::Point
                        (frame, feature.label.c_str()));
-	
+        
     } else if (isOutput<SparseTimeValueModel>(n)) {
 
-	SparseTimeValueModel *model =
+        SparseTimeValueModel *model =
             getConformingOutput<SparseTimeValueModel>(n);
-	if (!model) return;
+        if (!model) return;
 
         for (int i = 0; i < (int)feature.values.size(); ++i) {
 
@@ -1051,7 +1051,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
                                                   duration,
                                                   velocity / 127.f,
                                                   feature.label.c_str()));
-			// GF: end -- added for flexi note model
+                        // GF: end -- added for flexi note model
         } else  if (isOutput<NoteModel>(n)) {
 
             float velocity = 100;
@@ -1096,14 +1096,14 @@ FeatureExtractionModelTransformer::addFeature(int n,
                                                    feature.label.c_str()));
             }
         }
-	
+        
     } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
-	
-	DenseThreeDimensionalModel::Column values = feature.values;
-	
-	EditableDenseThreeDimensionalModel *model =
+        
+        DenseThreeDimensionalModel::Column values = feature.values;
+        
+        EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);
-	if (!model) return;
+        if (!model) return;
 
 //        cerr << "(note: model resolution = " << model->getResolution() << ")"
 //             << endl;
@@ -1127,48 +1127,48 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 
     if (isOutput<SparseOneDimensionalModel>(n)) {
 
-	SparseOneDimensionalModel *model =
+        SparseOneDimensionalModel *model =
             getConformingOutput<SparseOneDimensionalModel>(n);
-	if (!model) return;
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true);
+        model->setCompletion(completion, true);
 
     } else if (isOutput<SparseTimeValueModel>(n)) {
 
-	SparseTimeValueModel *model =
+        SparseTimeValueModel *model =
             getConformingOutput<SparseTimeValueModel>(n);
-	if (!model) return;
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true);
+        model->setCompletion(completion, true);
 
     } else if (isOutput<NoteModel>(n)) {
 
-	NoteModel *model = getConformingOutput<NoteModel>(n);
-	if (!model) return;
+        NoteModel *model = getConformingOutput<NoteModel>(n);
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true);
-	
+        model->setCompletion(completion, true);
+        
     } else if (isOutput<FlexiNoteModel>(n)) {
 
-	FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
-	if (!model) return;
+        FlexiNoteModel *model = getConformingOutput<FlexiNoteModel>(n);
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true);
+        model->setCompletion(completion, true);
 
     } else if (isOutput<RegionModel>(n)) {
 
-	RegionModel *model = getConformingOutput<RegionModel>(n);
-	if (!model) return;
+        RegionModel *model = getConformingOutput<RegionModel>(n);
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true);
+        model->setCompletion(completion, true);
 
     } else if (isOutput<EditableDenseThreeDimensionalModel>(n)) {
 
-	EditableDenseThreeDimensionalModel *model =
+        EditableDenseThreeDimensionalModel *model =
             getConformingOutput<EditableDenseThreeDimensionalModel>(n);
-	if (!model) return;
+        if (!model) return;
         if (model->isAbandoning()) abandon();
-	model->setCompletion(completion, true); //!!!m_context.updates);
+        model->setCompletion(completion, true); //!!!m_context.updates);
     }
 }
 

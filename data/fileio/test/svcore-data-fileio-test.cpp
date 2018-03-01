@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
 
     if (bad > 0) {
     SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	return 1;
+        return 1;
     } else {
     SVCERR << "All tests passed" << endl;
-	return 0;
+        return 0;
     }
 }
 

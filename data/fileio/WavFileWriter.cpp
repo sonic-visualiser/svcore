@@ -134,11 +134,11 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
     for (MultiSelection::SelectionList::iterator i =
          selection->getSelections().begin();
          i != selection->getSelections().end(); ++i) {
-	
+        
         sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
 
         for (sv_frame_t f = f0; f < f1; f += bs) {
-	    
+            
             sv_frame_t n = min(bs, f1 - f);
             floatvec_t interleaved(n * m_channels, 0.f);
 
@@ -163,7 +163,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 
     return isOK();
 }
-	
+        
 bool
 WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {

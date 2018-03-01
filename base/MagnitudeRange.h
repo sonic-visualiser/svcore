@@ -29,7 +29,7 @@ public:
     MagnitudeRange(float min, float max) : m_min(min), m_max(max) { }
     
     bool operator==(const MagnitudeRange &r) {
-	return r.m_min == m_min && r.m_max == m_max;
+        return r.m_min == m_min && r.m_max == m_max;
     }
     bool operator!=(const MagnitudeRange &r) {
         return !(*this == r);
@@ -37,20 +37,20 @@ public:
     
     bool isSet() const { return (m_min != 0.f || m_max != 0.f); }
     void set(float min, float max) {
-	m_min = min;
-	m_max = max;
-	if (m_max < m_min) m_max = m_min;
+        m_min = min;
+        m_max = max;
+        if (m_max < m_min) m_max = m_min;
     }
     bool sample(float f) {
-	bool changed = false;
-	if (isSet()) {
-	    if (f < m_min) { m_min = f; changed = true; }
-	    if (f > m_max) { m_max = f; changed = true; }
-	} else {
-	    m_max = m_min = f;
-	    changed = true;
-	}
-	return changed;
+        bool changed = false;
+        if (isSet()) {
+            if (f < m_min) { m_min = f; changed = true; }
+            if (f > m_max) { m_max = f; changed = true; }
+        } else {
+            m_max = m_min = f;
+            changed = true;
+        }
+        return changed;
     }
     bool sample(const std::vector<float> &ff) {
         bool changed = false;
@@ -62,16 +62,16 @@ public:
         return changed;
     }
     bool sample(const MagnitudeRange &r) {
-	bool changed = false;
-	if (isSet()) {
-	    if (r.m_min < m_min) { m_min = r.m_min; changed = true; }
-	    if (r.m_max > m_max) { m_max = r.m_max; changed = true; }
-	} else {
-	    m_min = r.m_min;
-	    m_max = r.m_max;
-	    changed = true;
-	}
-	return changed;
+        bool changed = false;
+        if (isSet()) {
+            if (r.m_min < m_min) { m_min = r.m_min; changed = true; }
+            if (r.m_max > m_max) { m_max = r.m_max; changed = true; }
+        } else {
+            m_min = r.m_min;
+            m_max = r.m_max;
+            changed = true;
+        }
+        return changed;
     }            
     float getMin() const { return m_min; }
     float getMax() const { return m_max; }

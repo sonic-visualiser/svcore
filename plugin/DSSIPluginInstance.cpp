@@ -54,13 +54,13 @@ std::map<LADSPA_Handle, std::set<DSSIPluginInstance::NonRTPluginThread *> > DSSI
 
 
 DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
-				       int clientId,
-				       QString identifier,
-				       int position,
-				       sv_samplerate_t sampleRate,
-				       int blockSize,
-				       int idealChannelCount,
-				       const DSSI_Descriptor* descriptor) :
+                                       int clientId,
+                                       QString identifier,
+                                       int position,
+                                       sv_samplerate_t sampleRate,
+                                       int blockSize,
+                                       int idealChannelCount,
+                                       const DSSI_Descriptor* descriptor) :
     RealTimePluginInstance(factory, identifier),
     m_client(clientId),
     m_position(position),
@@ -79,7 +79,7 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
 {
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::DSSIPluginInstance(" << identifier << ")"
-	      << endl;
+              << endl;
 #endif
 
     init();
@@ -88,10 +88,10 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     m_outputBuffers = new sample_t*[m_outputBufferCount];
 
     for (size_t i = 0; i < m_audioPortsIn.size(); ++i) {
-	m_inputBuffers[i] = new sample_t[blockSize];
+        m_inputBuffers[i] = new sample_t[blockSize];
     }
     for (int i = 0; i < m_outputBufferCount; ++i) {
-	m_outputBuffers[i] = new sample_t[blockSize];
+        m_outputBuffers[i] = new sample_t[blockSize];
     }
 
     m_ownBuffers = true;
@@ -100,9 +100,9 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
 
     instantiate(sampleRate);
     if (isOK()) {
-	connectPorts();
-	activate();
-	initialiseGroupMembership();
+        connectPorts();
+        activate();
+        initialiseGroupMembership();
     }
 }
 
@@ -229,34 +229,34 @@ DSSIPluginInstance::init()
         {
             if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
                 m_audioPortsIn.push_back(i);
-	    } else {
+            } else {
                 m_audioPortsOut.push_back(i);
-	    }
+            }
         }
         else
         if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i]))
         {
-	    if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
+            if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
 
-		LADSPA_Data *data = new LADSPA_Data(0.0);
+                LADSPA_Data *data = new LADSPA_Data(0.0);
 
-		m_controlPortsIn.push_back(std::pair<long, LADSPA_Data*>
-					   (i, data));
+                m_controlPortsIn.push_back(std::pair<long, LADSPA_Data*>
+                                           (i, data));
 
-		m_backupControlPortsIn.push_back(0.0);
+                m_backupControlPortsIn.push_back(0.0);
 
-	    } else {
-		LADSPA_Data *data = new LADSPA_Data(0.0);
-		m_controlPortsOut.push_back(
+            } else {
+                LADSPA_Data *data = new LADSPA_Data(0.0);
+                m_controlPortsOut.push_back(
                     std::pair<long, LADSPA_Data*>(i, data));
-		if (!strcmp(descriptor->PortNames[i], "latency") ||
-		    !strcmp(descriptor->PortNames[i], "_latency")) {
+                if (!strcmp(descriptor->PortNames[i], "latency") ||
+                    !strcmp(descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_DSSI
-		    cerr << "Wooo! We have a latency port!" << endl;
+                    cerr << "Wooo! We have a latency port!" << endl;
 #endif
-		    m_latencyPort = data;
-		}
-	    }
+                    m_latencyPort = data;
+                }
+            }
         }
 #ifdef DEBUG_DSSI
         else
@@ -279,7 +279,7 @@ DSSIPluginInstance::getLatency()
 #endif
 
     if (m_latencyPort) {
-	if (!m_run) {
+        if (!m_run) {
             for (int i = 0; i < getAudioInputCount(); ++i) {
                 for (int j = 0; j < m_blockSize; ++j) {
                     m_inputBuffers[i][j] = 0.f;
@@ -287,7 +287,7 @@ DSSIPluginInstance::getLatency()
             }
             run(Vamp::RealTime::zeroTime);
         }
-	latency = (sv_frame_t)(*m_latencyPort + 0.1);
+        latency = (sv_frame_t)(*m_latencyPort + 0.1);
     }
     
 #ifdef DEBUG_DSSI_PROCESS
@@ -301,8 +301,8 @@ void
 DSSIPluginInstance::silence()
 {
     if (m_instanceHandle != 0) {
-	deactivate();
-	activate();
+        deactivate();
+        activate();
     }
 }
 
@@ -317,41 +317,41 @@ DSSIPluginInstance::setIdealChannelCount(int channels)
 {
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::setIdealChannelCount: channel count "
-	      << channels << " (was " << m_idealChannelCount << ")" << endl;
+              << channels << " (was " << m_idealChannelCount << ")" << endl;
 #endif
 
     if (channels == m_idealChannelCount) {
-	silence();
-	return;
+        silence();
+        return;
     }
 
     if (m_instanceHandle != 0) {
-	deactivate();
+        deactivate();
     }
 
     m_idealChannelCount = channels;
 
     if (channels > m_outputBufferCount) {
 
-	for (int i = 0; i < m_outputBufferCount; ++i) {
-	    delete[] m_outputBuffers[i];
-	}
+        for (int i = 0; i < m_outputBufferCount; ++i) {
+            delete[] m_outputBuffers[i];
+        }
 
-	delete[] m_outputBuffers;
+        delete[] m_outputBuffers;
 
-	m_outputBufferCount = channels;
+        m_outputBufferCount = channels;
 
-	m_outputBuffers = new sample_t*[m_outputBufferCount];
+        m_outputBuffers = new sample_t*[m_outputBufferCount];
 
-	for (int i = 0; i < m_outputBufferCount; ++i) {
-	    m_outputBuffers[i] = new sample_t[m_blockSize];
-	}
+        for (int i = 0; i < m_outputBufferCount; ++i) {
+            m_outputBuffers[i] = new sample_t[m_blockSize];
+        }
 
-	connectPorts();
+        connectPorts();
     }
 
     if (m_instanceHandle != 0) {
-	activate();
+        activate();
     }
 }
 
@@ -367,8 +367,8 @@ void
 DSSIPluginInstance::initialiseGroupMembership()
 {
     if (!m_descriptor->run_multiple_synths) {
-	m_grouped = false;
-	return;
+        m_grouped = false;
+        return;
     }
 
     //!!! GroupMap is not actually thread-safe.
@@ -377,24 +377,24 @@ DSSIPluginInstance::initialiseGroupMembership()
 
     if (++pluginsInGroup > m_groupLocalEventBufferCount) {
 
-	size_t nextBufferCount = pluginsInGroup * 2;
+        size_t nextBufferCount = pluginsInGroup * 2;
 
-	snd_seq_event_t **eventLocalBuffers = new snd_seq_event_t *[nextBufferCount];
+        snd_seq_event_t **eventLocalBuffers = new snd_seq_event_t *[nextBufferCount];
 
-	for (size_t i = 0; i < m_groupLocalEventBufferCount; ++i) {
-	    eventLocalBuffers[i] = m_groupLocalEventBuffers[i];
-	}
-	for (size_t i = m_groupLocalEventBufferCount; i < nextBufferCount; ++i) {
-	    eventLocalBuffers[i] = new snd_seq_event_t[EVENT_BUFFER_SIZE];
-	}
+        for (size_t i = 0; i < m_groupLocalEventBufferCount; ++i) {
+            eventLocalBuffers[i] = m_groupLocalEventBuffers[i];
+        }
+        for (size_t i = m_groupLocalEventBufferCount; i < nextBufferCount; ++i) {
+            eventLocalBuffers[i] = new snd_seq_event_t[EVENT_BUFFER_SIZE];
+        }
 
-	if (m_groupLocalEventBuffers) {
-	    m_bufferScavenger.claim(new ScavengerArrayWrapper<snd_seq_event_t *>
-				    (m_groupLocalEventBuffers));
-	}
+        if (m_groupLocalEventBuffers) {
+            m_bufferScavenger.claim(new ScavengerArrayWrapper<snd_seq_event_t *>
+                                    (m_groupLocalEventBuffers));
+        }
 
-	m_groupLocalEventBuffers = eventLocalBuffers;
-	m_groupLocalEventBufferCount = nextBufferCount;
+        m_groupLocalEventBuffers = eventLocalBuffers;
+        m_groupLocalEventBufferCount = nextBufferCount;
     }
 
     m_grouped = true;
@@ -409,22 +409,22 @@ DSSIPluginInstance::~DSSIPluginInstance()
 
     if (m_threads.find(m_instanceHandle) != m_threads.end()) {
 
-	for (std::set<NonRTPluginThread *>::iterator i =
-		 m_threads[m_instanceHandle].begin();
-	     i != m_threads[m_instanceHandle].end(); ++i) {
+        for (std::set<NonRTPluginThread *>::iterator i =
+                 m_threads[m_instanceHandle].begin();
+             i != m_threads[m_instanceHandle].end(); ++i) {
 
-	    (*i)->setExiting();
-	    (*i)->wait();
-	    delete *i;
-	}
+            (*i)->setExiting();
+            (*i)->wait();
+            delete *i;
+        }
 
-	m_threads.erase(m_instanceHandle);
+        m_threads.erase(m_instanceHandle);
     }
 
     detachFromGroup();
 
     if (m_instanceHandle != 0) {
-	deactivate();
+        deactivate();
     }
 
     cleanup();
@@ -439,15 +439,15 @@ DSSIPluginInstance::~DSSIPluginInstance()
     m_controlPortsOut.clear();
 
     if (m_ownBuffers) {
-	for (int i = 0; i < getAudioInputCount(); ++i) {
-	    delete[] m_inputBuffers[i];
-	}
-	for (int i = 0; i < m_outputBufferCount; ++i) {
-	    delete[] m_outputBuffers[i];
-	}
+        for (int i = 0; i < getAudioInputCount(); ++i) {
+            delete[] m_inputBuffers[i];
+        }
+        for (int i = 0; i < m_outputBufferCount; ++i) {
+            delete[] m_outputBuffers[i];
+        }
 
-	delete[] m_inputBuffers;
-	delete[] m_outputBuffers;
+        delete[] m_inputBuffers;
+        delete[] m_outputBuffers;
     }
 
     m_audioPortsIn.clear();
@@ -467,10 +467,10 @@ DSSIPluginInstance::instantiate(sv_samplerate_t sampleRate)
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
     if (!descriptor->instantiate) {
-	cerr << "Bad plugin: plugin id " << descriptor->UniqueID
-		  << ":" << descriptor->Label
-		  << " has no instantiate method!" << endl;
-	return;
+        cerr << "Bad plugin: plugin id " << descriptor->UniqueID
+                  << ":" << descriptor->Label
+                  << " has no instantiate method!" << endl;
+        return;
     }
 
     unsigned long pluginRate = (unsigned long)(sampleRate);
@@ -483,24 +483,24 @@ DSSIPluginInstance::instantiate(sv_samplerate_t sampleRate)
 
     if (m_instanceHandle) {
 
-	if (m_descriptor->get_midi_controller_for_port) {
+        if (m_descriptor->get_midi_controller_for_port) {
 
-	    for (int i = 0; i < (int)descriptor->PortCount; ++i) {
+            for (int i = 0; i < (int)descriptor->PortCount; ++i) {
 
-		if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i]) &&
-		    LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
+                if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i]) &&
+                    LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
 
-		    int controller = m_descriptor->get_midi_controller_for_port
-			(m_instanceHandle, i);
+                    int controller = m_descriptor->get_midi_controller_for_port
+                        (m_instanceHandle, i);
 
-		    if (controller != 0 && controller != 32 &&
-			DSSI_IS_CC(controller)) {
+                    if (controller != 0 && controller != 32 &&
+                        DSSI_IS_CC(controller)) {
 
-			m_controllerMap[DSSI_CC_NUMBER(controller)] = i;
-		    }
-		}
-	    }
-	}
+                        m_controllerMap[DSSI_CC_NUMBER(controller)] = i;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -515,19 +515,19 @@ DSSIPluginInstance::checkProgramCache() const
 #endif
 
     if (!m_descriptor || !m_descriptor->get_program) {
-	m_programCacheValid = true;
-	return;
+        m_programCacheValid = true;
+        return;
     }
 
     int index = 0;
     const DSSI_Program_Descriptor *programDescriptor;
     while ((programDescriptor = m_descriptor->get_program(m_instanceHandle, index))) {
-	++index;
-	ProgramDescriptor d;
-	d.bank = (int)programDescriptor->Bank;
-	d.program = (int)programDescriptor->Program;
-	d.name = programDescriptor->Name;
-	m_cachedPrograms.push_back(d);
+        ++index;
+        ProgramDescriptor d;
+        d.bank = (int)programDescriptor->Bank;
+        d.program = (int)programDescriptor->Program;
+        d.name = programDescriptor->Name;
+        m_cachedPrograms.push_back(d);
     }
 
 #ifdef DEBUG_DSSI
@@ -551,8 +551,8 @@ DSSIPluginInstance::getPrograms() const
     ProgramList programs;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
-	 i != m_cachedPrograms.end(); ++i) {
-	programs.push_back(i->name);
+         i != m_cachedPrograms.end(); ++i) {
+        programs.push_back(i->name);
     }
 
     return programs;
@@ -570,8 +570,8 @@ DSSIPluginInstance::getProgram(int bank, int program) const
     checkProgramCache();
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
-	 i != m_cachedPrograms.end(); ++i) {
-	if (i->bank == bank && i->program == program) return i->name;
+         i != m_cachedPrograms.end(); ++i) {
+        if (i->bank == bank && i->program == program) return i->name;
     }
 
     return std::string();
@@ -591,12 +591,12 @@ DSSIPluginInstance::getProgram(std::string name) const
     int rv;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
-	 i != m_cachedPrograms.end(); ++i) {
-	if (i->name == name) {
-	    rv = i->bank;
-	    rv = (rv << 16) + i->program;
-	    return rv;
-	}
+         i != m_cachedPrograms.end(); ++i) {
+        if (i->name == name) {
+            rv = i->bank;
+            rv = (rv << 16) + i->program;
+            return rv;
+        }
     }
 
     return 0;
@@ -631,20 +631,20 @@ DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
     int bankNo = 0, programNo = 0;
 
     for (std::vector<ProgramDescriptor>::iterator i = m_cachedPrograms.begin();
-	 i != m_cachedPrograms.end(); ++i) {
+         i != m_cachedPrograms.end(); ++i) {
 
-	if (i->name == program) {
+        if (i->name == program) {
 
-	    bankNo = i->bank;
-	    programNo = i->program;
-	    found = true;
+            bankNo = i->bank;
+            programNo = i->program;
+            found = true;
 
 #ifdef DEBUG_DSSI
-	    SVDEBUG << "DSSIPluginInstance::selectProgram(" << program << "): found at bank " << bankNo << ", program " << programNo << endl;
+            SVDEBUG << "DSSIPluginInstance::selectProgram(" << program << "): found at bank " << bankNo << ", program " << programNo << endl;
 #endif
 
-	    break;
-	}
+            break;
+        }
     }
 
     if (!found) return;
@@ -660,9 +660,9 @@ DSSIPluginInstance::selectProgramAux(std::string program, bool backupPortValues)
 #endif
 
     if (backupPortValues) {
-	for (size_t i = 0; i < m_backupControlPortsIn.size(); ++i) {
-	    m_backupControlPortsIn[i] = *m_controlPortsIn[i].second;
-	}
+        for (size_t i = 0; i < m_backupControlPortsIn.size(); ++i) {
+            m_backupControlPortsIn[i] = *m_controlPortsIn[i].second;
+        }
     }
 }
 
@@ -678,16 +678,16 @@ DSSIPluginInstance::activate()
 
     if (m_program != "") {
 #ifdef DEBUG_DSSI
-	SVDEBUG << "DSSIPluginInstance::activate: restoring program " << m_program << endl;
+        SVDEBUG << "DSSIPluginInstance::activate: restoring program " << m_program << endl;
 #endif
-	selectProgramAux(m_program, false);
+        selectProgramAux(m_program, false);
     }
 
     for (size_t i = 0; i < m_backupControlPortsIn.size(); ++i) {
 #ifdef DEBUG_DSSI
-	SVDEBUG << "DSSIPluginInstance::activate: setting port " << m_controlPortsIn[i].first << " to " << m_backupControlPortsIn[i] << endl;
+        SVDEBUG << "DSSIPluginInstance::activate: setting port " << m_controlPortsIn[i].first << " to " << m_backupControlPortsIn[i] << endl;
 #endif
-	*m_controlPortsIn[i].second = m_backupControlPortsIn[i];
+        *m_controlPortsIn[i].second = m_backupControlPortsIn[i];
     }
 }
 
@@ -697,8 +697,8 @@ DSSIPluginInstance::connectPorts()
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->connect_port) return;
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::connectPorts: " << getAudioInputCount() 
-	      << " audio ports in, " << m_audioPortsOut.size() << " out, "
-	      << m_outputBufferCount << " output buffers" << endl;
+              << " audio ports in, " << m_audioPortsOut.size() << " out, "
+              << m_outputBufferCount << " output buffers" << endl;
 #endif
 
     assert(sizeof(LADSPA_Data) == sizeof(float));
@@ -708,26 +708,26 @@ DSSIPluginInstance::connectPorts()
     int inbuf = 0, outbuf = 0;
 
     for (int i = 0; i < getAudioInputCount(); ++i) {
-	m_descriptor->LADSPA_Plugin->connect_port
-	    (m_instanceHandle,
-	     m_audioPortsIn[i],
-	     (LADSPA_Data *)m_inputBuffers[inbuf]);
-	++inbuf;
+        m_descriptor->LADSPA_Plugin->connect_port
+            (m_instanceHandle,
+             m_audioPortsIn[i],
+             (LADSPA_Data *)m_inputBuffers[inbuf]);
+        ++inbuf;
     }
 
     for (size_t i = 0; i < m_audioPortsOut.size(); ++i) {
-	m_descriptor->LADSPA_Plugin->connect_port
-	    (m_instanceHandle,
-	     m_audioPortsOut[i],
-	     (LADSPA_Data *)m_outputBuffers[outbuf]);
-	++outbuf;
+        m_descriptor->LADSPA_Plugin->connect_port
+            (m_instanceHandle,
+             m_audioPortsOut[i],
+             (LADSPA_Data *)m_outputBuffers[outbuf]);
+        ++outbuf;
     }
 
     for (size_t i = 0; i < m_controlPortsIn.size(); ++i) {
-	m_descriptor->LADSPA_Plugin->connect_port
-	    (m_instanceHandle,
-	     m_controlPortsIn[i].first,
-	     m_controlPortsIn[i].second);
+        m_descriptor->LADSPA_Plugin->connect_port
+            (m_instanceHandle,
+             m_controlPortsIn[i].first,
+             m_controlPortsIn[i].second);
 
         if (f) {
             float defaultValue = f->getPortDefault
@@ -741,10 +741,10 @@ DSSIPluginInstance::connectPorts()
     }
 
     for (size_t i = 0; i < m_controlPortsOut.size(); ++i) {
-	m_descriptor->LADSPA_Plugin->connect_port
-	    (m_instanceHandle,
-	     m_controlPortsOut[i].first,
-	     m_controlPortsOut[i].second);
+        m_descriptor->LADSPA_Plugin->connect_port
+            (m_instanceHandle,
+             m_controlPortsOut[i].first,
+             m_controlPortsOut[i].second);
     }
 }
 
@@ -766,12 +766,12 @@ DSSIPluginInstance::setParameterValue(int parameter, float value)
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
-	if (value < f->getPortMinimum(m_descriptor->LADSPA_Plugin, portNumber)) {
-	    value = f->getPortMinimum(m_descriptor->LADSPA_Plugin, portNumber);
-	}
-	if (value > f->getPortMaximum(m_descriptor->LADSPA_Plugin, portNumber)) {
-	    value = f->getPortMaximum(m_descriptor->LADSPA_Plugin, portNumber);
-	}
+        if (value < f->getPortMinimum(m_descriptor->LADSPA_Plugin, portNumber)) {
+            value = f->getPortMinimum(m_descriptor->LADSPA_Plugin, portNumber);
+        }
+        if (value > f->getPortMaximum(m_descriptor->LADSPA_Plugin, portNumber)) {
+            value = f->getPortMaximum(m_descriptor->LADSPA_Plugin, portNumber);
+        }
     }
 
     (*m_controlPortsIn[parameter].second) = value;
@@ -793,27 +793,27 @@ DSSIPluginInstance::setPortValueFromController(int port, int cv)
     float value = (float)cv;
 
     if (!LADSPA_IS_HINT_BOUNDED_BELOW(d)) {
-	if (!LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
-	    /* unbounded: might as well leave the value alone. */
-	} else {
-	    /* bounded above only. just shift the range. */
-	    value = ub - 127.0f + value;
-	}
+        if (!LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
+            /* unbounded: might as well leave the value alone. */
+        } else {
+            /* bounded above only. just shift the range. */
+            value = ub - 127.0f + value;
+        }
     } else {
-	if (!LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
-	    /* bounded below only. just shift the range. */
-	    value = lb + value;
-	} else {
-	    /* bounded both ends.  more interesting. */
-	    /* XXX !!! todo: fill in logarithmic, sample rate &c */
-	    value = lb + ((ub - lb) * value / 127.0f);
-	}
+        if (!LADSPA_IS_HINT_BOUNDED_ABOVE(d)) {
+            /* bounded below only. just shift the range. */
+            value = lb + value;
+        } else {
+            /* bounded both ends.  more interesting. */
+            /* XXX !!! todo: fill in logarithmic, sample rate &c */
+            value = lb + ((ub - lb) * value / 127.0f);
+        }
     }
 
     for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
-	if (m_controlPortsIn[i].first == port) {
-	    setParameterValue(i, value);
-	}
+        if (m_controlPortsIn[i].first == port) {
+            setParameterValue(i, value);
+        }
     }
 }
 
@@ -841,10 +841,10 @@ DSSIPluginInstance::getParameterDefault(int parameter) const
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
-	return f->getPortDefault(m_descriptor->LADSPA_Plugin,
-				 m_controlPortsIn[parameter].first);
+        return f->getPortDefault(m_descriptor->LADSPA_Plugin,
+                                 m_controlPortsIn[parameter].first);
     } else {
-	return 0.0f;
+        return 0.0f;
     }
 }
 
@@ -855,35 +855,35 @@ DSSIPluginInstance::getParameterDisplayHint(int parameter) const
 
     LADSPAPluginFactory *f = dynamic_cast<LADSPAPluginFactory *>(m_factory);
     if (f) {
-	return f->getPortDisplayHint(m_descriptor->LADSPA_Plugin,
+        return f->getPortDisplayHint(m_descriptor->LADSPA_Plugin,
                                      m_controlPortsIn[parameter].first);
     } else {
-	return PortHint::NoHint;
+        return PortHint::NoHint;
     }
 }
 
 std::string
 DSSIPluginInstance::configure(std::string key,
-			      std::string value)
+                              std::string value)
 {
     if (!m_descriptor || !m_descriptor->configure) return std::string();
 
     if (key == PluginIdentifier::RESERVED_PROJECT_DIRECTORY_KEY.toStdString()) {
 #ifdef DSSI_PROJECT_DIRECTORY_KEY
-	key = DSSI_PROJECT_DIRECTORY_KEY;
+        key = DSSI_PROJECT_DIRECTORY_KEY;
 #else
-	return std::string();
+        return std::string();
 #endif
     }
-	
+        
     
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::configure(" << key << "," << value << ")" << endl;
 #endif
 
     char *message = m_descriptor->configure(m_instanceHandle,
-					    key.c_str(),
-					    value.c_str());
+                                            key.c_str(),
+                                            value.c_str());
 
     m_programCacheValid = false;
 
@@ -895,16 +895,16 @@ DSSIPluginInstance::configure(std::string key,
     // as project directory
 #ifdef DSSI_RESERVED_CONFIGURE_PREFIX
     if (QString(key.c_str()).startsWith(DSSI_RESERVED_CONFIGURE_PREFIX)) {
-	return qm;
+        return qm;
     }
 #endif
 
     if (message) {
-	if (m_descriptor->LADSPA_Plugin && m_descriptor->LADSPA_Plugin->Label) {
-	    qm = std::string(m_descriptor->LADSPA_Plugin->Label) + ": ";
-	}
-	qm = qm + message;
-	free(message);
+        if (m_descriptor->LADSPA_Plugin && m_descriptor->LADSPA_Plugin->Label) {
+            qm = std::string(m_descriptor->LADSPA_Plugin->Label) + ": ";
+        }
+        qm = qm + message;
+        free(message);
 
         cerr << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm << "\"" << endl;
     }
@@ -914,7 +914,7 @@ DSSIPluginInstance::configure(std::string key,
 
 void
 DSSIPluginInstance::sendEvent(const RealTime &eventTime,
-			      const void *e)
+                              const void *e)
 {
 #ifdef DEBUG_DSSI_PROCESS
     SVDEBUG << "DSSIPluginInstance::sendEvent: last was " << m_lastEventSendTime << " (valid " << m_haveLastEventSendTime << "), this is " << eventTime << endl;
@@ -925,12 +925,12 @@ DSSIPluginInstance::sendEvent(const RealTime &eventTime,
     // we will happily drop events here if we find the timeline going
     // backwards.
     if (m_haveLastEventSendTime &&
-	m_lastEventSendTime > eventTime) {
+        m_lastEventSendTime > eventTime) {
 #ifdef DEBUG_DSSI_PROCESS
-	cerr << "... clearing down" << endl;
+        cerr << "... clearing down" << endl;
 #endif
-	m_haveLastEventSendTime = false;
-	clearEvents();
+        m_haveLastEventSendTime = false;
+        clearEvents();
     }
 
     snd_seq_event_t *event = (snd_seq_event_t *)e;
@@ -968,21 +968,21 @@ DSSIPluginInstance::handleController(snd_seq_event_t *ev)
 #endif
 
     if (controller == 0) { // bank select MSB
-	
-	m_pending.msb = ev->data.control.value;
+        
+        m_pending.msb = ev->data.control.value;
 
     } else if (controller == 32) { // bank select LSB
 
-	m_pending.lsb = ev->data.control.value;
+        m_pending.lsb = ev->data.control.value;
 
     } else if (controller > 0 && controller < 128) {
-	
-	if (m_controllerMap.find(controller) != m_controllerMap.end()) {
-	    int port = m_controllerMap[controller];
-	    setPortValueFromController(port, ev->data.control.value);
-	} else {
-	    return true; // pass through to plugin
-	}
+        
+        if (m_controllerMap.find(controller) != m_controllerMap.end()) {
+            int port = m_controllerMap[controller];
+            setPortValueFromController(port, ev->data.control.value);
+        } else {
+            return true; // pass through to plugin
+        }
     }
 
     return false;
@@ -1000,32 +1000,32 @@ DSSIPluginInstance::run(const RealTime &blockTime, int count)
     if (m_descriptor && m_descriptor->select_program) needLock = true;
 
     if (needLock) {
-	if (!m_processLock.tryLock()) {
-	    for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
-		memset(m_outputBuffers[ch], 0, m_blockSize * sizeof(sample_t));
-	    }
-	    return;
-	}
+        if (!m_processLock.tryLock()) {
+            for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
+                memset(m_outputBuffers[ch], 0, m_blockSize * sizeof(sample_t));
+            }
+            return;
+        }
     }
 
     if (m_grouped) {
-	runGrouped(blockTime);
-	goto done;
+        runGrouped(blockTime);
+        goto done;
     }
 
     if (!m_descriptor || !m_descriptor->run_synth) {
-	m_eventBuffer.skip(m_eventBuffer.getReadSpace());
-	m_haveLastEventSendTime = false;
-	if (m_descriptor && m_descriptor->LADSPA_Plugin->run) {
-	    m_descriptor->LADSPA_Plugin->run(m_instanceHandle, count);
-	} else {
-	    for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
-		memset(m_outputBuffers[ch], 0, m_blockSize * sizeof(sample_t));
-	    }
-	}
-	m_run = true;
-	if (needLock) m_processLock.unlock();
-	return;
+        m_eventBuffer.skip(m_eventBuffer.getReadSpace());
+        m_haveLastEventSendTime = false;
+        if (m_descriptor && m_descriptor->LADSPA_Plugin->run) {
+            m_descriptor->LADSPA_Plugin->run(m_instanceHandle, count);
+        } else {
+            for (size_t ch = 0; ch < m_audioPortsOut.size(); ++ch) {
+                memset(m_outputBuffers[ch], 0, m_blockSize * sizeof(sample_t));
+            }
+        }
+        m_run = true;
+        if (needLock) m_processLock.unlock();
+        return;
     }
 
 #ifdef DEBUG_DSSI_PROCESS
@@ -1034,65 +1034,65 @@ DSSIPluginInstance::run(const RealTime &blockTime, int count)
 
 #ifdef DEBUG_DSSI_PROCESS
     if (m_eventBuffer.getReadSpace() > 0) {
-	SVDEBUG << "DSSIPluginInstance::run: event buffer has "
-		  << m_eventBuffer.getReadSpace() << " event(s) in it" << endl;
+        SVDEBUG << "DSSIPluginInstance::run: event buffer has "
+                  << m_eventBuffer.getReadSpace() << " event(s) in it" << endl;
     }
 #endif
 
     while (m_eventBuffer.getReadSpace() > 0) {
 
-	snd_seq_event_t *ev = localEventBuffer + evCount;
-	*ev = m_eventBuffer.peekOne();
-	bool accept = true;
+        snd_seq_event_t *ev = localEventBuffer + evCount;
+        *ev = m_eventBuffer.peekOne();
+        bool accept = true;
 
-	RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
+        RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
 
         sv_frame_t frameOffset = 0;
-	if (evTime > blockTime) {
-	    frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
-	}
+        if (evTime > blockTime) {
+            frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+        }
 
 #ifdef DEBUG_DSSI_PROCESS
-	SVDEBUG << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
-		  << ", blockSize " << m_blockSize << endl;
-	cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
+        SVDEBUG << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
+                  << ", blockSize " << m_blockSize << endl;
+        cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
 #endif
 
-	if (frameOffset >= (long)count) break;
-	if (frameOffset < 0) {
-	    frameOffset = 0;
-	    if (ev->type == SND_SEQ_EVENT_NOTEON) {
-		m_eventBuffer.skip(1);
-		continue;
-	    }
-	}
+        if (frameOffset >= (long)count) break;
+        if (frameOffset < 0) {
+            frameOffset = 0;
+            if (ev->type == SND_SEQ_EVENT_NOTEON) {
+                m_eventBuffer.skip(1);
+                continue;
+            }
+        }
 
-	ev->time.tick = (snd_seq_tick_time_t)frameOffset;
-	m_eventBuffer.skip(1);
+        ev->time.tick = (snd_seq_tick_time_t)frameOffset;
+        m_eventBuffer.skip(1);
 
-	if (ev->type == SND_SEQ_EVENT_CONTROLLER) {
-	    accept = handleController(ev);
-	} else if (ev->type == SND_SEQ_EVENT_PGMCHANGE) {
-	    m_pending.program = ev->data.control.value;
-	    accept = false;
-	}
+        if (ev->type == SND_SEQ_EVENT_CONTROLLER) {
+            accept = handleController(ev);
+        } else if (ev->type == SND_SEQ_EVENT_PGMCHANGE) {
+            m_pending.program = ev->data.control.value;
+            accept = false;
+        }
 
-	if (accept) {
-	    if (++evCount >= EVENT_BUFFER_SIZE) break;
-	}
+        if (accept) {
+            if (++evCount >= EVENT_BUFFER_SIZE) break;
+        }
     }
 
     if (m_pending.program >= 0 && m_descriptor->select_program) {
 
-	int program = m_pending.program;
-	int bank = m_pending.lsb + 128 * m_pending.msb;
+        int program = m_pending.program;
+        int bank = m_pending.lsb + 128 * m_pending.msb;
 
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::run: making select_program(" << bank << "," << program << ") call" << endl;
 #endif
 
-	m_pending.lsb = m_pending.msb = m_pending.program = -1;
-	m_descriptor->select_program(m_instanceHandle, bank, program);
+        m_pending.lsb = m_pending.msb = m_pending.program = -1;
+        m_descriptor->select_program(m_instanceHandle, bank, program);
 
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::run: made select_program(" << bank << "," << program << ") call" << endl;
@@ -1101,16 +1101,16 @@ DSSIPluginInstance::run(const RealTime &blockTime, int count)
 
 #ifdef DEBUG_DSSI_PROCESS
     SVDEBUG << "DSSIPluginInstance::run: running with " << evCount << " events"
-	      << endl;
+              << endl;
 #endif
 
     m_descriptor->run_synth(m_instanceHandle, count,
-			    localEventBuffer, evCount);
+                            localEventBuffer, evCount);
 
 #ifdef DEBUG_DSSI_PROCESS
 //    for (int i = 0; i < count; ++i) {
-//	cout << m_outputBuffers[0][i] << " ";
-//	if (i % 8 == 0) cout << endl;
+//        cout << m_outputBuffers[0][i] << " ";
+//        if (i % 8 == 0) cout << endl;
 //    }
 #endif
 
@@ -1120,31 +1120,31 @@ DSSIPluginInstance::run(const RealTime &blockTime, int count)
     int numAudioOuts = int(m_audioPortsOut.size());
     
     if (numAudioOuts == 0) {
-	// copy inputs to outputs
-	for (int ch = 0; ch < m_idealChannelCount; ++ch) {
-	    int sch = ch % getAudioInputCount();
-	    for (int i = 0; i < m_blockSize; ++i) {
-		m_outputBuffers[ch][i] = m_inputBuffers[sch][i];
-	    }
-	}
+        // copy inputs to outputs
+        for (int ch = 0; ch < m_idealChannelCount; ++ch) {
+            int sch = ch % getAudioInputCount();
+            for (int i = 0; i < m_blockSize; ++i) {
+                m_outputBuffers[ch][i] = m_inputBuffers[sch][i];
+            }
+        }
     } else if (m_idealChannelCount < numAudioOuts) {
-	if (m_idealChannelCount == 1) {
-	    // mix down to mono
-	    for (int ch = 1; ch < numAudioOuts; ++ch) {
-		for (int i = 0; i < m_blockSize; ++i) {
-		    m_outputBuffers[0][i] += m_outputBuffers[ch][i];
-		}
-	    }
-	}
+        if (m_idealChannelCount == 1) {
+            // mix down to mono
+            for (int ch = 1; ch < numAudioOuts; ++ch) {
+                for (int i = 0; i < m_blockSize; ++i) {
+                    m_outputBuffers[0][i] += m_outputBuffers[ch][i];
+                }
+            }
+        }
     } else if (m_idealChannelCount > numAudioOuts) {
-	// duplicate
-	for (int ch = numAudioOuts; ch < m_idealChannelCount; ++ch) {
-	    int sch = (ch - numAudioOuts) % numAudioOuts;
-	    for (int i = 0; i < m_blockSize; ++i) {
-		m_outputBuffers[ch][i] = m_outputBuffers[sch][i];
-	    }
-	}
-    }	
+        // duplicate
+        for (int ch = numAudioOuts; ch < m_idealChannelCount; ++ch) {
+            int sch = (ch - numAudioOuts) % numAudioOuts;
+            for (int i = 0; i < m_blockSize; ++i) {
+                m_outputBuffers[ch][i] = m_outputBuffers[sch][i];
+            }
+        }
+    }        
 
     m_lastRunTime = blockTime;
     m_run = true;
@@ -1168,22 +1168,22 @@ DSSIPluginInstance::runGrouped(const RealTime &blockTime)
 #endif
 
     if (m_lastRunTime != blockTime) {
-	for (PluginSet::iterator i = s.begin(); i != s.end(); ++i) {
-	    DSSIPluginInstance *instance = *i;
-	    if (instance != this && instance->m_lastRunTime == blockTime) {
+        for (PluginSet::iterator i = s.begin(); i != s.end(); ++i) {
+            DSSIPluginInstance *instance = *i;
+            if (instance != this && instance->m_lastRunTime == blockTime) {
 #ifdef DEBUG_DSSI_PROCESS
-		SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): plugin " << instance << " has already been run" << endl;
+                SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): plugin " << instance << " has already been run" << endl;
 #endif
-		needRun = false;
-	    }
-	}
+                needRun = false;
+            }
+        }
     }
 
     if (!needRun) {
 #ifdef DEBUG_DSSI_PROCESS
-	SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): already run, returning" << endl;
+        SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): already run, returning" << endl;
 #endif
-	return;
+        return;
     }
 
 #ifdef DEBUG_DSSI_PROCESS
@@ -1192,81 +1192,81 @@ DSSIPluginInstance::runGrouped(const RealTime &blockTime)
 
     size_t index = 0;
     unsigned long *counts = (unsigned long *)
-	alloca(m_groupLocalEventBufferCount * sizeof(unsigned long));
+        alloca(m_groupLocalEventBufferCount * sizeof(unsigned long));
     LADSPA_Handle *instances = (LADSPA_Handle *)
-	alloca(m_groupLocalEventBufferCount * sizeof(LADSPA_Handle));
+        alloca(m_groupLocalEventBufferCount * sizeof(LADSPA_Handle));
 
     for (PluginSet::iterator i = s.begin(); i != s.end(); ++i) {
 
-	if (index >= m_groupLocalEventBufferCount) break;
+        if (index >= m_groupLocalEventBufferCount) break;
 
-	DSSIPluginInstance *instance = *i;
-	counts[index] = 0;
-	instances[index] = instance->m_instanceHandle;
-
-#ifdef DEBUG_DSSI_PROCESS
-	SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): running " << instance << endl;
-#endif
-
-	if (instance->m_pending.program >= 0 &&
-	    instance->m_descriptor->select_program) {
-	    int program = instance->m_pending.program;
-	    int bank = instance->m_pending.lsb + 128 * instance->m_pending.msb;
-	    instance->m_pending.lsb = instance->m_pending.msb = instance->m_pending.program = -1;
-	    instance->m_descriptor->select_program
-		(instance->m_instanceHandle, bank, program);
-	}
-
-	while (instance->m_eventBuffer.getReadSpace() > 0) {
-
-	    snd_seq_event_t *ev = m_groupLocalEventBuffers[index] + counts[index];
-	    *ev = instance->m_eventBuffer.peekOne();
-	    bool accept = true;
-
-	    RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
-
-	    sv_frame_t frameOffset = 0;
-	    if (evTime > blockTime) {
-		frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
-	    }
+        DSSIPluginInstance *instance = *i;
+        counts[index] = 0;
+        instances[index] = instance->m_instanceHandle;
 
 #ifdef DEBUG_DSSI_PROCESS
-	    SVDEBUG << "DSSIPluginInstance::runGrouped: evTime " << evTime << ", frameOffset " << frameOffset
-		      << ", block size " << m_blockSize << endl;
+        SVDEBUG << "DSSIPluginInstance::runGrouped(" << blockTime << "): running " << instance << endl;
 #endif
 
-	    if (frameOffset >= int(m_blockSize)) break;
-	    if (frameOffset < 0) frameOffset = 0;
+        if (instance->m_pending.program >= 0 &&
+            instance->m_descriptor->select_program) {
+            int program = instance->m_pending.program;
+            int bank = instance->m_pending.lsb + 128 * instance->m_pending.msb;
+            instance->m_pending.lsb = instance->m_pending.msb = instance->m_pending.program = -1;
+            instance->m_descriptor->select_program
+                (instance->m_instanceHandle, bank, program);
+        }
 
-	    ev->time.tick = snd_seq_tick_time_t(frameOffset);
-	    instance->m_eventBuffer.skip(1);
+        while (instance->m_eventBuffer.getReadSpace() > 0) {
 
-	    if (ev->type == SND_SEQ_EVENT_CONTROLLER) {
-		accept = instance->handleController(ev);
-	    } else if (ev->type == SND_SEQ_EVENT_PGMCHANGE) {
-		instance->m_pending.program = ev->data.control.value;
-		accept = false;
-	    }
+            snd_seq_event_t *ev = m_groupLocalEventBuffers[index] + counts[index];
+            *ev = instance->m_eventBuffer.peekOne();
+            bool accept = true;
 
-	    if (accept) {
-		if (++counts[index] >= EVENT_BUFFER_SIZE) break;
-	    }
-	}
+            RealTime evTime(ev->time.time.tv_sec, ev->time.time.tv_nsec);
 
-	++index;
+            sv_frame_t frameOffset = 0;
+            if (evTime > blockTime) {
+                frameOffset = RealTime::realTime2Frame(evTime - blockTime, m_sampleRate);
+            }
+
+#ifdef DEBUG_DSSI_PROCESS
+            SVDEBUG << "DSSIPluginInstance::runGrouped: evTime " << evTime << ", frameOffset " << frameOffset
+                      << ", block size " << m_blockSize << endl;
+#endif
+
+            if (frameOffset >= int(m_blockSize)) break;
+            if (frameOffset < 0) frameOffset = 0;
+
+            ev->time.tick = snd_seq_tick_time_t(frameOffset);
+            instance->m_eventBuffer.skip(1);
+
+            if (ev->type == SND_SEQ_EVENT_CONTROLLER) {
+                accept = instance->handleController(ev);
+            } else if (ev->type == SND_SEQ_EVENT_PGMCHANGE) {
+                instance->m_pending.program = ev->data.control.value;
+                accept = false;
+            }
+
+            if (accept) {
+                if (++counts[index] >= EVENT_BUFFER_SIZE) break;
+            }
+        }
+
+        ++index;
     }
 
     m_descriptor->run_multiple_synths(index,
-				      instances,
-				      m_blockSize,
-				      m_groupLocalEventBuffers,
-				      counts);
+                                      instances,
+                                      m_blockSize,
+                                      m_groupLocalEventBuffers,
+                                      counts);
 }
 
 int
 DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
-				    unsigned char /* ports */,
-				    unsigned char /* channels */)
+                                    unsigned char /* ports */,
+                                    unsigned char /* channels */)
 {
     // This is called from a non-RT context (during instantiate)
 
@@ -1276,8 +1276,8 @@ DSSIPluginInstance::requestMidiSend(LADSPA_Handle /* instance */,
 
 void
 DSSIPluginInstance::midiSend(LADSPA_Handle /* instance */,
-			     snd_seq_event_t * /* events */,
-			     unsigned long /* eventCount */)
+                             snd_seq_event_t * /* events */,
+                             unsigned long /* eventCount */)
 {
     // This is likely to be called from an RT context
 
@@ -1288,14 +1288,14 @@ void
 DSSIPluginInstance::NonRTPluginThread::run()
 {
     while (!m_exiting) {
-	m_runFunction(m_handle);
-	usleep(100000);
+        m_runFunction(m_handle);
+        usleep(100000);
     }
 }
 
 int
 DSSIPluginInstance::requestNonRTThread(LADSPA_Handle instance,
-				       void (*runFunction)(LADSPA_Handle))
+                                       void (*runFunction)(LADSPA_Handle))
 {
     NonRTPluginThread *thread = new NonRTPluginThread(instance, runFunction);
     m_threads[instance].insert(thread);
@@ -1312,7 +1312,7 @@ DSSIPluginInstance::deactivate()
     if (!m_descriptor || !m_descriptor->LADSPA_Plugin->deactivate) return;
 
     for (size_t i = 0; i < m_backupControlPortsIn.size(); ++i) {
-	m_backupControlPortsIn[i] = *m_controlPortsIn[i].second;
+        m_backupControlPortsIn[i] = *m_controlPortsIn[i].second;
     }
 
     m_descriptor->LADSPA_Plugin->deactivate(m_instanceHandle);
@@ -1332,11 +1332,11 @@ DSSIPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->LADSPA_Plugin->cleanup) {
-	cerr << "Bad plugin: plugin id "
-		  << m_descriptor->LADSPA_Plugin->UniqueID
-		  << ":" << m_descriptor->LADSPA_Plugin->Label
-		  << " has no cleanup method!" << endl;
-	return;
+        cerr << "Bad plugin: plugin id "
+                  << m_descriptor->LADSPA_Plugin->UniqueID
+                  << ":" << m_descriptor->LADSPA_Plugin->Label
+                  << " has no cleanup method!" << endl;
+        return;
     }
 
     m_descriptor->LADSPA_Plugin->cleanup(m_instanceHandle);

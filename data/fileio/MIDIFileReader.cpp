@@ -58,7 +58,7 @@ using namespace MIDIConstants;
 
 MIDIFileReader::MIDIFileReader(QString path,
                                MIDIFileImportPreferenceAcquirer *acquirer,
-			       sv_samplerate_t mainModelSampleRate) :
+                               sv_samplerate_t mainModelSampleRate) :
     m_smpte(false),
     m_timingDivision(0),
     m_fps(0),
@@ -74,21 +74,21 @@ MIDIFileReader::MIDIFileReader(QString path,
     m_acquirer(acquirer)
 {
     if (parseFile()) {
-	m_error = "";
+        m_error = "";
     }
 }
 
 MIDIFileReader::~MIDIFileReader()
 {
     for (MIDIComposition::iterator i = m_midiComposition.begin();
-	 i != m_midiComposition.end(); ++i) {
-	
-	for (MIDITrack::iterator j = i->second.begin();
-	     j != i->second.end(); ++j) {
-	    delete *j;
-	}
+         i != m_midiComposition.end(); ++i) {
+        
+        for (MIDITrack::iterator j = i->second.begin();
+             j != i->second.end(); ++j) {
+            delete *j;
+        }
 
-	i->second.clear();
+        i->second.clear();
     }
 
     m_midiComposition.clear();
@@ -110,7 +110,7 @@ long
 MIDIFileReader::midiBytesToLong(const string& bytes)
 {
     if (bytes.length() != 4) {
-	throw MIDIException(tr("Wrong length for long data in MIDI stream (%1, should be %2)").arg(bytes.length()).arg(4));
+        throw MIDIException(tr("Wrong length for long data in MIDI stream (%1, should be %2)").arg(bytes.length()).arg(4));
     }
 
     long longRet = ((long)(((MIDIByte)bytes[0]) << 24)) |
@@ -125,7 +125,7 @@ int
 MIDIFileReader::midiBytesToInt(const string& bytes)
 {
     if (bytes.length() != 2) {
-	throw MIDIException(tr("Wrong length for int data in MIDI stream (%1, should be %2)").arg(bytes.length()).arg(2));
+        throw MIDIException(tr("Wrong length for int data in MIDI stream (%1, should be %2)").arg(bytes.length()).arg(2));
     }
 
     int intRet = ((int)(((MIDIByte)bytes[0]) << 8)) |
@@ -142,7 +142,7 @@ MIDIByte
 MIDIFileReader::getMIDIByte()
 {
     if (!m_midiFile) {
-	throw MIDIException(tr("getMIDIByte called but no MIDI file open"));
+        throw MIDIException(tr("getMIDIByte called but no MIDI file open"));
     }
 
     if (m_midiFile->eof()) {
@@ -155,8 +155,8 @@ MIDIFileReader::getMIDIByte()
 
     char byte;
     if (m_midiFile->read(&byte, 1)) {
-	--m_trackByteCount;
-	return (MIDIByte)byte;
+        --m_trackByteCount;
+        return (MIDIByte)byte;
     }
 
     throw MIDIException(tr("Attempt to read past MIDI file end"));
@@ -171,7 +171,7 @@ string
 MIDIFileReader::getMIDIBytes(unsigned long numberOfBytes)
 {
     if (!m_midiFile) {
-	throw MIDIException(tr("getMIDIBytes called but no MIDI file open"));
+        throw MIDIException(tr("getMIDIBytes called but no MIDI file open"));
     }
 
     if (m_midiFile->eof()) {
@@ -212,27 +212,27 @@ long
 MIDIFileReader::getNumberFromMIDIBytes(int firstByte)
 {
     if (!m_midiFile) {
-	throw MIDIException(tr("getNumberFromMIDIBytes called but no MIDI file open"));
+        throw MIDIException(tr("getNumberFromMIDIBytes called but no MIDI file open"));
     }
 
     long longRet = 0;
     MIDIByte midiByte;
 
     if (firstByte >= 0) {
-	midiByte = (MIDIByte)firstByte;
+        midiByte = (MIDIByte)firstByte;
     } else if (m_midiFile->eof()) {
-	return longRet;
+        return longRet;
     } else {
-	midiByte = getMIDIByte();
+        midiByte = getMIDIByte();
     }
 
     longRet = midiByte;
     if (midiByte & 0x80) {
-	longRet &= 0x7F;
-	do {
-	    midiByte = getMIDIByte();
-	    longRet = (longRet << 7) + (midiByte & 0x7F);
-	} while (!m_midiFile->eof() && (midiByte & 0x80));
+        longRet &= 0x7F;
+        do {
+            midiByte = getMIDIByte();
+            longRet = (longRet << 7) + (midiByte & 0x7F);
+        } while (!m_midiFile->eof() && (midiByte & 0x80));
     }
 
     return longRet;
@@ -246,7 +246,7 @@ bool
 MIDIFileReader::skipToNextTrack()
 {
     if (!m_midiFile) {
-	throw MIDIException(tr("skipToNextTrack called but no MIDI file open"));
+        throw MIDIException(tr("skipToNextTrack called but no MIDI file open"));
     }
 
     string buffer, buffer2;
@@ -255,10 +255,10 @@ MIDIFileReader::skipToNextTrack()
 
     while (!m_midiFile->eof() && (m_decrementCount == false)) {
         buffer = getMIDIBytes(4); 
-	if (buffer.compare(0, 4, MIDI_TRACK_HEADER) == 0) {
-	    m_trackByteCount = midiBytesToLong(getMIDIBytes(4));
-	    m_decrementCount = true;
-	}
+        if (buffer.compare(0, 4, MIDI_TRACK_HEADER) == 0) {
+            m_trackByteCount = midiBytesToLong(getMIDIBytes(4));
+            m_decrementCount = true;
+        }
     }
 
     if (m_trackByteCount == -1) { // we haven't found a track
@@ -284,77 +284,77 @@ MIDIFileReader::parseFile()
 
     // Open the file
     m_midiFile = new ifstream(m_path.toLocal8Bit().data(),
-			      ios::in | ios::binary);
+                              ios::in | ios::binary);
 
     if (!*m_midiFile) {
-	m_error = "File not found or not readable.";
-	m_format = MIDI_FILE_BAD_FORMAT;
-	delete m_midiFile;
+        m_error = "File not found or not readable.";
+        m_format = MIDI_FILE_BAD_FORMAT;
+        delete m_midiFile;
         m_midiFile = 0;
-	return false;
+        return false;
     }
 
     bool retval = false;
 
     try {
 
-	// Set file size so we can count it off
-	//
-	m_midiFile->seekg(0, ios::end);
+        // Set file size so we can count it off
+        //
+        m_midiFile->seekg(0, ios::end);
         std::streamoff off = m_midiFile->tellg();
-	m_fileSize = 0;
+        m_fileSize = 0;
         if (off > 0) m_fileSize = off;
-	m_midiFile->seekg(0, ios::beg);
+        m_midiFile->seekg(0, ios::beg);
 
-	// Parse the MIDI header first.  The first 14 bytes of the file.
-	if (!parseHeader(getMIDIBytes(14))) {
-	    m_format = MIDI_FILE_BAD_FORMAT;
-	    m_error = "Not a MIDI file.";
-	    goto done;
-	}
+        // Parse the MIDI header first.  The first 14 bytes of the file.
+        if (!parseHeader(getMIDIBytes(14))) {
+            m_format = MIDI_FILE_BAD_FORMAT;
+            m_error = "Not a MIDI file.";
+            goto done;
+        }
 
-	unsigned int i = 0;
+        unsigned int i = 0;
 
-	for (unsigned int j = 0; j < m_numberOfTracks; ++j) {
-
-#ifdef MIDI_DEBUG
-	    SVDEBUG << "Parsing Track " << j << endl;
-#endif
-
-	    if (!skipToNextTrack()) {
-#ifdef MIDI_DEBUG
-		SVDEBUG << "Couldn't find Track " << j << endl;
-#endif
-		m_error = "File corrupted or in non-standard format?";
-		m_format = MIDI_FILE_BAD_FORMAT;
-		goto done;
-	    }
+        for (unsigned int j = 0; j < m_numberOfTracks; ++j) {
 
 #ifdef MIDI_DEBUG
-	    SVDEBUG << "Track has " << m_trackByteCount << " bytes" << endl;
+            SVDEBUG << "Parsing Track " << j << endl;
 #endif
 
-	    // Run through the events taking them into our internal
-	    // representation.
-	    if (!parseTrack(i)) {
+            if (!skipToNextTrack()) {
 #ifdef MIDI_DEBUG
-		SVDEBUG << "Track " << j << " parsing failed" << endl;
+                SVDEBUG << "Couldn't find Track " << j << endl;
 #endif
-		m_error = "File corrupted or in non-standard format?";
-		m_format = MIDI_FILE_BAD_FORMAT;
-		goto done;
-	    }
+                m_error = "File corrupted or in non-standard format?";
+                m_format = MIDI_FILE_BAD_FORMAT;
+                goto done;
+            }
 
-	    ++i; // j is the source track number, i the destination
-	}
-	
-	m_numberOfTracks = i;
-	retval = true;
+#ifdef MIDI_DEBUG
+            SVDEBUG << "Track has " << m_trackByteCount << " bytes" << endl;
+#endif
+
+            // Run through the events taking them into our internal
+            // representation.
+            if (!parseTrack(i)) {
+#ifdef MIDI_DEBUG
+                SVDEBUG << "Track " << j << " parsing failed" << endl;
+#endif
+                m_error = "File corrupted or in non-standard format?";
+                m_format = MIDI_FILE_BAD_FORMAT;
+                goto done;
+            }
+
+            ++i; // j is the source track number, i the destination
+        }
+        
+        m_numberOfTracks = i;
+        retval = true;
 
     } catch (MIDIException e) {
 
         SVDEBUG << "MIDIFileReader::open() - caught exception - " << e.what() << endl;
-	m_error = e.what();
+        m_error = e.what();
     }
     
 done:
@@ -367,7 +367,7 @@ done:
         // start.  The addTime method returns the sum of the current
         // MIDI Event delta time plus the argument.
 
-	unsigned long acc = 0;
+        unsigned long acc = 0;
 
         for (MIDITrack::iterator i = m_midiComposition[track].begin();
              i != m_midiComposition[track].end(); ++i) {
@@ -375,8 +375,8 @@ done:
         }
 
         if (consolidateNoteOffEvents(track)) { // returns true if some notes exist
-	    m_loadableTracks.insert(track);
-	}
+            m_loadableTracks.insert(track);
+        }
     }
 
     for (unsigned int track = 0; track < m_numberOfTracks; ++track) {
@@ -402,18 +402,18 @@ MIDIFileReader::parseHeader(const string &midiHeader)
 
     if (midiHeader.compare(0, 4, MIDI_FILE_HEADER) != 0) {
 #ifdef MIDI_DEBUG
-	SVDEBUG << "MIDIFileReader::parseHeader()"
-	     << "- file header not found or malformed"
-	     << endl;
+        SVDEBUG << "MIDIFileReader::parseHeader()"
+             << "- file header not found or malformed"
+             << endl;
 #endif
-	return false;
+        return false;
     }
 
     if (midiBytesToLong(midiHeader.substr(4,4)) != 6L) {
 #ifdef MIDI_DEBUG
         SVDEBUG << "MIDIFileReader::parseHeader()"
-	     << " - header length incorrect"
-	     << endl;
+             << " - header length incorrect"
+             << endl;
 #endif
         return false;
     }
@@ -474,18 +474,18 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 
     while (!m_midiFile->eof() && (m_trackByteCount > 0)) {
 
-	if (eventCode < 0x80) {
+        if (eventCode < 0x80) {
 #ifdef MIDI_DEBUG
-	    SVDEBUG << "WARNING: Invalid event code " << eventCode
-		 << " in MIDI file" << endl;
+            SVDEBUG << "WARNING: Invalid event code " << eventCode
+                 << " in MIDI file" << endl;
 #endif
-	    throw MIDIException(tr("Invalid event code %1 found").arg(int(eventCode)));
-	}
+            throw MIDIException(tr("Invalid event code %1 found").arg(int(eventCode)));
+        }
 
         deltaTime = getNumberFromMIDIBytes();
 
 #ifdef MIDI_DEBUG
-	SVDEBUG << "read delta time " << deltaTime << endl;
+        SVDEBUG << "read delta time " << deltaTime << endl;
 #endif
 
         // Get a single byte
@@ -493,72 +493,72 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
 
         if (!(midiByte & MIDI_STATUS_BYTE_MASK)) {
 
-	    if (runningStatus < 0) {
-		throw MIDIException(tr("Running status used for first event in track"));
-	    }
+            if (runningStatus < 0) {
+                throw MIDIException(tr("Running status used for first event in track"));
+            }
 
-	    eventCode = (MIDIByte)runningStatus;
-	    data1 = midiByte;
+            eventCode = (MIDIByte)runningStatus;
+            data1 = midiByte;
 
 #ifdef MIDI_DEBUG
-	    SVDEBUG << "using running status (byte " << int(midiByte) << " found)" << endl;
+            SVDEBUG << "using running status (byte " << int(midiByte) << " found)" << endl;
 #endif
         } else {
 #ifdef MIDI_DEBUG
-	    SVDEBUG << "have new event code " << int(midiByte) << endl;
+            SVDEBUG << "have new event code " << int(midiByte) << endl;
 #endif
             eventCode = midiByte;
-	    data1 = getMIDIByte();
-	}
+            data1 = getMIDIByte();
+        }
 
         if (eventCode == MIDI_FILE_META_EVENT) {
 
-	    metaEventCode = data1;
+            metaEventCode = data1;
             messageLength = getNumberFromMIDIBytes();
 
 //#ifdef MIDI_DEBUG
-		SVDEBUG << "Meta event of type " << int(metaEventCode) << " and " << messageLength << " bytes found, putting on track " << metaTrack << endl;
+                SVDEBUG << "Meta event of type " << int(metaEventCode) << " and " << messageLength << " bytes found, putting on track " << metaTrack << endl;
 //#endif
             metaMessage = getMIDIBytes(messageLength);
 
-	    long gap = accumulatedTime - trackTimeMap[metaTrack];
-	    accumulatedTime += deltaTime;
-	    deltaTime += gap;
-	    trackTimeMap[metaTrack] = accumulatedTime;
+            long gap = accumulatedTime - trackTimeMap[metaTrack];
+            accumulatedTime += deltaTime;
+            deltaTime += gap;
+            trackTimeMap[metaTrack] = accumulatedTime;
 
             MIDIEvent *e = new MIDIEvent(deltaTime,
                                          MIDI_FILE_META_EVENT,
                                          metaEventCode,
                                          metaMessage);
 
-	    m_midiComposition[metaTrack].push_back(e);
+            m_midiComposition[metaTrack].push_back(e);
 
-	    if (metaEventCode == MIDI_TRACK_NAME) {
-		m_trackNames[metaTrack] = metaMessage.c_str();
-	    }
+            if (metaEventCode == MIDI_TRACK_NAME) {
+                m_trackNames[metaTrack] = metaMessage.c_str();
+            }
 
         } else { // non-meta events
 
-	    runningStatus = eventCode;
+            runningStatus = eventCode;
 
             MIDIEvent *midiEvent;
 
-	    int channel = (eventCode & MIDI_CHANNEL_NUM_MASK);
-	    if (channelTrackMap[channel] == -1) {
-		if (!firstTrack) ++lastTrackNum;
-		else firstTrack = false;
-		channelTrackMap[channel] = lastTrackNum;
-	    }
+            int channel = (eventCode & MIDI_CHANNEL_NUM_MASK);
+            if (channelTrackMap[channel] == -1) {
+                if (!firstTrack) ++lastTrackNum;
+                else firstTrack = false;
+                channelTrackMap[channel] = lastTrackNum;
+            }
 
-	    unsigned int trackNum = channelTrackMap[channel];
-	    
-	    // accumulatedTime is abs time of last event on any track;
-	    // trackTimeMap[trackNum] is that of last event on this track
-	    
-	    long gap = accumulatedTime - trackTimeMap[trackNum];
-	    accumulatedTime += deltaTime;
-	    deltaTime += gap;
-	    trackTimeMap[trackNum] = accumulatedTime;
+            unsigned int trackNum = channelTrackMap[channel];
+            
+            // accumulatedTime is abs time of last event on any track;
+            // trackTimeMap[trackNum] is that of last event on this track
+            
+            long gap = accumulatedTime - trackTimeMap[trackNum];
+            accumulatedTime += deltaTime;
+            deltaTime += gap;
+            trackTimeMap[trackNum] = accumulatedTime;
 
             switch (eventCode & MIDI_MESSAGE_TYPE_MASK) {
 
@@ -572,17 +572,17 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                 midiEvent = new MIDIEvent(deltaTime, eventCode, data1, data2);
 
                 /*
-		SVDEBUG << "MIDI event for channel " << channel << " (track "
-			  << trackNum << ")" << endl;
-		midiEvent->print();
+                SVDEBUG << "MIDI event for channel " << channel << " (track "
+                          << trackNum << ")" << endl;
+                midiEvent->print();
                           */
 
 
                 m_midiComposition[trackNum].push_back(midiEvent);
 
-		if (midiEvent->getChannelNumber() == MIDI_PERCUSSION_CHANNEL) {
-		    m_percussionTracks.insert(trackNum);
-		}
+                if (midiEvent->getChannelNumber() == MIDI_PERCUSSION_CHANNEL) {
+                    m_percussionTracks.insert(trackNum);
+                }
 
                 break;
 
@@ -605,7 +605,7 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
                 messageLength = getNumberFromMIDIBytes(data1);
 
 #ifdef MIDI_DEBUG
-		SVDEBUG << "SysEx of " << messageLength << " bytes found" << endl;
+                SVDEBUG << "SysEx of " << messageLength << " bytes found" << endl;
 #endif
 
                 metaMessage= getMIDIBytes(messageLength);
@@ -644,10 +644,10 @@ MIDIFileReader::parseTrack(unsigned int &lastTrackNum)
     }
 
     if (lastTrackNum > metaTrack) {
-	for (unsigned int track = metaTrack + 1; track <= lastTrackNum; ++track) {
-	    m_trackNames[track] = QString("%1 <%2>")
-		.arg(m_trackNames[metaTrack]).arg(track - metaTrack + 1);
-	}
+        for (unsigned int track = metaTrack + 1; track <= lastTrackNum; ++track) {
+            m_trackNames[track] = QString("%1 <%2>")
+                .arg(m_trackNames[metaTrack]).arg(track - metaTrack + 1);
+        }
     }
 
     return true;
@@ -664,18 +664,18 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
     bool noteOffFound;
 
     for (MIDITrack::iterator i = m_midiComposition[track].begin();
-	 i != m_midiComposition[track].end(); i++) {
+         i != m_midiComposition[track].end(); i++) {
 
         if ((*i)->getMessageType() == MIDI_NOTE_ON && (*i)->getVelocity() > 0) {
 
-	    notesOnTrack = true;
+            notesOnTrack = true;
             noteOffFound = false;
 
             for (MIDITrack::iterator j = i;
-		 j != m_midiComposition[track].end(); j++) {
+                 j != m_midiComposition[track].end(); j++) {
 
                 if (((*j)->getChannelNumber() == (*i)->getChannelNumber()) &&
-		    ((*j)->getPitch() == (*i)->getPitch()) &&
+                    ((*j)->getPitch() == (*i)->getPitch()) &&
                     ((*j)->getMessageType() == MIDI_NOTE_OFF ||
                     ((*j)->getMessageType() == MIDI_NOTE_ON &&
                      (*j)->getVelocity() == 0x00))) {
@@ -694,10 +694,10 @@ MIDIFileReader::consolidateNoteOffEvents(unsigned int track)
             // Event duration to length of track
             //
             if (!noteOffFound) {
-		MIDITrack::iterator j = m_midiComposition[track].end();
-		--j;
+                MIDITrack::iterator j = m_midiComposition[track].end();
+                --j;
                 (*i)->setDuration((*j)->getTime() - (*i)->getTime());
-	    }
+            }
         }
     }
 
@@ -712,24 +712,24 @@ MIDIFileReader::updateTempoMap(unsigned int track)
     SVDEBUG << "updateTempoMap for track " << track << " (" << m_midiComposition[track].size() << " events)" << endl;
 
     for (MIDITrack::iterator i = m_midiComposition[track].begin();
-	 i != m_midiComposition[track].end(); ++i) {
+         i != m_midiComposition[track].end(); ++i) {
 
         if ((*i)->isMeta() &&
-	    (*i)->getMetaEventCode() == MIDI_SET_TEMPO) {
+            (*i)->getMetaEventCode() == MIDI_SET_TEMPO) {
 
-	    MIDIByte m0 = (*i)->getMetaMessage()[0];
-	    MIDIByte m1 = (*i)->getMetaMessage()[1];
-	    MIDIByte m2 = (*i)->getMetaMessage()[2];
-	    
-	    long tempo = (((m0 << 8) + m1) << 8) + m2;
+            MIDIByte m0 = (*i)->getMetaMessage()[0];
+            MIDIByte m1 = (*i)->getMetaMessage()[1];
+            MIDIByte m2 = (*i)->getMetaMessage()[2];
+            
+            long tempo = (((m0 << 8) + m1) << 8) + m2;
 
-	    SVDEBUG << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << endl;
+            SVDEBUG << "updateTempoMap: have tempo, it's " << tempo << " at " << (*i)->getTime() << endl;
 
-	    if (tempo != 0) {
-		double qpm = 60000000.0 / double(tempo);
-		m_tempoMap[(*i)->getTime()] =
-		    TempoChange(RealTime::zeroTime, qpm);
-	    }
+            if (tempo != 0) {
+                double qpm = 60000000.0 / double(tempo);
+                m_tempoMap[(*i)->getTime()] =
+                    TempoChange(RealTime::zeroTime, qpm);
+            }
         }
     }
 }
@@ -744,19 +744,19 @@ MIDIFileReader::calculateTempoTimestamps()
     if (td == 0) td = 96;
 
     for (TempoMap::iterator i = m_tempoMap.begin(); i != m_tempoMap.end(); ++i) {
-	
-	unsigned long mtime = i->first;
-	unsigned long melapsed = mtime - lastMIDITime;
-	double quarters = double(melapsed) / double(td);
-	double seconds = (60.0 * quarters) / tempo;
+        
+        unsigned long mtime = i->first;
+        unsigned long melapsed = mtime - lastMIDITime;
+        double quarters = double(melapsed) / double(td);
+        double seconds = (60.0 * quarters) / tempo;
 
-	RealTime t = lastRealTime + RealTime::fromSeconds(seconds);
+        RealTime t = lastRealTime + RealTime::fromSeconds(seconds);
 
-	i->second.first = t;
+        i->second.first = t;
 
-	lastRealTime = t;
-	lastMIDITime = mtime;
-	tempo = i->second.second;
+        lastRealTime = t;
+        lastMIDITime = mtime;
+        tempo = i->second.second;
     }
 }
 
@@ -769,10 +769,10 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
 
     TempoMap::const_iterator i = m_tempoMap.lower_bound(midiTime);
     if (i != m_tempoMap.begin()) {
-	--i;
-	tempoMIDITime = i->first;
-	tempoRealTime = i->second.first;
-	tempo = i->second.second;
+        --i;
+        tempoMIDITime = i->first;
+        tempoRealTime = i->second.first;
+        tempo = i->second.second;
     }
 
     int td = m_timingDivision;
@@ -784,10 +784,10 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
 
 /*
     SVDEBUG << "MIDIFileReader::getTimeForMIDITime(" << midiTime << ")"
-	      << endl;
+              << endl;
     SVDEBUG << "timing division = " << td << endl;
     SVDEBUG << "nearest tempo event (of " << m_tempoMap.size() << ") is at " << tempoMIDITime << " ("
-	      << tempoRealTime << ")" << endl;
+              << tempoRealTime << ")" << endl;
     SVDEBUG << "quarters since then = " << quarters << endl;
     SVDEBUG << "tempo = " << tempo << " quarters per minute" << endl;
     SVDEBUG << "seconds since then = " << seconds << endl;
@@ -807,40 +807,40 @@ MIDIFileReader::load() const
             m_acquirer->showError
                 (tr("MIDI file \"%1\" has no notes in any track").arg(m_path));
         }
-	return 0;
+        return 0;
     }
 
     std::set<unsigned int> tracksToLoad;
 
     if (m_loadableTracks.size() == 1) {
 
-	tracksToLoad.insert(*m_loadableTracks.begin());
+        tracksToLoad.insert(*m_loadableTracks.begin());
 
     } else {
 
         QStringList displayNames;
 
-	for (set<unsigned int>::iterator i = m_loadableTracks.begin();
-	     i != m_loadableTracks.end(); ++i) {
+        for (set<unsigned int>::iterator i = m_loadableTracks.begin();
+             i != m_loadableTracks.end(); ++i) {
 
-	    unsigned int trackNo = *i;
-	    QString label;
+            unsigned int trackNo = *i;
+            QString label;
 
-	    QString perc;
-	    if (m_percussionTracks.find(trackNo) != m_percussionTracks.end()) {
-		perc = tr(" - uses GM percussion channel");
-	    }
+            QString perc;
+            if (m_percussionTracks.find(trackNo) != m_percussionTracks.end()) {
+                perc = tr(" - uses GM percussion channel");
+            }
 
-	    if (m_trackNames.find(trackNo) != m_trackNames.end()) {
-		label = tr("Track %1 (%2)%3")
-		    .arg(trackNo).arg(m_trackNames.find(trackNo)->second)
-		    .arg(perc);
-	    } else {
-		label = tr("Track %1 (untitled)%3").arg(trackNo).arg(perc);
-	    }
+            if (m_trackNames.find(trackNo) != m_trackNames.end()) {
+                label = tr("Track %1 (%2)%3")
+                    .arg(trackNo).arg(m_trackNames.find(trackNo)->second)
+                    .arg(perc);
+            } else {
+                label = tr("Track %1 (untitled)%3").arg(trackNo).arg(perc);
+            }
 
             displayNames << label;
-	}
+        }
 
         QString singleTrack;
 
@@ -866,28 +866,28 @@ MIDIFileReader::load() const
             for (set<unsigned int>::iterator i = m_loadableTracks.begin();
                  i != m_loadableTracks.end(); ++i) {
                 
-		if (pref == MIDIFileImportPreferenceAcquirer::MergeAllTracks ||
-		    m_percussionTracks.find(*i) == m_percussionTracks.end()) {
+                if (pref == MIDIFileImportPreferenceAcquirer::MergeAllTracks ||
+                    m_percussionTracks.find(*i) == m_percussionTracks.end()) {
                     
-		    tracksToLoad.insert(*i);
-		}
-	    }
+                    tracksToLoad.insert(*i);
+                }
+            }
 
-	} else {
-	    
-	    int j = 0;
+        } else {
+            
+            int j = 0;
 
-	    for (set<unsigned int>::iterator i = m_loadableTracks.begin();
-		 i != m_loadableTracks.end(); ++i) {
-		
-		if (singleTrack == displayNames[j]) {
-		    tracksToLoad.insert(*i);
-		    break;
-		}
-		
-		++j;
-	    }
-	}
+            for (set<unsigned int>::iterator i = m_loadableTracks.begin();
+                 i != m_loadableTracks.end(); ++i) {
+                
+                if (singleTrack == displayNames[j]) {
+                    tracksToLoad.insert(*i);
+                    break;
+                }
+                
+                ++j;
+            }
+        }
     }
 
     if (tracksToLoad.empty()) return 0;
@@ -896,18 +896,18 @@ MIDIFileReader::load() const
     Model *model = 0;
 
     for (std::set<unsigned int>::iterator i = tracksToLoad.begin();
-	 i != tracksToLoad.end(); ++i) {
+         i != tracksToLoad.end(); ++i) {
 
-	int minProgress = (100 * count) / n;
-	int progressAmount = 100 / n;
+        int minProgress = (100 * count) / n;
+        int progressAmount = 100 / n;
 
-	model = loadTrack(*i, model, minProgress, progressAmount);
+        model = loadTrack(*i, model, minProgress, progressAmount);
 
-	++count;
+        ++count;
     }
 
     if (dynamic_cast<NoteModel *>(model)) {
-	dynamic_cast<NoteModel *>(model)->setCompletion(100);
+        dynamic_cast<NoteModel *>(model)->setCompletion(100);
     }
 
     return model;
@@ -915,26 +915,26 @@ MIDIFileReader::load() const
 
 Model *
 MIDIFileReader::loadTrack(unsigned int trackToLoad,
-			  Model *existingModel,
-			  int minProgress,
-			  int progressAmount) const
+                          Model *existingModel,
+                          int minProgress,
+                          int progressAmount) const
 {
     if (m_midiComposition.find(trackToLoad) == m_midiComposition.end()) {
-	return 0;
+        return 0;
     }
 
     NoteModel *model = 0;
 
     if (existingModel) {
-	model = dynamic_cast<NoteModel *>(existingModel);
-	if (!model) {
-	    SVDEBUG << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << endl;
-	}
+        model = dynamic_cast<NoteModel *>(existingModel);
+        if (!model) {
+            SVDEBUG << "WARNING: MIDIFileReader::loadTrack: Existing model given, but it isn't a NoteModel -- ignoring it" << endl;
+        }
     }
 
     if (!model) {
-	model = new NoteModel(m_mainModelSampleRate, 1, 0.0, 0.0, false);
-	model->setValueQuantization(1.0);
+        model = new NoteModel(m_mainModelSampleRate, 1, 0.0, 0.0, false);
+        model->setValueQuantization(1.0);
         model->setObjectName(QFileInfo(m_path).fileName());
     }
 
@@ -956,54 +956,54 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
             rt = getTimeForMIDITime(midiTime);
         }
 
-	// We ignore most of these event types for now, though in
-	// theory some of the text ones could usefully be incorporated
+        // We ignore most of these event types for now, though in
+        // theory some of the text ones could usefully be incorporated
 
-	if ((*i)->isMeta()) {
+        if ((*i)->isMeta()) {
 
-	    switch((*i)->getMetaEventCode()) {
+            switch((*i)->getMetaEventCode()) {
 
-	    case MIDI_KEY_SIGNATURE:
-		// minorKey = (int((*i)->getMetaMessage()[1]) != 0);
-		sharpKey = (int((*i)->getMetaMessage()[0]) >= 0);
-		break;
+            case MIDI_KEY_SIGNATURE:
+                // minorKey = (int((*i)->getMetaMessage()[1]) != 0);
+                sharpKey = (int((*i)->getMetaMessage()[0]) >= 0);
+                break;
 
-	    case MIDI_TEXT_EVENT:
-	    case MIDI_LYRIC:
-	    case MIDI_TEXT_MARKER:
-	    case MIDI_COPYRIGHT_NOTICE:
-	    case MIDI_TRACK_NAME:
-		// The text events that we could potentially use
-		break;
+            case MIDI_TEXT_EVENT:
+            case MIDI_LYRIC:
+            case MIDI_TEXT_MARKER:
+            case MIDI_COPYRIGHT_NOTICE:
+            case MIDI_TRACK_NAME:
+                // The text events that we could potentially use
+                break;
 
-	    case MIDI_SET_TEMPO:
-		// Already dealt with in a separate pass previously
-		break;
+            case MIDI_SET_TEMPO:
+                // Already dealt with in a separate pass previously
+                break;
 
-	    case MIDI_TIME_SIGNATURE:
-		// Not yet!
-		break;
+            case MIDI_TIME_SIGNATURE:
+                // Not yet!
+                break;
 
-	    case MIDI_SEQUENCE_NUMBER:
-	    case MIDI_CHANNEL_PREFIX_OR_PORT:
-	    case MIDI_INSTRUMENT_NAME:
-	    case MIDI_CUE_POINT:
-	    case MIDI_CHANNEL_PREFIX:
-	    case MIDI_SEQUENCER_SPECIFIC:
-	    case MIDI_SMPTE_OFFSET:
-	    default:
-		break;
-	    }
+            case MIDI_SEQUENCE_NUMBER:
+            case MIDI_CHANNEL_PREFIX_OR_PORT:
+            case MIDI_INSTRUMENT_NAME:
+            case MIDI_CUE_POINT:
+            case MIDI_CHANNEL_PREFIX:
+            case MIDI_SEQUENCER_SPECIFIC:
+            case MIDI_SMPTE_OFFSET:
+            default:
+                break;
+            }
 
-	} else {
+        } else {
 
-	    switch ((*i)->getMessageType()) {
+            switch ((*i)->getMessageType()) {
 
-	    case MIDI_NOTE_ON:
+            case MIDI_NOTE_ON:
 
                 if ((*i)->getVelocity() == 0) break; // effective note-off
-		else {
-		    RealTime endRT;
+                else {
+                    RealTime endRT;
                     unsigned long endMidiTime = (*i)->getTime() + (*i)->getDuration();
                     if (m_smpte) {
                         endRT = RealTime::frame2RealTime(endMidiTime, m_fps * m_subframes);
@@ -1011,32 +1011,32 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
                         endRT = getTimeForMIDITime(endMidiTime);
                     }
 
-		    long startFrame = RealTime::realTime2Frame
-			(rt, model->getSampleRate());
+                    long startFrame = RealTime::realTime2Frame
+                        (rt, model->getSampleRate());
 
-		    long endFrame = RealTime::realTime2Frame
-			(endRT, model->getSampleRate());
+                    long endFrame = RealTime::realTime2Frame
+                        (endRT, model->getSampleRate());
 
-		    QString pitchLabel = Pitch::getPitchLabel((*i)->getPitch(),
-							      0, 
-							      !sharpKey);
+                    QString pitchLabel = Pitch::getPitchLabel((*i)->getPitch(),
+                                                              0, 
+                                                              !sharpKey);
 
-		    QString noteLabel = tr("%1 - vel %2")
-			.arg(pitchLabel).arg(int((*i)->getVelocity()));
+                    QString noteLabel = tr("%1 - vel %2")
+                        .arg(pitchLabel).arg(int((*i)->getVelocity()));
 
                     float level = float((*i)->getVelocity()) / 128.f;
 
-		    Note note(startFrame, (*i)->getPitch(),
-			      endFrame - startFrame, level, noteLabel);
+                    Note note(startFrame, (*i)->getPitch(),
+                              endFrame - startFrame, level, noteLabel);
 
-//		    SVDEBUG << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << endl;
+//                    SVDEBUG << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << endl;
 
-		    model->addPoint(note);
-		    break;
-		}
+                    model->addPoint(note);
+                    break;
+                }
 
             case MIDI_PITCH_BEND:
-		// I guess we could make some use of this...
+                // I guess we could make some use of this...
                 break;
 
             case MIDI_NOTE_OFF:
@@ -1050,11 +1050,11 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
             default:
                 break;
             }
-	}
+        }
 
-	model->setCompletion(minProgress +
-			     (count * progressAmount) / totalEvents);
-	++count;
+        model->setCompletion(minProgress +
+                             (count * progressAmount) / totalEvents);
+        ++count;
     }
 
     return model;

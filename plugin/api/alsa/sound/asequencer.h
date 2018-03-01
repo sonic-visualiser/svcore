@@ -28,11 +28,11 @@
 #ifndef __SOUND_ASEQUENCER_H
 #define __SOUND_ASEQUENCER_H
 
-#define SNDRV_SEQ_EVENT_SYSEX		130	/* system exclusive data (variable length) */
+#define SNDRV_SEQ_EVENT_SYSEX                130        /* system exclusive data (variable length) */
 
-#define SNDRV_SEQ_EVENT_LENGTH_FIXED	(0<<2)	/* fixed event size */
-#define SNDRV_SEQ_EVENT_LENGTH_VARIABLE	(1<<2)	/* variable event size */
+#define SNDRV_SEQ_EVENT_LENGTH_FIXED        (0<<2)        /* fixed event size */
+#define SNDRV_SEQ_EVENT_LENGTH_VARIABLE        (1<<2)        /* variable event size */
 
-#define SNDRV_SEQ_EVENT_LENGTH_MASK	(3<<2)
+#define SNDRV_SEQ_EVENT_LENGTH_MASK        (3<<2)
 
 #endif /* __SOUND_ASEQUENCER_H */

@@ -47,11 +47,11 @@ public:
     virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const;
 
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
-						      int clientId,
-						      int position,
-						      sv_samplerate_t sampleRate,
-						      int blockSize,
-						      int channels);
+                                                      int clientId,
+                                                      int position,
+                                                      sv_samplerate_t sampleRate,
+                                                      int blockSize,
+                                                      int channels);
 
     virtual QString getPluginCategory(QString identifier);
 

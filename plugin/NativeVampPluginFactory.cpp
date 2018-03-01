@@ -231,7 +231,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
             return file;
         }
 
-	for (unsigned int j = 0; j < dir.count(); ++j) {
+        for (unsigned int j = 0; j < dir.count(); ++j) {
             file = dir.filePath(dir[j]);
             if (QFileInfo(file).baseName() == QFileInfo(soname).baseName()) {
 
@@ -304,7 +304,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
         cerr << "NativeVampPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
 #endif
-	return 0;
+        return 0;
     }
 
     QString found = findPluginFile(soname);
@@ -399,42 +399,42 @@ NativeVampPluginFactory::generateTaxonomy()
     vector<QString> path;
 
     for (size_t i = 0; i < pluginPath.size(); ++i) {
-	if (pluginPath[i].contains("/lib/")) {
-	    QString p(pluginPath[i]);
+        if (pluginPath[i].contains("/lib/")) {
+            QString p(pluginPath[i]);
             path.push_back(p);
-	    p.replace("/lib/", "/share/");
-	    path.push_back(p);
-	}
-	path.push_back(pluginPath[i]);
+            p.replace("/lib/", "/share/");
+            path.push_back(p);
+        }
+        path.push_back(pluginPath[i]);
     }
 
     for (size_t i = 0; i < path.size(); ++i) {
 
-	QDir dir(path[i], "*.cat");
+        QDir dir(path[i], "*.cat");
 
-//	SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << endl;
-	for (unsigned int j = 0; j < dir.count(); ++j) {
+//        SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: directory " << path[i] << " has " << dir.count() << " .cat files" << endl;
+        for (unsigned int j = 0; j < dir.count(); ++j) {
 
-	    QFile file(path[i] + "/" + dir[j]);
+            QFile file(path[i] + "/" + dir[j]);
 
-//	    SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
+//            SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
 
-	    if (file.open(QIODevice::ReadOnly)) {
-//		    cerr << "...opened" << endl;
-		QTextStream stream(&file);
-		QString line;
+            if (file.open(QIODevice::ReadOnly)) {
+//                    cerr << "...opened" << endl;
+                QTextStream stream(&file);
+                QString line;
 
-		while (!stream.atEnd()) {
-		    line = stream.readLine();
-//		    cerr << "line is: \"" << line << "\"" << endl;
-		    QString id = PluginIdentifier::canonicalise
+                while (!stream.atEnd()) {
+                    line = stream.readLine();
+//                    cerr << "line is: \"" << line << "\"" << endl;
+                    QString id = PluginIdentifier::canonicalise
                         (line.section("::", 0, 0));
-		    QString cat = line.section("::", 1, 1);
-		    m_taxonomy[id] = cat;
-//		    cerr << "NativeVampPluginFactory: set id \"" << id << "\" to cat \"" << cat << "\"" << endl;
-		}
-	    }
-	}
+                    QString cat = line.section("::", 1, 1);
+                    m_taxonomy[id] = cat;
+//                    cerr << "NativeVampPluginFactory: set id \"" << id << "\" to cat \"" << cat << "\"" << endl;
+                }
+            }
+        }
     }
 }    
 

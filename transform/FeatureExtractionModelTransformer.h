@@ -70,7 +70,7 @@ protected:
 
     void addFeature(int n,
                     sv_frame_t blockFrame,
-		    const Vamp::Plugin::Feature &feature);
+                    const Vamp::Plugin::Feature &feature);
 
     void setCompletion(int, int);
 

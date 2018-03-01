@@ -43,10 +43,10 @@ public:
     };
 
     EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
-				       int resolution,
-				       int height,
+                                       int resolution,
+                                       int height,
                                        CompressionType compression,
-				       bool notifyOnAdd = true);
+                                       bool notifyOnAdd = true);
 
     virtual bool isOK() const;
 

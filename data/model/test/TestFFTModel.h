@@ -101,7 +101,7 @@ private slots:
     // are those of our expected signal.
     
     void dc_simple_rect() {
-	MockWaveModel mwm({ DC }, 16, 4);
+        MockWaveModel mwm({ DC }, 16, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 1,
@@ -115,7 +115,7 @@ private slots:
     void dc_simple_hann() {
         // The Hann window function is a simple sinusoid with period
         // equal to twice the window size, and it halves the DC energy
-	MockWaveModel mwm({ DC }, 16, 4);
+        MockWaveModel mwm({ DC }, 16, 4);
         test(&mwm, HanningWindow, 8, 8, 8, 0,
              { { {}, {}, {}, {}, {} } }, 4);
         test(&mwm, HanningWindow, 8, 8, 8, 1,
@@ -127,7 +127,7 @@ private slots:
     }
     
     void dc_simple_hann_halfoverlap() {
-	MockWaveModel mwm({ DC }, 16, 4);
+        MockWaveModel mwm({ DC }, 16, 4);
         test(&mwm, HanningWindow, 8, 4, 8, 0,
              { { {}, {}, {}, {}, {} } }, 7);
         test(&mwm, HanningWindow, 8, 4, 8, 2,
@@ -139,7 +139,7 @@ private slots:
     }
     
     void sine_simple_rect() {
-	MockWaveModel mwm({ Sine }, 16, 4);
+        MockWaveModel mwm({ Sine }, 16, 4);
         // Sine: output is purely imaginary. Note the sign is flipped
         // (normally the first half of the output would have negative
         // sign for a sine starting at 0) because the model does an
@@ -155,7 +155,7 @@ private slots:
     }
     
     void cosine_simple_rect() {
-	MockWaveModel mwm({ Cosine }, 16, 4);
+        MockWaveModel mwm({ Cosine }, 16, 4);
         // Cosine: output is purely real. Note the sign is flipped
         // because the model does an FFT shift to centre the phase
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
@@ -169,7 +169,7 @@ private slots:
     }
     
     void twochan_simple_rect() {
-	MockWaveModel mwm({ Sine, Cosine }, 16, 4);
+        MockWaveModel mwm({ Sine, Cosine }, 16, 4);
         // Test that the two channels are read and converted separately
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
              {
@@ -194,7 +194,7 @@ private slots:
     }
     
     void nyquist_simple_rect() {
-	MockWaveModel mwm({ Nyquist }, 16, 4);
+        MockWaveModel mwm({ Nyquist }, 16, 4);
         // Again, the sign is flipped. This has the same amount of
         // energy as the DC example
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
@@ -208,7 +208,7 @@ private slots:
     }
     
     void dirac_simple_rect() {
-	MockWaveModel mwm({ Dirac }, 16, 4);
+        MockWaveModel mwm({ Dirac }, 16, 4);
         // The window scales by 0.5 and some signs are flipped. Only
         // column 1 has any data (the single impulse).
         test(&mwm, RectangularWindow, 8, 8, 8, 0,
@@ -222,7 +222,7 @@ private slots:
     }
     
     void dirac_simple_rect_2() {
-	MockWaveModel mwm({ Dirac }, 16, 8);
+        MockWaveModel mwm({ Dirac }, 16, 8);
         // With 8 samples padding, the FFT shift places the first
         // Dirac impulse at the start of column 1, thus giving all
         // positive values
@@ -239,7 +239,7 @@ private slots:
     }
 
     void dirac_simple_rect_halfoverlap() {
-	MockWaveModel mwm({ Dirac }, 16, 4);
+        MockWaveModel mwm({ Dirac }, 16, 4);
         test(&mwm, RectangularWindow, 8, 4, 8, 0,
              { { {}, {}, {}, {}, {} } }, 7);
         test(&mwm, RectangularWindow, 8, 4, 8, 1,

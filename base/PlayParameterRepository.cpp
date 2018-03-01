@@ -39,8 +39,8 @@ PlayParameterRepository::addPlayable(const Playable *playable)
 
     if (!getPlayParameters(playable)) {
 
-	// Give all playables the same type of play parameters for the
-	// moment
+        // Give all playables the same type of play parameters for the
+        // moment
 
 //        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
 
@@ -121,8 +121,8 @@ PlayParameterRepository::clear()
 {
 //    cerr << "PlayParameterRepository: PlayParameterRepository::clear" << endl;
     while (!m_playParameters.empty()) {
-	delete m_playParameters.begin()->second;
-	m_playParameters.erase(m_playParameters.begin());
+        delete m_playParameters.begin()->second;
+        m_playParameters.erase(m_playParameters.begin());
     }
 }
 

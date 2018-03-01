@@ -22,7 +22,7 @@
 #include <iostream>
 
 LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
-				     double minval, double maxval,
+                                     double minval, double maxval,
                                      QString unit, bool inverted,
                                      std::map<int, QString> labels) :
     m_minpos(minpos),

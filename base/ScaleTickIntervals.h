@@ -30,14 +30,14 @@ class ScaleTickIntervals
 {
 public:
     struct Range {
-	double min;        // start of value range
-	double max;        // end of value range
-	int n;             // number of divisions (approximate only)
+        double min;        // start of value range
+        double max;        // end of value range
+        int n;             // number of divisions (approximate only)
     };
 
     struct Tick {
-	double value;      // value this tick represents
-	std::string label; // value as written 
+        double value;      // value this tick represents
+        std::string label; // value as written 
     };
 
     typedef std::vector<Tick> Ticks;
@@ -79,12 +79,12 @@ private:
     };
     
     struct Instruction {
-	double initial;    // value of first tick
+        double initial;    // value of first tick
         double limit;      // max from original range
-	double spacing;    // increment between ticks
-	double roundTo;    // what all displayed values should be rounded to
-	Display display;   // whether to use fixed precision (%e, %f, or %g)
-	int precision;     // number of dp (%f) or sf (%e)
+        double spacing;    // increment between ticks
+        double roundTo;    // what all displayed values should be rounded to
+        Display display;   // whether to use fixed precision (%e, %f, or %g)
+        int precision;     // number of dp (%f) or sf (%e)
         bool logUnmap;     // true if values represent logs of display values
     };
     
@@ -92,21 +92,21 @@ private:
     {
         Display display = Auto;
 
-	if (r.max < r.min) {
-	    return linearInstruction({ r.max, r.min, r.n });
-	}
-	if (r.n < 1 || r.max == r.min) {
+        if (r.max < r.min) {
+            return linearInstruction({ r.max, r.min, r.n });
+        }
+        if (r.n < 1 || r.max == r.min) {
             return { r.min, r.min, 1.0, r.min, display, 1, false };
         }
-	
-	double inc = (r.max - r.min) / r.n;
+        
+        double inc = (r.max - r.min) / r.n;
 
         double digInc = log10(inc);
         double digMax = log10(fabs(r.max));
         double digMin = log10(fabs(r.min));
 
         int precInc = int(floor(digInc));
-	double roundTo = pow(10.0, precInc);
+        double roundTo = pow(10.0, precInc);
 
         if (precInc > -4 && precInc < 4) {
             display = Fixed;
@@ -182,21 +182,21 @@ private:
     {
         Display display = Auto;
 
-	if (r.n < 1) {
-	    return {};
-	}
-	if (r.max < r.min) {
-	    return logInstruction({ r.max, r.min, r.n });
-	}
+        if (r.n < 1) {
+            return {};
+        }
+        if (r.max < r.min) {
+            return logInstruction({ r.max, r.min, r.n });
+        }
         if (r.max == r.min) {
             return { r.min, r.max, 1.0, r.min, display, 1, true };
         }
-	
-	double inc = (r.max - r.min) / r.n;
+        
+        double inc = (r.max - r.min) / r.n;
 
         double digInc = log10(inc);
         int precInc = int(floor(digInc));
-	double roundTo = pow(10.0, precInc);
+        double roundTo = pow(10.0, precInc);
 
         if (roundTo != 0.0) {
             inc = round(inc / roundTo) * roundTo;
@@ -237,7 +237,7 @@ private:
         SVDEBUG << "ScaleTickIntervals: roundTo = " << roundTo << endl;
 #endif
         
-	double min = r.min;
+        double min = r.min;
         if (inc != 0.0) {
             min = ceil(r.min / inc) * inc;
             if (min > r.max) min = r.max;
@@ -275,7 +275,7 @@ private:
     static Ticks explode(Instruction instruction) {
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-	SVDEBUG << "ScaleTickIntervals::explode:" << endl
+        SVDEBUG << "ScaleTickIntervals::explode:" << endl
                 << "initial = " << instruction.initial
                 << ", limit = " << instruction.limit
                 << ", spacing = " << instruction.spacing
@@ -311,11 +311,11 @@ private:
             if (instruction.roundTo != 0.0) {
                 value = instruction.roundTo * round(value / instruction.roundTo);
             }
-	    ticks.push_back(makeTick(instruction.display,
+            ticks.push_back(makeTick(instruction.display,
                                      instruction.precision,
                                      value));
             ++n;
-	}
+        }
 
         return ticks;
     }

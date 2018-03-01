@@ -33,44 +33,44 @@ int main(int argc, char *argv[])
     app.setApplicationName("test-svcore-base");
 
     {
-	TestRangeMapper t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestRangeMapper t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
-	TestPitch t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestPitch t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
         TestOurRealTime t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
         TestVampRealTime t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
-	TestStringBits t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestStringBits t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
-	TestColumnOp t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestColumnOp t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
-	TestLogRange t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestLogRange t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
     {
-	TestScaleTickIntervals t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestScaleTickIntervals t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
 
     if (bad > 0) {

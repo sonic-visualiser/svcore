@@ -89,12 +89,12 @@ protected:
     // Constructor that creates the buffers internally
     // 
     LADSPAPluginInstance(RealTimePluginFactory *factory,
-			 int client,
-			 QString identifier,
+                         int client,
+                         QString identifier,
                          int position,
-			 sv_samplerate_t sampleRate,
-			 int blockSize,
-			 int idealChannelCount,
+                         sv_samplerate_t sampleRate,
+                         int blockSize,
+                         int idealChannelCount,
                          const LADSPA_Descriptor* descriptor);
 
     void init(int idealChannelCount = 0);

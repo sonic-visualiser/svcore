@@ -223,8 +223,8 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
 }
 
 PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
-							  const PropertyName &pn,
-							  int value) :
+                                                          const PropertyName &pn,
+                                                          int value) :
     m_pc(pc),
     m_pn(pn),
     m_value(value),

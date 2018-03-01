@@ -44,7 +44,7 @@ struct FlexiNote
 public:
     FlexiNote(sv_frame_t _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
     FlexiNote(sv_frame_t _frame, float _value, sv_frame_t _duration, float _level, QString _label) :
-	frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
+        frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
 
     int getDimensions() const { return 3; }
 
@@ -60,9 +60,9 @@ public:
                QString indent = "",
                QString extraAttributes = "") const
     {
-	stream <<
+        stream <<
             QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration).arg(level)
+            .arg(indent).arg(frame).arg(value).arg(duration).arg(level)
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
@@ -80,21 +80,21 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const FlexiNote &p1,
-			const FlexiNote &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
-	    if (p1.value != p2.value) return p1.value < p2.value;
-	    if (p1.duration != p2.duration) return p1.duration < p2.duration;
+        bool operator()(const FlexiNote &p1,
+                        const FlexiNote &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
+            if (p1.value != p2.value) return p1.value < p2.value;
+            if (p1.duration != p2.duration) return p1.duration < p2.duration;
             if (p1.level != p2.level) return p1.level < p2.level;
-	    return p1.label < p2.label;
-	}
+            return p1.label < p2.label;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const FlexiNote &p1,
-			const FlexiNote &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const FlexiNote &p1,
+                        const FlexiNote &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -106,21 +106,21 @@ class FlexiNoteModel : public IntervalModel<FlexiNote>, public NoteExportable
 public:
     FlexiNoteModel(sv_samplerate_t sampleRate, int resolution,
                    bool notifyOnAdd = true) :
-	IntervalModel<FlexiNote>(sampleRate, resolution, notifyOnAdd),
-	m_valueQuantization(0)
+        IntervalModel<FlexiNote>(sampleRate, resolution, notifyOnAdd),
+        m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     FlexiNoteModel(sv_samplerate_t sampleRate, int resolution,
-	      float valueMinimum, float valueMaximum,
-	      bool notifyOnAdd = true) :
-	IntervalModel<FlexiNote>(sampleRate, resolution,
+              float valueMinimum, float valueMaximum,
+              bool notifyOnAdd = true) :
+        IntervalModel<FlexiNote>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
-	m_valueQuantization(0)
+        m_valueQuantization(0)
     {
-	PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     virtual ~FlexiNoteModel()
@@ -150,10 +150,10 @@ public:
                   << extraAttributes.toStdString() << std::endl;
 
         IntervalModel<FlexiNote>::toXml
-	    (out,
+            (out,
              indent,
-	     QString("%1 subtype=\"flexinote\" valueQuantization=\"%2\"")
-	     .arg(extraAttributes).arg(m_valueQuantization));
+             QString("%1 subtype=\"flexinote\" valueQuantization=\"%2\"")
+             .arg(extraAttributes).arg(m_valueQuantization));
     }
 
     /**
@@ -235,10 +235,10 @@ public:
 
     NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const 
     {    
-    	PointList points = getPoints(startFrame, endFrame);
+            PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
         for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {
-    	    sv_frame_t duration = pli->duration;
+                sv_frame_t duration = pli->duration;
             if (duration == 0 || duration == 1) {
                 duration = sv_frame_t(getSampleRate() / 20);
             }

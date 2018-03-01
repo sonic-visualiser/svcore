@@ -48,7 +48,7 @@ public:
      */
     static DataFileReader *createReader(QString path,
                                         MIDIFileImportPreferenceAcquirer *,
-					sv_samplerate_t mainModelSampleRate);
+                                        sv_samplerate_t mainModelSampleRate);
 
     /**
      * Read the given path, if a suitable reader is available.
@@ -83,7 +83,7 @@ protected:
     static DataFileReader *createReader(QString path, bool csv,
                                         MIDIFileImportPreferenceAcquirer *,
                                         CSVFormat format,
-					sv_samplerate_t mainModelSampleRate);
+                                        sv_samplerate_t mainModelSampleRate);
 };
 
 #endif

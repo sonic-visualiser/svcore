@@ -43,21 +43,21 @@ RealTimePluginFactory *
 RealTimePluginFactory::instance(QString pluginType)
 {
     if (pluginType == "ladspa") {
-	if (!_ladspaInstance) {
-//	    SVDEBUG << "RealTimePluginFactory::instance(" << pluginType//		      << "): creating new LADSPAPluginFactory" << endl;
-	    _ladspaInstance = new LADSPAPluginFactory();
-	    _ladspaInstance->discoverPlugins();
-	}
-	return _ladspaInstance;
+        if (!_ladspaInstance) {
+//            SVDEBUG << "RealTimePluginFactory::instance(" << pluginType//                      << "): creating new LADSPAPluginFactory" << endl;
+            _ladspaInstance = new LADSPAPluginFactory();
+            _ladspaInstance->discoverPlugins();
+        }
+        return _ladspaInstance;
     } else if (pluginType == "dssi") {
-	if (!_dssiInstance) {
-//	    SVDEBUG << "RealTimePluginFactory::instance(" << pluginType//		      << "): creating new DSSIPluginFactory" << endl;
-	    _dssiInstance = new DSSIPluginFactory();
-	    _dssiInstance->discoverPlugins();
-	}
-	return _dssiInstance;
+        if (!_dssiInstance) {
+//            SVDEBUG << "RealTimePluginFactory::instance(" << pluginType//                      << "): creating new DSSIPluginFactory" << endl;
+            _dssiInstance = new DSSIPluginFactory();
+            _dssiInstance->discoverPlugins();
+        }
+        return _dssiInstance;
     }
-	
+        
     else return 0;
 }
 
@@ -86,18 +86,18 @@ RealTimePluginFactory::getAllPluginIdentifiers()
 
     factory = instance("dssi");
     if (factory) {
-	const std::vector<QString> &tmp = factory->getPluginIdentifiers();
-	for (size_t i = 0; i < tmp.size(); ++i) {
-	    rv.push_back(tmp[i]);
-	}
+        const std::vector<QString> &tmp = factory->getPluginIdentifiers();
+        for (size_t i = 0; i < tmp.size(); ++i) {
+            rv.push_back(tmp[i]);
+        }
     }
 
     factory = instance("ladspa");
     if (factory) {
-	const std::vector<QString> &tmp = factory->getPluginIdentifiers();
-	for (size_t i = 0; i < tmp.size(); ++i) {
-	    rv.push_back(tmp[i]);
-	}
+        const std::vector<QString> &tmp = factory->getPluginIdentifiers();
+        for (size_t i = 0; i < tmp.size(); ++i) {
+            rv.push_back(tmp[i]);
+        }
     }
 
     // Plugins can change the locale, revert it to default.

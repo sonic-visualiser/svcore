@@ -20,7 +20,7 @@
 #include "base/HitCount.h"
 
 Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
-					     int columnsPerPeak) :
+                                             int columnsPerPeak) :
     m_source(source),
     m_columnsPerPeak(columnsPerPeak)
 {

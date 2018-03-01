@@ -254,17 +254,17 @@ private slots:
                               AudioFileReaderFactory::GaplessMode::Gapless :
                               AudioFileReaderFactory::GaplessMode::Gappy);
 
-	AudioFileReader *reader =
-	    AudioFileReaderFactory::createReader
-	    (audioDir + "/" + format + "/" + audiofile, params);
+        AudioFileReader *reader =
+            AudioFileReaderFactory::createReader
+            (audioDir + "/" + format + "/" + audiofile, params);
         
-	if (!reader) {
+        if (!reader) {
 #if ( QT_VERSION >= 0x050000 )
-	    QSKIP("Unsupported file, skipping");
+            QSKIP("Unsupported file, skipping");
 #else
-	    QSKIP("Unsupported file, skipping", SkipSingle);
+            QSKIP("Unsupported file, skipping", SkipSingle);
 #endif
-	}
+        }
 
         QString extension;
         sv_samplerate_t fileRate;
@@ -276,22 +276,22 @@ private slots:
         QCOMPARE(reader->getNativeRate(), fileRate);
         QCOMPARE(reader->getSampleRate(), readRate);
 
-	AudioTestData tdata(readRate, channels);
-	
-	float *reference = tdata.getInterleavedData();
+        AudioTestData tdata(readRate, channels);
+        
+        float *reference = tdata.getInterleavedData();
         sv_frame_t refFrames = tdata.getFrameCount();
-	
-	// The reader should give us exactly the expected number of
-	// frames, except for mp3/aac files. We ask for quite a lot
-	// more, though, so we can (a) check that we only get the
-	// expected number back (if this is not mp3/aac) or (b) take
-	// into account silence at beginning and end (if it is).
-	floatvec_t test = reader->getInterleavedFrames(0, refFrames + 5000);
+        
+        // The reader should give us exactly the expected number of
+        // frames, except for mp3/aac files. We ask for quite a lot
+        // more, though, so we can (a) check that we only get the
+        // expected number back (if this is not mp3/aac) or (b) take
+        // into account silence at beginning and end (if it is).
+        floatvec_t test = reader->getInterleavedFrames(0, refFrames + 5000);
 
         delete reader;
         reader = 0;
         
-	sv_frame_t read = test.size() / channels;
+        sv_frame_t read = test.size() / channels;
 
         bool perceptual = (extension == "mp3" ||
                            extension == "aac" ||
@@ -461,8 +461,8 @@ private slots:
 
             /*
         cerr << "channel " << c << ": mean diff " << meanDiff << endl;
-	    cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
-	    cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
+            cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
+            cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
             */            
             if (rmsDiff >= rmsLimit) {
                 SVCERR << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
@@ -484,7 +484,7 @@ private slots:
                     QVERIFY(mag < quiet);
                 }
             }
-	}
+        }
     }
 };
 

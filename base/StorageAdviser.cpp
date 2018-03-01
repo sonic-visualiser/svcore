@@ -65,8 +65,8 @@ StorageAdviser::m_baseRecommendation = StorageAdviser::NoRecommendation;
 
 StorageAdviser::Recommendation
 StorageAdviser::recommend(Criteria criteria,
-			  size_t minimumSize,
-			  size_t maximumSize)
+                          size_t minimumSize,
+                          size_t maximumSize)
 {
     SVDEBUG << "StorageAdviser::recommend: criteria " << criteria
             << " (" + criteriaToString(criteria) + ")"

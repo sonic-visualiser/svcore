@@ -21,8 +21,8 @@
 
 double
 Pitch::getFrequencyForPitch(int midiPitch,
-			    double centsOffset,
-			    double concertA)
+                            double centsOffset,
+                            double concertA)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
@@ -33,8 +33,8 @@ Pitch::getFrequencyForPitch(int midiPitch,
 
 int
 Pitch::getPitchForFrequency(double frequency,
-			    double *centsOffsetReturn,
-			    double concertA)
+                            double *centsOffsetReturn,
+                            double concertA)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
@@ -45,12 +45,12 @@ Pitch::getPitchForFrequency(double frequency,
     double centsOffset = (p - midiPitch) * 100.0;
 
     if (centsOffset >= 50.0) {
-	midiPitch = midiPitch + 1;
-	centsOffset = -(100.0 - centsOffset);
+        midiPitch = midiPitch + 1;
+        centsOffset = -(100.0 - centsOffset);
     }
     if (centsOffset < -50.0) {
-	midiPitch = midiPitch - 1;
-	centsOffset = (100.0 + centsOffset);
+        midiPitch = midiPitch - 1;
+        centsOffset = (100.0 + centsOffset);
     }
     
     if (centsOffsetReturn) *centsOffsetReturn = centsOffset;
@@ -80,8 +80,8 @@ Pitch::getPitchForFrequencyDifference(double frequencyA,
     double centsOffset = (p - midiPitch) * 100.0;
 
     if (centsOffset >= 50.0) {
-	midiPitch = midiPitch + 1;
-	centsOffset = -(100.0 - centsOffset);
+        midiPitch = midiPitch + 1;
+        centsOffset = -(100.0 - centsOffset);
     }
     
     if (centsOffsetReturn) *centsOffsetReturn = centsOffset;
@@ -120,12 +120,12 @@ Pitch::getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave)
     // spelled from a MIDI pitch + flats flag in isolation.
 
     if (midiPitch < 0) {
-	while (midiPitch < 0) {
-	    midiPitch += 12;
-	    --octave;
-	}
+        while (midiPitch < 0) {
+            midiPitch += 12;
+            --octave;
+        }
     } else {
-	octave = midiPitch / 12 + baseOctave;
+        octave = midiPitch / 12 + baseOctave;
     }
 
     note = midiPitch % 12;
@@ -133,8 +133,8 @@ Pitch::getNoteAndOctaveForPitch(int midiPitch, int &note, int &octave)
 
 QString
 Pitch::getPitchLabel(int midiPitch,
-		     double centsOffset,
-		     bool useFlats)
+                     double centsOffset,
+                     bool useFlats)
 {
     int note, octave;
     getNoteAndOctaveForPitch(midiPitch, note, octave);
@@ -149,8 +149,8 @@ Pitch::getPitchLabel(int midiPitch,
 
 QString
 Pitch::getPitchLabelForFrequency(double frequency,
-				 double concertA,
-				 bool useFlats)
+                                 double concertA,
+                                 bool useFlats)
 {
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();

@@ -27,8 +27,8 @@ TempWriteFile::TempWriteFile(QString target) :
     temp.setAutoRemove(false);
     temp.open(); // creates the file and opens it atomically
     if (temp.error()) {
-	SVCERR << "TempWriteFile: Failed to create temporary file in directory of " << m_target << ": " << temp.errorString() << endl;
-	throw FileOperationFailed(temp.fileName(), "creation");
+        SVCERR << "TempWriteFile: Failed to create temporary file in directory of " << m_target << ": " << temp.errorString() << endl;
+        throw FileOperationFailed(temp.fileName(), "creation");
     }
     
     m_temp = temp.fileName();
@@ -38,8 +38,8 @@ TempWriteFile::TempWriteFile(QString target) :
 TempWriteFile::~TempWriteFile()
 {
     if (m_temp != "") {
-	QDir dir(QFileInfo(m_temp).dir());
-	dir.remove(m_temp);
+        QDir dir(QFileInfo(m_temp).dir());
+        dir.remove(m_temp);
     }
 }
 
@@ -65,7 +65,7 @@ TempWriteFile::moveToTarget()
     
     if (!tempFile.rename(m_target)) {
         SVCERR << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << endl;
-	throw FileOperationFailed(m_temp, "rename");
+        throw FileOperationFailed(m_temp, "rename");
     }
 
     m_temp = "";

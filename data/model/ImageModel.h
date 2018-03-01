@@ -47,9 +47,9 @@ public:
                QString indent = "",
                QString extraAttributes = "") const
     {
-	stream <<
+        stream <<
             QString("%1<point frame=\"%2\" image=\"%3\" label=\"%4\" %5/>\n")
-	    .arg(indent).arg(frame)
+            .arg(indent).arg(frame)
             .arg(encodeEntities(image))
             .arg(encodeEntities(label))
             .arg(extraAttributes);
@@ -65,19 +65,19 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const ImagePoint &p1,
-			const ImagePoint &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
+        bool operator()(const ImagePoint &p1,
+                        const ImagePoint &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
             if (p1.label != p2.label) return p1.label < p2.label;
-	    return p1.image < p2.image;
-	}
+            return p1.image < p2.image;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const ImagePoint &p1,
-			const ImagePoint &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const ImagePoint &p1,
+                        const ImagePoint &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -90,7 +90,7 @@ class ImageModel : public SparseModel<ImagePoint>
 
 public:
     ImageModel(sv_samplerate_t sampleRate, int resolution, bool notifyOnAdd = true) :
-	SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
+        SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
     QString getTypeName() const { return tr("Image"); }
@@ -100,10 +100,10 @@ public:
                        QString extraAttributes = "") const
     {
         SparseModel<ImagePoint>::toXml
-	    (out, 
+            (out, 
              indent,
-	     QString("%1 subtype=\"image\"")
-	     .arg(extraAttributes));
+             QString("%1 subtype=\"image\"")
+             .arg(extraAttributes));
     }
 
     /**
@@ -116,25 +116,25 @@ public:
                            const ImagePoint &point,
                            QString newImage,
                            QString newLabel) :
-	    m_model(model), m_oldPoint(point), m_newPoint(point) {
-	    m_newPoint.image = newImage;
+            m_model(model), m_oldPoint(point), m_newPoint(point) {
+            m_newPoint.image = newImage;
             m_newPoint.label = newLabel;
-	}
+        }
 
-	virtual QString getName() const { return tr("Edit Image"); }
+        virtual QString getName() const { return tr("Edit Image"); }
 
-	virtual void execute() { 
-	    m_model->deletePoint(m_oldPoint);
-	    m_model->addPoint(m_newPoint);
-	    std::swap(m_oldPoint, m_newPoint);
-	}
+        virtual void execute() { 
+            m_model->deletePoint(m_oldPoint);
+            m_model->addPoint(m_newPoint);
+            std::swap(m_oldPoint, m_newPoint);
+        }
 
-	virtual void unexecute() { execute(); }
+        virtual void unexecute() { execute(); }
 
     private:
-	ImageModel *m_model;
-	ImagePoint m_oldPoint;
-	ImagePoint m_newPoint;
+        ImageModel *m_model;
+        ImagePoint m_oldPoint;
+        ImagePoint m_newPoint;
     };
 
     /**

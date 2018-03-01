@@ -32,76 +32,76 @@ class TestPitch : public QObject
 
 private slots:
     void init() {
-	Preferences::getInstance()->setOctaveOfMiddleC(4);
-	Preferences::getInstance()->setTuningFrequency(440);
+        Preferences::getInstance()->setOctaveOfMiddleC(4);
+        Preferences::getInstance()->setTuningFrequency(440);
     }
 
     void pitchLabel()
     {
-	QCOMPARE(Pitch::getPitchLabel(60, 0, false), QString("C4"));
-	QCOMPARE(Pitch::getPitchLabel(69, 0, false), QString("A4"));
-	QCOMPARE(Pitch::getPitchLabel(61, 0, false), QString("C#4"));
-	QCOMPARE(Pitch::getPitchLabel(61, 0, true), QString("Db4"));
-	QCOMPARE(Pitch::getPitchLabel(59, 0, false), QString("B3"));
-	QCOMPARE(Pitch::getPitchLabel(59, 0, true), QString("B3"));
-	QCOMPARE(Pitch::getPitchLabel(0, 0, false), QString("C-1"));
+        QCOMPARE(Pitch::getPitchLabel(60, 0, false), QString("C4"));
+        QCOMPARE(Pitch::getPitchLabel(69, 0, false), QString("A4"));
+        QCOMPARE(Pitch::getPitchLabel(61, 0, false), QString("C#4"));
+        QCOMPARE(Pitch::getPitchLabel(61, 0, true), QString("Db4"));
+        QCOMPARE(Pitch::getPitchLabel(59, 0, false), QString("B3"));
+        QCOMPARE(Pitch::getPitchLabel(59, 0, true), QString("B3"));
+        QCOMPARE(Pitch::getPitchLabel(0, 0, false), QString("C-1"));
 
-	QCOMPARE(Pitch::getPitchLabel(60, -40, false), QString("C4-40c"));
-	QCOMPARE(Pitch::getPitchLabel(60, 40, false), QString("C4+40c"));
-	QCOMPARE(Pitch::getPitchLabel(58, 4, false), QString("A#3+4c"));
+        QCOMPARE(Pitch::getPitchLabel(60, -40, false), QString("C4-40c"));
+        QCOMPARE(Pitch::getPitchLabel(60, 40, false), QString("C4+40c"));
+        QCOMPARE(Pitch::getPitchLabel(58, 4, false), QString("A#3+4c"));
 
-	Preferences::getInstance()->setOctaveOfMiddleC(3);
+        Preferences::getInstance()->setOctaveOfMiddleC(3);
 
-	QCOMPARE(Pitch::getPitchLabel(60, 0, false), QString("C3"));
-	QCOMPARE(Pitch::getPitchLabel(69, 0, false), QString("A3"));
-	QCOMPARE(Pitch::getPitchLabel(61, 0, false), QString("C#3"));
-	QCOMPARE(Pitch::getPitchLabel(61, 0, true), QString("Db3"));
-	QCOMPARE(Pitch::getPitchLabel(59, 0, false), QString("B2"));
-	QCOMPARE(Pitch::getPitchLabel(59, 0, true), QString("B2"));
-	QCOMPARE(Pitch::getPitchLabel(0, 0, false), QString("C-2"));
+        QCOMPARE(Pitch::getPitchLabel(60, 0, false), QString("C3"));
+        QCOMPARE(Pitch::getPitchLabel(69, 0, false), QString("A3"));
+        QCOMPARE(Pitch::getPitchLabel(61, 0, false), QString("C#3"));
+        QCOMPARE(Pitch::getPitchLabel(61, 0, true), QString("Db3"));
+        QCOMPARE(Pitch::getPitchLabel(59, 0, false), QString("B2"));
+        QCOMPARE(Pitch::getPitchLabel(59, 0, true), QString("B2"));
+        QCOMPARE(Pitch::getPitchLabel(0, 0, false), QString("C-2"));
 
-	QCOMPARE(Pitch::getPitchLabel(60, -40, false), QString("C3-40c"));
-	QCOMPARE(Pitch::getPitchLabel(60, 40, false), QString("C3+40c"));
-	QCOMPARE(Pitch::getPitchLabel(58, 4, false), QString("A#2+4c"));
+        QCOMPARE(Pitch::getPitchLabel(60, -40, false), QString("C3-40c"));
+        QCOMPARE(Pitch::getPitchLabel(60, 40, false), QString("C3+40c"));
+        QCOMPARE(Pitch::getPitchLabel(58, 4, false), QString("A#2+4c"));
     }
 
     void pitchLabelForFrequency()
     {
-	QCOMPARE(Pitch::getPitchLabelForFrequency(440, 440, false), QString("A4"));
-	QCOMPARE(Pitch::getPitchLabelForFrequency(440, 220, false), QString("A5"));
-	QCOMPARE(Pitch::getPitchLabelForFrequency(261.63, 440, false), QString("C4"));
+        QCOMPARE(Pitch::getPitchLabelForFrequency(440, 440, false), QString("A4"));
+        QCOMPARE(Pitch::getPitchLabelForFrequency(440, 220, false), QString("A5"));
+        QCOMPARE(Pitch::getPitchLabelForFrequency(261.63, 440, false), QString("C4"));
     }
 
 #define MIDDLE_C 261.6255653005986
 
     void frequencyForPitch()
     {
-	QCOMPARE(Pitch::getFrequencyForPitch(60, 0), MIDDLE_C);
-	QCOMPARE(Pitch::getFrequencyForPitch(69, 0), 440.0);
-	QCOMPARE(Pitch::getFrequencyForPitch(60, 0, 220), MIDDLE_C / 2.0);
-	QCOMPARE(Pitch::getFrequencyForPitch(69, 0, 220), 220.0);
+        QCOMPARE(Pitch::getFrequencyForPitch(60, 0), MIDDLE_C);
+        QCOMPARE(Pitch::getFrequencyForPitch(69, 0), 440.0);
+        QCOMPARE(Pitch::getFrequencyForPitch(60, 0, 220), MIDDLE_C / 2.0);
+        QCOMPARE(Pitch::getFrequencyForPitch(69, 0, 220), 220.0);
     }
 
     void pitchForFrequency()
     {
-	double centsOffset = 0.0;
-	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
-	QCOMPARE(centsOffset + 1.0, 1.0); // avoid ineffective fuzzy-compare to 0
-	QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
-	QCOMPARE(int(centsOffset), -4);
-	QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
-	QCOMPARE(centsOffset + 1.0, 1.0);
+        double centsOffset = 0.0;
+        QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
+        QCOMPARE(centsOffset + 1.0, 1.0); // avoid ineffective fuzzy-compare to 0
+        QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
+        QCOMPARE(int(centsOffset), -4);
+        QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
+        QCOMPARE(centsOffset + 1.0, 1.0);
     }
 
     void pitchForFrequencyF()
     {
-	float centsOffset = 0.f;
-	QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
-	QCOMPARE(centsOffset + 1.f, 1.f); // avoid ineffective fuzzy-compare to 0
-	QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
-	QCOMPARE(int(centsOffset), -4);
-	QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
-	QCOMPARE(centsOffset + 1.f, 1.f);
+        float centsOffset = 0.f;
+        QCOMPARE(Pitch::getPitchForFrequency(MIDDLE_C, &centsOffset), 60);
+        QCOMPARE(centsOffset + 1.f, 1.f); // avoid ineffective fuzzy-compare to 0
+        QCOMPARE(Pitch::getPitchForFrequency(261.0, &centsOffset), 60);
+        QCOMPARE(int(centsOffset), -4);
+        QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
+        QCOMPARE(centsOffset + 1.f, 1.f);
     }
 };
 

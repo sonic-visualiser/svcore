@@ -114,7 +114,7 @@ CSVFormat::guessQualities(QString line, int lineno)
         ColumnNumeric | ColumnIntegral | ColumnIncreasing | ColumnNearEmpty;
     
     for (int i = 0; i < cols; ++i) {
-	    
+            
         while (m_columnQualities.size() <= i) {
             m_columnQualities.push_back(defaultQualities);
             m_prevValues.push_back(0.f);
@@ -197,7 +197,7 @@ CSVFormat::guessPurposes()
 {
     m_timingType = CSVFormat::ImplicitTiming;
     m_timeUnits = CSVFormat::TimeWindows;
-	
+        
     int timingColumnCount = 0;
 
     // if our first column has zero or one entries in it and the rest

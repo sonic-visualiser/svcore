@@ -33,7 +33,7 @@ class AlignmentModel;
  */
 
 class Model : public QObject,
-	      public XmlExportable,
+              public XmlExportable,
               public Playable
 {
     Q_OBJECT
@@ -125,9 +125,9 @@ public:
      * getCompletion().
      */
     virtual bool isReady(int *completion = 0) const {
-	bool ok = isOK();
-	if (completion) *completion = (ok ? 100 : 0);
-	return ok;
+        bool ok = isOK();
+        if (completion) *completion = (ok ? 100 : 0);
+        return ok;
     }
     static const int COMPLETION_UNKNOWN;
 

@@ -32,19 +32,19 @@ class SparseValueModel : public SparseModel<PointType>
 {
 public:
     SparseValueModel(sv_samplerate_t sampleRate, int resolution,
-		     bool notifyOnAdd = true) :
-	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
-	m_valueMinimum(0.f),
-	m_valueMaximum(0.f),
+                     bool notifyOnAdd = true) :
+        SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
+        m_valueMinimum(0.f),
+        m_valueMaximum(0.f),
         m_haveExtents(false)
     { }
 
     SparseValueModel(sv_samplerate_t sampleRate, int resolution,
-		     float valueMinimum, float valueMaximum,
-		     bool notifyOnAdd = true) :
-	SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
-	m_valueMinimum(valueMinimum),
-	m_valueMaximum(valueMaximum),
+                     float valueMinimum, float valueMaximum,
+                     bool notifyOnAdd = true) :
+        SparseModel<PointType>(sampleRate, resolution, notifyOnAdd),
+        m_valueMinimum(valueMinimum),
+        m_valueMaximum(valueMaximum),
         m_haveExtents(true)
     { }
 
@@ -66,7 +66,7 @@ public:
 
     virtual void addPoint(const PointType &point)
     {
-	bool allChange = false;
+        bool allChange = false;
 
         if (!ISNAN(point.value) && !ISINF(point.value)) {
             if (!m_haveExtents || point.value < m_valueMinimum) {
@@ -80,37 +80,37 @@ public:
             m_haveExtents = true;
         }
 
-	SparseModel<PointType>::addPoint(point);
-	if (allChange) emit modelChanged();
+        SparseModel<PointType>::addPoint(point);
+        if (allChange) emit modelChanged();
     }
 
     virtual void deletePoint(const PointType &point)
     {
-	SparseModel<PointType>::deletePoint(point);
+        SparseModel<PointType>::deletePoint(point);
 
-	if (point.value == m_valueMinimum ||
-	    point.value == m_valueMaximum) {
+        if (point.value == m_valueMinimum ||
+            point.value == m_valueMaximum) {
 
-	    float formerMin = m_valueMinimum, formerMax = m_valueMaximum;
+            float formerMin = m_valueMinimum, formerMax = m_valueMaximum;
 
-	    for (typename SparseModel<PointType>::PointList::const_iterator i
-		     = m_points.begin();
-		 i != m_points.end(); ++i) {
+            for (typename SparseModel<PointType>::PointList::const_iterator i
+                     = m_points.begin();
+                 i != m_points.end(); ++i) {
 
-		if (i == m_points.begin() || i->value < m_valueMinimum) {
-		    m_valueMinimum = i->value;
+                if (i == m_points.begin() || i->value < m_valueMinimum) {
+                    m_valueMinimum = i->value;
 //                    std::cerr << "deletePoint: value min = " << m_valueMinimum << std::endl;
-		} 
-		if (i == m_points.begin() || i->value > m_valueMaximum) {
-		    m_valueMaximum = i->value;
+                } 
+                if (i == m_points.begin() || i->value > m_valueMaximum) {
+                    m_valueMaximum = i->value;
 //                    std::cerr << "deletePoint: value max = " << m_valueMaximum << std::endl;
-		} 
-	    }
+                } 
+            }
 
-	    if (formerMin != m_valueMinimum || formerMax != m_valueMaximum) {
-		emit modelChanged();
-	    }
-	}
+            if (formerMin != m_valueMinimum || formerMax != m_valueMaximum) {
+                emit modelChanged();
+            }
+        }
     }
 
     virtual void toXml(QTextStream &stream,
@@ -120,11 +120,11 @@ public:
         std::cerr << "SparseValueModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
 
-	SparseModel<PointType>::toXml
-	    (stream,
+        SparseModel<PointType>::toXml
+            (stream,
              indent,
-	     QString("%1 minimum=\"%2\" maximum=\"%3\" units=\"%4\"")
-	     .arg(extraAttributes).arg(m_valueMinimum).arg(m_valueMaximum)
+             QString("%1 minimum=\"%2\" maximum=\"%3\" units=\"%4\"")
+             .arg(extraAttributes).arg(m_valueMinimum).arg(m_valueMaximum)
              .arg(this->encodeEntities(m_units)));
     }
 
