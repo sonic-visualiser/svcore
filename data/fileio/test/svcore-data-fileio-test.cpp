@@ -16,6 +16,7 @@
 #include "AudioFileWriterTest.h"
 #include "EncodingTest.h"
 #include "MIDIFileReaderTest.h"
+#include "CSVStreamWriterTest.h"
 
 #include <QtTest>
 
@@ -70,6 +71,12 @@ int main(int argc, char *argv[])
         else ++bad;
     }
 
+    {
+        CSVStreamWriterTest t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
     if (bad > 0) {
     SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
         return 1;
@@ -78,4 +85,3 @@ int main(int argc, char *argv[])
         return 0;
     }
 }
-

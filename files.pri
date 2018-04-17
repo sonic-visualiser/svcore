@@ -51,6 +51,7 @@ SVCORE_HEADERS = \
            data/fileio/CSVFileReader.h \
            data/fileio/CSVFileWriter.h \
            data/fileio/CSVFormat.h \
+           data/fileio/CSVStreamWriter.h \
            data/fileio/DataFileReader.h \
            data/fileio/DataFileReaderFactory.h \
            data/fileio/FileFinder.h \

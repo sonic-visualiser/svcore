@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_MODEL_H_
-#define _SPARSE_MODEL_H_
+#ifndef SV_SPARSE_MODEL_H
+#define SV_SPARSE_MODEL_H
 
 #include "Model.h"
 #include "TabularModel.h"
@@ -62,12 +62,6 @@ public:
         return m_resolution ? m_resolution : 1;
     }
     virtual void setResolution(int resolution);
-
-    // Extend the end of the model. If this is set to something beyond
-    // the end of the final point in the model, then getEndFrame()
-    // will return this value. Otherwise getEndFrame() will return the
-    // end of the final point.
-    virtual void extendEndFrame(sv_frame_t to) { m_extendTo = to; }
     
     typedef PointType Point;
     typedef std::multiset<PointType,
@@ -151,6 +145,8 @@ public:
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
 
+    virtual bool isSparse() const { return true; }
+
     QString getTypeName() const { return tr("Sparse"); }
 
     virtual QString getXmlOutputType() const { return "sparse"; }
@@ -168,7 +164,7 @@ public:
                                                      DataExportOptions opts) const {
         return toDelimitedDataStringSubsetWithOptions
             (delimiter, opts,
-             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame() + 1);
+             std::min(getStartFrame(), sv_frame_t(0)), getEndFrame());
     }
 
     virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
@@ -395,7 +391,6 @@ public:
 protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
-    sv_frame_t m_extendTo;
     bool m_notifyOnAdd;
     sv_frame_t m_sinceLastNotifyMin;
     sv_frame_t m_sinceLastNotifyMax;
@@ -541,7 +536,6 @@ SparseModel<PointType>::SparseModel(sv_samplerate_t sampleRate,
                                     bool notifyOnAdd) :
     m_sampleRate(sampleRate),
     m_resolution(resolution),
-    m_extendTo(0),
     m_notifyOnAdd(notifyOnAdd),
     m_sinceLastNotifyMin(-1),
     m_sinceLastNotifyMax(-1),
@@ -571,10 +565,9 @@ SparseModel<PointType>::getEndFrame() const
     sv_frame_t f = 0;
     if (!m_points.empty()) {
         PointListConstIterator i(m_points.end());
-        f = (--i)->frame;
+        f = (--i)->frame + 1;
     }
-    if (m_extendTo > f) return m_extendTo;
-    else return f;
+    return f;
 }
 
 template <typename PointType>
