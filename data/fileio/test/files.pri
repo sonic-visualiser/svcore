@@ -1,6 +1,5 @@
 
 TEST_HEADERS += \
-	../../../test/TestHelper.h \
 	../../model/test/MockWaveModel.h \
 	AudioFileReaderTest.h \
 	AudioFileWriterTest.h \
