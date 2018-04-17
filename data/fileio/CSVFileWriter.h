@@ -58,7 +58,7 @@ protected:
     QString m_error;
     QString m_delimiter;
     DataExportOptions m_options;
-    ProgressReporter *m_reporter;
+    ProgressReporter *m_reporter = nullptr;
 };
 
 #endif
