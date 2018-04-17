@@ -1,6 +1,7 @@
 
 TEST_HEADERS += \
 	../../../test/TestHelper.h \
+	../../model/test/MockWaveModel.h \
 	AudioFileReaderTest.h \
 	AudioFileWriterTest.h \
 	AudioTestData.h \
@@ -9,4 +10,5 @@ TEST_HEADERS += \
 	CSVStreamWriterTest.h
      
 TEST_SOURCES += \
+	../../model/test/MockWaveModel.cpp \
 	svcore-data-fileio-test.cpp

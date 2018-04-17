@@ -181,7 +181,6 @@ SVCORE_SOURCES = \
            data/fileio/CSVFileReader.cpp \
            data/fileio/CSVFileWriter.cpp \
            data/fileio/CSVFormat.cpp \
-           data/fileio/CSVStreamWriter.cpp \
            data/fileio/DataFileReaderFactory.cpp \
            data/fileio/FileReadThread.cpp \
            data/fileio/FileSource.cpp \
