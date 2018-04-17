@@ -53,7 +53,11 @@ public:
     virtual sv_frame_t getStartFrame() const = 0;
 
     /**
-     * Return the last audio frame spanned by the model.
+     * Return the audio frame at the end of the model, i.e. 1 more
+     * than the final frame contained within the model. The end frame
+     * minus the start frame should yield the total duration in frames
+     * spanned by the model. This is consistent with the definition of
+     * the end frame of a Selection object.
      */
     virtual sv_frame_t getEndFrame() const = 0;
 
@@ -220,11 +224,11 @@ public:
 
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataStringSubset
-            (delimiter, getStartFrame(), getEndFrame() + 1);
+            (delimiter, getStartFrame(), getEndFrame());
     }
     virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
         return toDelimitedDataStringSubsetWithOptions
-            (delimiter, opts, getStartFrame(), getEndFrame() + 1);
+            (delimiter, opts, getStartFrame(), getEndFrame());
     }
     virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
         return "";
