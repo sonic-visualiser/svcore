@@ -68,13 +68,17 @@ writeInChunks(OutStream& oss,
 
             const auto start = readPtr;
             const auto end = std::min(start + blockSize, endFrame);
-
-            oss << model.toDelimitedDataStringSubsetWithOptions(
+            const auto data = model.toDelimitedDataStringSubsetWithOptions(
                 delimiter,
                 options,
                 start,
                 end
-            ) << (end < finalFrameOfLastRegion ? "\n" : "");
+            ).trimmed();
+
+            if ( data != "" ) {
+                oss << data << (end < finalFrameOfLastRegion ? "\n" : "");
+            }
+
             nFramesWritten += end - start;
             const auto currentProgress = 100 * nFramesWritten / nFramesToWrite;
             const bool hasIncreased = currentProgress > previousProgress;
