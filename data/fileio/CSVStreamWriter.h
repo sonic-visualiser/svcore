@@ -24,23 +24,42 @@
 #include <QString>
 #include <algorithm>
 
+namespace 
+{
+    const auto initProgressCalculator = [](sv_frame_t nFramesToWrite) {
+        return [nFramesToWrite](sv_frame_t nFramesWritten) {
+            return 100 * nFramesWritten / nFramesToWrite;
+        };
+    };
+} // namespace
+
 namespace CSVStreamWriter
 {
 
-template <class OutStream>
-bool writeInChunks(OutStream& oss,
-                   const Model& model,
-                   const Selection& extents,
-                   ProgressReporter* reporter = nullptr,
-                   QString delimiter = ",",
-                   DataExportOptions options = DataExportDefaults,
-                   const sv_frame_t blockSize = 16384)
+template <
+    class OutStream,
+    class ProgressCalculatorInit = decltype(initProgressCalculator)
+>
+bool 
+writeInChunks(OutStream& oss,
+              const Model& model,
+              const Selection& extents,
+              ProgressReporter* reporter = nullptr,
+              QString delimiter = ",",
+              DataExportOptions options = DataExportDefaults,
+              const sv_frame_t blockSize = 16384,
+              const ProgressCalculatorInit& initCalc = initProgressCalculator)
 {
     if (blockSize <= 0) return false;
-    sv_frame_t readPtr = extents.isEmpty() ?
+    const auto startFrame = extents.isEmpty() ?
         model.getStartFrame() : extents.getStartFrame();
-    sv_frame_t endFrame = extents.isEmpty() ?
+    const auto endFrame = extents.isEmpty() ?
         model.getEndFrame() : extents.getEndFrame();
+    const auto hasValidExtents = startFrame >= 0 && endFrame > startFrame;
+    if (!hasValidExtents) return false;
+    const auto calculateProgress = initCalc(endFrame - startFrame);
+
+    auto readPtr = startFrame;
     int previousPercentagePoint = 0;
 
     const auto wasCancelled = [&reporter]() { 
@@ -59,8 +78,8 @@ bool writeInChunks(OutStream& oss,
             start,
             end
         ) << (end < endFrame ? "\n" : "");
-
-        const auto currentPercentage = 100 * end / endFrame;
+        const auto nFramesWritten = end - startFrame;
+        const auto currentPercentage = calculateProgress(nFramesWritten);
         const bool hasIncreased = currentPercentage > previousPercentagePoint;
 
         if (hasIncreased) {
@@ -73,12 +92,13 @@ bool writeInChunks(OutStream& oss,
 }
 
 template <class OutStream>
-bool writeInChunks(OutStream& oss,
-                   const Model& model,
-                   ProgressReporter* reporter = nullptr,
-                   QString delimiter = ",",
-                   DataExportOptions options = DataExportDefaults,
-                   const sv_frame_t blockSize = 16384)
+bool 
+writeInChunks(OutStream& oss,
+              const Model& model,
+              ProgressReporter* reporter = nullptr,
+              QString delimiter = ",",
+              DataExportOptions options = DataExportDefaults,
+              const sv_frame_t blockSize = 16384)
 {
     const Selection empty;
     return CSV::writeInChunks(
