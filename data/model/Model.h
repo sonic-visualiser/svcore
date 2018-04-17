@@ -95,6 +95,11 @@ public:
     virtual QString getTypeName() const = 0;
 
     /**
+     * Return true if this is a sparse model.
+     */
+    virtual bool isSparse() const { return false; }
+    
+    /**
      * Mark the model as abandoning. This means that the application
      * no longer needs it, so it can stop doing any background
      * calculations it may be involved in. Note that as far as the

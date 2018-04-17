@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef CSV_STREAM_WRITER_H
-#define CSV_STREAM_WRITER_H
+#ifndef SV_CSV_STREAM_WRITER_H
+#define SV_CSV_STREAM_WRITER_H
 
 #include "base/BaseTypes.h"
 #include "base/Selection.h"

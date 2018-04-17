@@ -67,11 +67,11 @@ CSVFileWriter::write()
     };
     MultiSelection selections;
     selections.addSelection(all);
-    writeSelection(&selections); 
+    writeSelection(selections); 
 }
 
 void
-CSVFileWriter::writeSelection(MultiSelection *selection)
+CSVFileWriter::writeSelection(MultiSelection selection)
 {
     try {
         TempWriteFile temp(m_path);
@@ -85,13 +85,24 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
     
         QTextStream out(&file);
 
+        sv_frame_t blockSize = 65536;
+
+        if (m_model->isSparse()) {
+            // Write the whole in one go, as re-seeking for each block
+            // may be very costly otherwise
+            sv_frame_t startFrame, endFrame;
+            selection.getExtents(startFrame, endFrame);
+            blockSize = endFrame - startFrame;
+        }
+        
         bool completed = CSVStreamWriter::writeInChunks(
             out,
             *m_model,
-            *selection,
+            selection,
             m_reporter,
             m_delimiter,
-            m_options
+            m_options,
+            blockSize
         );
 
         file.close();

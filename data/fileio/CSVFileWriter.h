@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FILE_WRITER_H_
-#define _CSV_FILE_WRITER_H_
+#ifndef SV_CSV_FILE_WRITER_H
+#define SV_CSV_FILE_WRITER_H
 
 #include <QObject>
 #include <QString>
@@ -50,7 +50,7 @@ public:
     virtual QString getError() const;
 
     virtual void write();
-    virtual void writeSelection(MultiSelection *selection);
+    virtual void writeSelection(MultiSelection selection);
 
 protected:
     QString m_path;

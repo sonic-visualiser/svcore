@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_MODEL_H_
-#define _SPARSE_MODEL_H_
+#ifndef SV_SPARSE_MODEL_H
+#define SV_SPARSE_MODEL_H
 
 #include "Model.h"
 #include "TabularModel.h"
@@ -144,6 +144,8 @@ public:
     virtual int getCompletion() const { return m_completion; }
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
+
+    virtual bool isSparse() const { return true; }
 
     QString getTypeName() const { return tr("Sparse"); }
 
