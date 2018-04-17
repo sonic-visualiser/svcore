@@ -256,7 +256,7 @@ private slots:
         regions.addSelection({0, 2});
         regions.addSelection({4, 6});
         regions.addSelection({16, 18});
-        qDebug("End frame: %lld", mwm.getEndFrame());
+        qDebug("End frame: %lld", (long long int)mwm.getEndFrame());
         const std::string expectedOutput {
           "0,0,0\n"
           "1,0,0\n"
@@ -307,7 +307,7 @@ private slots:
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;
-        qDebug("End frame: %lld", notes.getEndFrame());
+        qDebug("End frame: %lld", (long long int)notes.getEndFrame());
         qDebug("Write streaming\n");
         const auto wroteSparseModel = CSVStreamWriter::writeInChunks(
             oss,

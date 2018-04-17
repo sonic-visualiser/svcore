@@ -80,7 +80,8 @@ writeInChunks(OutStream& oss,
             }
 
             nFramesWritten += end - start;
-            const auto currentProgress = 100 * nFramesWritten / nFramesToWrite;
+            const int currentProgress =
+                int(100 * nFramesWritten / nFramesToWrite);
             const bool hasIncreased = currentProgress > previousProgress;
             if (hasIncreased) {
                 if (reporter) reporter->setProgress(currentProgress);
