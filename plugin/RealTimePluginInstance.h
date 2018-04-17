@@ -33,7 +33,7 @@
 #include <map>
 
 class RealTimePluginFactory;
-	
+        
 /**
  * RealTimePluginInstance is an interface that an audio process can
  * use to refer to an instance of a plugin without needing to know
@@ -121,7 +121,7 @@ public:
     virtual std::string configure(std::string /* key */, std::string /* value */) { return std::string(); }
 
     virtual void sendEvent(const RealTime & /* eventTime */,
-			   const void * /* event */) { }
+                           const void * /* event */) { }
     virtual void clearEvents() { }
 
     virtual bool isBypassed() const = 0;
@@ -145,7 +145,7 @@ public:
 
 protected:
     RealTimePluginInstance(RealTimePluginFactory *factory, QString identifier) :
-	m_factory(factory), m_identifier(identifier) { }
+        m_factory(factory), m_identifier(identifier) { }
 
     RealTimePluginFactory *m_factory;
     QString m_identifier;

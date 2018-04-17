@@ -37,8 +37,8 @@ const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
-					     int channels,
-					     QString path) :
+                                             int channels,
+                                             QString path) :
     m_model(0),
     m_writer(0),
     m_reader(0),
@@ -54,7 +54,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
             path = dir.filePath(QString("written_%1.wav")
                                 .arg((intptr_t)this));
         } catch (DirectoryCreationFailed f) {
-            cerr << "WritableWaveFileModel: Failed to create temporary directory" << endl;
+            SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }
     }
@@ -64,7 +64,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
     m_writer = new WavFileWriter(path, sampleRate, channels,
                                  WavFileWriter::WriteToTarget);
     if (!m_writer->isOK()) {
-        cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << endl;
+        SVCERR << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << endl;
         delete m_writer; 
         m_writer = 0;
         return;
@@ -74,7 +74,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
 
     m_reader = new WavFileReader(source, true);
     if (!m_reader->getError().isEmpty()) {
-        cerr << "WritableWaveFileModel: Error in creating wave file reader" << endl;
+        SVCERR << "WritableWaveFileModel: Error in creating wave file reader" << endl;
         delete m_reader;
         m_reader = 0;
         return;
@@ -82,7 +82,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
     
     m_model = new ReadOnlyWaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
-        cerr << "WritableWaveFileModel: Error in creating wave file model" << endl;
+        SVCERR << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
         m_model = 0;
         delete m_reader;

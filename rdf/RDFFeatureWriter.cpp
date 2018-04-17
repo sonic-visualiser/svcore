@@ -146,14 +146,14 @@ RDFFeatureWriter::write(QString trackId,
         m_rdfDescriptions[pluginId] = PluginRDFDescription(pluginId);
 
         if (m_rdfDescriptions[pluginId].haveDescription()) {
-            cerr << "NOTE: Have RDF description for plugin ID \""
+            SVCERR << "NOTE: Have RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
         } else {
-            cerr << "NOTE: No RDF description for plugin ID \""
+            SVCERR << "NOTE: No RDF description for plugin ID \""
                  << pluginId << "\"" << endl;
             if (!m_network) {
-                cerr << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
-                cerr << "      from the network where possible." << endl;
+                SVCERR << "      Consider using the --rdf-network option to retrieve plugin descriptions"  << endl;
+                SVCERR << "      from the network where possible." << endl;
             }
         }
     }
@@ -194,7 +194,7 @@ RDFFeatureWriter::write(QString trackId,
     QString timelineURI = m_trackTimelineURIs[trackId];
     
     if (timelineURI == "") {
-        cerr << "RDFFeatureWriter: INTERNAL ERROR: writing features without having established a timeline URI!" << endl;
+        SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing features without having established a timeline URI!" << endl;
         exit(1);
     }
 
@@ -211,7 +211,7 @@ RDFFeatureWriter::write(QString trackId,
         QString signalURI = m_trackSignalURIs[trackId];
 
         if (signalURI == "") {
-            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having established a signal URI!" << endl;
+            SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having established a signal URI!" << endl;
             exit(1);
         }
 
@@ -229,7 +229,7 @@ RDFFeatureWriter::write(QString trackId,
         QString signalURI = m_trackSignalURIs[trackId];
 
         if (signalURI == "") {
-            cerr << "RDFFeatureWriter: INTERNAL ERROR: writing track-level features without having established a signal URI!" << endl;
+            SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing track-level features without having established a signal URI!" << endl;
             exit(1);
         }
 
@@ -702,19 +702,19 @@ RDFFeatureWriter::writeDenseRDF(QTextStream *sptr,
 
             sampleRate = transform.getSampleRate();
             if (sampleRate == 0.f) {
-                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the sample rate properly!" << endl;
+                SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the sample rate properly!" << endl;
                 return;
             }
 
             stepSize = transform.getStepSize();
             if (stepSize == 0) {
-                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the step size properly!" << endl;
+                SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the step size properly!" << endl;
                 return;
             }
 
             blockSize = transform.getBlockSize();
             if (blockSize == 0) {
-                cerr << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the block size properly!" << endl;
+                SVCERR << "RDFFeatureWriter: INTERNAL ERROR: writing dense features without having set the block size properly!" << endl;
                 return;
             }
         }

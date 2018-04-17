@@ -24,12 +24,12 @@
         COMPARE_FUZZIER(a[cmp_i], n); \
     }
 
-#define COMPARE_ALL(a, b)						\
+#define COMPARE_ALL(a, b)                                                \
     for (int cmp_i = 0; cmp_i < (int)(sizeof(a)/sizeof(a[0])); ++cmp_i) { \
         COMPARE_FUZZIER(a[cmp_i], b[cmp_i]); \
     }
 
-#define COMPARE_SCALED(a, b, s)						\
+#define COMPARE_SCALED(a, b, s)                                                \
     for (int cmp_i = 0; cmp_i < (int)(sizeof(a)/sizeof(a[0])); ++cmp_i) { \
         COMPARE_FUZZIER(a[cmp_i] / s, b[cmp_i]); \
     }
@@ -39,12 +39,12 @@
         COMPARE_FUZZIER_F(a[cmp_i], n); \
     }
 
-#define COMPARE_ALL_F(a, b)						\
+#define COMPARE_ALL_F(a, b)                                                \
     for (int cmp_i = 0; cmp_i < (int)(sizeof(a)/sizeof(a[0])); ++cmp_i) { \
         COMPARE_FUZZIER_F(a[cmp_i], b[cmp_i]); \
     }
 
-#define COMPARE_SCALED_F(a, b, s)						\
+#define COMPARE_SCALED_F(a, b, s)                                                \
     for (int cmp_i = 0; cmp_i < (int)(sizeof(a)/sizeof(a[0])); ++cmp_i) { \
         COMPARE_FUZZIER_F(a[cmp_i] / s, b[cmp_i]); \
     }

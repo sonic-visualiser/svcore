@@ -185,12 +185,12 @@ Model::toXml(QTextStream &stream, QString indent,
 {
     stream << indent;
     stream << QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
-	.arg(getObjectExportId(this))
-	.arg(encodeEntities(objectName()))
-	.arg(getSampleRate())
-	.arg(getStartFrame())
-	.arg(getEndFrame())
-	.arg(extraAttributes);
+        .arg(getObjectExportId(this))
+        .arg(encodeEntities(objectName()))
+        .arg(getSampleRate())
+        .arg(getStartFrame())
+        .arg(getEndFrame())
+        .arg(extraAttributes);
 }
 
 

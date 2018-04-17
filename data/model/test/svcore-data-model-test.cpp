@@ -28,17 +28,17 @@ int main(int argc, char *argv[])
     app.setApplicationName("test-model");
 
     {
-	TestFFTModel t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        TestFFTModel t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
 
     if (bad > 0) {
-	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	return 1;
+    SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        return 1;
     } else {
-	cerr << "All tests passed" << endl;
-	return 0;
+    SVCERR << "All tests passed" << endl;
+        return 0;
     }
 }
 

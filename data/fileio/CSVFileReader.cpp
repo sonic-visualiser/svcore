@@ -34,6 +34,7 @@
 
 #include <iostream>
 #include <map>
+#include <string>
 
 using namespace std;
 
@@ -49,18 +50,18 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
     bool good = false;
     
     if (!file->exists()) {
-	m_error = QFile::tr("File \"%1\" does not exist").arg(path);
+        m_error = QFile::tr("File \"%1\" does not exist").arg(path);
     } else if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-	m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
+        m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
     } else {
-	good = true;
+        good = true;
     }
 
     if (good) {
         m_device = file;
         m_filename = QFileInfo(path).fileName();
     } else {
-	delete file;
+        delete file;
     }
 }
 
@@ -137,12 +138,12 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
     
     if (!ok) {
         if (m_warnings < warnLimit) {
-            cerr << "WARNING: CSVFileReader::load: "
+            SVCERR << "WARNING: CSVFileReader::load: "
                       << "Bad time format (\"" << s
                       << "\") in data line "
                       << lineno+1 << endl;
         } else if (m_warnings == warnLimit) {
-            cerr << "WARNING: Too many warnings" << endl;
+            SVCERR << "WARNING: Too many warnings" << endl;
         }
         ++m_warnings;
     }
@@ -172,10 +173,10 @@ CSVFileReader::load() const
         } else {
             windowSize = 1;
         }
-	if (timeUnits == CSVFormat::TimeSeconds ||
+        if (timeUnits == CSVFormat::TimeSeconds ||
             timeUnits == CSVFormat::TimeMilliseconds) {
-	    sampleRate = m_mainModelSampleRate;
-	}
+            sampleRate = m_mainModelSampleRate;
+        }
     }
 
     SparseOneDimensionalModel *model1 = 0;
@@ -243,22 +244,22 @@ CSVFileReader::load() const
                     model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
                     model = model1;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModel:
                     model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
                     model = model2;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModelWithDuration:
                     model2a = new RegionModel(sampleRate, windowSize, false);
                     model = model2a;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
                     model2b = new NoteModel(sampleRate, windowSize, false);
                     model = model2b;
                     break;
-		
+                
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate,
@@ -334,7 +335,7 @@ CSVFileReader::load() const
             }
 
             if (modelType == CSVFormat::OneDimensionalModel) {
-	    
+            
                 SparseOneDimensionalModel::Point point(frameNo, label);
                 model1->addPoint(point);
 
@@ -368,7 +369,7 @@ CSVFileReader::load() const
                     float value = list[i].toFloat(&ok);
 
                     values.push_back(value);
-	    
+            
                     if (firstEverValue || value < min) min = value;
                     if (firstEverValue || value > max) max = value;
                     
@@ -384,19 +385,19 @@ CSVFileReader::load() const
 
                     if (!ok) {
                         if (warnings < warnLimit) {
-                            cerr << "WARNING: CSVFileReader::load: "
+                            SVCERR << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
                                       << list[i]
                                       << "\" in data line " << lineno+1
                                       << ":" << endl;
-                            cerr << line << endl;
+                            SVCERR << line << endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
-//                            cerr << "WARNING: Too many warnings" << endl;
+//                            SVCERR << "WARNING: Too many warnings" << endl;
                         }
                     }
                 }
-	
+        
 //                SVDEBUG << "Setting bin values for count " << lineno << ", frame "
 //                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << endl;
 
@@ -426,11 +427,11 @@ CSVFileReader::load() const
             for (map<int, map<QString, float> >::iterator i =
                      countLabelValueMap.end(); i != countLabelValueMap.begin(); ) {
                 --i;
-                cerr << "count -> " << i->first << endl;
+                SVCERR << "count -> " << i->first << endl;
                 for (map<QString, float>::iterator j = i->second.begin();
                      j != i->second.end(); ++j) {
                     j->second = v;
-                    cerr << "label -> " << j->first << ", value " << v << endl;
+                    SVCERR << "label -> " << j->first << ", value " << v << endl;
                     v = v + 1.f;
                 }
             }
@@ -443,7 +444,7 @@ CSVFileReader::load() const
                 RegionModel::Point p(*i);
                 int count = labelCountMap[p.label];
                 v = countLabelValueMap[count][p.label];
-                cerr << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
+              //  SVCERR << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
                 RegionModel::Point pp(p.frame, v, p.duration, p.label);
                 pointMap[p] = pp;
             }
@@ -474,8 +475,8 @@ CSVFileReader::load() const
     }
 
     if (model3) {
-	model3->setMinimumLevel(min);
-	model3->setMaximumLevel(max);
+        model3->setMinimumLevel(min);
+        model3->setMaximumLevel(max);
     }
 
     return model;

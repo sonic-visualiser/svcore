@@ -36,7 +36,7 @@ public:
     static QString canonicalise(QString identifier);
 
     static void parseIdentifier(QString identifier,
-				QString &type, QString &soName, QString &label);
+                                QString &type, QString &soName, QString &label);
 
     static bool areIdentifiersSimilar(QString id1, QString id2);
 

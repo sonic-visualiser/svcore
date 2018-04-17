@@ -45,7 +45,7 @@ class SparseModel : public Model,
 {
 public:
     SparseModel(sv_samplerate_t sampleRate, int resolution,
-		bool notifyOnAdd = true);
+                bool notifyOnAdd = true);
     virtual ~SparseModel() { }
     
     virtual bool isOK() const { return true; }
@@ -71,7 +71,7 @@ public:
     
     typedef PointType Point;
     typedef std::multiset<PointType,
-			  typename PointType::OrderComparator> PointList;
+                          typename PointType::OrderComparator> PointList;
     typedef typename PointList::iterator PointListIterator;
     typedef typename PointList::const_iterator PointListConstIterator;
 
@@ -196,23 +196,23 @@ public:
     class AddPointCommand : public Command
     {
     public:
-	AddPointCommand(SparseModel<PointType> *model,
-			const PointType &point,
+        AddPointCommand(SparseModel<PointType> *model,
+                        const PointType &point,
                         QString name = "") :
-	    m_model(model), m_point(point), m_name(name) { }
+            m_model(model), m_point(point), m_name(name) { }
 
-	virtual QString getName() const {
+        virtual QString getName() const {
             return (m_name == "" ? tr("Add Point") : m_name);
         }
 
-	virtual void execute() { m_model->addPoint(m_point); }
-	virtual void unexecute() { m_model->deletePoint(m_point); }
+        virtual void execute() { m_model->addPoint(m_point); }
+        virtual void unexecute() { m_model->deletePoint(m_point); }
 
-	const PointType &getPoint() const { return m_point; }
+        const PointType &getPoint() const { return m_point; }
 
     private:
-	SparseModel<PointType> *m_model;
-	PointType m_point;
+        SparseModel<PointType> *m_model;
+        PointType m_point;
         QString m_name;
     };
 
@@ -223,20 +223,20 @@ public:
     class DeletePointCommand : public Command
     {
     public:
-	DeletePointCommand(SparseModel<PointType> *model,
-			   const PointType &point) :
-	    m_model(model), m_point(point) { }
+        DeletePointCommand(SparseModel<PointType> *model,
+                           const PointType &point) :
+            m_model(model), m_point(point) { }
 
-	virtual QString getName() const { return tr("Delete Point"); }
+        virtual QString getName() const { return tr("Delete Point"); }
 
-	virtual void execute() { m_model->deletePoint(m_point); }
-	virtual void unexecute() { m_model->addPoint(m_point); }
+        virtual void execute() { m_model->deletePoint(m_point); }
+        virtual void unexecute() { m_model->addPoint(m_point); }
 
-	const PointType &getPoint() const { return m_point; }
+        const PointType &getPoint() const { return m_point; }
 
     private:
-	SparseModel<PointType> *m_model;
-	PointType m_point;
+        SparseModel<PointType> *m_model;
+        PointType m_point;
     };
 
     
@@ -247,27 +247,27 @@ public:
     class EditCommand : public MacroCommand
     {
     public:
-	EditCommand(SparseModel<PointType> *model, QString commandName);
+        EditCommand(SparseModel<PointType> *model, QString commandName);
 
-	virtual void addPoint(const PointType &point);
-	virtual void deletePoint(const PointType &point);
+        virtual void addPoint(const PointType &point);
+        virtual void deletePoint(const PointType &point);
 
-	/**
-	 * Stack an arbitrary other command in the same sequence.
-	 */
-	virtual void addCommand(Command *command) { addCommand(command, true); }
+        /**
+         * Stack an arbitrary other command in the same sequence.
+         */
+        virtual void addCommand(Command *command) { addCommand(command, true); }
 
-	/**
-	 * If any points have been added or deleted, return this
-	 * command (so the caller can add it to the command history).
-	 * Otherwise delete the command and return NULL.
-	 */
-	virtual EditCommand *finish();
+        /**
+         * If any points have been added or deleted, return this
+         * command (so the caller can add it to the command history).
+         * Otherwise delete the command and return NULL.
+         */
+        virtual EditCommand *finish();
 
     protected:
-	virtual void addCommand(Command *command, bool executeFirst);
+        virtual void addCommand(Command *command, bool executeFirst);
 
-	SparseModel<PointType> *m_model;
+        SparseModel<PointType> *m_model;
     };
 
 
@@ -277,27 +277,27 @@ public:
     class RelabelCommand : public Command
     {
     public:
-	RelabelCommand(SparseModel<PointType> *model,
-		       const PointType &point,
-		       QString newLabel) :
-	    m_model(model), m_oldPoint(point), m_newPoint(point) {
-	    m_newPoint.label = newLabel;
-	}
+        RelabelCommand(SparseModel<PointType> *model,
+                       const PointType &point,
+                       QString newLabel) :
+            m_model(model), m_oldPoint(point), m_newPoint(point) {
+            m_newPoint.label = newLabel;
+        }
 
-	virtual QString getName() const { return tr("Re-Label Point"); }
+        virtual QString getName() const { return tr("Re-Label Point"); }
 
-	virtual void execute() { 
-	    m_model->deletePoint(m_oldPoint);
-	    m_model->addPoint(m_newPoint);
-	    std::swap(m_oldPoint, m_newPoint);
-	}
+        virtual void execute() { 
+            m_model->deletePoint(m_oldPoint);
+            m_model->addPoint(m_newPoint);
+            std::swap(m_oldPoint, m_newPoint);
+        }
 
-	virtual void unexecute() { execute(); }
+        virtual void unexecute() { execute(); }
 
     private:
-	SparseModel<PointType> *m_model;
-	PointType m_oldPoint;
-	PointType m_newPoint;
+        SparseModel<PointType> *m_model;
+        PointType m_oldPoint;
+        PointType m_newPoint;
     };
 
     /**
@@ -558,7 +558,7 @@ SparseModel<PointType>::getStartFrame() const
     QMutexLocker locker(&m_mutex);
     sv_frame_t f = 0;
     if (!m_points.empty()) {
-	f = m_points.begin()->frame;
+        f = m_points.begin()->frame;
     }
     return f;
 }
@@ -570,8 +570,8 @@ SparseModel<PointType>::getEndFrame() const
     QMutexLocker locker(&m_mutex);
     sv_frame_t f = 0;
     if (!m_points.empty()) {
-	PointListConstIterator i(m_points.end());
-	f = (--i)->frame;
+        PointListConstIterator i(m_points.end());
+        f = (--i)->frame;
     }
     if (m_extendTo > f) return m_extendTo;
     else return f;
@@ -618,7 +618,7 @@ SparseModel<PointType>::getPoints(sv_frame_t start, sv_frame_t end) const
     PointList rv;
 
     for (PointListConstIterator i = startItr; i != endItr; ++i) {
-	rv.insert(*i);
+        rv.insert(*i);
     }
 
     return rv;
@@ -634,7 +634,7 @@ SparseModel<PointType>::getPoints(sv_frame_t frame) const
     PointList rv;
 
     for (PointListConstIterator i = startItr; i != endItr; ++i) {
-	rv.insert(*i);
+        rv.insert(*i);
     }
 
     return rv;
@@ -704,9 +704,9 @@ SparseModel<PointType>::getPreviousPoints(sv_frame_t originFrame) const
     --i;
     sv_frame_t frame = i->frame;
     while (i->frame == frame) {
-	rv.insert(*i);
-	if (i == m_points.begin()) break;
-	--i;
+        rv.insert(*i);
+        if (i == m_points.begin()) break;
+        --i;
     }
 
     return rv;
@@ -726,8 +726,8 @@ SparseModel<PointType>::getNextPoints(sv_frame_t originFrame) const
 
     sv_frame_t frame = i->frame;
     while (i != m_points.end() && i->frame == frame) {
-	rv.insert(*i);
-	++i;
+        rv.insert(*i);
+        ++i;
     }
 
     return rv;
@@ -738,8 +738,8 @@ void
 SparseModel<PointType>::setResolution(int resolution)
 {
     {
-	QMutexLocker locker(&m_mutex);
-	m_resolution = resolution;
+        QMutexLocker locker(&m_mutex);
+        m_resolution = resolution;
         m_rows.clear();
     }
     emit modelChanged();
@@ -750,8 +750,8 @@ void
 SparseModel<PointType>::clear()
 {
     {
-	QMutexLocker locker(&m_mutex);
-	m_points.clear();
+        QMutexLocker locker(&m_mutex);
+        m_points.clear();
         m_pointCount = 0;
         m_rows.clear();
     }
@@ -776,16 +776,16 @@ SparseModel<PointType>::addPoint(const PointType &point)
 
     if (m_notifyOnAdd) {
         m_rows.clear(); //!!! inefficient
-	emit modelChangedWithin(point.frame, point.frame + m_resolution);
+        emit modelChangedWithin(point.frame, point.frame + m_resolution);
     } else {
-	if (m_sinceLastNotifyMin == -1 ||
-	    point.frame < m_sinceLastNotifyMin) {
-	    m_sinceLastNotifyMin = point.frame;
-	}
-	if (m_sinceLastNotifyMax == -1 ||
-	    point.frame > m_sinceLastNotifyMax) {
-	    m_sinceLastNotifyMax = point.frame;
-	}
+        if (m_sinceLastNotifyMin == -1 ||
+            point.frame < m_sinceLastNotifyMin) {
+            m_sinceLastNotifyMin = point.frame;
+        }
+        if (m_sinceLastNotifyMax == -1 ||
+            point.frame > m_sinceLastNotifyMax) {
+            m_sinceLastNotifyMax = point.frame;
+        }
     }
 }
 
@@ -822,12 +822,12 @@ SparseModel<PointType>::deletePoint(const PointType &point)
             m_points.erase(i);
             m_pointCount--;
             break;
-	    }
+            }
         ++i;
     }
 
 //    std::cout << "SparseOneDimensionalModel: emit modelChanged("
-//	      << point.frame << ")" << std::endl;
+//              << point.frame << ")" << std::endl;
     m_rows.clear(); //!!! inefficient
     emit modelChangedWithin(point.frame, point.frame + m_resolution);
 }
@@ -841,32 +841,32 @@ SparseModel<PointType>::setCompletion(int completion, bool update)
     QMutexLocker locker(&m_mutex);
 
     if (m_completion != completion) {
-	m_completion = completion;
+        m_completion = completion;
 
-	if (completion == 100) {
+        if (completion == 100) {
 
             if (!m_notifyOnAdd) {
                 emit completionChanged();
             }
 
-	    m_notifyOnAdd = true; // henceforth
+            m_notifyOnAdd = true; // henceforth
             m_rows.clear(); //!!! inefficient
-	    emit modelChanged();
+            emit modelChanged();
 
-	} else if (!m_notifyOnAdd) {
+        } else if (!m_notifyOnAdd) {
 
-	    if (update &&
+            if (update &&
                 m_sinceLastNotifyMin >= 0 &&
-		m_sinceLastNotifyMax >= 0) {
+                m_sinceLastNotifyMax >= 0) {
                 m_rows.clear(); //!!! inefficient
-		emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
-		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
-	    } else {
-		emit completionChanged();
-	    }
-	} else {
-	    emit completionChanged();
-	}	    
+                emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
+                m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
+            } else {
+                emit completionChanged();
+            }
+        } else {
+            emit completionChanged();
+        }            
     }
 }
 
@@ -882,20 +882,20 @@ SparseModel<PointType>::toXml(QTextStream &out,
     QString type = getXmlOutputType();
 
     Model::toXml
-	(out,
+        (out,
          indent,
-	 QString("type=\"%1\" dimensions=\"%2\" resolution=\"%3\" notifyOnAdd=\"%4\" dataset=\"%5\" %6")
+         QString("type=\"%1\" dimensions=\"%2\" resolution=\"%3\" notifyOnAdd=\"%4\" dataset=\"%5\" %6")
          .arg(type)
-	 .arg(PointType(0).getDimensions())
-	 .arg(m_resolution)
-	 .arg(m_notifyOnAdd ? "true" : "false")
-	 .arg(getObjectExportId(&m_points))
-	 .arg(extraAttributes));
+         .arg(PointType(0).getDimensions())
+         .arg(m_resolution)
+         .arg(m_notifyOnAdd ? "true" : "false")
+         .arg(getObjectExportId(&m_points))
+         .arg(extraAttributes));
 
     out << indent;
     out << QString("<dataset id=\"%1\" dimensions=\"%2\">\n")
-	.arg(getObjectExportId(&m_points))
-	.arg(PointType(0).getDimensions());
+        .arg(getObjectExportId(&m_points))
+        .arg(PointType(0).getDimensions());
 
     for (PointListConstIterator i = m_points.begin(); i != m_points.end(); ++i) {
         i->toXml(out, indent + "  ");
@@ -942,24 +942,24 @@ SparseModel<PointType>::EditCommand::finish()
 template <typename PointType>
 void
 SparseModel<PointType>::EditCommand::addCommand(Command *command,
-						bool executeFirst)
+                                                bool executeFirst)
 {
     if (executeFirst) command->execute();
 
     if (!m_commands.empty()) {
-	DeletePointCommand *dpc = dynamic_cast<DeletePointCommand *>(command);
-	if (dpc) {
-	    AddPointCommand *apc = dynamic_cast<AddPointCommand *>
-		(m_commands[m_commands.size() - 1]);
-	    typename PointType::Comparator comparator;
-	    if (apc) {
-		if (!comparator(apc->getPoint(), dpc->getPoint()) &&
-		    !comparator(dpc->getPoint(), apc->getPoint())) {
-		    deleteCommand(apc);
-		    return;
-		}
-	    }
-	}
+        DeletePointCommand *dpc = dynamic_cast<DeletePointCommand *>(command);
+        if (dpc) {
+            AddPointCommand *apc = dynamic_cast<AddPointCommand *>
+                (m_commands[m_commands.size() - 1]);
+            typename PointType::Comparator comparator;
+            if (apc) {
+                if (!comparator(apc->getPoint(), dpc->getPoint()) &&
+                    !comparator(dpc->getPoint(), apc->getPoint())) {
+                    deleteCommand(apc);
+                    return;
+                }
+            }
+        }
     }
 
     MacroCommand::addCommand(command);

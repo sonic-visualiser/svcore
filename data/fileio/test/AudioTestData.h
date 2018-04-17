@@ -38,74 +38,74 @@ class AudioTestData
 {
 public:
     AudioTestData(double rate, int channels) :
-	m_channelCount(channels),
-	m_duration(2.0),
-	m_sampleRate(rate),
-	m_sinFreq(600.0),
-	m_pulseFreq(2)
+        m_channelCount(channels),
+        m_duration(2.0),
+        m_sampleRate(rate),
+        m_sinFreq(600.0),
+        m_pulseFreq(2)
     {
-	m_frameCount = lrint(m_duration * m_sampleRate);
-	m_data = new float[m_frameCount * m_channelCount];
-	m_pulseWidth = 0.01 * m_sampleRate;
-	generate();
+        m_frameCount = lrint(m_duration * m_sampleRate);
+        m_data = new float[m_frameCount * m_channelCount];
+        m_pulseWidth = 0.01 * m_sampleRate;
+        generate();
     }
 
     ~AudioTestData() {
-	delete[] m_data;
+        delete[] m_data;
     }
 
     void generate() {
 
-	double hpw = m_pulseWidth / 2.0;
+        double hpw = m_pulseWidth / 2.0;
 
-	for (int i = 0; i < m_frameCount; ++i) {
-	    for (int c = 0; c < m_channelCount; ++c) {
+        for (int i = 0; i < m_frameCount; ++i) {
+            for (int c = 0; c < m_channelCount; ++c) {
 
-		double s = 0.0;
+                double s = 0.0;
 
-		if (c == 0) {
+                if (c == 0) {
 
-		    double phase = (i * m_sinFreq * 2.0 * M_PI) / m_sampleRate;
-		    s = sin(phase);
+                    double phase = (i * m_sinFreq * 2.0 * M_PI) / m_sampleRate;
+                    s = sin(phase);
 
-		} else if (c == 1) {
+                } else if (c == 1) {
 
-		    int pulseNo = int((i * m_pulseFreq) / m_sampleRate);
-		    int index = int(round((i * m_pulseFreq) -
+                    int pulseNo = int((i * m_pulseFreq) / m_sampleRate);
+                    int index = int(round((i * m_pulseFreq) -
                                           (m_sampleRate * pulseNo)));
-		    if (index < m_pulseWidth) {
-			s = 1.0 - fabs(hpw - index) / hpw;
-			if (pulseNo % 2) s = -s;
-		    }
+                    if (index < m_pulseWidth) {
+                        s = 1.0 - fabs(hpw - index) / hpw;
+                        if (pulseNo % 2) s = -s;
+                    }
 
-		} else {
+                } else {
 
-		    s = c / 20.0;
-		}
+                    s = c / 20.0;
+                }
 
-		m_data[i * m_channelCount + c] = float(s);
-	    }
-	}
+                m_data[i * m_channelCount + c] = float(s);
+            }
+        }
     }
 
     float *getInterleavedData() const {
-	return m_data;
+        return m_data;
     }
 
     sv_frame_t getFrameCount() const { 
-	return m_frameCount;
+        return m_frameCount;
     }
 
     int getChannelCount() const {
-	return m_channelCount;
+        return m_channelCount;
     }
 
     sv_samplerate_t getSampleRate () const {
-	return m_sampleRate;
+        return m_sampleRate;
     }
 
     double getDuration() const { // seconds
-	return m_duration;
+        return m_duration;
     }
 
 private:

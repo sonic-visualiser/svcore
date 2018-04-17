@@ -24,8 +24,8 @@
 
 QString
 PluginIdentifier::createIdentifier(QString type,
-				   QString soName,
-				   QString label)
+                                   QString soName,
+                                   QString label)
 {
     QString identifier = type + ":" + QFileInfo(soName).baseName() + ":" + label;
     return identifier;
@@ -41,9 +41,9 @@ PluginIdentifier::canonicalise(QString identifier)
 
 void
 PluginIdentifier::parseIdentifier(QString identifier,
-				  QString &type,
-				  QString &soName,
-				  QString &label)
+                                  QString &type,
+                                  QString &soName,
+                                  QString &label)
 {
     type = identifier.section(':', 0, 0);
     soName = identifier.section(':', 1, 1);
@@ -61,7 +61,7 @@ PluginIdentifier::areIdentifiersSimilar(QString id1, QString id2)
     if (type1 != type2 || label1 != label2) return false;
 
     bool similar = (soName1.section('/', -1).section('.', 0, 0) ==
-		    soName2.section('/', -1).section('.', 0, 0));
+                    soName2.section('/', -1).section('.', 0, 0));
 
     return similar;
 }

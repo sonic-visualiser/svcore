@@ -50,12 +50,12 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 //    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
 
     RealTimePluginFactory *factory =
-	RealTimePluginFactory::instanceFor(pluginId);
+        RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-	cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
-		  << pluginId << "\"" << endl;
-	return;
+        cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
+                  << pluginId << "\"" << endl;
+        return;
     }
 
     DenseTimeValueModel *input = getConformingInput();
@@ -67,9 +67,9 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
                                           input->getChannelCount());
 
     if (!m_plugin) {
-	cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
+        cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
              << pluginId << "\"" << endl;
-	return;
+        return;
     }
 
     TransformFactory::getInstance()->setPluginParameters(transform, m_plugin);
@@ -93,7 +93,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
         m_outputs.push_back(model);
 
     } else {
-	
+        
         SparseTimeValueModel *model = new SparseTimeValueModel
             (input->getSampleRate(), transform.getBlockSize(), 0.0, 0.0, false);
 
@@ -112,9 +112,9 @@ DenseTimeValueModel *
 RealTimeEffectModelTransformer::getConformingInput()
 {
     DenseTimeValueModel *dtvm =
-	dynamic_cast<DenseTimeValueModel *>(getInputModel());
+        dynamic_cast<DenseTimeValueModel *>(getInputModel());
     if (!dtvm) {
-	SVDEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
+        SVDEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
     }
     return dtvm;
 }
@@ -183,13 +183,13 @@ RealTimeEffectModelTransformer::run()
     while (blockFrame < contextStart + contextDuration + latency &&
            !m_abandoned) {
 
-	int completion = int
-	    ((((blockFrame - contextStart) / blockSize) * 99) /
+        int completion = int
+            ((((blockFrame - contextStart) / blockSize) * 99) /
              (1 + ((contextDuration) / blockSize)));
 
-	sv_frame_t got = 0;
+        sv_frame_t got = 0;
 
-	if (channelCount == 1) {
+        if (channelCount == 1) {
             if (inbufs && inbufs[0]) {
                 auto data = input->getData
                     (m_input.getChannel(), blockFrame, blockSize);
@@ -206,7 +206,7 @@ RealTimeEffectModelTransformer::run()
                     }
                 }
             }
-	} else {
+        } else {
             if (inbufs && inbufs[0]) {
                 auto data = input->getMultiChannelData
                     (0, channelCount - 1, blockFrame, blockSize);
@@ -228,7 +228,7 @@ RealTimeEffectModelTransformer::run()
                     }
                 }
             }
-	}
+        }
 
 /*
         cerr << "Input for plugin: " << m_plugin->getAudioInputCount() << " channels "<< endl;
@@ -281,15 +281,15 @@ RealTimeEffectModelTransformer::run()
             }
         }
 
-	if (blockFrame == contextStart || completion > prevCompletion) {
+        if (blockFrame == contextStart || completion > prevCompletion) {
             // This setCompletion is probably misusing the completion
             // terminology, just as it was for WritableWaveFileModel
-	    if (stvm) stvm->setCompletion(completion);
-	    if (wwfm) wwfm->setWriteProportion(completion);
-	    prevCompletion = completion;
-	}
+            if (stvm) stvm->setCompletion(completion);
+            if (wwfm) wwfm->setWriteProportion(completion);
+            prevCompletion = completion;
+        }
         
-	blockFrame += blockSize;
+        blockFrame += blockSize;
     }
 
     if (m_abandoned) return;

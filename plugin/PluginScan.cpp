@@ -190,16 +190,16 @@ PluginScan::getStartupFailureReport() const
     QMutexLocker locker(&m_mutex);
 
     if (!m_succeeded) {
-	return QObject::tr("<b>Failed to scan for plugins</b>"
-			   "<p>Failed to scan for plugins at startup. Possibly "
+        return QObject::tr("<b>Failed to scan for plugins</b>"
+                           "<p>Failed to scan for plugins at startup. Possibly "
                            "the plugin checker program was not correctly "
                            "installed alongside %1?</p>")
             .arg(QCoreApplication::applicationName());
     }
     if (m_kp.empty()) {
-	return QObject::tr("<b>Did not scan for plugins</b>"
-			   "<p>Apparently no scan for plugins was attempted "
-			   "(internal error?)</p>");
+        return QObject::tr("<b>Did not scan for plugins</b>"
+                           "<p>Apparently no scan for plugins was attempted "
+                           "(internal error?)</p>");
     }
 
     QString report;
@@ -207,12 +207,12 @@ PluginScan::getStartupFailureReport() const
         report += QString::fromStdString(kp.second->getFailureReport());
     }
     if (report == "") {
-	return report;
+        return report;
     }
 
     return QObject::tr("<b>Failed to load plugins</b>"
-		       "<p>Failed to load one or more plugin libraries:</p>")
-	+ report
+                       "<p>Failed to load one or more plugin libraries:</p>")
+        + report
         + QObject::tr("<p>These plugins may be incompatible with the system, "
                       "and will be ignored during this run of %1.</p>")
         .arg(QCoreApplication::applicationName());

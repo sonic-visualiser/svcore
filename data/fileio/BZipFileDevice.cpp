@@ -189,7 +189,7 @@ BZipFileDevice::close()
     if (openMode() & WriteOnly) {
         unsigned int in = 0, out = 0;
         BZ2_bzWriteClose(&bzError, m_bzFile, 0, &in, &out);
-//	cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << endl;
+//        cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << endl;
         if (bzError != BZ_OK) {
             setErrorString(tr("bzip2 stream write close error"));
         }

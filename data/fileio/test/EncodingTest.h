@@ -82,11 +82,11 @@ private slots:
     void init()
     {
         if (!QDir(encodingDir).exists()) {
-            cerr << "ERROR: Audio encoding file directory \"" << encodingDir << "\" does not exist" << endl;
+            SVCERR << "ERROR: Audio encoding file directory \"" << encodingDir << "\" does not exist" << endl;
             QVERIFY2(QDir(encodingDir).exists(), "Audio encoding file directory not found");
         }
         if (!QDir(outDir).exists() && !QDir().mkpath(outDir)) {
-            cerr << "ERROR: Audio out directory \"" << outDir << "\" does not exist and could not be created" << endl;
+            SVCERR << "ERROR: Audio out directory \"" << outDir << "\" does not exist and could not be created" << endl;
             QVERIFY2(QDir(outDir).exists(), "Audio out directory not found and could not be created");
         }
     }
@@ -161,17 +161,17 @@ private slots:
                     found = true;
                     QString expected = QString::fromUtf8(mapping[m][1]);
                     if (title != expected) {
-                        cerr << "Title does not match expected: codepoints are" << endl;
-                        cerr << "Title (" << title.length() << "ch): ";
+                        SVCERR << "Title does not match expected: codepoints are" << endl;
+                        SVCERR << "Title (" << title.length() << "ch): ";
                         for (int i = 0; i < title.length(); ++i) {
-                            cerr << title[i].unicode() << " ";
+                            SVCERR << title[i].unicode() << " ";
                         }
-                        cerr << endl;
-                        cerr << "Expected (" << expected.length() << "ch): ";
+                        SVCERR << endl;
+                        SVCERR << "Expected (" << expected.length() << "ch): ";
                         for (int i = 0; i < expected.length(); ++i) {
-                            cerr << expected[i].unicode() << " ";
+                            SVCERR << expected[i].unicode() << " ";
                         }
-                        cerr << endl;
+                        SVCERR << endl;
                     }
                     QCOMPARE(title, expected);
                     break;
@@ -185,7 +185,7 @@ private slots:
                 // the expected UTF-16. We check this properly in
                 // readWriteAudio below, by saving out the file to a
                 // name matching the metadata
-                cerr << "Couldn't find filename \""
+                SVCERR << "Couldn't find filename \""
                      << file << "\" in title mapping array" << endl;
                 QSKIP("Couldn't find filename in title mapping array");
             }

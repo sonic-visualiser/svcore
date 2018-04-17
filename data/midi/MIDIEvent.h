@@ -123,9 +123,9 @@ public:
               int eventCode,
               int data1 = 0,
               int data2 = 0) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_metaEventCode(0)
+        m_deltaTime(deltaTime),
+        m_duration(0),
+        m_metaEventCode(0)
     {
         if (eventCode < 0 || eventCode > 0xff ||
             data1 < 0 || data1 > 0xff ||
@@ -141,25 +141,25 @@ public:
               MIDIByte eventCode,
               MIDIByte metaEventCode,
               const std::string &metaMessage) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(0),
-	m_data2(0),
-	m_metaEventCode(metaEventCode),
-	m_metaMessage(metaMessage)
+        m_deltaTime(deltaTime),
+        m_duration(0),
+        m_eventCode(eventCode),
+        m_data1(0),
+        m_data2(0),
+        m_metaEventCode(metaEventCode),
+        m_metaMessage(metaMessage)
     { }
 
     MIDIEvent(unsigned long deltaTime,
               MIDIByte eventCode,
               const std::string &sysEx) :
-	m_deltaTime(deltaTime),
-	m_duration(0),
-	m_eventCode(eventCode),
-	m_data1(0),
-	m_data2(0),
-	m_metaEventCode(0),
-	m_metaMessage(sysEx)
+        m_deltaTime(deltaTime),
+        m_duration(0),
+        m_eventCode(eventCode),
+        m_data1(0),
+        m_data2(0),
+        m_metaEventCode(0),
+        m_metaMessage(sysEx)
     { }
 
     ~MIDIEvent() { }
@@ -167,8 +167,8 @@ public:
     void setTime(const unsigned long &time) { m_deltaTime = time; }
     void setDuration(const unsigned long& duration) { m_duration = duration;}
     unsigned long addTime(const unsigned long &time) {
-	m_deltaTime += time;
-	return m_deltaTime;
+        m_deltaTime += time;
+        return m_deltaTime;
     }
 
     MIDIByte getMessageType() const
@@ -222,12 +222,12 @@ class MIDIException : virtual public std::exception
 public:
     MIDIException(QString message) throw() : m_message(message) {
         std::cerr << "WARNING: MIDI exception: "
-		  << message.toLocal8Bit().data() << std::endl;
+                  << message.toLocal8Bit().data() << std::endl;
     }
     virtual ~MIDIException() throw() { }
 
     virtual const char *what() const throw() {
-	return m_message.toLocal8Bit().data();
+        return m_message.toLocal8Bit().data();
     }
 
 protected:

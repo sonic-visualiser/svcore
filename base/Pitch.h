@@ -31,8 +31,8 @@ public:
      * specified in the application preferences (default 440Hz).
      */
     static double getFrequencyForPitch(int midiPitch,
-				      double centsOffset = 0,
-				      double concertA = 0.0);
+                                      double centsOffset = 0,
+                                      double concertA = 0.0);
 
     /**
      * Return the nearest MIDI pitch to the given frequency.
@@ -47,16 +47,16 @@ public:
      * specified in the application preferences (default 440Hz).
      */
     static int getPitchForFrequency(double frequency,
-				    double *centsOffsetReturn = 0,
-				    double concertA = 0.0);
+                                    double *centsOffsetReturn = 0,
+                                    double concertA = 0.0);
 
     /**
      * Compatibility version of getPitchForFrequency accepting float
      * pointer argument.
      */
     static int getPitchForFrequency(double frequency,
-				    float *centsOffsetReturn,
-				    double concertA = 0.0) {
+                                    float *centsOffsetReturn,
+                                    double concertA = 0.0) {
         double c;
         int p = getPitchForFrequency(frequency, &c, concertA);
         if (centsOffsetReturn) *centsOffsetReturn = float(c);
@@ -127,8 +127,8 @@ public:
      * e.g. Bb3 instead of A#3.
      */
     static QString getPitchLabel(int midiPitch,
-				 double centsOffset = 0,
-				 bool useFlats = false);
+                                 double centsOffset = 0,
+                                 bool useFlats = false);
     
     /**
      * Return a string describing the nearest MIDI pitch to the given
@@ -142,8 +142,8 @@ public:
      * e.g. Bb3 instead of A#3.
      */
     static QString getPitchLabelForFrequency(double frequency,
-					     double concertA = 0.0,
-					     bool useFlats = false);
+                                             double concertA = 0.0,
+                                             bool useFlats = false);
 
     /**
      * Return a string describing the given pitch range in octaves,

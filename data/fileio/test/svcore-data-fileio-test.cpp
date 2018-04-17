@@ -35,12 +35,12 @@ int main(int argc, char *argv[])
 #endif
 
     if (argc > 1) {
-        cerr << "argc = " << argc << endl;
+        SVCERR << "argc = " << argc << endl;
         testDir = argv[1];
     }
 
     if (testDir != "") {
-        cerr << "Setting test directory base path to \"" << testDir << "\"" << endl;
+        SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
     }
 
     QCoreApplication app(argc, argv);
@@ -78,10 +78,10 @@ int main(int argc, char *argv[])
     }
 
     if (bad > 0) {
-	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	return 1;
+    SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        return 1;
     } else {
-	cerr << "All tests passed" << endl;
-	return 0;
+    SVCERR << "All tests passed" << endl;
+        return 0;
     }
 }

@@ -19,6 +19,7 @@
 #include "base/Profiler.h"
 #include "base/Pitch.h"
 #include "base/HitCount.h"
+#include "base/Debug.h"
 
 #include <algorithm>
 
@@ -52,8 +53,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     }
     
     if (m_windowSize > m_fftSize) {
-        cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
-             << ") must be at least FFT size (" << m_fftSize << ")" << endl;
+        SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
+               << ") must be at least FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size must be at least FFT size");
     }
 
@@ -72,7 +73,7 @@ void
 FFTModel::sourceModelAboutToBeDeleted()
 {
     if (m_model) {
-        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
+        SVDEBUG << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
         m_model = 0;
     }
 }
@@ -287,15 +288,15 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     }
     
     if (m_channel == -1) {
-	int channels = m_model->getChannelCount();
-	if (channels > 1) {
+        int channels = m_model->getChannelCount();
+        if (channels > 1) {
             int n = int(data.size());
             float factor = 1.f / float(channels);
             // use mean instead of sum for fft model input
-	    for (int i = 0; i < n; ++i) {
-		data[i] *= factor;
-	    }
-	}
+            for (int i = 0; i < n; ++i) {
+                data[i] *= factor;
+            }
+        }
     }
     
     return data;

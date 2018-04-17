@@ -100,7 +100,7 @@ void Profiles::dump() const
 
         fprintf(stderr, "\tCPU:  \t%.9g ms/call \t[%d ms total]\n",
                 (((double)pp.second.first * 1000.0 /
-		  (double)pp.first) / CLOCKS_PER_SEC),
+                  (double)pp.first) / CLOCKS_PER_SEC),
                 int((double(pp.second.first) * 1000.0) / CLOCKS_PER_SEC));
 
         fprintf(stderr, "\tReal: \t%s ms      \t[%s ms total]\n",
@@ -192,8 +192,8 @@ Profiler::update() const
     RealTime elapsedTime = RealTime::fromTimeval(tv) - m_startTime;
 
     cerr << "Profiler : id = " << m_c
-	 << " - elapsed so far = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
-	 << "ms CPU, " << elapsedTime << " real" << endl;
+         << " - elapsed so far = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
+         << "ms CPU, " << elapsedTime << " real" << endl;
 }    
 
 Profiler::~Profiler()
@@ -215,7 +215,7 @@ Profiler::end()
     if (m_showOnDestruct)
         cerr << "Profiler : id = " << m_c
              << " - elapsed = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
-	     << "ms CPU, " << elapsedTime << " real" << endl;
+             << "ms CPU, " << elapsedTime << " real" << endl;
 
     m_ended = true;
 }

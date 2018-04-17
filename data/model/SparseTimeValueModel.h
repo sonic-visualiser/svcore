@@ -31,7 +31,7 @@ struct TimeValuePoint
 public:
     TimeValuePoint(sv_frame_t _frame) : frame(_frame), value(0.0f) { }
     TimeValuePoint(sv_frame_t _frame, float _value, QString _label) : 
-	frame(_frame), value(_value), label(_label) { }
+        frame(_frame), value(_value), label(_label) { }
 
     int getDimensions() const { return 2; }
     
@@ -45,7 +45,7 @@ public:
                QString extraAttributes = "") const
     {
         stream << QString("%1<point frame=\"%2\" value=\"%3\" label=\"%4\" %5/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(XmlExportable::encodeEntities(label))
+            .arg(indent).arg(frame).arg(value).arg(XmlExportable::encodeEntities(label))
             .arg(extraAttributes);
     }
 
@@ -59,19 +59,19 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const TimeValuePoint &p1,
-			const TimeValuePoint &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
-	    if (p1.value != p2.value) return p1.value < p2.value;
-	    return p1.label < p2.label;
-	}
+        bool operator()(const TimeValuePoint &p1,
+                        const TimeValuePoint &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
+            if (p1.value != p2.value) return p1.value < p2.value;
+            return p1.label < p2.label;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const TimeValuePoint &p1,
-			const TimeValuePoint &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const TimeValuePoint &p1,
+                        const TimeValuePoint &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -82,30 +82,30 @@ class SparseTimeValueModel : public SparseValueModel<TimeValuePoint>
     
 public:
     SparseTimeValueModel(sv_samplerate_t sampleRate, int resolution,
-			 bool notifyOnAdd = true) :
-	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
-					 notifyOnAdd)
+                         bool notifyOnAdd = true) :
+        SparseValueModel<TimeValuePoint>(sampleRate, resolution,
+                                         notifyOnAdd)
     {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
-	PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     SparseTimeValueModel(sv_samplerate_t sampleRate, int resolution,
-			 float valueMinimum, float valueMaximum,
-			 bool notifyOnAdd = true) :
-	SparseValueModel<TimeValuePoint>(sampleRate, resolution,
-					 valueMinimum, valueMaximum,
-					 notifyOnAdd)
+                         float valueMinimum, float valueMaximum,
+                         bool notifyOnAdd = true) :
+        SparseValueModel<TimeValuePoint>(sampleRate, resolution,
+                                         valueMinimum, valueMaximum,
+                                         notifyOnAdd)
     {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
-	PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     virtual ~SparseTimeValueModel()
     {
-	PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
     QString getTypeName() const { return tr("Sparse Time-Value"); }

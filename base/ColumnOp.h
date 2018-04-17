@@ -60,10 +60,10 @@ public:
      */
     static Column applyGain(const Column &in, double gain) {
         if (gain == 1.0) return in;
-	Column out;
-	out.reserve(in.size());
-	for (auto v: in) out.push_back(float(v * gain));
-	return out;
+        Column out;
+        out.reserve(in.size());
+        for (auto v: in) out.push_back(float(v * gain));
+        return out;
     }
 
     /**
@@ -71,10 +71,10 @@ public:
      */
     static Column applyShift(const Column &in, float offset) {
         if (offset == 0.f) return in;
-	Column out;
-	out.reserve(in.size());
-	for (auto v: in) out.push_back(v + offset);
-	return out;
+        Column out;
+        out.reserve(in.size());
+        for (auto v: in) out.push_back(v + offset);
+        return out;
     }
 
     /**
@@ -95,13 +95,13 @@ public:
         if (!in_range_for(in, ix+1)) {
             return in[ix] > in[ix-1];
         }
-	if (in[ix] < in[ix+1]) {
+        if (in[ix] < in[ix+1]) {
             return false;
         }
-	if (in[ix] <= in[ix-1]) {
+        if (in[ix] <= in[ix-1]) {
             return false;
         }
-	return true;
+        return true;
     }
 
     /**
@@ -130,10 +130,10 @@ public:
      * with the bin of index minbin.
      */
     static Column distribute(const Column &in,
-			     int h,
-			     const std::vector<double> &binfory,
-			     int minbin,
-			     bool interpolate);
+                             int h,
+                             const std::vector<double> &binfory,
+                             int minbin,
+                             bool interpolate);
 
 };
 

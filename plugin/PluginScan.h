@@ -45,9 +45,9 @@ public:
     bool scanSucceeded() const;
     
     enum PluginType {
-	VampPlugin,
-	LADSPAPlugin,
-	DSSIPlugin
+        VampPlugin,
+        LADSPAPlugin,
+        DSSIPlugin
     };
     struct Candidate {
         QString libraryPath;    // full path, not just soname

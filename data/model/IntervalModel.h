@@ -31,13 +31,13 @@ class IntervalModel : public SparseValueModel<PointType>
 public:
     IntervalModel(sv_samplerate_t sampleRate, int resolution,
                   bool notifyOnAdd = true) :
-	SparseValueModel<PointType>(sampleRate, resolution, notifyOnAdd)
+        SparseValueModel<PointType>(sampleRate, resolution, notifyOnAdd)
     { }
 
     IntervalModel(sv_samplerate_t sampleRate, int resolution,
                   float valueMinimum, float valueMaximum,
                   bool notifyOnAdd = true) :
-	SparseValueModel<PointType>(sampleRate, resolution,
+        SparseValueModel<PointType>(sampleRate, resolution,
                                     valueMinimum, valueMaximum,
                                     notifyOnAdd)
     { }

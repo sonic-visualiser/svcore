@@ -42,7 +42,7 @@ StringBits::stringToDoubleLocaleFree(QString s, bool *ok)
 
     while (i < len) {
 
-	QChar c = s[i];
+        QChar c = s[i];
 
         if (c.isDigit()) {
 
@@ -85,45 +85,45 @@ StringBits::splitQuoted(QString s, QChar separator)
     enum { sep, unq, q1, q2 } mode = sep;
 
     for (int i = 0; i < s.length(); ++i) {
-	
-	QChar c = s[i];
+        
+        QChar c = s[i];
 
-	if (c == '\'') {
-	    switch (mode) {
-	    case sep: mode = q1; break;
-	    case unq: case q2: tok += c; break;
-	    case q1: mode = unq; break;
-	    }
+        if (c == '\'') {
+            switch (mode) {
+            case sep: mode = q1; break;
+            case unq: case q2: tok += c; break;
+            case q1: mode = unq; break;
+            }
 
-	} else if (c == '"') {
-	    switch (mode) {
-	    case sep: mode = q2; break;
-	    case unq: case q1: tok += c; break;
-	    case q2: mode = unq; break;
-	    }
+        } else if (c == '"') {
+            switch (mode) {
+            case sep: mode = q2; break;
+            case unq: case q1: tok += c; break;
+            case q2: mode = unq; break;
+            }
 
-	} else if (c == separator || (separator == ' ' && c.isSpace())) {
-	    switch (mode) {
-	    case sep: if (separator != ' ') tokens << ""; break;
-	    case unq: mode = sep; tokens << tok; tok = ""; break;
-	    case q1: case q2: tok += c; break;
-	    }
+        } else if (c == separator || (separator == ' ' && c.isSpace())) {
+            switch (mode) {
+            case sep: if (separator != ' ') tokens << ""; break;
+            case unq: mode = sep; tokens << tok; tok = ""; break;
+            case q1: case q2: tok += c; break;
+            }
 
-	} else if (c == '\\') {
-	    if (++i < s.length()) {
-		c = s[i];
-		switch (mode) {
-		case sep: mode = unq; tok += c; break;
+        } else if (c == '\\') {
+            if (++i < s.length()) {
+                c = s[i];
+                switch (mode) {
+                case sep: mode = unq; tok += c; break;
                 case unq: case q1: case q2: tok += c; break;
-		}
-	    }
+                }
+            }
 
-	} else {
-	    switch (mode) {
-	    case sep: mode = unq; tok += c; break;
+        } else {
+            switch (mode) {
+            case sep: mode = unq; tok += c; break;
             case unq: case q1: case q2: tok += c; break;
-	    }
-	}
+            }
+        }
     }
 
     if (tok != "" || mode != sep) {

@@ -27,7 +27,7 @@ DenseTimeValueModel::~DenseTimeValueModel()
 {
     PlayParameterRepository::getInstance()->removePlayable(this);
 }
-	
+        
 QString
 DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
 {

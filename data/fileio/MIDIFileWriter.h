@@ -60,10 +60,10 @@ protected:
     typedef std::map<unsigned int, MIDITrack> MIDIComposition;
 
     typedef enum {
-	MIDI_SINGLE_TRACK_FILE          = 0x00,
-	MIDI_SIMULTANEOUS_TRACK_FILE    = 0x01,
-	MIDI_SEQUENTIAL_TRACK_FILE      = 0x02,
-	MIDI_FILE_BAD_FORMAT            = 0xFF
+        MIDI_SINGLE_TRACK_FILE          = 0x00,
+        MIDI_SIMULTANEOUS_TRACK_FILE    = 0x01,
+        MIDI_SEQUENTIAL_TRACK_FILE      = 0x02,
+        MIDI_FILE_BAD_FORMAT            = 0xFF
     } MIDIFileFormatType;
 
     std::string intToMIDIBytes(int number) const;

@@ -37,17 +37,17 @@ private:
     ~SamplePlayer();
 
     enum {
-	OutputPort    = 0,
-	RetunePort    = 1,
-	BasePitchPort = 2,
+        OutputPort    = 0,
+        RetunePort    = 1,
+        BasePitchPort = 2,
         ConcertAPort  = 3,
-	SustainPort   = 4,
-	ReleasePort   = 5,
-	PortCount     = 6
+        SustainPort   = 4,
+        ReleasePort   = 5,
+        PortCount     = 6
     };
 
     enum {
-	Polyphony = 128
+        Polyphony = 128
     };
 
     static const char *const portNames[PortCount];
@@ -69,7 +69,7 @@ private:
     static void selectProgram(LADSPA_Handle, unsigned long, unsigned long);
     static int getMidiController(LADSPA_Handle, unsigned long);
     static void runSynth(LADSPA_Handle, unsigned long,
-			 snd_seq_event_t *, unsigned long);
+                         snd_seq_event_t *, unsigned long);
     static void receiveHostDescriptor(const DSSI_Host_Descriptor *descriptor);
     static void workThreadCallback(LADSPA_Handle);
 

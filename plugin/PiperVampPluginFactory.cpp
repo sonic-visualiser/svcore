@@ -113,8 +113,7 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
     Profiler profiler("PiperVampPluginFactory::instantiatePlugin");
 
     if (m_origins.find(identifier) == m_origins.end()) {
-        cerr << "ERROR: No known server for identifier " << identifier << endl;
-        SVDEBUG << "ERROR: No known server for identifier " << identifier << endl;
+        SVCERR << "ERROR: No known server for identifier " << identifier << endl;
         return 0;
     }
     

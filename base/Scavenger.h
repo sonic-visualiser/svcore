@@ -106,15 +106,15 @@ template <typename T>
 Scavenger<T>::~Scavenger()
 {
     if (m_scavenged < m_claimed) {
-	for (size_t i = 0; i < m_objects.size(); ++i) {
-	    ObjectTimePair &pair = m_objects[i];
-	    if (pair.first != 0) {
-		T *ot = pair.first;
-		pair.first = 0;
-		delete ot;
-		++m_scavenged;
-	    }
-	}
+        for (size_t i = 0; i < m_objects.size(); ++i) {
+            ObjectTimePair &pair = m_objects[i];
+            if (pair.first != 0) {
+                T *ot = pair.first;
+                pair.first = 0;
+                delete ot;
+                ++m_scavenged;
+            }
+        }
     }
 
     clearExcess(0);
@@ -131,17 +131,17 @@ Scavenger<T>::claim(T *t)
     time_t sec = tv.tv_sec;
 
     for (size_t i = 0; i < m_objects.size(); ++i) {
-	ObjectTimePair &pair = m_objects[i];
-	if (pair.first == 0) {
-	    pair.second = sec;
-	    pair.first = t;
-	    ++m_claimed;
-	    return;
-	}
+        ObjectTimePair &pair = m_objects[i];
+        if (pair.first == 0) {
+            pair.second = sec;
+            pair.first = t;
+            ++m_claimed;
+            return;
+        }
     }
 
     std::cerr << "WARNING: Scavenger::claim(" << t << "): run out of slots, "
-	      << "using non-RT-safe method" << std::endl;
+              << "using non-RT-safe method" << std::endl;
     pushExcess(t);
 }
 
@@ -158,14 +158,14 @@ Scavenger<T>::scavenge(bool clearNow)
     time_t sec = tv.tv_sec;
 
     for (size_t i = 0; i < m_objects.size(); ++i) {
-	ObjectTimePair &pair = m_objects[i];
-	if (clearNow ||
-	    (pair.first != 0 && pair.second + m_sec < sec)) {
-	    T *ot = pair.first;
-	    pair.first = 0;
-	    delete ot;
-	    ++m_scavenged;
-	}
+        ObjectTimePair &pair = m_objects[i];
+        if (clearNow ||
+            (pair.first != 0 && pair.second + m_sec < sec)) {
+            T *ot = pair.first;
+            pair.first = 0;
+            delete ot;
+            ++m_scavenged;
+        }
     }
 
     if (sec > m_lastExcess + m_sec) {
@@ -191,8 +191,8 @@ Scavenger<T>::clearExcess(time_t sec)
 {
     m_excessMutex.lock();
     for (typename ObjectList::iterator i = m_excess.begin();
-	 i != m_excess.end(); ++i) {
-	delete *i;
+         i != m_excess.end(); ++i) {
+        delete *i;
     }
     m_excess.clear();
     m_lastExcess = sec;

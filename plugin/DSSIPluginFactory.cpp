@@ -61,61 +61,61 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
     Profiler profiler("DSSIPluginFactory::enumeratePlugins");
 
     for (std::vector<QString>::iterator i = m_identifiers.begin();
-	 i != m_identifiers.end(); ++i) {
+         i != m_identifiers.end(); ++i) {
 
-	const DSSI_Descriptor *ddesc = getDSSIDescriptor(*i);
-	if (!ddesc) continue;
+        const DSSI_Descriptor *ddesc = getDSSIDescriptor(*i);
+        if (!ddesc) continue;
 
-	const LADSPA_Descriptor *descriptor = ddesc->LADSPA_Plugin;
-	if (!descriptor) continue;
-	
-//	SVDEBUG << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << endl;
+        const LADSPA_Descriptor *descriptor = ddesc->LADSPA_Plugin;
+        if (!descriptor) continue;
+        
+//        SVDEBUG << "DSSIPluginFactory::enumeratePlugins: Name " << (descriptor->Name ? descriptor->Name : "NONE" ) << endl;
 
-	list.push_back(*i);
-	list.push_back(descriptor->Name);
-	list.push_back(QString("%1").arg(descriptor->UniqueID));
-	list.push_back(descriptor->Label);
-	list.push_back(descriptor->Maker);
-	list.push_back(descriptor->Copyright);
-	list.push_back((ddesc->run_synth || ddesc->run_multiple_synths) ? "true" : "false");
-	list.push_back(ddesc->run_multiple_synths ? "true" : "false");
-	list.push_back(m_taxonomy[*i]);
-	list.push_back(QString("%1").arg(descriptor->PortCount));
+        list.push_back(*i);
+        list.push_back(descriptor->Name);
+        list.push_back(QString("%1").arg(descriptor->UniqueID));
+        list.push_back(descriptor->Label);
+        list.push_back(descriptor->Maker);
+        list.push_back(descriptor->Copyright);
+        list.push_back((ddesc->run_synth || ddesc->run_multiple_synths) ? "true" : "false");
+        list.push_back(ddesc->run_multiple_synths ? "true" : "false");
+        list.push_back(m_taxonomy[*i]);
+        list.push_back(QString("%1").arg(descriptor->PortCount));
 
-	for (int p = 0; p < (int)descriptor->PortCount; ++p) {
+        for (int p = 0; p < (int)descriptor->PortCount; ++p) {
 
-	    int type = 0;
-	    if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[p])) {
-		type |= PortType::Control;
-	    } else {
-		type |= PortType::Audio;
-	    }
-	    if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[p])) {
-		type |= PortType::Input;
-	    } else {
-		type |= PortType::Output;
-	    }
+            int type = 0;
+            if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[p])) {
+                type |= PortType::Control;
+            } else {
+                type |= PortType::Audio;
+            }
+            if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[p])) {
+                type |= PortType::Input;
+            } else {
+                type |= PortType::Output;
+            }
 
-	    list.push_back(QString("%1").arg(p));
-	    list.push_back(descriptor->PortNames[p]);
-	    list.push_back(QString("%1").arg(type));
-	    list.push_back(QString("%1").arg(getPortDisplayHint(descriptor, p)));
-	    list.push_back(QString("%1").arg(getPortMinimum(descriptor, p)));
-	    list.push_back(QString("%1").arg(getPortMaximum(descriptor, p)));
-	    list.push_back(QString("%1").arg(getPortDefault(descriptor, p)));
-	}
+            list.push_back(QString("%1").arg(p));
+            list.push_back(descriptor->PortNames[p]);
+            list.push_back(QString("%1").arg(type));
+            list.push_back(QString("%1").arg(getPortDisplayHint(descriptor, p)));
+            list.push_back(QString("%1").arg(getPortMinimum(descriptor, p)));
+            list.push_back(QString("%1").arg(getPortMaximum(descriptor, p)));
+            list.push_back(QString("%1").arg(getPortDefault(descriptor, p)));
+        }
     }
 
     unloadUnusedLibraries();
 }
-	
+        
 RealTimePluginInstance *
 DSSIPluginFactory::instantiatePlugin(QString identifier,
-				     int instrument,
-				     int position,
-				     sv_samplerate_t sampleRate,
-				     int blockSize,
-				     int channels)
+                                     int instrument,
+                                     int position,
+                                     sv_samplerate_t sampleRate,
+                                     int blockSize,
+                                     int channels)
 {
     Profiler profiler("DSSIPluginFactory::instantiatePlugin");
 
@@ -123,14 +123,14 @@ DSSIPluginFactory::instantiatePlugin(QString identifier,
 
     if (descriptor) {
 
-	DSSIPluginInstance *instance =
-	    new DSSIPluginInstance
-	    (this, instrument, identifier, position, sampleRate, blockSize, channels,
-	     descriptor);
+        DSSIPluginInstance *instance =
+            new DSSIPluginInstance
+            (this, instrument, identifier, position, sampleRate, blockSize, channels,
+             descriptor);
 
-	m_instances.insert(instance);
+        m_instances.insert(instance);
 
-	return instance;
+        return instance;
     }
 
     return 0;
@@ -143,49 +143,49 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
 
     if (soname == PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
-	if (label == "sample_player") {
-	    const DSSI_Descriptor *descriptor = SamplePlayer::getDescriptor(0);
-	    if (descriptor) {
-		descriptor->receive_host_descriptor(&m_hostDescriptor);
-	    }
-	    return descriptor;
-	} else {
-	    return 0;
-	}
+        if (label == "sample_player") {
+            const DSSI_Descriptor *descriptor = SamplePlayer::getDescriptor(0);
+            if (descriptor) {
+                descriptor->receive_host_descriptor(&m_hostDescriptor);
+            }
+            return descriptor;
+        } else {
+            return 0;
+        }
     }
     
     bool firstInLibrary = false;
 
     if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
-	loadLibrary(soname);
-	if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
-	    cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: loadLibrary failed for " << soname << endl;
-	    return 0;
-	}
-	firstInLibrary = true;
+        loadLibrary(soname);
+        if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
+            cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: loadLibrary failed for " << soname << endl;
+            return 0;
+        }
+        firstInLibrary = true;
     }
 
     void *libraryHandle = m_libraryHandles[soname];
 
     DSSI_Descriptor_Function fn = (DSSI_Descriptor_Function)
-	DLSYM(libraryHandle, "dssi_descriptor");
+        DLSYM(libraryHandle, "dssi_descriptor");
 
     if (!fn) {
-	cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No descriptor function in library " << soname << endl;
-	return 0;
+        cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No descriptor function in library " << soname << endl;
+        return 0;
     }
 
     const DSSI_Descriptor *descriptor = 0;
     
     int index = 0;
     while ((descriptor = fn(index))) {
-	if (descriptor->LADSPA_Plugin->Label == label) {
-	    if (firstInLibrary && (descriptor->DSSI_API_Version >= 2)) {
-		descriptor->receive_host_descriptor(&m_hostDescriptor);
-	    }
-	    return descriptor;
-	}
-	++index;
+        if (descriptor->LADSPA_Plugin->Label == label) {
+            if (firstInLibrary && (descriptor->DSSI_API_Version >= 2)) {
+                descriptor->receive_host_descriptor(&m_hostDescriptor);
+            }
+            return descriptor;
+        }
+        ++index;
     }
 
     cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No such plugin as " << label << " in library " << soname << endl;
@@ -215,8 +215,8 @@ DSSIPluginFactory::getPluginPath()
 
         path = DEFAULT_DSSI_PATH;
 
-	char *home = getenv("HOME");
-	if (home) {
+        char *home = getenv("HOME");
+        if (home) {
             std::string::size_type f;
             while ((f = path.find("$HOME")) != std::string::npos &&
                    f < path.length()) {
@@ -240,8 +240,8 @@ DSSIPluginFactory::getPluginPath()
     std::string::size_type index = 0, newindex = 0;
 
     while ((newindex = path.find(PATH_SEPARATOR, index)) < path.size()) {
-	pathList.push_back(path.substr(index, newindex - index).c_str());
-	index = newindex + 1;
+        pathList.push_back(path.substr(index, newindex - index).c_str());
+        index = newindex + 1;
     }
     
     pathList.push_back(path.substr(index).c_str());
@@ -265,8 +265,8 @@ DSSIPluginFactory::getLRDFPath(QString &baseUri)
     lrdfPaths.push_back("/usr/share/ladspa/rdf");
 
     for (std::vector<QString>::iterator i = pathList.begin();
-	 i != pathList.end(); ++i) {
-	lrdfPaths.push_back(*i + "/rdf");
+         i != pathList.end(); ++i) {
+        lrdfPaths.push_back(*i + "/rdf");
     }
 
 #ifdef DSSI_BASE
@@ -300,11 +300,11 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
     }
 
     DSSI_Descriptor_Function fn = (DSSI_Descriptor_Function)
-	DLSYM(libraryHandle, "dssi_descriptor");
+        DLSYM(libraryHandle, "dssi_descriptor");
 
     if (!fn) {
-	cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No descriptor function in " << soname << endl;
-	return;
+        cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No descriptor function in " << soname << endl;
+        return;
     }
 
     const DSSI_Descriptor *descriptor = 0;
@@ -312,12 +312,12 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
     int index = 0;
     while ((descriptor = fn(index))) {
 
-	const LADSPA_Descriptor *ladspaDescriptor = descriptor->LADSPA_Plugin;
-	if (!ladspaDescriptor) {
-	    cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No LADSPA descriptor for plugin " << index << " in " << soname << endl;
-	    ++index;
-	    continue;
-	}
+        const LADSPA_Descriptor *ladspaDescriptor = descriptor->LADSPA_Plugin;
+        if (!ladspaDescriptor) {
+            cerr << "WARNING: DSSIPluginFactory::discoverPlugins: No LADSPA descriptor for plugin " << index << " in " << soname << endl;
+            ++index;
+            continue;
+        }
 
         RealTimePluginDescriptor *rtd = new RealTimePluginDescriptor;
         rtd->name = ladspaDescriptor->Name;
@@ -332,71 +332,71 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         rtd->audioOutputPortCount = 0;
         rtd->controlOutputPortCount = 0;
 
-	QString identifier = PluginIdentifier::createIdentifier
-	    ("dssi", soname, ladspaDescriptor->Label);
+        QString identifier = PluginIdentifier::createIdentifier
+            ("dssi", soname, ladspaDescriptor->Label);
 
 #ifdef HAVE_LRDF
-	char *def_uri = 0;
-	lrdf_defaults *defs = 0;
-		
-	QString category = m_taxonomy[identifier];
+        char *def_uri = 0;
+        lrdf_defaults *defs = 0;
+                
+        QString category = m_taxonomy[identifier];
 
         if (category == "" && m_lrdfTaxonomy[ladspaDescriptor->UniqueID] != "") {
             m_taxonomy[identifier] = m_lrdfTaxonomy[ladspaDescriptor->UniqueID];
             category = m_taxonomy[identifier];
         }
 
-	if (category == "") {
-	    std::string name = rtd->name;
-	    if (name.length() > 4 &&
-		name.substr(name.length() - 4) == " VST") {
-		if (descriptor->run_synth || descriptor->run_multiple_synths) {
-		    category = "VST instruments";
-		} else {
-		    category = "VST effects";
-		}
-		m_taxonomy[identifier] = category;
-	    }
-	}
+        if (category == "") {
+            std::string name = rtd->name;
+            if (name.length() > 4 &&
+                name.substr(name.length() - 4) == " VST") {
+                if (descriptor->run_synth || descriptor->run_multiple_synths) {
+                    category = "VST instruments";
+                } else {
+                    category = "VST effects";
+                }
+                m_taxonomy[identifier] = category;
+            }
+        }
 
         rtd->category = category.toStdString();
-	
-//	cerr << "Plugin id is " << ladspaDescriptor->UniqueID
+        
+//        cerr << "Plugin id is " << ladspaDescriptor->UniqueID
 //                  << ", identifier is \"" << identifier
-//		  << "\", category is \"" << category
-//		  << "\", name is " << ladspaDescriptor->Name
-//		  << ", label is " << ladspaDescriptor->Label
-//		  << endl;
-	
-	def_uri = lrdf_get_default_uri(ladspaDescriptor->UniqueID);
-	if (def_uri) {
-	    defs = lrdf_get_setting_values(def_uri);
-	}
-	
-	unsigned int controlPortNumber = 1;
-	
-	for (int i = 0; i < (int)ladspaDescriptor->PortCount; i++) {
-	    
-	    if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
-		
-		if (def_uri && defs) {
-		    
-		    for (int j = 0; j < (int)defs->count; j++) {
-			if (defs->items[j].pid == controlPortNumber) {
-//			    cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << ladspaDescriptor->PortNames[i] << endl;
-			    m_portDefaults[ladspaDescriptor->UniqueID][i] =
-				defs->items[j].value;
-			}
-		    }
-		}
-		
-		++controlPortNumber;
-	    }
-	}
+//                  << "\", category is \"" << category
+//                  << "\", name is " << ladspaDescriptor->Name
+//                  << ", label is " << ladspaDescriptor->Label
+//                  << endl;
+        
+        def_uri = lrdf_get_default_uri(ladspaDescriptor->UniqueID);
+        if (def_uri) {
+            defs = lrdf_get_setting_values(def_uri);
+        }
+        
+        unsigned int controlPortNumber = 1;
+        
+        for (int i = 0; i < (int)ladspaDescriptor->PortCount; i++) {
+            
+            if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
+                
+                if (def_uri && defs) {
+                    
+                    for (int j = 0; j < (int)defs->count; j++) {
+                        if (defs->items[j].pid == controlPortNumber) {
+//                            cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << ladspaDescriptor->PortNames[i] << endl;
+                            m_portDefaults[ladspaDescriptor->UniqueID][i] =
+                                defs->items[j].value;
+                        }
+                    }
+                }
+                
+                ++controlPortNumber;
+            }
+        }
 #endif // HAVE_LRDF
 
-	for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
-	    if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
+        for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
+            if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
                 if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
                     ++rtd->parameterCount;
                 } else {
@@ -416,11 +416,11 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
             }
         }
 
-	m_identifiers.push_back(identifier);
+        m_identifiers.push_back(identifier);
 
         m_rtDescriptors[identifier] = rtd;
 
-	++index;
+        ++index;
     }
 
     if (DLCLOSE(libraryHandle) != 0) {

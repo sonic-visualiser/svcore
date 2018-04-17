@@ -19,11 +19,13 @@
 #include "base/Selection.h"
 #include "base/TempWriteFile.h"
 #include "base/Exceptions.h"
+#include "base/Debug.h"
 
 #include <QFileInfo>
 
 #include <iostream>
 #include <cmath>
+#include <string>
 
 using namespace std;
 
@@ -41,7 +43,7 @@ WavFileWriter::WavFileWriter(QString path,
 
     int fileRate = int(round(m_sampleRate));
     if (m_sampleRate != sv_samplerate_t(fileRate)) {
-        cerr << "WavFileWriter: WARNING: Non-integer sample rate "
+        SVCERR << "WavFileWriter: WARNING: Non-integer sample rate "
              << m_sampleRate << " presented, rounding to " << fileRate
              << endl;
     }
@@ -61,7 +63,7 @@ WavFileWriter::WavFileWriter(QString path,
         m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
 #endif
         if (!m_file) {
-            cerr << "WavFileWriter: Failed to open file ("
+            SVCERR << "WavFileWriter: Failed to open file ("
                  << sf_strerror(m_file) << ")" << endl;
             m_error = QString("Failed to open audio file '%1' for writing")
                 .arg(writePath);
@@ -132,11 +134,11 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
     for (MultiSelection::SelectionList::iterator i =
          selection->getSelections().begin();
          i != selection->getSelections().end(); ++i) {
-	
+        
         sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
 
         for (sv_frame_t f = f0; f < f1; f += bs) {
-	    
+            
             sv_frame_t n = min(bs, f1 - f);
             floatvec_t interleaved(n * m_channels, 0.f);
 
@@ -161,7 +163,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 
     return isOK();
 }
-	
+        
 bool
 WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {

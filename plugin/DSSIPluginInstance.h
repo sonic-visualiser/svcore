@@ -68,7 +68,7 @@ public:
 
     virtual std::string configure(std::string key, std::string value);
     virtual void sendEvent(const RealTime &eventTime,
-			   const void *event);
+                           const void *event);
     virtual void clearEvents();
 
     virtual int getBufferSize() const { return m_blockSize; }
@@ -107,13 +107,13 @@ protected:
     // Constructor that creates the buffers internally
     // 
     DSSIPluginInstance(RealTimePluginFactory *factory,
-		       int client,
-		       QString identifier,
-		       int position,
-		       sv_samplerate_t sampleRate,
-		       int blockSize,
-		       int idealChannelCount,
-		       const DSSI_Descriptor* descriptor);
+                       int client,
+                       QString identifier,
+                       int position,
+                       sv_samplerate_t sampleRate,
+                       int blockSize,
+                       int idealChannelCount,
+                       const DSSI_Descriptor* descriptor);
     
     void init();
     void instantiate(sv_samplerate_t sampleRate);
@@ -132,13 +132,13 @@ protected:
 
     // For use in DSSIPluginFactory (set in the DSSI_Host_Descriptor):
     static int requestMidiSend(LADSPA_Handle instance,
-			       unsigned char ports,
-			       unsigned char channels);
+                               unsigned char ports,
+                               unsigned char channels);
     static void midiSend(LADSPA_Handle instance,
-			 snd_seq_event_t *events,
-			 unsigned long eventCount);
+                         snd_seq_event_t *events,
+                         unsigned long eventCount);
     static int requestNonRTThread(LADSPA_Handle instance,
-				  void (*runFunction)(LADSPA_Handle));
+                                  void (*runFunction)(LADSPA_Handle));
 
     int                        m_client;
     int                        m_position;
@@ -156,16 +156,16 @@ protected:
     std::vector<int>          m_audioPortsOut;
 
     struct ProgramControl {
-	int msb;
-	int lsb;
-	int program;
+        int msb;
+        int lsb;
+        int program;
     };
     ProgramControl m_pending;
 
     struct ProgramDescriptor {
-	int bank;
-	int program;
-	std::string name;
+        int bank;
+        int program;
+        std::string name;
     };
     mutable std::vector<ProgramDescriptor> m_cachedPrograms;
     mutable bool m_programCacheValid;
@@ -203,19 +203,19 @@ protected:
     class NonRTPluginThread : public Thread
     {
     public:
-	NonRTPluginThread(LADSPA_Handle handle,
-			  void (*runFunction)(LADSPA_Handle)) :
-	    m_handle(handle),
-	    m_runFunction(runFunction),
-	    m_exiting(false) { }
+        NonRTPluginThread(LADSPA_Handle handle,
+                          void (*runFunction)(LADSPA_Handle)) :
+            m_handle(handle),
+            m_runFunction(runFunction),
+            m_exiting(false) { }
 
-	virtual void run();
-	void setExiting() { m_exiting = true; }
+        virtual void run();
+        void setExiting() { m_exiting = true; }
 
     protected:
-	LADSPA_Handle m_handle;
-	void (*m_runFunction)(LADSPA_Handle);
-	bool m_exiting;
+        LADSPA_Handle m_handle;
+        void (*m_runFunction)(LADSPA_Handle);
+        bool m_exiting;
     };
     static std::map<LADSPA_Handle, std::set<NonRTPluginThread *> > m_threads;
 };

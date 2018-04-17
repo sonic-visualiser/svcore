@@ -33,9 +33,9 @@ public:
     virtual ~ZoomConstraint() { }
 
     enum RoundingDirection {
-	RoundDown,
-	RoundUp,
-	RoundNearest
+        RoundDown,
+        RoundUp,
+        RoundNearest
     };
 
     /**
@@ -49,11 +49,11 @@ public:
      * depending on the rounding direction supplied.
      */
     virtual int getNearestBlockSize(int requestedBlockSize,
-				       RoundingDirection = RoundNearest)
-	const
+                                       RoundingDirection = RoundNearest)
+        const
     {
-	if (requestedBlockSize > getMaxZoomLevel()) return getMaxZoomLevel();
-	else return requestedBlockSize;
+        if (requestedBlockSize > getMaxZoomLevel()) return getMaxZoomLevel();
+        else return requestedBlockSize;
     }
 
     /**

@@ -25,23 +25,23 @@ class CSVFormat
 {
 public:
     enum ModelType {
-	OneDimensionalModel,
-	TwoDimensionalModel,
+        OneDimensionalModel,
+        TwoDimensionalModel,
         TwoDimensionalModelWithDuration,
         TwoDimensionalModelWithDurationAndPitch,
-	ThreeDimensionalModel
+        ThreeDimensionalModel
     };
     
     enum TimingType {
-	ExplicitTiming,
-	ImplicitTiming
+        ExplicitTiming,
+        ImplicitTiming
     };
 
     enum TimeUnits {
-	TimeSeconds,
+        TimeSeconds,
         TimeMilliseconds,
-	TimeAudioFrames,
-	TimeWindows,
+        TimeAudioFrames,
+        TimeWindows,
     };
 
     enum ColumnPurpose {
@@ -121,7 +121,7 @@ public:
     // read-only; only valid if format has been guessed:
     QList<QStringList> getExample() const { return m_example; }
     int getMaxExampleCols() const { return m_maxExampleCols; }
-	
+        
 protected:
     ModelType    m_modelType;
     TimingType   m_timingType;
