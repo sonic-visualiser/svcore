@@ -37,12 +37,19 @@ namespace
         void setDefinite(bool) override {}
         bool wasCancelled() const override { return m_isCancelled(); }
         void setMessage(QString) override {}
-        void setProgress(int) override { ++m_calls; }
+        void setProgress(int p) override
+        { 
+            ++m_calls;
+            m_percentageLog.push_back(p);
+        }
+
         size_t getCallCount() const { return m_calls; }
+        std::vector<int> getPercentageLog() const { return m_percentageLog; }
         void reset() { m_calls = 0; }
     private:
         size_t m_calls = 0;
         std::function<bool()> m_isCancelled;
+        std::vector<int> m_percentageLog;
     };
 } // namespace
 
@@ -168,6 +175,77 @@ private slots:
         );
         QVERIFY( cancelMidway.getCallCount() == 3 );
         QVERIFY( cancelledMidway == false );
+    }
+
+    void zeroStartTimeReportsPercentageCorrectly()
+    {
+        MockWaveModel mwm({ DC, DC }, 16, 4);
+        StubReporter reporter { []() -> bool { return false; } };
+        std::ostringstream oss;
+        const auto succeeded = CSVStreamWriter::writeInChunks(
+            oss,
+            mwm,
+            &reporter,
+            ",",
+            DataExportDefaults,
+            4
+        );
+        QVERIFY( succeeded == true );
+        QVERIFY( reporter.getCallCount() == 6 );
+        const std::vector<int> expectedCallLog {
+            16,
+            33,
+            50,
+            66,
+            83,
+            100
+        };
+        QVERIFY( reporter.getPercentageLog() == expectedCallLog );
+        QVERIFY( oss.str() == getExpectedString() );
+    }
+
+    void nonZeroStartTimeReportsPercentageCorrectly()
+    {
+        MockWaveModel mwm({ DC, DC }, 16, 4);
+        StubReporter reporter { []() -> bool { return false; } };
+        std::ostringstream oss;
+        const auto writeSubSection = CSVStreamWriter::writeInChunks(
+            oss,
+            mwm,
+            {4, 20},
+            &reporter,
+            ",",
+            DataExportDefaults,
+            4
+        );
+        QVERIFY( reporter.getCallCount() == 4 );
+        const std::vector<int> expectedCallLog {
+            25,
+            50,
+            75,
+            100
+        };
+        QVERIFY( reporter.getPercentageLog() == expectedCallLog );
+        QVERIFY( writeSubSection == true );
+        const std::string expectedOutput {
+          "4,1,1\n"
+          "5,1,1\n"
+          "6,1,1\n"
+          "7,1,1\n"
+          "8,1,1\n"
+          "9,1,1\n"
+          "10,1,1\n"
+          "11,1,1\n"
+          "12,1,1\n"
+          "13,1,1\n"
+          "14,1,1\n"
+          "15,1,1\n"
+          "16,1,1\n"
+          "17,1,1\n"
+          "18,1,1\n"
+          "19,1,1"
+        };
+        QVERIFY( oss.str() == expectedOutput );
     }
 };
 
