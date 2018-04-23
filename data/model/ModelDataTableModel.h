@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MODEL_DATA_TABLE_MODEL_H_
-#define _MODEL_DATA_TABLE_MODEL_H_
+#ifndef SV_MODEL_DATA_TABLE_MODEL_H
+#define SV_MODEL_DATA_TABLE_MODEL_H
 
 #include <QAbstractItemModel>
 

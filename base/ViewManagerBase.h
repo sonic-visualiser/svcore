@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _VIEW_MANAGER_BASE_H_
-#define _VIEW_MANAGER_BASE_H_
+#ifndef SV_VIEW_MANAGER_BASE_H
+#define SV_VIEW_MANAGER_BASE_H
 
 #include <QObject>
 
