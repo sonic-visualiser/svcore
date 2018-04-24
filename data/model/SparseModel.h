@@ -43,6 +43,13 @@ template <typename PointType>
 class SparseModel : public Model,
                     public TabularModel
 {
+    // If we omit the Q_OBJECT macro, lupdate complains.
+
+    // If we include it, moc fails (can't handle template classes).
+
+    // If we omit it, lupdate still seems to emit translatable
+    // messages for the tr() strings in here. So I guess we omit it.
+    
 public:
     SparseModel(sv_samplerate_t sampleRate, int resolution,
                 bool notifyOnAdd = true);
