@@ -207,11 +207,17 @@ ReadOnlyWaveFileModel::getLocalFilename() const
 }
     
 floatvec_t
-ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
+ReadOnlyWaveFileModel::getData(int channel,
+                               sv_frame_t start,
+                               sv_frame_t count)
+    const
 {
-    // Read directly from the file.  This is used for e.g. audio
-    // playback or input to transforms.
+    // Read a single channel (if channel >= 0) or a mixdown of all
+    // channels (if channel == -1) directly from the file.  This is
+    // used for e.g. audio playback or input to transforms.
 
+    Profiler profiler("ReadOnlyWaveFileModel::getData");
+    
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << endl;
 #endif
@@ -268,8 +274,10 @@ vector<floatvec_t>
 ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
                                            sv_frame_t start, sv_frame_t count) const
 {
-    // Read directly from the file.  This is used for e.g. audio
-    // playback or input to transforms.
+    // Read a set of channels directly from the file.  This is used
+    // for e.g. audio playback or input to transforms.
+
+    Profiler profiler("ReadOnlyWaveFileModel::getMultiChannelData");
 
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << endl;
@@ -278,16 +286,18 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
     int channels = getChannelCount();
 
     if (fromchannel > tochannel) {
-        SVCERR << "ERROR: ReadOnlyWaveFileModel::getData: fromchannel ("
-                  << fromchannel << ") > tochannel (" << tochannel << ")"
-                  << endl;
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getMultiChannelData: "
+               << "fromchannel (" << fromchannel
+               << ") > tochannel (" << tochannel << ")"
+               << endl;
         return {};
     }
 
     if (tochannel >= channels) {
-        SVCERR << "ERROR: ReadOnlyWaveFileModel::getData: tochannel ("
-                  << tochannel << ") >= channel count (" << channels << ")"
-                  << endl;
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getMultiChannelData: "
+               << "tochannel (" << tochannel
+               << ") >= channel count (" << channels << ")"
+               << endl;
         return {};
     }
 

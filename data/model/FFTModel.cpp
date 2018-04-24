@@ -241,14 +241,20 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         
         sv_frame_t discard = range.first - m_savedData.range.first;
 
-        fvec acc(m_savedData.data.begin() + discard, m_savedData.data.end());
+        fvec data;
+        data.reserve(range.second - range.first);
 
-        fvec rest = getSourceDataUncached({ m_savedData.range.second, range.second });
+        data.insert(data.end(),
+                    m_savedData.data.begin() + discard,
+                    m_savedData.data.end());
 
-        acc.insert(acc.end(), rest.begin(), rest.end());
+        fvec rest = getSourceDataUncached
+            ({ m_savedData.range.second, range.second });
+
+        data.insert(data.end(), rest.begin(), rest.end());
         
-        m_savedData = { range, acc };
-        return acc;
+        m_savedData = { range, data };
+        return data;
 
     } else {
 
@@ -263,6 +269,8 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 FFTModel::fvec
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
+    Profiler profiler("FFTModel::getSourceDataUncached");
+    
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
         pfx = -range.first;
