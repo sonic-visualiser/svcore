@@ -755,30 +755,35 @@ template <typename PointType>
 void
 SparseModel<PointType>::addPoint(const PointType &point)
 {
-    QMutexLocker locker(&m_mutex);
+    {
+        QMutexLocker locker(&m_mutex);
 
-    m_points.insert(point);
-    m_pointCount++;
-    if (point.getLabel() != "") m_hasTextLabels = true;
+        m_points.insert(point);
+        m_pointCount++;
+        if (point.getLabel() != "") m_hasTextLabels = true;
 
-    // Even though this model is nominally sparse, there may still be
-    // too many signals going on here (especially as they'll probably
-    // be queued from one thread to another), which is why we need the
-    // notifyOnAdd as an option rather than a necessity (the
-    // alternative is to notify on setCompletion).
+        // Even though this model is nominally sparse, there may still
+        // be too many signals going on here (especially as they'll
+        // probably be queued from one thread to another), which is
+        // why we need the notifyOnAdd as an option rather than a
+        // necessity (the alternative is to notify on setCompletion).
+
+        if (m_notifyOnAdd) {
+            m_rows.clear(); //!!! inefficient
+        } else {
+            if (m_sinceLastNotifyMin == -1 ||
+                point.frame < m_sinceLastNotifyMin) {
+                m_sinceLastNotifyMin = point.frame;
+            }
+            if (m_sinceLastNotifyMax == -1 ||
+                point.frame > m_sinceLastNotifyMax) {
+                m_sinceLastNotifyMax = point.frame;
+            }
+        }
+    }
 
     if (m_notifyOnAdd) {
-        m_rows.clear(); //!!! inefficient
         emit modelChangedWithin(point.frame, point.frame + m_resolution);
-    } else {
-        if (m_sinceLastNotifyMin == -1 ||
-            point.frame < m_sinceLastNotifyMin) {
-            m_sinceLastNotifyMin = point.frame;
-        }
-        if (m_sinceLastNotifyMax == -1 ||
-            point.frame > m_sinceLastNotifyMax) {
-            m_sinceLastNotifyMax = point.frame;
-        }
     }
 }
 
@@ -805,23 +810,26 @@ template <typename PointType>
 void
 SparseModel<PointType>::deletePoint(const PointType &point)
 {
-    QMutexLocker locker(&m_mutex);
+    {
+        QMutexLocker locker(&m_mutex);
 
-    PointListIterator i = m_points.lower_bound(point);
-    typename PointType::Comparator comparator;
-    while (i != m_points.end()) {
-        if (i->frame > point.frame) break;
-        if (!comparator(*i, point) && !comparator(point, *i)) {
-            m_points.erase(i);
-            m_pointCount--;
-            break;
+        PointListIterator i = m_points.lower_bound(point);
+        typename PointType::Comparator comparator;
+        while (i != m_points.end()) {
+            if (i->frame > point.frame) break;
+            if (!comparator(*i, point) && !comparator(point, *i)) {
+                m_points.erase(i);
+                m_pointCount--;
+                break;
             }
-        ++i;
-    }
+            ++i;
+        }
 
 //    std::cout << "SparseOneDimensionalModel: emit modelChanged("
 //              << point.frame << ")" << std::endl;
-    m_rows.clear(); //!!! inefficient
+        m_rows.clear(); //!!! inefficient
+    }
+    
     emit modelChangedWithin(point.frame, point.frame + m_resolution);
 }
 
@@ -830,36 +838,47 @@ void
 SparseModel<PointType>::setCompletion(int completion, bool update)
 {
 //    std::cerr << "SparseModel::setCompletion(" << completion << ")" << std::endl;
+    bool emitCompletionChanged = true;
+    bool emitGeneralModelChanged = false;
+    bool emitRegionChanged = false;
 
-    QMutexLocker locker(&m_mutex);
+    {
+        QMutexLocker locker(&m_mutex);
 
-    if (m_completion != completion) {
-        m_completion = completion;
+        if (m_completion != completion) {
+            m_completion = completion;
 
-        if (completion == 100) {
+            if (completion == 100) {
 
-            if (!m_notifyOnAdd) {
-                emit completionChanged();
-            }
+                if (m_notifyOnAdd) {
+                    emitCompletionChanged = false;
+                }
 
-            m_notifyOnAdd = true; // henceforth
-            m_rows.clear(); //!!! inefficient
-            emit modelChanged();
-
-        } else if (!m_notifyOnAdd) {
-
-            if (update &&
-                m_sinceLastNotifyMin >= 0 &&
-                m_sinceLastNotifyMax >= 0) {
+                m_notifyOnAdd = true; // henceforth
                 m_rows.clear(); //!!! inefficient
-                emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
-                m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
-            } else {
-                emit completionChanged();
+                emitGeneralModelChanged = true;
+
+            } else if (!m_notifyOnAdd) {
+
+                if (update &&
+                    m_sinceLastNotifyMin >= 0 &&
+                    m_sinceLastNotifyMax >= 0) {
+                    m_rows.clear(); //!!! inefficient
+                    emitRegionChanged = true;
+                }
             }
-        } else {
-            emit completionChanged();
-        }            
+        }
+    }
+
+    if (emitCompletionChanged) {
+        emit completionChanged();
+    }
+    if (emitGeneralModelChanged) {
+        emit modelChanged();
+    }
+    if (emitRegionChanged) {
+        emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
+        m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
     }
 }
 
