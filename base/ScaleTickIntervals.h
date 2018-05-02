@@ -182,6 +182,11 @@ private:
     {
         Display display = Auto;
 
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        SVDEBUG << "ScaleTickIntervals::logInstruction: Range is "
+                << r.min << " to " << r.max << endl;
+#endif
+        
         if (r.n < 1) {
             return {};
         }
@@ -196,33 +201,71 @@ private:
 
         double digInc = log10(inc);
         int precInc = int(floor(digInc));
+
         double roundTo = pow(10.0, precInc);
 
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        SVDEBUG << "ScaleTickIntervals::logInstruction: Naive increment is "
+                << inc << ", of " << digInc << "-digit length" << endl;
+        SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                << "So increment is precision " << precInc
+                << ", yielding rounding for increment of "
+                << roundTo << endl;
+#endif
+        
         if (roundTo != 0.0) {
             inc = round(inc / roundTo) * roundTo;
             if (inc < roundTo) inc = roundTo;
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                    << "Rounded increment to " << inc << endl;
+#endif
         }
 
         // if inc is close to giving us powers of two, nudge it
         if (fabs(inc - 0.301) < 0.01) {
             inc = log10(2.0);
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                    << "Nudged increment to " << inc << " to get powers of two"
+                    << endl;
+#endif
         }
 
         // smallest increment as displayed
         double minDispInc =
             LogRange::unmap(r.min + inc) - LogRange::unmap(r.min);
 
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                << "Smallest displayed increment is " << minDispInc << endl;
+#endif
+        
         int prec = 1;
 
         if (minDispInc > 0.0) {
-            prec = int(floor(log10(minDispInc)));
+            prec = int(ceil(log10(minDispInc))) - 1;
+            if (prec == 0) prec = 1;
             if (prec < 0) prec = -prec;
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                    << "Precision therefrom is " << prec << endl;
+#endif
         }
 
         if (r.max >= -2.0 && r.max <= 3.0 &&
             r.min >= -3.0 && r.min <= 3.0) {
             display = Fixed;
             if (prec == 0) prec = 1;
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+            SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                    << "Min and max within modest range, adjusted precision to "
+                    << prec << " and display to Fixed" << endl;
+#endif
         }
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
@@ -259,16 +302,58 @@ private:
     }
     
     static Tick makeTick(Display display, int precision, double value) {
+
         if (value == -0.0) {
             value = 0.0;
         }
+        
         const int buflen = 40;
         char buffer[buflen];
-        snprintf(buffer, buflen,
-                 display == Auto ? "%.*g" :
-                 display == Fixed ? "%.*f" :
-                 "%.*e",
-                 precision, value);
+
+        if (display == Auto) {
+
+            int digits = (value != 0.0 ? int(ceil(log10(abs(value)))) : 0);
+
+            // This is not the same logic as %g uses for determining
+            // whether to delegate to use scientific or fixed notation
+
+            if (digits < -3 || digits > 4) {
+
+                display = Auto; // delegate planning to %g
+
+            } else {
+
+                display = Fixed;
+                
+                // in %.*f, the * indicates decimal places, not sig figs
+                if (precision > digits) {
+                    precision -= digits;
+                } else if (precision == digits) {
+                    precision = 1;
+                } else if (precision + 1 < digits) {
+                    double r = pow(10, digits - precision - 1);
+                    value = r * round(value / r);
+                    precision = 0;
+                } else {
+                    precision = 0;
+                }
+            }
+        }
+        
+        const char *spec = (display == Auto ? "%.*g" :
+                            display == Scientific ? "%.*e" :
+                            "%.*f");
+
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+        
+        snprintf(buffer, buflen, spec, precision, value);
+
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        SVDEBUG << "makeTick: spec = \"" << spec
+                << "\", prec = " << precision << ", value = " << value
+                << ", label = \"" << buffer << "\"" << endl;
+#endif
+        
         return Tick({ value, std::string(buffer) });
     }
     

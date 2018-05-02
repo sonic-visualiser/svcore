@@ -428,7 +428,7 @@ private slots:
         // pathological range
         auto ticks = ScaleTickIntervals::linear({ 1, 1, 10 });
         ScaleTickIntervals::Ticks expected {
-            { 1.0, "1" }
+            { 1.0, "1.0" }
         };
         compareTicks(ticks, expected);
     }
@@ -438,7 +438,7 @@ private slots:
         // pathological range
         auto ticks = ScaleTickIntervals::linear({ 0, 0, 10 });
         ScaleTickIntervals::Ticks expected {
-            { 0.0, "0" }
+            { 0.0, "0.0" }
         };
         compareTicks(ticks, expected);
     }
@@ -458,7 +458,7 @@ private slots:
         // senseless input
         auto ticks = ScaleTickIntervals::linear({ 0, 1, 0 });
         ScaleTickIntervals::Ticks expected {
-            { 0.0, "0" },
+            { 0.0, "0.0" },
         };
         compareTicks(ticks, expected);
     }
@@ -468,7 +468,7 @@ private slots:
         // senseless input
         auto ticks = ScaleTickIntervals::linear({ 0, 1, -1 });
         ScaleTickIntervals::Ticks expected {
-            { 0.0, "0" },
+            { 0.0, "0.0" },
         };
         compareTicks(ticks, expected);
     }
@@ -518,7 +518,7 @@ private slots:
     {
         auto ticks = ScaleTickIntervals::logarithmic({ M_PI, 6.022140857e23, 7 });
         ScaleTickIntervals::Ticks expected {
-            { 1000, "1e+03" },
+            { 1000, "1000.0" },
             { 1e+06, "1e+06" },
             { 1e+09, "1e+09" },
             { 1e+12, "1e+12" },
@@ -528,7 +528,7 @@ private slots:
         };
         compareTicks(ticks, expected, true);
     }
-    
+
     void log_0p465_778_10()
     {
         auto ticks = ScaleTickIntervals::logarithmic({ 0.465, 778.08, 10 });
@@ -548,6 +548,76 @@ private slots:
         compareTicks(ticks, expected);
     }
     
+    void log_1_10k_10()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 1.0, 10000.0, 10 });
+        ScaleTickIntervals::Ticks expected {
+            { 1.0, "1.0" },
+            { 2.5, "2.5" },
+            { 6.0, "6.0" },
+            { 16.0, "16.0" },
+            { 40.0, "40.0" },
+            { 100.0, "100.0" },
+            { 250.0, "250.0" },
+            { 600.0, "600.0" },
+            { 1600.0, "1600.0" },
+            { 4000.0, "4000.0" },
+            { 10000.0, "1e+04" },
+        };
+        compareTicks(ticks, expected, true);
+    }
+    
+    void log_80_10k_6()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 80.0, 10000.0, 6 });
+        ScaleTickIntervals::Ticks expected {
+            { 130, "130" },
+            { 260, "260" },
+            { 510, "510" },
+            { 1000, "1000" },
+            { 2000, "2000" },
+            { 4100, "4100" },
+            { 8200, "8200" }
+        };
+        compareTicks(ticks, expected, true);
+    }
+    
+    void log_80_800k_10()
+    {
+        auto ticks = ScaleTickIntervals::logarithmic({ 80.0, 800000.0, 10 });
+        ScaleTickIntervals::Ticks expected {
+            { 100, "100" },
+            { 251, "251" },
+            { 631, "631" },
+            { 1580, "1580" },
+            { 3980, "3980" },
+            { 10000, "10000" },
+            { 25100, "2.5e+04" },
+            { 63100, "6.3e+04" },
+            { 160000, "1.6e+05" },
+            { 400000, "4e+05" },
+        };
+        compareTicks(ticks, expected, true);
+    }
+    
+    void log_0_1_0()
+    {
+        // senseless input
+        auto ticks = ScaleTickIntervals::logarithmic({ 0, 1, 0 });
+        ScaleTickIntervals::Ticks expected {
+        };
+        compareTicks(ticks, expected);
+    }
+    
+    void log_0_1_m1()
+    {
+        // senseless input
+        auto ticks = ScaleTickIntervals::logarithmic({ 0, 1, -1 });
+        ScaleTickIntervals::Ticks expected {
+        };
+        compareTicks(ticks, expected);
+    }
+
 };
 
 #endif
