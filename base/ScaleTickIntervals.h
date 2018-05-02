@@ -83,6 +83,7 @@ private:
         double limit;      // max from original range
         double spacing;    // increment between ticks
         double roundTo;    // what all displayed values should be rounded to
+                           // (if 0.0, then calculate based on precision)
         Display display;   // whether to use fixed precision (%e, %f, or %g)
         int precision;     // number of dp (%f) or sf (%e)
         bool logUnmap;     // true if values represent logs of display values
@@ -199,29 +200,28 @@ private:
         
         double inc = (r.max - r.min) / r.n;
 
+#ifdef DEBUG_SCALE_TICK_INTERVALS
+        SVDEBUG << "ScaleTickIntervals::logInstruction: "
+                << "Naive increment is " << inc << endl;
+#endif
+
+        int precision = 1;
+
+        if (inc < 1.0) {
+            precision = int(ceil(1.0 - inc)) + 1;
+        }
+
         double digInc = log10(inc);
         int precInc = int(floor(digInc));
+        double roundIncTo = pow(10.0, precInc);
 
-        double roundTo = pow(10.0, precInc);
+        inc = round(inc / roundIncTo) * roundIncTo;
+        if (inc < roundIncTo) inc = roundIncTo;
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVDEBUG << "ScaleTickIntervals::logInstruction: Naive increment is "
-                << inc << ", of " << digInc << "-digit length" << endl;
         SVDEBUG << "ScaleTickIntervals::logInstruction: "
-                << "So increment is precision " << precInc
-                << ", yielding rounding for increment of "
-                << roundTo << endl;
+                << "Rounded increment to " << inc << endl;
 #endif
-        
-        if (roundTo != 0.0) {
-            inc = round(inc / roundTo) * roundTo;
-            if (inc < roundTo) inc = roundTo;
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVDEBUG << "ScaleTickIntervals::logInstruction: "
-                    << "Rounded increment to " << inc << endl;
-#endif
-        }
 
         // if inc is close to giving us powers of two, nudge it
         if (fabs(inc - 0.301) < 0.01) {
@@ -234,59 +234,13 @@ private:
 #endif
         }
 
-        // smallest increment as displayed
-        double minDispInc =
-            LogRange::unmap(r.min + inc) - LogRange::unmap(r.min);
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVDEBUG << "ScaleTickIntervals::logInstruction: "
-                << "Smallest displayed increment is " << minDispInc << endl;
-#endif
-        
-        int prec = 1;
-
-        if (minDispInc > 0.0) {
-            prec = int(ceil(log10(minDispInc))) - 1;
-            if (prec == 0) prec = 1;
-            if (prec < 0) prec = -prec;
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVDEBUG << "ScaleTickIntervals::logInstruction: "
-                    << "Precision therefrom is " << prec << endl;
-#endif
-        }
-
-        if (r.max >= -2.0 && r.max <= 3.0 &&
-            r.min >= -3.0 && r.min <= 3.0) {
-            display = Fixed;
-            if (prec == 0) prec = 1;
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVDEBUG << "ScaleTickIntervals::logInstruction: "
-                    << "Min and max within modest range, adjusted precision to "
-                    << prec << " and display to Fixed" << endl;
-#endif
-        }
-
-#ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVDEBUG << "ScaleTickIntervals: calculating logInstruction" << endl
-                << "ScaleTickIntervals: min = " << r.min << ", max = " << r.max
-                << ", n = " << r.n << ", inc = " << inc
-                << ", minDispInc = " << minDispInc << ", digInc = " << digInc
-                << endl;
-        SVDEBUG << "ScaleTickIntervals: display = " << display
-                << ", inc = " << inc << ", precInc = " << precInc
-                << ", prec = " << prec << endl;
-        SVDEBUG << "ScaleTickIntervals: roundTo = " << roundTo << endl;
-#endif
-        
         double min = r.min;
         if (inc != 0.0) {
             min = ceil(r.min / inc) * inc;
             if (min > r.max) min = r.max;
         }
 
-        return { min, r.max, inc, 0.0, display, prec, true };
+        return { min, r.max, inc, 0.0, display, precision, true };
     }
 
     static Ticks linearTicks(Range r) {
@@ -312,7 +266,7 @@ private:
 
         if (display == Auto) {
 
-            int digits = (value != 0.0 ? int(ceil(log10(abs(value)))) : 0);
+            int digits = (value != 0.0 ? 1 + int(floor(log10(abs(value)))) : 0);
 
             // This is not the same logic as %g uses for determining
             // whether to delegate to use scientific or fixed notation
@@ -326,20 +280,14 @@ private:
                 display = Fixed;
                 
                 // in %.*f, the * indicates decimal places, not sig figs
-                if (precision > digits) {
+                if (precision >= digits) {
                     precision -= digits;
-                } else if (precision == digits) {
-                    precision = 1;
-                } else if (precision + 1 < digits) {
-                    double r = pow(10, digits - precision - 1);
-                    value = r * round(value / r);
-                    precision = 0;
                 } else {
                     precision = 0;
                 }
             }
         }
-        
+
         const char *spec = (display == Auto ? "%.*g" :
                             display == Scientific ? "%.*e" :
                             "%.*f");
@@ -386,16 +334,30 @@ private:
         Ticks ticks;
         
         while (true) {
+
             double value = instruction.initial + n * instruction.spacing;
+
             if (value >= max + eps) {
                 break;
             }
+
             if (instruction.logUnmap) {
                 value = pow(10.0, value);
             }
-            if (instruction.roundTo != 0.0) {
-                value = instruction.roundTo * round(value / instruction.roundTo);
+
+            double roundTo = instruction.roundTo;
+
+            if (roundTo == 0.0 && value != 0.0) {
+                // We don't want the internal value secretly not
+                // matching the displayed one
+                roundTo =
+                    pow(10, ceil(log10(abs(value))) - instruction.precision);
             }
+                                           
+            if (roundTo != 0.0) {
+                value = roundTo * round(value / roundTo);
+            }
+            
             ticks.push_back(makeTick(instruction.display,
                                      instruction.precision,
                                      value));
