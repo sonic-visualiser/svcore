@@ -357,6 +357,10 @@ private:
             if (roundTo != 0.0) {
                 value = roundTo * round(value / roundTo);
             }
+
+            if (fabs(value) < eps) {
+                value = 0.0;
+            }
             
             ticks.push_back(makeTick(instruction.display,
                                      instruction.precision,
