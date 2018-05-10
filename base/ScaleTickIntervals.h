@@ -266,7 +266,11 @@ private:
 
         if (display == Auto) {
 
-            int digits = (value != 0.0 ? 1 + int(floor(log10(abs(value)))) : 0);
+            double eps = 1e-10;
+            
+            int digits = (value != 0.0 ?
+                          1 + int(floor(eps + log10(abs(value)))) :
+                          0);
 
             // This is not the same logic as %g uses for determining
             // whether to delegate to use scientific or fixed notation

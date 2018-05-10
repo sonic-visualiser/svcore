@@ -32,14 +32,14 @@ class TestScaleTickIntervals : public QObject
     void printDiff(vector<ScaleTickIntervals::Tick> ticks,
                    vector<ScaleTickIntervals::Tick> expected) {
 
-    SVCERR << "Have " << ticks.size() << " ticks, expected "
-             << expected.size() << endl;
+        SVCERR << "Have " << ticks.size() << " ticks, expected "
+               << expected.size() << endl;
         for (int i = 0; i < int(ticks.size()); ++i) {
             SVCERR << i << ": have " << ticks[i].value << " \""
-                 << ticks[i].label << "\", expected ";
+                   << ticks[i].label << "\", expected ";
             if (i < int(expected.size())) {
                 SVCERR << expected[i].value << " \"" << expected[i].label
-                     << "\"" << endl;
+                       << "\"" << endl;
             } else {
                 SVCERR << "(n/a)" << endl;
             }
@@ -50,27 +50,24 @@ class TestScaleTickIntervals : public QObject
                       ScaleTickIntervals::Ticks expected,
                       bool fuzzier = false)
     {
-        double eps = 1e-7;
         for (int i = 0; i < int(expected.size()); ++i) {
             if (i < int(ticks.size())) {
                 bool pass = true;
                 if (ticks[i].label != expected[i].label) {
                     pass = false;
-                } else if (!fuzzier) {
-                    if (fabs(ticks[i].value - expected[i].value) > eps) {
-                        pass = false;
-                    }
                 } else {
-                    if (fabs(ticks[i].value - expected[i].value) >
-                        fabs(ticks[i].value) * 1e-5) {
+                    double eps = fuzzier ? 1e-5 : 1e-10;
+                    double diff = fabs(ticks[i].value - expected[i].value);
+                    double limit = max(eps, fabs(ticks[i].value) * eps);
+                    if (diff > limit) {
                         pass = false;
                     }
                 }
                 if (!pass) {
                     printDiff(ticks, expected);
-                    QCOMPARE(ticks[i].label, expected[i].label);
-                    QCOMPARE(ticks[i].value, expected[i].value);
                 }
+                QCOMPARE(ticks[i].label, expected[i].label);
+                QCOMPARE(ticks[i].value, expected[i].value);
             }
         }
         if (ticks.size() != expected.size()) {
