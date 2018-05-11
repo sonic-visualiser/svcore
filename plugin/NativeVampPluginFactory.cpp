@@ -95,8 +95,8 @@ getCandidateLibraries()
                  QDir::Files | QDir::Readable);
 
         for (unsigned int i = 0; i < dir.count(); ++i) {
-            QString soname = dir.filePath(dir[i]);
-            candidates.push_back({ soname, "" });
+            QString libpath = dir.filePath(dir[i]);
+            candidates.push_back({ libpath, "" });
         }
     }
 
@@ -121,14 +121,14 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         
     for (auto candidate : candidates) {
 
-        QString soname = candidate.libraryPath;
+        QString libpath = candidate.libraryPath;
 
-        SVDEBUG << "INFO: Considering candidate Vamp plugin library " << soname << endl;
+        SVDEBUG << "INFO: Considering candidate Vamp plugin library " << libpath << endl;
         
-        void *libraryHandle = DLOPEN(soname, RTLD_LAZY | RTLD_LOCAL);
+        void *libraryHandle = DLOPEN(libpath, RTLD_LAZY | RTLD_LOCAL);
             
         if (!libraryHandle) {
-            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to load library " << soname << ": " << DLERROR() << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to load library " << libpath << ": " << DLERROR() << endl;
             continue;
         }
 
@@ -136,9 +136,9 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
             DLSYM(libraryHandle, "vampGetPluginDescriptor");
 
         if (!fn) {
-            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: No descriptor function in " << soname << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: No descriptor function in " << libpath << endl;
             if (DLCLOSE(libraryHandle) != 0) {
-                SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
+                SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << libpath << endl;
             }
             continue;
         }
@@ -157,12 +157,12 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
 
             if (known.find(descriptor->identifier) != known.end()) {
                 SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Plugin library "
-                     << soname
-                     << " returns the same plugin identifier \""
-                     << descriptor->identifier << "\" at indices "
-                     << known[descriptor->identifier] << " and "
-                     << index << endl;
-                    SVDEBUG << "NativeVampPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
+                        << libpath
+                        << " returns the same plugin identifier \""
+                        << descriptor->identifier << "\" at indices "
+                        << known[descriptor->identifier] << " and "
+                        << index << endl;
+                SVDEBUG << "NativeVampPluginFactory::getPluginIdentifiers: Avoiding this library (obsolete API?)" << endl;
                 ok = false;
                 break;
             } else {
@@ -179,8 +179,9 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
             while ((descriptor = fn(VAMP_API_VERSION, index))) {
 
                 QString id = PluginIdentifier::createIdentifier
-                    ("vamp", soname, descriptor->identifier);
+                    ("vamp", libpath, descriptor->identifier);
                 m_identifiers.push_back(id);
+                m_libraries[id] = libpath;
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
                 cerr << "NativeVampPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
 #endif
@@ -189,7 +190,7 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         }
             
         if (DLCLOSE(libraryHandle) != 0) {
-            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << soname << endl;
+            SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << libpath << endl;
         }
     }
 
@@ -390,6 +391,12 @@ QString
 NativeVampPluginFactory::getPluginCategory(QString identifier)
 {
     return m_taxonomy[identifier];
+}
+
+QString
+NativeVampPluginFactory::getPluginLibraryPath(QString identifier)
+{
+    return m_libraries[identifier];
 }
 
 void

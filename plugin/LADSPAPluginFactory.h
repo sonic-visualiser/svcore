@@ -55,6 +55,8 @@ public:
 
     virtual QString getPluginCategory(QString identifier);
 
+    virtual QString getPluginLibraryPath(QString identifier);
+    
     float getPortMinimum(const LADSPA_Descriptor *, int port);
     float getPortMaximum(const LADSPA_Descriptor *, int port);
     float getPortDefault(const LADSPA_Descriptor *, int port);
@@ -86,6 +88,7 @@ protected:
     void unloadUnusedLibraries();
 
     std::vector<QString> m_identifiers;
+    std::map<QString, QString> m_libraries; // identifier -> full file path
     std::map<QString, RealTimePluginDescriptor *> m_rtDescriptors;
 
     std::map<QString, QString> m_taxonomy;

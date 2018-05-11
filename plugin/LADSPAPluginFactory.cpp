@@ -69,6 +69,12 @@ LADSPAPluginFactory::getPluginIdentifiers() const
     return m_identifiers;
 }
 
+QString
+LADSPAPluginFactory::getPluginLibraryPath(QString identifier)
+{
+    return m_libraries[identifier];
+}
+
 void
 LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
 {
@@ -793,6 +799,8 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         }
 
         m_identifiers.push_back(identifier);
+
+        m_libraries[identifier] = soname;
 
         m_rtDescriptors[identifier] = rtd;
 

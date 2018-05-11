@@ -418,6 +418,8 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
 
         m_identifiers.push_back(identifier);
 
+        m_libraries[identifier] = soname;
+
         m_rtDescriptors[identifier] = rtd;
 
         ++index;

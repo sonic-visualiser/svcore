@@ -160,6 +160,27 @@ PiperVampPluginFactory::getPluginCategory(QString identifier)
     }
 }
 
+QString
+PiperVampPluginFactory::getPluginLibraryPath(QString identifier)
+{
+    // What we want to return here is the file path of the library in
+    // which the plugin was actually found -- we want to be paranoid
+    // about that and not just query
+    // Vamp::HostExt::PluginLoader::getLibraryPathForPlugin to return
+    // what the SDK thinks the likely location would be (in case our
+    // search order turns out to have been different)
+
+    QStringList bits = identifier.split(':');
+    if (bits.size() > 1) {
+        QString soname = bits[bits.size() - 2];
+        auto i = m_libraries.find(soname);
+        if (i != m_libraries.end()) {
+            return i->second;
+        }
+    }
+    return QString();
+}
+
 void
 PiperVampPluginFactory::populate(QString &errorMessage)
 {
@@ -196,6 +217,7 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
             string soname = QFileInfo(c.libraryPath).baseName().toStdString();
             SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
             from.push_back(soname);
+            m_libraries[QString::fromStdString(soname)] = c.libraryPath;
         }
     }
 

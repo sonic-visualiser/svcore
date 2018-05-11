@@ -97,6 +97,14 @@ public:
      */
     virtual QString getPluginCategory(QString identifier) = 0;
 
+    /**
+     * Get the full file path (including both directory and filename)
+     * of the library file that provides a given plugin
+     * identifier. Note getPluginIdentifiers() must have been called
+     * before this has access to the necessary information.
+     */
+    virtual QString getPluginLibraryPath(QString identifier) = 0;
+    
 protected:
     RealTimePluginFactory() { }
 

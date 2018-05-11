@@ -34,17 +34,13 @@ public:
     /**
      * Return all installed plugin identifiers.
      */
-    virtual std::vector<QString> getPluginIdentifiers(QString &errorMessage) {
-        return instance()->getPluginIdentifiers(errorMessage);
-    }
-
+    virtual std::vector<QString> getPluginIdentifiers(QString &errorMsg) = 0;
+    
     /**
      * Return static data for the given plugin.
      */
-    virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier) {
-        return instance()->getPluginStaticData(identifier);
-    }
-
+    virtual piper_vamp::PluginStaticData getPluginStaticData(QString ident) = 0;
+    
     /**
      * Instantiate (load) and return pointer to the plugin with the
      * given identifier, at the given sample rate. We don't set
@@ -52,16 +48,20 @@ public:
      * via initialize() on the plugin itself after loading.
      */
     virtual Vamp::Plugin *instantiatePlugin(QString identifier,
-                                            sv_samplerate_t inputSampleRate) {
-        return instance()->instantiatePlugin(identifier, inputSampleRate);
-    }
-
+                                            sv_samplerate_t inputSampleRate) = 0;
+    
     /**
      * Get category metadata about a plugin (without instantiating it).
      */
-    virtual QString getPluginCategory(QString identifier) {
-        return instance()->getPluginCategory(identifier);
-    }
+    virtual QString getPluginCategory(QString identifier) = 0;
+
+    /**
+     * Get the full file path (including both directory and filename)
+     * of the library file that provides a given plugin
+     * identifier. Note getPluginIdentifiers() must have been called
+     * before this has access to the necessary information.
+     */
+    virtual QString getPluginLibraryPath(QString identifier) = 0;
 };
 
 #endif

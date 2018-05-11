@@ -44,10 +44,9 @@ public:
                                             sv_samplerate_t inputSampleRate)
         override;
 
-    /**
-     * Get category metadata about a plugin (without instantiating it).
-     */
     virtual QString getPluginCategory(QString identifier) override;
+
+    virtual QString getPluginLibraryPath(QString identifier) override;
 
 protected:
     QMutex m_mutex;
@@ -55,6 +54,7 @@ protected:
     std::vector<QString> m_identifiers;
     std::map<QString, QString> m_taxonomy; // identifier -> category string
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data (created opportunistically)
+    std::map<QString, QString> m_libraries; // identifier -> full file path
 
     friend class PluginDeletionNotifyAdapter;
     void pluginDeleted(Vamp::Plugin *);
