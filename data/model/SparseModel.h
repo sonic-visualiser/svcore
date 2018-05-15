@@ -69,7 +69,13 @@ public:
         return m_resolution ? m_resolution : 1;
     }
     virtual void setResolution(int resolution);
-    
+
+    // Extend the end of the model. If this is set to something beyond
+    // the end of the final point in the model, then getEndFrame()
+    // will return this value. Otherwise getEndFrame() will return the
+    // end of the final point. (This is used by the Tony application)
+    virtual void extendEndFrame(sv_frame_t to) { m_extendTo = to; }
+
     typedef PointType Point;
     typedef std::multiset<PointType,
                           typename PointType::OrderComparator> PointList;
@@ -398,6 +404,7 @@ public:
 protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
+    sv_frame_t m_extendTo;
     bool m_notifyOnAdd;
     sv_frame_t m_sinceLastNotifyMin;
     sv_frame_t m_sinceLastNotifyMax;
@@ -543,6 +550,7 @@ SparseModel<PointType>::SparseModel(sv_samplerate_t sampleRate,
                                     bool notifyOnAdd) :
     m_sampleRate(sampleRate),
     m_resolution(resolution),
+    m_extendTo(0),
     m_notifyOnAdd(notifyOnAdd),
     m_sinceLastNotifyMin(-1),
     m_sinceLastNotifyMax(-1),
@@ -574,7 +582,11 @@ SparseModel<PointType>::getEndFrame() const
         PointListConstIterator i(m_points.end());
         f = (--i)->frame + 1;
     }
-    return f;
+    if (m_extendTo > f) {
+        return m_extendTo;
+    } else {
+        return f;
+    }
 }
 
 template <typename PointType>
