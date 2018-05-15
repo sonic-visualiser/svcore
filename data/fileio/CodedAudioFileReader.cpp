@@ -228,7 +228,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheMode = CacheInMemory;
             }
 
-        } catch (DirectoryCreationFailed f) {
+        } catch (const DirectoryCreationFailed &f) {
             SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
             m_cacheMode = CacheInMemory;
         }

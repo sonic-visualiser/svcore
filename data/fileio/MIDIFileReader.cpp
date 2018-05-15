@@ -351,7 +351,7 @@ MIDIFileReader::parseFile()
         m_numberOfTracks = i;
         retval = true;
 
-    } catch (MIDIException e) {
+    } catch (const MIDIException &e) {
 
         SVDEBUG << "MIDIFileReader::open() - caught exception - " << e.what() << endl;
         m_error = e.what();

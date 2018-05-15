@@ -53,7 +53,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
             QDir dir(TempDirectory::getInstance()->getPath());
             path = dir.filePath(QString("written_%1.wav")
                                 .arg((intptr_t)this));
-        } catch (DirectoryCreationFailed f) {
+        } catch (const DirectoryCreationFailed &f) {
             SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }

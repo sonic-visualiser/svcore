@@ -83,7 +83,7 @@ StorageAdviser::recommend(Criteria criteria,
     QString path;
     try {
         path = TempDirectory::getInstance()->getPath();
-    } catch (std::exception e) {
+    } catch (const std::exception &e) {
         SVDEBUG << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
         int r = UseMemory | ConserveSpace;
         SVDEBUG << "StorageAdviser: returning fallback " << r

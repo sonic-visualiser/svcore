@@ -271,7 +271,7 @@ SamplePlayer::getProgram(LADSPA_Handle handle, unsigned long program)
     static DSSI_Program_Descriptor descriptor;
     static char name[60];
 
-    strncpy(name, player->m_samples[program].first.toLocal8Bit().data(), 60);
+    strncpy(name, player->m_samples[program].first.toLocal8Bit().data(), 59);
     name[59] = '\0';
 
     descriptor.Bank = 0;

@@ -64,7 +64,7 @@ MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
             }
         }
         
-    } catch (RtMidiError e) {
+    } catch (const RtMidiError &e) {
         SVCERR << "ERROR: RtMidi error: " << e.getMessage() << endl;
         delete m_rtmidi;
         m_rtmidi = 0;

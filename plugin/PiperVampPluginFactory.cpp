@@ -251,7 +251,7 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
 
     try {
         resp = client.list(req);
-    } catch (piper_vamp::client::ServerCrashed) {
+    } catch (const piper_vamp::client::ServerCrashed &) {
         SVDEBUG << "PiperVampPluginFactory: Piper server crashed" << endl;
         errorMessage = QObject::tr
             ("External plugin host exited unexpectedly while listing plugins");
