@@ -154,7 +154,7 @@ private:
             // to 2 or a min of -0.9999999999 rounding to 0, both of
             // which would prevent some of our test cases from getting
             // the most natural results.
-            double eps = 1e-8;
+            double eps = 1e-7;
             inc = round(inc / roundTo + eps) * roundTo;
             if (inc < roundTo) inc = roundTo;
             min = ceil(min / roundTo - eps) * roundTo;
@@ -266,7 +266,7 @@ private:
 
         if (display == Auto) {
 
-            double eps = 1e-10;
+            double eps = 1e-7;
             
             int digits = (value != 0.0 ?
                           1 + int(floor(eps + log10(abs(value)))) :
