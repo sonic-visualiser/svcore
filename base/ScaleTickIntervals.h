@@ -269,7 +269,7 @@ private:
             double eps = 1e-7;
             
             int digits = (value != 0.0 ?
-                          1 + int(floor(eps + log10(abs(value)))) :
+                          1 + int(floor(eps + log10(fabs(value)))) :
                           0);
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
@@ -361,7 +361,7 @@ private:
                 // We don't want the internal value secretly not
                 // matching the displayed one
                 roundTo =
-                    pow(10, ceil(log10(abs(value))) - instruction.precision);
+                    pow(10, ceil(log10(fabs(value))) - instruction.precision);
             }
                                            
             if (roundTo != 0.0) {
