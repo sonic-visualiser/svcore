@@ -24,7 +24,7 @@
 #include "Debug.h"
 
 // Can't have this on by default, as we're called on every refresh
-#define DEBUG_SCALE_TICK_INTERVALS 1
+//#define DEBUG_SCALE_TICK_INTERVALS 1
 
 class ScaleTickIntervals
 {
@@ -133,12 +133,12 @@ private:
         }
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "ScaleTickIntervals: calculating linearInstruction" << endl
+        SVDEBUG << "ScaleTickIntervals: calculating linearInstruction" << endl
                 << "ScaleTickIntervals: min = " << r.min << ", max = " << r.max
                 << ", n = " << r.n << ", inc = " << inc << endl;
-        SVCERR << "ScaleTickIntervals: digMax = " << digMax
+        SVDEBUG << "ScaleTickIntervals: digMax = " << digMax
                 << ", digInc = " << digInc << endl;
-        SVCERR << "ScaleTickIntervals: display = " << display
+        SVDEBUG << "ScaleTickIntervals: display = " << display
                 << ", inc = " << inc << ", precInc = " << precInc
                 << ", precRange = " << precRange
                 << ", prec = " << prec << ", roundTo = " << roundTo
@@ -161,7 +161,7 @@ private:
             if (min > r.max) min = r.max;
             if (min == -0.0) min = 0.0;
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVCERR << "ScaleTickIntervals: rounded inc to " << inc
+            SVDEBUG << "ScaleTickIntervals: rounded inc to " << inc
                     << " and min to " << min << endl;
 #endif
         }
@@ -171,7 +171,7 @@ private:
             if (digNewMin < digInc) {
                 prec = int(ceil(digMax - digNewMin));
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-                SVCERR << "ScaleTickIntervals: min is smaller than increment, adjusting prec to " << prec << endl;
+                SVDEBUG << "ScaleTickIntervals: min is smaller than increment, adjusting prec to " << prec << endl;
 #endif
             }
         }
@@ -184,7 +184,7 @@ private:
         Display display = Auto;
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "ScaleTickIntervals::logInstruction: Range is "
+        SVDEBUG << "ScaleTickIntervals::logInstruction: Range is "
                 << r.min << " to " << r.max << endl;
 #endif
         
@@ -201,7 +201,7 @@ private:
         double inc = (r.max - r.min) / r.n;
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "ScaleTickIntervals::logInstruction: "
+        SVDEBUG << "ScaleTickIntervals::logInstruction: "
                 << "Naive increment is " << inc << endl;
 #endif
 
@@ -219,7 +219,7 @@ private:
         if (inc < roundIncTo) inc = roundIncTo;
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "ScaleTickIntervals::logInstruction: "
+        SVDEBUG << "ScaleTickIntervals::logInstruction: "
                 << "Rounded increment to " << inc << endl;
 #endif
 
@@ -228,7 +228,7 @@ private:
             inc = log10(2.0);
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVCERR << "ScaleTickIntervals::logInstruction: "
+            SVDEBUG << "ScaleTickIntervals::logInstruction: "
                     << "Nudged increment to " << inc << " to get powers of two"
                     << endl;
 #endif
@@ -273,9 +273,9 @@ private:
                           0);
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-            SVCERR << "makeTick: display = Auto, precision = "
-                   << precision << ", value = " << value
-                   << ", resulting digits = " << digits << endl;
+            SVDEBUG << "makeTick: display = Auto, precision = "
+                    << precision << ", value = " << value
+                    << ", resulting digits = " << digits << endl;
 #endif
             
             // This is not the same logic as %g uses for determining
@@ -307,7 +307,7 @@ private:
         snprintf(buffer, buflen, spec, precision, value);
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "makeTick: spec = \"" << spec
+        SVDEBUG << "makeTick: spec = \"" << spec
                 << "\", prec = " << precision << ", value = " << value
                 << ", label = \"" << buffer << "\"" << endl;
 #endif
@@ -318,7 +318,7 @@ private:
     static Ticks explode(Instruction instruction) {
 
 #ifdef DEBUG_SCALE_TICK_INTERVALS
-        SVCERR << "ScaleTickIntervals::explode:" << endl
+        SVDEBUG << "ScaleTickIntervals::explode:" << endl
                 << "initial = " << instruction.initial
                 << ", limit = " << instruction.limit
                 << ", spacing = " << instruction.spacing
