@@ -108,6 +108,7 @@ SVCORE_HEADERS = \
            plugin/NativeVampPluginFactory.h \
            plugin/PiperVampPluginFactory.h \
            plugin/PluginIdentifier.h \
+           plugin/PluginPathSetter.h \
            plugin/PluginXml.h \
            plugin/RealTimePluginFactory.h \
            plugin/RealTimePluginInstance.h \
@@ -220,6 +221,7 @@ SVCORE_SOURCES = \
            plugin/NativeVampPluginFactory.cpp \
            plugin/PiperVampPluginFactory.cpp \
            plugin/PluginIdentifier.cpp \
+           plugin/PluginPathSetter.cpp \
            plugin/PluginXml.cpp \
            plugin/RealTimePluginFactory.cpp \
            plugin/RealTimePluginInstance.cpp \

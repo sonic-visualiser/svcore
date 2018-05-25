@@ -63,6 +63,8 @@ public:
     float getPortQuantization(const LADSPA_Descriptor *, int port);
     int getPortDisplayHint(const LADSPA_Descriptor *, int port);
 
+    static std::vector<QString> getPluginPath();
+
 protected:
     LADSPAPluginFactory();
     friend class RealTimePluginFactory;
@@ -70,8 +72,6 @@ protected:
     virtual PluginScan::PluginType getPluginType() const {
         return PluginScan::LADSPAPlugin;
     }
-
-    virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 

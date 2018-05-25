@@ -44,6 +44,8 @@ public:
                                                       int blockSize,
                                                       int channels);
 
+    static std::vector<QString> getPluginPath();
+
 protected:
     DSSIPluginFactory();
     friend class RealTimePluginFactory;
@@ -51,8 +53,6 @@ protected:
     virtual PluginScan::PluginType getPluginType() const {
         return PluginScan::DSSIPlugin;
     }
-
-    virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 
