@@ -30,14 +30,14 @@ PluginPathSetter::Paths
 PluginPathSetter::m_defaultPaths;
 
 PluginPathSetter::Paths
-PluginPathSetter::getDefaultPaths()
-{
-    QMutexLocker locker(&m_mutex);
+PluginPathSetter::m_environmentPaths;
 
-    if (!m_defaultPaths.empty()) {
-        return m_defaultPaths;
-    }
-        
+std::map<QString, QString>
+PluginPathSetter::m_originalEnvValues;
+
+PluginPathSetter::Paths
+PluginPathSetter::getEnvironmentPathsUncached()
+{
     Paths paths;
 
     auto vampPath = Vamp::PluginHostAdapter::getPluginPath();
@@ -64,14 +64,53 @@ PluginPathSetter::getDefaultPaths()
     }
     paths["LADSPA"] = { qLadspaPath, "LADSPA_PATH", true };
 
+    return paths;
+}
+
+PluginPathSetter::Paths
+PluginPathSetter::getDefaultPaths()
+{
+    QMutexLocker locker(&m_mutex);
+
+    if (!m_defaultPaths.empty()) {
+        return m_defaultPaths;
+    }
+        
+    QString savedPathVamp = qEnvironmentVariable("VAMP_PATH");
+    QString savedPathDssi = qEnvironmentVariable("DSSI_PATH");
+    QString savedPathLadspa = qEnvironmentVariable("LADSPA_PATH");
+
+    qunsetenv("VAMP_PATH");
+    qunsetenv("DSSI_PATH");
+    qunsetenv("LADSPA_PATH");
+
+    Paths paths = getEnvironmentPathsUncached();
+
+    qputenv("VAMP_PATH", savedPathVamp.toUtf8());
+    qputenv("DSSI_PATH", savedPathDssi.toUtf8());
+    qputenv("LADSPA_PATH", savedPathLadspa.toUtf8());
+
     m_defaultPaths = paths;
     return m_defaultPaths;
 }
 
 PluginPathSetter::Paths
+PluginPathSetter::getEnvironmentPaths()
+{
+    QMutexLocker locker(&m_mutex);
+
+    if (!m_environmentPaths.empty()) {
+        return m_environmentPaths;
+    }
+        
+    m_environmentPaths = getEnvironmentPathsUncached();
+    return m_environmentPaths;
+}
+
+PluginPathSetter::Paths
 PluginPathSetter::getPaths()
 {
-    Paths paths = getDefaultPaths();
+    Paths paths = getEnvironmentPaths();
        
     QSettings settings;
     settings.beginGroup("Plugins");
@@ -132,8 +171,18 @@ PluginPathSetter::savePathSettings(Paths paths)
     settings.endGroup();
 }
 
+QString
+PluginPathSetter::getOriginalEnvironmentValue(QString envVariable)
+{
+    if (m_originalEnvValues.find(envVariable) != m_originalEnvValues.end()) {
+        return m_originalEnvValues.at(envVariable);
+    } else {
+        return QString();
+    }
+}
+
 void
-PluginPathSetter::setEnvironmentVariables()
+PluginPathSetter::initialiseEnvironmentVariables()
 {
     // Set the relevant environment variables from user configuration,
     // so that later lookups through the standard APIs will follow the
@@ -143,6 +192,7 @@ PluginPathSetter::setEnvironmentVariables()
     // we don't erroneously re-read them from the environment
     // variables we've just set
     (void)getDefaultPaths();
+    (void)getEnvironmentPaths();
     
     Paths paths = getPaths();
 
@@ -150,6 +200,7 @@ PluginPathSetter::setEnvironmentVariables()
         QString envVariable = p.second.envVariable;
         std::string envVarStr = envVariable.toStdString();
         QString currentValue = qEnvironmentVariable(envVarStr.c_str());
+        m_originalEnvValues[envVariable] = currentValue;
         if (currentValue != QString() && p.second.useEnvVariable) {
             // don't override
             continue;

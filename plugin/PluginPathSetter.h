@@ -28,31 +28,51 @@ public:
     typedef QString PluginTypeLabel;
 
     struct PathConfig {
-        QStringList directories;
-        QString envVariable; // e.g. "LADSPA_PATH" etc
-        bool useEnvVariable; // true if env variable overrides directories list
+        QStringList directories; // Actual list of directories arising
+                                 // from user settings, environment
+                                 // variables, and defaults as
+                                 // appropriate
+        
+        QString envVariable; // Name of env var, e.g. LADSPA_PATH
+        
+        bool useEnvVariable; // True if env variable should override
+                             // any user settings for this
     };
 
     typedef std::map<PluginTypeLabel, PathConfig> Paths;
 
-    /// Return paths arising from environment variables only, without
-    /// any user-defined preferences
+    /// Update *_PATH environment variables from the settings, on
+    /// application startup. Must be called exactly once, before any
+    /// of the other functions in this class has been called
+    static void initialiseEnvironmentVariables();
+
+    /// Return default values of paths only, without any environment
+    /// variables or user-defined preferences
     static Paths getDefaultPaths();
 
+    /// Return paths arising from environment variables only, falling
+    /// back to the defaults, without any user-defined preferences
+    static Paths getEnvironmentPaths();
+
     /// Return paths arising from user settings + environment
-    /// variables as appropriate
+    /// variables + defaults as appropriate
     static Paths getPaths();
 
     /// Save the given paths to the settings
     static void savePathSettings(Paths paths);
 
-    /// Update *_PATH environment variables from the settings, on
-    /// application startup
-    static void setEnvironmentVariables();
-
+    /// Return the original value observed on startup for the given
+    /// environment variable, if it is one of the variables used by a
+    /// known path config.
+    static QString getOriginalEnvironmentValue(QString envVariable);
+    
 private:
     static Paths m_defaultPaths;
+    static Paths m_environmentPaths;
+    static std::map<QString, QString> m_originalEnvValues;
     static QMutex m_mutex;
+
+    static Paths getEnvironmentPathsUncached();
 };
 
 #endif
