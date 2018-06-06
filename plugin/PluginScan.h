@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 
-class KnownPlugins;
+class KnownPluginCandidates;
 
 class PluginScan
 {
@@ -75,7 +75,7 @@ private:
 
     mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
-    std::map<QString, KnownPlugins *> m_kp; // tag -> KnownPlugins client
+    std::map<QString, KnownPluginCandidates *> m_kp; // tag -> KnownPlugins client
     bool m_succeeded;
 
     class Logger;
