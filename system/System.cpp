@@ -394,9 +394,9 @@ getEnvUtf8(std::string variable, std::string &value)
 bool
 putEnvUtf8(std::string variable, std::string value)
 {
+#ifdef _WIN32
     std::string entry = variable + "=" + value;
     
-#ifdef _WIN32
     int wentlen = MultiByteToWideChar(CP_UTF8, 0,
                                       entry.c_str(), int(entry.length()),
                                       0, 0);
@@ -424,8 +424,7 @@ putEnvUtf8(std::string variable, std::string value)
 
 #else
 
-    int rv = putenv(entry.c_str());
-
+    int rv = setenv(variable.c_str(), value.c_str(), 1);
     if (rv != 0) {
         SVCERR << "WARNING: Failed to set environment entry" << endl;
         return false;
