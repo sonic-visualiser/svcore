@@ -11,13 +11,11 @@
     COPYING included with this distribution for more information.
 */
 
-#include "TestFFTModel.h"
+#include "TestEnv.h"
 
 #include <QtTest>
 
 #include <iostream>
-
-using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -25,10 +23,10 @@ int main(int argc, char *argv[])
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
-    app.setApplicationName("test-model");
+    app.setApplicationName("test-svcore-system");
 
     {
-        TestFFTModel t;
+        TestEnv t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
@@ -41,4 +39,3 @@ int main(int argc, char *argv[])
         return 0;
     }
 }
-
