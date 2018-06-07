@@ -49,6 +49,17 @@ private slots:
         QVERIFY(value != "");
     }
     
+    void roundTripShort()
+    {
+        bool rv = false;
+        rv = putEnvUtf8("XYZABC", "woo");
+        QCOMPARE(rv, true);
+        string value;
+        rv = getEnvUtf8("XYZABC", value);
+        QCOMPARE(rv, true);
+        QCOMPARE(value, "woo");
+    }
+    
     void roundTripAsciiAscii()
     {
         bool rv = false;
