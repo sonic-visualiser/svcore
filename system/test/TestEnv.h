@@ -40,6 +40,14 @@ private slots:
         QCOMPARE(rv, false);
         QCOMPARE(value, "");
     }
+
+    void getExpected()
+    {
+        string value;
+        bool rv = getEnvUtf8("PATH", value);
+        QCOMPARE(rv, true);
+        QVERIFY(value != "");
+    }
     
     void roundTripAsciiAscii()
     {
