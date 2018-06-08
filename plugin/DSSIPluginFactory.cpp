@@ -39,6 +39,7 @@
 #include "lrdf.h"
 #endif // HAVE_LRDF
 
+using std::string;
 
 DSSIPluginFactory::DSSIPluginFactory() :
     LADSPAPluginFactory()
@@ -206,38 +207,38 @@ std::vector<QString>
 DSSIPluginFactory::getPluginPath()
 {
     std::vector<QString> pathList;
-    std::string path;
+    string path;
 
-    char *cpath = getenv("DSSI_PATH");
-    if (cpath) path = cpath;
+    (void)getEnvUtf8("DSSI_PATH", path);
 
     if (path == "") {
 
         path = DEFAULT_DSSI_PATH;
 
-        char *home = getenv("HOME");
-        if (home) {
-            std::string::size_type f;
-            while ((f = path.find("$HOME")) != std::string::npos &&
+        string home;
+        if (getEnvUtf8("HOME", home)) {
+            string::size_type f;
+            while ((f = path.find("$HOME")) != string::npos &&
                    f < path.length()) {
                 path.replace(f, 5, home);
             }
         }
 
 #ifdef _WIN32
-        const char *pfiles = getenv("ProgramFiles");
-        if (!pfiles) pfiles = "C:\\Program Files";
-        {
-        std::string::size_type f;
-        while ((f = path.find("%ProgramFiles%")) != std::string::npos &&
+        string pfiles;
+        if (!getEnvUtf8("ProgramFiles", pfiles)) {
+            pfiles = "C:\\Program Files";
+        }
+
+        string::size_type f;
+        while ((f = path.find("%ProgramFiles%")) != string::npos &&
                f < path.length()) {
             path.replace(f, 14, pfiles);
-        }
         }
 #endif
     }
 
-    std::string::size_type index = 0, newindex = 0;
+    string::size_type index = 0, newindex = 0;
 
     while ((newindex = path.find(PATH_SEPARATOR, index)) < path.size()) {
         pathList.push_back(path.substr(index, newindex - index).c_str());
@@ -347,7 +348,7 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         }
 
         if (category == "") {
-            std::string name = rtd->name;
+            string name = rtd->name;
             if (name.length() > 4 &&
                 name.substr(name.length() - 4) == " VST") {
                 if (descriptor->run_synth || descriptor->run_multiple_synths) {

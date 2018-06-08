@@ -35,6 +35,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "system/System.h"
+
 /**
    Resource files may be found in three places:
 
@@ -67,10 +69,11 @@ ResourceFinder::getSystemResourcePrefixList()
     QStringList list;
 
 #ifdef Q_OS_WIN32
-    char *programFiles = getenv("ProgramFiles");
-    if (programFiles && programFiles[0]) {
+    std::string programFiles;
+    (void)getEnvUtf8("ProgramFiles", programFiles);
+    if (programFiles != "") {
         list << QString("%1/%2/%3")
-            .arg(programFiles)
+            .arg(QString::fromStdString(programFiles))
             .arg(qApp->organizationName())
             .arg(qApp->applicationName());
     } else {

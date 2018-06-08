@@ -47,17 +47,11 @@ private slots:
         bool rv = getEnvUtf8("PATH", value);
         QCOMPARE(rv, true);
         QVERIFY(value != "");
-    }
-    
-    void roundTripShort()
-    {
-        bool rv = false;
-        rv = putEnvUtf8("XYZABC", "woo");
-        QCOMPARE(rv, true);
-        string value;
-        rv = getEnvUtf8("XYZABC", value);
-        QCOMPARE(rv, true);
-        QCOMPARE(value, "woo");
+        QVERIFY(value.size() > 5); // Not quite but nearly certain,
+                                   // and weeds out an unfortunate
+                                   // case where we accidentally
+                                   // returned the variable's name
+                                   // instead of its value!
     }
     
     void roundTripAsciiAscii()

@@ -357,9 +357,9 @@ getEnvUtf8(std::string variable, std::string &value)
         return false;
     }
 
-    int wvallen = int(wcslen(wvarbuf));
+    int wvallen = int(wcslen(wvalue));
     int vallen = WideCharToMultiByte(CP_UTF8, 0,
-                                     wvarbuf, wvallen,
+                                     wvalue, wvallen,
                                      0, 0, 0, 0);
     if (vallen < 0) {
         SVCERR << "WARNING: Unable to convert environment value to UTF-8"
@@ -369,7 +369,7 @@ getEnvUtf8(std::string variable, std::string &value)
 
     char *val = new char[vallen + 1];
     (void)WideCharToMultiByte(CP_UTF8, 0,
-                              wvarbuf, wvallen,
+                              wvalue, wvallen,
                               val, vallen, 0, 0);
     val[vallen] = '\0';
 

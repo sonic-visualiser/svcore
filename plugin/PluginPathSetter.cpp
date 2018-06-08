@@ -23,6 +23,8 @@
 #include <QSettings>
 #include <QMutexLocker>
 
+#include "system/System.h"
+
 QMutex
 PluginPathSetter::m_mutex;
 
@@ -34,6 +36,8 @@ PluginPathSetter::m_environmentPaths;
 
 std::map<QString, QString>
 PluginPathSetter::m_originalEnvValues;
+
+using std::string;
 
 PluginPathSetter::Paths
 PluginPathSetter::getEnvironmentPathsUncached()
@@ -75,20 +79,21 @@ PluginPathSetter::getDefaultPaths()
     if (!m_defaultPaths.empty()) {
         return m_defaultPaths;
     }
-        
-    QString savedPathVamp = qEnvironmentVariable("VAMP_PATH");
-    QString savedPathDssi = qEnvironmentVariable("DSSI_PATH");
-    QString savedPathLadspa = qEnvironmentVariable("LADSPA_PATH");
 
-    qunsetenv("VAMP_PATH");
-    qunsetenv("DSSI_PATH");
-    qunsetenv("LADSPA_PATH");
+    string savedPathVamp, savedPathDssi, savedPathLadspa;
+    (void)getEnvUtf8("VAMP_PATH", savedPathVamp);
+    (void)getEnvUtf8("DSSI_PATH", savedPathDssi);
+    (void)getEnvUtf8("LADSPA_PATH", savedPathLadspa);
+
+    putEnvUtf8("VAMP_PATH", "");
+    putEnvUtf8("DSSI_PATH", "");
+    putEnvUtf8("LADSPA_PATH", "");
 
     Paths paths = getEnvironmentPathsUncached();
 
-    qputenv("VAMP_PATH", savedPathVamp.toUtf8());
-    qputenv("DSSI_PATH", savedPathDssi.toUtf8());
-    qputenv("LADSPA_PATH", savedPathLadspa.toUtf8());
+    putEnvUtf8("VAMP_PATH", savedPathVamp);
+    putEnvUtf8("DSSI_PATH", savedPathDssi);
+    putEnvUtf8("LADSPA_PATH", savedPathLadspa);
 
     m_defaultPaths = paths;
     return m_defaultPaths;
@@ -131,11 +136,13 @@ PluginPathSetter::getPaths()
             settings.value(QString("use-env-variable-%1").arg(tag),
                            p.second.useEnvVariable)
             .toBool();
-        std::string envVarStr = envVariable.toStdString();
-        
-        QString currentValue = qEnvironmentVariable(envVarStr.c_str());
-        if (currentValue != QString() && useEnvVariable) {
-            directories = currentValue.split(
+
+        string envVarStr = envVariable.toStdString();
+        string currentValue;
+        (void)getEnvUtf8(envVarStr, currentValue);
+
+        if (currentValue != "" && useEnvVariable) {
+            directories = QString::fromStdString(currentValue).split(
 #ifdef Q_OS_WIN
                ";"
 #else
@@ -198,7 +205,7 @@ PluginPathSetter::initialiseEnvironmentVariables()
 
     for (auto p: paths) {
         QString envVariable = p.second.envVariable;
-        std::string envVarStr = envVariable.toStdString();
+        string envVarStr = envVariable.toStdString();
         QString currentValue = qEnvironmentVariable(envVarStr.c_str());
         m_originalEnvValues[envVariable] = currentValue;
         if (currentValue != QString() && p.second.useEnvVariable) {
@@ -213,7 +220,7 @@ PluginPathSetter::initialiseEnvironmentVariables()
 #endif
             ;
         QString proposedValue = p.second.directories.join(separator);
-        qputenv(envVarStr.c_str(), proposedValue.toUtf8());
+        putEnvUtf8(envVarStr, proposedValue.toStdString());
     }
 }
 
