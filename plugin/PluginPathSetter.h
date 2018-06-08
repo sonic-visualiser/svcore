@@ -21,11 +21,15 @@
 
 #include <map>
 
+#include "checker/knownplugins.h"
+
 class PluginPathSetter
 {
 public:
-    /// Text used to identify a plugin type, e.g. "LADSPA", "Vamp"
-    typedef QString PluginTypeLabel;
+    typedef std::pair<KnownPlugins::PluginType,
+                      KnownPlugins::BinaryFormat> TypeKey;
+
+    typedef std::vector<TypeKey> TypeKeys;
 
     struct PathConfig {
         QStringList directories; // Actual list of directories arising
@@ -39,7 +43,7 @@ public:
                              // any user settings for this
     };
 
-    typedef std::map<PluginTypeLabel, PathConfig> Paths;
+    typedef std::map<TypeKey, PathConfig> Paths;
 
     /// Update *_PATH environment variables from the settings, on
     /// application startup. Must be called exactly once, before any
@@ -70,9 +74,12 @@ private:
     static Paths m_defaultPaths;
     static Paths m_environmentPaths;
     static std::map<QString, QString> m_originalEnvValues;
+    static TypeKeys m_supportedKeys;
     static QMutex m_mutex;
 
-    static Paths getEnvironmentPathsUncached();
+    static std::vector<TypeKey> getSupportedKeys();
+    static Paths getEnvironmentPathsUncached(const TypeKeys &keys);
+    static QString getSettingTagFor(TypeKey);
 };
 
 #endif

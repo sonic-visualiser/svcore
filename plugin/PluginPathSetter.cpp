@@ -24,6 +24,8 @@
 #include <QMutexLocker>
 
 #include "system/System.h"
+#include "base/Preferences.h"
+#include "base/HelperExecPath.h"
 
 QMutex
 PluginPathSetter::m_mutex;
@@ -37,36 +39,61 @@ PluginPathSetter::m_environmentPaths;
 std::map<QString, QString>
 PluginPathSetter::m_originalEnvValues;
 
-using std::string;
+PluginPathSetter::TypeKeys
+PluginPathSetter::m_supportedKeys;
 
+using namespace std;
+
+PluginPathSetter::TypeKeys
+PluginPathSetter::getSupportedKeys()
+{
+    QMutexLocker locker(&m_mutex);
+
+    if (!m_supportedKeys.empty()) {
+        return m_supportedKeys;
+    }
+
+    TypeKeys keys;
+    keys.push_back({ KnownPlugins::VampPlugin, KnownPlugins::FormatNative });
+    
+    bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
+    HelperExecPath hep(inProcess ?
+                       HelperExecPath::NativeArchitectureOnly :
+                       HelperExecPath::AllInstalled);
+    auto execs = hep.getHelperExecutables("vamp-plugin-load-checker");
+    if (execs.size() > 1) {
+        keys.push_back({
+                KnownPlugins::VampPlugin, KnownPlugins::FormatNonNative32Bit });
+    }
+
+    keys.push_back({ KnownPlugins::LADSPAPlugin, KnownPlugins::FormatNative });
+    keys.push_back({ KnownPlugins::DSSIPlugin, KnownPlugins::FormatNative });
+
+    m_supportedKeys = keys;
+    return keys;
+}
+
+// call with mutex held please
 PluginPathSetter::Paths
-PluginPathSetter::getEnvironmentPathsUncached()
+PluginPathSetter::getEnvironmentPathsUncached(const TypeKeys &keys)
 {
     Paths paths;
 
-    auto vampPath = Vamp::PluginHostAdapter::getPluginPath();
+    for (auto k: keys) {
 
-    QStringList qVampPath;
-    for (auto s: vampPath) {
-        qVampPath.push_back(QString::fromStdString(s));
+        KnownPlugins kp(k.second);
+
+        auto path = kp.getPathFor(k.first);
+        QStringList qPath;
+        for (auto s: path) {
+            qPath.push_back(QString::fromStdString(s));
+        }
+
+        auto var = kp.getPathEnvironmentVariableFor(k.first);
+        QString qVar = QString::fromStdString(var);
+        
+        paths[k] = { qPath, qVar, true };
     }
-    paths["Vamp"] = { qVampPath, "VAMP_PATH", true };
-
-    auto dssiPath = DSSIPluginFactory::getPluginPath();
-
-    QStringList qDssiPath;
-    for (auto s: dssiPath) {
-        qDssiPath.push_back(s);
-    }
-    paths["DSSI"] = { qDssiPath, "DSSI_PATH", true };
-            
-    auto ladspaPath = LADSPAPluginFactory::getPluginPath();
-
-    QStringList qLadspaPath;
-    for (auto s: ladspaPath) {
-        qLadspaPath.push_back(s);
-    }
-    paths["LADSPA"] = { qLadspaPath, "LADSPA_PATH", true };
 
     return paths;
 }
@@ -74,42 +101,54 @@ PluginPathSetter::getEnvironmentPathsUncached()
 PluginPathSetter::Paths
 PluginPathSetter::getDefaultPaths()
 {
+    TypeKeys keys = getSupportedKeys();
+    
     QMutexLocker locker(&m_mutex);
 
-    if (!m_defaultPaths.empty()) {
-        return m_defaultPaths;
+    Paths paths;
+
+    for (auto k: keys) {
+
+        KnownPlugins kp(k.second);
+
+        auto path = kp.getDefaultPathFor(k.first);
+        QStringList qPath;
+        for (auto s: path) {
+            qPath.push_back(QString::fromStdString(s));
+        }
+
+        auto var = kp.getPathEnvironmentVariableFor(k.first);
+        QString qVar = QString::fromStdString(var);
+        
+        paths[k] = { qPath, qVar, true };
     }
 
-    string savedPathVamp, savedPathDssi, savedPathLadspa;
-    (void)getEnvUtf8("VAMP_PATH", savedPathVamp);
-    (void)getEnvUtf8("DSSI_PATH", savedPathDssi);
-    (void)getEnvUtf8("LADSPA_PATH", savedPathLadspa);
-
-    putEnvUtf8("VAMP_PATH", "");
-    putEnvUtf8("DSSI_PATH", "");
-    putEnvUtf8("LADSPA_PATH", "");
-
-    Paths paths = getEnvironmentPathsUncached();
-
-    putEnvUtf8("VAMP_PATH", savedPathVamp);
-    putEnvUtf8("DSSI_PATH", savedPathDssi);
-    putEnvUtf8("LADSPA_PATH", savedPathLadspa);
-
-    m_defaultPaths = paths;
-    return m_defaultPaths;
+    return paths;
 }
 
 PluginPathSetter::Paths
 PluginPathSetter::getEnvironmentPaths()
 {
+    TypeKeys keys = getSupportedKeys();
+    
     QMutexLocker locker(&m_mutex);
 
     if (!m_environmentPaths.empty()) {
         return m_environmentPaths;
     }
         
-    m_environmentPaths = getEnvironmentPathsUncached();
+    m_environmentPaths = getEnvironmentPathsUncached(keys);
     return m_environmentPaths;
+}
+
+QString
+PluginPathSetter::getSettingTagFor(TypeKey tk)
+{
+    string tag = KnownPlugins(tk.second).getTagFor(tk.first);
+    if (tk.second == KnownPlugins::FormatNonNative32Bit) {
+        tag += "-32";
+    }
+    return QString::fromStdString(tag);
 }
 
 PluginPathSetter::Paths
@@ -122,18 +161,20 @@ PluginPathSetter::getPaths()
 
     for (auto p: paths) {
 
-        QString tag = p.first;
+        TypeKey tk = p.first;
+
+        QString settingTag = getSettingTagFor(tk);
 
         QStringList directories =
-            settings.value(QString("directories-%1").arg(tag),
+            settings.value(QString("directories-%1").arg(settingTag),
                            p.second.directories)
             .toStringList();
         QString envVariable =
-            settings.value(QString("env-variable-%1").arg(tag),
+            settings.value(QString("env-variable-%1").arg(settingTag),
                            p.second.envVariable)
             .toString();
         bool useEnvVariable =
-            settings.value(QString("use-env-variable-%1").arg(tag),
+            settings.value(QString("use-env-variable-%1").arg(settingTag),
                            p.second.useEnvVariable)
             .toBool();
 
@@ -151,7 +192,7 @@ PluginPathSetter::getPaths()
                 );
         }
         
-        paths[tag] = { directories, envVariable, useEnvVariable };
+        paths[tk] = { directories, envVariable, useEnvVariable };
     }
 
     settings.endGroup();
@@ -166,12 +207,12 @@ PluginPathSetter::savePathSettings(Paths paths)
     settings.beginGroup("Plugins");
 
     for (auto p: paths) {
-        QString tag = p.first;
-        settings.setValue(QString("directories-%1").arg(tag),
+        QString settingTag = getSettingTagFor(p.first);
+        settings.setValue(QString("directories-%1").arg(settingTag),
                           p.second.directories);
-        settings.setValue(QString("env-variable-%1").arg(tag),
+        settings.setValue(QString("env-variable-%1").arg(settingTag),
                           p.second.envVariable);
-        settings.setValue(QString("use-env-variable-%1").arg(tag),
+        settings.setValue(QString("use-env-variable-%1").arg(settingTag),
                           p.second.useEnvVariable);
     }
 
@@ -206,9 +247,10 @@ PluginPathSetter::initialiseEnvironmentVariables()
     for (auto p: paths) {
         QString envVariable = p.second.envVariable;
         string envVarStr = envVariable.toStdString();
-        QString currentValue = qEnvironmentVariable(envVarStr.c_str());
-        m_originalEnvValues[envVariable] = currentValue;
-        if (currentValue != QString() && p.second.useEnvVariable) {
+        string currentValue;
+        getEnvUtf8(envVarStr, currentValue);
+        m_originalEnvValues[envVariable] = QString::fromStdString(currentValue);
+        if (currentValue != "" && p.second.useEnvVariable) {
             // don't override
             continue;
         }
