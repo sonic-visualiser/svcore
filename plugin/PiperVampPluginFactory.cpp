@@ -217,7 +217,10 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
             string soname = QFileInfo(c.libraryPath).baseName().toStdString();
             SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
             from.push_back(soname);
-            m_libraries[QString::fromStdString(soname)] = c.libraryPath;
+            QString qsoname = QString::fromStdString(soname);
+            if (m_libraries.find(qsoname) == m_libraries.end()) {
+                m_libraries[qsoname] = c.libraryPath;
+            }
         }
     }
 
