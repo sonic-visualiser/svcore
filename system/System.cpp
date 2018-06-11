@@ -4,7 +4,7 @@
   Sonic Visualiser
   An audio file viewer and annotation editor.
   Centre for Digital Music, Queen Mary, University of London.
-  This file copyright 2006 Chris Cannam and QMUL.
+  This file copyright 2006-2018 Chris Cannam and QMUL.
     
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as
@@ -63,7 +63,7 @@ extern "C" {
     }
 #endif
 
-    int gettimeofday(struct timeval *tv, void *tz)
+    int gettimeofday(struct timeval *tv, void * /* tz */)
     {
         union { 
             long long ns100;  
@@ -328,4 +328,109 @@ float modf(float x, float y) { return x - (y * floorf(x / y)); }
 double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
 float princargf(float a) { return float(princarg(a)); }
 
+bool
+getEnvUtf8(std::string variable, std::string &value)
+{
+    value = "";
+    
+#ifdef _WIN32
+    int wvarlen = MultiByteToWideChar(CP_UTF8, 0,
+                                      variable.c_str(), int(variable.length()),
+                                      0, 0);
+    if (wvarlen < 0) {
+        SVCERR << "WARNING: Unable to convert environment variable name "
+               << variable << " to wide characters" << endl;
+        return false;
+    }
+    
+    wchar_t *wvarbuf = new wchar_t[wvarlen + 1];
+    (void)MultiByteToWideChar(CP_UTF8, 0,
+                              variable.c_str(), int(variable.length()),
+                              wvarbuf, wvarlen);
+    wvarbuf[wvarlen] = L'\0';
+    
+    wchar_t *wvalue = _wgetenv(wvarbuf);
+
+    delete[] wvarbuf;
+
+    if (!wvalue) {
+        return false;
+    }
+
+    int wvallen = int(wcslen(wvalue));
+    int vallen = WideCharToMultiByte(CP_UTF8, 0,
+                                     wvalue, wvallen,
+                                     0, 0, 0, 0);
+    if (vallen < 0) {
+        SVCERR << "WARNING: Unable to convert environment value to UTF-8"
+               << endl;
+        return false;
+    }
+
+    char *val = new char[vallen + 1];
+    (void)WideCharToMultiByte(CP_UTF8, 0,
+                              wvalue, wvallen,
+                              val, vallen, 0, 0);
+    val[vallen] = '\0';
+
+    value = val;
+
+    delete[] val;
+    return true;
+
+#else
+
+    char *val = getenv(variable.c_str());
+    if (!val) {
+        return false;
+    }
+
+    value = val;
+    return true;
+    
+#endif
+}
+
+bool
+putEnvUtf8(std::string variable, std::string value)
+{
+#ifdef _WIN32
+    std::string entry = variable + "=" + value;
+    
+    int wentlen = MultiByteToWideChar(CP_UTF8, 0,
+                                      entry.c_str(), int(entry.length()),
+                                      0, 0);
+    if (wentlen < 0) {
+        SVCERR << "WARNING: Unable to convert environment entry to "
+               << "wide characters" << endl;
+        return false;
+    }
+    
+    wchar_t *wentbuf = new wchar_t[wentlen + 1];
+    (void)MultiByteToWideChar(CP_UTF8, 0,
+                              entry.c_str(), int(entry.length()),
+                              wentbuf, wentlen);
+    wentbuf[wentlen] = L'\0';
+
+    int rv = _wputenv(wentbuf);
+
+    delete[] wentbuf;
+
+    if (rv != 0) {
+        SVCERR << "WARNING: Failed to set environment entry" << endl;
+        return false;
+    }
+    return true;
+
+#else
+
+    int rv = setenv(variable.c_str(), value.c_str(), 1);
+    if (rv != 0) {
+        SVCERR << "WARNING: Failed to set environment entry" << endl;
+        return false;
+    }
+    return true;
+    
+#endif
+}
 

@@ -19,9 +19,9 @@
 #include "base/HelperExecPath.h"
 
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
-#include "checker/knownplugins.h"
+#include "checker/knownplugincandidates.h"
 #else
-class KnownPlugins {};
+class KnownPluginCandidates {};
 #endif
 
 #include <QMutex>
@@ -92,7 +92,7 @@ PluginScan::scan()
 
     for (auto p: helpers) {
         try {
-            KnownPlugins *kp = new KnownPlugins
+            KnownPluginCandidates *kp = new KnownPluginCandidates
                 (p.executable.toStdString(), m_logger);
             if (m_kp.find(p.tag) != m_kp.end()) {
                 SVDEBUG << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
@@ -151,7 +151,7 @@ PluginScan::getCandidateLibrariesFor(PluginType
 
     for (auto rec: m_kp) {
 
-        KnownPlugins *kp = rec.second;
+        KnownPluginCandidates *kp = rec.second;
         
         auto c = kp->getCandidateLibrariesFor(kpt);
 
