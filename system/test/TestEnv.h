@@ -38,7 +38,7 @@ private slots:
         bool rv = getEnvUtf8("nonexistent_environment_variable_I_sincerely_hope_including_a_missspellling_just_to_be_sure",
                              value);
         QCOMPARE(rv, false);
-        QCOMPARE(value, "");
+        QCOMPARE(value, string());
     }
 
     void getExpected()
@@ -62,7 +62,7 @@ private slots:
         string value;
         rv = getEnvUtf8("SV_CORE_TEST_SYSTEM_RT_A_A", value);
         QCOMPARE(rv, true);
-        QCOMPARE(value, "EXPECTED_VALUE");
+        QCOMPARE(value, string("EXPECTED_VALUE"));
     }
     
     void roundTripAsciiUtf8()
@@ -84,7 +84,7 @@ private slots:
         string value;
         rv = getEnvUtf8("SV_CORE_TEST_SYSTEM_RT_\351\207\215\345\272\206_A", value);
         QCOMPARE(rv, true);
-        QCOMPARE(value, "EXPECTED_VALUE");
+        QCOMPARE(value, string("EXPECTED_VALUE"));
     }
 
     void roundTripUtf8Utf8()
