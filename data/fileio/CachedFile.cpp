@@ -157,7 +157,7 @@ CachedFile::checkFile()
                 SVDEBUG << "CachedFile::check: Retrieval succeeded" << endl;
                 updateLastRetrieval(true);
             } else {
-                cerr << "CachedFile::check: Retrieval failed, will try again later (using existing file for now)" << endl;
+                SVCERR << "CachedFile::check: Retrieval failed, will try again later (using existing file for now)" << endl;
             }                
         }
     } else {
@@ -168,7 +168,7 @@ CachedFile::checkFile()
             m_ok = true;
             updateLastRetrieval(true);
         } else {
-            cerr << "CachedFile::check: Retrieval failed, remaining in invalid state" << endl;
+            SVCERR << "CachedFile::check: Retrieval failed, remaining in invalid state" << endl;
             // again, we don't need to do anything here -- the last
             // retrieval timestamp is already invalid
         }
@@ -212,7 +212,7 @@ CachedFile::retrieve()
     QFile previous(m_localFilename);
     if (previous.exists()) {
         if (!previous.remove()) {
-            cerr << "CachedFile::retrieve: ERROR: Failed to remove previous copy of cached file at \"" << m_localFilename << "\"" << endl;
+            SVCERR << "CachedFile::retrieve: ERROR: Failed to remove previous copy of cached file at \"" << m_localFilename << "\"" << endl;
             return false;
         }
     }
@@ -222,7 +222,7 @@ CachedFile::retrieve()
     //!!! disk space left)
 
     if (!tempFile.copy(m_localFilename)) {
-        cerr << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName << "\" to \"" << m_localFilename << "\"" << endl;
+        SVCERR << "CachedFile::retrieve: ERROR: Failed to copy newly retrieved file from \"" << tempName << "\" to \"" << m_localFilename << "\"" << endl;
         return false;
     }
 
