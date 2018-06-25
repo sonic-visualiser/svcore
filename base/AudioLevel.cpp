@@ -127,7 +127,7 @@ AudioLevel::fader_to_dB(int level, int maxLevel, FaderType type)
 
     } else { // scale proportional to sqrt(fabs(dB))
 
-        int zeroLevel = int(maxLevel * faderTypes[type].zeroPoint);
+        int zeroLevel = int(round(maxLevel * faderTypes[type].zeroPoint));
     
         if (level >= zeroLevel) {
             
@@ -172,7 +172,7 @@ AudioLevel::dB_to_fader(double dB, int maxLevel, FaderType type)
 
     } else {
 
-        int zeroLevel = int(maxLevel * faderTypes[type].zeroPoint);
+        int zeroLevel = int(round(maxLevel * faderTypes[type].zeroPoint));
 
         if (dB >= 0.) {
             
