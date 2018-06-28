@@ -418,17 +418,22 @@ CSVFileReader::load() const
                 float **samples =
                     breakfastquay::allocate_and_zero_channels<float>
                     (channels, 1);
-                
-                for (int i = 0; i < list.size() && i < channels; ++i) {
 
-                    if (m_format.getColumnPurpose(i) != CSVFormat::ColumnValue) {
+                int channel = 0;
+                
+                for (int i = 0; i < list.size() && channel < channels; ++i) {
+
+                    if (m_format.getColumnPurpose(i) !=
+                        CSVFormat::ColumnValue) {
                         continue;
                     }
 
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
                     
-                    samples[i][0] = value;
+                    samples[channel][0] = value;
+
+                    ++channel;
                 }
 
                 bool ok = modelW->addSamples(samples, 1);
