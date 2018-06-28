@@ -521,6 +521,10 @@ CSVFileReader::load() const
         model3->setMaximumLevel(max);
     }
 
+    if (modelW) {
+        modelW->writeComplete();
+    }
+
     return model;
 }
 
