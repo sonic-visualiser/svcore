@@ -23,6 +23,7 @@
 #include "model/EditableDenseThreeDimensionalModel.h"
 #include "model/RegionModel.h"
 #include "model/NoteModel.h"
+#include "model/WritableWaveFileModel.h"
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
@@ -184,6 +185,7 @@ CSVFileReader::load() const
     RegionModel *model2a = 0;
     NoteModel *model2b = 0;
     EditableDenseThreeDimensionalModel *model3 = 0;
+    WritableWaveFileModel *modelW = 0;
     Model *model = 0;
 
     QTextStream in(m_device);
@@ -267,6 +269,12 @@ CSVFileReader::load() const
                          valueColumns,
                          EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
+                    break;
+
+                case CSVFormat::WaveFileModel:
+                    modelW = new WritableWaveFileModel
+                        (sampleRate, valueColumns);
+                    model = modelW;
                     break;
                 }
 
@@ -402,8 +410,42 @@ CSVFileReader::load() const
 //                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << endl;
 
                 model3->setColumn(lineno, values);
-            }
 
+            } else if (modelType == CSVFormat::WaveFileModel) {
+
+                int channels = modelW->getChannelCount();
+                
+                float **samples =
+                    breakfastquay::allocate_and_zero_channels<float>
+                    (channels, 1);
+                
+                for (int i = 0; i < list.size() && i < channels; ++i) {
+
+                    if (m_format.getColumnPurpose(i) != CSVFormat::ColumnValue) {
+                        continue;
+                    }
+
+                    bool ok = false;
+                    float value = list[i].toFloat(&ok);
+                    
+                    samples[i][0] = value;
+                }
+
+                bool ok = modelW->addSamples(samples, 1);
+
+                breakfastquay::deallocate_channels(samples, channels);
+                
+                if (!ok) {
+                    if (warnings < warnLimit) {
+                        SVCERR << "WARNING: CSVFileReader::load: "
+                               << "Unable to add sample to wave-file model"
+                               << endl;
+                        SVCERR << line << endl;
+                        ++warnings;
+                    }
+                }
+            }
+            
             ++lineno;
             if (timingType == CSVFormat::ImplicitTiming ||
                 list.size() == 0) {

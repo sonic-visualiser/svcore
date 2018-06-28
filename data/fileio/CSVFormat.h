@@ -29,7 +29,8 @@ public:
         TwoDimensionalModel,
         TwoDimensionalModelWithDuration,
         TwoDimensionalModelWithDurationAndPitch,
-        ThreeDimensionalModel
+        ThreeDimensionalModel,
+        WaveFileModel
     };
     
     enum TimingType {
