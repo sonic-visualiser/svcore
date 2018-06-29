@@ -31,6 +31,7 @@
 #include <QObject>
 
 class MIDIEvent;
+class ProgressReporter;
 
 typedef unsigned char MIDIByte;
 
@@ -61,7 +62,8 @@ class MIDIFileReader : public DataFileReader
 public:
     MIDIFileReader(QString path,
                    MIDIFileImportPreferenceAcquirer *pref, // may be null
-                   sv_samplerate_t mainModelSampleRate);
+                   sv_samplerate_t mainModelSampleRate,
+                   ProgressReporter *reporter = 0);
     virtual ~MIDIFileReader();
 
     virtual bool isOK() const;

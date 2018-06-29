@@ -58,7 +58,8 @@ using namespace MIDIConstants;
 
 MIDIFileReader::MIDIFileReader(QString path,
                                MIDIFileImportPreferenceAcquirer *acquirer,
-                               sv_samplerate_t mainModelSampleRate) :
+                               sv_samplerate_t mainModelSampleRate,
+                               ProgressReporter *) : // we don't actually report progress
     m_smpte(false),
     m_timingDivision(0),
     m_fps(0),

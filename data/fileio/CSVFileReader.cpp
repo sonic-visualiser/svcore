@@ -18,6 +18,7 @@
 #include "model/Model.h"
 #include "base/RealTime.h"
 #include "base/StringBits.h"
+#include "base/ProgressReporter.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
@@ -40,12 +41,17 @@
 using namespace std;
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
-                             sv_samplerate_t mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate,
+                             ProgressReporter *reporter) :
     m_format(format),
     m_device(0),
     m_ownDevice(true),
     m_warnings(0),
-    m_mainModelSampleRate(mainModelSampleRate)
+    m_mainModelSampleRate(mainModelSampleRate),
+    m_fileSize(0),
+    m_readCount(0),
+    m_progress(0),
+    m_reporter(reporter)
 {
     QFile *file = new QFile(path);
     bool good = false;
@@ -61,19 +67,27 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
     if (good) {
         m_device = file;
         m_filename = QFileInfo(path).fileName();
+        m_fileSize = file->size();
+        if (m_reporter) m_reporter->setDefinite(true);
     } else {
         delete file;
     }
 }
 
 CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
-                             sv_samplerate_t mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate,
+                             ProgressReporter *reporter) :
     m_format(format),
     m_device(device),
     m_ownDevice(false),
     m_warnings(0),
-    m_mainModelSampleRate(mainModelSampleRate)
+    m_mainModelSampleRate(mainModelSampleRate),
+    m_fileSize(0),
+    m_readCount(0),
+    m_progress(0),
+    m_reporter(reporter)
 {
+    if (m_reporter) m_reporter->setDefinite(false);
 }
 
 CSVFileReader::~CSVFileReader()
@@ -230,6 +244,25 @@ CSVFileReader::load() const
 
         QString chunk = in.readLine();
         QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+
+        m_readCount += chunk.size() + 1;
+
+        if (m_reporter) {
+            if (m_reporter->wasCancelled()) {
+                break;
+            }
+            int progress;
+            if (m_fileSize > 0) {
+                progress = int((double(m_readCount) / double(m_fileSize))
+                               * 100.0);
+            } else {
+                progress = int(m_readCount / 10000);
+            }
+            if (progress != m_progress) {
+                m_reporter->setProgress(progress);
+                m_progress = progress;
+            }
+        }
         
         for (int li = 0; li < lines.size(); ++li) {
 

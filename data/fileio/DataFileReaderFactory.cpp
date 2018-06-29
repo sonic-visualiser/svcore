@@ -32,21 +32,28 @@ DataFileReaderFactory::createReader(QString path,
                                     bool csv,
                                     MIDIFileImportPreferenceAcquirer *acquirer,
                                     CSVFormat format,
-                                    sv_samplerate_t mainModelSampleRate)
+                                    sv_samplerate_t mainModelSampleRate,
+                                    ProgressReporter *reporter)
 {
     QString err;
 
     DataFileReader *reader = 0;
 
     if (!csv) {
-        reader = new MIDIFileReader(path, acquirer, mainModelSampleRate);
+        reader = new MIDIFileReader(path,
+                                    acquirer,
+                                    mainModelSampleRate,
+                                    reporter);
         if (reader->isOK()) return reader;
         if (reader->getError() != "") err = reader->getError();
         delete reader;
     }
 
     if (csv) {
-        reader = new CSVFileReader(path, format, mainModelSampleRate);
+        reader = new CSVFileReader(path,
+                                   format,
+                                   mainModelSampleRate,
+                                   reporter);
         if (reader->isOK()) return reader;
         if (reader->getError() != "") err = reader->getError();
         delete reader;
@@ -58,14 +65,15 @@ DataFileReaderFactory::createReader(QString path,
 DataFileReader *
 DataFileReaderFactory::createReader(QString path,
                                     MIDIFileImportPreferenceAcquirer *acquirer,
-                                    sv_samplerate_t mainModelSampleRate)
+                                    sv_samplerate_t mainModelSampleRate,
+                                    ProgressReporter *reporter)
 {
     DataFileReader *reader = createReader
-        (path, false, acquirer, CSVFormat(), mainModelSampleRate);
+        (path, false, acquirer, CSVFormat(), mainModelSampleRate, reporter);
     if (reader) return reader;
 
     reader = createReader
-        (path, true, acquirer, CSVFormat(path), mainModelSampleRate);
+        (path, true, acquirer, CSVFormat(path), mainModelSampleRate, reporter);
     if (reader) return reader;
 
     return 0;
@@ -74,11 +82,13 @@ DataFileReaderFactory::createReader(QString path,
 Model *
 DataFileReaderFactory::load(QString path,
                             MIDIFileImportPreferenceAcquirer *acquirer,
-                            sv_samplerate_t mainModelSampleRate)
+                            sv_samplerate_t mainModelSampleRate,
+                            ProgressReporter *reporter)
 {
     DataFileReader *reader = createReader(path,
                                           acquirer,
-                                          mainModelSampleRate);
+                                          mainModelSampleRate,
+                                          reporter);
     if (!reader) return NULL;
 
     try {
@@ -94,12 +104,14 @@ DataFileReaderFactory::load(QString path,
 Model *
 DataFileReaderFactory::loadNonCSV(QString path,
                                   MIDIFileImportPreferenceAcquirer *acquirer,
-                                  sv_samplerate_t mainModelSampleRate)
+                                  sv_samplerate_t mainModelSampleRate,
+                                  ProgressReporter *reporter)
 {
     DataFileReader *reader = createReader(path, false,
                                           acquirer,
                                           CSVFormat(),
-                                          mainModelSampleRate);
+                                          mainModelSampleRate,
+                                          reporter);
     if (!reader) return NULL;
 
     try {
@@ -114,10 +126,12 @@ DataFileReaderFactory::loadNonCSV(QString path,
 
 Model *
 DataFileReaderFactory::loadCSV(QString path, CSVFormat format,
-                               sv_samplerate_t mainModelSampleRate)
+                               sv_samplerate_t mainModelSampleRate,
+                               ProgressReporter *reporter)
 {
     DataFileReader *reader = createReader(path, true, 0, format,
-                                          mainModelSampleRate);
+                                          mainModelSampleRate,
+                                          reporter);
     if (!reader) return NULL;
 
     try {
