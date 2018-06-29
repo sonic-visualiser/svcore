@@ -560,6 +560,7 @@ CSVFileReader::load() const
     }
 
     if (modelW) {
+        modelW->updateModel();
         modelW->writeComplete();
     }
 
