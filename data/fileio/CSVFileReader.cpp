@@ -50,7 +50,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
     m_mainModelSampleRate(mainModelSampleRate),
     m_fileSize(0),
     m_readCount(0),
-    m_progress(0),
+    m_progress(-1),
     m_reporter(reporter)
 {
     QFile *file = new QFile(path);
@@ -84,7 +84,7 @@ CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
     m_mainModelSampleRate(mainModelSampleRate),
     m_fileSize(0),
     m_readCount(0),
-    m_progress(0),
+    m_progress(-1),
     m_reporter(reporter)
 {
     if (m_reporter) m_reporter->setDefinite(false);
