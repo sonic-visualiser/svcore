@@ -33,7 +33,7 @@ DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f
 {
     int ch = getChannelCount();
 
-    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
+//    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
 
     if (f1 <= f0) return "";
 
