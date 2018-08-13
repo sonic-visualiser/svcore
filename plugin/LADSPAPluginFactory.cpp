@@ -422,7 +422,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
     if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
         loadLibrary(soname);
         if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
-            cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: loadLibrary failed for " << soname << endl;
+            SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: loadLibrary failed for " << soname << endl;
             return 0;
         }
     }
@@ -433,7 +433,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
         DLSYM(libraryHandle, "ladspa_descriptor");
 
     if (!fn) {
-        cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No descriptor function in library " << soname << endl;
+        SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No descriptor function in library " << soname << endl;
         return 0;
     }
 
@@ -445,7 +445,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
         ++index;
     }
 
-    cerr << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No such plugin as " << label << " in library " << soname << endl;
+    SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No such plugin as " << label << " in library " << soname << endl;
 
     return 0;
 }
@@ -462,7 +462,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 
     if (QFileInfo(soName).exists()) {
         DLERROR();
-        cerr << "LADSPAPluginFactory::loadLibrary: Library \"" << soName << "\" exists, but failed to load it" << endl;
+        SVCERR << "LADSPAPluginFactory::loadLibrary: Library \"" << soName << "\" exists, but failed to load it" << endl;
         return;
     }
 
@@ -484,7 +484,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
 
         if (QFileInfo(dir.filePath(fileName)).exists()) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            cerr << "Loading: " << fileName << endl;
+            SVDEBUG << "Loading: " << fileName << endl;
 #endif
             libraryHandle = DLOPEN(dir.filePath(fileName), RTLD_NOW);
             if (libraryHandle) {
@@ -497,7 +497,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
             QString file = dir.filePath(dir[j]);
             if (QFileInfo(file).baseName() == base) {
 #ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-                cerr << "Loading: " << file << endl;
+                SVDEBUG << "Loading: " << file << endl;
 #endif
                 libraryHandle = DLOPEN(file, RTLD_NOW);
                 if (libraryHandle) {
@@ -508,7 +508,7 @@ LADSPAPluginFactory::loadLibrary(QString soName)
         }
     }
 
-    cerr << "LADSPAPluginFactory::loadLibrary: Failed to locate plugin library \"" << soName << "\"" << endl;
+    SVCERR << "LADSPAPluginFactory::loadLibrary: Failed to locate plugin library \"" << soName << "\"" << endl;
 }
 
 void
