@@ -47,14 +47,14 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     QString pluginId = transform.getPluginIdentifier();
 
-//    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << output << endl;
+    SVDEBUG << "RealTimeEffectModelTransformer::RealTimeEffectModelTransformer: plugin " << pluginId << ", output " << transform.getOutput() << endl;
 
     RealTimePluginFactory *factory =
         RealTimePluginFactory::instanceFor(pluginId);
 
     if (!factory) {
-        cerr << "RealTimeEffectModelTransformer: No factory available for plugin id \""
-                  << pluginId << "\"" << endl;
+        SVCERR << "RealTimeEffectModelTransformer: No factory available for plugin id \""
+               << pluginId << "\"" << endl;
         return;
     }
 
@@ -67,8 +67,8 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
                                           input->getChannelCount());
 
     if (!m_plugin) {
-        cerr << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
-             << pluginId << "\"" << endl;
+        SVCERR << "RealTimeEffectModelTransformer: Failed to instantiate plugin \""
+               << pluginId << "\"" << endl;
         return;
     }
 
@@ -129,13 +129,25 @@ RealTimeEffectModelTransformer::run()
         SVDEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
-    if (m_abandoned) return;
+    if (m_abandoned) {
+        return;
+    }
+    if (m_outputs.empty()) {
+        return;
+    }
+    
+    SparseTimeValueModel *stvm =
+        dynamic_cast<SparseTimeValueModel *>(m_outputs[0]);
+    WritableWaveFileModel *wwfm =
+        dynamic_cast<WritableWaveFileModel *>(m_outputs[0]);
 
-    SparseTimeValueModel *stvm = dynamic_cast<SparseTimeValueModel *>(m_outputs[0]);
-    WritableWaveFileModel *wwfm = dynamic_cast<WritableWaveFileModel *>(m_outputs[0]);
-    if (!stvm && !wwfm) return;
+    if (!stvm && !wwfm) {
+        return;
+    }
 
-    if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) return;
+    if (stvm && (m_outputNo >= int(m_plugin->getControlOutputCount()))) {
+        return;
+    }
 
     sv_samplerate_t sampleRate = input->getSampleRate();
     int channelCount = input->getChannelCount();
