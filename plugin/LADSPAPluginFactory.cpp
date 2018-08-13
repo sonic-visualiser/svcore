@@ -569,7 +569,7 @@ LADSPAPluginFactory::getPluginPath()
     std::vector<QString> pathList;
     string path;
 
-    (void)getEnvUtf8("DSSI_PATH", path);
+    (void)getEnvUtf8("LADSPA_PATH", path);
 
     if (path == "") {
 
