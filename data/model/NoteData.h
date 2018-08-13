@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef NOTE_DATA_H
-#define NOTE_DATA_H
+#ifndef SV_NOTE_DATA_H
+#define SV_NOTE_DATA_H
 
 #include <vector>
 
