@@ -18,11 +18,7 @@
 #include "base/Preferences.h"
 #include "base/HelperExecPath.h"
 
-#ifdef HAVE_PLUGIN_CHECKER_HELPER
-#include "checker/knownplugincandidates.h"
-#else
-class KnownPluginCandidates {};
-#endif
+#include <sstream>
 
 #include <QMutex>
 #include <QCoreApplication>
@@ -182,6 +178,95 @@ PluginScan::getCandidateLibrariesFor(PluginType
 #endif
 }
 
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+QString
+PluginScan::formatFailureReport(QString tag,
+                                std::vector<PluginCandidates::FailureRec> failures) const
+{
+    int n = int(failures.size());
+    int i = 0;
+
+    std::ostringstream os;
+    
+    os << "<ul>";
+    for (auto f: failures) {
+        os << "<li>" + f.library;
+
+        SVDEBUG << "PluginScan::formatFailureReport: tag is \"" << tag
+                << "\", failure code is " << int(f.code) << ", message is \""
+                << f.message << "\"" << endl;
+        
+        QString userMessage = QString::fromStdString(f.message);
+
+        switch (f.code) {
+
+        case PluginCheckCode::FAIL_LIBRARY_NOT_FOUND:
+            userMessage = QObject::tr("Library file could not be opened");
+            break;
+
+        case PluginCheckCode::FAIL_WRONG_ARCHITECTURE:
+            if (tag == "64" || (sizeof(void *) == 8 && tag == "")) {
+                userMessage = QObject::tr
+                    ("Library has wrong architecture - possibly a 32-bit plugin installed in a folder for 64-bit plugins");
+            } else if (tag == "32" || (sizeof(void *) == 4 && tag == "")) {
+                userMessage = QObject::tr
+                    ("Library has wrong architecture - possibly a 64-bit plugin installed in a folder for 32-bit plugins");
+            }
+            break;
+
+        case PluginCheckCode::FAIL_DEPENDENCY_MISSING:
+            userMessage = QObject::tr
+                ("Library depends on another library that cannot be found: %1")
+                .arg(userMessage);
+            break;
+
+        case PluginCheckCode::FAIL_NOT_LOADABLE:
+            userMessage = QObject::tr
+                ("Library cannot be loaded: %1").arg(userMessage);
+            break;
+
+        case PluginCheckCode::FAIL_DESCRIPTOR_MISSING:
+            userMessage = QObject::tr
+                ("Not a valid plugin library (no descriptor found)");
+            break;
+
+        case PluginCheckCode::FAIL_NO_PLUGINS:
+            userMessage = QObject::tr
+                ("Library contains no plugins");
+            break;
+
+        case PluginCheckCode::FAIL_OTHER:
+            if (userMessage == "") {
+                userMessage = QObject::tr
+                    ("Unknown error");
+            }
+            break;
+
+        case PluginCheckCode::SUCCESS:
+            // success shouldn't happen here!
+            break;
+        }
+        
+        os << "<br><i>" + userMessage.toStdString() + "</i>";
+        os << "</li>";
+
+        if (n > 10) {
+            if (++i == 5) {
+                os << "<li>";
+                os << QObject::tr("... and %n further failure(s)",
+                                  "", n - i)
+                    .toStdString();
+                os << "</li>";
+                break;
+            }
+        }
+    }
+    os << "</ul>";
+
+    return QString::fromStdString(os.str());
+}
+#endif
+
 QString
 PluginScan::getStartupFailureReport() const
 {
@@ -204,7 +289,8 @@ PluginScan::getStartupFailureReport() const
 
     QString report;
     for (auto kp: m_kp) {
-        report += QString::fromStdString(kp.second->getFailureReport());
+        auto failures = kp.second->getFailures();
+        report += formatFailureReport(kp.first, failures);
     }
     if (report == "") {
         return report;
