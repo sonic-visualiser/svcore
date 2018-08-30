@@ -290,7 +290,9 @@ PluginScan::getStartupFailureReport() const
     QString report;
     for (auto kp: m_kp) {
         auto failures = kp.second->getFailures();
-        report += formatFailureReport(kp.first, failures);
+        if (!failures.empty()) {
+            report += formatFailureReport(kp.first, failures);
+        }
     }
     if (report == "") {
         return report;
