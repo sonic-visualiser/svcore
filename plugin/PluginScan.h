@@ -20,7 +20,11 @@
 #include <vector>
 #include <map>
 
-class KnownPluginCandidates;
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+#include "checker/knownplugincandidates.h"
+#else
+class KnownPluginCandidates {};
+#endif
 
 class PluginScan
 {
@@ -72,6 +76,12 @@ private:
     ~PluginScan();
 
     void clear();
+
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    QString formatFailureReport(QString helperTag,
+                                std::vector<PluginCandidates::FailureRec>)
+        const;
+#endif
 
     mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
