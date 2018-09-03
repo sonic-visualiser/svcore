@@ -207,10 +207,10 @@ PluginScan::formatFailureReport(QString tag,
         case PluginCheckCode::FAIL_WRONG_ARCHITECTURE:
             if (tag == "64" || (sizeof(void *) == 8 && tag == "")) {
                 userMessage = QObject::tr
-                    ("Library has wrong architecture - possibly a 32-bit plugin installed in a folder for 64-bit plugins");
+                    ("Library has wrong architecture - possibly a 32-bit plugin installed in a 64-bit plugin folder");
             } else if (tag == "32" || (sizeof(void *) == 4 && tag == "")) {
                 userMessage = QObject::tr
-                    ("Library has wrong architecture - possibly a 64-bit plugin installed in a folder for 32-bit plugins");
+                    ("Library has wrong architecture - possibly a 64-bit plugin installed in a 32-bit plugin folder");
             }
             break;
 
