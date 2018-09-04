@@ -63,10 +63,15 @@ WavFileWriter::WavFileWriter(QString path,
         m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
 #endif
         if (!m_file) {
-            SVCERR << "WavFileWriter: Failed to open file ("
-                 << sf_strerror(m_file) << ")" << endl;
+            SVCERR << "WavFileWriter: Failed to create float-WAV file of "
+                   << m_channels << " channels at rate " << fileRate << " ("
+                   << sf_strerror(m_file) << ")" << endl;
             m_error = QString("Failed to open audio file '%1' for writing")
                 .arg(writePath);
+            if (m_temp) {
+                delete m_temp;
+                m_temp = 0;
+            }
         }
     } catch (FileOperationFailed &f) {
         m_error = f.what();

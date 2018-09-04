@@ -311,13 +311,25 @@ CSVFileReader::load() const
                     break;
                 }
 
-                if (model) {
+                if (model && model->isOK()) {
                     if (m_filename != "") {
                         model->setObjectName(m_filename);
                     }
                 }
             }
 
+            if (!model || !model->isOK()) {
+                SVCERR << "Failed to create model to load CSV file into"
+                       << endl;
+                if (model) {
+                    delete model;
+                    model = 0;
+                    model1 = 0; model2 = 0; model2a = 0; model2b = 0;
+                    model3 = 0; modelW = 0;
+                }
+                break;
+            }
+            
             float value = 0.f;
             float pitch = 0.f;
             QString label = "";
