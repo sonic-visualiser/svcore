@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MODEL_H_
-#define _MODEL_H_
+#ifndef SV_MODEL_H
+#define SV_MODEL_H
 
 #include <vector>
 #include <QObject>
@@ -26,6 +26,8 @@
 
 class ZoomConstraint;
 class AlignmentModel;
+
+typedef int ModelId;
 
 /** 
  * Model is the base class for all data models that represent any sort
@@ -98,6 +100,13 @@ public:
      * Return true if this is a sparse model.
      */
     virtual bool isSparse() const { return false; }
+
+    /**
+     * Return an id for this model. The id is guaranteed to be a
+     * unique identifier for this model among all models that may ever
+     * exist within this single run of the application.
+     */
+    ModelId getId() const { return m_id; }
     
     /**
      * Mark the model as abandoning. This means that the application
@@ -291,7 +300,8 @@ signals:
     void aboutToBeDeleted();
 
 protected:
-    Model() : 
+    Model() :
+        m_id(getNextId()),
         m_sourceModel(0), 
         m_alignment(0), 
         m_abandoning(false), 
@@ -301,11 +311,14 @@ protected:
     Model(const Model &);
     Model &operator=(const Model &); 
 
+    const ModelId m_id;
     Model *m_sourceModel;
     AlignmentModel *m_alignment;
     QString m_typeUri;
     bool m_abandoning;
     bool m_aboutToDelete;
+
+    int getNextId();
 };
 
 #endif

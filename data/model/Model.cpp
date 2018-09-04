@@ -40,6 +40,20 @@ Model::~Model()
     }
 }
 
+int
+Model::getNextId()
+{
+    static int nextId = 0;
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+    int i = nextId;
+    if (nextId == INT_MAX) {
+        nextId = INT_MIN;
+    }
+    ++nextId;
+    return i;
+}
+
 void
 Model::setSourceModel(Model *model)
 {
