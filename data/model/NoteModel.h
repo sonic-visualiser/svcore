@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _NOTE_MODEL_H_
-#define _NOTE_MODEL_H_
+#ifndef SV_NOTE_MODEL_H
+#define SV_NOTE_MODEL_H
 
 #include "IntervalModel.h"
 #include "NoteData.h"

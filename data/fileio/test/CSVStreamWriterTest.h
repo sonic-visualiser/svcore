@@ -256,7 +256,7 @@ private slots:
         regions.addSelection({0, 2});
         regions.addSelection({4, 6});
         regions.addSelection({16, 18});
-        qDebug("End frame: %lld", (long long int)mwm.getEndFrame());
+//        qDebug("End frame: %lld", (long long int)mwm.getEndFrame());
         const std::string expectedOutput {
           "0,0,0\n"
           "1,0,0\n"
@@ -278,7 +278,7 @@ private slots:
         QVERIFY( reporter.getCallCount() == 3 );
         const std::vector<int> expectedCallLog { 33, 66, 100 };
         QVERIFY( reporter.getPercentageLog() == expectedCallLog );
-        qDebug("%s", oss.str().c_str());
+//        qDebug("%s", oss.str().c_str());
         QVERIFY( oss.str() == expectedOutput );
     }
 
@@ -300,15 +300,15 @@ private slots:
             notes.addPoint({startFrame, note, 4, 1.f, ""});
             startFrame += 8;
         }
-        qDebug("Create Expected Output\n");
+//        qDebug("Create Expected Output\n");
 
         // NB. removed end line break
         const auto expectedOutput = notes.toDelimitedDataString(",").trimmed();
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;
-        qDebug("End frame: %lld", (long long int)notes.getEndFrame());
-        qDebug("Write streaming\n");
+//        qDebug("End frame: %lld", (long long int)notes.getEndFrame());
+//        qDebug("Write streaming\n");
         const auto wroteSparseModel = CSVStreamWriter::writeInChunks(
             oss,
             notes,
@@ -318,8 +318,8 @@ private slots:
             2
         );
 
-        qDebug("\n%s\n", expectedOutput.toLocal8Bit().data());
-        qDebug("\n%s\n", oss.str().c_str());
+//        qDebug("\n%s\n", expectedOutput.toLocal8Bit().data());
+//        qDebug("\n%s\n", oss.str().c_str());
         QVERIFY( wroteSparseModel == true );
         QVERIFY( oss.str() == expectedOutput.toStdString() );
     }

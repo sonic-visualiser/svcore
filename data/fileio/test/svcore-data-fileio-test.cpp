@@ -35,17 +35,16 @@ int main(int argc, char *argv[])
 #endif
 
     if (argc > 1) {
-        SVCERR << "argc = " << argc << endl;
         testDir = argv[1];
-    }
-
-    if (testDir != "") {
-        SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
     }
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
     app.setApplicationName("test-fileio");
+
+    if (testDir != "") {
+        SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
+    }
 
     {
         AudioFileReaderTest t(testDir);
