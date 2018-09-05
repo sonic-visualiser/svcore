@@ -229,7 +229,9 @@ CSVFileReader::load() const
         }
     }
 
-    while (!in.atEnd()) {
+    bool abandoned = false;
+    
+    while (!in.atEnd() && !abandoned) {
 
         // QTextStream's readLine doesn't cope with old-style Mac
         // CR-only line endings.  Why did they bother making the class
@@ -249,6 +251,7 @@ CSVFileReader::load() const
 
         if (m_reporter) {
             if (m_reporter->wasCancelled()) {
+                abandoned = true;
                 break;
             }
             int progress;
@@ -327,6 +330,7 @@ CSVFileReader::load() const
                     model1 = 0; model2 = 0; model2a = 0; model2b = 0;
                     model3 = 0; modelW = 0;
                 }
+                abandoned = true;
                 break;
             }
             
