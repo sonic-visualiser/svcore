@@ -91,6 +91,8 @@ CSVFormat::guessSeparator(QString line)
     for (int i = 0; i < int(sizeof(candidates)/sizeof(candidates[0])); ++i) {
         if (StringBits::split(line, candidates[i], m_allowQuoting).size() >= 2) {
             m_separator = candidates[i];
+            SVDEBUG << "Estimated column separator: '" << m_separator
+                    << "'" << endl;
             return;
         }
     }
@@ -199,6 +201,12 @@ CSVFormat::guessPurposes()
     m_timeUnits = CSVFormat::TimeWindows;
         
     int timingColumnCount = 0;
+
+    SVDEBUG << "Estimated column qualities overall: ";
+    for (int i = 0; i < m_columnCount; ++i) {
+        SVDEBUG << int(m_columnQualities[i]) << " ";
+    }
+    SVDEBUG << endl;
 
     // if our first column has zero or one entries in it and the rest
     // have more, then we'll default to ignoring the first column and

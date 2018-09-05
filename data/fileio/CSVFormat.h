@@ -117,10 +117,15 @@ public:
     void setColumnPurpose(int i, ColumnPurpose p);
     
     // read-only; only valid if format has been guessed:
-    QList<ColumnQualities> getColumnQualities() const { return m_columnQualities; }
+    const QList<ColumnQualities> &getColumnQualities() const {
+        return m_columnQualities;
+    }
 
     // read-only; only valid if format has been guessed:
-    QList<QStringList> getExample() const { return m_example; }
+    const QList<QStringList> &getExample() const {
+        return m_example;
+    }
+    
     int getMaxExampleCols() const { return m_maxExampleCols; }
         
 protected:
