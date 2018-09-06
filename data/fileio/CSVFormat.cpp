@@ -71,14 +71,16 @@ CSVFormat::guessFormatFor(QString path)
         for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
-            if (line.startsWith("#") || line == "") continue;
+            if (line.startsWith("#") || line == "") {
+                continue;
+            }
 
             guessQualities(line, lineno);
 
             ++lineno;
         }
 
-        if (lineno >= 50) break;
+        if (lineno >= 150) break;
     }
 
     guessPurposes();
@@ -113,7 +115,8 @@ CSVFormat::guessQualities(QString line, int lineno)
     // something that indicates otherwise:
 
     ColumnQualities defaultQualities =
-        ColumnNumeric | ColumnIntegral | ColumnIncreasing | ColumnNearEmpty;
+        ColumnNumeric | ColumnIntegral | ColumnSmall |
+        ColumnIncreasing | ColumnNearEmpty;
     
     for (int i = 0; i < cols; ++i) {
             
@@ -130,7 +133,9 @@ CSVFormat::guessQualities(QString line, int lineno)
         bool numeric    = (qualities & ColumnNumeric);
         bool integral   = (qualities & ColumnIntegral);
         bool increasing = (qualities & ColumnIncreasing);
+        bool small      = (qualities & ColumnSmall);
         bool large      = (qualities & ColumnLarge); // this one defaults to off
+        bool signd      = (qualities & ColumnSigned); // also defaults to off
         bool emptyish   = (qualities & ColumnNearEmpty);
 
         if (lineno > 1 && s.trimmed() != "") {
@@ -147,7 +152,15 @@ CSVFormat::guessQualities(QString line, int lineno)
                 value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
             }
             if (ok) {
-                if (lineno < 2 && value > 1000.f) large = true;
+                if (lineno < 2 && value > 1000.f) {
+                    large = true;
+                }
+                if (value < 0.f) {
+                    signd = true;
+                }
+                if (value < -1.f || value > 1.f) {
+                    small = false;
+                }
             } else {
                 numeric = false;
             }
@@ -174,7 +187,9 @@ CSVFormat::guessQualities(QString line, int lineno)
             (numeric    ? ColumnNumeric : 0) |
             (integral   ? ColumnIntegral : 0) |
             (increasing ? ColumnIncreasing : 0) |
+            (small      ? ColumnSmall : 0) |
             (large      ? ColumnLarge : 0) |
+            (signd      ? ColumnSigned : 0) |
             (emptyish   ? ColumnNearEmpty : 0);
     }
 

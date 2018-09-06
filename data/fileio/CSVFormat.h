@@ -56,11 +56,13 @@ public:
     };
 
     enum ColumnQuality {
-        ColumnNumeric    = 1,
-        ColumnIntegral   = 2,
-        ColumnIncreasing = 4,
-        ColumnLarge      = 8,
-        ColumnNearEmpty  = 16,
+        ColumnNumeric    = 1,   // No non-numeric values were seen in sample
+        ColumnIntegral   = 2,   // All sampled values were integers
+        ColumnIncreasing = 4,   // Sampled values were monotonically increasing
+        ColumnSmall      = 8,   // All sampled values had magnitude < 1
+        ColumnLarge      = 16,  // Values "quickly" grew to over 1000
+        ColumnSigned     = 32,  // Some negative values were seen
+        ColumnNearEmpty  = 64,  // Nothing in this column beyond first row
     };
     typedef unsigned int ColumnQualities;
 
