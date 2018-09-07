@@ -82,6 +82,7 @@ public:
         m_windowSize(1024),
         m_columnCount(0),
         m_variableColumnCount(false),
+        m_audioSampleRange(SampleRangeOther),
         m_allowQuoting(true),
         m_maxExampleCols(0)
     { }
@@ -103,6 +104,7 @@ public:
     sv_samplerate_t getSampleRate() const { return m_sampleRate;    }
     int          getWindowSize()    const { return m_windowSize;    }
     int          getColumnCount()   const { return m_columnCount;   }
+    AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
     QChar        getSeparator()     const { 
         if (m_separator == "") return ' ';
@@ -116,6 +118,7 @@ public:
     void setSampleRate(sv_samplerate_t r) { m_sampleRate   = r; }
     void setWindowSize(int s)             { m_windowSize   = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
+    void setAudioSampleRange(AudioSampleRange r) { m_audioSampleRange = r; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
 
     QList<ColumnPurpose> getColumnPurposes() const { return m_columnPurposes; }
