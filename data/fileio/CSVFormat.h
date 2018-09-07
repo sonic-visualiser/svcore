@@ -66,6 +66,13 @@ public:
     };
     typedef unsigned int ColumnQualities;
 
+    enum AudioSampleRange {
+        SampleRangeSigned1 = 0, //     -1 .. 1
+        SampleRangeUnsigned255, //      0 .. 255
+        SampleRangeSigned32767, // -32768 .. 32767
+        SampleRangeOther        // Other/unknown: Normalise on load
+    };
+
     CSVFormat() : // arbitrary defaults
         m_modelType(TwoDimensionalModel),
         m_timingType(ExplicitTiming),
@@ -149,6 +156,8 @@ protected:
     QList<ColumnQualities> m_columnQualities;
     QList<ColumnPurpose> m_columnPurposes;
 
+    AudioSampleRange m_audioSampleRange;
+
     QList<float> m_prevValues;
 
     bool m_allowQuoting;
@@ -159,9 +168,7 @@ protected:
     void guessSeparator(QString line);
     void guessQualities(QString line, int lineno);
     void guessPurposes();
-
-    void guessFormatFor_Old(QString path);
- 
+    void guessAudioSampleRange();
 };
 
 #endif

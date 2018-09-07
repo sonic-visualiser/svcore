@@ -84,6 +84,7 @@ CSVFormat::guessFormatFor(QString path)
     }
 
     guessPurposes();
+    guessAudioSampleRange();
 }
 
 void
@@ -349,6 +350,55 @@ CSVFormat::guessPurposes()
     SVDEBUG << "Estimated model type: " << m_modelType << endl;
     SVDEBUG << "Estimated timing type: " << m_timingType << endl;
     SVDEBUG << "Estimated units: " << m_timeUnits << endl;
+}
+
+void
+CSVFormat::guessAudioSampleRange()
+{
+    AudioSampleRange range = SampleRangeSigned1;
+    
+    range = SampleRangeSigned1;
+    bool knownSigned = false;
+    bool knownNonIntegral = false;
+    
+    for (int i = 0; i < m_columnCount; ++i) {
+        if (!(m_columnQualities[i] & ColumnIntegral)) {
+            knownNonIntegral = true;
+            if (range == SampleRangeUnsigned255 ||
+                range == SampleRangeSigned32767) {
+                range = SampleRangeOther;
+            }
+        }
+        if (m_columnQualities[i] & ColumnLarge) {
+            if (range == SampleRangeSigned1 ||
+                range == SampleRangeUnsigned255) {
+                if (knownNonIntegral) {
+                    range = SampleRangeOther;
+                } else {
+                    range = SampleRangeSigned32767;
+                }
+            }
+        }
+        if (m_columnQualities[i] & ColumnSigned) {
+            knownSigned = true;
+            if (range == SampleRangeUnsigned255) {
+                range = SampleRangeSigned32767;
+            }
+        }
+        if (!(m_columnQualities[i] & ColumnSmall)) {
+            if (range == SampleRangeSigned1) {
+                if (knownNonIntegral) {
+                    range = SampleRangeOther;
+                } else if (knownSigned) {
+                    range = SampleRangeSigned32767;
+                } else {
+                    range = SampleRangeUnsigned255;
+                }
+            }
+        }
+    }
+
+    m_audioSampleRange = range;
 }
 
 CSVFormat::ColumnPurpose
