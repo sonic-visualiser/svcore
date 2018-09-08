@@ -219,8 +219,6 @@ CSVFileReader::load() const
 
     sv_frame_t startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
-
-    map<QString, int> labelCountMap;
     
     int valueColumns = 0;
     for (int i = 0; i < m_format.getColumnCount(); ++i) {
@@ -228,6 +226,38 @@ CSVFileReader::load() const
             ++valueColumns;
         }
     }
+
+    int audioChannels = 0;
+    float **audioSamples = 0;
+    float sampleShift = 0.f;
+    float sampleScale = 1.f;
+
+    if (modelType == CSVFormat::WaveFileModel) {
+
+        audioChannels = valueColumns;
+                
+        audioSamples =
+            breakfastquay::allocate_and_zero_channels<float>
+            (audioChannels, 1);
+
+        switch (m_format.getAudioSampleRange()) {
+        case CSVFormat::SampleRangeSigned1:
+        case CSVFormat::SampleRangeOther:
+            sampleShift = 0.f;
+            sampleScale = 1.f;
+            break;
+        case CSVFormat::SampleRangeUnsigned255:
+            sampleShift = -128.f;
+            sampleScale = 1.f / 128.f;
+            break;
+        case CSVFormat::SampleRangeSigned32767:
+            sampleShift = 0.f;
+            sampleScale = 1.f / 32768.f;
+            break;
+        }
+    }
+
+    map<QString, int> labelCountMap;
 
     bool abandoned = false;
     
@@ -344,7 +374,7 @@ CSVFileReader::load() const
 
             duration = 0.f;
             haveEndTime = false;
-
+            
             for (int i = 0; i < list.size(); ++i) {
 
                 QString s = list[i];
@@ -466,33 +496,11 @@ CSVFileReader::load() const
 
             } else if (modelType == CSVFormat::WaveFileModel) {
 
-                int channels = modelW->getChannelCount();
-                
-                float **samples =
-                    breakfastquay::allocate_and_zero_channels<float>
-                    (channels, 1);
-
                 int channel = 0;
-                float shift = 0.f;
-                float scale = 1.f;
 
-                switch (m_format.getAudioSampleRange()) {
-                case CSVFormat::SampleRangeSigned1:
-                case CSVFormat::SampleRangeOther:
-                    shift = 0.f;
-                    scale = 1.f;
-                    break;
-                case CSVFormat::SampleRangeUnsigned255:
-                    shift = -128.f;
-                    scale = 1.f / 128.f;
-                    break;
-                case CSVFormat::SampleRangeSigned32767:
-                    shift = 0.f;
-                    scale = 1.f / 32768.f;
-                    break;
-                }
-                
-                for (int i = 0; i < list.size() && channel < channels; ++i) {
+                for (int i = 0;
+                     i < list.size() && channel < audioChannels;
+                     ++i) {
 
                     if (m_format.getColumnPurpose(i) !=
                         CSVFormat::ColumnValue) {
@@ -501,18 +509,24 @@ CSVFileReader::load() const
 
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
+                    if (!ok) {
+                        value = 0.f;
+                    }
 
-                    value += shift;
-                    value *= scale;
+                    value += sampleShift;
+                    value *= sampleScale;
                     
-                    samples[channel][0] = value;
+                    audioSamples[channel][0] = value;
 
                     ++channel;
                 }
 
-                bool ok = modelW->addSamples(samples, 1);
+                while (channel < audioChannels) {
+                    audioSamples[channel][0] = 0.f;
+                    ++channel;
+                }
 
-                breakfastquay::deallocate_channels(samples, channels);
+                bool ok = modelW->addSamples(audioSamples, 1);
                 
                 if (!ok) {
                     if (warnings < warnLimit) {
@@ -601,6 +615,7 @@ CSVFileReader::load() const
     }
 
     if (modelW) {
+        breakfastquay::deallocate_channels(audioSamples, audioChannels);
         modelW->updateModel();
         modelW->writeComplete();
     }
