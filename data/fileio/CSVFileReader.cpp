@@ -308,10 +308,14 @@ CSVFileReader::load() const
                     break;
 
                 case CSVFormat::WaveFileModel:
+                {
+                    bool normalise = (m_format.getAudioSampleRange()
+                                      == CSVFormat::SampleRangeOther);
                     modelW = new WritableWaveFileModel
-                        (sampleRate, valueColumns);
+                        (sampleRate, valueColumns, QString(), normalise);
                     model = modelW;
                     break;
+                }
                 }
 
                 if (model && model->isOK()) {
@@ -469,6 +473,24 @@ CSVFileReader::load() const
                     (channels, 1);
 
                 int channel = 0;
+                float shift = 0.f;
+                float scale = 1.f;
+
+                switch (m_format.getAudioSampleRange()) {
+                case CSVFormat::SampleRangeSigned1:
+                case CSVFormat::SampleRangeOther:
+                    shift = 0.f;
+                    scale = 1.f;
+                    break;
+                case CSVFormat::SampleRangeUnsigned255:
+                    shift = -128.f;
+                    scale = 1.f / 128.f;
+                    break;
+                case CSVFormat::SampleRangeSigned32767:
+                    shift = 0.f;
+                    scale = 1.f / 32768.f;
+                    break;
+                }
                 
                 for (int i = 0; i < list.size() && channel < channels; ++i) {
 
@@ -479,6 +501,9 @@ CSVFileReader::load() const
 
                     bool ok = false;
                     float value = list[i].toFloat(&ok);
+
+                    value += shift;
+                    value *= scale;
                     
                     samples[channel][0] = value;
 

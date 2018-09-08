@@ -28,7 +28,10 @@ class WritableWaveFileModel : public WaveFileModel
     Q_OBJECT
 
 public:
-    WritableWaveFileModel(sv_samplerate_t sampleRate, int channels, QString path = "");
+    WritableWaveFileModel(sv_samplerate_t sampleRate,
+                          int channels,
+                          QString path = "",
+                          bool normaliseOnRead = false);
     ~WritableWaveFileModel();
 
     /**

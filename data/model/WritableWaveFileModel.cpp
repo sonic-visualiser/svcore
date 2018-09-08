@@ -38,7 +38,8 @@ const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
 
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
                                              int channels,
-                                             QString path) :
+                                             QString path,
+                                             bool normaliseOnRead) :
     m_model(0),
     m_writer(0),
     m_reader(0),
@@ -72,7 +73,7 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
 
     FileSource source(m_writer->getPath());
 
-    m_reader = new WavFileReader(source, true);
+    m_reader = new WavFileReader(source, true, normaliseOnRead);
     if (!m_reader->getError().isEmpty()) {
         SVCERR << "WritableWaveFileModel: Error in creating wave file reader" << endl;
         delete m_reader;
