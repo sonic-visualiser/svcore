@@ -19,6 +19,7 @@
 #include "base/RealTime.h"
 #include "base/StringBits.h"
 #include "base/ProgressReporter.h"
+#include "base/RecordDirectory.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
@@ -28,11 +29,13 @@
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
+#include <QDir>
 #include <QFileInfo>
 #include <QString>
 #include <QRegExp>
 #include <QStringList>
 #include <QTextStream>
+#include <QDateTime>
 
 #include <iostream>
 #include <map>
@@ -306,6 +309,8 @@ CSVFileReader::load() const
             QStringList list = StringBits::split(line, separator, allowQuoting);
             if (!model) {
 
+                QString modelName = m_filename;
+                
                 switch (modelType) {
 
                 case CSVFormat::OneDimensionalModel:
@@ -341,16 +346,18 @@ CSVFileReader::load() const
                 {
                     bool normalise = (m_format.getAudioSampleRange()
                                       == CSVFormat::SampleRangeOther);
+                    QString path = getConvertedAudioFilePath();
                     modelW = new WritableWaveFileModel
-                        (sampleRate, valueColumns, QString(), normalise);
+                        (sampleRate, valueColumns, path, normalise);
+                    modelName = QFileInfo(path).fileName();
                     model = modelW;
                     break;
                 }
                 }
 
                 if (model && model->isOK()) {
-                    if (m_filename != "") {
-                        model->setObjectName(m_filename);
+                    if (modelName != "") {
+                        model->setObjectName(modelName);
                     }
                 }
             }
@@ -621,5 +628,25 @@ CSVFileReader::load() const
     }
 
     return model;
+}
+
+QString
+CSVFileReader::getConvertedAudioFilePath() const
+{
+    QString base = m_filename;
+    base.replace(QRegExp("[/\\,.:;~<>\"'|?%*]+"), "_");
+
+    QString convertedFileDir = RecordDirectory::getConvertedAudioDirectory();
+    if (convertedFileDir == "") {
+        SVCERR << "WARNING: CSVFileReader::getConvertedAudioFilePath: Failed to retrieve converted audio directory" << endl;
+        return "";
+    }
+
+    auto ms = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    auto s = ms / 1000; // there is a toSecsSinceEpoch in Qt 5.8 but
+                        // we currently want to support older versions
+    
+    return QDir(convertedFileDir).filePath
+        (QString("%1-%2.wav").arg(base).arg(s));
 }
 

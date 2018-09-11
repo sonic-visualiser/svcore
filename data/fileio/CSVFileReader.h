@@ -72,6 +72,8 @@ protected:
 
     sv_frame_t convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
                                 int windowSize) const;
+
+    QString getConvertedAudioFilePath() const;
 };
 
 
