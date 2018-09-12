@@ -133,11 +133,6 @@ public:
         return m_columnQualities;
     }
 
-    bool isColumnNumeric(int i) const {
-        return (m_columnQualities.size() > i &&
-                m_columnQualities[i] & ColumnNumeric);
-    }
-    
     // read-only; only valid if format has been guessed:
     const QList<QStringList> &getExample() const {
         return m_example;

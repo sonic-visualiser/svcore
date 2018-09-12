@@ -360,14 +360,24 @@ CSVFormat::guessAudioSampleRange()
     range = SampleRangeSigned1;
     bool knownSigned = false;
     bool knownNonIntegral = false;
+
+    SVDEBUG << "CSVFormat::guessAudioSampleRange: starting with assumption of "
+            << range << endl;
     
     for (int i = 0; i < m_columnCount; ++i) {
+        if (m_columnPurposes[i] != ColumnValue) {
+            SVDEBUG << "... column " << i
+                    << " is not apparently a value, ignoring" << endl;
+            continue;
+        }
         if (!(m_columnQualities[i] & ColumnIntegral)) {
             knownNonIntegral = true;
             if (range == SampleRangeUnsigned255 ||
                 range == SampleRangeSigned32767) {
                 range = SampleRangeOther;
             }
+            SVDEBUG << "... column " << i
+                    << " is non-integral, updating range to " << range << endl;
         }
         if (m_columnQualities[i] & ColumnLarge) {
             if (range == SampleRangeSigned1 ||
@@ -378,12 +388,16 @@ CSVFormat::guessAudioSampleRange()
                     range = SampleRangeSigned32767;
                 }
             }
+            SVDEBUG << "... column " << i << " is large, updating range to "
+                    << range << endl;
         }
         if (m_columnQualities[i] & ColumnSigned) {
             knownSigned = true;
             if (range == SampleRangeUnsigned255) {
                 range = SampleRangeSigned32767;
             }
+            SVDEBUG << "... column " << i << " is signed, updating range to "
+                    << range << endl;
         }
         if (!(m_columnQualities[i] & ColumnSmall)) {
             if (range == SampleRangeSigned1) {
@@ -395,9 +409,14 @@ CSVFormat::guessAudioSampleRange()
                     range = SampleRangeUnsigned255;
                 }
             }
+            SVDEBUG << "... column " << i << " is not small, updating range to "
+                    << range << endl;
         }
     }
 
+    SVDEBUG << "CSVFormat::guessAudioSampleRange: ended up with range "
+            << range << endl;
+    
     m_audioSampleRange = range;
 }
 
