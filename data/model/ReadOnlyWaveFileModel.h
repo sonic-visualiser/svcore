@@ -36,8 +36,20 @@ class ReadOnlyWaveFileModel : public WaveFileModel
     Q_OBJECT
 
 public:
+    /**
+     * Construct a WaveFileModel from a source path and optional
+     * resampling target rate
+     */
     ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate = 0);
+
+    /**
+     * Construct a WaveFileModel from a source path using an existing
+     * AudioFileReader. The model does not take ownership of the
+     * AudioFileReader, which remains managed by the caller and must
+     * outlive the model.
+     */
     ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader);
+    
     ~ReadOnlyWaveFileModel();
 
     bool isOK() const;

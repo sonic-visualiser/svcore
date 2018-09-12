@@ -21,6 +21,9 @@
 #include "base/Exceptions.h"
 #include "base/Debug.h"
 
+#include <bqvec/Allocators.h>
+#include <bqvec/VectorOps.h>
+
 #include <QFileInfo>
 
 #include <iostream>
@@ -63,10 +66,15 @@ WavFileWriter::WavFileWriter(QString path,
         m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
 #endif
         if (!m_file) {
-            SVCERR << "WavFileWriter: Failed to open file ("
-                 << sf_strerror(m_file) << ")" << endl;
+            SVCERR << "WavFileWriter: Failed to create float-WAV file of "
+                   << m_channels << " channels at rate " << fileRate << " ("
+                   << sf_strerror(m_file) << ")" << endl;
             m_error = QString("Failed to open audio file '%1' for writing")
                 .arg(writePath);
+            if (m_temp) {
+                delete m_temp;
+                m_temp = 0;
+            }
         }
     } catch (FileOperationFailed &f) {
         m_error = f.what();
@@ -191,7 +199,18 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 
     return isOK();
 }
-    
+
+bool
+WavFileWriter::putInterleavedFrames(const floatvec_t &frames)
+{
+    sv_frame_t count = frames.size() / m_channels;
+    float **samples = breakfastquay::allocate_channels<float>(m_channels, count);
+    breakfastquay::v_deinterleave(samples, frames.data(), m_channels, count);
+    bool result = writeSamples(samples, count);
+    breakfastquay::deallocate_channels(samples, m_channels);
+    return result;
+}
+
 bool
 WavFileWriter::close()
 {

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DATA_FILE_READER_FACTORY_H_
-#define _DATA_FILE_READER_FACTORY_H_
+#ifndef SV_DATA_FILE_READER_FACTORY_H
+#define SV_DATA_FILE_READER_FACTORY_H
 
 #include <QString>
 
@@ -23,6 +23,7 @@
 
 class DataFileReader;
 class Model;
+class ProgressReporter;
 
 class DataFileReaderFactory
 {
@@ -48,7 +49,8 @@ public:
      */
     static DataFileReader *createReader(QString path,
                                         MIDIFileImportPreferenceAcquirer *,
-                                        sv_samplerate_t mainModelSampleRate);
+                                        sv_samplerate_t mainModelSampleRate,
+                                        ProgressReporter *reporter = 0);
 
     /**
      * Read the given path, if a suitable reader is available.
@@ -60,7 +62,8 @@ public:
      */
     static Model *load(QString path,
                        MIDIFileImportPreferenceAcquirer *acquirer,
-                       sv_samplerate_t mainModelSampleRate);
+                       sv_samplerate_t mainModelSampleRate,
+                       ProgressReporter *reporter = 0);
 
     /**
      * Read the given path, if a suitable reader is available.
@@ -69,7 +72,8 @@ public:
      */
     static Model *loadNonCSV(QString path,
                              MIDIFileImportPreferenceAcquirer *acquirer,
-                             sv_samplerate_t mainModelSampleRate);
+                             sv_samplerate_t mainModelSampleRate,
+                             ProgressReporter *reporter = 0);
 
     /**
      * Read the given path using the CSV reader with the given format.
@@ -77,13 +81,15 @@ public:
      */
     static Model *loadCSV(QString path,
                           CSVFormat format,
-                          sv_samplerate_t mainModelSampleRate);
+                          sv_samplerate_t mainModelSampleRate,
+                          ProgressReporter *reporter = 0);
 
 protected:
     static DataFileReader *createReader(QString path, bool csv,
                                         MIDIFileImportPreferenceAcquirer *,
                                         CSVFormat format,
-                                        sv_samplerate_t mainModelSampleRate);
+                                        sv_samplerate_t mainModelSampleRate,
+                                        ProgressReporter *reporter = 0);
 };
 
 #endif

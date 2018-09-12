@@ -24,6 +24,7 @@ SVCORE_HEADERS = \
            base/RangeMapper.h \
            base/RealTime.h \
            base/RecentFiles.h \
+           base/RecordDirectory.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
            base/ScaleTickIntervals.h \
@@ -160,6 +161,7 @@ SVCORE_SOURCES = \
            base/RangeMapper.cpp \
            base/RealTimeSV.cpp \
            base/RecentFiles.cpp \
+           base/RecordDirectory.cpp \
            base/ResourceFinder.cpp \
            base/Selection.cpp \
            base/Serialiser.cpp \

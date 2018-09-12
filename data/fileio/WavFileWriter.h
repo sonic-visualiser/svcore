@@ -64,7 +64,11 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(const float *const *samples, sv_frame_t count); // count per channel
+    /// Write samples from raw arrays; count is per-channel
+    bool writeSamples(const float *const *samples, sv_frame_t count);
+
+    /// As writeSamples, but compatible with WavFileReader api. More expensive.
+    bool putInterleavedFrames(const floatvec_t &frames);
 
     bool close();
 

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TEMP_DIRECTORY_H_
-#define _TEMP_DIRECTORY_H_
+#ifndef SV_TEMP_DIRECTORY_H
+#define SV_TEMP_DIRECTORY_H
 
 #include <QString>
 #include <QMutex>

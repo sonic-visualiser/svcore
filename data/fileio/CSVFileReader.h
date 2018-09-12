@@ -27,6 +27,7 @@
 #include <QIODevice>
 
 class QFile;
+class ProgressReporter;
 
 class CSVFileReader : public DataFileReader
 {
@@ -35,7 +36,9 @@ public:
      * Construct a CSVFileReader to read the CSV file at the given
      * path, with the given format.
      */
-    CSVFileReader(QString path, CSVFormat format, sv_samplerate_t mainModelSampleRate);
+    CSVFileReader(QString path, CSVFormat format,
+                  sv_samplerate_t mainModelSampleRate,
+                  ProgressReporter *reporter = 0);
 
     /**
      * Construct a CSVFileReader to read from the given
@@ -43,7 +46,9 @@ public:
      * CSVFileReader will not close or delete it and it must outlive
      * the CSVFileReader.
      */
-    CSVFileReader(QIODevice *device, CSVFormat format, sv_samplerate_t mainModelSampleRate);
+    CSVFileReader(QIODevice *device, CSVFormat format,
+                  sv_samplerate_t mainModelSampleRate,
+                  ProgressReporter *reporter = 0);
 
     virtual ~CSVFileReader();
 
@@ -60,9 +65,15 @@ protected:
     QString m_error;
     mutable int m_warnings;
     sv_samplerate_t m_mainModelSampleRate;
+    qint64 m_fileSize;
+    mutable qint64 m_readCount;
+    mutable int m_progress;
+    ProgressReporter *m_reporter;
 
     sv_frame_t convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
                                 int windowSize) const;
+
+    QString getConvertedAudioFilePath() const;
 };
 
 

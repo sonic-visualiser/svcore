@@ -71,17 +71,20 @@ CSVFormat::guessFormatFor(QString path)
         for (int li = 0; li < lines.size(); ++li) {
 
             QString line = lines[li];
-            if (line.startsWith("#") || line == "") continue;
+            if (line.startsWith("#") || line == "") {
+                continue;
+            }
 
             guessQualities(line, lineno);
 
             ++lineno;
         }
 
-        if (lineno >= 50) break;
+        if (lineno >= 150) break;
     }
 
     guessPurposes();
+    guessAudioSampleRange();
 }
 
 void
@@ -91,6 +94,8 @@ CSVFormat::guessSeparator(QString line)
     for (int i = 0; i < int(sizeof(candidates)/sizeof(candidates[0])); ++i) {
         if (StringBits::split(line, candidates[i], m_allowQuoting).size() >= 2) {
             m_separator = candidates[i];
+            SVDEBUG << "Estimated column separator: '" << m_separator
+                    << "'" << endl;
             return;
         }
     }
@@ -111,7 +116,8 @@ CSVFormat::guessQualities(QString line, int lineno)
     // something that indicates otherwise:
 
     ColumnQualities defaultQualities =
-        ColumnNumeric | ColumnIntegral | ColumnIncreasing | ColumnNearEmpty;
+        ColumnNumeric | ColumnIntegral | ColumnSmall |
+        ColumnIncreasing | ColumnNearEmpty;
     
     for (int i = 0; i < cols; ++i) {
             
@@ -128,7 +134,9 @@ CSVFormat::guessQualities(QString line, int lineno)
         bool numeric    = (qualities & ColumnNumeric);
         bool integral   = (qualities & ColumnIntegral);
         bool increasing = (qualities & ColumnIncreasing);
+        bool small      = (qualities & ColumnSmall);
         bool large      = (qualities & ColumnLarge); // this one defaults to off
+        bool signd      = (qualities & ColumnSigned); // also defaults to off
         bool emptyish   = (qualities & ColumnNearEmpty);
 
         if (lineno > 1 && s.trimmed() != "") {
@@ -145,7 +153,15 @@ CSVFormat::guessQualities(QString line, int lineno)
                 value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
             }
             if (ok) {
-                if (lineno < 2 && value > 1000.f) large = true;
+                if (lineno < 2 && value > 1000.f) {
+                    large = true;
+                }
+                if (value < 0.f) {
+                    signd = true;
+                }
+                if (value < -1.f || value > 1.f) {
+                    small = false;
+                }
             } else {
                 numeric = false;
             }
@@ -172,7 +188,9 @@ CSVFormat::guessQualities(QString line, int lineno)
             (numeric    ? ColumnNumeric : 0) |
             (integral   ? ColumnIntegral : 0) |
             (increasing ? ColumnIncreasing : 0) |
+            (small      ? ColumnSmall : 0) |
             (large      ? ColumnLarge : 0) |
+            (signd      ? ColumnSigned : 0) |
             (emptyish   ? ColumnNearEmpty : 0);
     }
 
@@ -199,6 +217,12 @@ CSVFormat::guessPurposes()
     m_timeUnits = CSVFormat::TimeWindows;
         
     int timingColumnCount = 0;
+
+    SVDEBUG << "Estimated column qualities overall: ";
+    for (int i = 0; i < m_columnCount; ++i) {
+        SVDEBUG << int(m_columnQualities[i]) << " ";
+    }
+    SVDEBUG << endl;
 
     // if our first column has zero or one entries in it and the rest
     // have more, then we'll default to ignoring the first column and
@@ -326,6 +350,74 @@ CSVFormat::guessPurposes()
     SVDEBUG << "Estimated model type: " << m_modelType << endl;
     SVDEBUG << "Estimated timing type: " << m_timingType << endl;
     SVDEBUG << "Estimated units: " << m_timeUnits << endl;
+}
+
+void
+CSVFormat::guessAudioSampleRange()
+{
+    AudioSampleRange range = SampleRangeSigned1;
+    
+    range = SampleRangeSigned1;
+    bool knownSigned = false;
+    bool knownNonIntegral = false;
+
+    SVDEBUG << "CSVFormat::guessAudioSampleRange: starting with assumption of "
+            << range << endl;
+    
+    for (int i = 0; i < m_columnCount; ++i) {
+        if (m_columnPurposes[i] != ColumnValue) {
+            SVDEBUG << "... column " << i
+                    << " is not apparently a value, ignoring" << endl;
+            continue;
+        }
+        if (!(m_columnQualities[i] & ColumnIntegral)) {
+            knownNonIntegral = true;
+            if (range == SampleRangeUnsigned255 ||
+                range == SampleRangeSigned32767) {
+                range = SampleRangeOther;
+            }
+            SVDEBUG << "... column " << i
+                    << " is non-integral, updating range to " << range << endl;
+        }
+        if (m_columnQualities[i] & ColumnLarge) {
+            if (range == SampleRangeSigned1 ||
+                range == SampleRangeUnsigned255) {
+                if (knownNonIntegral) {
+                    range = SampleRangeOther;
+                } else {
+                    range = SampleRangeSigned32767;
+                }
+            }
+            SVDEBUG << "... column " << i << " is large, updating range to "
+                    << range << endl;
+        }
+        if (m_columnQualities[i] & ColumnSigned) {
+            knownSigned = true;
+            if (range == SampleRangeUnsigned255) {
+                range = SampleRangeSigned32767;
+            }
+            SVDEBUG << "... column " << i << " is signed, updating range to "
+                    << range << endl;
+        }
+        if (!(m_columnQualities[i] & ColumnSmall)) {
+            if (range == SampleRangeSigned1) {
+                if (knownNonIntegral) {
+                    range = SampleRangeOther;
+                } else if (knownSigned) {
+                    range = SampleRangeSigned32767;
+                } else {
+                    range = SampleRangeUnsigned255;
+                }
+            }
+            SVDEBUG << "... column " << i << " is not small, updating range to "
+                    << range << endl;
+        }
+    }
+
+    SVDEBUG << "CSVFormat::guessAudioSampleRange: ended up with range "
+            << range << endl;
+    
+    m_audioSampleRange = range;
 }
 
 CSVFormat::ColumnPurpose

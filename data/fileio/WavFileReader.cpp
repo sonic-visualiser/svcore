@@ -25,13 +25,17 @@
 
 using namespace std;
 
-WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
+WavFileReader::WavFileReader(FileSource source,
+                             bool fileUpdating,
+                             Normalisation normalisation) :
     m_file(0),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_seekable(false),
     m_lastStart(0),
     m_lastCount(0),
+    m_normalisation(normalisation),
+    m_max(0.f),
     m_updating(fileUpdating)
 {
     m_frameCount = 0;
@@ -87,9 +91,13 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
             // and mark those (basically only non-adaptive WAVs).
             m_seekable = true;
         }
+
+        if (m_normalisation != Normalisation::None && !m_updating) {
+            m_max = getMax();
+        }
     }
 
-    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << endl;
+    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << ", normalisation " << int(m_normalisation) << endl;
 }
 
 WavFileReader::~WavFileReader()
@@ -136,10 +144,30 @@ WavFileReader::updateDone()
 {
     updateFrameCount();
     m_updating = false;
+    if (m_normalisation != Normalisation::None) {
+        m_max = getMax();
+    }
 }
 
 floatvec_t
 WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
+{
+    floatvec_t frames = getInterleavedFramesUnnormalised(start, count);
+
+    if (m_normalisation == Normalisation::None || m_max == 0.f) {
+        return frames;
+    }
+
+    for (int i = 0; in_range_for(frames, i); ++i) {
+        frames[i] /= m_max;
+    }
+    
+    return frames;
+}
+
+floatvec_t
+WavFileReader::getInterleavedFramesUnnormalised(sv_frame_t start,
+                                                sv_frame_t count) const
 {
     static HitCount lastRead("WavFileReader: last read");
 
@@ -198,6 +226,43 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 
     m_buffer = data;
     return data;
+}
+
+float
+WavFileReader::getMax() const
+{
+    if (!m_file || !m_channelCount) {
+        return 0.f;
+    }
+
+    // First try for a PEAK chunk
+
+    double sfpeak = 0.0;
+    if (sf_command(m_file, SFC_GET_SIGNAL_MAX, &sfpeak, sizeof(sfpeak))
+        == SF_TRUE) {
+        SVDEBUG << "File has a PEAK chunk reporting max level " << sfpeak
+                << endl;
+        return float(fabs(sfpeak));
+    }
+
+    // Failing that, read all the samples
+
+    float peak = 0.f;
+    sv_frame_t ix = 0, chunk = 65536;
+
+    while (ix < m_frameCount) {
+        auto frames = getInterleavedFrames(ix, chunk);
+        for (float x: frames) {
+            float level = fabsf(x);
+            if (level > peak) {
+                peak = level;
+            }
+        }
+        ix += chunk;
+    }
+
+    SVDEBUG << "Measured file peak max level as " << peak << endl;
+    return peak;
 }
 
 void
