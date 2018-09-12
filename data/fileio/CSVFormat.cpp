@@ -131,6 +131,9 @@ CSVFormat::guessQualities(QString line, int lineno)
 
         ColumnQualities qualities = m_columnQualities[i];
 
+// Looks like this is defined on Windows
+#undef small
+        
         bool numeric    = (qualities & ColumnNumeric);
         bool integral   = (qualities & ColumnIntegral);
         bool increasing = (qualities & ColumnIncreasing);
