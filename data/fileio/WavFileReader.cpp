@@ -27,14 +27,14 @@ using namespace std;
 
 WavFileReader::WavFileReader(FileSource source,
                              bool fileUpdating,
-                             bool normalise) :
+                             Normalisation normalisation) :
     m_file(0),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_seekable(false),
     m_lastStart(0),
     m_lastCount(0),
-    m_normalise(normalise),
+    m_normalisation(normalisation),
     m_max(0.f),
     m_updating(fileUpdating)
 {
@@ -92,12 +92,12 @@ WavFileReader::WavFileReader(FileSource source,
             m_seekable = true;
         }
 
-        if (m_normalise && !m_updating) {
+        if (m_normalisation != Normalisation::None && !m_updating) {
             m_max = getMax();
         }
     }
 
-    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << ", normalise " << m_normalise << endl;
+    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << ", normalisation " << int(m_normalisation) << endl;
 }
 
 WavFileReader::~WavFileReader()
@@ -144,7 +144,7 @@ WavFileReader::updateDone()
 {
     updateFrameCount();
     m_updating = false;
-    if (m_normalise) {
+    if (m_normalisation != Normalisation::None) {
         m_max = getMax();
     }
 }
@@ -154,7 +154,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     floatvec_t frames = getInterleavedFramesUnnormalised(start, count);
 
-    if (!m_normalise || m_max == 0.f) {
+    if (m_normalisation == Normalisation::None || m_max == 0.f) {
         return frames;
     }
 

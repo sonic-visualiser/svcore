@@ -21,6 +21,9 @@
 #include "base/Exceptions.h"
 #include "base/Debug.h"
 
+#include <bqvec/Allocators.h>
+#include <bqvec/VectorOps.h>
+
 #include <QFileInfo>
 
 #include <iostream>
@@ -196,7 +199,18 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 
     return isOK();
 }
-    
+
+bool
+WavFileWriter::putInterleavedFrames(const floatvec_t &frames)
+{
+    sv_frame_t count = frames.size() / m_channels;
+    float **samples = breakfastquay::allocate_channels<float>(m_channels, count);
+    breakfastquay::v_deinterleave(samples, frames.data(), m_channels, count);
+    bool result = writeSamples(samples, count);
+    breakfastquay::deallocate_channels(samples, m_channels);
+    return result;
+}
+
 bool
 WavFileWriter::close()
 {

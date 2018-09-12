@@ -348,7 +348,10 @@ CSVFileReader::load() const
                                       == CSVFormat::SampleRangeOther);
                     QString path = getConvertedAudioFilePath();
                     modelW = new WritableWaveFileModel
-                        (sampleRate, valueColumns, path, normalise);
+                        (path, sampleRate, valueColumns,
+                         normalise ?
+                         WritableWaveFileModel::Normalisation::Peak :
+                         WritableWaveFileModel::Normalisation::None);
                     modelName = QFileInfo(path).fileName();
                     model = modelW;
                     break;

@@ -28,10 +28,54 @@ class WritableWaveFileModel : public WaveFileModel
     Q_OBJECT
 
 public:
+    enum class Normalisation { None, Peak };
+
+    /**
+     * Create a WritableWaveFileModel of the given sample rate and
+     * channel count, storing data in a new float-type extended WAV
+     * file with the given path. If path is the empty string, the data
+     * will be stored in a newly-created temporary file.
+     *
+     * If normalisation == None, sample values will be written
+     * verbatim, and will be ready to read as soon as they have been
+     * written. Otherwise samples will be normalised on writing; this
+     * will require an additional pass and temporary file, and no
+     * samples will be available to read until after writeComplete()
+     * has returned.
+     */
+    WritableWaveFileModel(QString path,
+                          sv_samplerate_t sampleRate,
+                          int channels,
+                          Normalisation normalisation);
+    
+    /**
+     * Create a WritableWaveFileModel of the given sample rate and
+     * channel count, storing data in a new float-type extended WAV
+     * file in a temporary location. This is equivalent to passing an
+     * empty path to the constructor above.
+     *
+     * If normalisation == None, sample values will be written
+     * verbatim, and will be ready to read as soon as they have been
+     * written. Otherwise samples will be normalised on writing; this
+     * will require an additional pass and temporary file, and no
+     * samples will be available to read until after writeComplete()
+     * has returned.
+     */
     WritableWaveFileModel(sv_samplerate_t sampleRate,
                           int channels,
-                          QString path = "",
-                          bool normaliseOnRead = false);
+                          Normalisation normalisation);
+
+    /**
+     * Create a WritableWaveFileModel of the given sample rate and
+     * channel count, storing data in a new float-type extended WAV
+     * file in a temporary location, and applying no normalisation.
+     *
+     * This is equivalent to passing an empty path and
+     * Normalisation::None to the first constructor above.
+     */
+    WritableWaveFileModel(sv_samplerate_t sampleRate,
+                          int channels);
+
     ~WritableWaveFileModel();
 
     /**
@@ -155,13 +199,35 @@ public:
 
 protected:
     ReadOnlyWaveFileModel *m_model;
-    WavFileWriter *m_writer;
+
+    /** When normalising, this writer is used to write verbatim
+     *  samples to the temporary file prior to
+     *  normalisation. Otherwise it's null
+     */
+    WavFileWriter *m_temporaryWriter;
+    QString m_temporaryPath;
+
+    /** When not normalising, this writer is used to write verbatim
+     *  samples direct to the target file. When normalising, it is
+     *  used to write normalised samples to the target after the
+     *  temporary file has been completed. But it is still created on
+     *  initialisation, so that there is a file header ready for the
+     *  reader to address.
+     */
+    WavFileWriter *m_targetWriter;
+    QString m_targetPath;
+
     WavFileReader *m_reader;
+    Normalisation m_normalisation;
     sv_samplerate_t m_sampleRate;
     int m_channels;
     sv_frame_t m_frameCount;
     sv_frame_t m_startFrame;
     int m_proportion;
+
+private:
+    void init(QString path = "");
+    void normaliseToTarget();
 };
 
 #endif

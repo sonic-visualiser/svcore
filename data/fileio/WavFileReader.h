@@ -41,9 +41,11 @@
 class WavFileReader : public AudioFileReader
 {
 public:
+    enum class Normalisation { None, Peak };
+
     WavFileReader(FileSource source,
                   bool fileUpdating = false,
-                  bool normalise = false);
+                  Normalisation normalise = Normalisation::None);
     virtual ~WavFileReader();
 
     virtual QString getLocation() const { return m_source.getLocation(); }
@@ -87,7 +89,7 @@ protected:
     mutable sv_frame_t m_lastStart;
     mutable sv_frame_t m_lastCount;
 
-    bool m_normalise;
+    Normalisation m_normalisation;
     float m_max;
 
     bool m_updating;
