@@ -249,6 +249,7 @@ CSVFormat::guessPurposes()
     m_timeUnits = CSVFormat::TimeWindows;
         
     int timingColumnCount = 0;
+    bool haveDurationOrEndTime = false;
 
     SVDEBUG << "Estimated column qualities overall: ";
     for (int i = 0; i < m_columnCount; ++i) {
@@ -310,6 +311,7 @@ CSVFormat::guessPurposes()
 
                 if (timingColumnCount == 2 && m_timingType == ExplicitTiming) {
                     purpose = ColumnEndTime;
+                    haveDurationOrEndTime = true;
                 }
             }
         }
@@ -353,15 +355,17 @@ CSVFormat::guessPurposes()
                 if (m_columnQualities[timecol] & ColumnIncreasing) {
                     // This shouldn't happen; should have been settled above
                     m_columnPurposes[timecol] = ColumnEndTime;
+                    haveDurationOrEndTime = true;
                 } else {
                     m_columnPurposes[timecol] = ColumnDuration;
+                    haveDurationOrEndTime = true;
                 }
                 --valueCount;
             }
         }
     }
 
-    if (timingColumnCount > 1) {
+    if (timingColumnCount > 1 || haveDurationOrEndTime) {
         m_modelType = TwoDimensionalModelWithDuration;
     } else {
         if (valueCount == 0) {
