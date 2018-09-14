@@ -204,8 +204,10 @@ bool
 WavFileWriter::putInterleavedFrames(const floatvec_t &frames)
 {
     sv_frame_t count = frames.size() / m_channels;
-    float **samples = breakfastquay::allocate_channels<float>(m_channels, count);
-    breakfastquay::v_deinterleave(samples, frames.data(), m_channels, count);
+    float **samples =
+        breakfastquay::allocate_channels<float>(m_channels, count);
+    breakfastquay::v_deinterleave
+        (samples, frames.data(), m_channels, int(count));
     bool result = writeSamples(samples, count);
     breakfastquay::deallocate_channels(samples, m_channels);
     return result;
