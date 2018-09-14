@@ -18,8 +18,8 @@
    This file copyright 2000-2010 Chris Cannam.
 */
 
-#ifndef _STRING_BITS_H_
-#define _STRING_BITS_H_
+#ifndef SV_STRING_BITS_H
+#define SV_STRING_BITS_H
 
 #include <QString>
 #include <QStringList>

@@ -16,6 +16,7 @@
 #include "AudioFileWriterTest.h"
 #include "EncodingTest.h"
 #include "MIDIFileReaderTest.h"
+#include "CSVFormatTest.h"
 #include "CSVStreamWriterTest.h"
 
 #include <QtTest>
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
-    app.setApplicationName("test-fileio");
+    app.setApplicationName("test-svcore-data-fileio");
 
     if (testDir != "") {
         SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
@@ -71,16 +72,22 @@ int main(int argc, char *argv[])
     }
 
     {
+        CSVFormatTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
         CSVStreamWriterTest t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
 
     if (bad > 0) {
-    SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
         return 1;
     } else {
-    SVCERR << "All tests passed" << endl;
+        SVCERR << "All tests passed" << endl;
         return 0;
     }
 }

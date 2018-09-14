@@ -95,8 +95,21 @@ public:
      * string, the separator character will also be guessed; otherwise
      * the current separator will be used.  The other properties of
      * this object will be set according to guesses from the file.
+     *
+     * The properties that are guessed from the file contents are:
+     * separator, column count, variable-column-count flag, audio
+     * sample range, timing type, time units, column qualities, column
+     * purposes, and model type. The sample rate and window size
+     * cannot be guessed and will not be changed by this function.
+     * Note also that this function will never guess WaveFileModel for
+     * the model type.
+     *
+     * Return false if there is some fundamental error, e.g. the file
+     * could not be opened at all. Return true otherwise. Note that
+     * this function returns true even if the file doesn't appear to
+     * make much sense as a data format.
      */
-    void guessFormatFor(QString path);
+    bool guessFormatFor(QString path);
  
     ModelType    getModelType()     const { return m_modelType;     }
     TimingType   getTimingType()    const { return m_timingType;    }

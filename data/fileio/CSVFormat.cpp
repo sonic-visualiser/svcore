@@ -33,12 +33,14 @@ CSVFormat::CSVFormat(QString path) :
     m_windowSize(1024),
     m_allowQuoting(true)
 {
-    guessFormatFor(path);
+    (void)guessFormatFor(path);
 }
 
-void
+bool
 CSVFormat::guessFormatFor(QString path)
 {
+    m_separator = ""; // to prompt guessing for it
+
     m_modelType = TwoDimensionalModel;
     m_timingType = ExplicitTiming;
     m_timeUnits = TimeSeconds;
@@ -53,8 +55,17 @@ CSVFormat::guessFormatFor(QString path)
     m_prevValues.clear();
 
     QFile file(path);
-    if (!file.exists()) return;
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
+    if (!file.exists()) {
+        SVCERR << "CSVFormat::guessFormatFor(" << path
+               << "): File does not exist" << endl;
+        return false;
+    }
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        SVCERR << "CSVFormat::guessFormatFor(" << path
+               << "): File could not be opened for reading" << endl;
+        return false;
+    }
+    SVDEBUG << "CSVFormat::guessFormatFor(" << path << ")" << endl;
 
     QTextStream in(&file);
     in.seek(0);
@@ -85,14 +96,22 @@ CSVFormat::guessFormatFor(QString path)
 
     guessPurposes();
     guessAudioSampleRange();
+
+    return true;
 }
 
 void
 CSVFormat::guessSeparator(QString line)
 {
-    char candidates[] = { ',', '\t', ' ', '|', '/', ':' };
-    for (int i = 0; i < int(sizeof(candidates)/sizeof(candidates[0])); ++i) {
-        if (StringBits::split(line, candidates[i], m_allowQuoting).size() >= 2) {
+    QString candidates = "\t|,/: ";
+
+    for (int i = 0; i < candidates.length(); ++i) {
+        auto bits = StringBits::split(line, candidates[i], m_allowQuoting);
+        if (bits.size() >= 2) {
+            SVDEBUG << "Successfully split the line into:" << endl;
+            for (auto b: bits) {
+                SVDEBUG << b << endl;
+            }
             m_separator = candidates[i];
             SVDEBUG << "Estimated column separator: '" << m_separator
                     << "'" << endl;
@@ -104,7 +123,9 @@ CSVFormat::guessSeparator(QString line)
 void
 CSVFormat::guessQualities(QString line, int lineno)
 {
-    if (m_separator == "") guessSeparator(line);
+    if (m_separator == "") {
+        guessSeparator(line);
+    }
 
     QStringList list = StringBits::split(line, getSeparator(), m_allowQuoting);
 
@@ -167,6 +188,14 @@ CSVFormat::guessQualities(QString line, int lineno)
                 }
             } else {
                 numeric = false;
+
+                // If the column is not numeric, it can't be any of
+                // these things either
+                integral = false;
+                increasing = false;
+                small = false;
+                large = false;
+                signd = false;
             }
         }
 
@@ -186,7 +215,7 @@ CSVFormat::guessQualities(QString line, int lineno)
 
             m_prevValues[i] = value;
         }
-
+        
         m_columnQualities[i] =
             (numeric    ? ColumnNumeric : 0) |
             (integral   ? ColumnIntegral : 0) |
