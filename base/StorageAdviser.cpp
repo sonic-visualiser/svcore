@@ -65,8 +65,8 @@ StorageAdviser::m_baseRecommendation = StorageAdviser::NoRecommendation;
 
 StorageAdviser::Recommendation
 StorageAdviser::recommend(Criteria criteria,
-			  size_t minimumSize,
-			  size_t maximumSize)
+                          size_t minimumSize,
+                          size_t maximumSize)
 {
     SVDEBUG << "StorageAdviser::recommend: criteria " << criteria
             << " (" + criteriaToString(criteria) + ")"
@@ -83,7 +83,7 @@ StorageAdviser::recommend(Criteria criteria,
     QString path;
     try {
         path = TempDirectory::getInstance()->getPath();
-    } catch (std::exception e) {
+    } catch (const std::exception &e) {
         SVDEBUG << "StorageAdviser::recommend: ERROR: Failed to get temporary directory path: " << e.what() << endl;
         int r = UseMemory | ConserveSpace;
         SVDEBUG << "StorageAdviser: returning fallback " << r
@@ -97,6 +97,28 @@ StorageAdviser::recommend(Criteria criteria,
     SVDEBUG << "StorageAdviser: disc space: " << discFree
             << "M, memory free: " << memoryFree
             << "M, memory total: " << memoryTotal << "M" << endl;
+
+    // In 32-bit addressing mode we can't address more than 4Gb.
+    // If the total memory is reported as more than 4Gb, we should
+    // reduce the available amount by the difference between 4Gb
+    // and the total. This won't give us an accurate idea of the
+    // amount of memory available any more, but it should be enough
+    // to prevent us from trying to allocate more for our own use
+    // than can be addressed at all!
+    if (sizeof(void *) < 8) {
+        if (memoryTotal > 4096) {
+            ssize_t excess = memoryTotal - 4096;
+            if (memoryFree > excess) {
+                memoryFree -= excess;
+            } else {
+                memoryFree = 0;
+            }
+            SVDEBUG << "StorageAdviser: more real memory found than we "
+                    << "can address in a 32-bit process, reducing free "
+                    << "estimate to " << memoryFree << "M accordingly" << endl;
+        }
+    }
+
     SVDEBUG << "StorageAdviser: disc planned: " << (m_discPlanned / 1024)
             << "K, memory planned: " << (m_memoryPlanned / 1024) << "K" << endl;
     SVDEBUG << "StorageAdviser: min requested: " << minimumSize

@@ -20,7 +20,11 @@
 #include <vector>
 #include <map>
 
-class KnownPlugins;
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+#include "checker/knownplugincandidates.h"
+#else
+class KnownPluginCandidates {};
+#endif
 
 class PluginScan
 {
@@ -45,9 +49,9 @@ public:
     bool scanSucceeded() const;
     
     enum PluginType {
-	VampPlugin,
-	LADSPAPlugin,
-	DSSIPlugin
+        VampPlugin,
+        LADSPAPlugin,
+        DSSIPlugin
     };
     struct Candidate {
         QString libraryPath;    // full path, not just soname
@@ -73,9 +77,15 @@ private:
 
     void clear();
 
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+    QString formatFailureReport(QString helperTag,
+                                std::vector<PluginCandidates::FailureRec>)
+        const;
+#endif
+
     mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
-    std::map<QString, KnownPlugins *> m_kp; // tag -> KnownPlugins client
+    std::map<QString, KnownPluginCandidates *> m_kp; // tag -> KnownPlugins client
     bool m_succeeded;
 
     class Logger;

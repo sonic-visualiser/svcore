@@ -122,10 +122,10 @@ protected:
     bool m_decodeErrorShown;
 
     struct DecoderData {
-	unsigned char const *start;
-	sv_frame_t length;
+        unsigned char const *start;
+        sv_frame_t length;
         bool finished;
-	MP3FileReader *reader;
+        MP3FileReader *reader;
     };
 
     bool decode(void *mm, sv_frame_t sz);
@@ -152,7 +152,7 @@ protected:
 
     DecodeThread *m_decodeThread;
 
-    void loadTags();
+    void loadTags(int fd);
     QString loadTag(void *vtag, const char *name);
 };
 

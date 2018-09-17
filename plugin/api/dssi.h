@@ -71,9 +71,9 @@ typedef struct _DSSI_Program_Descriptor {
     unsigned long Bank;
 
     /** Program number (unique within its bank) for this program.
-	There is no restriction on the set of available programs: the
-	numbers do not need to be contiguous, there does not need to
-	be a program 0, etc. */
+        There is no restriction on the set of available programs: the
+        numbers do not need to be contiguous, there does not need to
+        be a program 0, etc. */
     unsigned long Program;
 
     /** Name of the program. */
@@ -248,13 +248,13 @@ typedef struct _DSSI_Descriptor {
      * See also the configure OSC call documentation in RFC.txt.
      */
     char *(*configure)(LADSPA_Handle Instance,
-		       const char *Key,
-		       const char *Value);
+                       const char *Key,
+                       const char *Value);
 
     #define DSSI_RESERVED_CONFIGURE_PREFIX "DSSI:"
     #define DSSI_GLOBAL_CONFIGURE_PREFIX "GLOBAL:"
     #define DSSI_PROJECT_DIRECTORY_KEY \
-	DSSI_RESERVED_CONFIGURE_PREFIX "PROJECT_DIRECTORY"
+        DSSI_RESERVED_CONFIGURE_PREFIX "PROJECT_DIRECTORY"
 
     /**
      * get_program()
@@ -278,7 +278,7 @@ typedef struct _DSSI_Descriptor {
      * programs as well as their properties.
      */
     const DSSI_Program_Descriptor *(*get_program)(LADSPA_Handle Instance,
-						  unsigned long Index);
+                                                  unsigned long Index);
     
     /**
      * select_program()
@@ -308,8 +308,8 @@ typedef struct _DSSI_Descriptor {
      * which a DSSI plugin is allowed to modify its own input ports.)
      */
     void (*select_program)(LADSPA_Handle Instance,
-			   unsigned long Bank,
-			   unsigned long Program);
+                           unsigned long Bank,
+                           unsigned long Program);
 
     /**
      * get_midi_controller_for_port()
@@ -338,7 +338,7 @@ typedef struct _DSSI_Descriptor {
      * controllers 0 or 32 (MIDI Bank Select MSB and LSB).
      */
     int (*get_midi_controller_for_port)(LADSPA_Handle Instance,
-					unsigned long Port);
+                                        unsigned long Port);
 
     /**
      * run_synth()
@@ -388,9 +388,9 @@ typedef struct _DSSI_Descriptor {
      * select controller to a plugin via run_synth.
      */
     void (*run_synth)(LADSPA_Handle    Instance,
-		      unsigned long    SampleCount,
-		      snd_seq_event_t *Events,
-		      unsigned long    EventCount);
+                      unsigned long    SampleCount,
+                      snd_seq_event_t *Events,
+                      unsigned long    EventCount);
 
     /**
      * run_synth_adding()
@@ -402,9 +402,9 @@ typedef struct _DSSI_Descriptor {
      * that does not provide it must set this member to NULL.
      */
     void (*run_synth_adding)(LADSPA_Handle    Instance,
-			     unsigned long    SampleCount,
-			     snd_seq_event_t *Events,
-			     unsigned long    EventCount);
+                             unsigned long    SampleCount,
+                             snd_seq_event_t *Events,
+                             unsigned long    EventCount);
 
     /**
      * run_multiple_synths()
@@ -609,7 +609,7 @@ struct _DSSI_Host_Descriptor {
     */
 
     int (*request_non_rt_thread)(LADSPA_Handle Instance,
-				 void (*RunFunction)(LADSPA_Handle Instance));
+                                 void (*RunFunction)(LADSPA_Handle Instance));
 };
 
 /**
@@ -641,19 +641,19 @@ typedef const DSSI_Descriptor *(*DSSI_Descriptor_Function)(unsigned long Index);
  * get_midi_controller_for_port()
  */
 
-#define DSSI_CC_BITS			0x20000000
-#define DSSI_NRPN_BITS			0x40000000
+#define DSSI_CC_BITS                        0x20000000
+#define DSSI_NRPN_BITS                        0x40000000
 
-#define DSSI_NONE			-1
-#define DSSI_CONTROLLER_IS_SET(n)	(DSSI_NONE != (n))
+#define DSSI_NONE                        -1
+#define DSSI_CONTROLLER_IS_SET(n)        (DSSI_NONE != (n))
 
-#define DSSI_CC(n)			(DSSI_CC_BITS | (n))
-#define DSSI_IS_CC(n)			(DSSI_CC_BITS & (n))
-#define DSSI_CC_NUMBER(n)		((n) & 0x7f)
+#define DSSI_CC(n)                        (DSSI_CC_BITS | (n))
+#define DSSI_IS_CC(n)                        (DSSI_CC_BITS & (n))
+#define DSSI_CC_NUMBER(n)                ((n) & 0x7f)
 
-#define DSSI_NRPN(n)			(DSSI_NRPN_BITS | ((n) << 7))
-#define DSSI_IS_NRPN(n)			(DSSI_NRPN_BITS & (n))
-#define DSSI_NRPN_NUMBER(n)		(((n) >> 7) & 0x3fff)
+#define DSSI_NRPN(n)                        (DSSI_NRPN_BITS | ((n) << 7))
+#define DSSI_IS_NRPN(n)                        (DSSI_NRPN_BITS & (n))
+#define DSSI_NRPN_NUMBER(n)                (((n) >> 7) & 0x3fff)
 
 #ifdef __cplusplus
 }

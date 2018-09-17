@@ -45,28 +45,28 @@ PowerOfTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
 
 int
 PowerOfTwoZoomConstraint::getNearestBlockSize(int req,
-					      RoundingDirection dir) const
+                                              RoundingDirection dir) const
 {
     int result = 0;
 
     for (int bs = 1; ; bs *= 2) {
-	if (bs >= req) {
-	    if (dir == RoundNearest) {
-		if (bs - req < req - bs/2) {
-		    result = bs;
-		    break;
-		} else {
-		    result = bs/2;
-		    break;
-		}
-	    } else if (dir == RoundDown) {
-		result = bs/2;
-		break;
-	    } else {
-		result = bs;
-		break;
-	    }
-	}
+        if (bs >= req) {
+            if (dir == RoundNearest) {
+                if (bs - req < req - bs/2) {
+                    result = bs;
+                    break;
+                } else {
+                    result = bs/2;
+                    break;
+                }
+            } else if (dir == RoundDown) {
+                result = bs/2;
+                break;
+            } else {
+                result = bs;
+                break;
+            }
+        }
     }
 
     if (result > getMaxZoomLevel().level) result = getMaxZoomLevel().level;

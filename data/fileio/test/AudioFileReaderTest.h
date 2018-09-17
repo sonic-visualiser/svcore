@@ -32,13 +32,26 @@
 
 using namespace std;
 
-static QString audioDir = "svcore/data/fileio/test/testfiles";
-static QString diffDir  = "svcore/data/fileio/test/diffs";
-
 class AudioFileReaderTest : public QObject
 {
     Q_OBJECT
 
+private:
+    QString testDirBase;
+    QString audioDir;
+    QString diffDir;
+
+public:
+    AudioFileReaderTest(QString base) {
+        if (base == "") {
+            base = "svcore/data/fileio/test";
+        }
+        testDirBase = base;
+        audioDir = base + "/audio";
+        diffDir = base + "/diffs";
+    }
+
+private:
     const char *strOf(QString s) {
         return strdup(s.toLocal8Bit().data());
     }
@@ -174,11 +187,12 @@ private slots:
     void init()
     {
         if (!QDir(audioDir).exists()) {
-            cerr << "ERROR: Audio test file directory \"" << audioDir << "\" does not exist" << endl;
+            QString cwd = QDir::currentPath();
+            SVCERR << "ERROR: Audio test file directory \"" << audioDir << "\" does not exist (cwd = " << cwd << ")" << endl;
             QVERIFY2(QDir(audioDir).exists(), "Audio test file directory not found");
         }
         if (!QDir(diffDir).exists() && !QDir().mkpath(diffDir)) {
-            cerr << "ERROR: Audio diff directory \"" << diffDir << "\" does not exist and could not be created" << endl;
+            SVCERR << "ERROR: Audio diff directory \"" << diffDir << "\" does not exist and could not be created" << endl;
             QVERIFY2(QDir(diffDir).exists(), "Audio diff directory not found and could not be created");
         }
     }
@@ -240,17 +254,17 @@ private slots:
                               AudioFileReaderFactory::GaplessMode::Gapless :
                               AudioFileReaderFactory::GaplessMode::Gappy);
 
-	AudioFileReader *reader =
-	    AudioFileReaderFactory::createReader
-	    (audioDir + "/" + format + "/" + audiofile, params);
+        AudioFileReader *reader =
+            AudioFileReaderFactory::createReader
+            (audioDir + "/" + format + "/" + audiofile, params);
         
-	if (!reader) {
+        if (!reader) {
 #if ( QT_VERSION >= 0x050000 )
-	    QSKIP("Unsupported file, skipping");
+            QSKIP("Unsupported file, skipping");
 #else
-	    QSKIP("Unsupported file, skipping", SkipSingle);
+            QSKIP("Unsupported file, skipping", SkipSingle);
 #endif
-	}
+        }
 
         QString extension;
         sv_samplerate_t fileRate;
@@ -262,18 +276,22 @@ private slots:
         QCOMPARE(reader->getNativeRate(), fileRate);
         QCOMPARE(reader->getSampleRate(), readRate);
 
-	AudioTestData tdata(readRate, channels);
-	
-	float *reference = tdata.getInterleavedData();
+        AudioTestData tdata(readRate, channels);
+        
+        float *reference = tdata.getInterleavedData();
         sv_frame_t refFrames = tdata.getFrameCount();
-	
-	// The reader should give us exactly the expected number of
-	// frames, except for mp3/aac files. We ask for quite a lot
-	// more, though, so we can (a) check that we only get the
-	// expected number back (if this is not mp3/aac) or (b) take
-	// into account silence at beginning and end (if it is).
-	vector<float> test = reader->getInterleavedFrames(0, refFrames + 5000);
-	sv_frame_t read = test.size() / channels;
+        
+        // The reader should give us exactly the expected number of
+        // frames, except for mp3/aac files. We ask for quite a lot
+        // more, though, so we can (a) check that we only get the
+        // expected number back (if this is not mp3/aac) or (b) take
+        // into account silence at beginning and end (if it is).
+        floatvec_t test = reader->getInterleavedFrames(0, refFrames + 5000);
+
+        delete reader;
+        reader = 0;
+        
+        sv_frame_t read = test.size() / channels;
 
         bool perceptual = (extension == "mp3" ||
                            extension == "aac" ||
@@ -375,7 +393,7 @@ private slots:
             diffFile += ".wav";
             diffFile = QDir(diffDir).filePath(diffFile);
             WavFileWriter diffWriter(diffFile, readRate, channels,
-                                     WavFileWriter::WriteToTarget); //!!! NB WriteToTemporary not working, why?
+                                     WavFileWriter::WriteToTemporary);
             QVERIFY(diffWriter.isOK());
 
             vector<vector<float>> diffs(channels);
@@ -398,17 +416,17 @@ private slots:
             delete[] ptrs;
         }
             
-	for (int c = 0; c < channels; ++c) {
+        for (int c = 0; c < channels; ++c) {
 
             double maxDiff = 0.0;
             double totalDiff = 0.0;
             double totalSqrDiff = 0.0;
-	    int maxIndex = 0;
+            int maxIndex = 0;
 
-	    for (int i = 0; i < refFrames; ++i) {
+            for (int i = 0; i < refFrames; ++i) {
                 int ix = i + offset;
                 if (ix >= read) {
-                    cerr << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward, of " << refFrames << ", are lost)" << endl;
+                    SVCERR << "ERROR: audiofile " << audiofile << " reads truncated (read-rate reference frames " << i << " onward, of " << refFrames << ", are lost)" << endl;
                     QVERIFY(ix < read);
                 }
 
@@ -418,10 +436,10 @@ private slots:
                     continue;
                 }
                 
-		double diff = fabs(test[ix * channels + c] -
+                double diff = fabs(test[ix * channels + c] -
                                    reference[i * channels + c]);
 
-		totalDiff += diff;
+                totalDiff += diff;
                 totalSqrDiff += diff * diff;
                 
                 // in edge areas, record this only if it exceeds edgeLimit
@@ -435,25 +453,25 @@ private slots:
                         maxDiff = diff;
                         maxIndex = i;
                     }
-		}
-	    }
+                }
+            }
                 
-	    double meanDiff = totalDiff / double(refFrames);
+            double meanDiff = totalDiff / double(refFrames);
             double rmsDiff = sqrt(totalSqrDiff / double(refFrames));
 
             /*
-	    cerr << "channel " << c << ": mean diff " << meanDiff << endl;
-	    cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
-	    cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
+        cerr << "channel " << c << ": mean diff " << meanDiff << endl;
+            cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
+            cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
             */            
             if (rmsDiff >= rmsLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
+                SVCERR << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
                 QVERIFY(rmsDiff < rmsLimit);
             }
-	    if (maxDiff >= maxLimit) {
-		cerr << "ERROR: for audiofile " << audiofile << ": max diff = " << maxDiff << " at frame " << maxIndex << " of " << read << " on channel " << c << " (limit = " << maxLimit << ", edge limit = " << edgeLimit << ", mean diff = " << meanDiff << ", rms = " << rmsDiff << ")" << endl;
-		QVERIFY(maxDiff < maxLimit);
-	    }
+            if (maxDiff >= maxLimit) {
+                SVCERR << "ERROR: for audiofile " << audiofile << ": max diff = " << maxDiff << " at frame " << maxIndex << " of " << read << " on channel " << c << " (limit = " << maxLimit << ", edge limit = " << edgeLimit << ", mean diff = " << meanDiff << ", rms = " << rmsDiff << ")" << endl;
+                QVERIFY(maxDiff < maxLimit);
+            }
 
             // and check for spurious material at end
             
@@ -462,11 +480,11 @@ private slots:
                 float quiet = 0.1f; //!!! allow some ringing - but let's come back to this, it should tail off
                 float mag = fabsf(test[ix * channels + c]);
                 if (mag > quiet) {
-                    cerr << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << " after reference+offset ended at " << refFrames+offset << ")" << endl;
+                    SVCERR << "ERROR: audiofile " << audiofile << " contains spurious data after end of reference (found sample " << test[ix * channels + c] << " at index " << ix << " of channel " << c << " after reference+offset ended at " << refFrames+offset << ")" << endl;
                     QVERIFY(mag < quiet);
                 }
             }
-	}
+        }
     }
 };
 

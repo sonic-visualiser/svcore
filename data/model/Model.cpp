@@ -27,15 +27,31 @@ Model::~Model()
 //    SVDEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
-        SVDEBUG << "NOTE: Model::~Model(" << this << ", \""
-                  << objectName() << "\"): Model deleted "
-                  << "with no aboutToDelete notification" << endl;
+        SVDEBUG << "NOTE: Model(" << this << ", \""
+                << objectName() << "\", type uri <"
+                << m_typeUri << ">)::~Model(): Model deleted "
+                << "with no aboutToDelete notification"
+                << endl;
     }
 
     if (m_alignment) {
         m_alignment->aboutToDelete();
         delete m_alignment;
     }
+}
+
+int
+Model::getNextId()
+{
+    static int nextId = 0;
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+    int i = nextId;
+    if (nextId == INT_MAX) {
+        nextId = INT_MIN;
+    }
+    ++nextId;
+    return i;
 }
 
 void
@@ -59,13 +75,16 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-//    cerr << "Model(" << this << ")::aboutToDelete()" << endl;
+//    SVDEBUG << "Model(" << this << ", \""
+//            << objectName() << "\", type uri <"
+//            << m_typeUri << ">)::aboutToDelete()" << endl;
 
     if (m_aboutToDelete) {
-        cerr << "WARNING: Model(" << this << ", \""
-                  << objectName() << "\")::aboutToDelete: "
-                  << "aboutToDelete called more than once for the same model"
-                  << endl;
+        SVDEBUG << "WARNING: Model(" << this << ", \""
+                << objectName() << "\", type uri <"
+                << m_typeUri << ">)::aboutToDelete: "
+                << "aboutToDelete called more than once for the same model"
+                << endl;
     }
 
     emit aboutToBeDeleted();
@@ -180,12 +199,12 @@ Model::toXml(QTextStream &stream, QString indent,
 {
     stream << indent;
     stream << QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
-	.arg(getObjectExportId(this))
-	.arg(encodeEntities(objectName()))
-	.arg(getSampleRate())
-	.arg(getStartFrame())
-	.arg(getEndFrame())
-	.arg(extraAttributes);
+        .arg(getObjectExportId(this))
+        .arg(encodeEntities(objectName()))
+        .arg(getSampleRate())
+        .arg(getStartFrame())
+        .arg(getEndFrame())
+        .arg(extraAttributes);
 }
 
 

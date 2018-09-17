@@ -13,6 +13,11 @@
 */
 
 #include "AudioFileReaderTest.h"
+#include "AudioFileWriterTest.h"
+#include "EncodingTest.h"
+#include "MIDIFileReaderTest.h"
+#include "CSVFormatTest.h"
+#include "CSVStreamWriterTest.h"
 
 #include <QtTest>
 
@@ -22,22 +27,67 @@ int main(int argc, char *argv[])
 {
     int good = 0, bad = 0;
 
+    QString testDir;
+
+#ifdef Q_OS_WIN
+    // incredible to have to hardcode this, but I just can't figure out how to
+    // get QMAKE_POST_LINK to add an arg to its command successfully on Windows
+    testDir = "../sonic-visualiser/svcore/data/fileio/test";
+#endif
+
+    if (argc > 1) {
+        testDir = argv[1];
+    }
+
     QCoreApplication app(argc, argv);
-    app.setOrganizationName("Sonic Visualiser");
-    app.setApplicationName("test-fileio");
+    app.setOrganizationName("sonic-visualiser");
+    app.setApplicationName("test-svcore-data-fileio");
+
+    if (testDir != "") {
+        SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
+    }
 
     {
-	AudioFileReaderTest t;
-	if (QTest::qExec(&t, argc, argv) == 0) ++good;
-	else ++bad;
+        AudioFileReaderTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        AudioFileWriterTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        EncodingTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        MIDIFileReaderTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        CSVFormatTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        CSVStreamWriterTest t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
     }
 
     if (bad > 0) {
-	cerr << "\n********* " << bad << " test suite(s) failed!\n" << endl;
-	return 1;
+        SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
+        return 1;
     } else {
-	cerr << "All tests passed" << endl;
-	return 0;
+        SVCERR << "All tests passed" << endl;
+        return 0;
     }
 }
-

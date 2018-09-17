@@ -26,6 +26,9 @@
  * Max1 means to normalize to max value = 1.0.
  * Sum1 means to normalize to sum of values = 1.0.
  *
+ * Range01 means to normalize such that the max value = 1.0 and the
+ * min value (if different from the max value) = 0.0.
+ *
  * Hybrid means normalize to max = 1.0 and then multiply by
  * log10 of the max value, to retain some difference between
  * levels of neighbouring columns.
@@ -36,6 +39,7 @@ enum class ColumnNormalization {
     None,
     Max1,
     Sum1,
+    Range01,
     Hybrid
 };
 
@@ -56,10 +60,21 @@ public:
      */
     static Column applyGain(const Column &in, double gain) {
         if (gain == 1.0) return in;
-	Column out;
-	out.reserve(in.size());
-	for (auto v: in) out.push_back(float(v * gain));
-	return out;
+        Column out;
+        out.reserve(in.size());
+        for (auto v: in) out.push_back(float(v * gain));
+        return out;
+    }
+
+    /**
+     * Shift the values in the given column by the given offset.
+     */
+    static Column applyShift(const Column &in, float offset) {
+        if (offset == 0.f) return in;
+        Column out;
+        out.reserve(in.size());
+        for (auto v: in) out.push_back(v + offset);
+        return out;
     }
 
     /**
@@ -80,13 +95,13 @@ public:
         if (!in_range_for(in, ix+1)) {
             return in[ix] > in[ix-1];
         }
-	if (in[ix] < in[ix+1]) {
+        if (in[ix] < in[ix+1]) {
             return false;
         }
-	if (in[ix] <= in[ix-1]) {
+        if (in[ix] <= in[ix-1]) {
             return false;
         }
-	return true;
+        return true;
     }
 
     /**
@@ -115,10 +130,10 @@ public:
      * with the bin of index minbin.
      */
     static Column distribute(const Column &in,
-			     int h,
-			     const std::vector<double> &binfory,
-			     int minbin,
-			     bool interpolate);
+                             int h,
+                             const std::vector<double> &binfory,
+                             int minbin,
+                             bool interpolate);
 
 };
 

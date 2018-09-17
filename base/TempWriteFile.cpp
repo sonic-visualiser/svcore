@@ -27,8 +27,8 @@ TempWriteFile::TempWriteFile(QString target) :
     temp.setAutoRemove(false);
     temp.open(); // creates the file and opens it atomically
     if (temp.error()) {
-	cerr << "TempWriteFile: Failed to create temporary file in directory of " << m_target << ": " << temp.errorString() << endl;
-	throw FileOperationFailed(temp.fileName(), "creation");
+        SVCERR << "TempWriteFile: Failed to create temporary file in directory of " << m_target << ": " << temp.errorString() << endl;
+        throw FileOperationFailed(temp.fileName(), "creation");
     }
     
     m_temp = temp.fileName();
@@ -38,8 +38,8 @@ TempWriteFile::TempWriteFile(QString target) :
 TempWriteFile::~TempWriteFile()
 {
     if (m_temp != "") {
-	QDir dir(QFileInfo(m_temp).dir());
-	dir.remove(m_temp);
+        QDir dir(QFileInfo(m_temp).dir());
+        dir.remove(m_temp);
     }
 }
 
@@ -54,14 +54,18 @@ TempWriteFile::moveToTarget()
 {
     if (m_temp == "") return;
 
-    QDir dir(QFileInfo(m_temp).dir());
-    // According to  http://doc.trolltech.com/4.4/qdir.html#rename
-    // some systems fail, if renaming over an existing file.
-    // Therefore, delete first the existing file.
-    if (dir.exists(m_target)) dir.remove(m_target);
-    if (!dir.rename(m_temp, m_target)) {
-	cerr << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << endl;
-	throw FileOperationFailed(m_temp, "rename");
+    QFile tempFile(m_temp);
+    QFile targetFile(m_target);
+    
+    if (targetFile.exists()) {
+        if (!targetFile.remove()) {
+            SVCERR << "TempWriteFile: WARNING: Failed to remove existing target file " << m_target << " prior to moving temporary file " << m_temp << " to it" << endl;
+        }
+    }
+    
+    if (!tempFile.rename(m_target)) {
+        SVCERR << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << endl;
+        throw FileOperationFailed(m_temp, "rename");
     }
 
     m_temp = "";

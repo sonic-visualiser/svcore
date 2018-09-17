@@ -31,7 +31,7 @@ public:
                                     int &type,
                                     int &power,
                                     RoundingDirection dir = RoundNearest)
-	const;
+        const;
 };
 
 #endif

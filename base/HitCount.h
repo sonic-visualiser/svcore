@@ -25,34 +25,34 @@ class HitCount
 {
 public:
     HitCount(std::string name) :
-	m_name(name),
-	m_hit(0),
-	m_partial(0),
-	m_miss(0)
+        m_name(name),
+        m_hit(0),
+        m_partial(0),
+        m_miss(0)
     { }
     
     ~HitCount() {
 #ifndef NO_HIT_COUNTS
-	using namespace std;
-	int total = m_hit + m_partial + m_miss;
-	cerr << "Hit count: " << m_name << ": ";
-	if (m_partial > 0) {
-	    cerr << m_hit << " hits, " << m_partial << " partial, "
-		 << m_miss << " misses";
-	} else {
-	    cerr << m_hit << " hits, " << m_miss << " misses";
-	}
-	if (total > 0) {
-	    if (m_partial > 0) {
-		cerr << " (" << ((m_hit * 100.0) / total) << "%, "
-		     << ((m_partial * 100.0) / total) << "%, "
-		     << ((m_miss * 100.0) / total) << "%)";
-	    } else {
-		cerr << " (" << ((m_hit * 100.0) / total) << "%, "
-		     << ((m_miss * 100.0) / total) << "%)";
-	    }
-	}
-	cerr << endl;
+        using namespace std;
+        int total = m_hit + m_partial + m_miss;
+        cerr << "Hit count: " << m_name << ": ";
+        if (m_partial > 0) {
+            cerr << m_hit << " hits, " << m_partial << " partial, "
+                 << m_miss << " misses";
+        } else {
+            cerr << m_hit << " hits, " << m_miss << " misses";
+        }
+        if (total > 0) {
+            if (m_partial > 0) {
+                cerr << " (" << ((m_hit * 100.0) / total) << "%, "
+                     << ((m_partial * 100.0) / total) << "%, "
+                     << ((m_miss * 100.0) / total) << "%)";
+            } else {
+                cerr << " (" << ((m_hit * 100.0) / total) << "%, "
+                     << ((m_miss * 100.0) / total) << "%)";
+            }
+        }
+        cerr << endl;
 #endif
     }
 

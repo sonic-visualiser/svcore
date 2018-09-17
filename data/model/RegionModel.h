@@ -39,7 +39,7 @@ public:
     RegionRec() : frame(0), value(0.f), duration(0) { }
     RegionRec(sv_frame_t _frame) : frame(_frame), value(0.0f), duration(0) { }
     RegionRec(sv_frame_t _frame, float _value, sv_frame_t _duration, QString _label) :
-	frame(_frame), value(_value), duration(_duration), label(_label) { }
+        frame(_frame), value(_value), duration(_duration), label(_label) { }
 
     int getDimensions() const { return 3; }
 
@@ -54,9 +54,9 @@ public:
                QString indent = "",
                QString extraAttributes = "") const
     {
-	stream <<
+        stream <<
             QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" label=\"%5\" %6/>\n")
-	    .arg(indent).arg(frame).arg(value).arg(duration)
+            .arg(indent).arg(frame).arg(value).arg(duration)
             .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
     }
 
@@ -71,20 +71,20 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const RegionRec &p1,
-			const RegionRec &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
-	    if (p1.value != p2.value) return p1.value < p2.value;
-	    if (p1.duration != p2.duration) return p1.duration < p2.duration;
-	    return p1.label < p2.label;
-	}
+        bool operator()(const RegionRec &p1,
+                        const RegionRec &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
+            if (p1.value != p2.value) return p1.value < p2.value;
+            if (p1.duration != p2.duration) return p1.duration < p2.duration;
+            return p1.label < p2.label;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const RegionRec &p1,
-			const RegionRec &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const RegionRec &p1,
+                        const RegionRec &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -96,8 +96,8 @@ class RegionModel : public IntervalModel<RegionRec>
 public:
     RegionModel(sv_samplerate_t sampleRate, int resolution,
                 bool notifyOnAdd = true) :
-	IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
-	m_valueQuantization(0),
+        IntervalModel<RegionRec>(sampleRate, resolution, notifyOnAdd),
+        m_valueQuantization(0),
         m_haveDistinctValues(false)
     {
     }
@@ -105,10 +105,10 @@ public:
     RegionModel(sv_samplerate_t sampleRate, int resolution,
                 float valueMinimum, float valueMaximum,
                 bool notifyOnAdd = true) :
-	IntervalModel<RegionRec>(sampleRate, resolution,
+        IntervalModel<RegionRec>(sampleRate, resolution,
                             valueMinimum, valueMaximum,
                             notifyOnAdd),
-	m_valueQuantization(0),
+        m_valueQuantization(0),
         m_haveDistinctValues(false)
     {
     }
@@ -132,10 +132,10 @@ public:
                   << extraAttributes.toStdString() << std::endl;
 
         IntervalModel<RegionRec>::toXml
-	    (out,
+            (out,
              indent,
-	     QString("%1 subtype=\"region\" valueQuantization=\"%2\"")
-	     .arg(extraAttributes).arg(m_valueQuantization));
+             QString("%1 subtype=\"region\" valueQuantization=\"%2\"")
+             .arg(extraAttributes).arg(m_valueQuantization));
     }
 
     /**

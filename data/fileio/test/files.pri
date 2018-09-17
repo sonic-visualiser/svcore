@@ -1,7 +1,14 @@
 
 TEST_HEADERS += \
-	     AudioFileReaderTest.h \
-	     AudioTestData.h
-	     
+	../../model/test/MockWaveModel.h \
+	AudioFileReaderTest.h \
+	AudioFileWriterTest.h \
+	AudioTestData.h \
+	EncodingTest.h \
+	MIDIFileReaderTest.h \
+	CSVFormatTest.h \
+	CSVStreamWriterTest.h
+     
 TEST_SOURCES += \
-	     svcore-data-fileio-test.cpp
+	../../model/test/MockWaveModel.cpp \
+	svcore-data-fileio-test.cpp

@@ -34,7 +34,7 @@ void
 OSCQueue::oscError(int num, const char *msg, const char *path)
 {
     cerr << "ERROR: OSCQueue::oscError: liblo server error " << num
-	      << " in path " << path << ": " << msg << endl;
+              << " in path " << path << ": " << msg << endl;
 }
 
 int
@@ -48,7 +48,7 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
     QString method;
 
     if (!queue->parseOSCPath(path, target, targetData, method)) {
-	return 1;
+        return 1;
     }
 
     OSCMessage message;
@@ -80,7 +80,7 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
             break;
         }
 
-	++i;
+        ++i;
     }
 
     queue->postMessage(message);
@@ -190,7 +190,7 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
                        QString &method)
 {
     while (path.startsWith("/")) {
-	path = path.right(path.length()-1);
+        path = path.right(path.length()-1);
     }
 
     int i = 0;

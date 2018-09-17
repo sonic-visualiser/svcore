@@ -22,25 +22,25 @@ using namespace std;
 MockWaveModel::MockWaveModel(vector<Sort> sorts, int length, int pad)
 {
     for (auto sort: sorts) {
-	m_data.push_back(generate(sort, length, pad));
+        m_data.push_back(generate(sort, length, pad));
     }
 }
 
-vector<float>
+floatvec_t
 MockWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     sv_frame_t i = 0;
 
 //    cerr << "MockWaveModel::getData(" << channel << "," << start << "," << count << "): ";
 
-    vector<float> data;
+    floatvec_t data;
     
     while (i < count) {
-	sv_frame_t idx = start + i;
-	if (!in_range_for(m_data[channel], idx)) break;
-	data.push_back(m_data[channel][idx]);
-//	cerr << data[i] << " ";
-	++i;
+        sv_frame_t idx = start + i;
+        if (!in_range_for(m_data[channel], idx)) break;
+        data.push_back(m_data[channel][idx]);
+//        cerr << data[i] << " ";
+        ++i;
     }
 
 //    cerr << endl;
@@ -48,14 +48,14 @@ MockWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
     return data;
 }
 
-vector<vector<float>>
+vector<floatvec_t>
 MockWaveModel::getMultiChannelData(int fromchannel, int tochannel,
-				   sv_frame_t start, sv_frame_t count) const
+                                   sv_frame_t start, sv_frame_t count) const
 {
-    vector<vector<float>> data(tochannel - fromchannel + 1);
+    vector<floatvec_t> data(tochannel - fromchannel + 1);
     
     for (int c = fromchannel; c <= tochannel; ++c) {
-        data.push_back(getData(c, start, count));
+        data[c] = getData(c, start, count);
     }
 
     return data;
@@ -72,17 +72,17 @@ MockWaveModel::generate(Sort sort, int length, int pad) const
     
     for (int i = 0; i < length; ++i) {
 
-	double v = 0.0;
-	
-	switch (sort) {
-	case DC: v = 1.0; break;
-	case Sine: v = sin((2.0 * M_PI / 8.0) * i); break;
-	case Cosine: v = cos((2.0 * M_PI / 8.0) * i); break;
-	case Nyquist: v = (i % 2) * 2 - 1; break;
-	case Dirac: v = (i == 0) ? 1.0 : 0.0; break;
-	}
+        double v = 0.0;
+        
+        switch (sort) {
+        case DC: v = 1.0; break;
+        case Sine: v = sin((2.0 * M_PI / 8.0) * i); break;
+        case Cosine: v = cos((2.0 * M_PI / 8.0) * i); break;
+        case Nyquist: v = (i % 2) * 2 - 1; break;
+        case Dirac: v = (i == 0) ? 1.0 : 0.0; break;
+        }
 
-	data.push_back(float(v));
+        data.push_back(float(v));
     }
 
     for (int i = 0; i < pad; ++i) {

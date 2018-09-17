@@ -25,7 +25,7 @@ TextMatcher::~TextMatcher()
 
 void
 TextMatcher::test(Match &match, QStringList keywords, QString text,
-		  QString textType, int score)
+                  QString textType, int score)
 {
 /*
     if (text.toLower() == keyword.toLower()) {

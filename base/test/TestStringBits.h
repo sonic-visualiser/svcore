@@ -128,6 +128,34 @@ private slots:
         testSplitQuoted(in, out);
     }
 
+    void snested3() {
+        QString in = "'aa bb cc\"' dd";
+        QStringList out;            
+        out << "aa bb cc\"" << "dd";
+        testSplitQuoted(in, out);
+    }
+
+    void snested3a() {
+        QString in = "\"aa bb cc'\" dd";
+        QStringList out;            
+        out << "aa bb cc'" << "dd";
+        testSplitQuoted(in, out);
+    }
+
+    void snested4() {
+        QString in = "'aa \"bb cc\" dd'";
+        QStringList out;            
+        out << "aa \"bb cc\" dd";
+        testSplitQuoted(in, out);
+    }
+
+    void snested4a() {
+        QString in = "\"aa 'bb cc' dd\"";
+        QStringList out;            
+        out << "aa 'bb cc' dd";
+        testSplitQuoted(in, out);
+    }
+
     void qquoted() {
         QString in = "a'a 'bb' \\\"cc\" dd\\\"";
         QStringList out;                 
@@ -135,6 +163,19 @@ private slots:
         testSplitQuoted(in, out);
     }
 
+    void qspace() {
+        QString in = "\"a a\":\"b:b\":\"c d\"";
+        QStringList out1;
+        // Can't start a quote in the middle of a bare field - they
+        // are handled only if the first character in the field is a
+        // quote. Otherwise we'd have trouble with apostrophes etc
+        out1 << "a a:\"b:b\":\"c" << "d\"";
+        QCOMPARE(StringBits::splitQuoted(in, ' '), out1);
+        QStringList out2;
+        out2 << "a a" << "b:b" << "c d";
+        QCOMPARE(StringBits::splitQuoted(in, ':'), out2);
+    }
+    
     void multispace() {
         QString in = "  a'a \\'         'bb'    '      \\\"cc\" ' dd\\\" '";
         QStringList out;                                            

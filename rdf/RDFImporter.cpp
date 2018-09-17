@@ -818,7 +818,7 @@ RDFImporter::identifyDocumentType(QString url)
         store = BasicStore::load(QUrl(url));
         Triple t = store->matchOnce(Triple());
         if (t != Triple()) haveRDF = true;
-    } catch (std::exception &e) {
+    } catch (std::exception &) {
         // nothing; haveRDF will be false so the next bit catches it
     }
 

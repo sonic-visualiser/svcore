@@ -47,19 +47,23 @@ public:
     virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const;
 
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
-						      int clientId,
-						      int position,
-						      sv_samplerate_t sampleRate,
-						      int blockSize,
-						      int channels);
+                                                      int clientId,
+                                                      int position,
+                                                      sv_samplerate_t sampleRate,
+                                                      int blockSize,
+                                                      int channels);
 
     virtual QString getPluginCategory(QString identifier);
 
+    virtual QString getPluginLibraryPath(QString identifier);
+    
     float getPortMinimum(const LADSPA_Descriptor *, int port);
     float getPortMaximum(const LADSPA_Descriptor *, int port);
     float getPortDefault(const LADSPA_Descriptor *, int port);
     float getPortQuantization(const LADSPA_Descriptor *, int port);
     int getPortDisplayHint(const LADSPA_Descriptor *, int port);
+
+    static std::vector<QString> getPluginPath();
 
 protected:
     LADSPAPluginFactory();
@@ -68,8 +72,6 @@ protected:
     virtual PluginScan::PluginType getPluginType() const {
         return PluginScan::LADSPAPlugin;
     }
-
-    virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 
@@ -86,6 +88,7 @@ protected:
     void unloadUnusedLibraries();
 
     std::vector<QString> m_identifiers;
+    std::map<QString, QString> m_libraries; // identifier -> full file path
     std::map<QString, RealTimePluginDescriptor *> m_rtDescriptors;
 
     std::map<QString, QString> m_taxonomy;

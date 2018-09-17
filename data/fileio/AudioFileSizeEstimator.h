@@ -43,7 +43,7 @@ public:
      * will return 0.
      */
     static sv_frame_t estimate(FileSource source,
-			       sv_samplerate_t targetRate = 0);
+                               sv_samplerate_t targetRate = 0);
 };
 
 #endif

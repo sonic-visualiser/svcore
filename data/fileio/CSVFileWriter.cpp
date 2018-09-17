@@ -14,6 +14,7 @@
 */
 
 #include "CSVFileWriter.h"
+#include "CSVStreamWriter.h"
 
 #include "model/Model.h"
 #include "model/SparseOneDimensionalModel.h"
@@ -27,6 +28,7 @@
 
 #include <QFile>
 #include <QTextStream>
+#include <exception>
 
 CSVFileWriter::CSVFileWriter(QString path,
                              Model *model,
@@ -59,30 +61,17 @@ CSVFileWriter::getError() const
 void
 CSVFileWriter::write()
 {
-    try {
-        TempWriteFile temp(m_path);
-
-        QFile file(temp.getTemporaryFilename());
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            m_error = tr("Failed to open file %1 for writing")
-                .arg(temp.getTemporaryFilename());
-            return;
-        }
-    
-        QTextStream out(&file);
-        out << m_model->toDelimitedDataStringWithOptions
-            (m_delimiter, m_options);
-
-        file.close();
-        temp.moveToTarget();
-
-    } catch (FileOperationFailed &f) {
-        m_error = f.what();
-    }
+    Selection all {
+        m_model->getStartFrame(),
+        m_model->getEndFrame()
+    };
+    MultiSelection selections;
+    selections.addSelection(all);
+    writeSelection(selections); 
 }
 
 void
-CSVFileWriter::writeSelection(MultiSelection *selection)
+CSVFileWriter::writeSelection(MultiSelection selection)
 {
     try {
         TempWriteFile temp(m_path);
@@ -96,22 +85,34 @@ CSVFileWriter::writeSelection(MultiSelection *selection)
     
         QTextStream out(&file);
 
-        for (MultiSelection::SelectionList::iterator i =
-                 selection->getSelections().begin();
-             i != selection->getSelections().end(); ++i) {
-	
-            sv_frame_t f0(i->getStartFrame()), f1(i->getEndFrame());
-            out << m_model->toDelimitedDataStringSubsetWithOptions
-                (m_delimiter, m_options, f0, f1);
+        sv_frame_t blockSize = 65536;
+
+        if (m_model->isSparse()) {
+            // Write the whole in one go, as re-seeking for each block
+            // may be very costly otherwise
+            sv_frame_t startFrame, endFrame;
+            selection.getExtents(startFrame, endFrame);
+            blockSize = endFrame - startFrame;
         }
+        
+        bool completed = CSVStreamWriter::writeInChunks(
+            out,
+            *m_model,
+            selection,
+            m_reporter,
+            m_delimiter,
+            m_options,
+            blockSize
+        );
 
         file.close();
-        temp.moveToTarget();
+        if (completed) {
+            temp.moveToTarget();
+        }
 
     } catch (FileOperationFailed &f) {
         m_error = f.what();
+    } catch (const std::exception &e) { // ProgressReporter could throw
+        m_error = e.what();
     }
 }
-
-
-

@@ -66,13 +66,13 @@ PlaylistFileReader::init()
     bool good = false;
 
     if (!m_file->exists()) {
-	m_error = QFile::tr("File \"%1\" does not exist")
+        m_error = QFile::tr("File \"%1\" does not exist")
             .arg(m_source.getLocation());
     } else if (!m_file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-	m_error = QFile::tr("Failed to open file \"%1\"")
+        m_error = QFile::tr("Failed to open file \"%1\"")
             .arg(m_source.getLocation());
     } else {
-	good = true;
+        good = true;
     }
 
     if (good) {
@@ -82,8 +82,8 @@ PlaylistFileReader::init()
     }
 
     if (!good) {
-	delete m_file;
-	m_file = 0;
+        delete m_file;
+        m_file = 0;
     }
 }
 

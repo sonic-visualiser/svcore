@@ -33,7 +33,7 @@ struct TextPoint : public XmlExportable
 public:
     TextPoint(sv_frame_t _frame) : frame(_frame), height(0.0f) { }
     TextPoint(sv_frame_t _frame, float _height, QString _label) : 
-	frame(_frame), height(_height), label(_label) { }
+        frame(_frame), height(_height), label(_label) { }
 
     int getDimensions() const { return 2; }
     
@@ -46,8 +46,8 @@ public:
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const
     {
-	stream << QString("%1<point frame=\"%2\" height=\"%3\" label=\"%4\" %5/>\n")
-	    .arg(indent).arg(frame).arg(height)
+        stream << QString("%1<point frame=\"%2\" height=\"%3\" label=\"%4\" %5/>\n")
+            .arg(indent).arg(frame).arg(height)
             .arg(encodeEntities(label)).arg(extraAttributes);
     }
 
@@ -61,19 +61,19 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const TextPoint &p1,
-			const TextPoint &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
-	    if (p1.height != p2.height) return p1.height < p2.height;
-	    return p1.label < p2.label;
-	}
+        bool operator()(const TextPoint &p1,
+                        const TextPoint &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
+            if (p1.height != p2.height) return p1.height < p2.height;
+            return p1.label < p2.label;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const TextPoint &p1,
-			const TextPoint &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const TextPoint &p1,
+                        const TextPoint &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -86,7 +86,7 @@ class TextModel : public SparseModel<TextPoint>
     
 public:
     TextModel(sv_samplerate_t sampleRate, int resolution, bool notifyOnAdd = true) :
-	SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
+        SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
     virtual void toXml(QTextStream &out,
@@ -94,10 +94,10 @@ public:
                        QString extraAttributes = "") const
     {
         SparseModel<TextPoint>::toXml
-	    (out, 
+            (out, 
              indent,
-	     QString("%1 subtype=\"text\"")
-	     .arg(extraAttributes));
+             QString("%1 subtype=\"text\"")
+             .arg(extraAttributes));
     }
 
     QString getTypeName() const { return tr("Text"); }

@@ -56,14 +56,14 @@ MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
 MIDIFileWriter::~MIDIFileWriter()
 {
     for (MIDIComposition::iterator i = m_midiComposition.begin();
-	 i != m_midiComposition.end(); ++i) {
-	
-	for (MIDITrack::iterator j = i->second.begin();
-	     j != i->second.end(); ++j) {
-	    delete *j;
-	}
+         i != m_midiComposition.end(); ++i) {
+        
+        for (MIDITrack::iterator j = i->second.begin();
+             j != i->second.end(); ++j) {
+            delete *j;
+        }
 
-	i->second.clear();
+        i->second.clear();
     }
 
     m_midiComposition.clear();

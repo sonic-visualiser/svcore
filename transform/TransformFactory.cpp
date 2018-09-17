@@ -112,20 +112,20 @@ TransformFactory::getAllTransformDescriptions()
 
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-	 i != m_transforms.end(); ++i) {
+         i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
-	dset.insert(i->second);
+        dset.insert(i->second);
     }
 
     TransformList list;
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
-	 i != dset.end(); ++i) {
+         i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into list: id = " << i->identifier << endl;
 #endif
-	list.push_back(*i);
+        list.push_back(*i);
     }
 
     return list;
@@ -158,20 +158,20 @@ TransformFactory::getUninstalledTransformDescriptions()
     
     std::set<TransformDescription> dset;
     for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
-	 i != m_uninstalledTransforms.end(); ++i) {
+         i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
-	dset.insert(i->second);
+        dset.insert(i->second);
     }
 
     TransformList list;
     for (std::set<TransformDescription>::const_iterator i = dset.begin();
-	 i != dset.end(); ++i) {
+         i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
-	list.push_back(*i);
+        list.push_back(*i);
     }
 
     return list;
@@ -248,7 +248,7 @@ TransformFactory::getAllTransformTypes()
 
     std::set<TransformDescription::Type> types;
     for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-	 i != m_transforms.end(); ++i) {
+         i != m_transforms.end(); ++i) {
         types.insert(i->second.type);
     }
 
@@ -376,17 +376,17 @@ TransformFactory::populateTransforms()
          i != transforms.end(); ++i) {
 
         TransformDescription desc = i->second;
-	QString identifier = desc.identifier;
+        QString identifier = desc.identifier;
         QString maker = desc.maker;
 
         QString td = desc.name;
         QString tn = td.section(": ", 0, 0);
         QString to = td.section(": ", 1);
 
-	if (names[tn] > 1) {
+        if (names[tn] > 1) {
             maker.replace(QRegExp(tr(" [\\(<].*$")), "");
-	    tn = QString("%1 [%2]").arg(tn).arg(maker);
-	}
+            tn = QString("%1 [%2]").arg(tn).arg(maker);
+        }
 
         if (to != "") {
             desc.name = QString("%1: %2").arg(tn).arg(to);
@@ -394,8 +394,8 @@ TransformFactory::populateTransforms()
             desc.name = tn;
         }
 
-	m_transforms[identifier] = desc;
-    }	    
+        m_transforms[identifier] = desc;
+    }            
 
     m_transformsPopulated = true;
 }
@@ -416,7 +416,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 
     for (int i = 0; i < (int)plugs.size(); ++i) {
 
-	QString pluginId = plugs[i];
+        QString pluginId = plugs[i];
 
         piper_vamp::PluginStaticData psd = factory->getPluginStaticData(pluginId);
 
@@ -434,10 +434,10 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 
             QString outputName = QString::fromStdString(o.name);
 
-	    QString transformId = QString("%1:%2")
+            QString transformId = QString("%1:%2")
                 .arg(pluginId).arg(QString::fromStdString(o.identifier));
 
-	    QString userName;
+            QString userName;
             QString friendlyName;
 //!!! return to this            QString units = outputs[j].unit.c_str();
             QString description = QString::fromStdString(psd.basic.description);
@@ -464,13 +464,13 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                 }
             }                    
 
-	    if (basicOutputs.size() == 1) {
-		userName = pluginName;
+            if (basicOutputs.size() == 1) {
+                userName = pluginName;
                 friendlyName = pluginName;
-	    } else {
-		userName = QString("%1: %2").arg(pluginName).arg(outputName);
+            } else {
+                userName = QString("%1: %2").arg(pluginName).arg(outputName);
                 friendlyName = outputName;
-	    }
+            }
 
             bool configurable = (!psd.programs.empty() ||
                                  !psd.parameters.empty());
@@ -479,7 +479,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
             cerr << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
 #endif
 
-	    transforms[transformId] = 
+            transforms[transformId] = 
                 TransformDescription(TransformDescription::Analysis,
                                      category,
                                      transformId,
@@ -491,7 +491,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
 //!!!                                     units,
                                      "",
                                      configurable);
-	}
+        }
     }
 }
 
@@ -499,37 +499,37 @@ void
 TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 {
     std::vector<QString> plugs =
-	RealTimePluginFactory::getAllPluginIdentifiers();
+        RealTimePluginFactory::getAllPluginIdentifiers();
     if (m_exiting) return;
 
     static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
     for (int i = 0; i < (int)plugs.size(); ++i) {
         
-	QString pluginId = plugs[i];
+        QString pluginId = plugs[i];
 
         RealTimePluginFactory *factory =
             RealTimePluginFactory::instanceFor(pluginId);
 
-	if (!factory) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId << endl;
-	    continue;
-	}
+        if (!factory) {
+            cerr << "WARNING: TransformFactory::populateTransforms: No real time plugin factory for instance " << pluginId << endl;
+            continue;
+        }
 
         const RealTimePluginDescriptor *descriptor =
             factory->getPluginDescriptor(pluginId);
 
         if (!descriptor) {
-	    cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId << endl;
-	    continue;
-	}
-	
+            cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId << endl;
+            continue;
+        }
+        
 //!!!        if (descriptor->controlOutputPortCount == 0 ||
 //            descriptor->audioInputPortCount == 0) continue;
 
 //        cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
-	
-	QString pluginName = descriptor->name.c_str();
+        
+        QString pluginName = descriptor->name.c_str();
         QString category = factory->getPluginCategory(pluginId);
         bool configurable = (descriptor->parameterCount > 0);
         QString maker = descriptor->maker.c_str();
@@ -856,7 +856,7 @@ QString
 TransformFactory::getTransformName(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-	return m_transforms[identifier].name;
+        return m_transforms[identifier].name;
     } else return "";
 }
 
@@ -864,7 +864,7 @@ QString
 TransformFactory::getTransformFriendlyName(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-	return m_transforms[identifier].friendlyName;
+        return m_transforms[identifier].friendlyName;
     } else return "";
 }
 
@@ -872,7 +872,7 @@ QString
 TransformFactory::getTransformUnits(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-	return m_transforms[identifier].units;
+        return m_transforms[identifier].units;
     } else return "";
 }
 
@@ -880,7 +880,7 @@ QString
 TransformFactory::getTransformInfoUrl(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-	return m_transforms[identifier].infoUrl;
+        return m_transforms[identifier].infoUrl;
     } else return "";
 }
 
@@ -913,7 +913,7 @@ bool
 TransformFactory::isTransformConfigurable(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-	return m_transforms[identifier].configurable;
+        return m_transforms[identifier].configurable;
     } else return false;
 }
 

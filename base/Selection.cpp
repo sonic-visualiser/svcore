@@ -27,9 +27,9 @@ Selection::Selection(sv_frame_t startFrame, sv_frame_t endFrame) :
     m_endFrame(endFrame)
 {
     if (m_startFrame > m_endFrame) {
-	sv_frame_t tmp = m_endFrame;
-	m_endFrame = m_startFrame;
-	m_startFrame = tmp;
+        sv_frame_t tmp = m_endFrame;
+        m_endFrame = m_startFrame;
+        m_startFrame = tmp;
     }
 }
 
@@ -43,8 +43,8 @@ Selection &
 Selection::operator=(const Selection &s)
 {
     if (this != &s) {
-	m_startFrame = s.m_startFrame;
-	m_endFrame = s.m_endFrame;
+        m_startFrame = s.m_startFrame;
+        m_endFrame = s.m_endFrame;
     } 
     return *this;
 }
@@ -81,11 +81,11 @@ bool
 Selection::operator<(const Selection &s) const
 {
     if (isEmpty()) {
-	if (s.isEmpty()) return false;
-	else return true;
+        if (s.isEmpty()) return false;
+        else return true;
     } else {
-	if (s.isEmpty()) return false;
-	else return (m_startFrame < s.m_startFrame);
+        if (s.isEmpty()) return false;
+        else return (m_startFrame < s.m_startFrame);
     }
 }
 
@@ -95,7 +95,7 @@ Selection::operator==(const Selection &s) const
     if (isEmpty()) return s.isEmpty();
 
     return (m_startFrame == s.m_startFrame &&
-	    m_endFrame == s.m_endFrame);
+            m_endFrame == s.m_endFrame);
 }
 
 
@@ -134,21 +134,21 @@ MultiSelection::addSelection(const Selection &selection)
     // this is not just a frill.
 
     for (SelectionList::iterator i = m_selections.begin();
-	 i != m_selections.end(); ) {
-	
-	SelectionList::iterator j = i;
-	if (++j == m_selections.end()) break;
+         i != m_selections.end(); ) {
+        
+        SelectionList::iterator j = i;
+        if (++j == m_selections.end()) break;
 
-	if (i->getEndFrame() >= j->getStartFrame()) {
-	    Selection merged(i->getStartFrame(),
-			     std::max(i->getEndFrame(), j->getEndFrame()));
-	    m_selections.erase(i);
-	    m_selections.erase(j);
-	    m_selections.insert(merged);
-	    i = m_selections.begin();
-	} else {
-	    ++i;
-	}
+        if (i->getEndFrame() >= j->getStartFrame()) {
+            Selection merged(i->getStartFrame(),
+                             std::max(i->getEndFrame(), j->getEndFrame()));
+            m_selections.erase(i);
+            m_selections.erase(j);
+            m_selections.insert(merged);
+            i = m_selections.begin();
+        } else {
+            ++i;
+        }
     }
 }
 
@@ -161,7 +161,7 @@ MultiSelection::removeSelection(const Selection &selection)
     //appropriately)
 
     if (m_selections.find(selection) != m_selections.end()) {
-	m_selections.erase(selection);
+        m_selections.erase(selection);
     }
 }
 
@@ -169,7 +169,7 @@ void
 MultiSelection::clearSelections()
 {
     if (!m_selections.empty()) {
-	m_selections.clear();
+        m_selections.clear();
     }
 }
 
@@ -180,7 +180,7 @@ MultiSelection::getExtents(sv_frame_t &startFrame, sv_frame_t &endFrame) const
     endFrame = 0;
     
     for (SelectionList::const_iterator i = m_selections.begin();
-	 i != m_selections.end(); ++i) {
+         i != m_selections.end(); ++i) {
 
         if (i == m_selections.begin() || i->getStartFrame() < startFrame) {
             startFrame = i->getStartFrame();
@@ -200,14 +200,14 @@ MultiSelection::getContainingSelection(sv_frame_t frame, bool defaultToFollowing
     // scalable method, and I think that may be what we need
 
     for (SelectionList::const_iterator i = m_selections.begin();
-	 i != m_selections.end(); ++i) {
+         i != m_selections.end(); ++i) {
 
-	if (i->contains(frame)) return *i;
+        if (i->contains(frame)) return *i;
 
-	if (i->getStartFrame() > frame) {
-	    if (defaultToFollowing) return *i;
-	    else return Selection();
-	}
+        if (i->getStartFrame() > frame) {
+            if (defaultToFollowing) return *i;
+            else return Selection();
+        }
     }
 
     return Selection();
@@ -219,10 +219,10 @@ MultiSelection::toXml(QTextStream &stream, QString indent,
 {
     stream << indent << QString("<selections %1>\n").arg(extraAttributes);
     for (SelectionList::iterator i = m_selections.begin();
-	 i != m_selections.end(); ++i) {
-	stream << indent
+         i != m_selections.end(); ++i) {
+        stream << indent
                << QString("  <selection start=\"%1\" end=\"%2\"/>\n")
-	    .arg(i->getStartFrame()).arg(i->getEndFrame());
+            .arg(i->getStartFrame()).arg(i->getEndFrame());
     }
     stream << indent << "</selections>\n";
 }

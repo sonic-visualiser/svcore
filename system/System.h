@@ -4,7 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+    This file copyright 2006-2018 Chris Cannam and QMUL.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SYSTEM_H_
-#define _SYSTEM_H_
+#ifndef SV_SYSTEM_H
+#define SV_SYSTEM_H
 
 #include "base/Debug.h"
 
@@ -154,7 +154,8 @@ enum ProcessStatus { ProcessRunning, ProcessNotRunning, UnknownProcessStatus };
 extern ProcessStatus GetProcessStatus(int pid);
 
 // Return a vague approximation to the number of free megabytes of real memory.
-// Return -1 if unknown. (Hence signed args)
+// Return -1 if unknown. (Hence signed args.) Note that this could be more than
+// is actually addressable, e.g. for a 32-bit process on a 64-bit system.
 extern void GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total);
 
 // Return a vague approximation to the number of free megabytes of
@@ -180,6 +181,18 @@ extern float princargf(float a);
 #ifdef USE_POW_NO_F
 #define powf pow
 #endif
+
+/** Return the value of the given environment variable by reference.
+    Return true if successfully retrieved, false if unset or on error.
+    Both the variable name and the returned value are UTF-8 encoded.
+*/
+extern bool getEnvUtf8(std::string variable, std::string &value);
+
+/** Set the value of the given environment variable.
+    Return true if successfully set, false on error.
+    Both the variable name and the value must be UTF-8 encoded.
+*/
+extern bool putEnvUtf8(std::string variable, std::string value);
 
 #endif /* ! _SYSTEM_H_ */
 

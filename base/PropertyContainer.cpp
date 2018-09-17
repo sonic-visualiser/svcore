@@ -178,6 +178,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
 
     case ValueProperty:
     case ColourProperty:
+    case ColourMapProperty:
     {
         int min, max;
         getPropertyRangeAndValue(name, &min, &max, 0);
@@ -222,8 +223,8 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
 }
 
 PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
-							  const PropertyName &pn,
-							  int value) :
+                                                          const PropertyName &pn,
+                                                          int value) :
     m_pc(pc),
     m_pn(pn),
     m_value(value),

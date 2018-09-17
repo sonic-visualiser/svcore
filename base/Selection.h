@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SELECTION_H_
-#define _SELECTION_H_
+#ifndef SV_SELECTION_H
+#define SV_SELECTION_H
 
 #include <cstddef>
 #include <set>

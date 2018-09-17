@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef NOTE_DATA_H
-#define NOTE_DATA_H
+#ifndef SV_NOTE_DATA_H
+#define SV_NOTE_DATA_H
 
 #include <vector>
 
@@ -22,8 +22,8 @@
 struct NoteData
 {
     NoteData(sv_frame_t _start, sv_frame_t _dur, int _mp, int _vel) :
-	start(_start), duration(_dur), midiPitch(_mp), frequency(0),
-	isMidiPitchQuantized(true), velocity(_vel), channel(0) { };
+        start(_start), duration(_dur), midiPitch(_mp), frequency(0),
+        isMidiPitchQuantized(true), velocity(_vel), channel(0) { };
             
     sv_frame_t start;       // audio sample frame
     sv_frame_t duration;    // in audio sample frames

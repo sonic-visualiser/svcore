@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FORMAT_H_
-#define _CSV_FORMAT_H_
+#ifndef SV_CSV_FORMAT_H
+#define SV_CSV_FORMAT_H
 
 #include <QString>
 #include <QStringList>
@@ -25,23 +25,24 @@ class CSVFormat
 {
 public:
     enum ModelType {
-	OneDimensionalModel,
-	TwoDimensionalModel,
+        OneDimensionalModel,
+        TwoDimensionalModel,
         TwoDimensionalModelWithDuration,
         TwoDimensionalModelWithDurationAndPitch,
-	ThreeDimensionalModel
+        ThreeDimensionalModel,
+        WaveFileModel
     };
     
     enum TimingType {
-	ExplicitTiming,
-	ImplicitTiming
+        ExplicitTiming,
+        ImplicitTiming
     };
 
     enum TimeUnits {
-	TimeSeconds,
+        TimeSeconds,
         TimeMilliseconds,
-	TimeAudioFrames,
-	TimeWindows,
+        TimeAudioFrames,
+        TimeWindows,
     };
 
     enum ColumnPurpose {
@@ -55,13 +56,22 @@ public:
     };
 
     enum ColumnQuality {
-        ColumnNumeric    = 1,
-        ColumnIntegral   = 2,
-        ColumnIncreasing = 4,
-        ColumnLarge      = 8,
-        ColumnNearEmpty  = 16,
+        ColumnNumeric    = 1,   // No non-numeric values were seen in sample
+        ColumnIntegral   = 2,   // All sampled values were integers
+        ColumnIncreasing = 4,   // Sampled values were monotonically increasing
+        ColumnSmall      = 8,   // All sampled values had magnitude < 1
+        ColumnLarge      = 16,  // Values "quickly" grew to over 1000
+        ColumnSigned     = 32,  // Some negative values were seen
+        ColumnNearEmpty  = 64,  // Nothing in this column beyond first row
     };
     typedef unsigned int ColumnQualities;
+
+    enum AudioSampleRange {
+        SampleRangeSigned1 = 0, //     -1 .. 1
+        SampleRangeUnsigned255, //      0 .. 255
+        SampleRangeSigned32767, // -32768 .. 32767
+        SampleRangeOther        // Other/unknown: Normalise on load
+    };
 
     CSVFormat() : // arbitrary defaults
         m_modelType(TwoDimensionalModel),
@@ -72,6 +82,7 @@ public:
         m_windowSize(1024),
         m_columnCount(0),
         m_variableColumnCount(false),
+        m_audioSampleRange(SampleRangeOther),
         m_allowQuoting(true),
         m_maxExampleCols(0)
     { }
@@ -84,8 +95,21 @@ public:
      * string, the separator character will also be guessed; otherwise
      * the current separator will be used.  The other properties of
      * this object will be set according to guesses from the file.
+     *
+     * The properties that are guessed from the file contents are:
+     * separator, column count, variable-column-count flag, audio
+     * sample range, timing type, time units, column qualities, column
+     * purposes, and model type. The sample rate and window size
+     * cannot be guessed and will not be changed by this function.
+     * Note also that this function will never guess WaveFileModel for
+     * the model type.
+     *
+     * Return false if there is some fundamental error, e.g. the file
+     * could not be opened at all. Return true otherwise. Note that
+     * this function returns true even if the file doesn't appear to
+     * make much sense as a data format.
      */
-    void guessFormatFor(QString path);
+    bool guessFormatFor(QString path);
  
     ModelType    getModelType()     const { return m_modelType;     }
     TimingType   getTimingType()    const { return m_timingType;    }
@@ -93,6 +117,7 @@ public:
     sv_samplerate_t getSampleRate() const { return m_sampleRate;    }
     int          getWindowSize()    const { return m_windowSize;    }
     int          getColumnCount()   const { return m_columnCount;   }
+    AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
     QChar        getSeparator()     const { 
         if (m_separator == "") return ' ';
@@ -106,6 +131,7 @@ public:
     void setSampleRate(sv_samplerate_t r) { m_sampleRate   = r; }
     void setWindowSize(int s)             { m_windowSize   = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
+    void setAudioSampleRange(AudioSampleRange r) { m_audioSampleRange = r; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
 
     QList<ColumnPurpose> getColumnPurposes() const { return m_columnPurposes; }
@@ -116,12 +142,17 @@ public:
     void setColumnPurpose(int i, ColumnPurpose p);
     
     // read-only; only valid if format has been guessed:
-    QList<ColumnQualities> getColumnQualities() const { return m_columnQualities; }
+    const QList<ColumnQualities> &getColumnQualities() const {
+        return m_columnQualities;
+    }
 
     // read-only; only valid if format has been guessed:
-    QList<QStringList> getExample() const { return m_example; }
+    const QList<QStringList> &getExample() const {
+        return m_example;
+    }
+    
     int getMaxExampleCols() const { return m_maxExampleCols; }
-	
+        
 protected:
     ModelType    m_modelType;
     TimingType   m_timingType;
@@ -136,6 +167,8 @@ protected:
     QList<ColumnQualities> m_columnQualities;
     QList<ColumnPurpose> m_columnPurposes;
 
+    AudioSampleRange m_audioSampleRange;
+
     QList<float> m_prevValues;
 
     bool m_allowQuoting;
@@ -146,9 +179,7 @@ protected:
     void guessSeparator(QString line);
     void guessQualities(QString line, int lineno);
     void guessPurposes();
-
-    void guessFormatFor_Old(QString path);
- 
+    void guessAudioSampleRange();
 };
 
 #endif

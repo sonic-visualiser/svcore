@@ -22,7 +22,7 @@
 AlignmentModel::AlignmentModel(Model *reference,
                                Model *aligned,
                                Model *inputModel,
-			       SparseTimeValueModel *path) :
+                               SparseTimeValueModel *path) :
     m_reference(reference),
     m_aligned(aligned),
     m_inputModel(inputModel),

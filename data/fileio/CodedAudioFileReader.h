@@ -13,14 +13,20 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CODED_AUDIO_FILE_READER_H_
-#define _CODED_AUDIO_FILE_READER_H_
+#ifndef SV_CODED_AUDIO_FILE_READER_H
+#define SV_CODED_AUDIO_FILE_READER_H
 
 #include "AudioFileReader.h"
 
-#include <sndfile.h>
 #include <QMutex>
 #include <QReadWriteLock>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
+#include <sndfile.h>
 
 class WavFileReader;
 class Serialiser;
@@ -46,7 +52,7 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
 
     virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
 
@@ -71,7 +77,7 @@ protected:
     // may throw InsufficientDiscSpace:
     void addSamplesToDecodeCache(float **samples, sv_frame_t nframes);
     void addSamplesToDecodeCache(float *samplesInterleaved, sv_frame_t nframes);
-    void addSamplesToDecodeCache(const std::vector<float> &interleaved);
+    void addSamplesToDecodeCache(const floatvec_t &interleaved);
 
     // may throw InsufficientDiscSpace:
     void finishDecodeCache();
@@ -95,7 +101,7 @@ private:
 protected:
     QMutex m_cacheMutex;
     CacheMode m_cacheMode;
-    std::vector<float> m_data;
+    floatvec_t m_data;
     mutable QMutex m_dataLock;
     bool m_initialised;
     Serialiser *m_serialiser;

@@ -1,10 +1,12 @@
 TEST_HEADERS = \
+	     TestColumnOp.h \
+	     TestLogRange.h \
 	     TestRangeMapper.h \
-	     TestPitch.h \
 	     TestOurRealTime.h \
-	     TestVampRealTime.h \
+	     TestPitch.h \
+	     TestScaleTickIntervals.h \
 	     TestStringBits.h \
-	     TestColumnOp.h
+	     TestVampRealTime.h
 	     
 TEST_SOURCES += \
 	     svcore-base-test.cpp

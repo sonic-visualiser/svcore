@@ -71,7 +71,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
         sv_frame_t blockSize = 16384;
         sv_frame_t total = m_original->getFrameCount();
 
-        vector<float> block;
+        floatvec_t block;
 
         for (sv_frame_t i = 0; i < total; i += blockSize) {
 
@@ -128,7 +128,7 @@ DecodingWavFileReader::DecodeThread::run()
     sv_frame_t blockSize = 16384;
     sv_frame_t total = m_reader->m_original->getFrameCount();
     
-    vector<float> block;
+    floatvec_t block;
     
     for (sv_frame_t i = 0; i < total; i += blockSize) {
         
@@ -151,7 +151,7 @@ DecodingWavFileReader::DecodeThread::run()
 } 
 
 void
-DecodingWavFileReader::addBlock(const vector<float> &frames)
+DecodingWavFileReader::addBlock(const floatvec_t &frames)
 {
     addSamplesToDecodeCache(frames);
 

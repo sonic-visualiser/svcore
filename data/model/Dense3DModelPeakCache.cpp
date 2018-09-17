@@ -17,8 +17,10 @@
 
 #include "base/Profiler.h"
 
+#include "base/HitCount.h"
+
 Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
-					     int columnsPerPeak) :
+                                             int columnsPerPeak) :
     m_source(source),
     m_columnsPerPeak(columnsPerPeak)
 {
@@ -33,18 +35,17 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *s
             this, SLOT(sourceModelChanged()));
     connect(source, SIGNAL(aboutToBeDeleted()),
             this, SLOT(sourceModelAboutToBeDeleted()));
-
 }
 
 Dense3DModelPeakCache::~Dense3DModelPeakCache()
 {
+    if (m_cache) m_cache->aboutToDelete();
     delete m_cache;
 }
 
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
-    Profiler profiler("Dense3DModelPeakCache::getColumn");
     if (!m_source) return Column();
     if (!haveColumn(column)) fillColumn(column);
     return m_cache->getColumn(column);
@@ -79,7 +80,14 @@ Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 bool
 Dense3DModelPeakCache::haveColumn(int column) const
 {
-    return in_range_for(m_coverage, column) && m_coverage[column];
+    static HitCount count("Dense3DModelPeakCache");
+    if (in_range_for(m_coverage, column) && m_coverage[column]) {
+        count.hit();
+        return true;
+    } else {
+        count.miss();
+        return false;
+    }
 }
 
 void

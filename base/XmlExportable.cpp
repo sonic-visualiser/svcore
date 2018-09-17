@@ -41,11 +41,11 @@ QString
 XmlExportable::encodeEntities(QString s)
 {
     s
-	.replace("&", "&amp;")
-	.replace("<", "&lt;")
-	.replace(">", "&gt;")
-	.replace("\"", "&quot;")
-	.replace("'", "&apos;");
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;");
 
     return s;
 }
@@ -77,7 +77,7 @@ XmlExportable::getObjectExportId(const void * object)
     static int maxId = 0;
     
     if (idMap.find(object) == idMap.end()) {
-	idMap[object] = maxId++;
+        idMap[object] = maxId++;
     }
 
     return idMap[object];

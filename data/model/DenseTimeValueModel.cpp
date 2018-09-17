@@ -27,13 +27,13 @@ DenseTimeValueModel::~DenseTimeValueModel()
 {
     PlayParameterRepository::getInstance()->removePlayable(this);
 }
-	
+        
 QString
 DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
 {
     int ch = getChannelCount();
 
-    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
+//    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
 
     if (f1 <= f0) return "";
 

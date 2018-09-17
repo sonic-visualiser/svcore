@@ -1,15 +1,16 @@
 #!/bin/bash
 
-audio=/share/music
+audio=/data/Music
 preferred=$audio/free
 list=audiofiles.txt
 used=audiofiles-used.txt
 
-df=vamp:vamp-aubio:aubioonset:detectionfunction
-#df=vamp:qm-vamp-plugins:qm-tempotracker:detection_fn
-onsets=vamp:vamp-aubio:aubioonset:onsets
-#onsets=vamp:qm-vamp-plugins:qm-tempotracker:beats
-beats=vamp:vamp-aubio:aubiotempo:beats
+#df=vamp:vamp-aubio:aubioonset:detectionfunction
+df=vamp:qm-vamp-plugins:qm-tempotracker:detection_fn
+#onsets=vamp:vamp-aubio:aubioonset:onsets
+onsets=vamp:vamp-example-plugins:percussiononsets:onsets
+beats=vamp:qm-vamp-plugins:qm-tempotracker:beats
+#beats=vamp:vamp-aubio:aubiotempo:beats
 #beats=$onsets
 #onsets=$beats
 chromagram=vamp:qm-vamp-plugins:qm-chromagram:chromagram
@@ -49,17 +50,27 @@ pick_file()
     echo "$file"
 }
 
+resize_normal() {
+#    sv-command resize 1000 500
+    sv-command resize 2000 1000
+}
+
+resize_big() {
+#    sv-command resize 1000 700
+    sv-command resize 2000 1400
+}
+
 load_a_file()
 {
     file=`pick_file`
     if ! sv-command open "$file"; then
 	pid="`pidof sonic-visualiser`"
 	if [ -z "$pid" ]; then
-	    ( setsid sonic-visualiser -geometry 1000x500+10+100 & )
+	    ( setsid sonic-visualiser -geometry +10+100 & )
 	    sleep 2
             #sudo renice +19 `pidof sonic-visualiser`
             #sudo renice +18 `pidof Xorg`
-            sv-command resize 1000 500
+            resize_normal
 	    load_a_file
 	else
 	    echo "ERROR: Unable to contact sonic-visualiser pid $pid" 1>&2
@@ -122,7 +133,7 @@ play()
 fade_in()
 {
     sv-command set gain 0
-    sleep 0.5
+    sleep 1
     play "$@"
     for gain in 0.001 0.01 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1; do
 	sv-command set gain $gain
@@ -146,8 +157,8 @@ slow()
 #	sv-command set speedup "$speed"
 #	sleep 1
 #    done
-    for speed in -20 -100 -1000; do
-        sv-command set speedup "$speed"
+    for speed in 80 50 10; do
+        sv-command set speed "$speed"
         sleep 10
     done
 }
@@ -155,7 +166,7 @@ slow()
 stop()
 {
     sv-command stop "$@"
-    sv-command set speedup 0
+    sv-command set speed 100
 }
 
 quit()
@@ -285,7 +296,7 @@ spectrogram_bits()
     sv-command select 7.5 11
     fade_in selection
     sleep 10
-    sv-command set speedup -200
+    sv-command set speed 40
     sleep 10
     sv-command setcurrent 1
     sv-command delete pane
@@ -294,7 +305,7 @@ spectrogram_bits()
     sv-command set layer Normalize-Columns off
     sv-command set layer Normalize-Visible-Area on
     sleep 20
-    sv-command set speedup 0
+    sv-command set speed 100
     sleep 10
     sv-command select none
 #    fade_out
@@ -420,7 +431,7 @@ selection_bits()
 #    reset
     sv-command set overlays 1
     sv-command set zoomwheels 0
-    sv-command resize 1000 500
+    resize_normal
     sv-command zoom default
     sv-command setcurrent 2
     sv-command delete pane
@@ -466,13 +477,13 @@ selection_bits()
     sleep 4
     sv-command delete layer
     sleep 16
-    sv-command set speedup -50
+    sv-command set speed 66
     sleep 14
-    sv-command set speedup 50
+    sv-command set speed 150
     sleep 8
-    sv-command set speedup 100
+    sv-command set speed 200
     sleep 5
-    sv-command set speedup 200
+    sv-command set speed 400
     fade_out
 #    sleep 10
     sv-command select none
@@ -507,14 +518,14 @@ sleep 2
 load_a_file
 sv-command loop on
 
-sv-command resize 1000 500
+resize_normal
 show_stuff
 sleep 5
 sleep 20
 playback_bits
 
 #sleep 10
-sv-command resize 1000 700
+resize_big
 sv-command zoom default
 show_stuff
 onset_bits
@@ -524,7 +535,7 @@ selection_bits
 #sv-command resize 1000 700
 
 #sleep 10
-sv-command resize 1000 700
+resize_big
 #show_stuff
 spectrogram_bits
 

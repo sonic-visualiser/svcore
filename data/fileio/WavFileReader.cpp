@@ -25,13 +25,17 @@
 
 using namespace std;
 
-WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
+WavFileReader::WavFileReader(FileSource source,
+                             bool fileUpdating,
+                             Normalisation normalisation) :
     m_file(0),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_seekable(false),
     m_lastStart(0),
     m_lastCount(0),
+    m_normalisation(normalisation),
+    m_max(0.f),
     m_updating(fileUpdating)
 {
     m_frameCount = 0;
@@ -40,21 +44,26 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
 
     m_fileInfo.format = 0;
     m_fileInfo.frames = 0;
+
+#ifdef Q_OS_WIN
+    m_file = sf_wchar_open((LPCWSTR)m_path.utf16(), SFM_READ, &m_fileInfo);
+#else
     m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
+#endif
 
     if (!m_file || (!fileUpdating && m_fileInfo.channels <= 0)) {
-	SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
+        SVDEBUG << "WavFileReader::initialize: Failed to open file at \""
                 << m_path << "\" ("
                 << sf_strerror(m_file) << ")" << endl;
 
-	if (m_file) {
-	    m_error = QString("Couldn't load audio file '%1':\n%2")
-		.arg(m_path).arg(sf_strerror(m_file));
-	} else {
-	    m_error = QString("Failed to open audio file '%1'")
-		.arg(m_path);
-	}
-	return;
+        if (m_file) {
+            m_error = QString("Couldn't load audio file '%1':\n%2")
+                .arg(m_path).arg(sf_strerror(m_file));
+        } else {
+            m_error = QString("Failed to open audio file '%1'")
+                .arg(m_path);
+        }
+        return;
     }
 
     if (m_fileInfo.channels > 0) {
@@ -82,9 +91,13 @@ WavFileReader::WavFileReader(FileSource source, bool fileUpdating) :
             // and mark those (basically only non-adaptive WAVs).
             m_seekable = true;
         }
+
+        if (m_normalisation != Normalisation::None && !m_updating) {
+            m_max = getMax();
+        }
     }
 
-    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << endl;
+    SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << ", normalisation " << int(m_normalisation) << endl;
 }
 
 WavFileReader::~WavFileReader()
@@ -101,7 +114,11 @@ WavFileReader::updateFrameCount()
 
     if (m_file) {
         sf_close(m_file);
+#ifdef Q_OS_WIN
+        m_file = sf_wchar_open((LPCWSTR)m_path.utf16(), SFM_READ, &m_fileInfo);
+#else
         m_file = sf_open(m_path.toLocal8Bit(), SFM_READ, &m_fileInfo);
+#endif
         if (!m_file || m_fileInfo.channels <= 0) {
             SVDEBUG << "WavFileReader::updateFrameCount: Failed to open file at \"" << m_path << "\" ("
                     << sf_strerror(m_file) << ")" << endl;
@@ -127,10 +144,30 @@ WavFileReader::updateDone()
 {
     updateFrameCount();
     m_updating = false;
+    if (m_normalisation != Normalisation::None) {
+        m_max = getMax();
+    }
 }
 
-vector<float>
+floatvec_t
 WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
+{
+    floatvec_t frames = getInterleavedFramesUnnormalised(start, count);
+
+    if (m_normalisation == Normalisation::None || m_max == 0.f) {
+        return frames;
+    }
+
+    for (int i = 0; in_range_for(frames, i); ++i) {
+        frames[i] /= m_max;
+    }
+    
+    return frames;
+}
+
+floatvec_t
+WavFileReader::getInterleavedFramesUnnormalised(sv_frame_t start,
+                                                sv_frame_t count) const
 {
     static HitCount lastRead("WavFileReader: last read");
 
@@ -147,11 +184,11 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
     if (start >= m_fileInfo.frames) {
 //        SVDEBUG << "WavFileReader::getInterleavedFrames: " << start
 //                  << " > " << m_fileInfo.frames << endl;
-	return {};
+        return {};
     }
 
     if (start + count > m_fileInfo.frames) {
-	count = m_fileInfo.frames - start;
+        count = m_fileInfo.frames - start;
     }
 
     // Because WaveFileModel::getSummaries() is called separately for
@@ -175,7 +212,7 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
         return {};
     }
 
-    vector<float> data;
+    floatvec_t data;
     sv_frame_t n = count * m_fileInfo.channels;
     data.resize(n);
 
@@ -189,6 +226,43 @@ WavFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 
     m_buffer = data;
     return data;
+}
+
+float
+WavFileReader::getMax() const
+{
+    if (!m_file || !m_channelCount) {
+        return 0.f;
+    }
+
+    // First try for a PEAK chunk
+
+    double sfpeak = 0.0;
+    if (sf_command(m_file, SFC_GET_SIGNAL_MAX, &sfpeak, sizeof(sfpeak))
+        == SF_TRUE) {
+        SVDEBUG << "File has a PEAK chunk reporting max level " << sfpeak
+                << endl;
+        return float(fabs(sfpeak));
+    }
+
+    // Failing that, read all the samples
+
+    float peak = 0.f;
+    sv_frame_t ix = 0, chunk = 65536;
+
+    while (ix < m_frameCount) {
+        auto frames = getInterleavedFrames(ix, chunk);
+        for (float x: frames) {
+            float level = fabsf(x);
+            if (level > peak) {
+                peak = level;
+            }
+        }
+        ix += chunk;
+    }
+
+    SVDEBUG << "Measured file peak max level as " << peak << endl;
+    return peak;
 }
 
 void

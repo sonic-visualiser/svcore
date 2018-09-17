@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FILE_WRITER_H_
-#define _CSV_FILE_WRITER_H_
+#ifndef SV_CSV_FILE_WRITER_H
+#define SV_CSV_FILE_WRITER_H
 
 #include <QObject>
 #include <QString>
@@ -23,6 +23,7 @@
 
 class Model;
 class MultiSelection;
+class ProgressReporter;
 
 class CSVFileWriter : public QObject
 {
@@ -33,13 +34,23 @@ public:
                   Model *model,
                   QString delimiter = ",",
                   DataExportOptions options = DataExportDefaults);
+
+    CSVFileWriter(QString path,
+                  Model *model,
+                  ProgressReporter *reporter,
+                  QString delimiter = ",",
+                  DataExportOptions options = DataExportDefaults) 
+    : CSVFileWriter(path, model, delimiter, options)
+    {
+        m_reporter = reporter;
+    }
     virtual ~CSVFileWriter();
 
     virtual bool isOK() const;
     virtual QString getError() const;
 
     virtual void write();
-    virtual void writeSelection(MultiSelection *selection);
+    virtual void writeSelection(MultiSelection selection);
 
 protected:
     QString m_path;
@@ -47,6 +58,7 @@ protected:
     QString m_error;
     QString m_delimiter;
     DataExportOptions m_options;
+    ProgressReporter *m_reporter = nullptr;
 };
 
 #endif

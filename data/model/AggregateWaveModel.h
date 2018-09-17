@@ -59,9 +59,9 @@ public:
     virtual sv_frame_t getStartFrame() const { return 0; }
     virtual sv_frame_t getEndFrame() const { return getFrameCount(); }
 
-    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
 
-    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
@@ -79,15 +79,18 @@ signals:
     void modelChanged();
     void modelChangedWithin(sv_frame_t, sv_frame_t);
     void completionChanged();
+    void modelInvalidated();
 
 protected slots:
     void componentModelChanged();
     void componentModelChangedWithin(sv_frame_t, sv_frame_t);
     void componentModelCompletionChanged();
+    void componentModelAboutToBeDeleted();
 
 protected:
     ChannelSpecList m_components;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
+    bool m_invalidated; // because one of its component models is aboutToBeDeleted
 };
 
 #endif

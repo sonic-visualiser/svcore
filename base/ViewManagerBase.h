@@ -13,14 +13,15 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _VIEW_MANAGER_BASE_H_
-#define _VIEW_MANAGER_BASE_H_
+#ifndef SV_VIEW_MANAGER_BASE_H
+#define SV_VIEW_MANAGER_BASE_H
 
 #include <QObject>
 
 #include "Selection.h"
 
 class AudioPlaySource;
+class AudioRecordTarget;
 
 /**
  * Base class for ViewManager, with no GUI content.  This should
@@ -36,6 +37,7 @@ public:
     virtual ~ViewManagerBase();
 
     virtual void setAudioPlaySource(AudioPlaySource *source) = 0;
+    virtual void setAudioRecordTarget(AudioRecordTarget *target) = 0;
 
     virtual sv_frame_t alignPlaybackFrameToReference(sv_frame_t) const = 0;
     virtual sv_frame_t alignReferenceToPlaybackFrame(sv_frame_t) const = 0;

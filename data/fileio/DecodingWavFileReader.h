@@ -64,7 +64,7 @@ protected:
     WavFileReader *m_original;
     ProgressReporter *m_reporter;
 
-    void addBlock(const std::vector<float> &frames);
+    void addBlock(const floatvec_t &frames);
     
     class DecodeThread : public Thread
     {

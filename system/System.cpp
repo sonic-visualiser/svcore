@@ -1,16 +1,16 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Sonic Visualiser
-    An audio file viewer and annotation editor.
-    Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam and QMUL.
+  Sonic Visualiser
+  An audio file viewer and annotation editor.
+  Centre for Digital Music, Queen Mary, University of London.
+  This file copyright 2006-2018 Chris Cannam and QMUL.
     
-    This program is free software; you can redistribute it and/or
-    modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation; either version 2 of the
-    License, or (at your option) any later version.  See the file
-    COPYING included with this distribution for more information.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2 of the
+  License, or (at your option) any later version.  See the file
+  COPYING included with this distribution for more information.
 */
 
 #include "System.h"
@@ -39,16 +39,16 @@
 
 #ifdef __APPLE__
 extern "C" {
-void *
-rpl_realloc (void *p, size_t n)
-{
-    p = realloc(p, n);
-    if (p == 0 && n == 0)
+    void *
+    rpl_realloc (void *p, size_t n)
     {
-    p = malloc(0);
+        p = realloc(p, n);
+        if (p == 0 && n == 0)
+        {
+            p = malloc(0);
+        }
+        return p;
     }
-    return p;
-}
 }
 #endif
 
@@ -57,24 +57,24 @@ rpl_realloc (void *p, size_t n)
 extern "C" {
 
 #ifdef _MSC_VER
-void usleep(unsigned long usec)
-{
-    ::Sleep(usec / 1000);
-}
+    void usleep(unsigned long usec)
+    {
+        ::Sleep(usec / 1000);
+    }
 #endif
 
-int gettimeofday(struct timeval *tv, void *tz)
-{
-    union { 
-	long long ns100;  
-	FILETIME ft; 
-    } now; 
+    int gettimeofday(struct timeval *tv, void * /* tz */)
+    {
+        union { 
+            long long ns100;  
+            FILETIME ft; 
+        } now; 
     
-    ::GetSystemTimeAsFileTime(&now.ft); 
-    tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
-    tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
-    return 0;
-}
+        ::GetSystemTimeAsFileTime(&now.ft); 
+        tv->tv_usec = (long)((now.ns100 / 10LL) % 1000000LL); 
+        tv->tv_sec = (long)((now.ns100 - 116444736000000000LL) / 10000000LL); 
+        return 0;
+    }
 
 }
 
@@ -153,10 +153,10 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
     if (exFound) {
 
         lMEMORYSTATUSEX lms;
-	lms.dwLength = sizeof(lms);
-	if (!ex(&lms)) {
+        lms.dwLength = sizeof(lms);
+        if (!ex(&lms)) {
             cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                      << GetLastError() << endl;
+                 << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -167,9 +167,9 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         /* Fall back to GlobalMemoryStatus which is always available.
            but returns wrong results for physical memory > 4GB  */
 
-	MEMORYSTATUS ms;
-	GlobalMemoryStatus(&ms);
-	wavail = ms.dwAvailPhys;
+        MEMORYSTATUS ms;
+        GlobalMemoryStatus(&ms);
+        wavail = ms.dwAvailPhys;
         wtotal = ms.dwTotalPhys;
     }
 
@@ -211,7 +211,10 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
 
     char buf[256];
     while (!feof(meminfo)) {
-        fgets(buf, 256, meminfo);
+        if (!fgets(buf, 256, meminfo)) {
+            fclose(meminfo);
+            return;
+        }
         bool isMemFree = (strncmp(buf, "MemFree:", 8) == 0);
         bool isMemTotal = (!isMemFree && (strncmp(buf, "MemTotal:", 9) == 0));
         if (isMemFree || isMemTotal) {
@@ -249,13 +252,13 @@ GetDiscSpaceMBAvailable(const char *path)
 #ifdef _WIN32
     ULARGE_INTEGER available, total, totalFree;
     if (GetDiskFreeSpaceExA(path, &available, &total, &totalFree)) {
-	  __int64 a = available.QuadPart;
+        __int64 a = available.QuadPart;
         a /= 1048576;
         if (a > INT_MAX) a = INT_MAX;
         return ssize_t(a);
     } else {
         cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-                  << GetLastError() << endl;
+             << GetLastError() << endl;
         return -1;
     }
 #else
@@ -286,7 +289,7 @@ extern void SystemMemoryBarrier()
 #endif
 }
 #else /* !_WIN32 */
-#if !defined(__APPLE__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
+#if !defined(__APPLE__) && defined(__GNUC__) && ((__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ == 0))
 void
 SystemMemoryBarrier()
 {
@@ -325,4 +328,109 @@ float modf(float x, float y) { return x - (y * floorf(x / y)); }
 double princarg(double a) { return mod(a + M_PI, -2 * M_PI) + M_PI; }
 float princargf(float a) { return float(princarg(a)); }
 
+bool
+getEnvUtf8(std::string variable, std::string &value)
+{
+    value = "";
+    
+#ifdef _WIN32
+    int wvarlen = MultiByteToWideChar(CP_UTF8, 0,
+                                      variable.c_str(), int(variable.length()),
+                                      0, 0);
+    if (wvarlen < 0) {
+        SVCERR << "WARNING: Unable to convert environment variable name "
+               << variable << " to wide characters" << endl;
+        return false;
+    }
+    
+    wchar_t *wvarbuf = new wchar_t[wvarlen + 1];
+    (void)MultiByteToWideChar(CP_UTF8, 0,
+                              variable.c_str(), int(variable.length()),
+                              wvarbuf, wvarlen);
+    wvarbuf[wvarlen] = L'\0';
+    
+    wchar_t *wvalue = _wgetenv(wvarbuf);
+
+    delete[] wvarbuf;
+
+    if (!wvalue) {
+        return false;
+    }
+
+    int wvallen = int(wcslen(wvalue));
+    int vallen = WideCharToMultiByte(CP_UTF8, 0,
+                                     wvalue, wvallen,
+                                     0, 0, 0, 0);
+    if (vallen < 0) {
+        SVCERR << "WARNING: Unable to convert environment value to UTF-8"
+               << endl;
+        return false;
+    }
+
+    char *val = new char[vallen + 1];
+    (void)WideCharToMultiByte(CP_UTF8, 0,
+                              wvalue, wvallen,
+                              val, vallen, 0, 0);
+    val[vallen] = '\0';
+
+    value = val;
+
+    delete[] val;
+    return true;
+
+#else
+
+    char *val = getenv(variable.c_str());
+    if (!val) {
+        return false;
+    }
+
+    value = val;
+    return true;
+    
+#endif
+}
+
+bool
+putEnvUtf8(std::string variable, std::string value)
+{
+#ifdef _WIN32
+    std::string entry = variable + "=" + value;
+    
+    int wentlen = MultiByteToWideChar(CP_UTF8, 0,
+                                      entry.c_str(), int(entry.length()),
+                                      0, 0);
+    if (wentlen < 0) {
+        SVCERR << "WARNING: Unable to convert environment entry to "
+               << "wide characters" << endl;
+        return false;
+    }
+    
+    wchar_t *wentbuf = new wchar_t[wentlen + 1];
+    (void)MultiByteToWideChar(CP_UTF8, 0,
+                              entry.c_str(), int(entry.length()),
+                              wentbuf, wentlen);
+    wentbuf[wentlen] = L'\0';
+
+    int rv = _wputenv(wentbuf);
+
+    delete[] wentbuf;
+
+    if (rv != 0) {
+        SVCERR << "WARNING: Failed to set environment entry" << endl;
+        return false;
+    }
+    return true;
+
+#else
+
+    int rv = setenv(variable.c_str(), value.c_str(), 1);
+    if (rv != 0) {
+        SVCERR << "WARNING: Failed to set environment entry" << endl;
+        return false;
+    }
+    return true;
+    
+#endif
+}
 

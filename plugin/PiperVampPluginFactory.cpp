@@ -28,7 +28,9 @@
 #define CAPNP_LITE 1
 #endif
 
-#include "vamp-client/AutoPlugin.h"
+#include "vamp-client/qt/PiperAutoPlugin.h"
+#include "vamp-client/qt/ProcessQtTransport.h"
+#include "vamp-client/CapnpRRClient.h"
 
 #include <QDir>
 #include <QFile>
@@ -40,9 +42,6 @@
 
 #include "base/Profiler.h"
 #include "base/HelperExecPath.h"
-
-#include "vamp-client/ProcessQtTransport.h"
-#include "vamp-client/CapnpRRClient.h"
 
 using namespace std;
 
@@ -114,8 +113,7 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
     Profiler profiler("PiperVampPluginFactory::instantiatePlugin");
 
     if (m_origins.find(identifier) == m_origins.end()) {
-        cerr << "ERROR: No known server for identifier " << identifier << endl;
-        SVDEBUG << "ERROR: No known server for identifier " << identifier << endl;
+        SVCERR << "ERROR: No known server for identifier " << identifier << endl;
         return 0;
     }
     
@@ -124,10 +122,10 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
         return 0;
     }
 
-    SVDEBUG << "PiperVampPluginFactory: Creating Piper AutoPlugin for server "
+    SVDEBUG << "PiperVampPluginFactory: Creating PiperAutoPlugin for server "
         << m_origins[identifier] << ", identifier " << identifier << endl;
     
-    auto ap = new piper_vamp::client::AutoPlugin
+    auto ap = new piper_vamp::client::PiperAutoPlugin
         (m_origins[identifier].toStdString(),
          psd.pluginKey,
          float(inputSampleRate),
@@ -160,6 +158,27 @@ PiperVampPluginFactory::getPluginCategory(QString identifier)
     } else {
         return {};
     }
+}
+
+QString
+PiperVampPluginFactory::getPluginLibraryPath(QString identifier)
+{
+    // What we want to return here is the file path of the library in
+    // which the plugin was actually found -- we want to be paranoid
+    // about that and not just query
+    // Vamp::HostExt::PluginLoader::getLibraryPathForPlugin to return
+    // what the SDK thinks the likely location would be (in case our
+    // search order turns out to have been different)
+
+    QStringList bits = identifier.split(':');
+    if (bits.size() > 1) {
+        QString soname = bits[bits.size() - 2];
+        auto i = m_libraries.find(soname);
+        if (i != m_libraries.end()) {
+            return i->second;
+        }
+    }
+    return QString();
 }
 
 void
@@ -198,6 +217,10 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
             string soname = QFileInfo(c.libraryPath).baseName().toStdString();
             SVDEBUG << "INFO: For tag \"" << tag << "\" giving library " << soname << endl;
             from.push_back(soname);
+            QString qsoname = QString::fromStdString(soname);
+            if (m_libraries.find(qsoname) == m_libraries.end()) {
+                m_libraries[qsoname] = c.libraryPath;
+            }
         }
     }
 
@@ -230,8 +253,8 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
     piper_vamp::ListResponse resp;
 
     try {
-        resp = client.listPluginData(req);
-    } catch (piper_vamp::client::ServerCrashed) {
+        resp = client.list(req);
+    } catch (const piper_vamp::client::ServerCrashed &) {
         SVDEBUG << "PiperVampPluginFactory: Piper server crashed" << endl;
         errorMessage = QObject::tr
             ("External plugin host exited unexpectedly while listing plugins");

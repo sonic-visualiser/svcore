@@ -36,8 +36,20 @@ class ReadOnlyWaveFileModel : public WaveFileModel
     Q_OBJECT
 
 public:
+    /**
+     * Construct a WaveFileModel from a source path and optional
+     * resampling target rate
+     */
     ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate = 0);
+
+    /**
+     * Construct a WaveFileModel from a source path using an existing
+     * AudioFileReader. The model does not take ownership of the
+     * AudioFileReader, which remains managed by the caller and must
+     * outlive the model.
+     */
     ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader);
+    
     ~ReadOnlyWaveFileModel();
 
     bool isOK() const;
@@ -64,9 +76,9 @@ public:
 
     void setStartFrame(sv_frame_t startFrame) { m_startFrame = startFrame; }
 
-    virtual std::vector<float> getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
 
-    virtual std::vector<std::vector<float>> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
 
     virtual int getSummaryBlockSize(int desired) const;
 
@@ -93,15 +105,15 @@ protected:
     {
     public:
         RangeCacheFillThread(ReadOnlyWaveFileModel &model) :
-	    m_model(model), m_fillExtent(0),
+            m_model(model), m_fillExtent(0),
             m_frameCount(model.getFrameCount()) { }
     
-	sv_frame_t getFillExtent() const { return m_fillExtent; }
+        sv_frame_t getFillExtent() const { return m_fillExtent; }
         virtual void run();
 
     protected:
         ReadOnlyWaveFileModel &m_model;
-	sv_frame_t m_fillExtent;
+        sv_frame_t m_fillExtent;
         sv_frame_t m_frameCount;
     };
          
@@ -122,7 +134,7 @@ protected:
     bool m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 
-    mutable std::vector<float> m_directRead;
+    mutable floatvec_t m_directRead;
     mutable sv_frame_t m_lastDirectReadStart;
     mutable sv_frame_t m_lastDirectReadCount;
     mutable QMutex m_directReadMutex;

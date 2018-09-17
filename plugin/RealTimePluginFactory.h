@@ -86,17 +86,25 @@ public:
      * Instantiate a plugin.
      */
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
-						      int clientId,
-						      int position,
-						      sv_samplerate_t sampleRate,
-						      int blockSize,
-						      int channels) = 0;
+                                                      int clientId,
+                                                      int position,
+                                                      sv_samplerate_t sampleRate,
+                                                      int blockSize,
+                                                      int channels) = 0;
 
     /**
      * Get category metadata about a plugin (without instantiating it).
      */
     virtual QString getPluginCategory(QString identifier) = 0;
 
+    /**
+     * Get the full file path (including both directory and filename)
+     * of the library file that provides a given plugin
+     * identifier. Note getPluginIdentifiers() must have been called
+     * before this has access to the necessary information.
+     */
+    virtual QString getPluginLibraryPath(QString identifier) = 0;
+    
 protected:
     RealTimePluginFactory() { }
 

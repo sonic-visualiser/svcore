@@ -12,15 +12,14 @@
     COPYING included with this distribution for more information.
 */
 
-
 /*
    This is a modified version of a source file from the 
    Rosegarden MIDI and audio sequencer and notation editor.
    This file copyright 2000-2006 Richard Bown and Chris Cannam.
 */
 
-#ifndef _MIDI_FILE_READER_H_
-#define _MIDI_FILE_READER_H_
+#ifndef SV_MIDI_FILE_READER_H
+#define SV_MIDI_FILE_READER_H
 
 #include "DataFileReader.h"
 #include "base/RealTime.h"
@@ -32,6 +31,7 @@
 #include <QObject>
 
 class MIDIEvent;
+class ProgressReporter;
 
 typedef unsigned char MIDIByte;
 
@@ -61,8 +61,9 @@ class MIDIFileReader : public DataFileReader
 
 public:
     MIDIFileReader(QString path,
-                   MIDIFileImportPreferenceAcquirer *pref,
-                   sv_samplerate_t mainModelSampleRate);
+                   MIDIFileImportPreferenceAcquirer *pref, // may be null
+                   sv_samplerate_t mainModelSampleRate,
+                   ProgressReporter *reporter = 0);
     virtual ~MIDIFileReader();
 
     virtual bool isOK() const;
@@ -76,10 +77,10 @@ protected:
     typedef std::map<unsigned long, TempoChange> TempoMap; // key is MIDI time
 
     typedef enum {
-	MIDI_SINGLE_TRACK_FILE          = 0x00,
-	MIDI_SIMULTANEOUS_TRACK_FILE    = 0x01,
-	MIDI_SEQUENTIAL_TRACK_FILE      = 0x02,
-	MIDI_FILE_BAD_FORMAT            = 0xFF
+        MIDI_SINGLE_TRACK_FILE          = 0x00,
+        MIDI_SIMULTANEOUS_TRACK_FILE    = 0x01,
+        MIDI_SEQUENTIAL_TRACK_FILE      = 0x02,
+        MIDI_FILE_BAD_FORMAT            = 0xFF
     } MIDIFileFormatType;
 
     bool parseFile();
@@ -87,9 +88,9 @@ protected:
     bool parseTrack(unsigned int &trackNum);
 
     Model *loadTrack(unsigned int trackNum,
-		     Model *existingModel = 0,
-		     int minProgress = 0,
-		     int progressAmount = 100) const;
+                     Model *existingModel = 0,
+                     int minProgress = 0,
+                     int progressAmount = 100) const;
 
     bool consolidateNoteOffEvents(unsigned int track);
     void updateTempoMap(unsigned int track);

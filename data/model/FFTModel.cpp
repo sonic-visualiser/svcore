@@ -19,6 +19,7 @@
 #include "base/Profiler.h"
 #include "base/Pitch.h"
 #include "base/HitCount.h"
+#include "base/Debug.h"
 
 #include <algorithm>
 
@@ -44,11 +45,16 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     m_fftSize(fftSize),
     m_windower(windowType, windowSize),
     m_fft(fftSize),
+    m_cacheWriteIndex(0),
     m_cacheSize(3)
 {
+    while (m_cached.size() < m_cacheSize) {
+        m_cached.push_back({ -1, cvec(m_fftSize / 2 + 1) });
+    }
+    
     if (m_windowSize > m_fftSize) {
-        cerr << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
-             << ") must be at least FFT size (" << m_fftSize << ")" << endl;
+        SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
+               << ") must be at least FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size must be at least FFT size");
     }
 
@@ -67,7 +73,7 @@ void
 FFTModel::sourceModelAboutToBeDeleted()
 {
     if (m_model) {
-        cerr << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
+        SVDEBUG << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
         m_model = 0;
     }
 }
@@ -188,7 +194,7 @@ FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) 
     return true;
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceSamples(int column) const
 {
     // m_fftSize may be greater than m_windowSize, but not the reverse
@@ -204,7 +210,7 @@ FFTModel::getSourceSamples(int column) const
         return data;
     } else {
         vector<float> pad(off, 0.f);
-        vector<float> padded;
+        fvec padded;
         padded.reserve(m_fftSize);
         padded.insert(padded.end(), pad.begin(), pad.end());
         padded.insert(padded.end(), data.begin(), data.end());
@@ -213,7 +219,7 @@ FFTModel::getSourceSamples(int column) const
     }
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 {
 //    cerr << "getSourceData(" << range.first << "," << range.second
@@ -235,16 +241,20 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         
         sv_frame_t discard = range.first - m_savedData.range.first;
 
-        vector<float> acc(m_savedData.data.begin() + discard,
-                          m_savedData.data.end());
+        fvec data;
+        data.reserve(range.second - range.first);
 
-        vector<float> rest =
-            getSourceDataUncached({ m_savedData.range.second, range.second });
+        data.insert(data.end(),
+                    m_savedData.data.begin() + discard,
+                    m_savedData.data.end());
 
-        acc.insert(acc.end(), rest.begin(), rest.end());
+        fvec rest = getSourceDataUncached
+            ({ m_savedData.range.second, range.second });
+
+        data.insert(data.end(), rest.begin(), rest.end());
         
-        m_savedData = { range, acc };
-        return acc;
+        m_savedData = { range, data };
+        return data;
 
     } else {
 
@@ -256,9 +266,11 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
     }
 }
 
-vector<float>
+FFTModel::fvec
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
+    Profiler profiler("FFTModel::getSourceDataUncached");
+    
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
         pfx = -range.first;
@@ -284,21 +296,21 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     }
     
     if (m_channel == -1) {
-	int channels = m_model->getChannelCount();
-	if (channels > 1) {
+        int channels = m_model->getChannelCount();
+        if (channels > 1) {
             int n = int(data.size());
             float factor = 1.f / float(channels);
             // use mean instead of sum for fft model input
-	    for (int i = 0; i < n; ++i) {
-		data[i] *= factor;
-	    }
-	}
+            for (int i = 0; i < n; ++i) {
+                data[i] *= factor;
+            }
+        }
     }
     
     return data;
 }
 
-vector<complex<float>>
+const FFTModel::cvec &
 FFTModel::getFFTColumn(int n) const
 {
     // The small cache (i.e. the m_cached deque) is for cases where
@@ -321,16 +333,14 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data());
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    vector<complex<float>> col(m_fftSize/2 + 1);
+    cvec &col = m_cached[m_cacheWriteIndex].col;
     
     m_fft.forwardInterleaved(samples.data(),
                              reinterpret_cast<float *>(col.data()));
 
-    SavedColumn sc { n, col };
-    if (m_cached.size() >= m_cacheSize) {
-        m_cached.pop_front();
-    }
-    m_cached.push_back(sc);
+    m_cached[m_cacheWriteIndex].n = n;
+
+    m_cacheWriteIndex = (m_cacheWriteIndex + 1) % m_cacheSize;
 
     return col;
 }

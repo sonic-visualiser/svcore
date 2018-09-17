@@ -106,6 +106,10 @@ ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
     if (m_fillThread) m_fillThread->wait();
     if (m_myReader) delete m_reader;
     m_reader = 0;
+
+    SVDEBUG << "ReadOnlyWaveFileModel: Destructor exiting; we had caches of "
+            << (m_cache[0].size() * sizeof(Range)) << " and "
+            << (m_cache[1].size() * sizeof(Range)) << " bytes" << endl;
 }
 
 bool
@@ -202,12 +206,18 @@ ReadOnlyWaveFileModel::getLocalFilename() const
     return "";
 }
     
-vector<float>
-ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
+floatvec_t
+ReadOnlyWaveFileModel::getData(int channel,
+                               sv_frame_t start,
+                               sv_frame_t count)
+    const
 {
-    // Read directly from the file.  This is used for e.g. audio
-    // playback or input to transforms.
+    // Read a single channel (if channel >= 0) or a mixdown of all
+    // channels (if channel == -1) directly from the file.  This is
+    // used for e.g. audio playback or input to transforms.
 
+    Profiler profiler("ReadOnlyWaveFileModel::getData");
+    
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << endl;
 #endif
@@ -215,7 +225,7 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
     int channels = getChannelCount();
 
     if (channel >= channels) {
-        cerr << "ERROR: WaveFileModel::getData: channel ("
+        SVCERR << "ERROR: WaveFileModel::getData: channel ("
              << channel << ") >= channel count (" << channels << ")"
              << endl;
         return {};
@@ -236,12 +246,12 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
         }
     }
 
-    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    floatvec_t interleaved = m_reader->getInterleavedFrames(start, count);
     if (channels == 1) return interleaved;
 
     sv_frame_t obtained = interleaved.size() / channels;
     
-    vector<float> result(obtained, 0.f);
+    floatvec_t result(obtained, 0.f);
     
     if (channel != -1) {
         // get a single channel
@@ -260,12 +270,14 @@ ReadOnlyWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) 
     return result;
 }
 
-vector<vector<float>>
+vector<floatvec_t>
 ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
                                            sv_frame_t start, sv_frame_t count) const
 {
-    // Read directly from the file.  This is used for e.g. audio
-    // playback or input to transforms.
+    // Read a set of channels directly from the file.  This is used
+    // for e.g. audio playback or input to transforms.
+
+    Profiler profiler("ReadOnlyWaveFileModel::getMultiChannelData");
 
 #ifdef DEBUG_WAVE_FILE_MODEL
     cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << endl;
@@ -274,16 +286,18 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
     int channels = getChannelCount();
 
     if (fromchannel > tochannel) {
-        cerr << "ERROR: ReadOnlyWaveFileModel::getData: fromchannel ("
-                  << fromchannel << ") > tochannel (" << tochannel << ")"
-                  << endl;
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getMultiChannelData: "
+               << "fromchannel (" << fromchannel
+               << ") > tochannel (" << tochannel << ")"
+               << endl;
         return {};
     }
 
     if (tochannel >= channels) {
-        cerr << "ERROR: ReadOnlyWaveFileModel::getData: tochannel ("
-                  << tochannel << ") >= channel count (" << channels << ")"
-                  << endl;
+        SVCERR << "ERROR: ReadOnlyWaveFileModel::getMultiChannelData: "
+               << "tochannel (" << tochannel
+               << ") >= channel count (" << channels << ")"
+               << endl;
         return {};
     }
 
@@ -304,11 +318,11 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
         }
     }
 
-    vector<float> interleaved = m_reader->getInterleavedFrames(start, count);
+    floatvec_t interleaved = m_reader->getInterleavedFrames(start, count);
     if (channels == 1) return { interleaved };
 
     sv_frame_t obtained = interleaved.size() / channels;
-    vector<vector<float>> result(reqchannels, vector<float>(obtained, 0.f));
+    vector<floatvec_t> result(reqchannels, floatvec_t(obtained, 0.f));
 
     for (int c = fromchannel; c <= tochannel; ++c) {
         int destc = c - fromchannel;
@@ -361,13 +375,13 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
 
     if (cacheType != 0 && cacheType != 1) {
 
-	// We need to read directly from the file.  We haven't got
-	// this cached.  Hope the requested area is small.  This is
-	// not optimal -- we'll end up reading the same frames twice
-	// for stereo files, in two separate calls to this method.
-	// We could fairly trivially handle this for most cases that
-	// matter by putting a single cache in getInterleavedFrames
-	// for short queries.
+        // We need to read directly from the file.  We haven't got
+        // this cached.  Hope the requested area is small.  This is
+        // not optimal -- we'll end up reading the same frames twice
+        // for stereo files, in two separate calls to this method.
+        // We could fairly trivially handle this for most cases that
+        // matter by putting a single cache in getInterleavedFrames
+        // for short queries.
 
         m_directReadMutex.lock();
 
@@ -380,86 +394,86 @@ ReadOnlyWaveFileModel::getSummaries(int channel, sv_frame_t start, sv_frame_t co
             m_lastDirectReadCount = count;
         }
 
-	float max = 0.0, min = 0.0, total = 0.0;
-	sv_frame_t i = 0, got = 0;
+        float max = 0.0, min = 0.0, total = 0.0;
+        sv_frame_t i = 0, got = 0;
 
-	while (i < count) {
+        while (i < count) {
 
-	    sv_frame_t index = i * channels + channel;
-	    if (index >= (sv_frame_t)m_directRead.size()) break;
+            sv_frame_t index = i * channels + channel;
+            if (index >= (sv_frame_t)m_directRead.size()) break;
             
-	    float sample = m_directRead[index];
+            float sample = m_directRead[index];
             if (sample > max || got == 0) max = sample;
-	    if (sample < min || got == 0) min = sample;
+            if (sample < min || got == 0) min = sample;
             total += fabsf(sample);
 
-	    ++i;
+            ++i;
             ++got;
             
             if (got == blockSize) {
                 ranges.push_back(Range(min, max, total / float(got)));
                 min = max = total = 0.0f;
                 got = 0;
-	    }
-	}
+            }
+        }
 
         m_directReadMutex.unlock();
 
-	if (got > 0) {
+        if (got > 0) {
             ranges.push_back(Range(min, max, total / float(got)));
-	}
+        }
 
-	return;
+        return;
 
     } else {
 
-	QMutexLocker locker(&m_mutex);
+        QMutexLocker locker(&m_mutex);
     
-	const RangeBlock &cache = m_cache[cacheType];
+        const RangeBlock &cache = m_cache[cacheType];
 
         blockSize = roundedBlockSize;
 
-	sv_frame_t cacheBlock, div;
+        sv_frame_t cacheBlock, div;
 
         cacheBlock = (sv_frame_t(1) << m_zoomConstraint.getMinCachePower());
-	if (cacheType == 1) {
-	    cacheBlock = sv_frame_t(double(cacheBlock) * sqrt(2.) + 0.01);
-	}
+        if (cacheType == 1) {
+            cacheBlock = sv_frame_t(double(cacheBlock) * sqrt(2.) + 0.01);
+        }
         div = blockSize / cacheBlock;
 
-	sv_frame_t startIndex = start / cacheBlock;
-	sv_frame_t endIndex = (start + count) / cacheBlock;
+        sv_frame_t startIndex = start / cacheBlock;
+        sv_frame_t endIndex = (start + count) / cacheBlock;
 
-	float max = 0.0, min = 0.0, total = 0.0;
-	sv_frame_t i = 0, got = 0;
+        float max = 0.0, min = 0.0, total = 0.0;
+        sv_frame_t i = 0, got = 0;
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-	cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", count " << count << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
+        cerr << "blockSize is " << blockSize << ", cacheBlock " << cacheBlock << ", start " << start << ", count " << count << " (frame count " << getFrameCount() << "), power is " << power << ", div is " << div << ", startIndex " << startIndex << ", endIndex " << endIndex << endl;
 #endif
 
-	for (i = 0; i <= endIndex - startIndex; ) {
+        for (i = 0; i <= endIndex - startIndex; ) {
         
-	    sv_frame_t index = (i + startIndex) * channels + channel;
-	    if (!in_range_for(cache, index)) break;
+            sv_frame_t index = (i + startIndex) * channels + channel;
+            if (!in_range_for(cache, index)) break;
             
             const Range &range = cache[index];
             if (range.max() > max || got == 0) max = range.max();
             if (range.min() < min || got == 0) min = range.min();
             total += range.absmean();
             
-	    ++i;
+            ++i;
             ++got;
             
-	    if (got == div) {
-		ranges.push_back(Range(min, max, total / float(got)));
+            if (got == div) {
+                ranges.push_back(Range(min, max, total / float(got)));
                 min = max = total = 0.0f;
                 got = 0;
-	    }
-	}
-		
-	if (got > 0) {
+            }
+        }
+                
+        if (got > 0) {
             ranges.push_back(Range(min, max, total / float(got)));
-	}
+        }
     }
 
 #ifdef DEBUG_WAVE_FILE_MODEL
@@ -544,19 +558,19 @@ void
 ReadOnlyWaveFileModel::fillTimerTimedOut()
 {
     if (m_fillThread) {
-	sv_frame_t fillExtent = m_fillThread->getFillExtent();
+        sv_frame_t fillExtent = m_fillThread->getFillExtent();
 #ifdef DEBUG_WAVE_FILE_MODEL
         SVDEBUG << "ReadOnlyWaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
-	if (fillExtent > m_lastFillExtent) {
-	    emit modelChangedWithin(m_lastFillExtent, fillExtent);
-	    m_lastFillExtent = fillExtent;
-	}
+        if (fillExtent > m_lastFillExtent) {
+            emit modelChangedWithin(m_lastFillExtent, fillExtent);
+            m_lastFillExtent = fillExtent;
+        }
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
         SVDEBUG << "ReadOnlyWaveFileModel::fillTimerTimedOut: no thread" << endl;
 #endif
-	emit modelChanged();
+        emit modelChanged();
     }
 }
 
@@ -589,7 +603,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
     
     sv_frame_t frame = 0;
     const sv_frame_t readBlockSize = 32768;
-    vector<float> block;
+    floatvec_t block;
 
     if (!m_model.isOK()) return;
     
@@ -643,7 +657,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
             m_model.m_mutex.lock();
 
             for (sv_frame_t i = 0; i < gotBlockSize; ++i) {
-		
+                
                 for (int ch = 0; ch < channels; ++ch) {
 
                     sv_frame_t index = channels * i + ch;

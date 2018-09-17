@@ -36,57 +36,121 @@ const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
 
-WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
-					     int channels,
-					     QString path) :
+WritableWaveFileModel::WritableWaveFileModel(QString path,
+                                             sv_samplerate_t sampleRate,
+                                             int channels,
+                                             Normalisation norm) :
     m_model(0),
-    m_writer(0),
+    m_temporaryWriter(0),
+    m_targetWriter(0),
     m_reader(0),
+    m_normalisation(norm),
     m_sampleRate(sampleRate),
     m_channels(channels),
     m_frameCount(0),
     m_startFrame(0),
     m_proportion(PROPORTION_UNKNOWN)
 {
+    init(path);
+}
+
+WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
+                                             int channels,
+                                             Normalisation norm) :
+    m_model(0),
+    m_temporaryWriter(0),
+    m_targetWriter(0),
+    m_reader(0),
+    m_normalisation(norm),
+    m_sampleRate(sampleRate),
+    m_channels(channels),
+    m_frameCount(0),
+    m_startFrame(0),
+    m_proportion(PROPORTION_UNKNOWN)
+{
+    init();
+}
+
+WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
+                                             int channels) :
+    m_model(0),
+    m_temporaryWriter(0),
+    m_targetWriter(0),
+    m_reader(0),
+    m_normalisation(Normalisation::None),
+    m_sampleRate(sampleRate),
+    m_channels(channels),
+    m_frameCount(0),
+    m_startFrame(0),
+    m_proportion(PROPORTION_UNKNOWN)
+{
+    init();
+}
+
+void
+WritableWaveFileModel::init(QString path)
+{
     if (path.isEmpty()) {
         try {
+            // Temp dir is exclusive to this run of the application,
+            // so the filename only needs to be unique within that -
+            // model ID should be ok
             QDir dir(TempDirectory::getInstance()->getPath());
-            path = dir.filePath(QString("written_%1.wav")
-                                .arg((intptr_t)this));
-        } catch (DirectoryCreationFailed f) {
-            cerr << "WritableWaveFileModel: Failed to create temporary directory" << endl;
+            path = dir.filePath(QString("written_%1.wav").arg(getId()));
+        } catch (const DirectoryCreationFailed &f) {
+            SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }
     }
 
-    // Write directly to the target file, so that we can do
-    // incremental writes and concurrent reads
-    m_writer = new WavFileWriter(path, sampleRate, channels,
-                                 WavFileWriter::WriteToTarget);
-    if (!m_writer->isOK()) {
-        cerr << "WritableWaveFileModel: Error in creating WAV file writer: " << m_writer->getError() << endl;
-        delete m_writer; 
-        m_writer = 0;
+    m_targetPath = path;
+    m_temporaryPath = "";
+
+    // We don't delete or null-out writer/reader members after
+    // failures here - they are all deleted in the dtor, and the
+    // presence/existence of the model is what's used to determine
+    // whether to go ahead, not the writer/readers. If the model is
+    // non-null, then the necessary writer/readers must be OK, as the
+    // model is the last thing initialised
+    
+    m_targetWriter = new WavFileWriter(m_targetPath, m_sampleRate, m_channels,
+                                       WavFileWriter::WriteToTarget);
+    
+    if (!m_targetWriter->isOK()) {
+        SVCERR << "WritableWaveFileModel: Error in creating WAV file writer: " << m_targetWriter->getError() << endl;
         return;
     }
+    
+    if (m_normalisation != Normalisation::None) {
 
-    FileSource source(m_writer->getPath());
+        // Temp dir is exclusive to this run of the application, so
+        // the filename only needs to be unique within that
+        QDir dir(TempDirectory::getInstance()->getPath());
+        m_temporaryPath = dir.filePath(QString("prenorm_%1.wav").arg(getId()));
+
+        m_temporaryWriter = new WavFileWriter
+            (m_temporaryPath, m_sampleRate, m_channels,
+             WavFileWriter::WriteToTarget);
+    
+        if (!m_temporaryWriter->isOK()) {
+            SVCERR << "WritableWaveFileModel: Error in creating temporary WAV file writer: " << m_temporaryWriter->getError() << endl;
+            return;
+        }
+    }        
+
+    FileSource source(m_targetPath);
 
     m_reader = new WavFileReader(source, true);
     if (!m_reader->getError().isEmpty()) {
-        cerr << "WritableWaveFileModel: Error in creating wave file reader" << endl;
-        delete m_reader;
-        m_reader = 0;
+        SVCERR << "WritableWaveFileModel: Error in creating wave file reader: " << m_reader->getError() << endl;
         return;
     }
     
     m_model = new ReadOnlyWaveFileModel(source, m_reader);
     if (!m_model->isOK()) {
-        cerr << "WritableWaveFileModel: Error in creating wave file model" << endl;
+        SVCERR << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
         m_model = 0;
-        delete m_reader;
-        m_reader = 0;
         return;
     }
     m_model->setStartFrame(m_startFrame);
@@ -99,7 +163,8 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
 WritableWaveFileModel::~WritableWaveFileModel()
 {
     delete m_model;
-    delete m_writer;
+    delete m_targetWriter;
+    delete m_temporaryWriter;
     delete m_reader;
 }
 
@@ -107,49 +172,53 @@ void
 WritableWaveFileModel::setStartFrame(sv_frame_t startFrame)
 {
     m_startFrame = startFrame;
-    if (m_model) m_model->setStartFrame(startFrame);
+    if (m_model) {
+        m_model->setStartFrame(startFrame);
+    }
 }
 
 bool
-WritableWaveFileModel::addSamples(float **samples, sv_frame_t count)
+WritableWaveFileModel::addSamples(const float *const *samples, sv_frame_t count)
 {
-    if (!m_writer) return false;
+    if (!m_model) return false;
 
 #ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
 //    SVDEBUG << "WritableWaveFileModel::addSamples(" << count << ")" << endl;
 #endif
 
-    if (!m_writer->writeSamples(samples, count)) {
-        cerr << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << m_writer->getError() << endl;
+    WavFileWriter *writer = m_targetWriter;
+    if (m_normalisation != Normalisation::None) {
+        writer = m_temporaryWriter;
+    }
+    
+    if (!writer->writeSamples(samples, count)) {
+        SVCERR << "ERROR: WritableWaveFileModel::addSamples: writer failed: " << writer->getError() << endl;
         return false;
     }
 
     m_frameCount += count;
 
-    static int updateCounter = 0;
-
-    if (m_reader && m_reader->getChannelCount() == 0) {
-#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (initial)" << endl;
-#endif
-        m_reader->updateFrameCount();
-    } else if (++updateCounter == 100) {
-#ifdef DEBUG_WRITABLE_WAVE_FILE_MODEL
-        SVDEBUG << "WritableWaveFileModel::addSamples(" << count << "): calling updateFrameCount (periodic)" << endl;
-#endif
-        if (m_reader) m_reader->updateFrameCount();
-        updateCounter = 0;
+    if (m_normalisation == Normalisation::None) {
+        if (m_reader->getChannelCount() == 0) {
+            m_reader->updateFrameCount();
+        }
     }
 
     return true;
 }
 
+void
+WritableWaveFileModel::updateModel()
+{
+    if (!m_model) return;
+    
+    m_reader->updateFrameCount();
+}
+
 bool
 WritableWaveFileModel::isOK() const
 {
-    bool ok = (m_writer && m_writer->isOK());
-//    SVDEBUG << "WritableWaveFileModel::isOK(): ok = " << ok << endl;
-    return ok;
+    return (m_model && m_model->isOK());
 }
 
 bool
@@ -176,9 +245,54 @@ WritableWaveFileModel::getWriteProportion() const
 void
 WritableWaveFileModel::writeComplete()
 {
-    if (m_reader) m_reader->updateDone();
+    if (!m_model) return;
+
+    if (m_normalisation == Normalisation::None) {
+        m_targetWriter->close();
+    } else {
+        m_temporaryWriter->close();
+        normaliseToTarget();
+    }
+    
+    m_reader->updateDone();
     m_proportion = 100;
     emit modelChanged();
+}
+
+void
+WritableWaveFileModel::normaliseToTarget()
+{
+    if (m_temporaryPath == "") {
+        SVCERR << "WritableWaveFileModel::normaliseToTarget: No temporary path available" << endl;
+        return;
+    }
+    
+    WavFileReader normalisingReader(m_temporaryPath, false,
+                                    WavFileReader::Normalisation::Peak);
+
+    if (!normalisingReader.getError().isEmpty()) {
+        SVCERR << "WritableWaveFileModel: Error in creating normalising reader: " << normalisingReader.getError() << endl;
+        return;
+    }
+
+    sv_frame_t frame = 0;
+    sv_frame_t block = 65536;
+    sv_frame_t count = normalisingReader.getFrameCount();
+
+    while (frame < count) {
+        auto frames = normalisingReader.getInterleavedFrames(frame, block);
+        if (!m_targetWriter->putInterleavedFrames(frames)) {
+            SVCERR << "ERROR: WritableWaveFileModel::normaliseToTarget: writer failed: " << m_targetWriter->getError() << endl;
+            return;
+        }
+        frame += block;
+    }
+
+    m_targetWriter->close();
+
+    delete m_temporaryWriter;
+    m_temporaryWriter = 0;
+    QFile::remove(m_temporaryPath);
 }
 
 sv_frame_t
@@ -188,14 +302,14 @@ WritableWaveFileModel::getFrameCount() const
     return m_frameCount;
 }
 
-vector<float>
+floatvec_t
 WritableWaveFileModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
     if (!m_model || m_model->getChannelCount() == 0) return {};
     return m_model->getData(channel, start, count);
 }
 
-vector<vector<float>>
+vector<floatvec_t>
 WritableWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
                                            sv_frame_t start, sv_frame_t count) const
 {
@@ -241,7 +355,7 @@ WritableWaveFileModel::toXml(QTextStream &out,
     Model::toXml
         (out, indent,
          QString("type=\"wavefile\" file=\"%1\" subtype=\"writable\" %2")
-         .arg(encodeEntities(m_writer->getPath()))
+         .arg(encodeEntities(m_targetPath))
          .arg(extraAttributes));
 }
 

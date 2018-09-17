@@ -40,7 +40,7 @@ public:
      * Do not override this unless you really know what you're doing.
      */
     virtual QString toXmlString(QString indent = "",
-				QString extraAttributes = "") const;
+                                QString extraAttributes = "") const;
 
     static QString encodeEntities(QString);
 

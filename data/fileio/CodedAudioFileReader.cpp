@@ -136,7 +136,7 @@ CodedAudioFileReader::initialiseDecodeCache()
     
     if (m_fileRate == 0) {
         SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: ERROR: File sample rate unknown (bug in subclass implementation?)" << endl;
-        throw FileOperationFailed("(coded file)", "File sample rate unknown (bug in subclass implementation?)");
+        throw FileOperationFailed("(coded file)", "sample rate unknown (bug in subclass implementation?)");
     }
     if (m_sampleRate == 0) {
         m_sampleRate = m_fileRate;
@@ -144,10 +144,13 @@ CodedAudioFileReader::initialiseDecodeCache()
     }
     if (m_fileRate != m_sampleRate) {
         SVDEBUG << "CodedAudioFileReader: resampling " << m_fileRate << " -> " <<  m_sampleRate << endl;
-        m_resampler = new breakfastquay::Resampler
-            (breakfastquay::Resampler::FastestTolerable,
-             m_channelCount,
-             int(m_cacheWriteBufferFrames));
+
+        breakfastquay::Resampler::Parameters params;
+        params.quality = breakfastquay::Resampler::FastestTolerable;
+        params.maxBufferSize = int(m_cacheWriteBufferFrames);
+        params.initialSampleRate = m_fileRate;
+        m_resampler = new breakfastquay::Resampler(params, m_channelCount);
+
         double ratio = m_sampleRate / m_fileRate;
         m_resampleBufferFrames = int(ceil(double(m_cacheWriteBufferFrames) *
                                           ratio + 1));
@@ -161,7 +164,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 
         try {
             QDir dir(TempDirectory::getInstance()->getPath());
-            m_cacheFileName = dir.filePath(QString("decoded_%1.wav")
+            m_cacheFileName = dir.filePath(QString("decoded_%1.w64")
                                            .arg((intptr_t)this));
 
             SF_INFO fileInfo;
@@ -193,10 +196,15 @@ CodedAudioFileReader::initialiseDecodeCache()
             // tests.)
             //
             // So: now we write floats.
-            fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
-    
-            m_cacheFileWritePtr = sf_open(m_cacheFileName.toLocal8Bit(),
-                                          SFM_WRITE, &fileInfo);
+            fileInfo.format = SF_FORMAT_W64 | SF_FORMAT_FLOAT;
+
+#ifdef Q_OS_WIN
+            m_cacheFileWritePtr = sf_wchar_open
+                ((LPCWSTR)m_cacheFileName.utf16(), SFM_WRITE, &fileInfo);
+#else
+            m_cacheFileWritePtr = sf_open
+                (m_cacheFileName.toLocal8Bit(), SFM_WRITE, &fileInfo);
+#endif
 
             if (m_cacheFileWritePtr) {
 
@@ -220,7 +228,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 m_cacheMode = CacheInMemory;
             }
 
-        } catch (DirectoryCreationFailed f) {
+        } catch (const DirectoryCreationFailed &f) {
             SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
             m_cacheMode = CacheInMemory;
         }
@@ -289,7 +297,7 @@ CodedAudioFileReader::addSamplesToDecodeCache(float *samples, sv_frame_t nframes
 }
 
 void
-CodedAudioFileReader::addSamplesToDecodeCache(const vector<float> &samples)
+CodedAudioFileReader::addSamplesToDecodeCache(const floatvec_t &samples)
 {
     QMutexLocker locker(&m_cacheMutex);
 
@@ -470,7 +478,14 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
 
     case CacheInMemory:
         m_dataLock.lock();
-        m_data.insert(m_data.end(), buffer, buffer + count);
+        try {
+            m_data.insert(m_data.end(), buffer, buffer + count);
+        } catch (const std::bad_alloc &e) {
+            m_data.clear();
+            SVCERR << "CodedAudioFileReader: Caught bad_alloc when trying to add " << count << " elements to buffer" << endl;
+            m_dataLock.unlock();
+            throw e;
+        }
         m_dataLock.unlock();
         break;
     }
@@ -517,8 +532,12 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
              ratio,
              true);
 
-        if (m_frameCount + out > sv_frame_t(double(m_fileFrameCount) * ratio)) {
-            out = sv_frame_t(double(m_fileFrameCount) * ratio) - m_frameCount;
+        SVDEBUG << "CodedAudioFileReader::pushBufferResampling: resampled padFrames to " << out << " frames" << endl;
+
+        sv_frame_t expected = sv_frame_t(round(double(m_fileFrameCount) * ratio));
+        if (m_frameCount + out > expected) {
+            out = expected - m_frameCount;
+            SVDEBUG << "CodedAudioFileReader::pushBufferResampling: clipping that to " << out << " to avoid producing more samples than desired" << endl;
         }
 
         pushBufferNonResampling(m_resampleBuffer, out);
@@ -526,7 +545,7 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
     }
 }
 
-vector<float>
+floatvec_t
 CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
     // Lock is only required in CacheInMemory mode (the cache file
@@ -538,7 +557,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         return {};
     }
 
-    vector<float> frames;
+    floatvec_t frames;
     
     switch (m_cacheMode) {
 
@@ -564,7 +583,7 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
         sv_frame_t n = sv_frame_t(m_data.size());
         if (ix0 > n) ix0 = n;
         if (ix1 > n) ix1 = n;
-        frames = vector<float>(m_data.begin() + ix0, m_data.begin() + ix1);
+        frames = floatvec_t(m_data.begin() + ix0, m_data.begin() + ix1);
         m_dataLock.unlock();
         break;
     }

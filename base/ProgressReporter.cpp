@@ -16,7 +16,7 @@
 #include "ProgressReporter.h"
 
 ProgressReporter::ProgressReporter(QObject *parent) :
-	QObject(parent)
+        QObject(parent)
 {
 }
 

@@ -29,6 +29,11 @@
 #include <QDir>
 #include <QFileInfo>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
+
 #include <sndfile.h>
 #include <samplerate.h>
 #include <iostream>
@@ -152,17 +157,17 @@ LADSPA_Handle
 SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 {
     if (!hostDescriptor || !hostDescriptor->request_non_rt_thread) {
-	SVDEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
-	return 0;
+        SVDEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
+        return 0;
     }
 
     SamplePlayer *player = new SamplePlayer(int(rate));
-	// std::cerr << "Instantiated sample player " << std::endl;
+        // std::cerr << "Instantiated sample player " << std::endl;
 
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
-	SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
-	delete player;
-	return 0;
+        SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
+        delete player;
+        return 0;
     }
 
     return player;
@@ -170,17 +175,17 @@ SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 
 void
 SamplePlayer::connectPort(LADSPA_Handle handle,
-			  unsigned long port, LADSPA_Data *location)
+                          unsigned long port, LADSPA_Data *location)
 {
     SamplePlayer *player = (SamplePlayer *)handle;
 
     float **ports[PortCount] = {
-	&player->m_output,
-	&player->m_retune,
-	&player->m_basePitch,
+        &player->m_output,
+        &player->m_retune,
+        &player->m_basePitch,
         &player->m_concertA,
-	&player->m_sustain,
-	&player->m_release
+        &player->m_sustain,
+        &player->m_release
     };
 
     *ports[port] = (float *)location;
@@ -195,9 +200,9 @@ SamplePlayer::activate(LADSPA_Handle handle)
     player->m_sampleNo = 0;
 
     for (size_t i = 0; i < Polyphony; ++i) {
-	player->m_ons[i] = -1;
-	player->m_offs[i] = -1;
-	player->m_velocities[i] = 0;
+        player->m_ons[i] = -1;
+        player->m_offs[i] = -1;
+        player->m_velocities[i] = 0;
     }
 }
 
@@ -226,7 +231,7 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
 
         SamplePlayer *player = (SamplePlayer *)handle;
 
-	QMutexLocker locker(&player->m_mutex);
+        QMutexLocker locker(&player->m_mutex);
 
         if (QFileInfo(value).exists() &&
             QFileInfo(value).isDir()) {
@@ -256,17 +261,17 @@ SamplePlayer::getProgram(LADSPA_Handle handle, unsigned long program)
     SamplePlayer *player = (SamplePlayer *)handle;
 
     if (!player->m_sampleSearchComplete) {
-	QMutexLocker locker(&player->m_mutex);
-	if (!player->m_sampleSearchComplete) {
-	    player->searchSamples();
-	}
+        QMutexLocker locker(&player->m_mutex);
+        if (!player->m_sampleSearchComplete) {
+            player->searchSamples();
+        }
     }
     if (program >= player->m_samples.size()) return 0;
 
     static DSSI_Program_Descriptor descriptor;
     static char name[60];
 
-    strncpy(name, player->m_samples[program].first.toLocal8Bit().data(), 60);
+    strncpy(name, player->m_samples[program].first.toLocal8Bit().data(), 59);
     name[59] = '\0';
 
     descriptor.Bank = 0;
@@ -278,8 +283,8 @@ SamplePlayer::getProgram(LADSPA_Handle handle, unsigned long program)
 
 void
 SamplePlayer::selectProgram(LADSPA_Handle handle,
-			    unsigned long,
-			    unsigned long program)
+                            unsigned long,
+                            unsigned long program)
 {
     SamplePlayer *player = (SamplePlayer *)handle;
     player->m_pendingProgramChange = (int)program;
@@ -289,11 +294,11 @@ int
 SamplePlayer::getMidiController(LADSPA_Handle, unsigned long port)
 {
     int controllers[PortCount] = {
-	DSSI_NONE,
-	DSSI_CC(12),
-	DSSI_CC(13),
-	DSSI_CC(64),
-	DSSI_CC(72)
+        DSSI_NONE,
+        DSSI_CC(12),
+        DSSI_CC(13),
+        DSSI_CC(64),
+        DSSI_CC(72)
     };
 
     return controllers[port];
@@ -301,7 +306,7 @@ SamplePlayer::getMidiController(LADSPA_Handle, unsigned long port)
 
 void
 SamplePlayer::runSynth(LADSPA_Handle handle, unsigned long samples,
-		       snd_seq_event_t *events, unsigned long eventCount)
+                       snd_seq_event_t *events, unsigned long eventCount)
 {
     SamplePlayer *player = (SamplePlayer *)handle;
 
@@ -322,38 +327,38 @@ SamplePlayer::workThreadCallback(LADSPA_Handle handle)
     if (player->m_pendingProgramChange >= 0) {
 
 #ifdef DEBUG_SAMPLE_PLAYER
-	SVDEBUG << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << endl;
+        SVDEBUG << "SamplePlayer::workThreadCallback: pending program change " << player->m_pendingProgramChange << endl;
 #endif
 
-	player->m_mutex.lock();
+        player->m_mutex.lock();
 
-	int program = player->m_pendingProgramChange;
-	player->m_pendingProgramChange = -1;
+        int program = player->m_pendingProgramChange;
+        player->m_pendingProgramChange = -1;
 
-	if (!player->m_sampleSearchComplete) {
-	    player->searchSamples();
-	}
-	
-	if (program < int(player->m_samples.size())) {
-	    QString path = player->m_samples[program].second;
-	    QString programName = player->m_samples[program].first;
-	    if (programName != player->m_program) {
-		player->m_program = programName;
-		player->m_mutex.unlock();
-		player->loadSampleData(path);
-	    } else {
-		player->m_mutex.unlock();
-	    }
-	}
+        if (!player->m_sampleSearchComplete) {
+            player->searchSamples();
+        }
+        
+        if (program < int(player->m_samples.size())) {
+            QString path = player->m_samples[program].second;
+            QString programName = player->m_samples[program].first;
+            if (programName != player->m_program) {
+                player->m_program = programName;
+                player->m_mutex.unlock();
+                player->loadSampleData(path);
+            } else {
+                player->m_mutex.unlock();
+            }
+        }
     }
 
     if (!player->m_sampleSearchComplete) {
 
-	QMutexLocker locker(&player->m_mutex);
+        QMutexLocker locker(&player->m_mutex);
 
-	if (!player->m_sampleSearchComplete) {
-	    player->searchSamples();
-	}
+        if (!player->m_sampleSearchComplete) {
+            player->searchSamples();
+        }
     }
 }
 
@@ -366,7 +371,7 @@ SamplePlayer::searchSamples()
 
 #ifdef DEBUG_SAMPLE_PLAYER
     SVDEBUG << "SamplePlayer::searchSamples: Directory is \""
-	      << m_sampleDir << "\"" << endl;
+              << m_sampleDir << "\"" << endl;
 #endif
 
     QDir dir(m_sampleDir, "*.wav");
@@ -395,12 +400,16 @@ SamplePlayer::loadSampleData(QString path)
     size_t i;
 
     info.format = 0;
+#ifdef Q_OS_WIN
+    file = sf_wchar_open((LPCWSTR)path.utf16(), SFM_READ, &info);
+#else
     file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
+#endif
     if (!file) {
-	cerr << "SamplePlayer::loadSampleData: Failed to open file "
-		  << path << ": "
-		  << sf_strerror(file) << endl;
-	return;
+        cerr << "SamplePlayer::loadSampleData: Failed to open file "
+                  << path << ": "
+                  << sf_strerror(file) << endl;
+        return;
     }
     
     samples = info.frames;
@@ -413,47 +422,47 @@ SamplePlayer::loadSampleData(QString path)
     tmpResamples = 0;
 
     if (info.samplerate != m_sampleRate) {
-	
-	double ratio = (double)m_sampleRate / (double)info.samplerate;
-	size_t target = (size_t)(double(info.frames) * ratio);
-	SRC_DATA data;
+        
+        double ratio = (double)m_sampleRate / (double)info.samplerate;
+        size_t target = (size_t)(double(info.frames) * ratio);
+        SRC_DATA data;
 
-	tmpResamples = (float *)malloc(target * info.channels * sizeof(float));
-	if (!tmpResamples) {
-	    free(tmpFrames);
-	    return;
-	}
+        tmpResamples = (float *)malloc(target * info.channels * sizeof(float));
+        if (!tmpResamples) {
+            free(tmpFrames);
+            return;
+        }
 
-	memset(tmpResamples, 0, target * info.channels * sizeof(float));
+        memset(tmpResamples, 0, target * info.channels * sizeof(float));
 
-	data.data_in = tmpFrames;
-	data.data_out = tmpResamples;
-	data.input_frames = info.frames;
-	data.output_frames = target;
-	data.src_ratio = ratio;
+        data.data_in = tmpFrames;
+        data.data_out = tmpResamples;
+        data.input_frames = info.frames;
+        data.output_frames = target;
+        data.src_ratio = ratio;
 
-	if (!src_simple(&data, SRC_SINC_BEST_QUALITY, info.channels)) {
-	    free(tmpFrames);
-	    tmpFrames = tmpResamples;
-	    samples = target;
-	} else {
-	    free(tmpResamples);
-	}
+        if (!src_simple(&data, SRC_SINC_BEST_QUALITY, info.channels)) {
+            free(tmpFrames);
+            tmpFrames = tmpResamples;
+            samples = target;
+        } else {
+            free(tmpResamples);
+        }
     }
 
     /* add an extra sample for linear interpolation */
     tmpSamples = (float *)malloc((samples + 1) * sizeof(float));
     if (!tmpSamples) {
-	free(tmpFrames);
-	return;
+        free(tmpFrames);
+        return;
     }
 
     for (i = 0; i < samples; ++i) {
-	int j;
-	tmpSamples[i] = 0.0f;
-	for (j = 0; j < info.channels; ++j) {
-	    tmpSamples[i] += tmpFrames[i * info.channels + j];
-	}
+        int j;
+        tmpSamples[i] = 0.0f;
+        for (j = 0; j < info.channels; ++j) {
+            tmpSamples[i] += tmpFrames[i * info.channels + j];
+        }
     }
 
     free(tmpFrames);
@@ -468,9 +477,9 @@ SamplePlayer::loadSampleData(QString path)
     m_sampleCount = samples;
 
     for (i = 0; i < Polyphony; ++i) {
-	m_ons[i] = -1;
-	m_offs[i] = -1;
-	m_velocities[i] = 0;
+        m_ons[i] = -1;
+        m_offs[i] = -1;
+        m_velocities[i] = 0;
     }
 
     if (tmpOld) free(tmpOld);
@@ -480,8 +489,8 @@ SamplePlayer::loadSampleData(QString path)
 
 void
 SamplePlayer::runImpl(unsigned long sampleCount,
-		      snd_seq_event_t *events,
-		      unsigned long eventCount)
+                      snd_seq_event_t *events,
+                      unsigned long eventCount)
 {
     unsigned long pos;
     unsigned long count;
@@ -493,67 +502,67 @@ SamplePlayer::runImpl(unsigned long sampleCount,
     if (!m_mutex.tryLock()) return;
 
     if (!m_sampleData || !m_sampleCount) {
-	m_sampleNo += sampleCount;
-	m_mutex.unlock();
-	return;
+        m_sampleNo += sampleCount;
+        m_mutex.unlock();
+        return;
     }
 
     for (pos = 0, event_pos = 0; pos < sampleCount; ) {
 
-	while (event_pos < eventCount
-	       && pos >= events[event_pos].time.tick) {
+        while (event_pos < eventCount
+               && pos >= events[event_pos].time.tick) {
 
-	    if (events[event_pos].type == SND_SEQ_EVENT_NOTEON) {
+            if (events[event_pos].type == SND_SEQ_EVENT_NOTEON) {
 #ifdef DEBUG_SAMPLE_PLAYER
                 cerr << "SamplePlayer: found NOTEON at time " 
                           << events[event_pos].time.tick << endl;
 #endif
-		snd_seq_ev_note_t n = events[event_pos].data.note;
-		if (n.velocity > 0) {
-		    m_ons[n.note] =
-			m_sampleNo + events[event_pos].time.tick;
-		    m_offs[n.note] = -1;
-		    m_velocities[n.note] = n.velocity;
-		} else {
-		    if (!m_sustain || (*m_sustain < 0.001)) {
-			m_offs[n.note] = 
-			    m_sampleNo + events[event_pos].time.tick;
-		    }
-		}
-	    } else if (events[event_pos].type == SND_SEQ_EVENT_NOTEOFF &&
-		       (!m_sustain || (*m_sustain < 0.001))) {
+                snd_seq_ev_note_t n = events[event_pos].data.note;
+                if (n.velocity > 0) {
+                    m_ons[n.note] =
+                        m_sampleNo + events[event_pos].time.tick;
+                    m_offs[n.note] = -1;
+                    m_velocities[n.note] = n.velocity;
+                } else {
+                    if (!m_sustain || (*m_sustain < 0.001)) {
+                        m_offs[n.note] = 
+                            m_sampleNo + events[event_pos].time.tick;
+                    }
+                }
+            } else if (events[event_pos].type == SND_SEQ_EVENT_NOTEOFF &&
+                       (!m_sustain || (*m_sustain < 0.001))) {
 #ifdef DEBUG_SAMPLE_PLAYER
                 cerr << "SamplePlayer: found NOTEOFF at time " 
                           << events[event_pos].time.tick << endl;
 #endif
-		snd_seq_ev_note_t n = events[event_pos].data.note;
-		m_offs[n.note] = 
-		    m_sampleNo + events[event_pos].time.tick;
-	    }
+                snd_seq_ev_note_t n = events[event_pos].data.note;
+                m_offs[n.note] = 
+                    m_sampleNo + events[event_pos].time.tick;
+            }
 
-	    ++event_pos;
-	}
+            ++event_pos;
+        }
 
-	count = sampleCount - pos;
-	if (event_pos < eventCount &&
-	    events[event_pos].time.tick < sampleCount) {
-	    count = events[event_pos].time.tick - pos;
-	}
+        count = sampleCount - pos;
+        if (event_pos < eventCount &&
+            events[event_pos].time.tick < sampleCount) {
+            count = events[event_pos].time.tick - pos;
+        }
 
         int notecount = 0;
 
-	for (i = 0; i < Polyphony; ++i) {
-	    if (m_ons[i] >= 0) {
+        for (i = 0; i < Polyphony; ++i) {
+            if (m_ons[i] >= 0) {
                 ++notecount;
-		addSample(i, pos, count);
-	    }
-	}
+                addSample(i, pos, count);
+            }
+        }
 
 #ifdef DEBUG_SAMPLE_PLAYER
         cerr << "SamplePlayer: have " << notecount << " note(s) sounding currently" << endl;
 #endif
 
-	pos += count;
+        pos += count;
     }
 
     m_sampleNo += sampleCount;
@@ -571,9 +580,9 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
         if (m_concertA) {
             ratio *= *m_concertA / 440.f;
         }
-	if (m_basePitch && float(n) != *m_basePitch) {
-	    ratio *= powf(1.059463094f, float(n) - *m_basePitch);
-	}
+        if (m_basePitch && float(n) != *m_basePitch) {
+            ratio *= powf(1.059463094f, float(n) - *m_basePitch);
+        }
     }
 
     if (long(pos + m_sampleNo) < m_ons[n]) return;
@@ -581,49 +590,49 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
     gain = (float)m_velocities[n] / 127.0f;
 
     for (i = 0, s = pos + m_sampleNo - m_ons[n];
-	 i < count;
-	 ++i, ++s) {
+         i < count;
+         ++i, ++s) {
 
-	float         lgain = gain;
-	float         rs = float(s) * ratio;
-	unsigned long rsi = lrintf(floorf(rs));
+        float         lgain = gain;
+        float         rs = float(s) * ratio;
+        unsigned long rsi = lrintf(floorf(rs));
 
-	if (rsi >= m_sampleCount) {
+        if (rsi >= m_sampleCount) {
 #ifdef DEBUG_SAMPLE_PLAYER
             cerr << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << endl;
 #endif
-	    m_ons[n] = -1;
-	    break;
-	}
+            m_ons[n] = -1;
+            break;
+        }
 
-	if (m_offs[n] >= 0 &&
-	    long(pos + i + m_sampleNo) > m_offs[n]) {
+        if (m_offs[n] >= 0 &&
+            long(pos + i + m_sampleNo) > m_offs[n]) {
 
-	    unsigned long dist =
-		pos + i + m_sampleNo - m_offs[n];
+            unsigned long dist =
+                pos + i + m_sampleNo - m_offs[n];
 
-	    unsigned long releaseFrames = 200;
-	    if (m_release) {
-		releaseFrames = long(*m_release * float(m_sampleRate) + 0.0001f);
-	    }
+            unsigned long releaseFrames = 200;
+            if (m_release) {
+                releaseFrames = long(*m_release * float(m_sampleRate) + 0.0001f);
+            }
 
-	    if (dist > releaseFrames) {
+            if (dist > releaseFrames) {
 #ifdef DEBUG_SAMPLE_PLAYER
                 cerr << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << endl;
 #endif
-		m_ons[n] = -1;
-		break;
-	    } else {
-		lgain = lgain * (float)(releaseFrames - dist) /
-		    (float)releaseFrames;
-	    }
-	}
-	
-	float sample = m_sampleData[rsi] +
-	    ((m_sampleData[rsi + 1] -
-	      m_sampleData[rsi]) *
-	     (rs - (float)rsi));
+                m_ons[n] = -1;
+                break;
+            } else {
+                lgain = lgain * (float)(releaseFrames - dist) /
+                    (float)releaseFrames;
+            }
+        }
+        
+        float sample = m_sampleData[rsi] +
+            ((m_sampleData[rsi + 1] -
+              m_sampleData[rsi]) *
+             (rs - (float)rsi));
 
-	m_output[pos + i] += lgain * sample;
+        m_output[pos + i] += lgain * sample;
     }
 }

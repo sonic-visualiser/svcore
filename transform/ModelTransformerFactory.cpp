@@ -261,8 +261,8 @@ ModelTransformerFactory::transformerFinished()
 //    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
-	cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
-	return;
+        cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
+        return;
     }
 
     if (m_runningTransformers.find(transformer) == m_runningTransformers.end()) {

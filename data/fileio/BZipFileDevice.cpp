@@ -21,8 +21,16 @@
 
 #include "base/Debug.h"
 
+// for dup:
+#ifdef _MSC_VER
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
+    m_qfile(fileName),
     m_file(0),
     m_bzFile(0),
     m_atEnd(true),
@@ -70,11 +78,39 @@ BZipFileDevice::open(OpenMode mode)
         return false;
     }
 
+    // This is all going to be a bit silly.
+    //
+    // We open the file with QFile so as not to have to worry about locale
+    // support ourselves (especially on Windows). Then we get a fd from
+    // QFile and "convert" it to a FILE* using fdopen because that is what
+    // the bz2 library needs for reading and writing an already-open file.
+    //
+    // fdopen takes over the fd it is given, and will close it when fclose
+    // is called. (We must call fclose, because it's needed to avoid
+    // leaking the file stream structure.)
+    //
+    // But QFile will also close its fd, either when we call QFile::close
+    // or on destruction -- there doesn't seem to be a way to avoid that
+    // for a file that QFile opened.
+    //
+    // So we have to add an extra dup() in to the fdopen to avoid a double
+    // close.
+    //
+    // Note that bz2 will *not* fclose the FILE* it was passed, so we
+    // don't have a problem with calling both bzWriteClose and fclose.
+
     if (mode & WriteOnly) {
 
-        m_file = fopen(m_fileName.toLocal8Bit().data(), "wb");
-        if (!m_file) {
+        if (!m_qfile.open(QIODevice::WriteOnly)) {
             setErrorString(tr("Failed to open file for writing"));
+            m_ok = false;
+            return false;
+        }
+        
+        m_file = fdopen(dup(m_qfile.handle()), "wb");
+        if (!m_file) {
+            setErrorString(tr("Failed to open file handle for writing"));
+            m_qfile.close();
             m_ok = false;
             return false;
         }
@@ -85,6 +121,7 @@ BZipFileDevice::open(OpenMode mode)
         if (!m_bzFile) {
             fclose(m_file);
             m_file = 0;
+            m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for writing"));
             m_ok = false;
             return false;
@@ -99,9 +136,15 @@ BZipFileDevice::open(OpenMode mode)
 
     if (mode & ReadOnly) {
 
-        m_file = fopen(m_fileName.toLocal8Bit().data(), "rb");
-        if (!m_file) {
+        if (!m_qfile.open(QIODevice::ReadOnly)) {
             setErrorString(tr("Failed to open file for reading"));
+            m_ok = false;
+            return false;
+        }
+        
+        m_file = fdopen(dup(m_qfile.handle()), "rb");
+        if (!m_file) {
+            setErrorString(tr("Failed to open file handle for reading"));
             m_ok = false;
             return false;
         }
@@ -112,6 +155,7 @@ BZipFileDevice::open(OpenMode mode)
         if (!m_bzFile) {
             fclose(m_file);
             m_file = 0;
+            m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for reading"));
             m_ok = false;
             return false;
@@ -145,11 +189,12 @@ BZipFileDevice::close()
     if (openMode() & WriteOnly) {
         unsigned int in = 0, out = 0;
         BZ2_bzWriteClose(&bzError, m_bzFile, 0, &in, &out);
-//	cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << endl;
-	if (bzError != BZ_OK) {
-	    setErrorString(tr("bzip2 stream write close error"));
-	}
+//        cerr << "Wrote bzip2 stream (in=" << in << ", out=" << out << ")" << endl;
+        if (bzError != BZ_OK) {
+            setErrorString(tr("bzip2 stream write close error"));
+        }
         fclose(m_file);
+        m_qfile.close();
         m_bzFile = 0;
         m_file = 0;
         m_ok = false;
@@ -162,6 +207,7 @@ BZipFileDevice::close()
             setErrorString(tr("bzip2 stream read close error"));
         }
         fclose(m_file);
+        m_qfile.close();
         m_bzFile = 0;
         m_file = 0;
         m_ok = false;

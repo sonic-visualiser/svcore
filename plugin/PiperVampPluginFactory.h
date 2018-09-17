@@ -49,10 +49,13 @@ public:
 
     virtual QString getPluginCategory(QString identifier) override;
 
+    virtual QString getPluginLibraryPath(QString identifier) override;
+
 protected:
     QMutex m_mutex;
     QList<HelperExecPath::HelperExec> m_servers; // executable file paths
     std::map<QString, QString> m_origins; // plugin identifier -> server path
+    std::map<QString, QString> m_libraries; // soname -> full file path
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
 

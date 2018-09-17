@@ -32,223 +32,227 @@ class TestVampRealTime : public QObject
     Q_OBJECT
 
     void compareTexts(string s, const char *e) {
-        QCOMPARE(QString(s.c_str()), QString(e));
+        QString actual(s.c_str());
+        QString expected(e);
+        QCOMPARE(actual, expected);
     }
 
     typedef Vamp::RealTime RealTime;
     typedef long frame_type;
-			   
+                           
 private slots:
 
     void zero()
     {
-	QCOMPARE(RealTime(0, 0), RealTime::zeroTime);
-	QCOMPARE(RealTime(0, 0).sec, 0);
-	QCOMPARE(RealTime(0, 0).nsec, 0);
-	QCOMPARE(RealTime(0, 0).msec(), 0);
-	QCOMPARE(RealTime(0, 0).usec(), 0);
+        QCOMPARE(RealTime(0, 0), RealTime::zeroTime);
+        QCOMPARE(RealTime(0, 0).sec, 0);
+        QCOMPARE(RealTime(0, 0).nsec, 0);
+        QCOMPARE(RealTime(0, 0).msec(), 0);
+        QCOMPARE(RealTime(0, 0).usec(), 0);
     }
 
     void ctor()
     {
-	QCOMPARE(RealTime(0, 0), RealTime(0, 0));
+        QCOMPARE(RealTime(0, 0), RealTime(0, 0));
 
-	// wraparounds
-	QCOMPARE(RealTime(0, ONE_BILLION/2), RealTime(1, -ONE_BILLION/2));
-	QCOMPARE(RealTime(0, -ONE_BILLION/2), RealTime(-1, ONE_BILLION/2));
+        // wraparounds
+        QCOMPARE(RealTime(0, ONE_BILLION/2), RealTime(1, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, -ONE_BILLION/2), RealTime(-1, ONE_BILLION/2));
 
-	QCOMPARE(RealTime(1, ONE_BILLION), RealTime(2, 0));
-	QCOMPARE(RealTime(1, -ONE_BILLION), RealTime(0, 0));
-	QCOMPARE(RealTime(-1, ONE_BILLION), RealTime(0, 0));
-	QCOMPARE(RealTime(-1, -ONE_BILLION), RealTime(-2, 0));
+        QCOMPARE(RealTime(1, ONE_BILLION), RealTime(2, 0));
+        QCOMPARE(RealTime(1, -ONE_BILLION), RealTime(0, 0));
+        QCOMPARE(RealTime(-1, ONE_BILLION), RealTime(0, 0));
+        QCOMPARE(RealTime(-1, -ONE_BILLION), RealTime(-2, 0));
 
-	QCOMPARE(RealTime(2, -ONE_BILLION*2), RealTime(0, 0));
-	QCOMPARE(RealTime(2, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime(2, -ONE_BILLION*2), RealTime(0, 0));
+        QCOMPARE(RealTime(2, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
 
-	QCOMPARE(RealTime(-2, ONE_BILLION*2), RealTime(0, 0));
-	QCOMPARE(RealTime(-2, ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
-	
-	QCOMPARE(RealTime(0, 1).sec, 0);
-	QCOMPARE(RealTime(0, 1).nsec, 1);
-	QCOMPARE(RealTime(0, -1).sec, 0);
-	QCOMPARE(RealTime(0, -1).nsec, -1);
-	QCOMPARE(RealTime(1, -1).sec, 0);
-	QCOMPARE(RealTime(1, -1).nsec, ONE_BILLION-1);
-	QCOMPARE(RealTime(-1, 1).sec, 0);
-	QCOMPARE(RealTime(-1, 1).nsec, -ONE_BILLION+1);
-	QCOMPARE(RealTime(-1, -1).sec, -1);
-	QCOMPARE(RealTime(-1, -1).nsec, -1);
-	
-	QCOMPARE(RealTime(2, -ONE_BILLION*2).sec, 0);
-	QCOMPARE(RealTime(2, -ONE_BILLION*2).nsec, 0);
-	QCOMPARE(RealTime(2, -ONE_BILLION/2).sec, 1);
-	QCOMPARE(RealTime(2, -ONE_BILLION/2).nsec, ONE_BILLION/2);
+        QCOMPARE(RealTime(-2, ONE_BILLION*2), RealTime(0, 0));
+        QCOMPARE(RealTime(-2, ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
+        
+        QCOMPARE(RealTime(0, 1).sec, 0);
+        QCOMPARE(RealTime(0, 1).nsec, 1);
+        QCOMPARE(RealTime(0, -1).sec, 0);
+        QCOMPARE(RealTime(0, -1).nsec, -1);
+        QCOMPARE(RealTime(1, -1).sec, 0);
+        QCOMPARE(RealTime(1, -1).nsec, ONE_BILLION-1);
+        QCOMPARE(RealTime(-1, 1).sec, 0);
+        QCOMPARE(RealTime(-1, 1).nsec, -ONE_BILLION+1);
+        QCOMPARE(RealTime(-1, -1).sec, -1);
+        QCOMPARE(RealTime(-1, -1).nsec, -1);
+        
+        QCOMPARE(RealTime(2, -ONE_BILLION*2).sec, 0);
+        QCOMPARE(RealTime(2, -ONE_BILLION*2).nsec, 0);
+        QCOMPARE(RealTime(2, -ONE_BILLION/2).sec, 1);
+        QCOMPARE(RealTime(2, -ONE_BILLION/2).nsec, ONE_BILLION/2);
 
-	QCOMPARE(RealTime(-2, ONE_BILLION*2).sec, 0);
-	QCOMPARE(RealTime(-2, ONE_BILLION*2).nsec, 0);
-	QCOMPARE(RealTime(-2, ONE_BILLION/2).sec, -1);
-	QCOMPARE(RealTime(-2, ONE_BILLION/2).nsec, -ONE_BILLION/2);
+        QCOMPARE(RealTime(-2, ONE_BILLION*2).sec, 0);
+        QCOMPARE(RealTime(-2, ONE_BILLION*2).nsec, 0);
+        QCOMPARE(RealTime(-2, ONE_BILLION/2).sec, -1);
+        QCOMPARE(RealTime(-2, ONE_BILLION/2).nsec, -ONE_BILLION/2);
     }
     
     void fromSeconds()
     {
-	QCOMPARE(RealTime::fromSeconds(0), RealTime(0, 0));
+        QCOMPARE(RealTime::fromSeconds(0), RealTime(0, 0));
 
-	QCOMPARE(RealTime::fromSeconds(0.5).sec, 0);
-	QCOMPARE(RealTime::fromSeconds(0.5).nsec, ONE_BILLION/2);
-	QCOMPARE(RealTime::fromSeconds(0.5).usec(), ONE_MILLION/2);
-	QCOMPARE(RealTime::fromSeconds(0.5).msec(), 500);
-	
-	QCOMPARE(RealTime::fromSeconds(0.5), RealTime(0, ONE_BILLION/2));
-	QCOMPARE(RealTime::fromSeconds(1), RealTime(1, 0));
-	QCOMPARE(RealTime::fromSeconds(1.5), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime::fromSeconds(0.5).sec, 0);
+        QCOMPARE(RealTime::fromSeconds(0.5).nsec, ONE_BILLION/2);
+        QCOMPARE(RealTime::fromSeconds(0.5).usec(), ONE_MILLION/2);
+        QCOMPARE(RealTime::fromSeconds(0.5).msec(), 500);
+        
+        QCOMPARE(RealTime::fromSeconds(0.5), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime::fromSeconds(1), RealTime(1, 0));
+        QCOMPARE(RealTime::fromSeconds(1.5), RealTime(1, ONE_BILLION/2));
 
-	QCOMPARE(RealTime::fromSeconds(-0.5).sec, 0);
-	QCOMPARE(RealTime::fromSeconds(-0.5).nsec, -ONE_BILLION/2);
-	QCOMPARE(RealTime::fromSeconds(-0.5).usec(), -ONE_MILLION/2);
-	QCOMPARE(RealTime::fromSeconds(-0.5).msec(), -500);
-	
-	QCOMPARE(RealTime::fromSeconds(-1.5).sec, -1);
-	QCOMPARE(RealTime::fromSeconds(-1.5).nsec, -ONE_BILLION/2);
-	QCOMPARE(RealTime::fromSeconds(-1.5).usec(), -ONE_MILLION/2);
-	QCOMPARE(RealTime::fromSeconds(-1.5).msec(), -500);
-	
-	QCOMPARE(RealTime::fromSeconds(-0.5), RealTime(0, -ONE_BILLION/2));
-	QCOMPARE(RealTime::fromSeconds(-1), RealTime(-1, 0));
-	QCOMPARE(RealTime::fromSeconds(-1.5), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromSeconds(-0.5).sec, 0);
+        QCOMPARE(RealTime::fromSeconds(-0.5).nsec, -ONE_BILLION/2);
+        QCOMPARE(RealTime::fromSeconds(-0.5).usec(), -ONE_MILLION/2);
+        QCOMPARE(RealTime::fromSeconds(-0.5).msec(), -500);
+        
+        QCOMPARE(RealTime::fromSeconds(-1.5).sec, -1);
+        QCOMPARE(RealTime::fromSeconds(-1.5).nsec, -ONE_BILLION/2);
+        QCOMPARE(RealTime::fromSeconds(-1.5).usec(), -ONE_MILLION/2);
+        QCOMPARE(RealTime::fromSeconds(-1.5).msec(), -500);
+        
+        QCOMPARE(RealTime::fromSeconds(-0.5), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromSeconds(-1), RealTime(-1, 0));
+        QCOMPARE(RealTime::fromSeconds(-1.5), RealTime(-1, -ONE_BILLION/2));
     }
 
     void fromMilliseconds()
     {
-	QCOMPARE(RealTime::fromMilliseconds(0), RealTime(0, 0));
-	QCOMPARE(RealTime::fromMilliseconds(500), RealTime(0, ONE_BILLION/2));
-	QCOMPARE(RealTime::fromMilliseconds(1000), RealTime(1, 0));
-	QCOMPARE(RealTime::fromMilliseconds(1500), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMilliseconds(0), RealTime(0, 0));
+        QCOMPARE(RealTime::fromMilliseconds(500), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMilliseconds(1000), RealTime(1, 0));
+        QCOMPARE(RealTime::fromMilliseconds(1500), RealTime(1, ONE_BILLION/2));
 
-    	QCOMPARE(RealTime::fromMilliseconds(-0), RealTime(0, 0));
-	QCOMPARE(RealTime::fromMilliseconds(-500), RealTime(0, -ONE_BILLION/2));
-	QCOMPARE(RealTime::fromMilliseconds(-1000), RealTime(-1, 0));
-	QCOMPARE(RealTime::fromMilliseconds(-1500), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMilliseconds(-0), RealTime(0, 0));
+        QCOMPARE(RealTime::fromMilliseconds(-500), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMilliseconds(-1000), RealTime(-1, 0));
+        QCOMPARE(RealTime::fromMilliseconds(-1500), RealTime(-1, -ONE_BILLION/2));
     }
-    
+
+#ifndef Q_OS_WIN
     void fromTimeval()
     {
-	struct timeval tv;
+        struct timeval tv;
 
-	tv.tv_sec = 0; tv.tv_usec = 0;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, 0));
-	tv.tv_sec = 0; tv.tv_usec = ONE_MILLION/2;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, ONE_BILLION/2));
-	tv.tv_sec = 1; tv.tv_usec = 0;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(1, 0));
-	tv.tv_sec = 1; tv.tv_usec = ONE_MILLION/2;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(1, ONE_BILLION/2));
+        tv.tv_sec = 0; tv.tv_usec = 0;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, 0));
+        tv.tv_sec = 0; tv.tv_usec = ONE_MILLION/2;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, ONE_BILLION/2));
+        tv.tv_sec = 1; tv.tv_usec = 0;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(1, 0));
+        tv.tv_sec = 1; tv.tv_usec = ONE_MILLION/2;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(1, ONE_BILLION/2));
 
-	tv.tv_sec = 0; tv.tv_usec = -ONE_MILLION/2;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, -ONE_BILLION/2));
-	tv.tv_sec = -1; tv.tv_usec = 0;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(-1, 0));
-	tv.tv_sec = -1; tv.tv_usec = -ONE_MILLION/2;
-	QCOMPARE(RealTime::fromTimeval(tv), RealTime(-1, -ONE_BILLION/2));
+        tv.tv_sec = 0; tv.tv_usec = -ONE_MILLION/2;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(0, -ONE_BILLION/2));
+        tv.tv_sec = -1; tv.tv_usec = 0;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(-1, 0));
+        tv.tv_sec = -1; tv.tv_usec = -ONE_MILLION/2;
+        QCOMPARE(RealTime::fromTimeval(tv), RealTime(-1, -ONE_BILLION/2));
     }
+#endif
 
     void assign()
     {
-	RealTime r;
-	r = RealTime(0, 0);
-	QCOMPARE(r, RealTime::zeroTime);
-	r = RealTime(0, ONE_BILLION/2);
+        RealTime r;
+        r = RealTime(0, 0);
+        QCOMPARE(r, RealTime::zeroTime);
+        r = RealTime(0, ONE_BILLION/2);
         QCOMPARE(r.sec, 0);
         QCOMPARE(r.nsec, ONE_BILLION/2);
-	r = RealTime(-1, -ONE_BILLION/2);
+        r = RealTime(-1, -ONE_BILLION/2);
         QCOMPARE(r.sec, -1);
         QCOMPARE(r.nsec, -ONE_BILLION/2);
     }
 
     void plus()
     {
-	QCOMPARE(RealTime(0, 0) + RealTime(0, 0), RealTime(0, 0));
+        QCOMPARE(RealTime(0, 0) + RealTime(0, 0), RealTime(0, 0));
 
-	QCOMPARE(RealTime(0, 0) + RealTime(0, ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
-	QCOMPARE(RealTime(0, ONE_BILLION/2) + RealTime(0, ONE_BILLION/2), RealTime(1, 0));
-	QCOMPARE(RealTime(1, 0) + RealTime(0, ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, 0) + RealTime(0, ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, ONE_BILLION/2) + RealTime(0, ONE_BILLION/2), RealTime(1, 0));
+        QCOMPARE(RealTime(1, 0) + RealTime(0, ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
 
-	QCOMPARE(RealTime(0, 0) + RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
-	QCOMPARE(RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(-1, 0));
-	QCOMPARE(RealTime(-1, 0) + RealTime(0, -ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, 0) + RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(-1, 0));
+        QCOMPARE(RealTime(-1, 0) + RealTime(0, -ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
 
-    	QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
-	QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(0, 0));
-	QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(0, 0));
+        QCOMPARE(RealTime(1, 0) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2) + RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
 
-	QCOMPARE(RealTime(0, ONE_BILLION/2) + RealTime(-1, 0), RealTime(0, -ONE_BILLION/2));
-	QCOMPARE(RealTime(0, -ONE_BILLION/2) + RealTime(1, 0), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, ONE_BILLION/2) + RealTime(-1, 0), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, -ONE_BILLION/2) + RealTime(1, 0), RealTime(0, ONE_BILLION/2));
     }
     
     void minus()
     {
-	QCOMPARE(RealTime(0, 0) - RealTime(0, 0), RealTime(0, 0));
+        QCOMPARE(RealTime(0, 0) - RealTime(0, 0), RealTime(0, 0));
 
-	QCOMPARE(RealTime(0, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
-	QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(0, ONE_BILLION/2), RealTime(0, 0));
-	QCOMPARE(RealTime(1, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(0, ONE_BILLION/2), RealTime(0, 0));
+        QCOMPARE(RealTime(1, 0) - RealTime(0, ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
 
-	QCOMPARE(RealTime(0, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
-	QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(0, 0));
-	QCOMPARE(RealTime(-1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(0, 0));
+        QCOMPARE(RealTime(-1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(0, -ONE_BILLION/2));
 
-    	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
-	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, 0));
-	QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, ONE_BILLION/2));
+        QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, 0));
+        QCOMPARE(RealTime(1, 0) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2) - RealTime(0, -ONE_BILLION/2), RealTime(2, ONE_BILLION/2));
 
-	QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(-1, 0), RealTime(1, ONE_BILLION/2));
-	QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(1, 0), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(RealTime(0, ONE_BILLION/2) - RealTime(-1, 0), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(RealTime(0, -ONE_BILLION/2) - RealTime(1, 0), RealTime(-1, -ONE_BILLION/2));
     }
 
     void negate()
     {
-	QCOMPARE(-RealTime(0, 0), RealTime(0, 0));
-	QCOMPARE(-RealTime(1, 0), RealTime(-1, 0));
-	QCOMPARE(-RealTime(1, ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
-	QCOMPARE(-RealTime(-1, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
+        QCOMPARE(-RealTime(0, 0), RealTime(0, 0));
+        QCOMPARE(-RealTime(1, 0), RealTime(-1, 0));
+        QCOMPARE(-RealTime(1, ONE_BILLION/2), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(-RealTime(-1, -ONE_BILLION/2), RealTime(1, ONE_BILLION/2));
     }
 
     void compare()
     {
-	int sec, nsec;
-	for (sec = -2; sec <= 2; sec += 2) {
-	    for (nsec = -1; nsec <= 1; nsec += 1) {
-		QCOMPARE(RealTime(sec, nsec) < RealTime(sec, nsec), false);
-		QCOMPARE(RealTime(sec, nsec) > RealTime(sec, nsec), false);
-		QCOMPARE(RealTime(sec, nsec) == RealTime(sec, nsec), true);
-		QCOMPARE(RealTime(sec, nsec) != RealTime(sec, nsec), false);
-		QCOMPARE(RealTime(sec, nsec) <= RealTime(sec, nsec), true);
-		QCOMPARE(RealTime(sec, nsec) >= RealTime(sec, nsec), true);
-	    }
-	}
-	RealTime prev(-3, 0);
-	for (sec = -2; sec <= 2; sec += 2) {
-	    for (nsec = -1; nsec <= 1; nsec += 1) {
+        int sec, nsec;
+        for (sec = -2; sec <= 2; sec += 2) {
+            for (nsec = -1; nsec <= 1; nsec += 1) {
+                QCOMPARE(RealTime(sec, nsec) < RealTime(sec, nsec), false);
+                QCOMPARE(RealTime(sec, nsec) > RealTime(sec, nsec), false);
+                QCOMPARE(RealTime(sec, nsec) == RealTime(sec, nsec), true);
+                QCOMPARE(RealTime(sec, nsec) != RealTime(sec, nsec), false);
+                QCOMPARE(RealTime(sec, nsec) <= RealTime(sec, nsec), true);
+                QCOMPARE(RealTime(sec, nsec) >= RealTime(sec, nsec), true);
+            }
+        }
+        RealTime prev(-3, 0);
+        for (sec = -2; sec <= 2; sec += 2) {
+            for (nsec = -1; nsec <= 1; nsec += 1) {
 
-		RealTime curr(sec, nsec);
+                RealTime curr(sec, nsec);
 
-		QCOMPARE(prev < curr, true);
-		QCOMPARE(prev > curr, false);
-		QCOMPARE(prev == curr, false);
-		QCOMPARE(prev != curr, true);
-		QCOMPARE(prev <= curr, true);
-		QCOMPARE(prev >= curr, false);
+                QCOMPARE(prev < curr, true);
+                QCOMPARE(prev > curr, false);
+                QCOMPARE(prev == curr, false);
+                QCOMPARE(prev != curr, true);
+                QCOMPARE(prev <= curr, true);
+                QCOMPARE(prev >= curr, false);
 
-		QCOMPARE(curr < prev, false);
-		QCOMPARE(curr > prev, true);
-		QCOMPARE(curr == prev, false);
-		QCOMPARE(curr != prev, true);
-		QCOMPARE(curr <= prev, false);
-		QCOMPARE(curr >= prev, true);
+                QCOMPARE(curr < prev, false);
+                QCOMPARE(curr > prev, true);
+                QCOMPARE(curr == prev, false);
+                QCOMPARE(curr != prev, true);
+                QCOMPARE(curr <= prev, false);
+                QCOMPARE(curr >= prev, true);
 
-		prev = curr;
-	    }
-	}
+                prev = curr;
+            }
+        }
     }
 
     void frame()

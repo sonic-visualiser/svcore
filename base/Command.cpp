@@ -24,7 +24,7 @@ MacroCommand::MacroCommand(QString name) :
 MacroCommand::~MacroCommand()
 {
     for (size_t i = 0; i < m_commands.size(); ++i) {
-	delete m_commands[i];
+        delete m_commands[i];
     }
 }
 
@@ -38,13 +38,13 @@ void
 MacroCommand::deleteCommand(Command *command)
 {
     for (std::vector<Command *>::iterator i = m_commands.begin();
-	 i != m_commands.end(); ++i) {
+         i != m_commands.end(); ++i) {
 
-	if (*i == command) {
-	    m_commands.erase(i);
-	    delete command;
-	    return;
-	}
+        if (*i == command) {
+            m_commands.erase(i);
+            delete command;
+            return;
+        }
     }
 }
 
@@ -58,7 +58,7 @@ void
 MacroCommand::execute()
 {
     for (size_t i = 0; i < m_commands.size(); ++i) {
-	m_commands[i]->execute();
+        m_commands[i]->execute();
     }
 }
 
@@ -66,7 +66,7 @@ void
 MacroCommand::unexecute()
 {
     for (size_t i = 0; i < m_commands.size(); ++i) {
-	m_commands[m_commands.size() - i - 1]->unexecute();
+        m_commands[m_commands.size() - i - 1]->unexecute();
     }
 }
 

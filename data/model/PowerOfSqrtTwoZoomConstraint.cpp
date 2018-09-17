@@ -21,7 +21,7 @@
 
 ZoomLevel
 PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
-						  RoundingDirection dir) const
+                                                  RoundingDirection dir) const
 {
     int type, power;
     int blockSize;
@@ -47,30 +47,30 @@ PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
 
 int
 PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
-						  int &type, 
-						  int &power,
-						  RoundingDirection dir) const
+                                                  int &type, 
+                                                  int &power,
+                                                  RoundingDirection dir) const
 {
 //    cerr << "given " << blockSize << endl;
 
     int minCachePower = getMinCachePower();
 
     if (blockSize < (1 << minCachePower)) {
-	type = -1;
-	power = 0;
-	float val = 1.0, prevVal = 1.0;
-	while (val + 0.01 < blockSize) {
-	    prevVal = val;
-	    val *= sqrtf(2.f);
-	}
-	int rval;
-	if (dir == RoundUp) rval = int(val + 0.01f);
-	else if (dir == RoundDown) rval = int(prevVal + 0.01f);
-	else if (val - float(blockSize) <
+        type = -1;
+        power = 0;
+        float val = 1.0, prevVal = 1.0;
+        while (val + 0.01 < blockSize) {
+            prevVal = val;
+            val *= sqrtf(2.f);
+        }
+        int rval;
+        if (dir == RoundUp) rval = int(val + 0.01f);
+        else if (dir == RoundDown) rval = int(prevVal + 0.01f);
+        else if (val - float(blockSize) <
                  float(blockSize) - prevVal) rval = int(val + 0.01f);
-	else rval = int(prevVal + 0.01);
-//	SVDEBUG << "returning " << rval << endl;
-	return rval;
+        else rval = int(prevVal + 0.01);
+//        SVDEBUG << "returning " << rval << endl;
+        return rval;
     }
 
     int prevBase = (1 << minCachePower);
@@ -81,46 +81,46 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 
     for (unsigned int i = 0; ; ++i) {
 
-	power = minCachePower + i/2;
-	type = i % 2;
+        power = minCachePower + i/2;
+        type = i % 2;
 
-	int base;
-	if (type == 0) {
-	    base = (1 << power);
-	} else {
-	    base = (((unsigned int)((1 << minCachePower) * sqrt(2.) + 0.01))
-		    << (power - minCachePower));
-	}
+        int base;
+        if (type == 0) {
+            base = (1 << power);
+        } else {
+            base = (((unsigned int)((1 << minCachePower) * sqrt(2.) + 0.01))
+                    << (power - minCachePower));
+        }
 
-//	SVDEBUG << "Testing base " << base << endl;
+//        SVDEBUG << "Testing base " << base << endl;
 
         if (base == blockSize) {
             result = base;
             break;
         }
 
-	if (base > blockSize) {
-	    if (dir == RoundNearest) {
-		if (base - blockSize < blockSize - prevBase) {
-		    dir = RoundUp;
-		} else {
-		    dir = RoundDown;
-		}
-	    }
-	    if (dir == RoundUp) {
-		result = base;
-		break;
-	    } else {
-		type = prevType;
-		power = prevPower;
-		result = prevBase;
-		break;
-	    }
-	}
+        if (base > blockSize) {
+            if (dir == RoundNearest) {
+                if (base - blockSize < blockSize - prevBase) {
+                    dir = RoundUp;
+                } else {
+                    dir = RoundDown;
+                }
+            }
+            if (dir == RoundUp) {
+                result = base;
+                break;
+            } else {
+                type = prevType;
+                power = prevPower;
+                result = prevBase;
+                break;
+            }
+        }
 
-	prevType = type;
-	prevPower = power;
-	prevBase = base;
+        prevType = type;
+        prevPower = power;
+        prevBase = base;
     }
 
     if (result > getMaxZoomLevel().level) {

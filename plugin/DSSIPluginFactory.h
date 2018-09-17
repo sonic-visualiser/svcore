@@ -38,11 +38,13 @@ public:
     virtual void enumeratePlugins(std::vector<QString> &list);
 
     virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
-						      int clientId,
-						      int position,
-						      sv_samplerate_t sampleRate,
-						      int blockSize,
-						      int channels);
+                                                      int clientId,
+                                                      int position,
+                                                      sv_samplerate_t sampleRate,
+                                                      int blockSize,
+                                                      int channels);
+
+    static std::vector<QString> getPluginPath();
 
 protected:
     DSSIPluginFactory();
@@ -51,8 +53,6 @@ protected:
     virtual PluginScan::PluginType getPluginType() const {
         return PluginScan::DSSIPlugin;
     }
-
-    virtual std::vector<QString> getPluginPath();
 
     virtual std::vector<QString> getLRDFPath(QString &baseUri);
 

@@ -13,10 +13,15 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAV_FILE_READER_H_
-#define _WAV_FILE_READER_H_
+#ifndef SV_WAV_FILE_READER_H
+#define SV_WAV_FILE_READER_H
 
 #include "AudioFileReader.h"
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
 
 #include <sndfile.h>
 #include <QMutex>
@@ -36,7 +41,11 @@
 class WavFileReader : public AudioFileReader
 {
 public:
-    WavFileReader(FileSource source, bool fileUpdating = false);
+    enum class Normalisation { None, Peak };
+
+    WavFileReader(FileSource source,
+                  bool fileUpdating = false,
+                  Normalisation normalise = Normalisation::None);
     virtual ~WavFileReader();
 
     virtual QString getLocation() const { return m_source.getLocation(); }
@@ -50,7 +59,8 @@ public:
      * Must be safe to call from multiple threads with different
      * arguments on the same object at the same time.
      */
-    virtual std::vector<float> getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count)
+        const;
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
@@ -75,11 +85,18 @@ protected:
     bool m_seekable;
 
     mutable QMutex m_mutex;
-    mutable std::vector<float> m_buffer;
+    mutable floatvec_t m_buffer;
     mutable sv_frame_t m_lastStart;
     mutable sv_frame_t m_lastCount;
 
+    Normalisation m_normalisation;
+    float m_max;
+
     bool m_updating;
+
+    floatvec_t getInterleavedFramesUnnormalised(sv_frame_t start,
+                                                sv_frame_t count) const;
+    float getMax() const;
 };
 
 #endif

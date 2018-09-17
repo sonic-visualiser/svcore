@@ -13,10 +13,15 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WAV_FILE_WRITER_H_
-#define _WAV_FILE_WRITER_H_
+#ifndef SV_WAV_FILE_WRITER_H
+#define SV_WAV_FILE_WRITER_H
 
 #include <QString>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
 
 #include <sndfile.h>
 
@@ -59,7 +64,11 @@ public:
     bool writeModel(DenseTimeValueModel *source,
                     MultiSelection *selection = 0);
 
-    bool writeSamples(float **samples, sv_frame_t count); // count per channel
+    /// Write samples from raw arrays; count is per-channel
+    bool writeSamples(const float *const *samples, sv_frame_t count);
+
+    /// As writeSamples, but compatible with WavFileReader api. More expensive.
+    bool putInterleavedFrames(const floatvec_t &frames);
 
     bool close();
 

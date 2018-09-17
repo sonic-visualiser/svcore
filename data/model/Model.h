@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MODEL_H_
-#define _MODEL_H_
+#ifndef SV_MODEL_H
+#define SV_MODEL_H
 
 #include <vector>
 #include <QObject>
@@ -27,13 +27,15 @@
 class ZoomConstraint;
 class AlignmentModel;
 
+typedef int ModelId;
+
 /** 
  * Model is the base class for all data models that represent any sort
  * of data on a time scale based on an audio frame rate.
  */
 
 class Model : public QObject,
-	      public XmlExportable,
+              public XmlExportable,
               public Playable
 {
     Q_OBJECT
@@ -53,7 +55,11 @@ public:
     virtual sv_frame_t getStartFrame() const = 0;
 
     /**
-     * Return the last audio frame spanned by the model.
+     * Return the audio frame at the end of the model, i.e. 1 more
+     * than the final frame contained within the model. The end frame
+     * minus the start frame should yield the total duration in frames
+     * spanned by the model. This is consistent with the definition of
+     * the end frame of a Selection object.
      */
     virtual sv_frame_t getEndFrame() const = 0;
 
@@ -91,6 +97,18 @@ public:
     virtual QString getTypeName() const = 0;
 
     /**
+     * Return true if this is a sparse model.
+     */
+    virtual bool isSparse() const { return false; }
+
+    /**
+     * Return an id for this model. The id is guaranteed to be a
+     * unique identifier for this model among all models that may ever
+     * exist within this single run of the application.
+     */
+    ModelId getId() const { return m_id; }
+    
+    /**
      * Mark the model as abandoning. This means that the application
      * no longer needs it, so it can stop doing any background
      * calculations it may be involved in. Note that as far as the
@@ -125,9 +143,9 @@ public:
      * getCompletion().
      */
     virtual bool isReady(int *completion = 0) const {
-	bool ok = isOK();
-	if (completion) *completion = (ok ? 100 : 0);
-	return ok;
+        bool ok = isOK();
+        if (completion) *completion = (ok ? 100 : 0);
+        return ok;
     }
     static const int COMPLETION_UNKNOWN;
 
@@ -220,11 +238,11 @@ public:
 
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataStringSubset
-            (delimiter, getStartFrame(), getEndFrame() + 1);
+            (delimiter, getStartFrame(), getEndFrame());
     }
     virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
         return toDelimitedDataStringSubsetWithOptions
-            (delimiter, opts, getStartFrame(), getEndFrame() + 1);
+            (delimiter, opts, getStartFrame(), getEndFrame());
     }
     virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
         return "";
@@ -282,7 +300,8 @@ signals:
     void aboutToBeDeleted();
 
 protected:
-    Model() : 
+    Model() :
+        m_id(getNextId()),
         m_sourceModel(0), 
         m_alignment(0), 
         m_abandoning(false), 
@@ -292,11 +311,14 @@ protected:
     Model(const Model &);
     Model &operator=(const Model &); 
 
+    const ModelId m_id;
     Model *m_sourceModel;
     AlignmentModel *m_alignment;
     QString m_typeUri;
     bool m_abandoning;
     bool m_aboutToDelete;
+
+    int getNextId();
 };
 
 #endif

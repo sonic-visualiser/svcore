@@ -32,12 +32,17 @@
 #include <id3tag.h>
 #endif
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include <QFileInfo>
 
-#ifdef _MSC_VER
-#include <io.h>
-#define open _open
-#endif
+#include <QTextCodec>
 
 using std::string;
 
@@ -75,13 +80,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
         CodedAudioFileReader::setFramesToTrim(DEFAULT_DECODER_DELAY, 0);
     }
     
-    struct stat stat;
-    if (::stat(m_path.toLocal8Bit().data(), &stat) == -1 || stat.st_size == 0) {
-	m_error = QString("File %1 does not exist.").arg(m_path);
-	return;
-    }
-
-    m_fileSize = stat.st_size;
+    m_fileSize = 0;
 
     m_fileBuffer = 0;
     m_fileBufferSize = 0;
@@ -89,53 +88,42 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_sampleBuffer = 0;
     m_sampleBufferSize = 0;
 
-    int fd = -1;
-    if ((fd = ::open(m_path.toLocal8Bit().data(), O_RDONLY
-#ifdef _WIN32
-                     | O_BINARY
-#endif
-                     , 0)) < 0) {
-	m_error = QString("Failed to open file %1 for reading.").arg(m_path);
-	return;
-    }	
+    QFile qfile(m_path);
+    if (!qfile.open(QIODevice::ReadOnly)) {
+        m_error = QString("Failed to open file %1 for reading.").arg(m_path);
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
+    }   
 
+    m_fileSize = qfile.size();
+    
     try {
         // We need a mysterious MAD_BUFFER_GUARD (== 8) zero bytes at
         // end of input, to ensure libmad decodes the last frame
         // correctly. Otherwise the decoded audio is truncated.
+        SVDEBUG << "file size = " << m_fileSize << ", buffer guard = " << MAD_BUFFER_GUARD << endl;
         m_fileBufferSize = m_fileSize + MAD_BUFFER_GUARD;
         m_fileBuffer = new unsigned char[m_fileBufferSize];
         memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
     } catch (...) {
         m_error = QString("Out of memory");
-        ::close(fd);
-	return;
-    }
-    
-    ssize_t sz = 0;
-    ssize_t offset = 0;
-    while (offset < m_fileSize) {
-        sz = ::read(fd, m_fileBuffer + offset, m_fileSize - offset);
-        if (sz < 0) {
-            m_error = QString("Read error for file %1 (after %2 bytes)")
-                .arg(m_path).arg(offset);
-            delete[] m_fileBuffer;
-            ::close(fd);
-            return;
-        } else if (sz == 0) {
-            SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
-                .arg(offset).arg(m_fileSize) << endl;
-            m_fileSize = offset;
-            m_fileBufferSize = m_fileSize + MAD_BUFFER_GUARD;
-            memset(m_fileBuffer + m_fileSize, 0, MAD_BUFFER_GUARD);
-            break;
-        }
-        offset += sz;
+        SVDEBUG << "MP3FileReader: " << m_error << endl;
+        return;
     }
 
-    ::close(fd);
+    auto amountRead = qfile.read(reinterpret_cast<char *>(m_fileBuffer),
+                                 m_fileSize);
 
-    loadTags();
+    if (amountRead < m_fileSize) {
+        SVCERR << QString("MP3FileReader::MP3FileReader: Warning: reached EOF after only %1 of %2 bytes")
+            .arg(amountRead).arg(m_fileSize) << endl;
+        memset(m_fileBuffer + amountRead, 0, m_fileSize - amountRead);
+        m_fileSize = amountRead;
+    }
+        
+    loadTags(qfile.handle());
+
+    qfile.close();
 
     if (decodeMode == DecodeAtOnce) {
 
@@ -147,6 +135,14 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
         if (!decode(m_fileBuffer, m_fileBufferSize)) {
             m_error = QString("Failed to decode file %1.").arg(m_path);
+        }
+
+        if (m_sampleBuffer) {
+            for (int c = 0; c < m_channelCount; ++c) {
+                delete[] m_sampleBuffer[c];
+            }
+            delete[] m_sampleBuffer;
+            m_sampleBuffer = 0;
         }
         
         delete[] m_fileBuffer;
@@ -191,14 +187,19 @@ MP3FileReader::cancelled()
 }
 
 void
-MP3FileReader::loadTags()
+MP3FileReader::loadTags(int fd)
 {
     m_title = "";
 
 #ifdef HAVE_ID3TAG
 
-    id3_file *file = id3_file_open(m_path.toLocal8Bit().data(),
-                                   ID3_FILE_MODE_READONLY);
+#ifdef _WIN32
+    int id3fd = _dup(fd);
+#else
+    int id3fd = dup(fd);
+#endif
+
+    id3_file *file = id3_file_fdopen(id3fd, ID3_FILE_MODE_READONLY);
     if (!file) return;
 
     // We can do this a lot more elegantly, but we'll leave that for
@@ -207,7 +208,7 @@ MP3FileReader::loadTags()
     id3_tag *tag = id3_file_tag(file);
     if (!tag) {
         SVDEBUG << "MP3FileReader::loadTags: No ID3 tag found" << endl;
-        id3_file_close(file);
+        id3_file_close(file); // also closes our dup'd fd
         return;
     }
 
@@ -228,7 +229,7 @@ MP3FileReader::loadTags()
         }
     }
 
-    id3_file_close(file);
+    id3_file_close(file); // also closes our dup'd fd
 
 #else
     SVDEBUG << "MP3FileReader::loadTags: ID3 tag support not compiled in" << endl;
@@ -479,7 +480,7 @@ MP3FileReader::output_callback(void *dp,
 
 enum mad_flow
 MP3FileReader::accept(struct mad_header const *header,
-		      struct mad_pcm *pcm)
+                      struct mad_pcm *pcm)
 {
     int channels = pcm->channels;
     int frames = pcm->length;
@@ -495,6 +496,10 @@ MP3FileReader::accept(struct mad_header const *header,
 
         m_fileRate = pcm->samplerate;
         m_channelCount = channels;
+
+        SVDEBUG << "MP3FileReader::accept: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
 
         initialiseDecodeCache();
 
@@ -525,6 +530,9 @@ MP3FileReader::accept(struct mad_header const *header,
     }
 
     if (!isDecodeCacheInitialised()) {
+        SVDEBUG << "MP3FileReader::accept: fallback case: file rate = " << pcm->samplerate
+                << ", channel count = " << channels << ", about to init "
+                << "decode cache" << endl;
         initialiseDecodeCache();
     }
 
@@ -548,14 +556,14 @@ MP3FileReader::accept(struct mad_header const *header,
 
         for (int i = 0; i < frames; ++i) {
 
-	    mad_fixed_t sample = 0;
-	    if (ch < activeChannels) {
-		sample = pcm->samples[ch][i];
-	    }
-	    float fsample = float(sample) / float(MAD_F_ONE);
+            mad_fixed_t sample = 0;
+            if (ch < activeChannels) {
+                sample = pcm->samples[ch][i];
+            }
+            float fsample = float(sample) / float(MAD_F_ONE);
             
             m_sampleBuffer[ch][i] = fsample;
-	}
+        }
     }
 
     addSamplesToDecodeCache(m_sampleBuffer, frames);
@@ -584,8 +592,8 @@ MP3FileReader::error_callback(void *dp,
     if (!data->reader->m_decodeErrorShown) {
         char buffer[256];
         snprintf(buffer, 255,
-                 "MP3 decoding error 0x%04x (%s) at byte offset %lu",
-                 stream->error, mad_stream_errorstr(stream), ix);
+                 "MP3 decoding error 0x%04x (%s) at byte offset %lld",
+                 stream->error, mad_stream_errorstr(stream), (long long int)ix);
         SVCERR << "Warning: in file \"" << data->reader->m_path << "\": "
                << buffer << " (continuing; will not report any further decode errors for this file)" << endl;
         data->reader->m_decodeErrorShown = true;

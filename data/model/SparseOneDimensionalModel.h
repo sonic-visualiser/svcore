@@ -41,7 +41,7 @@ public:
                QString extraAttributes = "") const
     {
         stream << QString("%1<point frame=\"%2\" label=\"%3\" %4/>\n")
-	    .arg(indent).arg(frame).arg(XmlExportable::encodeEntities(label))
+            .arg(indent).arg(frame).arg(XmlExportable::encodeEntities(label))
             .arg(extraAttributes);
     }
 
@@ -54,18 +54,18 @@ public:
     }
 
     struct Comparator {
-	bool operator()(const OneDimensionalPoint &p1,
-			const OneDimensionalPoint &p2) const {
-	    if (p1.frame != p2.frame) return p1.frame < p2.frame;
-	    return p1.label < p2.label;
-	}
+        bool operator()(const OneDimensionalPoint &p1,
+                        const OneDimensionalPoint &p2) const {
+            if (p1.frame != p2.frame) return p1.frame < p2.frame;
+            return p1.label < p2.label;
+        }
     };
     
     struct OrderComparator {
-	bool operator()(const OneDimensionalPoint &p1,
-			const OneDimensionalPoint &p2) const {
-	    return p1.frame < p2.frame;
-	}
+        bool operator()(const OneDimensionalPoint &p1,
+                        const OneDimensionalPoint &p2) const {
+            return p1.frame < p2.frame;
+        }
     };
 };
 
@@ -77,10 +77,10 @@ class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>,
     
 public:
     SparseOneDimensionalModel(sv_samplerate_t sampleRate, int resolution,
-			      bool notifyOnAdd = true) :
-	SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
+                              bool notifyOnAdd = true) :
+        SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
     {
-	PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     virtual ~SparseOneDimensionalModel()
@@ -97,14 +97,14 @@ public:
 
     int getIndexOf(const Point &point)
     {
-	// slow
-	int i = 0;
-	Point::Comparator comparator;
-	for (PointList::const_iterator j = m_points.begin();
-	     j != m_points.end(); ++j, ++i) {
-	    if (!comparator(*j, point) && !comparator(point, *j)) return i;
-	}
-	return -1;
+        // slow
+        int i = 0;
+        Point::Comparator comparator;
+        for (PointList::const_iterator j = m_points.begin();
+             j != m_points.end(); ++j, ++i) {
+            if (!comparator(*j, point) && !comparator(point, *j)) return i;
+        }
+        return -1;
     }
 
     QString getTypeName() const { return tr("Sparse 1-D"); }
@@ -189,11 +189,11 @@ public:
 
     NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const {
         
-	PointList points = getPoints(startFrame, endFrame);
+        PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
 
-	for (PointList::iterator pli =
-		 points.begin(); pli != points.end(); ++pli) {
+        for (PointList::iterator pli =
+                 points.begin(); pli != points.end(); ++pli) {
 
             notes.push_back
                 (NoteData(pli->frame,

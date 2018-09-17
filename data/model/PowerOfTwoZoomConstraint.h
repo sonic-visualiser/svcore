@@ -28,7 +28,7 @@ public:
 protected:
     virtual int getNearestBlockSize(int requested,
                                     RoundingDirection dir = RoundNearest)
-	const;
+        const;
 };
 
 #endif

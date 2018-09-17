@@ -35,9 +35,9 @@ public:
     virtual ~ZoomConstraint() { }
 
     enum RoundingDirection {
-	RoundDown,
-	RoundUp,
-	RoundNearest
+        RoundDown,
+        RoundUp,
+        RoundNearest
     };
 
     /**
@@ -52,7 +52,7 @@ public:
      */
     virtual ZoomLevel getNearestZoomLevel(ZoomLevel requestedZoomLevel,
                                           RoundingDirection = RoundNearest)
-	const
+        const
     {
         if (getMaxZoomLevel() < requestedZoomLevel) return getMaxZoomLevel();
 	else return requestedZoomLevel;

@@ -57,11 +57,11 @@ public:
         encache();
     }
     Window &operator=(const Window &w) {
-	if (&w == this) return *this;
-	m_type = w.m_type;
-	m_size = w.m_size;
-	encache();
-	return *this;
+        if (&w == this) return *this;
+        m_type = w.m_type;
+        m_size = w.m_size;
+        encache();
+        return *this;
     }
     virtual ~Window() {
         breakfastquay::deallocate(m_cache);
@@ -107,38 +107,38 @@ void Window<T>::encache()
     int i;
 
     switch (m_type) {
-		
+                
     case RectangularWindow:
-	for (i = 0; i < n; ++i) {
-	    m_cache[i] *= T(0.5);
-	}
-	break;
-	    
+        for (i = 0; i < n; ++i) {
+            m_cache[i] *= T(0.5);
+        }
+        break;
+            
     case BartlettWindow:
-	for (i = 0; i < n/2; ++i) {
-	    m_cache[i] *= T(i) / T(n/2);
-	    m_cache[i + n/2] *= T(1.0) - T(i) / T(n/2);
-	}
-	break;
-	    
+        for (i = 0; i < n/2; ++i) {
+            m_cache[i] *= T(i) / T(n/2);
+            m_cache[i + n/2] *= T(1.0) - T(i) / T(n/2);
+        }
+        break;
+            
     case HammingWindow:
         cosinewin(m_cache, 0.54, 0.46, 0.0, 0.0);
-	break;
-	    
+        break;
+            
     case HanningWindow:
         cosinewin(m_cache, 0.50, 0.50, 0.0, 0.0);
-	break;
-	    
+        break;
+            
     case BlackmanWindow:
         cosinewin(m_cache, 0.42, 0.50, 0.08, 0.0);
-	break;
-	    
+        break;
+            
     case GaussianWindow:
-	for (i = 0; i < n; ++i) {
+        for (i = 0; i < n; ++i) {
             m_cache[i] *= T(pow(2, - pow((i - (n-1)/2.0) / ((n-1)/2.0 / 3), 2)));
-	}
-	break;
-	    
+        }
+        break;
+            
     case ParzenWindow:
     {
         int N = n-1;
@@ -158,13 +158,13 @@ void Window<T>::encache()
 
     case NuttallWindow:
         cosinewin(m_cache, 0.3635819, 0.4891775, 0.1365995, 0.0106411);
-	break;
+        break;
 
     case BlackmanHarrisWindow:
         cosinewin(m_cache, 0.35875, 0.48829, 0.14128, 0.01168);
         break;
     }
-	
+        
     m_area = 0;
     for (int i = 0; i < n; ++i) {
         m_area += m_cache[i];

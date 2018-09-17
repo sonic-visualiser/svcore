@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PROGRESS_REPORTER_H_
-#define _PROGRESS_REPORTER_H_
+#ifndef SV_PROGRESS_REPORTER_H
+#define SV_PROGRESS_REPORTER_H
 
 #include <QObject>
 #include <QString>

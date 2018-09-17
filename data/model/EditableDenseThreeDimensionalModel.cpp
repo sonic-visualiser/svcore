@@ -321,7 +321,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
     QWriteLocker locker(&m_lock);
 
     while (index >= int(m_data.size())) {
-	m_data.push_back(Column());
+        m_data.push_back(Column());
         m_trunc.push_back(0);
     }
 
@@ -332,14 +332,14 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
         if (ISNAN(value) || ISINF(value)) {
             continue;
         }
-	if (!m_haveExtents || value < m_minimum) {
-	    m_minimum = value;
-	    allChange = true;
-	}
-	if (!m_haveExtents || value > m_maximum) {
-	    m_maximum = value;
-	    allChange = true;
-	}
+        if (!m_haveExtents || value < m_minimum) {
+            m_minimum = value;
+            allChange = true;
+        }
+        if (!m_haveExtents || value > m_maximum) {
+            m_maximum = value;
+            allChange = true;
+        }
         m_haveExtents = true;
     }
 
@@ -351,26 +351,26 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
     windowStart *= m_resolution;
 
     if (m_notifyOnAdd) {
-	if (allChange) {
-	    emit modelChanged();
-	} else {
-	    emit modelChangedWithin(windowStart, windowStart + m_resolution);
-	}
+        if (allChange) {
+            emit modelChanged();
+        } else {
+            emit modelChangedWithin(windowStart, windowStart + m_resolution);
+        }
     } else {
-	if (allChange) {
-	    m_sinceLastNotifyMin = -1;
-	    m_sinceLastNotifyMax = -1;
-	    emit modelChanged();
-	} else {
-	    if (m_sinceLastNotifyMin == -1 ||
-		windowStart < m_sinceLastNotifyMin) {
-		m_sinceLastNotifyMin = windowStart;
-	    }
-	    if (m_sinceLastNotifyMax == -1 ||
-		windowStart > m_sinceLastNotifyMax) {
-		m_sinceLastNotifyMax = windowStart;
-	    }
-	}
+        if (allChange) {
+            m_sinceLastNotifyMin = -1;
+            m_sinceLastNotifyMax = -1;
+            emit modelChanged();
+        } else {
+            if (m_sinceLastNotifyMin == -1 ||
+                windowStart < m_sinceLastNotifyMin) {
+                m_sinceLastNotifyMin = windowStart;
+            }
+            if (m_sinceLastNotifyMax == -1 ||
+                windowStart > m_sinceLastNotifyMax) {
+                m_sinceLastNotifyMax = windowStart;
+            }
+        }
     }
 }
 
@@ -455,34 +455,34 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
         if (n[j]) sample[j] /= n[j];
     }
     
-    return LogRange::useLogScale(sample);
+    return LogRange::shouldUseLogScale(sample);
 }
 
 void
 EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 {
     if (m_completion != completion) {
-	m_completion = completion;
+        m_completion = completion;
 
-	if (completion == 100) {
+        if (completion == 100) {
 
-	    m_notifyOnAdd = true; // henceforth
-	    emit modelChanged();
+            m_notifyOnAdd = true; // henceforth
+            emit modelChanged();
 
-	} else if (!m_notifyOnAdd) {
+        } else if (!m_notifyOnAdd) {
 
-	    if (update &&
+            if (update &&
                 m_sinceLastNotifyMin >= 0 &&
-		m_sinceLastNotifyMax >= 0) {
-		emit modelChangedWithin(m_sinceLastNotifyMin,
+                m_sinceLastNotifyMax >= 0) {
+                emit modelChangedWithin(m_sinceLastNotifyMin,
                                         m_sinceLastNotifyMax + m_resolution);
-		m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
-	    } else {
-		emit completionChanged();
-	    }
-	} else {
-	    emit completionChanged();
-	}	    
+                m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
+            } else {
+                emit completionChanged();
+            }
+        } else {
+            emit completionChanged();
+        }            
     }
 }
 
@@ -493,7 +493,7 @@ EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) con
     QString s;
     for (int i = 0; in_range_for(m_data, i); ++i) {
         QStringList list;
-	for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
+        for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
             list << QString("%1").arg(m_data.at(i).at(j));
         }
         s += list.join(delimiter) + "\n";
@@ -531,36 +531,36 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     SVDEBUG << "EditableDenseThreeDimensionalModel::toXml" << endl;
 
     Model::toXml
-	(out, indent,
+        (out, indent,
          QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" startFrame=\"%6\" %7")
-	 .arg(m_resolution)
-	 .arg(m_yBinCount)
-	 .arg(m_minimum)
-	 .arg(m_maximum)
-	 .arg(getObjectExportId(&m_data))
+         .arg(m_resolution)
+         .arg(m_yBinCount)
+         .arg(m_minimum)
+         .arg(m_maximum)
+         .arg(getObjectExportId(&m_data))
          .arg(m_startFrame)
-	 .arg(extraAttributes));
+         .arg(extraAttributes));
 
     out << indent;
     out << QString("<dataset id=\"%1\" dimensions=\"3\" separator=\" \">\n")
-	.arg(getObjectExportId(&m_data));
+        .arg(getObjectExportId(&m_data));
 
     for (int i = 0; i < (int)m_binNames.size(); ++i) {
-	if (m_binNames[i] != "") {
-	    out << indent + "  ";
-	    out << QString("<bin number=\"%1\" name=\"%2\"/>\n")
-		.arg(i).arg(m_binNames[i]);
-	}
+        if (m_binNames[i] != "") {
+            out << indent + "  ";
+            out << QString("<bin number=\"%1\" name=\"%2\"/>\n")
+                .arg(i).arg(m_binNames[i]);
+        }
     }
 
     for (int i = 0; i < (int)m_data.size(); ++i) {
-	out << indent + "  ";
-	out << QString("<row n=\"%1\">").arg(i);
-	for (int j = 0; j < (int)m_data.at(i).size(); ++j) {
-	    if (j > 0) out << " ";
-	    out << m_data.at(i).at(j);
-	}
-	out << QString("</row>\n");
+        out << indent + "  ";
+        out << QString("<row n=\"%1\">").arg(i);
+        for (int j = 0; j < (int)m_data.at(i).size(); ++j) {
+            if (j > 0) out << " ";
+            out << m_data.at(i).at(j);
+        }
+        out << QString("</row>\n");
         out.flush();
     }
 

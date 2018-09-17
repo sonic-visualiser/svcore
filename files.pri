@@ -1,6 +1,7 @@
 SVCORE_HEADERS = \
            base/AudioLevel.h \
            base/AudioPlaySource.h \
+           base/AudioRecordTarget.h \
            base/BaseTypes.h \
            base/Clipboard.h \
            base/ColumnOp.h \
@@ -23,8 +24,10 @@ SVCORE_HEADERS = \
            base/RangeMapper.h \
            base/RealTime.h \
            base/RecentFiles.h \
+           base/RecordDirectory.h \
            base/ResourceFinder.h \
            base/RingBuffer.h \
+           base/ScaleTickIntervals.h \
            base/Scavenger.h \
            base/Selection.h \
            base/Serialiser.h \
@@ -49,6 +52,7 @@ SVCORE_HEADERS = \
            data/fileio/CSVFileReader.h \
            data/fileio/CSVFileWriter.h \
            data/fileio/CSVFormat.h \
+           data/fileio/CSVStreamWriter.h \
            data/fileio/DataFileReader.h \
            data/fileio/DataFileReaderFactory.h \
            data/fileio/FileFinder.h \
@@ -59,14 +63,12 @@ SVCORE_HEADERS = \
            data/fileio/MP3FileReader.h \
            data/fileio/OggVorbisFileReader.h \
            data/fileio/PlaylistFileReader.h \
-           data/fileio/QuickTimeFileReader.h \
            data/fileio/CoreAudioFileReader.h \
            data/fileio/DecodingWavFileReader.h \
            data/fileio/WavFileReader.h \
            data/fileio/WavFileWriter.h \
            data/midi/MIDIEvent.h \
            data/midi/MIDIInput.h \
-           data/midi/rtmidi/RtError.h \
            data/midi/rtmidi/RtMidi.h \
            data/model/AggregateWaveModel.h \
            data/model/AlignmentModel.h \
@@ -107,6 +109,7 @@ SVCORE_HEADERS = \
            plugin/NativeVampPluginFactory.h \
            plugin/PiperVampPluginFactory.h \
            plugin/PluginIdentifier.h \
+           plugin/PluginPathSetter.h \
            plugin/PluginXml.h \
            plugin/RealTimePluginFactory.h \
            plugin/RealTimePluginInstance.h \
@@ -158,6 +161,7 @@ SVCORE_SOURCES = \
            base/RangeMapper.cpp \
            base/RealTimeSV.cpp \
            base/RecentFiles.cpp \
+           base/RecordDirectory.cpp \
            base/ResourceFinder.cpp \
            base/Selection.cpp \
            base/Serialiser.cpp \
@@ -188,7 +192,6 @@ SVCORE_SOURCES = \
            data/fileio/MP3FileReader.cpp \
            data/fileio/OggVorbisFileReader.cpp \
            data/fileio/PlaylistFileReader.cpp \
-           data/fileio/QuickTimeFileReader.cpp \
            data/fileio/CoreAudioFileReader.cpp \
            data/fileio/DecodingWavFileReader.cpp \
            data/fileio/WavFileReader.cpp \
@@ -220,6 +223,7 @@ SVCORE_SOURCES = \
            plugin/NativeVampPluginFactory.cpp \
            plugin/PiperVampPluginFactory.cpp \
            plugin/PluginIdentifier.cpp \
+           plugin/PluginPathSetter.cpp \
            plugin/PluginXml.cpp \
            plugin/RealTimePluginFactory.cpp \
            plugin/RealTimePluginInstance.cpp \

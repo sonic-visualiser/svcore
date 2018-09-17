@@ -73,15 +73,11 @@ ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
     if (!m_model) return false;
     if (parent.isValid()) return false;
 
-    emit beginInsertRows(parent, row, row);
-
     Command *command = m_model->getInsertRowCommand(getUnsorted(row));
 
     if (command) {
         emit addCommand(command);
     }
-
-    emit endInsertRows();
 
     return (command ? true : false);
 }
@@ -92,15 +88,11 @@ ModelDataTableModel::removeRow(int row, const QModelIndex &parent)
     if (!m_model) return false;
     if (parent.isValid()) return false;
 
-    emit beginRemoveRows(parent, row, row);
-
     Command *command = m_model->getRemoveRowCommand(getUnsorted(row));
 
     if (command) {
         emit addCommand(command);
     }
-
-    emit endRemoveRows();
 
     return (command ? true : false);
 }
@@ -144,7 +136,8 @@ ModelDataTableModel::rowCount(const QModelIndex &parent) const
 {
     if (!m_model) return 0;
     if (parent.isValid()) return 0;
-    return m_model->getRowCount();
+    int count = m_model->getRowCount();
+    return count;
 }
 
 int
@@ -215,14 +208,37 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 void
 ModelDataTableModel::modelChanged()
 {
+    SVDEBUG << "ModelDataTableModel::modelChanged" << endl;
+    QModelIndex ix0;
+    QModelIndex ix1;
+    if (rowCount() > 0) {
+        ix0 = createIndex(0, 0);
+        int lastCol = columnCount() - 1;
+        if (lastCol < 0) lastCol = 0;
+        ix1 = createIndex(rowCount(), lastCol);
+    }
+    SVDEBUG << "emitting dataChanged from row " << ix0.row() << " to " << ix1.row() << endl;
+    emit dataChanged(ix0, ix1);
     clearSort();
     emit layoutChanged();
 }
 
 void 
-ModelDataTableModel::modelChangedWithin(sv_frame_t, sv_frame_t)
+ModelDataTableModel::modelChangedWithin(sv_frame_t f0, sv_frame_t f1)
 {
-    //!!! inefficient
+    SVDEBUG << "ModelDataTableModel::modelChangedWithin(" << f0 << "," << f1 << ")" << endl;
+    QModelIndex ix0 = getModelIndexForFrame(f0);
+    QModelIndex ix1 = getModelIndexForFrame(f1);
+    int row0 = ix0.row();
+    int row1 = ix1.row();
+    if (row0 > 0) {
+        ix0 = createIndex(row0 - 1, ix0.column(), (void *)0);
+    }
+    if (row1 + 1 < rowCount()) {
+        ix1 = createIndex(row1 + 1, ix1.column(), (void *)0);
+    }
+    SVDEBUG << "emitting dataChanged from row " << ix0.row() << " to " << ix1.row() << endl;
+    emit dataChanged(ix0, ix1);
     clearSort();
     emit layoutChanged();
 }

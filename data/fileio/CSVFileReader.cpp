@@ -18,60 +18,79 @@
 #include "model/Model.h"
 #include "base/RealTime.h"
 #include "base/StringBits.h"
+#include "base/ProgressReporter.h"
+#include "base/RecordDirectory.h"
 #include "model/SparseOneDimensionalModel.h"
 #include "model/SparseTimeValueModel.h"
 #include "model/EditableDenseThreeDimensionalModel.h"
 #include "model/RegionModel.h"
 #include "model/NoteModel.h"
+#include "model/WritableWaveFileModel.h"
 #include "DataFileReaderFactory.h"
 
 #include <QFile>
+#include <QDir>
 #include <QFileInfo>
 #include <QString>
 #include <QRegExp>
 #include <QStringList>
 #include <QTextStream>
+#include <QDateTime>
 
 #include <iostream>
 #include <map>
+#include <string>
 
 using namespace std;
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
-                             sv_samplerate_t mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate,
+                             ProgressReporter *reporter) :
     m_format(format),
     m_device(0),
     m_ownDevice(true),
     m_warnings(0),
-    m_mainModelSampleRate(mainModelSampleRate)
+    m_mainModelSampleRate(mainModelSampleRate),
+    m_fileSize(0),
+    m_readCount(0),
+    m_progress(-1),
+    m_reporter(reporter)
 {
     QFile *file = new QFile(path);
     bool good = false;
     
     if (!file->exists()) {
-	m_error = QFile::tr("File \"%1\" does not exist").arg(path);
+        m_error = QFile::tr("File \"%1\" does not exist").arg(path);
     } else if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-	m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
+        m_error = QFile::tr("Failed to open file \"%1\"").arg(path);
     } else {
-	good = true;
+        good = true;
     }
 
     if (good) {
         m_device = file;
         m_filename = QFileInfo(path).fileName();
+        m_fileSize = file->size();
+        if (m_reporter) m_reporter->setDefinite(true);
     } else {
-	delete file;
+        delete file;
     }
 }
 
 CSVFileReader::CSVFileReader(QIODevice *device, CSVFormat format,
-                             sv_samplerate_t mainModelSampleRate) :
+                             sv_samplerate_t mainModelSampleRate,
+                             ProgressReporter *reporter) :
     m_format(format),
     m_device(device),
     m_ownDevice(false),
     m_warnings(0),
-    m_mainModelSampleRate(mainModelSampleRate)
+    m_mainModelSampleRate(mainModelSampleRate),
+    m_fileSize(0),
+    m_readCount(0),
+    m_progress(-1),
+    m_reporter(reporter)
 {
+    if (m_reporter) m_reporter->setDefinite(false);
 }
 
 CSVFileReader::~CSVFileReader()
@@ -137,12 +156,12 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
     
     if (!ok) {
         if (m_warnings < warnLimit) {
-            cerr << "WARNING: CSVFileReader::load: "
+            SVCERR << "WARNING: CSVFileReader::load: "
                       << "Bad time format (\"" << s
                       << "\") in data line "
                       << lineno+1 << endl;
         } else if (m_warnings == warnLimit) {
-            cerr << "WARNING: Too many warnings" << endl;
+            SVCERR << "WARNING: Too many warnings" << endl;
         }
         ++m_warnings;
     }
@@ -172,10 +191,10 @@ CSVFileReader::load() const
         } else {
             windowSize = 1;
         }
-	if (timeUnits == CSVFormat::TimeSeconds ||
+        if (timeUnits == CSVFormat::TimeSeconds ||
             timeUnits == CSVFormat::TimeMilliseconds) {
-	    sampleRate = m_mainModelSampleRate;
-	}
+            sampleRate = m_mainModelSampleRate;
+        }
     }
 
     SparseOneDimensionalModel *model1 = 0;
@@ -183,6 +202,7 @@ CSVFileReader::load() const
     RegionModel *model2a = 0;
     NoteModel *model2b = 0;
     EditableDenseThreeDimensionalModel *model3 = 0;
+    WritableWaveFileModel *modelW = 0;
     Model *model = 0;
 
     QTextStream in(m_device);
@@ -202,8 +222,6 @@ CSVFileReader::load() const
 
     sv_frame_t startFrame = 0; // for calculation of dense model resolution
     bool firstEverValue = true;
-
-    map<QString, int> labelCountMap;
     
     int valueColumns = 0;
     for (int i = 0; i < m_format.getColumnCount(); ++i) {
@@ -212,7 +230,41 @@ CSVFileReader::load() const
         }
     }
 
-    while (!in.atEnd()) {
+    int audioChannels = 0;
+    float **audioSamples = 0;
+    float sampleShift = 0.f;
+    float sampleScale = 1.f;
+
+    if (modelType == CSVFormat::WaveFileModel) {
+
+        audioChannels = valueColumns;
+                
+        audioSamples =
+            breakfastquay::allocate_and_zero_channels<float>
+            (audioChannels, 1);
+
+        switch (m_format.getAudioSampleRange()) {
+        case CSVFormat::SampleRangeSigned1:
+        case CSVFormat::SampleRangeOther:
+            sampleShift = 0.f;
+            sampleScale = 1.f;
+            break;
+        case CSVFormat::SampleRangeUnsigned255:
+            sampleShift = -128.f;
+            sampleScale = 1.f / 128.f;
+            break;
+        case CSVFormat::SampleRangeSigned32767:
+            sampleShift = 0.f;
+            sampleScale = 1.f / 32768.f;
+            break;
+        }
+    }
+
+    map<QString, int> labelCountMap;
+
+    bool abandoned = false;
+    
+    while (!in.atEnd() && !abandoned) {
 
         // QTextStream's readLine doesn't cope with old-style Mac
         // CR-only line endings.  Why did they bother making the class
@@ -227,6 +279,26 @@ CSVFileReader::load() const
 
         QString chunk = in.readLine();
         QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+
+        m_readCount += chunk.size() + 1;
+
+        if (m_reporter) {
+            if (m_reporter->wasCancelled()) {
+                abandoned = true;
+                break;
+            }
+            int progress;
+            if (m_fileSize > 0) {
+                progress = int((double(m_readCount) / double(m_fileSize))
+                               * 100.0);
+            } else {
+                progress = int(m_readCount / 10000);
+            }
+            if (progress != m_progress) {
+                m_reporter->setProgress(progress);
+                m_progress = progress;
+            }
+        }
         
         for (int li = 0; li < lines.size(); ++li) {
 
@@ -237,28 +309,30 @@ CSVFileReader::load() const
             QStringList list = StringBits::split(line, separator, allowQuoting);
             if (!model) {
 
+                QString modelName = m_filename;
+                
                 switch (modelType) {
 
                 case CSVFormat::OneDimensionalModel:
                     model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
                     model = model1;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModel:
                     model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
                     model = model2;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModelWithDuration:
                     model2a = new RegionModel(sampleRate, windowSize, false);
                     model = model2a;
                     break;
-		
+                
                 case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
                     model2b = new NoteModel(sampleRate, windowSize, false);
                     model = model2b;
                     break;
-		
+                
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate,
@@ -267,22 +341,50 @@ CSVFileReader::load() const
                          EditableDenseThreeDimensionalModel::NoCompression);
                     model = model3;
                     break;
+
+                case CSVFormat::WaveFileModel:
+                {
+                    bool normalise = (m_format.getAudioSampleRange()
+                                      == CSVFormat::SampleRangeOther);
+                    QString path = getConvertedAudioFilePath();
+                    modelW = new WritableWaveFileModel
+                        (path, sampleRate, valueColumns,
+                         normalise ?
+                         WritableWaveFileModel::Normalisation::Peak :
+                         WritableWaveFileModel::Normalisation::None);
+                    modelName = QFileInfo(path).fileName();
+                    model = modelW;
+                    break;
+                }
                 }
 
-                if (model) {
-                    if (m_filename != "") {
-                        model->setObjectName(m_filename);
+                if (model && model->isOK()) {
+                    if (modelName != "") {
+                        model->setObjectName(modelName);
                     }
                 }
             }
 
+            if (!model || !model->isOK()) {
+                SVCERR << "Failed to create model to load CSV file into"
+                       << endl;
+                if (model) {
+                    delete model;
+                    model = 0;
+                    model1 = 0; model2 = 0; model2a = 0; model2b = 0;
+                    model3 = 0; modelW = 0;
+                }
+                abandoned = true;
+                break;
+            }
+            
             float value = 0.f;
             float pitch = 0.f;
             QString label = "";
 
             duration = 0.f;
             haveEndTime = false;
-
+            
             for (int i = 0; i < list.size(); ++i) {
 
                 QString s = list[i];
@@ -334,7 +436,7 @@ CSVFileReader::load() const
             }
 
             if (modelType == CSVFormat::OneDimensionalModel) {
-	    
+            
                 SparseOneDimensionalModel::Point point(frameNo, label);
                 model1->addPoint(point);
 
@@ -368,7 +470,7 @@ CSVFileReader::load() const
                     float value = list[i].toFloat(&ok);
 
                     values.push_back(value);
-	    
+            
                     if (firstEverValue || value < min) min = value;
                     if (firstEverValue || value > max) max = value;
                     
@@ -384,25 +486,69 @@ CSVFileReader::load() const
 
                     if (!ok) {
                         if (warnings < warnLimit) {
-                            cerr << "WARNING: CSVFileReader::load: "
+                            SVCERR << "WARNING: CSVFileReader::load: "
                                       << "Non-numeric value \""
                                       << list[i]
                                       << "\" in data line " << lineno+1
                                       << ":" << endl;
-                            cerr << line << endl;
+                            SVCERR << line << endl;
                             ++warnings;
                         } else if (warnings == warnLimit) {
-//                            cerr << "WARNING: Too many warnings" << endl;
+//                            SVCERR << "WARNING: Too many warnings" << endl;
                         }
                     }
                 }
-	
+        
 //                SVDEBUG << "Setting bin values for count " << lineno << ", frame "
 //                          << frameNo << ", time " << RealTime::frame2RealTime(frameNo, sampleRate) << endl;
 
                 model3->setColumn(lineno, values);
-            }
 
+            } else if (modelType == CSVFormat::WaveFileModel) {
+
+                int channel = 0;
+
+                for (int i = 0;
+                     i < list.size() && channel < audioChannels;
+                     ++i) {
+
+                    if (m_format.getColumnPurpose(i) !=
+                        CSVFormat::ColumnValue) {
+                        continue;
+                    }
+
+                    bool ok = false;
+                    float value = list[i].toFloat(&ok);
+                    if (!ok) {
+                        value = 0.f;
+                    }
+
+                    value += sampleShift;
+                    value *= sampleScale;
+                    
+                    audioSamples[channel][0] = value;
+
+                    ++channel;
+                }
+
+                while (channel < audioChannels) {
+                    audioSamples[channel][0] = 0.f;
+                    ++channel;
+                }
+
+                bool ok = modelW->addSamples(audioSamples, 1);
+                
+                if (!ok) {
+                    if (warnings < warnLimit) {
+                        SVCERR << "WARNING: CSVFileReader::load: "
+                               << "Unable to add sample to wave-file model"
+                               << endl;
+                        SVCERR << line << endl;
+                        ++warnings;
+                    }
+                }
+            }
+            
             ++lineno;
             if (timingType == CSVFormat::ImplicitTiming ||
                 list.size() == 0) {
@@ -426,11 +572,11 @@ CSVFileReader::load() const
             for (map<int, map<QString, float> >::iterator i =
                      countLabelValueMap.end(); i != countLabelValueMap.begin(); ) {
                 --i;
-                cerr << "count -> " << i->first << endl;
+                SVCERR << "count -> " << i->first << endl;
                 for (map<QString, float>::iterator j = i->second.begin();
                      j != i->second.end(); ++j) {
                     j->second = v;
-                    cerr << "label -> " << j->first << ", value " << v << endl;
+                    SVCERR << "label -> " << j->first << ", value " << v << endl;
                     v = v + 1.f;
                 }
             }
@@ -443,7 +589,7 @@ CSVFileReader::load() const
                 RegionModel::Point p(*i);
                 int count = labelCountMap[p.label];
                 v = countLabelValueMap[count][p.label];
-                cerr << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
+              //  SVCERR << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
                 RegionModel::Point pp(p.frame, v, p.duration, p.label);
                 pointMap[p] = pp;
             }
@@ -474,10 +620,36 @@ CSVFileReader::load() const
     }
 
     if (model3) {
-	model3->setMinimumLevel(min);
-	model3->setMaximumLevel(max);
+        model3->setMinimumLevel(min);
+        model3->setMaximumLevel(max);
+    }
+
+    if (modelW) {
+        breakfastquay::deallocate_channels(audioSamples, audioChannels);
+        modelW->updateModel();
+        modelW->writeComplete();
     }
 
     return model;
+}
+
+QString
+CSVFileReader::getConvertedAudioFilePath() const
+{
+    QString base = m_filename;
+    base.replace(QRegExp("[/\\,.:;~<>\"'|?%*]+"), "_");
+
+    QString convertedFileDir = RecordDirectory::getConvertedAudioDirectory();
+    if (convertedFileDir == "") {
+        SVCERR << "WARNING: CSVFileReader::getConvertedAudioFilePath: Failed to retrieve converted audio directory" << endl;
+        return "";
+    }
+
+    auto ms = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    auto s = ms / 1000; // there is a toSecsSinceEpoch in Qt 5.8 but
+                        // we currently want to support older versions
+    
+    return QDir(convertedFileDir).filePath
+        (QString("%1-%2.wav").arg(base).arg(s));
 }
 

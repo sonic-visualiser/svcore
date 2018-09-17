@@ -16,6 +16,10 @@
 #define SV_BASE_TYPES_H
 
 #include <cstdint>
+#include <complex>
+#include <vector>
+
+#include <bqvec/Allocators.h>
 
 /** Frame index, the unit of our time axis. This is signed because the
     axis conceptually extends below zero: zero represents the start of
@@ -34,9 +38,9 @@ bool in_range_for(const C &container, T i)
 {
     if (i < 0) return false;
     if (sizeof(T) > sizeof(typename C::size_type)) {
-	return i < static_cast<T>(container.size());
+        return i < static_cast<T>(container.size());
     } else {
-	return static_cast<typename C::size_type>(i) < container.size();
+        return static_cast<typename C::size_type>(i) < container.size();
     }
 }
 
@@ -46,6 +50,10 @@ bool in_range_for(const C &container, T i)
 */
 typedef double sv_samplerate_t;
 
+typedef std::vector<float, breakfastquay::StlAllocator<float>> floatvec_t;
+
+typedef std::vector<std::complex<float>,
+                    breakfastquay::StlAllocator<std::complex<float>>> complexvec_t;
 
 /** Display zoom level. Can be an integer number of samples per pixel,
  *  or an integer number of pixels per sample.
