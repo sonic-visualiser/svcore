@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _ZOOM_CONSTRAINT_H_
-#define _ZOOM_CONSTRAINT_H_
+#ifndef SV_ZOOM_CONSTRAINT_H
+#define SV_ZOOM_CONSTRAINT_H
 
 #include <stdlib.h>
 
@@ -49,7 +49,7 @@ public:
      * depending on the rounding direction supplied.
      */
     virtual int getNearestBlockSize(int requestedBlockSize,
-                                       RoundingDirection = RoundNearest)
+                                    RoundingDirection = RoundNearest)
         const
     {
         if (requestedBlockSize > getMaxZoomLevel()) return getMaxZoomLevel();

@@ -18,6 +18,8 @@
 #include <iostream>
 #include <cmath>
 
+#include "base/Debug.h"
+
 
 int
 PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
@@ -34,7 +36,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
                                                   int &power,
                                                   RoundingDirection dir) const
 {
-//    cerr << "given " << blockSize << endl;
+//    SVCERR << "given " << blockSize << endl;
 
     int minCachePower = getMinCachePower();
 
@@ -46,13 +48,18 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
             prevVal = val;
             val *= sqrtf(2.f);
         }
-        int rval;
-        if (dir == RoundUp) rval = int(val + 0.01f);
-        else if (dir == RoundDown) rval = int(prevVal + 0.01f);
-        else if (val - float(blockSize) <
-                 float(blockSize) - prevVal) rval = int(val + 0.01f);
-        else rval = int(prevVal + 0.01);
-//        SVDEBUG << "returning " << rval << endl;
+        int rval = int(val + 0.01f);
+//        SVCERR << "got val = " << val << ", rval = " << rval << ", prevVal = " << prevVal << endl;
+        if (rval != blockSize && dir != RoundUp) {
+            if (dir == RoundDown) {
+                rval = int(prevVal + 0.01f);
+            } else if (val - float(blockSize) < float(blockSize) - prevVal) {
+                rval = int(val + 0.01f);
+            } else {
+                rval = int(prevVal + 0.01);
+            }
+        }
+//        SVCERR << "returning " << rval << endl;
         return rval;
     }
 
@@ -75,7 +82,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
                     << (power - minCachePower));
         }
 
-//        SVDEBUG << "Testing base " << base << endl;
+//        SVCERR << "Testing base " << base << " (i = " << i << ", power = " << power << ", type = " << type << ")" << endl;
 
         if (base == blockSize) {
             result = base;

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _POWER_OF_TWO_ZOOM_CONSTRAINT_H_
-#define _POWER_OF_TWO_ZOOM_CONSTRAINT_H_
+#ifndef SV_POWER_OF_TWO_ZOOM_CONSTRAINT_H
+#define SV_POWER_OF_TWO_ZOOM_CONSTRAINT_H
 
 #include "base/ZoomConstraint.h"
 
@@ -22,7 +22,7 @@ class PowerOfTwoZoomConstraint : virtual public ZoomConstraint
 {
 public:
     virtual int getNearestBlockSize(int requestedBlockSize,
-                                       RoundingDirection dir = RoundNearest)
+                                    RoundingDirection dir = RoundNearest)
         const;
 };
 

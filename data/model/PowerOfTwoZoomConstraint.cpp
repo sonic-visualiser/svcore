@@ -19,29 +19,32 @@ int
 PowerOfTwoZoomConstraint::getNearestBlockSize(int req,
                                               RoundingDirection dir) const
 {
-    int result = 0;
+    int max = getMaxZoomLevel();
 
-    for (int bs = 1; ; bs *= 2) {
-        if (bs >= req) {
+    if (req > max) {
+        return max;
+    }
+
+    for (int bs = 1; bs <= max; bs *= 2) {
+        if (bs < req) {
+            continue;
+        } else if (bs == req) {
+            return bs;
+        } else { // bs > req
             if (dir == RoundNearest) {
                 if (bs - req < req - bs/2) {
-                    result = bs;
-                    break;
+                    return bs;
                 } else {
-                    result = bs/2;
-                    break;
+                    return bs/2;
                 }
             } else if (dir == RoundDown) {
-                result = bs/2;
-                break;
+                return bs/2;
             } else {
-                result = bs;
-                break;
+                return bs;
             }
         }
     }
 
-    if (result > getMaxZoomLevel()) result = getMaxZoomLevel();
-    return result;
+    return max;
 }
 

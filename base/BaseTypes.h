@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef BASE_TYPES_H
-#define BASE_TYPES_H
+#ifndef SV_BASE_TYPES_H
+#define SV_BASE_TYPES_H
 
 #include <cstdint>
 #include <complex>

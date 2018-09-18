@@ -12,6 +12,7 @@
 */
 
 #include "TestFFTModel.h"
+#include "TestZoomConstraints.h"
 
 #include <QtTest>
 
@@ -29,6 +30,12 @@ int main(int argc, char *argv[])
 
     {
         TestFFTModel t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        TestZoomConstraints t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
