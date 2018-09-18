@@ -30,150 +30,171 @@ class TestZoomConstraints : public QObject
 {
     Q_OBJECT
 
+    void checkFpp(const ZoomConstraint &c,
+                  ZoomConstraint::RoundingDirection dir,
+                  int n,
+                  int expected) {
+        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, n),
+                                       dir),
+                 ZoomLevel(ZoomLevel::FramesPerPixel, expected));
+    }
+    
 private slots:
     void unconstrainedNearest() {
-        // well, this shows how horrible this api is
         ZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1)), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2)), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3)), ZoomLevel(ZoomLevel::FramesPerPixel, 3));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4)), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20)), ZoomLevel(ZoomLevel::FramesPerPixel, 20));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 23)), ZoomLevel(ZoomLevel::FramesPerPixel, 23));
+        checkFpp(c, ZoomConstraint::RoundNearest, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundNearest, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundNearest, 3, 3);
+        checkFpp(c, ZoomConstraint::RoundNearest, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundNearest, 20, 20);
+        checkFpp(c, ZoomConstraint::RoundNearest, 32, 32);
         auto max = c.getMaxZoomLevel();
         QCOMPARE(c.getNearestZoomLevel(max), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1)), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented()), max);
     }
     
     void unconstrainedUp() {
         ZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 3));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 20));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 32), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
+        checkFpp(c, ZoomConstraint::RoundUp, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundUp, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundUp, 3, 3);
+        checkFpp(c, ZoomConstraint::RoundUp, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundUp, 20, 20);
+        checkFpp(c, ZoomConstraint::RoundUp, 32, 32);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundUp), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundUp), max);
     }
     
     void unconstrainedDown() {
         ZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 3));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 20));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 32), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
+        checkFpp(c, ZoomConstraint::RoundDown, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundDown, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundDown, 3, 3);
+        checkFpp(c, ZoomConstraint::RoundDown, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundDown, 20, 20);
+        checkFpp(c, ZoomConstraint::RoundDown, 32, 32);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundDown), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundDown), max);
     }
 
     void powerOfTwoNearest() {
         PowerOfTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1)), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2)), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3)), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4)), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20)), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 23)), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 24)), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 25)), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
+        checkFpp(c, ZoomConstraint::RoundNearest, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundNearest, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundNearest, 3, 2);
+        checkFpp(c, ZoomConstraint::RoundNearest, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundNearest, 20, 16);
+        checkFpp(c, ZoomConstraint::RoundNearest, 23, 16);
+        checkFpp(c, ZoomConstraint::RoundNearest, 24, 16);
+        checkFpp(c, ZoomConstraint::RoundNearest, 25, 32);
         auto max = c.getMaxZoomLevel();
         QCOMPARE(c.getNearestZoomLevel(max), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1)), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented()), max);
     }
     
     void powerOfTwoUp() {
         PowerOfTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 32), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 33), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 64));
+        checkFpp(c, ZoomConstraint::RoundUp, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundUp, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundUp, 3, 4);
+        checkFpp(c, ZoomConstraint::RoundUp, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundUp, 20, 32);
+        checkFpp(c, ZoomConstraint::RoundUp, 32, 32);
+        checkFpp(c, ZoomConstraint::RoundUp, 33, 64);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundUp), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundUp), max);
     }
     
     void powerOfTwoDown() {
         PowerOfTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 32), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 33), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
+        checkFpp(c, ZoomConstraint::RoundDown, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundDown, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundDown, 3, 2);
+        checkFpp(c, ZoomConstraint::RoundDown, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundDown, 20, 16);
+        checkFpp(c, ZoomConstraint::RoundDown, 32, 32);
+        checkFpp(c, ZoomConstraint::RoundDown, 33, 32);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundDown), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundDown), max);
     }
 
     void powerOfSqrtTwoNearest() {
         PowerOfSqrtTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1)), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2)), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3)), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4)), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 18)), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 19)), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 20)), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 23)), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 28)), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
+        checkFpp(c, ZoomConstraint::RoundNearest, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundNearest, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundNearest, 3, 2);
+        checkFpp(c, ZoomConstraint::RoundNearest, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundNearest, 18, 16);
+        checkFpp(c, ZoomConstraint::RoundNearest, 19, 16);
+        checkFpp(c, ZoomConstraint::RoundNearest, 20, 22);
+        checkFpp(c, ZoomConstraint::RoundNearest, 23, 22);
+        checkFpp(c, ZoomConstraint::RoundNearest, 28, 32);
         // PowerOfSqrtTwoZoomConstraint makes an effort to ensure
         // bigger numbers get rounded to a multiple of something
         // simple (64 or 90 depending on whether they are power-of-two
         // or power-of-sqrt-two types)
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 800)), ZoomLevel(ZoomLevel::FramesPerPixel, 720));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1023)), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1024)), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1025)), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
+        checkFpp(c, ZoomConstraint::RoundNearest, 800, 720);
+        checkFpp(c, ZoomConstraint::RoundNearest, 1023, 1024);
+        checkFpp(c, ZoomConstraint::RoundNearest, 1024, 1024);
+        checkFpp(c, ZoomConstraint::RoundNearest, 1024, 1024);
+        checkFpp(c, ZoomConstraint::RoundNearest, 1025, 1024);
         auto max = c.getMaxZoomLevel();
         QCOMPARE(c.getNearestZoomLevel(max), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1)), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented()), max);
     }
     
     void powerOfSqrtTwoUp() {
         PowerOfSqrtTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 18), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 22), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 23), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 32));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 800), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1023), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1024), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
+        checkFpp(c, ZoomConstraint::RoundUp, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundUp, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundUp, 3, 4);
+        checkFpp(c, ZoomConstraint::RoundUp, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundUp, 18, 22);
+        checkFpp(c, ZoomConstraint::RoundUp, 22, 22);
+        checkFpp(c, ZoomConstraint::RoundUp, 23, 32);
+        checkFpp(c, ZoomConstraint::RoundUp, 800, 1024);
+        checkFpp(c, ZoomConstraint::RoundUp, 1023, 1024);
+        checkFpp(c, ZoomConstraint::RoundUp, 1024, 1024);
         // see comment above
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1025), ZoomConstraint::RoundUp), ZoomLevel(ZoomLevel::FramesPerPixel, 1440));
+        checkFpp(c, ZoomConstraint::RoundUp, 1025, 1440);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundUp), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundUp), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundUp), max);
     }
     
     void powerOfSqrtTwoDown() {
         PowerOfSqrtTwoZoomConstraint c;
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 1));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 2), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 3), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 2));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 4), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 4));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 18), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 16));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 22), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 23), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 22));
+        checkFpp(c, ZoomConstraint::RoundDown, 1, 1);
+        checkFpp(c, ZoomConstraint::RoundDown, 2, 2);
+        checkFpp(c, ZoomConstraint::RoundDown, 3, 2);
+        checkFpp(c, ZoomConstraint::RoundDown, 4, 4);
+        checkFpp(c, ZoomConstraint::RoundDown, 18, 16);
+        checkFpp(c, ZoomConstraint::RoundDown, 22, 22);
+        checkFpp(c, ZoomConstraint::RoundDown, 23, 22);
         // see comment above
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 800), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 720));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1023), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 720));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1024), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, 1025), ZoomConstraint::RoundDown), ZoomLevel(ZoomLevel::FramesPerPixel, 1024));
+        checkFpp(c, ZoomConstraint::RoundDown, 800, 720);
+        checkFpp(c, ZoomConstraint::RoundDown, 1023, 720);
+        checkFpp(c, ZoomConstraint::RoundDown, 1024, 1024);
+        checkFpp(c, ZoomConstraint::RoundDown, 1025, 1024);
         auto max = c.getMaxZoomLevel();
-        QCOMPARE(c.getNearestZoomLevel(max, ZoomConstraint::RoundDown), max);
-        QCOMPARE(c.getNearestZoomLevel(ZoomLevel(ZoomLevel::FramesPerPixel, max.level + 1), ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max,
+                                       ZoomConstraint::RoundDown), max);
+        QCOMPARE(c.getNearestZoomLevel(max.incremented(),
+                                       ZoomConstraint::RoundDown), max);
     }
 };
 
