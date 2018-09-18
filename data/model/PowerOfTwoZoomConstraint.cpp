@@ -47,7 +47,7 @@ int
 PowerOfTwoZoomConstraint::getNearestBlockSize(int req,
                                               RoundingDirection dir) const
 {
-    int max = getMaxZoomLevel();
+    int max = getMaxZoomLevel().level;
 
     if (req > max) {
         return max;

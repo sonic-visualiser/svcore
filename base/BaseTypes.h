@@ -67,6 +67,8 @@ struct ZoomLevel {
     Zone zone;
     int level;
 
+    ZoomLevel(Zone z, int l) : zone(z), level(l) { }
+    
     bool operator<(const ZoomLevel &other) const {
         if (zone == FramesPerPixel) {
             if (other.zone == zone) {
@@ -83,6 +85,10 @@ struct ZoomLevel {
         }
     }
 
+    bool operator==(const ZoomLevel &other) const {
+        return (zone == other.zone && level == other.level);
+    }
+    
     ZoomLevel incremented() const {
         if (zone == FramesPerPixel) {
             return { zone, level + 1 };
