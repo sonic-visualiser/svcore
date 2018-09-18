@@ -1,7 +1,8 @@
 TEST_HEADERS += \
 	Compares.h \
 	MockWaveModel.h \
-	TestFFTModel.h
+	TestFFTModel.h \
+        TestZoomConstraints.h
 	
 TEST_SOURCES += \
 	MockWaveModel.cpp \
