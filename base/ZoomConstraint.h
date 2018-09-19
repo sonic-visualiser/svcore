@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 
-#include "BaseTypes.h"
+#include "ZoomLevel.h"
 
 /**
  * ZoomConstraint is a simple interface that describes a limitation on
