@@ -15,6 +15,8 @@
 #ifndef SV_ZOOM_LEVEL_H
 #define SV_ZOOM_LEVEL_H
 
+#include "BaseTypes.h"
+
 #include <ostream>
 #include <cmath>
 
@@ -103,11 +105,11 @@ struct ZoomLevel {
     /** Return a ZoomLevel that approximates the given ratio of pixels
      *  to frames.
      */
-    static ZoomLevel fromRatio(int pixels, int frames) {
+    static ZoomLevel fromRatio(int pixels, sv_frame_t frames) {
         if (pixels < frames) {
-            return { FramesPerPixel, int(round(double(pixels)/frames)) };
+            return { FramesPerPixel, int(round(double(frames)/pixels)) };
         } else {
-            int r = int(round(double(frames)/pixels));
+            int r = int(round(pixels/double(frames)));
             if (r > 1) {
                 return { PixelsPerFrame, r };
             } else {
