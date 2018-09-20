@@ -16,6 +16,7 @@
 #define SV_ZOOM_LEVEL_H
 
 #include <ostream>
+#include <cmath>
 
 /** Display zoom level. Can be an integer number of samples per pixel,
  *  or an integer number of pixels per sample.
@@ -26,6 +27,7 @@ struct ZoomLevel {
         FramesPerPixel, // zoomed out (as in classic SV)
         PixelsPerFrame  // zoomed in beyond 1-1 (interpolating the waveform)
     };
+
     Zone zone;
     int level;
 
@@ -74,7 +76,10 @@ struct ZoomLevel {
         }
     }
 
-    /// Inexact
+    /** Inexact conversion. The result is a whole number if we are
+     *  zoomed in enough (in PixelsPerFrame zone), a fraction
+     *  otherwise.
+     */
     double framesToPixels(double frames) const {
         if (zone == PixelsPerFrame) {
             return frames * level;
@@ -83,12 +88,31 @@ struct ZoomLevel {
         }
     }
 
-    /// Inexact
+    /** Inexact conversion. The result is a whole number if we are
+     *  zoomed out enough (in FramesPerPixel zone), a fraction
+     *  otherwise.
+     */
     double pixelsToFrames(double pixels) const {
         if (zone == PixelsPerFrame) {
             return pixels / level;
         } else {
             return pixels * level;
+        }
+    }
+
+    /** Return a ZoomLevel that approximates the given ratio of pixels
+     *  to frames.
+     */
+    static ZoomLevel fromRatio(int pixels, int frames) {
+        if (pixels < frames) {
+            return { FramesPerPixel, int(round(double(pixels)/frames)) };
+        } else {
+            int r = int(round(double(frames)/pixels));
+            if (r > 1) {
+                return { PixelsPerFrame, r };
+            } else {
+                return { FramesPerPixel, 1 };
+            }
         }
     }
 };
