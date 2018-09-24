@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef WAVE_FILE_MODEL_H
-#define WAVE_FILE_MODEL_H
+#ifndef SV_WAVE_FILE_MODEL_H
+#define SV_WAVE_FILE_MODEL_H
 
 #include "RangeSummarisableTimeValueModel.h"
 
