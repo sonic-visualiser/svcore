@@ -35,7 +35,7 @@ public:
         m_source[2501] = -0.5f;
         m_source[4999] = -1.f;
         for (int i = 4000; i < 4900; ++i) {
-            m_source[i] = sin(double(i - 1000) * M_PI / 50.0);
+            m_source[i] = float(sin(double(i - 1000) * M_PI / 50.0));
         }
         m_sourceModel = new WritableWaveFileModel(8000, 1);
         const float *d = m_source.data();
@@ -70,7 +70,7 @@ private:
 
     floatvec_t get(sv_frame_t sourceStartFrame,
                    sv_frame_t sourceFrameCount,
-                   sv_frame_t oversampleBy) {
+                   int oversampleBy) {
         return WaveformOversampler::getOversampledData
             (m_sourceModel, 0,
              sourceStartFrame, sourceFrameCount, oversampleBy);
@@ -194,6 +194,14 @@ private slots:
         testStrided(0, 500, 4, sourceSubset(0, 500));
         testStrided(4500, 500, 4, sourceSubset(4500, 500));
         testStrided(2000, 1000, 4, sourceSubset(2000, 1000));
+
+        // check for windowed sinc values between the original
+        // samples, even when the original sample that was the source
+        // of this sinc kernel is not within the requested range
+        floatvec_t output = get(1, 10, 4);
+        QVERIFY(output[1] + 0.1787 < 0.0001);
+        QVERIFY(output[2] + 0.2099 < 0.0001);
+        QVERIFY(output[3] + 0.1267 < 0.0001);
     }
     
     void testOverlaps4x() {

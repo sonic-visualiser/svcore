@@ -38,11 +38,11 @@ WaveformOversampler::getOversampledData(const DenseTimeValueModel *source,
         double pos = (double(i) / oversampleBy) * m_filterRatio;
         double diff = pos - floor(pos);
         int ix = int(floor(pos));
-        float interpolated = (1.0 - diff) * fixedRatio[ix];
+        double interpolated = (1.0 - diff) * fixedRatio[ix];
         if (in_range_for(fixedRatio, ix + 1)) {
             interpolated += diff * fixedRatio[ix + 1];
         }
-        result[i] = interpolated;
+        result[i] = float(interpolated);
     }
 
     return result;
@@ -65,7 +65,7 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel *source,
     
     sv_frame_t filterLength = m_filter.size(); // NB this is known to be odd
     sv_frame_t filterTailOut = (filterLength - 1) / 2;
-    sv_frame_t filterTailIn = filterTailIn / m_filterRatio;
+    sv_frame_t filterTailIn = filterTailOut / m_filterRatio;
 
     floatvec_t oversampled(targetFrameCount, 0.f);
 
@@ -77,7 +77,7 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel *source,
     if (i1 > sourceLength) {
         i1 = sourceLength;
     }
-
+    
     floatvec_t sourceData = source->getData(channel, i0, i1 - i0);
     
     for (sv_frame_t i = i0; i < i1; ++i) {
