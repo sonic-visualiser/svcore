@@ -56,9 +56,9 @@ private:
         float threshold = 1e-10f;
         for (int i = 0; in_range_for(expected, i); ++i) {
             if (fabsf(obtained[i * stride] - expected[i]) > threshold) {
-                cerr << "At position " << i * stride << ": "
-                     << obtained[i * stride] << " != " << expected[i]
-                     << endl;
+                std::cerr << "At position " << i * stride << ": "
+                          << obtained[i * stride] << " != " << expected[i]
+                          << std::endl;
                 QCOMPARE(obtained, expected);
             }
         }
