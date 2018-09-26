@@ -13,6 +13,7 @@
 
 #include "TestFFTModel.h"
 #include "TestZoomConstraints.h"
+#include "TestWaveformOversampler.h"
 
 #include <QtTest>
 
@@ -36,6 +37,12 @@ int main(int argc, char *argv[])
 
     {
         TestZoomConstraints t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        TestWaveformOversampler t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
