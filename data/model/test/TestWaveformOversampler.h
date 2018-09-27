@@ -34,8 +34,8 @@ public:
         m_source[2500] = 0.5f;
         m_source[2501] = -0.5f;
         m_source[4999] = -1.f;
-        for (int i = 4000; i < 4900; ++i) {
-            m_source[i] = float(sin(double(i - 1000) * M_PI / 50.0));
+        for (int i = 3000; i < 3900; ++i) {
+            m_source[i] = float(sin(double(i - 3000) * M_PI / 50.0));
         }
         m_sourceModel = new WritableWaveFileModel(8000, 1);
         const float *d = m_source.data();
@@ -199,9 +199,19 @@ private slots:
         // samples, even when the original sample that was the source
         // of this sinc kernel is not within the requested range
         floatvec_t output = get(1, 10, 4);
+        QVERIFY(output[0] < 0.0001);
         QVERIFY(output[1] + 0.1787 < 0.0001);
         QVERIFY(output[2] + 0.2099 < 0.0001);
         QVERIFY(output[3] + 0.1267 < 0.0001);
+
+        // and again at the end
+        output = get(4989, 10, 4);
+        QVERIFY(output[39] + 0.9000 < 0.0001);
+        QVERIFY(output[38] + 0.6358 < 0.0001);
+        QVERIFY(output[37] + 0.2993 < 0.0001);
+        QVERIFY(output[35] - 0.1787 < 0.0001);
+        QVERIFY(output[34] - 0.2099 < 0.0001);
+        QVERIFY(output[33] - 0.1267 < 0.0001);
     }
     
     void testOverlaps4x() {
