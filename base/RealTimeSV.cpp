@@ -67,6 +67,12 @@ RealTime::fromMilliseconds(int msec)
 }
 
 RealTime
+RealTime::fromMicroseconds(int usec)
+{
+    return RealTime(usec / 1000000, (usec % 1000000) * 1000);
+}
+
+RealTime
 RealTime::fromTimeval(const struct timeval &tv)
 {
     return RealTime(int(tv.tv_sec), int(tv.tv_usec * 1000));

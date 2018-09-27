@@ -58,6 +58,7 @@ struct RealTime
 
     static RealTime fromSeconds(double sec);
     static RealTime fromMilliseconds(int msec);
+    static RealTime fromMicroseconds(int usec);
     static RealTime fromTimeval(const struct timeval &);
     static RealTime fromXsdDuration(std::string xsdd);
 
