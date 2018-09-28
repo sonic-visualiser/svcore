@@ -14,6 +14,8 @@
 
 #include "WaveformOversampler.h"
 
+#include "base/Profiler.h"
+
 #include "data/model/DenseTimeValueModel.h"
 
 floatvec_t
@@ -23,6 +25,8 @@ WaveformOversampler::getOversampledData(const DenseTimeValueModel *source,
                                         sv_frame_t sourceFrameCount,
                                         int oversampleBy)
 {
+    Profiler profiler("WaveformOversampler::getOversampledData");
+    
     // Oversampled at a fixed ratio of m_filterRatio
     floatvec_t fixedRatio = getFixedRatioData(source, channel,
                                               sourceStartFrame,
@@ -54,6 +58,8 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel *source,
                                        sv_frame_t sourceStartFrame,
                                        sv_frame_t sourceFrameCount)
 {
+    Profiler profiler("WaveformOversampler::getFixedRatioData");
+    
     sv_frame_t sourceLength = source->getEndFrame();
     
     if (sourceStartFrame + sourceFrameCount > sourceLength) {
