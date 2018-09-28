@@ -65,7 +65,7 @@ public:
      * current window size, or in order to save on interpolation cost.
      */
     virtual ZoomLevel getMinZoomLevel() const {
-        return { ZoomLevel::PixelsPerFrame, 16384 };
+        return { ZoomLevel::PixelsPerFrame, 512 };
     }
     
     /**
