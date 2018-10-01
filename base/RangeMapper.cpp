@@ -20,6 +20,7 @@
 #include <cmath>
 
 #include <iostream>
+#include <stdexcept>
 
 LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
                                      double minval, double maxval,
@@ -33,8 +34,12 @@ LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
     m_inverted(inverted),
     m_labels(labels)
 {
-    assert(m_maxval != m_minval);
-    assert(m_maxpos != m_minpos);
+    if (m_maxval == m_minval) {
+        throw std::logic_error("LinearRangeMapper: maxval must differ from minval");
+    }
+    if (m_maxpos == m_minpos) {
+        throw std::logic_error("LinearRangeMapper: maxpos must differ from minpos");
+    }
 }
 
 int
@@ -101,7 +106,9 @@ LogRangeMapper::LogRangeMapper(int minpos, int maxpos,
 //              << maxval << ", minlog " << m_minlog << ", ratio " << m_ratio
 //              << ", unit " << unit << endl;
 
-    assert(m_maxpos != m_minpos);
+    if (m_maxpos == m_minpos) {
+        throw std::logic_error("LogRangeMapper: maxpos must differ from minpos");
+    }
 
     m_maxlog = (m_maxpos - m_minpos) / m_ratio + m_minlog;
 

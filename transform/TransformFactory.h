@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TRANSFORM_FACTORY_H_
-#define _TRANSFORM_FACTORY_H_
+#ifndef SV_TRANSFORM_FACTORY_H
+#define SV_TRANSFORM_FACTORY_H
 
 #include "TransformDescription.h"
 

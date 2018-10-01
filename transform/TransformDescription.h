@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TRANSFORM_DESCRIPTION_H_
-#define _TRANSFORM_DESCRIPTION_H_
+#ifndef SV_TRANSFORM_DESCRIPTION_H
+#define SV_TRANSFORM_DESCRIPTION_H
 
 #include "Transform.h"
 
@@ -77,11 +77,19 @@ struct TransformDescription
     QString infoUrl;
     QString units;
     bool configurable;
+
+    // User-visible strings (name, maker etc) should be sorted in a
+    // locale-aware way
+    static bool compareUserStrings(QString s1, QString s2) {
+        return QString::localeAwareCompare(s1, s2) < 0;
+    };
     
     bool operator<(const TransformDescription &od) const {
-        return
-            (name <  od.name) ||
-            (name == od.name && identifier < od.identifier);
+        if (name == od.name) {
+            return identifier < od.identifier;
+        } else {
+            return compareUserStrings(name, od.name);
+        }
     };
 };
 
