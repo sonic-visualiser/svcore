@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <set>
+#include <functional>
 
 #include <QRegExp>
 #include <QTextStream>
@@ -111,19 +112,17 @@ TransformFactory::getAllTransformDescriptions()
     populateTransforms();
 
     std::set<TransformDescription> dset;
-    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
+    for (auto i = m_transforms.begin(); i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
+        cerr << "inserting transform into set: id = " << i->second.identifier << " (" << i->second.name << ")" << endl;
 #endif
         dset.insert(i->second);
     }
 
     TransformList list;
-    for (std::set<TransformDescription>::const_iterator i = dset.begin();
-         i != dset.end(); ++i) {
+    for (auto i = dset.begin(); i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into list: id = " << i->identifier << endl;
+        cerr << "inserting transform into list: id = " << i->identifier << " (" << i->name << ")" << endl;
 #endif
         list.push_back(*i);
     }
@@ -157,7 +156,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     populateUninstalledTransforms();
     
     std::set<TransformDescription> dset;
-    for (TransformDescriptionMap::const_iterator i = m_uninstalledTransforms.begin();
+    for (auto i = m_uninstalledTransforms.begin();
          i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into set: id = " << i->second.identifier << endl;
@@ -166,8 +165,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     }
 
     TransformList list;
-    for (std::set<TransformDescription>::const_iterator i = dset.begin();
-         i != dset.end(); ++i) {
+    for (auto i = dset.begin(); i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
         cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
@@ -247,13 +245,12 @@ TransformFactory::getAllTransformTypes()
     populateTransforms();
 
     std::set<TransformDescription::Type> types;
-    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
+    for (auto i = m_transforms.begin(); i != m_transforms.end(); ++i) {
         types.insert(i->second.type);
     }
 
     std::vector<TransformDescription::Type> rv;
-    for (std::set<TransformDescription::Type>::iterator i = types.begin(); i != types.end(); ++i) {
+    for (auto i = types.begin(); i != types.end(); ++i) {
         rv.push_back(*i);
     }
 
@@ -265,9 +262,10 @@ TransformFactory::getTransformCategories(TransformDescription::Type transformTyp
 {
     populateTransforms();
 
-    std::set<QString> categories;
-    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
+    std::set<QString, std::function<bool(QString, QString)>>
+        categories(TransformDescription::compareUserStrings);
+    
+    for (auto i = m_transforms.begin(); i != m_transforms.end(); ++i) {
         if (i->second.type == transformType) {
             categories.insert(i->second.category);
         }
@@ -276,8 +274,7 @@ TransformFactory::getTransformCategories(TransformDescription::Type transformTyp
     bool haveEmpty = false;
     
     std::vector<QString> rv;
-    for (std::set<QString>::iterator i = categories.begin(); 
-         i != categories.end(); ++i) {
+    for (auto i = categories.begin(); i != categories.end(); ++i) {
         if (*i != "") rv.push_back(*i);
         else haveEmpty = true;
     }
@@ -292,9 +289,10 @@ TransformFactory::getTransformMakers(TransformDescription::Type transformType)
 {
     populateTransforms();
 
-    std::set<QString> makers;
-    for (TransformDescriptionMap::const_iterator i = m_transforms.begin();
-         i != m_transforms.end(); ++i) {
+    std::set<QString, std::function<bool(QString, QString)>>
+        makers(TransformDescription::compareUserStrings);
+
+    for (auto i = m_transforms.begin(); i != m_transforms.end(); ++i) {
         if (i->second.type == transformType) {
             makers.insert(i->second.maker);
         }
@@ -303,8 +301,7 @@ TransformFactory::getTransformMakers(TransformDescription::Type transformType)
     bool haveEmpty = false;
     
     std::vector<QString> rv;
-    for (std::set<QString>::iterator i = makers.begin(); 
-         i != makers.end(); ++i) {
+    for (auto i = makers.begin(); i != makers.end(); ++i) {
         if (*i != "") rv.push_back(*i);
         else haveEmpty = true;
     }
@@ -414,7 +411,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
     
     if (m_exiting) return;
 
-    for (int i = 0; i < (int)plugs.size(); ++i) {
+    for (int i = 0; in_range_for(plugs, i); ++i) {
 
         QString pluginId = plugs[i];
 
@@ -504,7 +501,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
 
     static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
-    for (int i = 0; i < (int)plugs.size(); ++i) {
+    for (int i = 0; in_range_for(plugs, i); ++i) {
         
         QString pluginId = plugs[i];
 
