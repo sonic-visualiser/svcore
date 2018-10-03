@@ -137,7 +137,12 @@ public:
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
-        default: return getBinName(column - 2);
+        default:
+            QString name = getBinName(column - 2);
+            if (name == "") {
+                name = tr("(bin %1)").arg(column - 2);
+            }
+            return name;
         }
     }
 
