@@ -31,10 +31,10 @@ struct ZoomLevel {
     };
 
     Zone zone;
-    int level;
+    double level;
 
     ZoomLevel() : zone(FramesPerPixel), level(1) { }
-    ZoomLevel(Zone z, int lev) : zone(z), level(lev) { }
+    ZoomLevel(Zone z, double lev) : zone(z), level(lev) { }
     
     bool operator<(const ZoomLevel &other) const {
         if (zone == FramesPerPixel) {
@@ -107,9 +107,9 @@ struct ZoomLevel {
      */
     static ZoomLevel fromRatio(int pixels, sv_frame_t frames) {
         if (pixels < frames) {
-            return { FramesPerPixel, int(round(double(frames)/pixels)) };
+            return { FramesPerPixel, round(double(frames)/pixels) };
         } else {
-            int r = int(round(pixels/double(frames)));
+            double r = round(pixels/double(frames));
             if (r > 1) {
                 return { PixelsPerFrame, r };
             } else {

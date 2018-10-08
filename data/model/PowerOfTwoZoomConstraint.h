@@ -26,8 +26,8 @@ public:
 	const override;
 
 protected:
-    virtual int getNearestBlockSize(int requested,
-                                    RoundingDirection dir = RoundNearest)
+    virtual double getNearestBlockSize(double requested,
+                                       RoundingDirection dir = RoundNearest)
         const;
 };
 

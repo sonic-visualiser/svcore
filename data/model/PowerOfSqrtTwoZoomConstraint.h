@@ -27,10 +27,10 @@ public:
 	
     virtual int getMinCachePower() const { return 6; }
 
-    virtual int getNearestBlockSize(int requestedBlockSize,
-                                    int &type,
-                                    int &power,
-                                    RoundingDirection dir = RoundNearest)
+    virtual double getNearestBlockSize(double requestedBlockSize,
+                                       int &type,
+                                       int &power,
+                                       RoundingDirection dir = RoundNearest)
         const;
 };
 

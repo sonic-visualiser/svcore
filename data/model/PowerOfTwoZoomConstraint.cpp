@@ -19,7 +19,7 @@ ZoomLevel
 PowerOfTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
                                               RoundingDirection dir) const
 {
-    int blockSize;
+    double blockSize;
 
     if (requested.zone == ZoomLevel::FramesPerPixel) {
         blockSize = getNearestBlockSize(requested.level, dir);
@@ -35,7 +35,7 @@ PowerOfTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
         if (blockSize > getMinZoomLevel().level) {
             blockSize = getMinZoomLevel().level;
         }
-        if (blockSize == 1) {
+        if (blockSize == 1.0) {
             return { ZoomLevel::FramesPerPixel, 1 };
         } else {
             return { requested.zone, blockSize };
@@ -43,17 +43,17 @@ PowerOfTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
     }
 }
 
-int
-PowerOfTwoZoomConstraint::getNearestBlockSize(int req,
+double
+PowerOfTwoZoomConstraint::getNearestBlockSize(double req,
                                               RoundingDirection dir) const
 {
-    int max = getMaxZoomLevel().level;
+    double max = getMaxZoomLevel().level;
 
     if (req > max) {
         return max;
     }
 
-    for (int bs = 1; bs <= max; bs *= 2) {
+    for (double bs = 1; bs <= max; bs *= 2) {
         if (bs < req) {
             continue;
         } else if (bs == req) {

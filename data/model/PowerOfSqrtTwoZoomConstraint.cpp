@@ -26,7 +26,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
                                                   RoundingDirection dir) const
 {
     int type, power;
-    int blockSize;
+    double blockSize;
 
     if (requested.zone == ZoomLevel::FramesPerPixel) {
         blockSize = getNearestBlockSize(requested.level, type, power, dir);
@@ -47,8 +47,8 @@ PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
     }
 }
 
-int
-PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
+double
+PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(double blockSize,
                                                   int &type, 
                                                   int &power,
                                                   RoundingDirection dir) const
@@ -57,46 +57,47 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 
     int minCachePower = getMinCachePower();
 
+    double eps = 1e-8;
+    
     if (blockSize < (1 << minCachePower)) {
         type = -1;
         power = 0;
-        float val = 1.0, prevVal = 1.0;
-        while (val + 0.01 < blockSize) {
+        double val = 1.0, prevVal = 1.0;
+        while (val + eps < blockSize) {
             prevVal = val;
             val *= sqrtf(2.f);
         }
-        int rval = int(val + 0.01f);
+        double rval = val;
 //        SVCERR << "got val = " << val << ", rval = " << rval << ", prevVal = " << prevVal << endl;
         if (rval != blockSize && dir != RoundUp) {
             if (dir == RoundDown) {
-                rval = int(prevVal + 0.01f);
-            } else if (val - float(blockSize) < float(blockSize) - prevVal) {
-                rval = int(val + 0.01f);
+                rval = prevVal;
+            } else if (val - blockSize < blockSize - prevVal) {
+                rval = val;
             } else {
-                rval = int(prevVal + 0.01);
+                rval = prevVal;
             }
         }
 //        SVCERR << "returning " << rval << endl;
         return rval;
     }
 
-    int prevBase = (1 << minCachePower);
+    double prevBase = (1 << minCachePower);
     int prevPower = minCachePower;
     int prevType = 0;
 
-    int result = 0;
+    double result = 0;
 
     for (unsigned int i = 0; ; ++i) {
 
         power = minCachePower + i/2;
         type = i % 2;
 
-        int base;
+        double base;
         if (type == 0) {
-            base = (1 << power);
+            base = pow(2.0, power);
         } else {
-            base = (((unsigned int)((1 << minCachePower) * sqrt(2.) + 0.01))
-                    << (power - minCachePower));
+            base = sqrt(2.0) * pow(2.0, power);
         }
 
 //        SVCERR << "Testing base " << base << " (i = " << i << ", power = " << power << ", type = " << type << ")" << endl;
