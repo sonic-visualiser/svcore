@@ -61,9 +61,29 @@ RealTime::fromSeconds(double sec)
 }
 
 RealTime
-RealTime::fromMilliseconds(int msec)
+RealTime::fromMilliseconds(int64_t msec)
 {
-    return RealTime(msec / 1000, (msec % 1000) * 1000000);
+    int64_t sec = msec / 1000;
+    if (sec > INT_MAX || sec < INT_MIN) {
+        cerr << "WARNING: millisecond value out of range for RealTime, "
+             << "returning zero instead: " << msec << endl;
+        return RealTime::zeroTime;
+    }
+        
+    return RealTime(int(sec), int(msec % 1000) * 1000000);
+}
+
+RealTime
+RealTime::fromMicroseconds(int64_t usec)
+{
+    int64_t sec = usec / 1000000;
+    if (sec > INT_MAX || sec < INT_MIN) {
+        cerr << "WARNING: microsecond value out of range for RealTime, "
+             << "returning zero instead: " << usec << endl;
+        return RealTime::zeroTime;
+    }
+    
+    return RealTime(int(sec), int(usec % 1000000) * 1000);
 }
 
 RealTime
@@ -258,20 +278,27 @@ RealTime::toText(bool fixedDp) const
 
     Preferences *p = Preferences::getInstance();
     bool hms = true;
+    std::string frameDelimiter = ":";
     
     if (p) {
         hms = p->getShowHMS();
         int fps = 0;
         switch (p->getTimeToTextMode()) {
-        case Preferences::TimeToTextMs: break;
-        case Preferences::TimeToTextUs: fps = 1000000; break;
+        case Preferences::TimeToTextMs:
+            break;
+        case Preferences::TimeToTextUs:
+            fps = 1000000;
+            frameDelimiter = ".";
+            break;
         case Preferences::TimeToText24Frame: fps = 24; break;
         case Preferences::TimeToText25Frame: fps = 25; break;
         case Preferences::TimeToText30Frame: fps = 30; break;
         case Preferences::TimeToText50Frame: fps = 50; break;
         case Preferences::TimeToText60Frame: fps = 60; break;
         }
-        if (fps != 0) return toFrameText(fps, hms);
+        if (fps != 0) {
+            return toFrameText(fps, hms, frameDelimiter);
+        }
     }
 
     return toMSText(fixedDp, hms);
@@ -338,9 +365,11 @@ RealTime::toMSText(bool fixedDp, bool hms) const
 }
 
 std::string
-RealTime::toFrameText(int fps, bool hms) const
+RealTime::toFrameText(int fps, bool hms, std::string frameDelimiter) const
 {
-    if (*this < RealTime::zeroTime) return "-" + (-*this).toFrameText(fps, hms);
+    if (*this < RealTime::zeroTime) {
+        return "-" + (-*this).toFrameText(fps, hms);
+    }
 
     std::stringstream out;
 
@@ -357,7 +386,7 @@ RealTime::toFrameText(int fps, bool hms) const
         div *= 10;
     }
 
-    out << ":";
+    out << frameDelimiter;
 
 //    cerr << "div = " << div << ", f =  "<< f << endl;
 

@@ -43,6 +43,7 @@ SVCORE_HEADERS = \
            base/Window.h \
            base/XmlExportable.h \
            base/ZoomConstraint.h \
+           base/ZoomLevel.h \
            data/fileio/AudioFileReader.h \
            data/fileio/AudioFileReaderFactory.h \
            data/fileio/AudioFileSizeEstimator.h \
@@ -95,6 +96,7 @@ SVCORE_HEADERS = \
            data/model/SparseValueModel.h \
            data/model/TabularModel.h \
            data/model/TextModel.h \
+           data/model/WaveformOversampler.h \
            data/model/WaveFileModel.h \
            data/model/ReadOnlyWaveFileModel.h \
            data/model/WritableWaveFileModel.h \
@@ -175,6 +177,7 @@ SVCORE_SOURCES = \
            base/UnitDatabase.cpp \
            base/ViewManagerBase.cpp \
            base/XmlExportable.cpp \
+           base/ZoomLevel.cpp \
            data/fileio/AudioFileReader.cpp \
            data/fileio/AudioFileReaderFactory.cpp \
            data/fileio/AudioFileSizeEstimator.cpp \
@@ -209,6 +212,7 @@ SVCORE_SOURCES = \
            data/model/PowerOfSqrtTwoZoomConstraint.cpp \
            data/model/PowerOfTwoZoomConstraint.cpp \
            data/model/RangeSummarisableTimeValueModel.cpp \
+           data/model/WaveformOversampler.cpp \
            data/model/WaveFileModel.cpp \
            data/model/ReadOnlyWaveFileModel.cpp \
            data/model/WritableWaveFileModel.cpp \

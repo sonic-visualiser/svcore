@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,23 +12,14 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_POWER_OF_TWO_ZOOM_CONSTRAINT_H
-#define SV_POWER_OF_TWO_ZOOM_CONSTRAINT_H
+#include "ZoomLevel.h"
 
-#include "base/ZoomConstraint.h"
-
-class PowerOfTwoZoomConstraint : virtual public ZoomConstraint
-{
-public:
-    virtual ZoomLevel getNearestZoomLevel(ZoomLevel requested,
-                                          RoundingDirection dir = RoundNearest)
-	const override;
-
-protected:
-    virtual int getNearestBlockSize(int requested,
-                                    RoundingDirection dir = RoundNearest)
-        const;
-};
-
-#endif
+std::ostream &operator<<(std::ostream &s, const ZoomLevel &z) {
+    if (z.zone == ZoomLevel::PixelsPerFrame) {
+        s << "1/" << z.level;
+    } else {
+        s << z.level;
+    }
+    return s;
+}
 

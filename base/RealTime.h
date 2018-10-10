@@ -57,7 +57,8 @@ struct RealTime
         sec(r.sec), nsec(r.nsec) { }
 
     static RealTime fromSeconds(double sec);
-    static RealTime fromMilliseconds(int msec);
+    static RealTime fromMilliseconds(int64_t msec);
+    static RealTime fromMicroseconds(int64_t usec);
     static RealTime fromTimeval(const struct timeval &);
     static RealTime fromXsdDuration(std::string xsdd);
 
@@ -171,7 +172,8 @@ struct RealTime
      * Unlike toText, this function does not depend on the application
      * preferences.
      */
-    std::string toFrameText(int fps, bool hms) const;
+    std::string toFrameText(int fps, bool hms,
+                            std::string frameDelimiter = ":") const;
 
     /**
      * Return a user-readable string to the nearest second, in H:M:S

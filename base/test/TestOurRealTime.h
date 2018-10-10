@@ -138,6 +138,20 @@ private slots:
         QCOMPARE(RealTime::fromMilliseconds(-1000), RealTime(-1, 0));
         QCOMPARE(RealTime::fromMilliseconds(-1500), RealTime(-1, -ONE_BILLION/2));
     }
+
+    void fromMicroseconds()
+    {
+        QCOMPARE(RealTime::fromMicroseconds(0), RealTime(0, 0));
+        QCOMPARE(RealTime::fromMicroseconds(500000), RealTime(0, ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMicroseconds(1000000), RealTime(1, 0));
+        QCOMPARE(RealTime::fromMicroseconds(1500000), RealTime(1, ONE_BILLION/2));
+
+        QCOMPARE(RealTime::fromMicroseconds(-0), RealTime(0, 0));
+        QCOMPARE(RealTime::fromMicroseconds(-500000), RealTime(0, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMicroseconds(-1000000), RealTime(-1, 0));
+        QCOMPARE(RealTime::fromMicroseconds(-1500000), RealTime(-1, -ONE_BILLION/2));
+        QCOMPARE(RealTime::fromMicroseconds(13500000), RealTime(13, ONE_BILLION/2));
+    }
     
     void fromTimeval()
     {
