@@ -103,6 +103,7 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 
         if (base == blockSize) {
             result = base;
+//            SVCERR << "Equal, accepting" << endl;
             break;
         }
 
@@ -110,8 +111,12 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
             if (dir == RoundNearest) {
                 if (base - blockSize < blockSize - prevBase) {
                     dir = RoundUp;
+//                    SVCERR << "Closer to " << base << " than " << prevBase
+//                           << ", rounding up" << endl;
                 } else {
                     dir = RoundDown;
+//                    SVCERR << "Closer to " << prevBase << " than " << base
+//                           << ", rounding down" << endl;
                 }
             }
             if (dir == RoundUp) {
@@ -133,6 +138,8 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
     if (result > getMaxZoomLevel().level) {
         result = getMaxZoomLevel().level;
     }
+
+//    SVCERR << "Returning result " << result << endl;
 
     return result;
 }   
