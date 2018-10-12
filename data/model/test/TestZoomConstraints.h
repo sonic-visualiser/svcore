@@ -52,10 +52,10 @@ class TestZoomConstraints : public QObject
         if (zobt == zexp) {
             return;
         } else {
-            cerr << "For input " << zin << " and rounding direction "
-                 << roundingName(dir)
-                 << ", expected output " << zexp << " but obtained " << zobt
-                 << endl;
+            std::cerr << "For input " << zin << " and rounding direction "
+                      << roundingName(dir)
+                      << ", expected output " << zexp << " but obtained "
+                      << zobt << std::endl;
             QCOMPARE(zobt, zexp);
         }
     }
