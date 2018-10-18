@@ -40,6 +40,8 @@
 
 #include <QSettings>
 
+//#define DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN 1
+
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
@@ -656,9 +658,11 @@ FeatureExtractionModelTransformer::run()
     Transform primaryTransform = m_transforms[0];
 
     while (!input->isReady() && !m_abandoned) {
-        cerr << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
+        SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
         usleep(500000);
     }
+    SVDEBUG << "FeatureExtractionModelTransformer::run: Waited, ready = "
+            << input->isReady() << ", m_abandoned = " << m_abandoned << endl;
     if (m_abandoned) return;
 
     sv_samplerate_t sampleRate = input->getSampleRate();
@@ -678,6 +682,7 @@ FeatureExtractionModelTransformer::run()
 
     bool frequencyDomain = (m_plugin->getInputDomain() ==
                             Vamp::Plugin::FrequencyDomain);
+
     std::vector<FFTModel *> fftModels;
 
     if (frequencyDomain) {
@@ -754,10 +759,12 @@ FeatureExtractionModelTransformer::run()
                     contextStart + contextDuration) break;
             }
 
-//        SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
-//                  << blockFrame << ", endFrame " << endFrame << ", blockSize "
-//                  << blockSize << endl;
-
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+            SVDEBUG << "FeatureExtractionModelTransformer::run: blockFrame "
+                    << blockFrame << ", endFrame " << endFrame << ", blockSize "
+                    << blockSize << endl;
+#endif
+        
             int completion = int
                 ((((blockFrame - contextStart) / stepSize) * 99) /
                  (contextDuration / stepSize + 1));
@@ -777,7 +784,8 @@ FeatureExtractionModelTransformer::run()
                             buffers[ch][i*2] = 0.f;
                             buffers[ch][i*2+1] = 0.f;
                         }
-                    }                    
+                    }
+                        
                     error = fftModels[ch]->getError();
                     if (error != "") {
                         SVCERR << "FeatureExtractionModelTransformer::run: Abandoning, error is " << error << endl;
@@ -793,8 +801,10 @@ FeatureExtractionModelTransformer::run()
             if (m_abandoned) break;
 
             Vamp::Plugin::FeatureSet features = m_plugin->process
-                (buffers, RealTime::frame2RealTime(blockFrame, sampleRate).toVampRealTime());
-
+                (buffers,
+                 RealTime::frame2RealTime(blockFrame, sampleRate)
+                 .toVampRealTime());
+            
             if (m_abandoned) break;
 
             for (int j = 0; j < (int)m_outputNos.size(); ++j) {
@@ -1122,8 +1132,10 @@ FeatureExtractionModelTransformer::addFeature(int n,
 void
 FeatureExtractionModelTransformer::setCompletion(int n, int completion)
 {
-//    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
-//              << completion << ")" << endl;
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+    SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
+              << completion << ")" << endl;
+#endif
 
     if (isOutput<SparseOneDimensionalModel>(n)) {
 
