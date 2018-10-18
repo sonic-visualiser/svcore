@@ -21,6 +21,8 @@
 
 using namespace std;
 
+//#define DEBUG_AGGREGATE_WAVE_FILE_MODEL 1
+
 PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 
@@ -80,11 +82,19 @@ AggregateWaveModel::isReady(int *completion) const
     for (ChannelSpecList::const_iterator i = m_components.begin();
          i != m_components.end(); ++i) {
         int completionHere = 100;
-        if (!i->model->isReady(&completionHere)) ready = false;
+        if (!i->model->isReady(&completionHere)) {
+            ready = false;
+        }
         if (completion && completionHere < *completion) {
             *completion = completionHere;
         }
     }
+
+#ifdef DEBUG_AGGREGATE_WAVE_FILE_MODEL
+    SVDEBUG << "AggregateWaveModel(" << objectName()
+            << ")::isReady: returning " << ready << endl;
+#endif
+    
     return ready;
 }
 
