@@ -48,10 +48,14 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
+    m_prevCompletion(0),
     m_exiting(false),
     m_lastDirectReadStart(0),
     m_lastDirectReadCount(0)
 {
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
+            << m_path << ", target rate " << targetRate << endl;
+    
     m_source.waitForData();
 
     if (m_source.isOK()) {
@@ -77,7 +81,7 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
                       << m_reader->getSampleRate() << endl;
         }
     }
-    
+
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     if (isOK()) fillCache();
@@ -92,8 +96,12 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     m_fillThread(0),
     m_updateTimer(0),
     m_lastFillExtent(0),
+    m_prevCompletion(0),
     m_exiting(false)
 {
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
+            << m_path << ", with reader" << endl;
+    
     m_reader = reader;
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
@@ -121,9 +129,14 @@ ReadOnlyWaveFileModel::isOK() const
 bool
 ReadOnlyWaveFileModel::isReady(int *completion) const
 {
-    bool ready = (isOK() && (m_fillThread == 0));
-    double c = double(m_lastFillExtent) / double(getEndFrame() - getStartFrame());
-    static int prevCompletion = 0;
+    bool ready = true;
+    if (!isOK()) ready = false;
+    if (m_fillThread) ready = false;
+    if (m_reader && m_reader->isUpdating()) ready = false;
+
+    double c = double(m_lastFillExtent) /
+        double(getEndFrame() - getStartFrame());
+
     if (completion) {
         *completion = int(c * 100.0 + 0.01);
         if (m_reader) {
@@ -133,15 +146,20 @@ ReadOnlyWaveFileModel::isReady(int *completion) const
         }
         if (*completion != 0 &&
             *completion != 100 &&
-            prevCompletion != 0 &&
-            prevCompletion > *completion) {
+            m_prevCompletion != 0 &&
+            m_prevCompletion > *completion) {
             // just to avoid completion going backwards
-            *completion = prevCompletion;
+            *completion = m_prevCompletion;
         }
-        prevCompletion = *completion;
+        m_prevCompletion = *completion;
     }
+    
 #ifdef DEBUG_WAVE_FILE_MODEL
-    SVDEBUG << "ReadOnlyWaveFileModel::isReady(): ready = " << ready << ", completion = " << (completion ? *completion : -1) << endl;
+    if (completion) {
+        SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::isReady(): ready = " << ready << ", m_fillThread = " << m_fillThread << ", m_lastFillExtent = " << m_lastFillExtent << ", end frame = " << getEndFrame() << ", start frame = " << getStartFrame() << ", c = " << c << ", completion = " << *completion << endl;
+    } else {
+        SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::isReady(): ready = " << ready << ", m_fillThread = " << m_fillThread << ", m_lastFillExtent = " << m_lastFillExtent << ", end frame = " << getEndFrame() << ", start frame = " << getStartFrame() << ", c = " << c << ", completion not requested" << endl;
+    }
 #endif
     return ready;
 }
@@ -550,7 +568,7 @@ ReadOnlyWaveFileModel::fillCache()
     m_fillThread->start();
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-    SVDEBUG << "ReadOnlyWaveFileModel::fillCache: started fill thread" << endl;
+    SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillCache: started fill thread" << endl;
 #endif
 }   
 
@@ -560,7 +578,7 @@ ReadOnlyWaveFileModel::fillTimerTimedOut()
     if (m_fillThread) {
         sv_frame_t fillExtent = m_fillThread->getFillExtent();
 #ifdef DEBUG_WAVE_FILE_MODEL
-        SVDEBUG << "ReadOnlyWaveFileModel::fillTimerTimedOut: extent = " << fillExtent << endl;
+        SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
         if (fillExtent > m_lastFillExtent) {
             emit modelChangedWithin(m_lastFillExtent, fillExtent);
@@ -568,7 +586,7 @@ ReadOnlyWaveFileModel::fillTimerTimedOut()
         }
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
-        SVDEBUG << "ReadOnlyWaveFileModel::fillTimerTimedOut: no thread" << endl;
+        SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: no thread" << endl;
 #endif
         emit modelChanged();
     }
@@ -582,15 +600,17 @@ ReadOnlyWaveFileModel::cacheFilled()
     m_fillThread = 0;
     delete m_updateTimer;
     m_updateTimer = 0;
+    auto prevFillExtent = m_lastFillExtent;
+    m_lastFillExtent = getEndFrame();
     m_mutex.unlock();
-    if (getEndFrame() > m_lastFillExtent) {
-        emit modelChangedWithin(m_lastFillExtent, getEndFrame());
+#ifdef DEBUG_WAVE_FILE_MODEL
+    SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::cacheFilled, about to emit things" << endl;
+#endif
+    if (getEndFrame() > prevFillExtent) {
+        emit modelChangedWithin(prevFillExtent, getEndFrame());
     }
     emit modelChanged();
     emit ready();
-#ifdef DEBUG_WAVE_FILE_MODEL
-    SVDEBUG << "ReadOnlyWaveFileModel::cacheFilled" << endl;
-#endif
 }
 
 void
@@ -613,7 +633,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
     if (updating) {
         while (channels == 0 && !m_model.m_exiting) {
 #ifdef DEBUG_WAVE_FILE_MODEL
-            cerr << "ReadOnlyWaveFileModel::fill: Waiting for channels..." << endl;
+            cerr << "ReadOnlyWaveFileModel(" << objectName() << ")::fill: Waiting for channels..." << endl;
 #endif
             sleep(1);
             channels = m_model.getChannelCount();
@@ -642,7 +662,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
             m_model.m_mutex.unlock();
 
 #ifdef DEBUG_WAVE_FILE_MODEL
-            cerr << "ReadOnlyWaveFileModel::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
+            SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.objectName() << ")::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
 #endif
 
             if (updating && (frame + readBlockSize > m_frameCount)) {
@@ -735,7 +755,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
 
 #ifdef DEBUG_WAVE_FILE_MODEL        
     for (int cacheType = 0; cacheType < 2; ++cacheType) {
-        cerr << "Cache type " << cacheType << " now contains " << m_model.m_cache[cacheType].size() << " ranges" << endl;
+        SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.objectName() << "): Cache type " << cacheType << " now contains " << m_model.m_cache[cacheType].size() << " ranges" << endl;
     }
 #endif
 }

@@ -131,6 +131,7 @@ protected:
     RangeCacheFillThread *m_fillThread;
     QTimer *m_updateTimer;
     sv_frame_t m_lastFillExtent;
+    mutable int m_prevCompletion;
     bool m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 
