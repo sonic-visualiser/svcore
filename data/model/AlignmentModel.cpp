@@ -381,6 +381,7 @@ AlignmentModel::setPath(PathModel *path)
     if (m_path) m_path->aboutToDelete();
     delete m_path;
     m_path = path;
+    m_pathComplete = true;
 #ifdef DEBUG_ALIGNMENT_MODEL
     cerr << "AlignmentModel::setPath: path = " << m_path << endl;
 #endif
