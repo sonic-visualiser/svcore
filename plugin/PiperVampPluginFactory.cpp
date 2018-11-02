@@ -58,18 +58,29 @@ PiperVampPluginFactory::PiperVampPluginFactory() :
     m_logger(new Logger)
 {
     QString serverName = "piper-vamp-simple-server";
+    float minimumVersion = 2.0;
 
     HelperExecPath hep(HelperExecPath::AllInstalled);
-    m_servers = hep.getHelperExecutables(serverName);
 
-    for (auto n: m_servers) {
+    auto servers = hep.getHelperExecutables(serverName);
+
+    for (auto n: servers) {
         SVDEBUG << "NOTE: PiperVampPluginFactory: Found server: "
                 << n.executable << endl;
+        if (serverMeetsMinimumVersion(n, minimumVersion)) {
+            m_servers.push_back(n);
+        } else {
+            SVCERR << "WARNING: PiperVampPluginFactory: Server at "
+                   << n.executable
+                   << " does not meet minimum version requirement (version >= "
+                   << minimumVersion << ")" << endl;
+        }
     }
     
     if (m_servers.empty()) {
         SVDEBUG << "NOTE: No Piper Vamp servers found in installation;"
-                << " found none of the following:" << endl;
+                << " the following paths are either absent or fail "
+                << "minimum-version check:" << endl;
         for (auto d: hep.getHelperCandidatePaths(serverName)) {
             SVDEBUG << "NOTE: " << d << endl;
         }
@@ -79,6 +90,55 @@ PiperVampPluginFactory::PiperVampPluginFactory() :
 PiperVampPluginFactory::~PiperVampPluginFactory()
 {
     delete m_logger;
+}
+
+bool
+PiperVampPluginFactory::serverMeetsMinimumVersion(const HelperExecPath::HelperExec &server,
+                                                  float minimumVersion)
+{
+    QProcess process;
+    QString executable = server.executable;
+    process.setReadChannel(QProcess::StandardOutput);
+    process.setProcessChannelMode(QProcess::ForwardedErrorChannel);
+    process.start(executable, { "--version" });
+
+    if (!process.waitForStarted()) {
+        QProcess::ProcessError err = process.error();
+        if (err == QProcess::FailedToStart) {
+            SVCERR << "WARNING: Unable to start server " << executable
+                   << " for version check" << endl;
+        } else if (err == QProcess::Crashed) {
+            SVCERR << "WARNING: Server " << executable
+                   << " crashed on version check" << endl;
+        } else {
+            SVCERR << "WARNING: Server " << executable
+                   << " failed on version check with error code "
+                   << err << endl;
+        }
+        return false;
+    }
+    process.waitForFinished();
+
+    QByteArray output = process.readAllStandardOutput();
+    while (output.endsWith('\n') || output.endsWith('\r')) {
+        output.chop(1);
+    }
+
+    QString outputString(output);
+    bool ok = false;
+    float version = outputString.toFloat(&ok);
+    if (!ok) {
+        SVCERR << "WARNING: Failed to convert server version response \""
+               << outputString << "\" into one- or two-part version number"
+               << endl;
+    }
+
+    SVDEBUG << "Server " << executable << " reports version number "
+            << version << endl;
+
+    float eps = 1e-6;
+    return (version >= minimumVersion ||
+            fabsf(version - minimumVersion) < eps); // arf
 }
 
 vector<QString>

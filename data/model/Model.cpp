@@ -161,14 +161,15 @@ Model::alignFromReference(sv_frame_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-//    SVDEBUG << "Model::getAlignmentCompletion" << endl;
+//    SVDEBUG << "Model::getAlignmentCompletion: m_alignment = "
+//            << m_alignment << endl;
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
         else return 100;
     }
     int completion = 0;
     (void)m_alignment->isReady(&completion);
-//    cerr << " -> " << completion << endl;
+//    SVDEBUG << " -> " << completion << endl;
     return completion;
 }
 
