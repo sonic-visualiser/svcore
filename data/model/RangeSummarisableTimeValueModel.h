@@ -19,7 +19,6 @@
 #include <QObject>
 
 #include "DenseTimeValueModel.h"
-#include "base/ZoomConstraint.h"
 
 #include <stdint.h>
 
