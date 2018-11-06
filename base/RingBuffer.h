@@ -18,12 +18,14 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _RINGBUFFER_H_
-#define _RINGBUFFER_H_
+#ifndef SV_RINGBUFFER_H
+#define SV_RINGBUFFER_H
 
 #include <sys/types.h>
 
 #include "system/System.h"
+
+#include <bqvec/Barrier.h>
 
 #include <cstring> // memcpy, memset &c
 
@@ -339,7 +341,7 @@ RingBuffer<T, N>::read(T *destination, int n, int R)
         memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
     }
 
-    MBARRIER();
+    BQ_MBARRIER();
     m_readers[R] = (m_readers[R] + n) % m_size;
 
 #ifdef DEBUG_RINGBUFFER
@@ -382,7 +384,7 @@ RingBuffer<T, N>::readAdding(T *destination, int n, int R)
         }
     }
 
-    MBARRIER();
+    BQ_MBARRIER();
     m_readers[R] = (m_readers[R] + n) % m_size;
     return n;
 }
@@ -405,7 +407,7 @@ RingBuffer<T, N>::readOne(int R)
         return t;
     }
     T value = m_buffer[m_readers[R]];
-    MBARRIER();
+    BQ_MBARRIER();
     if (++m_readers[R] == m_size) m_readers[R] = 0;
     return value;
 }
@@ -512,7 +514,7 @@ RingBuffer<T, N>::write(const T *source, int n)
         memcpy(m_buffer, source + here, (n - here) * sizeof(T));
     }
 
-    MBARRIER();
+    BQ_MBARRIER();
     m_writer = (m_writer + n) % m_size;
 
 #ifdef DEBUG_RINGBUFFER
@@ -548,7 +550,7 @@ RingBuffer<T, N>::zero(int n)
         memset(m_buffer, 0, (n - here) * sizeof(T));
     }
     
-    MBARRIER();
+    BQ_MBARRIER();
     m_writer = (m_writer + n) % m_size;
     return n;
 }

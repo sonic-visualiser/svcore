@@ -90,6 +90,7 @@ SVCORE_HEADERS = \
            data/model/PowerOfTwoZoomConstraint.h \
            data/model/RangeSummarisableTimeValueModel.h \
            data/model/RegionModel.h \
+           data/model/RelativelyFineZoomConstraint.h \
            data/model/SparseModel.h \
            data/model/SparseOneDimensionalModel.h \
            data/model/SparseTimeValueModel.h \
@@ -212,6 +213,7 @@ SVCORE_SOURCES = \
            data/model/PowerOfSqrtTwoZoomConstraint.cpp \
            data/model/PowerOfTwoZoomConstraint.cpp \
            data/model/RangeSummarisableTimeValueModel.cpp \
+           data/model/RelativelyFineZoomConstraint.cpp \
            data/model/WaveformOversampler.cpp \
            data/model/WaveFileModel.cpp \
            data/model/ReadOnlyWaveFileModel.cpp \

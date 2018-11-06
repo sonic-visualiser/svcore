@@ -20,6 +20,7 @@
 #include <QDir>
 #include <QUrl>
 #include <QCoreApplication>
+#include <QDateTime>
 
 #include <stdexcept>
 
@@ -82,8 +83,9 @@ SVDebug::SVDebug() :
                              << "Failed to open debug log file "
                              << fileName << " for writing";
     } else {
-//        cerr << m_prefix << ": Log file is " << fileName << endl;
         m_ok = true;
+        (*this) << "Debug log started at "
+                << QDateTime::currentDateTime().toString() << endl;
     }
 }
 

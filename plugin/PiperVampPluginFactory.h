@@ -59,6 +59,8 @@ protected:
     std::map<QString, piper_vamp::PluginStaticData> m_pluginData; // identifier -> data
     std::map<QString, QString> m_taxonomy; // identifier -> category string
 
+    bool serverMeetsMinimumVersion(const HelperExecPath::HelperExec &server,
+                                   float minimumVersion);
     void populate(QString &errorMessage);
     void populateFrom(const HelperExecPath::HelperExec &, QString &errorMessage);
 

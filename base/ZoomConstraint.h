@@ -54,6 +54,10 @@ public:
                                           RoundingDirection = RoundNearest)
         const
     {
+        // canonicalise
+        if (requestedZoomLevel.level == 1) {
+            requestedZoomLevel.zone = ZoomLevel::FramesPerPixel;
+        }
         if (getMaxZoomLevel() < requestedZoomLevel) return getMaxZoomLevel();
 	else return requestedZoomLevel;
     }

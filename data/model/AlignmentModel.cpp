@@ -101,10 +101,16 @@ AlignmentModel::isReady(int *completion) const
 {
     if (!m_pathBegun && m_rawPath) {
         if (completion) *completion = 0;
+#ifdef DEBUG_ALIGNMENT_MODEL
+        SVDEBUG << "AlignmentModel::isReady: path not begun" << endl;
+#endif
         return false;
     }
     if (m_pathComplete) {
         if (completion) *completion = 100;
+#ifdef DEBUG_ALIGNMENT_MODEL
+        SVDEBUG << "AlignmentModel::isReady: path complete" << endl;
+#endif
         return true;
     }
     if (!m_rawPath) {
@@ -112,6 +118,9 @@ AlignmentModel::isReady(int *completion) const
         // m_pathComplete true above) or else no alignment has been
         // set at all yet (this case)
         if (completion) *completion = 0;
+#ifdef DEBUG_ALIGNMENT_MODEL
+        SVDEBUG << "AlignmentModel::isReady: no raw path" << endl;
+#endif
         return false;
     }
     return m_rawPath->isReady(completion);
@@ -381,6 +390,7 @@ AlignmentModel::setPath(PathModel *path)
     if (m_path) m_path->aboutToDelete();
     delete m_path;
     m_path = path;
+    m_pathComplete = true;
 #ifdef DEBUG_ALIGNMENT_MODEL
     cerr << "AlignmentModel::setPath: path = " << m_path << endl;
 #endif

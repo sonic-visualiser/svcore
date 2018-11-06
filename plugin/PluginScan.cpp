@@ -190,7 +190,7 @@ PluginScan::formatFailureReport(QString tag,
     
     os << "<ul>";
     for (auto f: failures) {
-        os << "<li>" + f.library;
+        os << "<li><code>" + f.library + "</code>";
 
         SVDEBUG << "PluginScan::formatFailureReport: tag is \"" << tag
                 << "\", failure code is " << int(f.code) << ", message is \""
@@ -223,6 +223,11 @@ PluginScan::formatFailureReport(QString tag,
         case PluginCheckCode::FAIL_NOT_LOADABLE:
             userMessage = QObject::tr
                 ("Library cannot be loaded: %1").arg(userMessage);
+            break;
+
+        case PluginCheckCode::FAIL_FORBIDDEN:
+            userMessage = QObject::tr
+                ("Permission to load library was refused");
             break;
 
         case PluginCheckCode::FAIL_DESCRIPTOR_MISSING:
@@ -298,8 +303,7 @@ PluginScan::getStartupFailureReport() const
         return report;
     }
 
-    return QObject::tr("<b>Failed to load plugins</b>"
-                       "<p>Failed to load one or more plugin libraries:</p>")
+    return QObject::tr("<p>Failed to load one or more plugin libraries:</p>")
         + report
         + QObject::tr("<p>These plugins may be incompatible with the system, "
                       "and will be ignored during this run of %1.</p>")
