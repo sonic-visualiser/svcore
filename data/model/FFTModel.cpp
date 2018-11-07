@@ -126,7 +126,9 @@ FFTModel::getPhases(int x) const
 float
 FFTModel::getMagnitudeAt(int x, int y) const
 {
-    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) {
+        return 0.f;
+    }
     auto col = getFFTColumn(x);
     return abs(col[y]);
 }
@@ -318,7 +320,7 @@ FFTModel::getFFTColumn(int n) const
     // spectrograms where values from two consecutive columns are
     // needed at once. This cache gets essentially no hits when
     // scrolling through a magnitude spectrogram, but 95%+ hits with a
-    // peak-frequency spectrogram.
+    // peak-frequency spectrogram or spectrum.
     for (const auto &incache : m_cached) {
         if (incache.n == n) {
             inSmallCache.hit();
