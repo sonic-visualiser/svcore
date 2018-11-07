@@ -136,7 +136,7 @@ PiperVampPluginFactory::serverMeetsMinimumVersion(const HelperExecPath::HelperEx
     SVDEBUG << "Server " << executable << " reports version number "
             << version << endl;
 
-    float eps = 1e-6;
+    float eps = 1e-6f;
     return (version >= minimumVersion ||
             fabsf(version - minimumVersion) < eps); // arf
 }
