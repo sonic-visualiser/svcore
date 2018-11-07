@@ -21,6 +21,8 @@
 /**
  * Profile class for counting cache hits and the like.
  */
+#ifndef NO_HIT_COUNTS
+
 class HitCount
 {
 public:
@@ -32,7 +34,6 @@ public:
     { }
     
     ~HitCount() {
-#ifndef NO_HIT_COUNTS
         using namespace std;
         int total = m_hit + m_partial + m_miss;
         cerr << "Hit count: " << m_name << ": ";
@@ -53,7 +54,6 @@ public:
             }
         }
         cerr << endl;
-#endif
     }
 
     void hit() { ++m_hit; }
@@ -66,5 +66,19 @@ private:
     int m_partial;
     int m_miss;
 };
+
+#else // NO_HIT_COUNTS
+
+class HitCount
+{
+public:
+    HitCount(std::string) {}
+
+    void hit() {}
+    void partial() {}
+    void miss() {}
+};
+
+#endif
 
 #endif
