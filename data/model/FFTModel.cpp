@@ -330,7 +330,7 @@ FFTModel::getFFTColumn(int n) const
     Profiler profiler("FFTModel::getFFTColumn (cache miss)");
     
     auto samples = getSourceSamples(n);
-    m_windower.cut(samples.data());
+    m_windower.cut(samples.data() + (m_fftSize - m_windowSize) / 2);
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
     cvec &col = m_cached[m_cacheWriteIndex].col;
