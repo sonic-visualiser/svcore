@@ -19,6 +19,7 @@
 #include "TestOurRealTime.h"
 #include "TestVampRealTime.h"
 #include "TestColumnOp.h"
+#include "TestMovingMedian.h"
 
 #include <QtTest>
 
@@ -69,6 +70,11 @@ int main(int argc, char *argv[])
     }
     {
         TestScaleTickIntervals t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+    {
+        TestMovingMedian t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }

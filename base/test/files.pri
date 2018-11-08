@@ -1,9 +1,10 @@
 TEST_HEADERS = \
 	     TestColumnOp.h \
 	     TestLogRange.h \
-	     TestRangeMapper.h \
+	     TestMovingMedian.h \
 	     TestOurRealTime.h \
 	     TestPitch.h \
+	     TestRangeMapper.h \
 	     TestScaleTickIntervals.h \
 	     TestStringBits.h \
 	     TestVampRealTime.h

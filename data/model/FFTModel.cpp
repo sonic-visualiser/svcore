@@ -20,6 +20,7 @@
 #include "base/Pitch.h"
 #include "base/HitCount.h"
 #include "base/Debug.h"
+#include "base/MovingMedian.h"
 
 #include <algorithm>
 
@@ -429,12 +430,13 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
     sv_samplerate_t sampleRate = getSampleRate();
 
-    deque<float> window;
     vector<int> inrange;
     float dist = 0.5;
 
     int medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin, dist);
     int halfWin = medianWinSize/2;
+
+    MovingMedian<float> window(medianWinSize);
 
     int binmin;
     if (ymin > halfWin) binmin = ymin - halfWin;
@@ -450,27 +452,21 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
         float value = values[bin];
 
-        window.push_back(value);
-
         // so-called median will actually be the dist*100'th percentile
         medianWinSize = getPeakPickWindowSize(type, sampleRate, bin, dist);
-
         halfWin = medianWinSize/2;
 
-        while ((int)window.size() > medianWinSize) {
-            window.pop_front();
-        }
-
-        int actualSize = int(window.size());
+        int actualSize = std::min(medianWinSize, bin - binmin + 1);
+        window.resize(actualSize);
+        window.setPercentile(dist * 100.0);
+        window.push(value);
 
         if (type == MajorPitchAdaptivePeaks) {
             if (ymax + halfWin < nv) binmax = ymax + halfWin;
             else binmax = nv - 1;
         }
 
-        vector<float> sorted(window.begin(), window.end());
-        sort(sorted.begin(), sorted.end());
-        float median = sorted[int(float(sorted.size()) * dist)];
+        float median = window.get();
 
         int centrebin = 0;
         if (bin > actualSize/2) centrebin = bin - actualSize/2;
