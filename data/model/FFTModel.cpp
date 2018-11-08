@@ -454,6 +454,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
         // so-called median will actually be the dist*100'th percentile
         medianWinSize = getPeakPickWindowSize(type, sampleRate, bin, dist);
+
         halfWin = medianWinSize/2;
 
         while ((int)window.size() > medianWinSize) {
@@ -467,7 +468,7 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
             else binmax = nv - 1;
         }
 
-        deque<float> sorted(window);
+        vector<float> sorted(window.begin(), window.end());
         sort(sorted.begin(), sorted.end());
         float median = sorted[int(float(sorted.size()) * dist)];
 
