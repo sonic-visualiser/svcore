@@ -33,18 +33,20 @@ class TestMovingMedian : public QObject
     void checkExpected(const vector<T> &output,
                        const vector<T> &expected) {
         if (output.size() != expected.size()) {
-            cerr << "ERROR: output array size " << output.size()
-                 << " differs from expected size " << expected.size() << endl;
+            std::cerr << "ERROR: output array size " << output.size()
+                      << " differs from expected size " << expected.size()
+                      << std::endl;
         }
         for (int i = 0; i < int(output.size()); ++i) {
             if (output[i] != expected[i]) {
-                cerr << "ERROR: Value at index " << i
-                     << " in output array differs from expected" << endl;
-                cerr << "Output:   ";
-                for (auto v: output) cerr << v << " ";
-                cerr << "\nExpected: ";
-                for (auto v: expected) cerr << v << " ";
-                cerr << endl;
+                std::cerr << "ERROR: Value at index " << i
+                          << " in output array differs from expected"
+                          << std::endl;
+                std::cerr << "Output:   ";
+                for (auto v: output) std::cerr << v << " ";
+                std::cerr << "\nExpected: ";
+                for (auto v: expected) std::cerr << v << " ";
+                std::cerr << std::endl;
                 break;
             }
         }
