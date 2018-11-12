@@ -389,7 +389,7 @@ FFTModel::PeakLocationSet
 FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeaks");
-
+    
     FFTModel::PeakLocationSet peaks;
     if (!isOK()) return peaks;
 
@@ -518,10 +518,19 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
 
     int hibin = int(lrint((hifreq * m_fftSize) / sampleRate));
     int medianWinSize = hibin - bin;
-    if (medianWinSize < 3) medianWinSize = 3;
+    if (medianWinSize < 3) {
+        medianWinSize = 3;
+    }
+    if (medianWinSize > 20) {
+        medianWinSize = (1 + medianWinSize / 10) * 10;
+    }
+    if (medianWinSize > 500) {
+        medianWinSize = 500;
+    }
 
     percentile = 0.5f + float(binfreq / sampleRate);
-
+    if (percentile > 0.9f) percentile = 0.9f;
+    
     return medianWinSize;
 }
 
