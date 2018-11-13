@@ -156,7 +156,7 @@ private:
     mutable breakfastquay::FFT m_fft;
     
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
-                              int bin, float &percentile) const;
+                              int bin, double &dist) const;
 
     std::pair<sv_frame_t, sv_frame_t> getSourceSampleRange(int column) const {
         sv_frame_t startFrame = m_windowIncrement * sv_frame_t(column);
