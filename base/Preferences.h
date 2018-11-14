@@ -37,9 +37,7 @@ public:
 
     enum SpectrogramSmoothing {
         NoSpectrogramSmoothing,
-        SpectrogramInterpolated,
-        SpectrogramZeroPadded,
-        SpectrogramZeroPaddedAndInterpolated
+        SpectrogramInterpolated
     };
 
     enum SpectrogramXSmoothing {

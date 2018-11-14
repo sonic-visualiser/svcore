@@ -241,7 +241,7 @@ Preferences::getPropertyRangeAndValue(const PropertyName &name,
 {
     if (name == "Spectrogram Y Smoothing") {
         if (min) *min = 0;
-        if (max) *max = 3;
+        if (max) *max = 1;
         if (deflt) *deflt = int(SpectrogramInterpolated);
         return int(m_spectrogramSmoothing);
     }
@@ -353,8 +353,6 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         switch (value) {
         case NoSpectrogramSmoothing: return tr("None");
         case SpectrogramInterpolated: return tr("Linear interpolation");
-        case SpectrogramZeroPadded: return tr("4 x Oversampling");
-        case SpectrogramZeroPaddedAndInterpolated: return tr("4 x Oversampling with interpolation");
         }
     }
     if (name == "Spectrogram X Smoothing") {
