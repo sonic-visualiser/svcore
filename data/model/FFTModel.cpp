@@ -20,6 +20,7 @@
 #include "base/Pitch.h"
 #include "base/HitCount.h"
 #include "base/Debug.h"
+#include "base/MovingMedian.h"
 
 #include <algorithm>
 
@@ -388,7 +389,7 @@ FFTModel::PeakLocationSet
 FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeaks");
-
+    
     FFTModel::PeakLocationSet peaks;
     if (!isOK()) return peaks;
 
@@ -429,12 +430,13 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
     sv_samplerate_t sampleRate = getSampleRate();
 
-    deque<float> window;
     vector<int> inrange;
-    float dist = 0.5;
+    double dist = 0.5;
 
     int medianWinSize = getPeakPickWindowSize(type, sampleRate, ymin, dist);
     int halfWin = medianWinSize/2;
+
+    MovingMedian<float> window(medianWinSize);
 
     int binmin;
     if (ymin > halfWin) binmin = ymin - halfWin;
@@ -450,26 +452,21 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
         float value = values[bin];
 
-        window.push_back(value);
-
         // so-called median will actually be the dist*100'th percentile
         medianWinSize = getPeakPickWindowSize(type, sampleRate, bin, dist);
         halfWin = medianWinSize/2;
 
-        while ((int)window.size() > medianWinSize) {
-            window.pop_front();
-        }
-
-        int actualSize = int(window.size());
+        int actualSize = std::min(medianWinSize, bin - binmin + 1);
+        window.resize(actualSize);
+        window.setPercentile(dist * 100.0);
+        window.push(value);
 
         if (type == MajorPitchAdaptivePeaks) {
             if (ymax + halfWin < nv) binmax = ymax + halfWin;
             else binmax = nv - 1;
         }
 
-        deque<float> sorted(window);
-        sort(sorted.begin(), sorted.end());
-        float median = sorted[int(float(sorted.size()) * dist)];
+        float median = window.get();
 
         int centrebin = 0;
         if (bin > actualSize/2) centrebin = bin - actualSize/2;
@@ -510,9 +507,9 @@ FFTModel::getPeaks(PeakPickType type, int x, int ymin, int ymax) const
 
 int
 FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
-                                int bin, float &percentile) const
+                                int bin, double &dist) const
 {
-    percentile = 0.5;
+    dist = 0.5; // dist is percentile / 100.0
     if (type == MajorPeaks) return 10;
     if (bin == 0) return 3;
 
@@ -521,10 +518,34 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
 
     int hibin = int(lrint((hifreq * m_fftSize) / sampleRate));
     int medianWinSize = hibin - bin;
-    if (medianWinSize < 3) medianWinSize = 3;
 
-    percentile = 0.5f + float(binfreq / sampleRate);
+    if (medianWinSize < 3) {
+        medianWinSize = 3;
+    }
 
+    // We want to avoid the median window size changing too often, as
+    // it requires a reallocation. So snap to a nearby round number.
+    
+    if (medianWinSize > 20) {
+        medianWinSize = (1 + medianWinSize / 10) * 10;
+    }
+    if (medianWinSize > 200) {
+        medianWinSize = (1 + medianWinSize / 100) * 100;
+    }
+    if (medianWinSize > 2000) {
+        medianWinSize = (1 + medianWinSize / 1000) * 1000;
+    }
+    if (medianWinSize > 20000) {
+        medianWinSize = 20000;
+    }
+
+    if (medianWinSize < 100) {
+        dist = 1.0 - (4.0 / medianWinSize);
+    } else {
+        dist = 1.0 - (8.0 / medianWinSize);
+    }        
+    if (dist < 0.5) dist = 0.5;
+    
     return medianWinSize;
 }
 

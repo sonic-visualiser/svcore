@@ -100,8 +100,7 @@ RealTime::fromXsdDuration(std::string xsdd)
     int year = 0, month = 0, day = 0, hour = 0, minute = 0;
     double second = 0.0;
 
-    char *loc = setlocale(LC_NUMERIC, 0);
-    (void)setlocale(LC_NUMERIC, "C"); // avoid strtod expecting ,-separator in DE
+    char *formerLoc = setlocale(LC_NUMERIC, "C"); // avoid strtod expecting ,-separator in DE
 
     int i = 0;
 
@@ -169,7 +168,7 @@ RealTime::fromXsdDuration(std::string xsdd)
 
     t = t + fromSeconds(second);
 
-    setlocale(LC_NUMERIC, loc);
+    setlocale(LC_NUMERIC, formerLoc);
     
     if (negative) {
         return -t;
