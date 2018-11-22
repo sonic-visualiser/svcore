@@ -31,7 +31,7 @@ class PluginScan::Logger
 #endif
 {
 protected:
-    void log(std::string message) {
+    void log(std::string message) override {
         SVDEBUG << "PluginScan: " << message << endl;
     }
 };

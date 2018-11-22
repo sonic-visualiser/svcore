@@ -44,7 +44,7 @@ public:
     PluginDeletionNotifyAdapter(Vamp::Plugin *plugin,
                                 NativeVampPluginFactory *factory) :
         PluginWrapper(plugin), m_factory(factory) { }
-    virtual ~PluginDeletionNotifyAdapter();
+    ~PluginDeletionNotifyAdapter() override;
 protected:
     NativeVampPluginFactory *m_factory;
 };
