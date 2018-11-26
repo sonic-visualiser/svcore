@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _IMAGE_MODEL_H_
-#define _IMAGE_MODEL_H_
+#ifndef SV_IMAGE_MODEL_H
+#define SV_IMAGE_MODEL_H
 
 #include "SparseModel.h"
 #include "base/XmlExportable.h"

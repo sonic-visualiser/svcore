@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _REAL_TIME_EFFECT_TRANSFORMER_H_
-#define _REAL_TIME_EFFECT_TRANSFORMER_H_
+#ifndef SV_REAL_TIME_EFFECT_TRANSFORMER_H
+#define SV_REAL_TIME_EFFECT_TRANSFORMER_H
 
 #include "ModelTransformer.h"
 #include "plugin/RealTimePluginInstance.h"

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H_
-#define _EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H_
+#ifndef SV_EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H
+#define SV_EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H
 
 #include "DenseThreeDimensionalModel.h"
 

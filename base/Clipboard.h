@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CLIPBOARD_H_
-#define _CLIPBOARD_H_
+#ifndef SV_CLIPBOARD_H
+#define SV_CLIPBOARD_H
 
 #include <QString>
 #include <vector>

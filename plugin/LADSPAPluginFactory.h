@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and Richard Bown.
 */
 
-#ifndef _LADSPA_PLUGIN_FACTORY_H_
-#define _LADSPA_PLUGIN_FACTORY_H_
+#ifndef SV_LADSPA_PLUGIN_FACTORY_H
+#define SV_LADSPA_PLUGIN_FACTORY_H
 
 #include "RealTimePluginFactory.h"
 #include "api/ladspa.h"

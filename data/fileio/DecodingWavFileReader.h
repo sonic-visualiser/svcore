@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DECODING_WAV_FILE_READER_H_
-#define _DECODING_WAV_FILE_READER_H_
+#ifndef SV_DECODING_WAV_FILE_READER_H
+#define SV_DECODING_WAV_FILE_READER_H
 
 #include "CodedAudioFileReader.h"
 

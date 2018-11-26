@@ -19,8 +19,8 @@
    This file copyright 2000-2006 Richard Bown and Chris Cannam.
 */
 
-#ifndef _MIDI_EVENT_H_
-#define _MIDI_EVENT_H_
+#ifndef SV_MIDI_EVENT_H
+#define SV_MIDI_EVENT_H
 
 #include <QString>
 #include <string>

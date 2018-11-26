@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MP3_FILE_READER_H_
-#define _MP3_FILE_READER_H_
+#ifndef SV_MP3_FILE_READER_H
+#define SV_MP3_FILE_READER_H
 
 #ifdef HAVE_MAD
 

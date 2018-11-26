@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RANGE_MAPPER_H_
-#define _RANGE_MAPPER_H_
+#ifndef SV_RANGE_MAPPER_H
+#define SV_RANGE_MAPPER_H
 
 #include <QString>
 

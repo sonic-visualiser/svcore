@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PATH_MODEL_H_
-#define _PATH_MODEL_H_
+#ifndef SV_PATH_MODEL_H
+#define SV_PATH_MODEL_H
 
 #include "Model.h"
 #include "SparseModel.h"

@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and Richard Bown.
 */
 
-#ifndef _LADSPAPLUGININSTANCE_H_
-#define _LADSPAPLUGININSTANCE_H_
+#ifndef SV_LADSPAPLUGININSTANCE_H
+#define SV_LADSPAPLUGININSTANCE_H
 
 #include <vector>
 #include <set>

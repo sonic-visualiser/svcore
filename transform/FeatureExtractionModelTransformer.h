@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FEATURE_EXTRACTION_MODEL_TRANSFORMER_H_
-#define _FEATURE_EXTRACTION_MODEL_TRANSFORMER_H_
+#ifndef SV_FEATURE_EXTRACTION_MODEL_TRANSFORMER_H
+#define SV_FEATURE_EXTRACTION_MODEL_TRANSFORMER_H
 
 #include "ModelTransformer.h"
 

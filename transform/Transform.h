@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TRANSFORM_H_
-#define _TRANSFORM_H_
+#ifndef SV_TRANSFORM_H
+#define SV_TRANSFORM_H
 
 #include "base/XmlExportable.h"
 #include "base/Window.h"

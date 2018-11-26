@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_TIME_VALUE_MODEL_H_
-#define _SPARSE_TIME_VALUE_MODEL_H_
+#ifndef SV_SPARSE_TIME_VALUE_MODEL_H
+#define SV_SPARSE_TIME_VALUE_MODEL_H
 
 #include "SparseValueModel.h"
 #include "base/PlayParameterRepository.h"

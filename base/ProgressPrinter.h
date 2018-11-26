@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PROGRESS_PRINTER_H_
-#define _PROGRESS_PRINTER_H_
+#ifndef SV_PROGRESS_PRINTER_H
+#define SV_PROGRESS_PRINTER_H
 
 #include "ProgressReporter.h"
 

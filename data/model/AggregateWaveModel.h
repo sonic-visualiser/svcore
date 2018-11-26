@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _AGGREGATE_WAVE_MODEL_H_
-#define _AGGREGATE_WAVE_MODEL_H_
+#ifndef SV_AGGREGATE_WAVE_MODEL_H
+#define SV_AGGREGATE_WAVE_MODEL_H
 
 #include "RangeSummarisableTimeValueModel.h"
 #include "PowerOfSqrtTwoZoomConstraint.h"

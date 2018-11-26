@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DENSE_THREE_DIMENSIONAL_MODEL_H_
-#define _DENSE_THREE_DIMENSIONAL_MODEL_H_
+#ifndef SV_DENSE_THREE_DIMENSIONAL_MODEL_H
+#define SV_DENSE_THREE_DIMENSIONAL_MODEL_H
 
 #include "Model.h"
 #include "TabularModel.h"

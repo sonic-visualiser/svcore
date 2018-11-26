@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FILE_SOURCE_H_
-#define _FILE_SOURCE_H_
+#ifndef SV_FILE_SOURCE_H
+#define SV_FILE_SOURCE_H
 
 #include <QUrl>
 #include <QMutex>

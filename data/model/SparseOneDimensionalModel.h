@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_ONE_DIMENSIONAL_MODEL_H_
-#define _SPARSE_ONE_DIMENSIONAL_MODEL_H_
+#ifndef SV_SPARSE_ONE_DIMENSIONAL_MODEL_H
+#define SV_SPARSE_ONE_DIMENSIONAL_MODEL_H
 
 #include "SparseModel.h"
 #include "NoteData.h"

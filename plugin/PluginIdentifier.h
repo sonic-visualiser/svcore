@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and QMUL.
 */
 
-#ifndef _PLUGIN_IDENTIFIER_H_
-#define _PLUGIN_IDENTIFIER_H_
+#ifndef SV_PLUGIN_IDENTIFIER_H
+#define SV_PLUGIN_IDENTIFIER_H
 
 #include <QString>
 

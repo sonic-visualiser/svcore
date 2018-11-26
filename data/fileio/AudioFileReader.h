@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _AUDIO_FILE_READER_H_
-#define _AUDIO_FILE_READER_H_
+#ifndef SV_AUDIO_FILE_READER_H
+#define SV_AUDIO_FILE_READER_H
 
 #include <QString>
 

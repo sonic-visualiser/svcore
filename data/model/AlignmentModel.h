@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _ALIGNMENT_MODEL_H_
-#define _ALIGNMENT_MODEL_H_
+#ifndef SV_ALIGNMENT_MODEL_H
+#define SV_ALIGNMENT_MODEL_H
 
 #include "Model.h"
 #include "PathModel.h"

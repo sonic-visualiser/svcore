@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_VALUE_MODEL_H_
-#define _SPARSE_VALUE_MODEL_H_
+#ifndef SV_SPARSE_VALUE_MODEL_H
+#define SV_SPARSE_VALUE_MODEL_H
 
 #include "SparseModel.h"
 #include "base/UnitDatabase.h"

@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _DSSI_PLUGIN_FACTORY_H_
-#define _DSSI_PLUGIN_FACTORY_H_
+#ifndef SV_DSSI_PLUGIN_FACTORY_H
+#define SV_DSSI_PLUGIN_FACTORY_H
 
 #define DSSI_API_LEVEL 2
 

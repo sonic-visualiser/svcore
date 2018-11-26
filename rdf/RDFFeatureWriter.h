@@ -17,8 +17,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RDF_FEATURE_WRITER_H_
-#define _RDF_FEATURE_WRITER_H_
+#ifndef SV_RDF_FEATURE_WRITER_H
+#define SV_RDF_FEATURE_WRITER_H
 
 #include <string>
 #include <map>

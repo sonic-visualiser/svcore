@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _REGION_MODEL_H_
-#define _REGION_MODEL_H_
+#ifndef SV_REGION_MODEL_H
+#define SV_REGION_MODEL_H
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"

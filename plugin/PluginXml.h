@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLUGIN_XML_H_
-#define _PLUGIN_XML_H_
+#ifndef SV_PLUGIN_XML_H
+#define SV_PLUGIN_XML_H
 
 #include "base/XmlExportable.h"
 #include <vamp-hostsdk/PluginBase.h>

@@ -17,8 +17,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FEATURE_WRITER_H_
-#define _CSV_FEATURE_WRITER_H_
+#ifndef SV_CSV_FEATURE_WRITER_H
+#define SV_CSV_FEATURE_WRITER_H
 
 #include <string>
 #include <map>

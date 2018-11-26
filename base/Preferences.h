@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PREFERENCES_H_
-#define _PREFERENCES_H_
+#ifndef SV_PREFERENCES_H
+#define SV_PREFERENCES_H
 
 #include "PropertyContainer.h"
 

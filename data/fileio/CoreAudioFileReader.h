@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _COREAUDIO_FILE_READER_H_
-#define _COREAUDIO_FILE_READER_H_
+#ifndef SV_COREAUDIO_FILE_READER_H
+#define SV_COREAUDIO_FILE_READER_H
 
 #ifdef HAVE_COREAUDIO
 

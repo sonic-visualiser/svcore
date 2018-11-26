@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TEXT_MODEL_H_
-#define _TEXT_MODEL_H_
+#ifndef SV_TEXT_MODEL_H
+#define SV_TEXT_MODEL_H
 
 #include "SparseModel.h"
 #include "base/XmlExportable.h"

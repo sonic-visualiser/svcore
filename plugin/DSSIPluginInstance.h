@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _DSSIPLUGININSTANCE_H_
-#define _DSSIPLUGININSTANCE_H_
+#ifndef SV_DSSIPLUGININSTANCE_H
+#define SV_DSSIPLUGININSTANCE_H
 
 #define DSSI_API_LEVEL 2
 

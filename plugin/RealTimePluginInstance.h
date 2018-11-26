@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _REALTIME_PLUGIN_INSTANCE_H_
-#define _REALTIME_PLUGIN_INSTANCE_H_
+#ifndef SV_REALTIME_PLUGIN_INSTANCE_H
+#define SV_REALTIME_PLUGIN_INSTANCE_H
 
 #include <vamp-hostsdk/PluginBase.h>
 

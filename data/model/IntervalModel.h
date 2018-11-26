@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _INTERVAL_MODEL_H_
-#define _INTERVAL_MODEL_H_
+#ifndef SV_INTERVAL_MODEL_H
+#define SV_INTERVAL_MODEL_H
 
 #include "SparseValueModel.h"
 #include "base/RealTime.h"

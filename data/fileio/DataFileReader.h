@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DATA_FILE_READER_H_
-#define _DATA_FILE_READER_H_
+#ifndef SV_DATA_FILE_READER_H
+#define SV_DATA_FILE_READER_H
 
 #include <QString>
 #include <QObject>
