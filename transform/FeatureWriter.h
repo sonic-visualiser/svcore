@@ -72,7 +72,7 @@ public:
             m_transformId(transformId)
         { }
         virtual ~FailedToOpenOutputStream() throw() { }
-        virtual const char *what() const throw() {
+        const char *what() const throw() override {
             return QString("Failed to open output stream for track id \"%1\", transform id \"%2\"")
                 .arg(m_trackId).arg(m_transformId).toLocal8Bit().data();
         }            

@@ -41,64 +41,64 @@ class DSSIPluginInstance : public RealTimePluginInstance
 public:
     virtual ~DSSIPluginInstance();
 
-    virtual bool isOK() const { return m_instanceHandle != 0; }
+    bool isOK() const override { return m_instanceHandle != 0; }
 
     int getClientId() const { return m_client; }
-    virtual QString getPluginIdentifier() const { return m_identifier; }
+    QString getPluginIdentifier() const override { return m_identifier; }
     int getPosition() const { return m_position; }
 
-    virtual std::string getIdentifier() const;
-    virtual std::string getName() const;
-    virtual std::string getDescription() const;
-    virtual std::string getMaker() const;
-    virtual int getPluginVersion() const;
-    virtual std::string getCopyright() const;
+    std::string getIdentifier() const override;
+    std::string getName() const override;
+    std::string getDescription() const override;
+    std::string getMaker() const override;
+    int getPluginVersion() const override;
+    std::string getCopyright() const override;
 
-    virtual void run(const RealTime &, int count = 0);
+    void run(const RealTime &, int count = 0) override;
 
-    virtual int getParameterCount() const;
-    virtual void setParameterValue(int parameter, float value);
-    virtual float getParameterValue(int parameter) const;
-    virtual float getParameterDefault(int parameter) const;
-    virtual int getParameterDisplayHint(int parameter) const;
+    int getParameterCount() const override;
+    void setParameterValue(int parameter, float value) override;
+    float getParameterValue(int parameter) const override;
+    float getParameterDefault(int parameter) const override;
+    int getParameterDisplayHint(int parameter) const override;
 
-    virtual ParameterList getParameterDescriptors() const;
-    virtual float getParameter(std::string) const;
-    virtual void setParameter(std::string, float);
+    ParameterList getParameterDescriptors() const override;
+    float getParameter(std::string) const override;
+    void setParameter(std::string, float) override;
 
-    virtual std::string configure(std::string key, std::string value);
-    virtual void sendEvent(const RealTime &eventTime,
-                           const void *event);
-    virtual void clearEvents();
+    std::string configure(std::string key, std::string value) override;
+    void sendEvent(const RealTime &eventTime,
+                           const void *event) override;
+    void clearEvents() override;
 
-    virtual int getBufferSize() const { return m_blockSize; }
-    virtual int getAudioInputCount() const { return (int)m_audioPortsIn.size(); }
-    virtual int getAudioOutputCount() const { return m_idealChannelCount; }
-    virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
-    virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
+    int getBufferSize() const override { return m_blockSize; }
+    int getAudioInputCount() const override { return (int)m_audioPortsIn.size(); }
+    int getAudioOutputCount() const override { return m_idealChannelCount; }
+    sample_t **getAudioInputBuffers() override { return m_inputBuffers; }
+    sample_t **getAudioOutputBuffers() override { return m_outputBuffers; }
 
-    virtual int getControlOutputCount() const { return (int)m_controlPortsOut.size(); }
-    virtual float getControlOutputValue(int n) const;
+    int getControlOutputCount() const override { return (int)m_controlPortsOut.size(); }
+    float getControlOutputValue(int n) const override;
 
-    virtual ProgramList getPrograms() const;
-    virtual std::string getCurrentProgram() const;
-    virtual std::string getProgram(int bank, int program) const;
+    ProgramList getPrograms() const override;
+    std::string getCurrentProgram() const override;
+    std::string getProgram(int bank, int program) const override;
     virtual int getProgram(std::string name) const;
-    virtual void selectProgram(std::string program);
+    void selectProgram(std::string program) override;
 
-    virtual bool isBypassed() const { return m_bypassed; }
-    virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
+    bool isBypassed() const override { return m_bypassed; }
+    void setBypassed(bool bypassed) override { m_bypassed = bypassed; }
 
-    virtual sv_frame_t getLatency();
+    sv_frame_t getLatency() override;
 
-    virtual void silence();
-    virtual void discardEvents();
-    virtual void setIdealChannelCount(int channels); // may re-instantiate
+    void silence() override;
+    void discardEvents() override;
+    void setIdealChannelCount(int channels) override; // may re-instantiate
 
     virtual bool isInGroup() const { return m_grouped; }
     virtual void detachFromGroup();
 
-    virtual std::string getType() const { return "DSSI Real-Time Plugin"; }
+    std::string getType() const override { return "DSSI Real-Time Plugin"; }
 
 protected:
     // To be constructed only by DSSIPluginFactory
@@ -209,7 +209,7 @@ protected:
             m_runFunction(runFunction),
             m_exiting(false) { }
 
-        virtual void run();
+        void run() override;
         void setExiting() { m_exiting = true; }
 
     protected:

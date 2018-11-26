@@ -33,7 +33,7 @@ class FileReadThread : public Thread
 public:
     FileReadThread();
 
-    virtual void run();
+    void run() override;
     virtual void finish();
 
     struct Request {

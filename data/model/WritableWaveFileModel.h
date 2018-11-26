@@ -138,8 +138,8 @@ public:
      */
     int getWriteProportion() const;
     
-    bool isOK() const;
-    bool isReady(int *) const;
+    bool isOK() const override;
+    bool isReady(int *) const override;
     
     /**
      * Return the generation completion percentage of this model. This
@@ -149,53 +149,53 @@ public:
      */
     virtual int getCompletion() const { return 100; }
 
-    const ZoomConstraint *getZoomConstraint() const {
+    const ZoomConstraint *getZoomConstraint() const override {
         static PowerOfSqrtTwoZoomConstraint zc;
         return &zc;
     }
 
-    sv_frame_t getFrameCount() const;
-    int getChannelCount() const { return m_channels; }
-    sv_samplerate_t getSampleRate() const { return m_sampleRate; }
-    sv_samplerate_t getNativeRate() const { return m_sampleRate; }
+    sv_frame_t getFrameCount() const override;
+    int getChannelCount() const override { return m_channels; }
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    sv_samplerate_t getNativeRate() const override { return m_sampleRate; }
 
-    QString getTitle() const {
+    QString getTitle() const override {
         if (m_model) return m_model->getTitle();
         else return "";
     } 
-    QString getMaker() const {
+    QString getMaker() const override {
         if (m_model) return m_model->getMaker();
         else return "";
     }
-    QString getLocation() const {
+    QString getLocation() const override {
         if (m_model) return m_model->getLocation();
         else return "";
     }
 
-    float getValueMinimum() const { return -1.0f; }
-    float getValueMaximum() const { return  1.0f; }
+    float getValueMinimum() const override { return -1.0f; }
+    float getValueMaximum() const override { return  1.0f; }
 
-    virtual sv_frame_t getStartFrame() const { return m_startFrame; }
-    virtual sv_frame_t getEndFrame() const { return m_startFrame + getFrameCount(); }
+    sv_frame_t getStartFrame() const override { return m_startFrame; }
+    sv_frame_t getEndFrame() const override { return m_startFrame + getFrameCount(); }
 
-    void setStartFrame(sv_frame_t startFrame);
+    void setStartFrame(sv_frame_t startFrame) override;
 
-    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual int getSummaryBlockSize(int desired) const;
+    int getSummaryBlockSize(int desired) const override;
 
-    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
-                              RangeBlock &ranges, int &blockSize) const;
+    void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
+                              RangeBlock &ranges, int &blockSize) const override;
 
-    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
+    Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    QString getTypeName() const { return tr("Writable Wave File"); }
+    QString getTypeName() const override { return tr("Writable Wave File"); }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 protected:
     ReadOnlyWaveFileModel *m_model;

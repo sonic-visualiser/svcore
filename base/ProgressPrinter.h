@@ -26,14 +26,14 @@ public:
     ProgressPrinter(QString message, QObject *parent = 0);
     virtual ~ProgressPrinter();
     
-    virtual bool isDefinite() const;
-    virtual void setDefinite(bool definite);
+    bool isDefinite() const override;
+    void setDefinite(bool definite) override;
 
-    virtual bool wasCancelled() const { return false; } // no mechanism
+    bool wasCancelled() const override { return false; } // no mechanism
 
 public slots:
-    virtual void setMessage(QString);
-    virtual void setProgress(int);
+    void setMessage(QString) override;
+    void setProgress(int) override;
     virtual void done();
 
 protected:

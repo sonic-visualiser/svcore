@@ -98,7 +98,7 @@ public:
 
     virtual int getSummaryBlockSize(int desired) const = 0;
 
-    QString getTypeName() const { return tr("Range-Summarisable Time-Value"); }
+    QString getTypeName() const override { return tr("Range-Summarisable Time-Value"); }
 };
 
 #endif

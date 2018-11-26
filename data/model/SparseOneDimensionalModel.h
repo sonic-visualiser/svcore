@@ -88,9 +88,9 @@ public:
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
-    virtual bool canPlay() const { return true; }
+    bool canPlay() const override { return true; }
 
-    virtual QString getDefaultPlayClipId() const
+    QString getDefaultPlayClipId() const override
     {
         return "tap";
     }
@@ -107,18 +107,18 @@ public:
         return -1;
     }
 
-    QString getTypeName() const { return tr("Sparse 1-D"); }
+    QString getTypeName() const override { return tr("Sparse 1-D"); }
 
     /**
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 3;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -128,7 +128,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 2) {
             return SparseModel<OneDimensionalPoint>::getData
@@ -144,7 +144,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 2) {
             return SparseModel<OneDimensionalPoint>::getSetDataCommand
@@ -168,12 +168,12 @@ public:
     }
 
 
-    virtual bool isColumnTimeValue(int column) const
+    bool isColumnTimeValue(int column) const override
     {
         return (column < 2); 
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 2) return SortAlphabetical;
         return SortNumeric;
@@ -183,11 +183,11 @@ public:
      * NoteExportable methods.
      */
 
-    NoteList getNotes() const {
+    NoteList getNotes() const override {
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const {
+    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const override {
         
         PointList points = getPoints(startFrame, endFrame);
         NoteList notes;

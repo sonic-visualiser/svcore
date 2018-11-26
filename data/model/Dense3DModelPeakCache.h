@@ -28,23 +28,23 @@ public:
                           int columnsPerPeak);
     ~Dense3DModelPeakCache();
 
-    virtual bool isOK() const {
+    bool isOK() const override {
         return m_source && m_source->isOK(); 
     }
 
-    virtual sv_samplerate_t getSampleRate() const {
+    sv_samplerate_t getSampleRate() const override {
         return m_source->getSampleRate();
     }
 
-    virtual sv_frame_t getStartFrame() const {
+    sv_frame_t getStartFrame() const override {
         return m_source->getStartFrame();
     }
 
-    virtual sv_frame_t getEndFrame() const {
+    sv_frame_t getEndFrame() const override {
         return m_source->getEndFrame();
     }
 
-    virtual int getResolution() const {
+    int getResolution() const override {
         return m_source->getResolution() * m_columnsPerPeak;
     }
 
@@ -52,7 +52,7 @@ public:
         return m_columnsPerPeak;
     }
     
-    virtual int getWidth() const {
+    int getWidth() const override {
         int sourceWidth = m_source->getWidth();
         if ((sourceWidth % m_columnsPerPeak) == 0) {
             return sourceWidth / m_columnsPerPeak;
@@ -61,15 +61,15 @@ public:
         }
     }
 
-    virtual int getHeight() const {
+    int getHeight() const override {
         return m_source->getHeight();
     }
 
-    virtual float getMinimumLevel() const {
+    float getMinimumLevel() const override {
         return m_source->getMinimumLevel();
     }
 
-    virtual float getMaximumLevel() const {
+    float getMaximumLevel() const override {
         return m_source->getMaximumLevel();
     }
 
@@ -79,21 +79,21 @@ public:
      * columns (col * getColumnsPerPeak()) to ((col+1) *
      * getColumnsPerPeak() - 1) inclusive.
      */
-    virtual Column getColumn(int col) const;
+    Column getColumn(int col) const override;
 
-    virtual float getValueAt(int col, int n) const;
+    float getValueAt(int col, int n) const override;
 
-    virtual QString getBinName(int n) const {
+    QString getBinName(int n) const override {
         return m_source->getBinName(n);
     }
 
-    virtual bool shouldUseLogValueScale() const {
+    bool shouldUseLogValueScale() const override {
         return m_source->shouldUseLogValueScale();
     }
 
-    QString getTypeName() const { return tr("Dense 3-D Peak Cache"); }
+    QString getTypeName() const override { return tr("Dense 3-D Peak Cache"); }
 
-    virtual int getCompletion() const {
+    int getCompletion() const override {
         return m_source->getCompletion();
     }
 

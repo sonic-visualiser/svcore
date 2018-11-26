@@ -226,7 +226,7 @@ public:
     }
     virtual ~MIDIException() throw() { }
 
-    virtual const char *what() const throw() {
+    const char *what() const throw() override {
         return m_message.toLocal8Bit().data();
     }
 

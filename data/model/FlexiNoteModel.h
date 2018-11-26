@@ -130,21 +130,21 @@ public:
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
-    float getValueMinimum() const { return 33; }
-    float getValueMaximum() const { return 88; }
+    float getValueMinimum() const override { return 33; }
+    float getValueMaximum() const override { return 88; }
 
-    QString getTypeName() const { return tr("FlexiNote"); }
+    QString getTypeName() const override { return tr("FlexiNote"); }
 
-    virtual bool canPlay() const { return true; }
+    bool canPlay() const override { return true; }
 
-    virtual QString getDefaultPlayClipId() const
+    QString getDefaultPlayClipId() const override
     {
         return "elecpiano";
     }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         std::cerr << "FlexiNoteModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
@@ -160,12 +160,12 @@ public:
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 6;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -178,7 +178,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 4) {
             return IntervalModel<FlexiNote>::getData(row, column, role);
@@ -194,7 +194,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 4) {
             return IntervalModel<FlexiNote>::getSetDataCommand
@@ -218,7 +218,7 @@ public:
         return command->finish();
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 5) return SortAlphabetical;
         return SortNumeric;
@@ -229,12 +229,12 @@ public:
      */
 
     NoteList getNotes() const 
-    {
+    override {
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
     NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const 
-    {    
+    override {    
             PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
         for (PointList::iterator pli = points.begin(); pli != points.end(); ++pli) {

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _EXCEPTIONS_H_
-#define _EXCEPTIONS_H_
+#ifndef SV_EXCEPTIONS_H
+#define SV_EXCEPTIONS_H
 
 #include <exception>
 
@@ -27,7 +27,7 @@ class FileNotFound : virtual public std::exception
 public:
     FileNotFound(QString file) throw();
     virtual ~FileNotFound() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
     
 protected:
     QString m_file;
@@ -38,7 +38,7 @@ class FailedToOpenFile : virtual public std::exception
 public:
     FailedToOpenFile(QString file) throw();
     virtual ~FailedToOpenFile() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
     
 protected:
     QString m_file;
@@ -49,7 +49,7 @@ class DirectoryCreationFailed : virtual public std::exception
 public:
     DirectoryCreationFailed(QString directory) throw();
     virtual ~DirectoryCreationFailed() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
     
 protected:
     QString m_directory;
@@ -60,7 +60,7 @@ class FileReadFailed : virtual public std::exception
 public:
     FileReadFailed(QString file) throw();
     virtual ~FileReadFailed() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
 
 protected:
     QString m_file;
@@ -71,7 +71,7 @@ class FileOperationFailed : virtual public std::exception
 public:
     FileOperationFailed(QString file, QString operation) throw();
     virtual ~FileOperationFailed() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
 
 protected:
     QString m_file;
@@ -85,7 +85,7 @@ public:
                           size_t required, size_t available) throw();
     InsufficientDiscSpace(QString directory) throw();
     virtual ~InsufficientDiscSpace() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
 
     QString getDirectory() const { return m_directory; }
     size_t getRequired() const { return m_required; }
@@ -102,7 +102,7 @@ class AllocationFailed : virtual public std::exception
 public:
     AllocationFailed(QString purpose) throw();
     virtual ~AllocationFailed() throw() { }
-    virtual const char *what() const throw();
+    const char *what() const throw() override;
 
 protected:
     QString m_purpose;

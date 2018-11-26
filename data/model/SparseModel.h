@@ -55,10 +55,10 @@ public:
                 bool notifyOnAdd = true);
     virtual ~SparseModel() { }
     
-    virtual bool isOK() const { return true; }
+    bool isOK() const override { return true; }
     virtual sv_frame_t getStartFrame() const;
     virtual sv_frame_t getEndFrame() const;
-    virtual sv_samplerate_t getSampleRate() const { return m_sampleRate; }
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
 
     // Number of frames of the underlying sample rate that this model
     // is capable of resolving to.  For example, if m_resolution == 10
@@ -147,7 +147,7 @@ public:
      */
     virtual bool containsPoint(const PointType &point);
     
-    virtual bool isReady(int *completion = 0) const {
+    bool isReady(int *completion = 0) const override {
         bool ready = isOK() && (m_completion == 100);
         if (completion) *completion = m_completion;
         return ready;
@@ -158,9 +158,9 @@ public:
 
     virtual bool hasTextLabels() const { return m_hasTextLabels; }
 
-    virtual bool isSparse() const { return true; }
+    bool isSparse() const override { return true; }
 
-    QString getTypeName() const { return tr("Sparse"); }
+    QString getTypeName() const override { return tr("Sparse"); }
 
     virtual QString getXmlOutputType() const { return "sparse"; }
 
@@ -168,24 +168,24 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const;
 
-    virtual QString toDelimitedDataString(QString delimiter) const {
+    QString toDelimitedDataString(QString delimiter) const override {
         return toDelimitedDataStringWithOptions
             (delimiter, DataExportDefaults);
     }
 
-    virtual QString toDelimitedDataStringWithOptions(QString delimiter,
-                                                     DataExportOptions opts) const {
+    QString toDelimitedDataStringWithOptions(QString delimiter,
+                                                     DataExportOptions opts) const override {
         return toDelimitedDataStringSubsetWithOptions
             (delimiter, opts,
              std::min(getStartFrame(), sv_frame_t(0)), getEndFrame());
     }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const {
+    QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const override {
         return toDelimitedDataStringSubsetWithOptions
             (delimiter, DataExportDefaults, f0, f1);
     }
 
-    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const {
+    QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions opts, sv_frame_t f0, sv_frame_t f1) const override {
         if (opts & DataExportFillGaps) {
             return toDelimitedDataStringSubsetFilled(delimiter, opts, f0, f1);
         } else {
@@ -210,12 +210,12 @@ public:
                         QString name = "") :
             m_model(model), m_point(point), m_name(name) { }
 
-        virtual QString getName() const {
+        QString getName() const override {
             return (m_name == "" ? tr("Add Point") : m_name);
         }
 
-        virtual void execute() { m_model->addPoint(m_point); }
-        virtual void unexecute() { m_model->deletePoint(m_point); }
+        void execute() override { m_model->addPoint(m_point); }
+        void unexecute() override { m_model->deletePoint(m_point); }
 
         const PointType &getPoint() const { return m_point; }
 
@@ -236,10 +236,10 @@ public:
                            const PointType &point) :
             m_model(model), m_point(point) { }
 
-        virtual QString getName() const { return tr("Delete Point"); }
+        QString getName() const override { return tr("Delete Point"); }
 
-        virtual void execute() { m_model->deletePoint(m_point); }
-        virtual void unexecute() { m_model->addPoint(m_point); }
+        void execute() override { m_model->deletePoint(m_point); }
+        void unexecute() override { m_model->addPoint(m_point); }
 
         const PointType &getPoint() const { return m_point; }
 
@@ -264,7 +264,7 @@ public:
         /**
          * Stack an arbitrary other command in the same sequence.
          */
-        virtual void addCommand(Command *command) { addCommand(command, true); }
+        void addCommand(Command *command) override { addCommand(command, true); }
 
         /**
          * If any points have been added or deleted, return this
@@ -293,15 +293,15 @@ public:
             m_newPoint.label = newLabel;
         }
 
-        virtual QString getName() const { return tr("Re-Label Point"); }
+        QString getName() const override { return tr("Re-Label Point"); }
 
-        virtual void execute() { 
+        void execute() override { 
             m_model->deletePoint(m_oldPoint);
             m_model->addPoint(m_newPoint);
             std::swap(m_oldPoint, m_newPoint);
         }
 
-        virtual void unexecute() { execute(); }
+        void unexecute() override { execute(); }
 
     private:
         SparseModel<PointType> *m_model;
@@ -313,19 +313,19 @@ public:
      * TabularModel methods.  
      */
 
-    virtual int getRowCount() const
+    int getRowCount() const override
     {
         return int(m_points.size());
     }
 
-    virtual sv_frame_t getFrameForRow(int row) const
+    sv_frame_t getFrameForRow(int row) const override
     {
         PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return 0;
         return i->frame;
     }
 
-    virtual int getRowForFrame(sv_frame_t frame) const
+    int getRowForFrame(sv_frame_t frame) const override
     {
         if (m_rows.empty()) rebuildRowVector();
         std::vector<sv_frame_t>::iterator i =
@@ -337,8 +337,8 @@ public:
         return int(row);
     }
 
-    virtual int getColumnCount() const { return 1; }
-    virtual QVariant getData(int row, int column, int role) const
+    int getColumnCount() const override { return 1; }
+    QVariant getData(int row, int column, int role) const override
     {
         PointListConstIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) {
@@ -361,8 +361,8 @@ public:
         return QVariant();
     }
 
-    virtual Command *getSetDataCommand(int row, int column,
-                                       const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column,
+                               const QVariant &value, int role) override
     {
         if (role != Qt::EditRole) return 0;
         PointListIterator i = getPointListIteratorForRow(row);
@@ -381,7 +381,7 @@ public:
         return command->finish();
     }
 
-    virtual Command *getInsertRowCommand(int row)
+    Command *getInsertRowCommand(int row) override
     {
         EditCommand *command = new EditCommand(this, tr("Insert Data Point"));
         Point point(0);
@@ -392,7 +392,7 @@ public:
         return command->finish();
     }
             
-    virtual Command *getRemoveRowCommand(int row)
+    Command *getRemoveRowCommand(int row) override
     {
         PointListIterator i = getPointListIteratorForRow(row);
         if (i == m_points.end()) return 0;

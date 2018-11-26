@@ -140,7 +140,7 @@ public:
     void setSampleRate(sv_samplerate_t rate);
 
     void toXml(QTextStream &stream, QString indent = "",
-               QString extraAttributes = "") const;
+               QString extraAttributes = "") const override;
 
     /**
      * Set the main transform data from the given XML attributes.

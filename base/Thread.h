@@ -34,7 +34,7 @@ public slots:
     void start();
 
 protected:
-    virtual void run() = 0;
+    void run() override = 0;
 
 private:    
     Type m_type;

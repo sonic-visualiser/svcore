@@ -36,14 +36,14 @@ public:
                    SparseTimeValueModel *path); // I take ownership
     ~AlignmentModel();
 
-    virtual bool isOK() const;
-    virtual sv_frame_t getStartFrame() const;
-    virtual sv_frame_t getEndFrame() const;
-    virtual sv_samplerate_t getSampleRate() const;
-    virtual bool isReady(int *completion = 0) const;
-    virtual const ZoomConstraint *getZoomConstraint() const;
+    bool isOK() const override;
+    sv_frame_t getStartFrame() const override;
+    sv_frame_t getEndFrame() const override;
+    sv_samplerate_t getSampleRate() const override;
+    bool isReady(int *completion = 0) const override;
+    const ZoomConstraint *getZoomConstraint() const override;
 
-    QString getTypeName() const { return tr("Alignment"); }
+    QString getTypeName() const override { return tr("Alignment"); }
 
     const Model *getReferenceModel() const;
     const Model *getAlignedModel() const;
@@ -54,9 +54,9 @@ public:
     void setPathFrom(SparseTimeValueModel *rawpath);
     void setPath(PathModel *path);
 
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 signals:
     void modelChanged();

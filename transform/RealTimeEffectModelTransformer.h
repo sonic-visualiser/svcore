@@ -29,9 +29,9 @@ public:
     virtual ~RealTimeEffectModelTransformer();
 
 protected:
-    virtual void run();
+    void run() override;
 
-    virtual void awaitOutputModels() { } // they're created synchronously
+    void awaitOutputModels() override { } // they're created synchronously
     
     QString m_units;
     RealTimePluginInstance *m_plugin;

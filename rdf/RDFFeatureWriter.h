@@ -44,24 +44,24 @@ public:
     RDFFeatureWriter();
     virtual ~RDFFeatureWriter();
 
-    virtual string getDescription() const;
+    string getDescription() const override;
 
-    virtual ParameterList getSupportedParameters() const;
-    virtual void setParameters(map<string, string> &params);
+    ParameterList getSupportedParameters() const override;
+    void setParameters(map<string, string> &params) override;
 
-    virtual void setTrackMetadata(QString trackid, TrackMetadata metadata);
+    void setTrackMetadata(QString trackid, TrackMetadata metadata) override;
 
-    virtual void write(QString trackid,
+    void write(QString trackid,
                        const Transform &transform,
                        const Vamp::Plugin::OutputDescriptor &output,
                        const Vamp::Plugin::FeatureList &features,
-                       std::string summaryType = "");
+                       std::string summaryType = "") override;
 
     virtual void setFixedEventTypeURI(QString uri); // something of a hack
 
-    virtual void finish();
+    void finish() override;
 
-    virtual QString getWriterTag() const { return "rdf"; }
+    QString getWriterTag() const override { return "rdf"; }
 
 private:
     typedef map<QString, PluginRDFDescription> RDFDescriptionMap; // by plugin id
@@ -85,7 +85,7 @@ private:
 
     QString m_fixedEventTypeURI;
 
-    virtual void reviewFileForAppending(QString filename);
+    void reviewFileForAppending(QString filename) override;
 
     void writePrefixes(QTextStream *);
     void writeSignalDescription(QTextStream *, QString);

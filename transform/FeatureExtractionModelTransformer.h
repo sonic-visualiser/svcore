@@ -47,14 +47,14 @@ public:
     virtual ~FeatureExtractionModelTransformer();
 
     // ModelTransformer method, retrieve the additional models
-    Models getAdditionalOutputModels();
-    bool willHaveAdditionalOutputModels();
+    Models getAdditionalOutputModels() override;
+    bool willHaveAdditionalOutputModels() override;
 
 protected:
     bool initialise();
     void deinitialise();
 
-    virtual void run();
+    void run() override;
 
     Vamp::Plugin *m_plugin;
     std::vector<Vamp::Plugin::OutputDescriptor *> m_descriptors; // per transform
@@ -80,7 +80,7 @@ protected:
     bool m_haveOutputs;
     QMutex m_outputMutex;
     QWaitCondition m_outputsCondition;
-    void awaitOutputModels();
+    void awaitOutputModels() override;
     
     // just casts:
 

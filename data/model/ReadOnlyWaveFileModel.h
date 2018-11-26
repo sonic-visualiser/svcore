@@ -52,47 +52,47 @@ public:
     
     ~ReadOnlyWaveFileModel();
 
-    bool isOK() const;
-    bool isReady(int *) const;
+    bool isOK() const override;
+    bool isReady(int *) const override;
 
-    const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
+    const ZoomConstraint *getZoomConstraint() const override { return &m_zoomConstraint; }
 
-    sv_frame_t getFrameCount() const;
-    int getChannelCount() const;
-    sv_samplerate_t getSampleRate() const;
-    sv_samplerate_t getNativeRate() const;
+    sv_frame_t getFrameCount() const override;
+    int getChannelCount() const override;
+    sv_samplerate_t getSampleRate() const override;
+    sv_samplerate_t getNativeRate() const override;
 
-    QString getTitle() const;
-    QString getMaker() const;
-    QString getLocation() const;
+    QString getTitle() const override;
+    QString getMaker() const override;
+    QString getLocation() const override;
 
     QString getLocalFilename() const;
 
-    float getValueMinimum() const { return -1.0f; }
-    float getValueMaximum() const { return  1.0f; }
+    float getValueMinimum() const override { return -1.0f; }
+    float getValueMaximum() const override { return  1.0f; }
 
-    virtual sv_frame_t getStartFrame() const { return m_startFrame; }
-    virtual sv_frame_t getEndFrame() const { return m_startFrame + getFrameCount(); }
+    sv_frame_t getStartFrame() const override { return m_startFrame; }
+    sv_frame_t getEndFrame() const override { return m_startFrame + getFrameCount(); }
 
-    void setStartFrame(sv_frame_t startFrame) { m_startFrame = startFrame; }
+    void setStartFrame(sv_frame_t startFrame) override { m_startFrame = startFrame; }
 
-    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual int getSummaryBlockSize(int desired) const;
+    int getSummaryBlockSize(int desired) const override;
 
-    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
+    void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
-                              int &blockSize) const;
+                              int &blockSize) const override;
 
-    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
+    Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    QString getTypeName() const { return tr("Wave File"); }
+    QString getTypeName() const override { return tr("Wave File"); }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 protected slots:
     void fillTimerTimedOut();
@@ -109,7 +109,7 @@ protected:
             m_frameCount(model.getFrameCount()) { }
     
         sv_frame_t getFillExtent() const { return m_fillExtent; }
-        virtual void run();
+        void run() override;
 
     protected:
         ReadOnlyWaveFileModel &m_model;

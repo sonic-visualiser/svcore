@@ -44,7 +44,7 @@ public:
     QString getLabel() const { return label; }
     
     void toXml(QTextStream &stream, QString indent = "",
-               QString extraAttributes = "") const
+               QString extraAttributes = "") const override
     {
         stream << QString("%1<point frame=\"%2\" height=\"%3\" label=\"%4\" %5/>\n")
             .arg(indent).arg(frame).arg(height)
@@ -89,9 +89,9 @@ public:
         SparseModel<TextPoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         SparseModel<TextPoint>::toXml
             (out, 
@@ -100,18 +100,18 @@ public:
              .arg(extraAttributes));
     }
 
-    QString getTypeName() const { return tr("Text"); }
+    QString getTypeName() const override { return tr("Text"); }
 
     /**
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 4;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -122,7 +122,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 2) {
             return SparseModel<TextPoint>::getData
@@ -139,7 +139,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 2) {
             return SparseModel<TextPoint>::getSetDataCommand
@@ -163,12 +163,12 @@ public:
         return command->finish();
     }
 
-    virtual bool isColumnTimeValue(int column) const
+    bool isColumnTimeValue(int column) const override
     {
         return (column < 2); 
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 3) return SortAlphabetical;
         return SortNumeric;

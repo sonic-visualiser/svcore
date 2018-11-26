@@ -30,9 +30,9 @@ public:
     /**
      * Export plugin settings to XML.
      */
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
     /**
      * Set the parameters and program of a plugin from a set of XML

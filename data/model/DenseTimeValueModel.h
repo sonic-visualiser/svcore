@@ -79,14 +79,13 @@ public:
                                                         sv_frame_t count)
         const = 0;
 
-    virtual bool canPlay() const { return true; }
-    virtual QString getDefaultPlayClipId() const { return ""; }
+    bool canPlay() const override { return true; }
+    QString getDefaultPlayClipId() const override { return ""; }
 
-    virtual QString toDelimitedDataStringSubset(QString delimiter,
-                                                sv_frame_t f0, sv_frame_t f1)
-        const;
+    QString toDelimitedDataStringSubset(QString delimiter,
+                                        sv_frame_t f0, sv_frame_t f1) const override;
 
-    QString getTypeName() const { return tr("Dense Time-Value"); }
+    QString getTypeName() const override { return tr("Dense Time-Value"); }
 };
 
 #endif

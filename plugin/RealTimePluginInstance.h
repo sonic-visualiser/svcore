@@ -136,7 +136,7 @@ public:
 
     void setFactory(RealTimePluginFactory *f) { m_factory = f; } // ew
 
-    virtual std::string getType() const { return "Real-Time Plugin"; }
+    std::string getType() const override { return "Real-Time Plugin"; }
 
     typedef std::map<std::string, std::string> ConfigurationPairMap;
     virtual ConfigurationPairMap getConfigurePairs() {

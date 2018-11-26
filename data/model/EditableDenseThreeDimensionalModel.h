@@ -48,11 +48,11 @@ public:
                                        CompressionType compression,
                                        bool notifyOnAdd = true);
 
-    virtual bool isOK() const;
+    bool isOK() const override;
 
-    virtual sv_samplerate_t getSampleRate() const;
-    virtual sv_frame_t getStartFrame() const;
-    virtual sv_frame_t getEndFrame() const;
+    sv_samplerate_t getSampleRate() const override;
+    sv_frame_t getStartFrame() const override;
+    sv_frame_t getEndFrame() const override;
 
     /**
      * Set the frame offset of the first column.
@@ -62,7 +62,7 @@ public:
     /**
      * Return the number of sample frames covered by each set of bins.
      */
-    virtual int getResolution() const;
+    int getResolution() const override;
 
     /**
      * Set the number of sample frames covered by each set of bins.
@@ -72,12 +72,12 @@ public:
     /**
      * Return the number of columns.
      */
-    virtual int getWidth() const;
+    int getWidth() const override;
 
     /**
      * Return the number of bins in each column.
      */
-    virtual int getHeight() const; 
+    int getHeight() const override;
 
     /**
      * Set the number of bins in each column.
@@ -94,7 +94,7 @@ public:
     /**
      * Return the minimum value of the value in each bin.
      */
-    virtual float getMinimumLevel() const;
+    float getMinimumLevel() const override;
 
     /**
      * Set the minimum value of the value in a bin.
@@ -104,7 +104,7 @@ public:
     /**
      * Return the maximum value of the value in each bin.
      */
-    virtual float getMaximumLevel() const;
+    float getMaximumLevel() const override;
 
     /**
      * Set the maximum value of the value in a bin.
@@ -114,12 +114,12 @@ public:
     /**
      * Get the set of bin values at the given column.
      */
-    virtual Column getColumn(int x) const;
+    Column getColumn(int x) const override;
 
     /**
      * Get a single value, from the n'th bin of the given column.
      */
-    virtual float getValueAt(int x, int n) const;
+    float getValueAt(int x, int n) const override;
 
     /**
      * Set the entire set of bin values at the given column.
@@ -130,7 +130,7 @@ public:
      * Return the name of bin n. This is a single label per bin that
      * does not vary from one column to the next.
      */
-    virtual QString getBinName(int n) const;
+    QString getBinName(int n) const override;
 
     /**
      * Set the name of bin n.
@@ -148,14 +148,14 @@ public:
      * numbers from them.) If this returns true, getBinValue() may be
      * used to retrieve the values.
      */
-    virtual bool hasBinValues() const;
+    bool hasBinValues() const override;
 
     /**
      * Return the value of bin n, if any. This is a "vertical scale"
      * value which does not vary from one column to the next. This is
      * only meaningful if hasBinValues() returns true.
      */
-    virtual float getBinValue(int n) const;
+    float getBinValue(int n) const override;
 
     /**
      * Set the values of all bins (separate from their labels). These
@@ -168,7 +168,7 @@ public:
      * Obtain the name of the unit of the values returned from
      * getBinValue(), if any.
      */
-    virtual QString getBinValueUnit() const;
+    QString getBinValueUnit() const override;
 
     /**
      * Set the name of the unit of the values return from
@@ -181,19 +181,19 @@ public:
      * as to suggest a log scale (mapping to colour etc) may be better
      * than a linear one.
      */
-    bool shouldUseLogValueScale() const;
+    bool shouldUseLogValueScale() const override;
 
     virtual void setCompletion(int completion, bool update = true);
-    virtual int getCompletion() const { return m_completion; }
+    int getCompletion() const override { return m_completion; }
 
-    QString getTypeName() const { return tr("Editable Dense 3-D"); }
+    QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 
-    virtual QString toDelimitedDataString(QString delimiter) const;
-    virtual QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const;
+    QString toDelimitedDataString(QString delimiter) const override;
+    QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const override;
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 protected:
     typedef std::vector<Column> ValueMatrix;

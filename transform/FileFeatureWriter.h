@@ -40,12 +40,12 @@ class FileFeatureWriter : public FeatureWriter
 public:
     virtual ~FileFeatureWriter();
 
-    virtual ParameterList getSupportedParameters() const;
-    virtual void setParameters(map<string, string> &params);
+    ParameterList getSupportedParameters() const override;
+    void setParameters(map<string, string> &params) override;
 
-    virtual void testOutputFile(QString trackId, TransformId transformId);
-    virtual void flush();
-    virtual void finish();
+    void testOutputFile(QString trackId, TransformId transformId) override;
+    void flush() override;
+    void finish() override;
 
 protected:
     enum FileWriteSupport {

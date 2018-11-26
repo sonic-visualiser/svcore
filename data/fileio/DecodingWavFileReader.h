@@ -37,16 +37,16 @@ public:
                           ProgressReporter *reporter = 0);
     virtual ~DecodingWavFileReader();
 
-    virtual QString getError() const { return m_error; }
-    virtual QString getLocation() const { return m_source.getLocation(); }
+    QString getError() const override { return m_error; }
+    QString getLocation() const override { return m_source.getLocation(); }
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
     static bool supports(FileSource &source);
 
-    virtual int getDecodeCompletion() const { return m_completion; }
+    int getDecodeCompletion() const override { return m_completion; }
 
-    virtual bool isUpdating() const {
+    bool isUpdating() const override {
         return m_decodeThread && m_decodeThread->isRunning();
     }
 
@@ -70,7 +70,7 @@ protected:
     {
     public:
         DecodeThread(DecodingWavFileReader *reader) : m_reader(reader) { }
-        virtual void run();
+        void run() override;
 
     protected:
         DecodingWavFileReader *m_reader;

@@ -71,9 +71,9 @@ public:
     PathModel(sv_samplerate_t sampleRate, int resolution, bool notify = true) :
         SparseModel<PathPoint>(sampleRate, resolution, notify) { }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         SparseModel<PathPoint>::toXml
             (out, 
@@ -85,9 +85,9 @@ public:
     /**
      * TabularModel is inherited via SparseModel, but we don't need it here.
      */
-    virtual QString getHeading(int) const { return ""; }
-    virtual bool isColumnTimeValue(int) const { return false; }
-    virtual SortType getSortType(int) const { return SortNumeric; }
+    QString getHeading(int) const override { return ""; }
+    bool isColumnTimeValue(int) const override { return false; }
+    SortType getSortType(int) const override { return SortNumeric; }
 
 };
 
