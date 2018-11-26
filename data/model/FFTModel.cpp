@@ -75,7 +75,7 @@ FFTModel::sourceModelAboutToBeDeleted()
 {
     if (m_model) {
         SVDEBUG << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
-        m_model = 0;
+        m_model = nullptr;
     }
 }
 

@@ -54,7 +54,7 @@ PluginDeletionNotifyAdapter::~PluginDeletionNotifyAdapter()
     // see notes in vamp-sdk/hostext/PluginLoader.cpp from which this is drawn
     Vamp::Plugin *p = m_plugin;
     delete m_plugin;
-    m_plugin = 0;
+    m_plugin = nullptr;
     // acceptable use after free here, as pluginDeleted uses p only as
     // pointer key and does not deref it
     if (m_factory) m_factory->pluginDeleted(p);
@@ -147,7 +147,7 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
             cerr << "NativeVampPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
 #endif
 
-        const VampPluginDescriptor *descriptor = 0;
+        const VampPluginDescriptor *descriptor = nullptr;
         int index = 0;
 
         map<string, int> known;
@@ -293,10 +293,10 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
 {
     Profiler profiler("NativeVampPluginFactory::instantiatePlugin");
 
-    Vamp::Plugin *rv = 0;
-    Vamp::PluginHostAdapter *plugin = 0;
+    Vamp::Plugin *rv = nullptr;
+    Vamp::PluginHostAdapter *plugin = nullptr;
 
-    const VampPluginDescriptor *descriptor = 0;
+    const VampPluginDescriptor *descriptor = nullptr;
     int index = 0;
 
     QString type, soname, label;
@@ -305,14 +305,14 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
         cerr << "NativeVampPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
 #endif
-        return 0;
+        return nullptr;
     }
 
     QString found = findPluginFile(soname);
 
     if (found == "") {
         SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Failed to find library file " << soname << endl;
-        return 0;
+        return nullptr;
     } else if (found != soname) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
@@ -328,7 +328,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
             
     if (!libraryHandle) {
         SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Failed to load library " << soname << ": " << DLERROR() << endl;
-        return 0;
+        return nullptr;
     }
 
     VampGetPluginDescriptorFunction fn = (VampGetPluginDescriptorFunction)

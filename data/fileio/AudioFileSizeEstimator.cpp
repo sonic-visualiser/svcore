@@ -51,7 +51,7 @@ AudioFileSizeEstimator::estimate(FileSource source,
     }
 
     delete reader;
-    reader = 0;
+    reader = nullptr;
 
     if (estimate == 0) {
 

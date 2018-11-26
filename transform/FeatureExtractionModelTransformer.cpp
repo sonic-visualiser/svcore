@@ -45,7 +45,7 @@
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
-    m_plugin(0),
+    m_plugin(nullptr),
     m_haveOutputs(false)
 {
     SVDEBUG << "FeatureExtractionModelTransformer::FeatureExtractionModelTransformer: plugin " << m_transforms.begin()->getPluginIdentifier() << ", outputName " << m_transforms.begin()->getOutput() << endl;
@@ -54,7 +54,7 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transforms &transforms) :
     ModelTransformer(in, transforms),
-    m_plugin(0),
+    m_plugin(nullptr),
     m_haveOutputs(false)
 {
     if (m_transforms.empty()) {
@@ -271,7 +271,7 @@ FeatureExtractionModelTransformer::deinitialise()
         SVCERR << "FeatureExtractionModelTransformer: caught exception while deleting plugin: " << e.what() << endl;
         m_message = e.what();
     }
-    m_plugin = 0;
+    m_plugin = nullptr;
         
     for (int j = 0; j < (int)m_descriptors.size(); ++j) {
         delete m_descriptors[j];
@@ -354,7 +354,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     bool preDurationPlugin = (m_plugin->getVampApiVersion() < 2);
 
-    Model *out = 0;
+    Model *out = nullptr;
 
     if (binCount == 0 &&
         (preDurationPlugin || !m_descriptors[n]->hasDuration)) {
@@ -589,17 +589,17 @@ FeatureExtractionModelTransformer::getAdditionalModel(int n, int binNo)
 
     if (binNo == 0) {
         std::cerr << "Internal error: binNo == 0 in getAdditionalModel (should be using primary model)" << std::endl;
-        return 0;
+        return nullptr;
     }
 
-    if (!m_needAdditionalModels[n]) return 0;
-    if (!isOutput<SparseTimeValueModel>(n)) return 0;
+    if (!m_needAdditionalModels[n]) return nullptr;
+    if (!isOutput<SparseTimeValueModel>(n)) return nullptr;
     if (m_additionalModels[n][binNo]) return m_additionalModels[n][binNo];
 
     std::cerr << "getAdditionalModel(" << n << ", " << binNo << "): creating" << std::endl;
 
     SparseTimeValueModel *baseModel = getConformingOutput<SparseTimeValueModel>(n);
-    if (!baseModel) return 0;
+    if (!baseModel) return nullptr;
 
     std::cerr << "getAdditionalModel(" << n << ", " << binNo << "): (from " << baseModel << ")" << std::endl;
 
@@ -739,8 +739,8 @@ FeatureExtractionModelTransformer::run()
         setCompletion(j, 0);
     }
 
-    float *reals = 0;
-    float *imaginaries = 0;
+    float *reals = nullptr;
+    float *imaginaries = nullptr;
     if (frequencyDomain) {
         reals = new float[blockSize/2 + 1];
         imaginaries = new float[blockSize/2 + 1];

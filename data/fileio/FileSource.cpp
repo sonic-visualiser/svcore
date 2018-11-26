@@ -91,8 +91,8 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
                        QString preferredContentType) :
     m_rawFileOrUrl(fileOrUrl),
     m_url(fileOrUrl, QUrl::StrictMode),
-    m_localFile(0),
-    m_reply(0),
+    m_localFile(nullptr),
+    m_reply(nullptr),
     m_preferredContentType(preferredContentType),
     m_ok(false),
     m_cancelled(false),
@@ -182,8 +182,8 @@ FileSource::FileSource(QString fileOrUrl, ProgressReporter *reporter,
 
 FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
     m_url(url),
-    m_localFile(0),
-    m_reply(0),
+    m_localFile(nullptr),
+    m_reply(nullptr),
     m_ok(false),
     m_cancelled(false),
     m_lastStatus(0),
@@ -215,8 +215,8 @@ FileSource::FileSource(QUrl url, ProgressReporter *reporter) :
 FileSource::FileSource(const FileSource &rf) :
     QObject(),
     m_url(rf.m_url),
-    m_localFile(0),
-    m_reply(0),
+    m_localFile(nullptr),
+    m_reply(nullptr),
     m_ok(rf.m_ok),
     m_cancelled(rf.m_cancelled),
     m_lastStatus(rf.m_lastStatus),
@@ -385,7 +385,7 @@ FileSource::init()
         qint64 written = m_localFile->write(ba);
         m_localFile->close();
         delete m_localFile;
-        m_localFile = 0;
+        m_localFile = nullptr;
 
         if (written != ba.size()) {
 #ifdef DEBUG_FILE_SOURCE
@@ -502,13 +502,13 @@ FileSource::cleanup()
 {
     if (m_done) {
         delete m_localFile; // does not actually delete the file
-        m_localFile = 0;
+        m_localFile = nullptr;
     }
     m_done = true;
     if (m_reply) {
         QNetworkReply *r = m_reply;
-        disconnect(r, 0, this, 0);
-        m_reply = 0;
+        disconnect(r, nullptr, this, nullptr);
+        m_reply = nullptr;
         // Can only call abort() when there are no errors.
         if (r->error() == QNetworkReply::NoError) {
             r->abort();
@@ -517,7 +517,7 @@ FileSource::cleanup()
     }
     if (m_localFile) {
         delete m_localFile; // does not actually delete the file
-        m_localFile = 0;
+        m_localFile = nullptr;
     }
 }
 
@@ -693,7 +693,7 @@ FileSource::metaDataChanged()
                 incCount(newUrl.toString());
 #endif
                 m_url = newUrl;
-                m_localFile = 0;
+                m_localFile = nullptr;
                 m_lastStatus = 0;
                 m_done = false;
                 m_refCounted = false;

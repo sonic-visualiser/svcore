@@ -40,17 +40,17 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
     CodedAudioFileReader(mode, targetRate, normalised),
     m_source(source),
     m_path(source.getLocalFilename()),
-    m_qfile(0),
-    m_ffile(0),
-    m_oggz(0),
-    m_fishSound(0),
+    m_qfile(nullptr),
+    m_ffile(nullptr),
+    m_oggz(nullptr),
+    m_fishSound(nullptr),
     m_reporter(reporter),
     m_fileSize(0),
     m_bytesRead(0),
     m_commentsRead(false),
     m_cancelled(false),
     m_completion(0),
-    m_decodeThread(0)
+    m_decodeThread(nullptr)
 {
     SVDEBUG << "OggVorbisFileReader: local path: \"" << m_path
             << "\", decode mode: " << decodeMode << " ("
@@ -72,7 +72,7 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
         m_error = QString("Failed to open file %1 for reading.").arg(m_path);
         SVDEBUG << "OggVorbisFileReader: " << m_error << endl;
         delete m_qfile;
-        m_qfile = 0;
+        m_qfile = nullptr;
         return;
     }
     
@@ -83,16 +83,16 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
         m_error = QString("Failed to open file pointer for file %1").arg(m_path);
         SVDEBUG << "OggVorbisFileReader: " << m_error << endl;
         delete m_qfile;
-        m_qfile = 0;
+        m_qfile = nullptr;
         return;
     }
     
     if (!(m_oggz = oggz_open_stdio(m_ffile, OGGZ_READ))) {
         m_error = QString("File %1 is not an OGG file.").arg(m_path);
         fclose(m_ffile);
-        m_ffile = 0;
+        m_ffile = nullptr;
         delete m_qfile;
-        m_qfile = 0;
+        m_qfile = nullptr;
         return;
     }
 
@@ -113,9 +113,9 @@ OggVorbisFileReader::OggVorbisFileReader(FileSource source,
         while (oggz_read(m_oggz, 1024) > 0);
         
         fish_sound_delete(m_fishSound);
-        m_fishSound = 0;
+        m_fishSound = nullptr;
         oggz_close(m_oggz);
-        m_oggz = 0;
+        m_oggz = nullptr;
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
         endSerialised();
@@ -145,7 +145,7 @@ OggVorbisFileReader::~OggVorbisFileReader()
     if (m_qfile) {
         // don't fclose m_ffile; oggz_close did that
         delete m_qfile;
-        m_qfile = 0;
+        m_qfile = nullptr;
     }
 }
 
@@ -166,15 +166,15 @@ OggVorbisFileReader::DecodeThread::run()
     while (oggz_read(m_reader->m_oggz, 1024) > 0);
         
     fish_sound_delete(m_reader->m_fishSound);
-    m_reader->m_fishSound = 0;
+    m_reader->m_fishSound = nullptr;
 
     oggz_close(m_reader->m_oggz);
-    m_reader->m_oggz = 0;
+    m_reader->m_oggz = nullptr;
 
     // don't fclose m_ffile; oggz_close did that
 
     delete m_reader->m_qfile;
-    m_reader->m_qfile = 0;
+    m_reader->m_qfile = nullptr;
     
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
     m_reader->m_completion = 100;

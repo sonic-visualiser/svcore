@@ -69,7 +69,7 @@ MIDIFileReader::MIDIFileReader(QString path,
     m_trackByteCount(0),
     m_decrementCount(false),
     m_path(path),
-    m_midiFile(0),
+    m_midiFile(nullptr),
     m_fileSize(0),
     m_mainModelSampleRate(mainModelSampleRate),
     m_acquirer(acquirer)
@@ -291,7 +291,7 @@ MIDIFileReader::parseFile()
         m_error = "File not found or not readable.";
         m_format = MIDI_FILE_BAD_FORMAT;
         delete m_midiFile;
-        m_midiFile = 0;
+        m_midiFile = nullptr;
         return false;
     }
 
@@ -801,14 +801,14 @@ MIDIFileReader::getTimeForMIDITime(unsigned long midiTime) const
 Model *
 MIDIFileReader::load() const
 {
-    if (!isOK()) return 0;
+    if (!isOK()) return nullptr;
 
     if (m_loadableTracks.empty()) {
         if (m_acquirer) {
             m_acquirer->showError
                 (tr("MIDI file \"%1\" has no notes in any track").arg(m_path));
         }
-        return 0;
+        return nullptr;
     }
 
     std::set<unsigned int> tracksToLoad;
@@ -859,7 +859,7 @@ MIDIFileReader::load() const
             pref = MIDIFileImportPreferenceAcquirer::MergeAllTracks;
         }
 
-        if (pref == MIDIFileImportPreferenceAcquirer::ImportNothing) return 0;
+        if (pref == MIDIFileImportPreferenceAcquirer::ImportNothing) return nullptr;
 
         if (pref == MIDIFileImportPreferenceAcquirer::MergeAllTracks ||
             pref == MIDIFileImportPreferenceAcquirer::MergeAllNonPercussionTracks) {
@@ -891,10 +891,10 @@ MIDIFileReader::load() const
         }
     }
 
-    if (tracksToLoad.empty()) return 0;
+    if (tracksToLoad.empty()) return nullptr;
 
     int n = int(tracksToLoad.size()), count = 0;
-    Model *model = 0;
+    Model *model = nullptr;
 
     for (std::set<unsigned int>::iterator i = tracksToLoad.begin();
          i != tracksToLoad.end(); ++i) {
@@ -921,10 +921,10 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
                           int progressAmount) const
 {
     if (m_midiComposition.find(trackToLoad) == m_midiComposition.end()) {
-        return 0;
+        return nullptr;
     }
 
-    NoteModel *model = 0;
+    NoteModel *model = nullptr;
 
     if (existingModel) {
         model = dynamic_cast<NoteModel *>(existingModel);

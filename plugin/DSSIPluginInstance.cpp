@@ -47,7 +47,7 @@ static std::ostream &operator<<(std::ostream& o, const QString &s)
 #endif
 
 DSSIPluginInstance::GroupMap DSSIPluginInstance::m_groupMap;
-snd_seq_event_t **DSSIPluginInstance::m_groupLocalEventBuffers = 0;
+snd_seq_event_t **DSSIPluginInstance::m_groupLocalEventBuffers = nullptr;
 size_t DSSIPluginInstance::m_groupLocalEventBufferCount = 0;
 Scavenger<ScavengerArrayWrapper<snd_seq_event_t *> > DSSIPluginInstance::m_bufferScavenger(2, 10);
 std::map<LADSPA_Handle, std::set<DSSIPluginInstance::NonRTPluginThread *> > DSSIPluginInstance::m_threads;
@@ -64,14 +64,14 @@ DSSIPluginInstance::DSSIPluginInstance(RealTimePluginFactory *factory,
     RealTimePluginInstance(factory, identifier),
     m_client(clientId),
     m_position(position),
-    m_instanceHandle(0),
+    m_instanceHandle(nullptr),
     m_descriptor(descriptor),
     m_programCacheValid(false),
     m_eventBuffer(EVENT_BUFFER_SIZE),
     m_blockSize(blockSize),
     m_idealChannelCount(idealChannelCount),
     m_sampleRate(sampleRate),
-    m_latencyPort(0),
+    m_latencyPort(nullptr),
     m_run(false),
     m_bypassed(false),
     m_grouped(false),
@@ -300,7 +300,7 @@ DSSIPluginInstance::getLatency()
 void
 DSSIPluginInstance::silence()
 {
-    if (m_instanceHandle != 0) {
+    if (m_instanceHandle != nullptr) {
         deactivate();
         activate();
     }
@@ -325,7 +325,7 @@ DSSIPluginInstance::setIdealChannelCount(int channels)
         return;
     }
 
-    if (m_instanceHandle != 0) {
+    if (m_instanceHandle != nullptr) {
         deactivate();
     }
 
@@ -350,7 +350,7 @@ DSSIPluginInstance::setIdealChannelCount(int channels)
         connectPorts();
     }
 
-    if (m_instanceHandle != 0) {
+    if (m_instanceHandle != nullptr) {
         activate();
     }
 }
@@ -423,7 +423,7 @@ DSSIPluginInstance::~DSSIPluginInstance()
 
     detachFromGroup();
 
-    if (m_instanceHandle != 0) {
+    if (m_instanceHandle != nullptr) {
         deactivate();
     }
 
@@ -1340,7 +1340,7 @@ DSSIPluginInstance::cleanup()
     }
 
     m_descriptor->LADSPA_Plugin->cleanup(m_instanceHandle);
-    m_instanceHandle = 0;
+    m_instanceHandle = nullptr;
 #ifdef DEBUG_DSSI
     SVDEBUG << "DSSIPluginInstance::cleanup " << m_identifier << " done" << endl;
 #endif

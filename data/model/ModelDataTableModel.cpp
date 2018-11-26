@@ -122,7 +122,7 @@ ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int ro
 QModelIndex
 ModelDataTableModel::index(int row, int column, const QModelIndex &) const
 {
-    return createIndex(row, column, (void *)0);
+    return createIndex(row, column, (void *)nullptr);
 }
 
 QModelIndex
@@ -153,7 +153,7 @@ ModelDataTableModel::getModelIndexForFrame(sv_frame_t frame) const
 {
     if (!m_model) return createIndex(0, 0);
     int row = m_model->getRowForFrame(frame);
-    return createIndex(getSorted(row), 0, (void *)0);
+    return createIndex(getSorted(row), 0, (void *)nullptr);
 }
 
 sv_frame_t
@@ -200,7 +200,7 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
     int current = getCurrentRow();
     if (current != prevCurrent) {
 //         cerr << "Current row changed from " << prevCurrent << " to " << current << " for underlying row " << m_currentRow << endl;
-        emit currentChanged(createIndex(current, 0, (void *)0));
+        emit currentChanged(createIndex(current, 0, (void *)nullptr));
     }
     emit layoutChanged();
 }
@@ -232,10 +232,10 @@ ModelDataTableModel::modelChangedWithin(sv_frame_t f0, sv_frame_t f1)
     int row0 = ix0.row();
     int row1 = ix1.row();
     if (row0 > 0) {
-        ix0 = createIndex(row0 - 1, ix0.column(), (void *)0);
+        ix0 = createIndex(row0 - 1, ix0.column(), (void *)nullptr);
     }
     if (row1 + 1 < rowCount()) {
-        ix1 = createIndex(row1 + 1, ix1.column(), (void *)0);
+        ix1 = createIndex(row1 + 1, ix1.column(), (void *)nullptr);
     }
     SVDEBUG << "emitting dataChanged from row " << ix0.row() << " to " << ix1.row() << endl;
     emit dataChanged(ix0, ix1);
@@ -246,7 +246,7 @@ ModelDataTableModel::modelChangedWithin(sv_frame_t f0, sv_frame_t f1)
 void
 ModelDataTableModel::modelAboutToBeDeleted()
 {
-    m_model = 0;
+    m_model = nullptr;
     emit modelRemoved();
 }
 

@@ -55,13 +55,13 @@ TransformFactory::deleteInstance()
 {
     SVDEBUG << "TransformFactory::deleteInstance called" << endl;
     delete m_instance;
-    m_instance = 0;
+    m_instance = nullptr;
 }
 
 TransformFactory::TransformFactory() :
     m_transformsPopulated(false),
     m_uninstalledTransformsPopulated(false),
-    m_thread(0),
+    m_thread(nullptr),
     m_exiting(false),
     m_populatingSlowly(false)
 {
@@ -790,7 +790,7 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
     if (rate == 0) rate = 44100.0;
     QString pluginId = t.getPluginIdentifier();
 
-    Vamp::PluginBase *plugin = 0;
+    Vamp::PluginBase *plugin = nullptr;
 
     if (t.getType() == Transform::FeatureExtraction) {
 

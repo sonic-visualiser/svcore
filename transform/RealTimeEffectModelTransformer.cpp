@@ -32,7 +32,7 @@
 RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
                                                                const Transform &t) :
     ModelTransformer(in, t),
-    m_plugin(0)
+    m_plugin(nullptr)
 {
     Transform transform(t);
     if (!transform.getBlockSize()) {

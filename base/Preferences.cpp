@@ -25,7 +25,7 @@
 #include <QSettings>
 
 Preferences *
-Preferences::m_instance = 0;
+Preferences::m_instance = nullptr;
 
 Preferences *
 Preferences::getInstance()

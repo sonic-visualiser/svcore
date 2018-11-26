@@ -36,15 +36,15 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
                                            bool normalised) :
     m_cacheMode(cacheMode),
     m_initialised(false),
-    m_serialiser(0),
+    m_serialiser(nullptr),
     m_fileRate(0),
-    m_cacheFileWritePtr(0),
-    m_cacheFileReader(0),
-    m_cacheWriteBuffer(0),
+    m_cacheFileWritePtr(nullptr),
+    m_cacheFileReader(nullptr),
+    m_cacheWriteBuffer(nullptr),
     m_cacheWriteBufferIndex(0),
     m_cacheWriteBufferFrames(65536),
-    m_resampler(0),
-    m_resampleBuffer(0),
+    m_resampler(nullptr),
+    m_resampleBuffer(nullptr),
     m_resampleBufferFrames(0),
     m_fileFrameCount(0),
     m_normalised(normalised),
@@ -119,7 +119,7 @@ CodedAudioFileReader::endSerialised()
     SVDEBUG << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId() : "(none)") << endl;
 
     delete m_serialiser;
-    m_serialiser = 0;
+    m_serialiser = nullptr;
 }
 
 void
@@ -218,7 +218,7 @@ CodedAudioFileReader::initialiseDecodeCache()
                 if (!m_cacheFileReader->isOK()) {
                     SVDEBUG << "ERROR: CodedAudioFileReader::initialiseDecodeCache: Failed to construct WAV file reader for temporary file: " << m_cacheFileReader->getError() << endl;
                     delete m_cacheFileReader;
-                    m_cacheFileReader = 0;
+                    m_cacheFileReader = nullptr;
                     m_cacheMode = CacheInMemory;
                     sf_close(m_cacheFileWritePtr);
                 }
@@ -331,18 +331,18 @@ CodedAudioFileReader::finishDecodeCache()
     pushCacheWriteBufferMaybe(true);
 
     delete[] m_cacheWriteBuffer;
-    m_cacheWriteBuffer = 0;
+    m_cacheWriteBuffer = nullptr;
 
     delete[] m_resampleBuffer;
-    m_resampleBuffer = 0;
+    m_resampleBuffer = nullptr;
 
     delete m_resampler;
-    m_resampler = 0;
+    m_resampler = nullptr;
 
     if (m_cacheMode == CacheInTemporaryFile) {
 
         sf_close(m_cacheFileWritePtr);
-        m_cacheFileWritePtr = 0;
+        m_cacheFileWritePtr = nullptr;
         if (m_cacheFileReader) m_cacheFileReader->updateFrameCount();
 
     } else {
@@ -471,7 +471,7 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     case CacheInTemporaryFile:
         if (sf_writef_float(m_cacheFileWritePtr, buffer, sz) < sz) {
             sf_close(m_cacheFileWritePtr);
-            m_cacheFileWritePtr = 0;
+            m_cacheFileWritePtr = nullptr;
             throw InsufficientDiscSpace(TempDirectory::getInstance()->getPath());
         }
         break;

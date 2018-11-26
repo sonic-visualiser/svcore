@@ -93,13 +93,13 @@ SamplePlayer::ladspaDescriptor =
     ports,
     portNames,
     hints,
-    0, // Implementation data
+    nullptr, // Implementation data
     instantiate,
     connectPort,
     activate,
     run,
-    0, // Run adding
-    0, // Set run adding gain
+    nullptr, // Run adding
+    nullptr, // Set run adding gain
     deactivate,
     cleanup
 };
@@ -114,31 +114,31 @@ SamplePlayer::dssiDescriptor =
     selectProgram,
     getMidiController,
     runSynth,
-    0, // Run synth adding
-    0, // Run multiple synths
-    0, // Run multiple synths adding
+    nullptr, // Run synth adding
+    nullptr, // Run multiple synths
+    nullptr, // Run multiple synths adding
     receiveHostDescriptor
 };
 
 const DSSI_Host_Descriptor *
-SamplePlayer::hostDescriptor = 0;
+SamplePlayer::hostDescriptor = nullptr;
 
 
 const DSSI_Descriptor *
 SamplePlayer::getDescriptor(unsigned long index)
 {
     if (index == 0) return &dssiDescriptor;
-    return 0;
+    return nullptr;
 }
 
 SamplePlayer::SamplePlayer(int sampleRate) :
-    m_output(0),
-    m_retune(0),
-    m_basePitch(0),
-    m_concertA(0),
-    m_sustain(0),
-    m_release(0),
-    m_sampleData(0),
+    m_output(nullptr),
+    m_retune(nullptr),
+    m_basePitch(nullptr),
+    m_concertA(nullptr),
+    m_sustain(nullptr),
+    m_release(nullptr),
+    m_sampleData(nullptr),
     m_sampleCount(0),
     m_sampleRate(sampleRate),
     m_sampleNo(0),
@@ -158,7 +158,7 @@ SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
 {
     if (!hostDescriptor || !hostDescriptor->request_non_rt_thread) {
         SVDEBUG << "SamplePlayer::instantiate: Host does not provide request_non_rt_thread, not instantiating" << endl;
-        return 0;
+        return nullptr;
     }
 
     SamplePlayer *player = new SamplePlayer(int(rate));
@@ -167,7 +167,7 @@ SamplePlayer::instantiate(const LADSPA_Descriptor *, unsigned long rate)
     if (hostDescriptor->request_non_rt_thread(player, workThreadCallback)) {
         SVDEBUG << "SamplePlayer::instantiate: Host rejected request_non_rt_thread call, not instantiating" << endl;
         delete player;
-        return 0;
+        return nullptr;
     }
 
     return player;
@@ -209,7 +209,7 @@ SamplePlayer::activate(LADSPA_Handle handle)
 void
 SamplePlayer::run(LADSPA_Handle handle, unsigned long samples)
 {
-    runSynth(handle, samples, 0, 0);
+    runSynth(handle, samples, nullptr, 0);
 }
 
 void
@@ -243,7 +243,7 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
                 player->searchSamples();
             }
 
-            return 0;
+            return nullptr;
 
         } else {
             char *buffer = (char *)malloc(strlen(value) + 80);
@@ -266,7 +266,7 @@ SamplePlayer::getProgram(LADSPA_Handle handle, unsigned long program)
             player->searchSamples();
         }
     }
-    if (program >= player->m_samples.size()) return 0;
+    if (program >= player->m_samples.size()) return nullptr;
 
     static DSSI_Program_Descriptor descriptor;
     static char name[60];
@@ -419,7 +419,7 @@ SamplePlayer::loadSampleData(QString path)
     sf_readf_float(file, tmpFrames, info.frames);
     sf_close(file);
 
-    tmpResamples = 0;
+    tmpResamples = nullptr;
 
     if (info.samplerate != m_sampleRate) {
         

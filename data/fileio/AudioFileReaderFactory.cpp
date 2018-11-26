@@ -68,15 +68,15 @@ AudioFileReaderFactory::createReader(FileSource source,
 
     if (!source.isOK()) {
         SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
-        return 0;
+        return nullptr;
     }
 
     if (!source.isAvailable()) {
         SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
-        return 0;
+        return nullptr;
     }
 
-    AudioFileReader *reader = 0;
+    AudioFileReader *reader = nullptr;
 
     sv_samplerate_t targetRate = params.targetRate;
     bool normalised = (params.normalisation == Normalisation::Peak);

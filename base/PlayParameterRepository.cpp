@@ -92,7 +92,7 @@ PlayParameterRepository::copyParameters(const Playable *from, const Playable *to
 PlayParameters *
 PlayParameterRepository::getPlayParameters(const Playable *playable) 
 {
-    if (m_playParameters.find(playable) == m_playParameters.end()) return 0;
+    if (m_playParameters.find(playable) == m_playParameters.end()) return nullptr;
     return m_playParameters.find(playable)->second;
 }
 

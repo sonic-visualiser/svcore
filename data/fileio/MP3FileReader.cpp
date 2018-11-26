@@ -58,7 +58,7 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     m_path(source.getLocalFilename()),
     m_gaplessMode(gaplessMode),
     m_decodeErrorShown(false),
-    m_decodeThread(0)
+    m_decodeThread(nullptr)
 {
     SVDEBUG << "MP3FileReader: local path: \"" << m_path
             << "\", decode mode: " << decodeMode << " ("
@@ -82,10 +82,10 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
     
     m_fileSize = 0;
 
-    m_fileBuffer = 0;
+    m_fileBuffer = nullptr;
     m_fileBufferSize = 0;
 
-    m_sampleBuffer = 0;
+    m_sampleBuffer = nullptr;
     m_sampleBufferSize = 0;
 
     QFile qfile(m_path);
@@ -142,11 +142,11 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
                 delete[] m_sampleBuffer[c];
             }
             delete[] m_sampleBuffer;
-            m_sampleBuffer = 0;
+            m_sampleBuffer = nullptr;
         }
         
         delete[] m_fileBuffer;
-        m_fileBuffer = 0;
+        m_fileBuffer = nullptr;
 
         if (isDecodeCacheInitialised()) finishDecodeCache();
         endSerialised();
@@ -292,14 +292,14 @@ MP3FileReader::DecodeThread::run()
     }
 
     delete[] m_reader->m_fileBuffer;
-    m_reader->m_fileBuffer = 0;
+    m_reader->m_fileBuffer = nullptr;
 
     if (m_reader->m_sampleBuffer) {
         for (int c = 0; c < m_reader->m_channelCount; ++c) {
             delete[] m_reader->m_sampleBuffer[c];
         }
         delete[] m_reader->m_sampleBuffer;
-        m_reader->m_sampleBuffer = 0;
+        m_reader->m_sampleBuffer = nullptr;
     }
 
     if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
@@ -324,11 +324,11 @@ MP3FileReader::decode(void *mm, sv_frame_t sz)
     mad_decoder_init(&decoder,          // decoder to initialise
                      &data,             // our own data block for callbacks
                      input_callback,    // provides (entire) input to mad
-                     0,                 // checks header
+                     nullptr,                 // checks header
                      filter_callback,   // filters frame before decoding
                      output_callback,   // receives decoded output
                      error_callback,    // handles decode errors
-                     0);                // "message_func"
+                     nullptr);                // "message_func"
 
     mad_decoder_run(&decoder, MAD_DECODER_MODE_SYNC);
     mad_decoder_finish(&decoder);
@@ -540,7 +540,7 @@ MP3FileReader::accept(struct mad_header const *header,
         if (!m_sampleBuffer) {
             m_sampleBuffer = new float *[channels];
             for (int c = 0; c < channels; ++c) {
-                m_sampleBuffer[c] = 0;
+                m_sampleBuffer[c] = nullptr;
             }
         }
         for (int c = 0; c < channels; ++c) {
