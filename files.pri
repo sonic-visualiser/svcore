@@ -47,6 +47,7 @@ SVCORE_HEADERS = \
            data/fileio/AudioFileReader.h \
            data/fileio/AudioFileReaderFactory.h \
            data/fileio/AudioFileSizeEstimator.h \
+           data/fileio/BQAFileReader.h \
            data/fileio/BZipFileDevice.h \
            data/fileio/CachedFile.h \
            data/fileio/CodedAudioFileReader.h \
@@ -62,9 +63,7 @@ SVCORE_HEADERS = \
            data/fileio/MIDIFileReader.h \
            data/fileio/MIDIFileWriter.h \
            data/fileio/MP3FileReader.h \
-           data/fileio/OggVorbisFileReader.h \
            data/fileio/PlaylistFileReader.h \
-           data/fileio/CoreAudioFileReader.h \
            data/fileio/DecodingWavFileReader.h \
            data/fileio/WavFileReader.h \
            data/fileio/WavFileWriter.h \
@@ -182,6 +181,7 @@ SVCORE_SOURCES = \
            data/fileio/AudioFileReader.cpp \
            data/fileio/AudioFileReaderFactory.cpp \
            data/fileio/AudioFileSizeEstimator.cpp \
+           data/fileio/BQAFileReader.cpp \
            data/fileio/BZipFileDevice.cpp \
            data/fileio/CachedFile.cpp \
            data/fileio/CodedAudioFileReader.cpp \
@@ -194,9 +194,7 @@ SVCORE_SOURCES = \
            data/fileio/MIDIFileReader.cpp \
            data/fileio/MIDIFileWriter.cpp \
            data/fileio/MP3FileReader.cpp \
-           data/fileio/OggVorbisFileReader.cpp \
            data/fileio/PlaylistFileReader.cpp \
-           data/fileio/CoreAudioFileReader.cpp \
            data/fileio/DecodingWavFileReader.cpp \
            data/fileio/WavFileReader.cpp \
            data/fileio/WavFileWriter.cpp \
