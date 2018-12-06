@@ -58,8 +58,8 @@ BQAFileReader::BQAFileReader(FileSource source,
 	return;
     }
 
-    m_channelCount = m_stream->getChannelCount();
-    m_fileRate = m_stream->getSampleRate();
+    m_channelCount = int(m_stream->getChannelCount());
+    m_fileRate = sv_samplerate_t(m_stream->getSampleRate());
 
     initialiseDecodeCache();
 
@@ -185,7 +185,7 @@ BQAFileReader::supportsExtension(QString extension)
 }
 
 bool
-BQAFileReader::supportsContentType(QString type)
+BQAFileReader::supportsContentType(QString)
 {
 //!!! todo
     return false;
