@@ -17,8 +17,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FILE_FEATURE_WRITER_H_
-#define _FILE_FEATURE_WRITER_H_
+#ifndef SV_FILE_FEATURE_WRITER_H
+#define SV_FILE_FEATURE_WRITER_H
 
 #include <string>
 #include <map>
@@ -40,12 +40,12 @@ class FileFeatureWriter : public FeatureWriter
 public:
     virtual ~FileFeatureWriter();
 
-    virtual ParameterList getSupportedParameters() const;
-    virtual void setParameters(map<string, string> &params);
+    ParameterList getSupportedParameters() const override;
+    void setParameters(map<string, string> &params) override;
 
-    virtual void testOutputFile(QString trackId, TransformId transformId);
-    virtual void flush();
-    virtual void finish();
+    void testOutputFile(QString trackId, TransformId transformId) override;
+    void flush() override;
+    void finish() override;
 
 protected:
     enum FileWriteSupport {

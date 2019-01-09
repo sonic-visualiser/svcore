@@ -37,22 +37,22 @@ public:
      * to "pad" number of zero samples at the start and end */
     MockWaveModel(std::vector<Sort> sorts, int length, int pad);
 
-    virtual float getValueMinimum() const { return -1.f; }
-    virtual float getValueMaximum() const { return  1.f; }
-    virtual int getChannelCount() const { return int(m_data.size()); }
+    float getValueMinimum() const override { return -1.f; }
+    float getValueMaximum() const override { return  1.f; }
+    int getChannelCount() const override { return int(m_data.size()); }
     
-    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
-    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const override;
+    std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual bool canPlay() const { return true; }
-    virtual QString getDefaultPlayClipId() const { return ""; }
+    bool canPlay() const override { return true; }
+    QString getDefaultPlayClipId() const override { return ""; }
 
-    virtual sv_frame_t getStartFrame() const { return 0; }
-    virtual sv_frame_t getEndFrame() const { return m_data[0].size(); }
-    virtual sv_samplerate_t getSampleRate() const { return 44100; }
-    virtual bool isOK() const { return true; }
+    sv_frame_t getStartFrame() const override { return 0; }
+    sv_frame_t getEndFrame() const override { return m_data[0].size(); }
+    sv_samplerate_t getSampleRate() const override { return 44100; }
+    bool isOK() const override { return true; }
     
-    QString getTypeName() const { return tr("Mock Wave"); }
+    QString getTypeName() const override { return tr("Mock Wave"); }
 
 private:
     std::vector<std::vector<float> > m_data;

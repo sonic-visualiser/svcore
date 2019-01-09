@@ -32,8 +32,8 @@
 
 sv_samplerate_t RealTimePluginFactory::m_sampleRate = 48000;
 
-static LADSPAPluginFactory *_ladspaInstance = 0;
-static LADSPAPluginFactory *_dssiInstance = 0;
+static LADSPAPluginFactory *_ladspaInstance = nullptr;
+static LADSPAPluginFactory *_dssiInstance = nullptr;
 
 RealTimePluginFactory::~RealTimePluginFactory()
 {
@@ -58,7 +58,7 @@ RealTimePluginFactory::instance(QString pluginType)
         return _dssiInstance;
     }
         
-    else return 0;
+    else return nullptr;
 }
 
 RealTimePluginFactory *

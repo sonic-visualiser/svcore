@@ -46,7 +46,7 @@ MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
     m_exportable(exportable),
     m_sampleRate(sampleRate),
     m_tempo(tempo),
-    m_midiFile(0)
+    m_midiFile(nullptr)
 {
     if (!convert()) {
         m_error = "Conversion from model to internal MIDI format failed";
@@ -288,7 +288,7 @@ MIDIFileWriter::writeComposition()
     if (!(*m_midiFile)) {
         m_error = "Can't open file for writing.";
         delete m_midiFile;
-        m_midiFile = 0;
+        m_midiFile = nullptr;
         return false;
     }
 
@@ -304,7 +304,7 @@ MIDIFileWriter::writeComposition()
 
     m_midiFile->close();
     delete m_midiFile;
-    m_midiFile = 0;
+    m_midiFile = nullptr;
 
     if (!retOK) {
         m_error = "MIDI file write failed";

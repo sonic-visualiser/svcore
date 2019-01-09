@@ -31,7 +31,7 @@ class PluginScan::Logger
 #endif
 {
 protected:
-    void log(std::string message) {
+    void log(std::string message) override {
         SVDEBUG << "PluginScan: " << message << endl;
     }
 };
@@ -39,7 +39,7 @@ protected:
 PluginScan *PluginScan::getInstance()
 {
     static QMutex mutex;
-    static PluginScan *m_instance = 0;
+    static PluginScan *m_instance = nullptr;
     mutex.lock();
     if (!m_instance) m_instance = new PluginScan();
     mutex.unlock();

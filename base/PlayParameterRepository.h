@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLAY_PARAMETER_REPOSITORY_H_
-#define _PLAY_PARAMETER_REPOSITORY_H_
+#ifndef SV_PLAY_PARAMETER_REPOSITORY_H
+#define SV_PLAY_PARAMETER_REPOSITORY_H
 
 #include "PlayParameters.h"
 #include "Command.h"
@@ -52,9 +52,9 @@ public:
         void setPlayPan(float);
         void setPlayGain(float);
         void setPlayClipId(QString);
-        void execute();
-        void unexecute();
-        QString getName() const;
+        void execute() override;
+        void unexecute() override;
+        QString getName() const override;
 
     protected:
         PlayParameters *m_params;

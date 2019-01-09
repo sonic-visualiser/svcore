@@ -232,9 +232,9 @@ public:
      */
     QString getRDFTypeURI() const { return m_typeUri; }
 
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
     virtual QString toDelimitedDataString(QString delimiter) const {
         return toDelimitedDataStringSubset

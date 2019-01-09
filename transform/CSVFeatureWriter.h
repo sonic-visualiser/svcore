@@ -17,8 +17,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CSV_FEATURE_WRITER_H_
-#define _CSV_FEATURE_WRITER_H_
+#ifndef SV_CSV_FEATURE_WRITER_H
+#define SV_CSV_FEATURE_WRITER_H
 
 #include <string>
 #include <map>
@@ -40,20 +40,20 @@ public:
     CSVFeatureWriter();
     virtual ~CSVFeatureWriter();
 
-    virtual string getDescription() const;
+    string getDescription() const override;
 
-    virtual ParameterList getSupportedParameters() const;
-    virtual void setParameters(map<string, string> &params);
+    ParameterList getSupportedParameters() const override;
+    void setParameters(map<string, string> &params) override;
 
-    virtual void write(QString trackid,
+    void write(QString trackid,
                        const Transform &transform,
                        const Vamp::Plugin::OutputDescriptor &output,
                        const Vamp::Plugin::FeatureList &features,
-                       std::string summaryType = "");
+                       std::string summaryType = "") override;
 
-    virtual void finish();
+    void finish() override;
 
-    virtual QString getWriterTag() const { return "csv"; }
+    QString getWriterTag() const override { return "csv"; }
 
 private:
     QString m_separator;

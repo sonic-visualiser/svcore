@@ -19,8 +19,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _SCAVENGER_H_
-#define _SCAVENGER_H_
+#ifndef SV_SCAVENGER_H
+#define SV_SCAVENGER_H
 
 #include "system/System.h"
 

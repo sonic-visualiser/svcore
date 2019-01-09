@@ -126,18 +126,18 @@ public:
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
 
-    QString getTypeName() const { return tr("Note"); }
+    QString getTypeName() const override { return tr("Note"); }
 
-    virtual bool canPlay() const { return true; }
+    bool canPlay() const override { return true; }
 
-    virtual QString getDefaultPlayClipId() const
+    QString getDefaultPlayClipId() const override
     {
         return "elecpiano";
     }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         std::cerr << "NoteModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
@@ -153,12 +153,12 @@ public:
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 6;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -171,7 +171,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 4) {
             return IntervalModel<Note>::getData(row, column, role);
@@ -187,7 +187,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 4) {
             return IntervalModel<Note>::getSetDataCommand
@@ -211,7 +211,7 @@ public:
         return command->finish();
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 5) return SortAlphabetical;
         return SortNumeric;
@@ -221,11 +221,11 @@ public:
      * NoteExportable methods.
      */
 
-    NoteList getNotes() const {
+    NoteList getNotes() const override {
         return getNotesWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const {
+    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const override {
         
         PointList points = getPoints(startFrame, endFrame);
         NoteList notes;

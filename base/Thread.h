@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _THREAD_H_
-#define _THREAD_H_
+#ifndef SV_THREAD_H
+#define SV_THREAD_H
 
 #include <QThread>
 #include <QMutexLocker>
@@ -34,7 +34,7 @@ public slots:
     void start();
 
 protected:
-    virtual void run() = 0;
+    void run() override = 0;
 
 private:    
     Type m_type;

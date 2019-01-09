@@ -60,26 +60,26 @@ public:
 
     // DenseThreeDimensionalModel and Model methods:
     //
-    virtual int getWidth() const;
-    virtual int getHeight() const;
-    virtual float getValueAt(int x, int y) const { return getMagnitudeAt(x, y); }
-    virtual bool isOK() const { return m_model && m_model->isOK(); }
-    virtual sv_frame_t getStartFrame() const { return 0; }
-    virtual sv_frame_t getEndFrame() const {
+    int getWidth() const override;
+    int getHeight() const override;
+    float getValueAt(int x, int y) const override { return getMagnitudeAt(x, y); }
+    bool isOK() const override { return m_model && m_model->isOK(); }
+    sv_frame_t getStartFrame() const override { return 0; }
+    sv_frame_t getEndFrame() const override {
         return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
-    virtual sv_samplerate_t getSampleRate() const {
+    sv_samplerate_t getSampleRate() const override {
         return isOK() ? m_model->getSampleRate() : 0;
     }
-    virtual int getResolution() const { return m_windowIncrement; }
+    int getResolution() const override { return m_windowIncrement; }
     virtual int getYBinCount() const { return getHeight(); }
-    virtual float getMinimumLevel() const { return 0.f; } // Can't provide
-    virtual float getMaximumLevel() const { return 1.f; } // Can't provide
-    virtual Column getColumn(int x) const; // magnitudes
+    float getMinimumLevel() const override { return 0.f; } // Can't provide
+    float getMaximumLevel() const override { return 1.f; } // Can't provide
+    Column getColumn(int x) const override; // magnitudes
     virtual Column getPhases(int x) const;
-    virtual QString getBinName(int n) const;
-    virtual bool shouldUseLogValueScale() const { return true; }
-    virtual int getCompletion() const {
+    QString getBinName(int n) const override;
+    bool shouldUseLogValueScale() const override { return true; }
+    int getCompletion() const override {
         int c = 100;
         if (m_model) {
             if (m_model->isReady(&c)) return 100;
@@ -137,7 +137,7 @@ public:
     virtual PeakSet getPeakFrequencies(PeakPickType type, int x,
                                        int ymin = 0, int ymax = 0) const;
 
-    QString getTypeName() const { return tr("FFT"); }
+    QString getTypeName() const override { return tr("FFT"); }
 
 public slots:
     void sourceModelAboutToBeDeleted();

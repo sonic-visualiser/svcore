@@ -44,21 +44,21 @@ public:
                         ProgressReporter *reporter = nullptr);
     virtual ~OggVorbisFileReader();
 
-    virtual QString getError() const { return m_error; }
+    QString getError() const override { return m_error; }
 
-    virtual QString getLocation() const { return m_source.getLocation(); }
-    virtual QString getTitle() const { return m_title; }
-    virtual QString getMaker() const { return m_maker; }
-    virtual TagMap getTags() const { return m_tags; }
+    QString getLocation() const override { return m_source.getLocation(); }
+    QString getTitle() const override { return m_title; }
+    QString getMaker() const override { return m_maker; }
+    TagMap getTags() const override { return m_tags; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
     static bool supports(FileSource &source);
 
-    virtual int getDecodeCompletion() const { return m_completion; }
+    int getDecodeCompletion() const override { return m_completion; }
 
-    virtual bool isUpdating() const {
+    bool isUpdating() const override {
         return m_decodeThread && m_decodeThread->isRunning();
     }
 
@@ -91,7 +91,7 @@ protected:
     {
     public:
         DecodeThread(OggVorbisFileReader *reader) : m_reader(reader) { }
-        virtual void run();
+        void run() override;
 
     protected:
         OggVorbisFileReader *m_reader; 

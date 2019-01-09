@@ -47,7 +47,7 @@ CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              sv_samplerate_t mainModelSampleRate,
                              ProgressReporter *reporter) :
     m_format(format),
-    m_device(0),
+    m_device(nullptr),
     m_ownDevice(true),
     m_warnings(0),
     m_mainModelSampleRate(mainModelSampleRate),
@@ -107,7 +107,7 @@ CSVFileReader::~CSVFileReader()
 bool
 CSVFileReader::isOK() const
 {
-    return (m_device != 0);
+    return (m_device != nullptr);
 }
 
 QString
@@ -172,7 +172,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
 Model *
 CSVFileReader::load() const
 {
-    if (!m_device) return 0;
+    if (!m_device) return nullptr;
 
     CSVFormat::ModelType modelType = m_format.getModelType();
     CSVFormat::TimingType timingType = m_format.getTimingType();
@@ -197,13 +197,13 @@ CSVFileReader::load() const
         }
     }
 
-    SparseOneDimensionalModel *model1 = 0;
-    SparseTimeValueModel *model2 = 0;
-    RegionModel *model2a = 0;
-    NoteModel *model2b = 0;
-    EditableDenseThreeDimensionalModel *model3 = 0;
-    WritableWaveFileModel *modelW = 0;
-    Model *model = 0;
+    SparseOneDimensionalModel *model1 = nullptr;
+    SparseTimeValueModel *model2 = nullptr;
+    RegionModel *model2a = nullptr;
+    NoteModel *model2b = nullptr;
+    EditableDenseThreeDimensionalModel *model3 = nullptr;
+    WritableWaveFileModel *modelW = nullptr;
+    Model *model = nullptr;
 
     QTextStream in(m_device);
 
@@ -231,7 +231,7 @@ CSVFileReader::load() const
     }
 
     int audioChannels = 0;
-    float **audioSamples = 0;
+    float **audioSamples = nullptr;
     float sampleShift = 0.f;
     float sampleScale = 1.f;
 
@@ -370,9 +370,9 @@ CSVFileReader::load() const
                        << endl;
                 if (model) {
                     delete model;
-                    model = 0;
-                    model1 = 0; model2 = 0; model2a = 0; model2b = 0;
-                    model3 = 0; modelW = 0;
+                    model = nullptr;
+                    model1 = nullptr; model2 = nullptr; model2a = nullptr; model2b = nullptr;
+                    model3 = nullptr; modelW = nullptr;
                 }
                 abandoned = true;
                 break;

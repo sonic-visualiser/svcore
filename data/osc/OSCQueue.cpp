@@ -91,16 +91,16 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
    
 OSCQueue::OSCQueue() :
 #ifdef HAVE_LIBLO
-    m_thread(0),
+    m_thread(nullptr),
 #endif
     m_buffer(OSC_MESSAGE_QUEUE_SIZE)
 {
     Profiler profiler("OSCQueue::OSCQueue");
 
 #ifdef HAVE_LIBLO
-    m_thread = lo_server_thread_new(NULL, oscError);
+    m_thread = lo_server_thread_new(nullptr, oscError);
 
-    lo_server_thread_add_method(m_thread, NULL, NULL,
+    lo_server_thread_add_method(m_thread, nullptr, nullptr,
                                 oscMessageHandler, this);
 
     lo_server_thread_start(m_thread);
@@ -127,7 +127,7 @@ bool
 OSCQueue::isOK() const
 {
 #ifdef HAVE_LIBLO
-    return (m_thread != 0);
+    return (m_thread != nullptr);
 #else
     return false;
 #endif

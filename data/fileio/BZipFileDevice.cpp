@@ -31,8 +31,8 @@
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
     m_qfile(fileName),
-    m_file(0),
-    m_bzFile(0),
+    m_file(nullptr),
+    m_bzFile(nullptr),
     m_atEnd(true),
     m_ok(true)
 {
@@ -120,7 +120,7 @@ BZipFileDevice::open(OpenMode mode)
 
         if (!m_bzFile) {
             fclose(m_file);
-            m_file = 0;
+            m_file = nullptr;
             m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for writing"));
             m_ok = false;
@@ -150,11 +150,11 @@ BZipFileDevice::open(OpenMode mode)
         }
 
         int bzError = BZ_OK;
-        m_bzFile = BZ2_bzReadOpen(&bzError, m_file, 0, 0, NULL, 0);
+        m_bzFile = BZ2_bzReadOpen(&bzError, m_file, 0, 0, nullptr, 0);
 
         if (!m_bzFile) {
             fclose(m_file);
-            m_file = 0;
+            m_file = nullptr;
             m_qfile.close();
             setErrorString(tr("Failed to open bzip2 stream for reading"));
             m_ok = false;
@@ -195,8 +195,8 @@ BZipFileDevice::close()
         }
         fclose(m_file);
         m_qfile.close();
-        m_bzFile = 0;
-        m_file = 0;
+        m_bzFile = nullptr;
+        m_file = nullptr;
         m_ok = false;
         return;
     }
@@ -208,8 +208,8 @@ BZipFileDevice::close()
         }
         fclose(m_file);
         m_qfile.close();
-        m_bzFile = 0;
-        m_file = 0;
+        m_bzFile = nullptr;
+        m_file = nullptr;
         m_ok = false;
         return;
     }

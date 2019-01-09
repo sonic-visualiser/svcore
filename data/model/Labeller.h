@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _LABELLER_H_
-#define _LABELLER_H_
+#ifndef SV_LABELLER_H
+#define SV_LABELLER_H
 
 #include "SparseModel.h"
 #include "SparseValueModel.h"

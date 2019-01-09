@@ -29,7 +29,7 @@
 #include <set>
 #include <map>
 
-Profiles* Profiles::m_instance = 0;
+Profiles* Profiles::m_instance = nullptr;
 
 Profiles* Profiles::getInstance()
 {

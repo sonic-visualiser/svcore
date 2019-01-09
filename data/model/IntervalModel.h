@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _INTERVAL_MODEL_H_
-#define _INTERVAL_MODEL_H_
+#ifndef SV_INTERVAL_MODEL_H
+#define SV_INTERVAL_MODEL_H
 
 #include "SparseValueModel.h"
 #include "base/RealTime.h"
@@ -57,7 +57,7 @@ public:
      */
     virtual typename SparseValueModel<PointType>::PointList getPoints(sv_frame_t frame) const;
 
-    virtual const typename SparseModel<PointType>::PointList &getPoints() const {
+    const typename SparseModel<PointType>::PointList &getPoints() const override {
         return SparseModel<PointType>::getPoints(); 
     }
 
@@ -65,7 +65,7 @@ public:
      * TabularModel methods.  
      */
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 2) {
             return SparseValueModel<PointType>::getData
@@ -86,7 +86,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         typedef IntervalModel<PointType> I;
 
@@ -115,7 +115,7 @@ public:
         return command->finish();
     }
 
-    virtual bool isColumnTimeValue(int column) const
+    bool isColumnTimeValue(int column) const override
     {
         // NB duration is not a "time value" -- that's for columns
         // whose sort ordering is exactly that of the frame time

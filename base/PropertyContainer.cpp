@@ -68,7 +68,7 @@ PropertyContainer::getPropertyValueIconName(const PropertyName &, int) const
 RangeMapper *
 PropertyContainer::getNewPropertyRangeMapper(const PropertyName &) const
 {
-    return 0;
+    return nullptr;
 }
 
 void
@@ -80,8 +80,8 @@ PropertyContainer::setProperty(const PropertyName &name, int)
 Command *
 PropertyContainer::getSetPropertyCommand(const PropertyName &name, int value)
 {
-    int currentValue = getPropertyRangeAndValue(name, 0, 0, 0);
-    if (value == currentValue) return 0;
+    int currentValue = getPropertyRangeAndValue(name, nullptr, nullptr, nullptr);
+    if (value == currentValue) return nullptr;
     return new SetPropertyCommand(this, name, value);
 }
  
@@ -110,7 +110,7 @@ PropertyContainer::getSetPropertyCommand(QString nameString, QString valueString
                   << nameString << "\", \""
                   << valueString
                   << "\"): Name and value conversion failed" << endl;
-        return 0;
+        return nullptr;
     }
     return getSetPropertyCommand(name, value);
 }
@@ -181,7 +181,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     case ColourMapProperty:
     {
         int min, max;
-        getPropertyRangeAndValue(name, &min, &max, 0);
+        getPropertyRangeAndValue(name, &min, &max, nullptr);
         for (int i = min; i <= max; ++i) {
             if (valueString == getPropertyValueLabel(name, i)) {
                 value = i;
@@ -206,7 +206,7 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     if (success) return true;
 
     int min, max;
-    getPropertyRangeAndValue(name, &min, &max, 0);
+    getPropertyRangeAndValue(name, &min, &max, nullptr);
     
     bool ok = false;
     int i = valueString.toInt(&ok);
@@ -235,7 +235,7 @@ PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
 void
 PropertyContainer::SetPropertyCommand::execute()
 {
-    m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, 0, 0, 0);
+    m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, nullptr, nullptr, nullptr);
     m_pc->setProperty(m_pn, m_value);
 }
 

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RDF_TRANSFORM_FACTORY_H_
-#define _RDF_TRANSFORM_FACTORY_H_
+#ifndef SV_RDF_TRANSFORM_FACTORY_H
+#define SV_RDF_TRANSFORM_FACTORY_H
 
 #include <QObject>
 #include <QString>

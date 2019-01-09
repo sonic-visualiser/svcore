@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLUGIN_RDF_DESCRIPTION_H_
-#define _PLUGIN_RDF_DESCRIPTION_H_
+#ifndef SV_PLUGIN_RDF_DESCRIPTION_H
+#define SV_PLUGIN_RDF_DESCRIPTION_H
 
 #include <QString>
 #include <QStringList>

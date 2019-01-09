@@ -37,7 +37,7 @@ DataFileReaderFactory::createReader(QString path,
 {
     QString err;
 
-    DataFileReader *reader = 0;
+    DataFileReader *reader = nullptr;
 
     if (!csv) {
         reader = new MIDIFileReader(path,
@@ -59,7 +59,7 @@ DataFileReaderFactory::createReader(QString path,
         delete reader;
     }
 
-    return 0;
+    return nullptr;
 }
 
 DataFileReader *
@@ -76,7 +76,7 @@ DataFileReaderFactory::createReader(QString path,
         (path, true, acquirer, CSVFormat(path), mainModelSampleRate, reporter);
     if (reader) return reader;
 
-    return 0;
+    return nullptr;
 }
 
 Model *
@@ -89,7 +89,7 @@ DataFileReaderFactory::load(QString path,
                                           acquirer,
                                           mainModelSampleRate,
                                           reporter);
-    if (!reader) return NULL;
+    if (!reader) return nullptr;
 
     try {
         Model *model = reader->load();
@@ -112,7 +112,7 @@ DataFileReaderFactory::loadNonCSV(QString path,
                                           CSVFormat(),
                                           mainModelSampleRate,
                                           reporter);
-    if (!reader) return NULL;
+    if (!reader) return nullptr;
 
     try {
         Model *model = reader->load();
@@ -129,10 +129,10 @@ DataFileReaderFactory::loadCSV(QString path, CSVFormat format,
                                sv_samplerate_t mainModelSampleRate,
                                ProgressReporter *reporter)
 {
-    DataFileReader *reader = createReader(path, true, 0, format,
+    DataFileReader *reader = createReader(path, true, nullptr, format,
                                           mainModelSampleRate,
                                           reporter);
-    if (!reader) return NULL;
+    if (!reader) return nullptr;
 
     try {
         Model *model = reader->load();

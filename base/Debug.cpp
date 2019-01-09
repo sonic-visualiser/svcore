@@ -24,8 +24,8 @@
 
 #include <stdexcept>
 
-static SVDebug *svdebug = 0;
-static SVCerr *svcerr = 0;
+static SVDebug *svdebug = nullptr;
+static SVCerr *svcerr = nullptr;
 static QMutex mutex;
 
 SVDebug &getSVDebug() {
@@ -53,7 +53,7 @@ bool SVDebug::m_silenced = false;
 bool SVCerr::m_silenced = false;
 
 SVDebug::SVDebug() :
-    m_prefix(0),
+    m_prefix(nullptr),
     m_ok(false),
     m_eol(true)
 {

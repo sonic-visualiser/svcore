@@ -32,7 +32,7 @@ using namespace Vamp;
 
 FileFeatureWriter::FileFeatureWriter(int support,
                                      QString extension) :
-    m_prevstream(0),
+    m_prevstream(nullptr),
     m_support(support),
     m_extension(extension),
     m_manyFiles(false),
@@ -284,7 +284,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
         QString filename = createOutputFilename(trackId, transformId);
 
         if (filename == "") { // stdout or failure
-            return 0;
+            return nullptr;
         }
 
         SVDEBUG << "FileFeatureWriter: NOTE: Using output filename \""
@@ -303,7 +303,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
             SVCERR << "FileFeatureWriter: ERROR: Failed to open output file \"" << filename
                  << "\" for writing" << endl;
             delete file;
-            m_files[key] = 0;
+            m_files[key] = nullptr;
             throw FailedToOpenFile(filename);
         }
         
@@ -320,7 +320,7 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
 {
     QFile *file = getOutputFile(trackId, transformId);
     if (!file && !m_stdout) {
-        return 0;
+        return nullptr;
     }
     
     if (m_streams.find(file) == m_streams.end()) {
@@ -372,6 +372,6 @@ FileFeatureWriter::finish()
         }
         m_files.erase(m_files.begin());
     }
-    m_prevstream = 0;
+    m_prevstream = nullptr;
 }
 

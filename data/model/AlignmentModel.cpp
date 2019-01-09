@@ -27,8 +27,8 @@ AlignmentModel::AlignmentModel(Model *reference,
     m_aligned(aligned),
     m_inputModel(inputModel),
     m_rawPath(path),
-    m_path(0),
-    m_reversePath(0),
+    m_path(nullptr),
+    m_reversePath(nullptr),
     m_pathBegun(false),
     m_pathComplete(false)
 {
@@ -129,7 +129,7 @@ AlignmentModel::isReady(int *completion) const
 const ZoomConstraint *
 AlignmentModel::getZoomConstraint() const
 {
-    return 0;
+    return nullptr;
 }
 
 const Model *
@@ -177,7 +177,7 @@ AlignmentModel::pathChanged()
         cerr << "AlignmentModel: deleting raw path model" << endl;
         if (m_rawPath) m_rawPath->aboutToDelete();
         delete m_rawPath;
-        m_rawPath = 0;
+        m_rawPath = nullptr;
     }
 }
 
@@ -214,7 +214,7 @@ AlignmentModel::pathCompletionChanged()
             
             if (m_inputModel) m_inputModel->aboutToDelete();
             delete m_inputModel;
-            m_inputModel = 0;
+            m_inputModel = nullptr;
         }
     }
 

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SERIALISER_H_
-#define _SERIALISER_H_
+#ifndef SV_SERIALISER_H
+#define SV_SERIALISER_H
 
 #include <QString>
 #include <QMutex>

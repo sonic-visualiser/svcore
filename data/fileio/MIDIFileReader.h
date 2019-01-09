@@ -66,9 +66,9 @@ public:
                    ProgressReporter *reporter = 0);
     virtual ~MIDIFileReader();
 
-    virtual bool isOK() const;
-    virtual QString getError() const;
-    virtual Model *load() const;
+    bool isOK() const override;
+    QString getError() const override;
+    Model *load() const override;
 
 protected:
     typedef std::vector<MIDIEvent *> MIDITrack;

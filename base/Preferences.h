@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PREFERENCES_H_
-#define _PREFERENCES_H_
+#ifndef SV_PREFERENCES_H
+#define SV_PREFERENCES_H
 
 #include "PropertyContainer.h"
 
@@ -27,13 +27,13 @@ class Preferences : public PropertyContainer
 public:
     static Preferences *getInstance();
 
-    virtual PropertyList getProperties() const;
-    virtual QString getPropertyLabel(const PropertyName &) const;
-    virtual PropertyType getPropertyType(const PropertyName &) const;
-    virtual int getPropertyRangeAndValue(const PropertyName &, int *, int *, int *) const;
-    virtual QString getPropertyValueLabel(const PropertyName &, int value) const;
-    virtual QString getPropertyContainerName() const;
-    virtual QString getPropertyContainerIconName() const;
+    PropertyList getProperties() const override;
+    QString getPropertyLabel(const PropertyName &) const override;
+    PropertyType getPropertyType(const PropertyName &) const override;
+    int getPropertyRangeAndValue(const PropertyName &, int *, int *, int *) const override;
+    QString getPropertyValueLabel(const PropertyName &, int value) const override;
+    QString getPropertyContainerName() const override;
+    QString getPropertyContainerIconName() const override;
 
     enum SpectrogramSmoothing {
         NoSpectrogramSmoothing,
@@ -108,7 +108,7 @@ public:
     bool getShowSplash() const { return m_showSplash; }
 
 public slots:
-    virtual void setProperty(const PropertyName &, int);
+    void setProperty(const PropertyName &, int) override;
 
     void setSpectrogramSmoothing(SpectrogramSmoothing smoothing);
     void setSpectrogramXSmoothing(SpectrogramXSmoothing smoothing);

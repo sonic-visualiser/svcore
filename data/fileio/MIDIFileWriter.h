@@ -20,8 +20,8 @@
    and copyright 2007 QMUL.
 */
 
-#ifndef _MIDI_FILE_WRITER_H_
-#define _MIDI_FILE_WRITER_H_
+#ifndef SV_MIDI_FILE_WRITER_H
+#define SV_MIDI_FILE_WRITER_H
 
 #include "base/RealTime.h"
 #include "base/BaseTypes.h"

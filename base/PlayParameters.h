@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLAY_PARAMETERS_H_
-#define _PLAY_PARAMETERS_H_
+#ifndef SV_PLAY_PARAMETERS_H
+#define SV_PLAY_PARAMETERS_H
 
 #include <QObject>
 
@@ -36,9 +36,9 @@ public:
 
     virtual void copyFrom(const PlayParameters *);
 
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 public slots:
     virtual void setPlayMuted(bool muted);

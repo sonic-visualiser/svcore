@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _LOG_RANGE_H_
-#define _LOG_RANGE_H_
+#ifndef SV_LOG_RANGE_H
+#define SV_LOG_RANGE_H
 
 #include <vector>
 #include "Debug.h"

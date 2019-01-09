@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _DENSE_THREE_DIMENSIONAL_MODEL_H_
-#define _DENSE_THREE_DIMENSIONAL_MODEL_H_
+#ifndef SV_DENSE_THREE_DIMENSIONAL_MODEL_H
+#define SV_DENSE_THREE_DIMENSIONAL_MODEL_H
 
 #include "Model.h"
 #include "TabularModel.h"
@@ -118,7 +118,7 @@ public:
         return getValueAt(x, y) > threshold;
     }
 
-    QString getTypeName() const { return tr("Dense 3-D"); }
+    QString getTypeName() const override { return tr("Dense 3-D"); }
 
     virtual int getCompletion() const = 0;
 
@@ -129,10 +129,10 @@ public:
        "on its side").
      */
     
-    virtual int getRowCount() const { return getWidth(); }
-    virtual int getColumnCount() const { return getHeight() + 2; }
+    int getRowCount() const override { return getWidth(); }
+    int getColumnCount() const override { return getHeight() + 2; }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -146,8 +146,8 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int) const 
-    {
+    QVariant getData(int row, int column, int) const 
+    override {
         switch (column) {
         case 0: {
             RealTime rt = RealTime::frame2RealTime
@@ -161,17 +161,17 @@ public:
         }
     }
 
-    virtual bool isColumnTimeValue(int col) const {
+    bool isColumnTimeValue(int col) const override {
         return col < 2;
     }
-    virtual SortType getSortType(int) const {
+    SortType getSortType(int) const override {
         return SortNumeric;
     }
 
-    virtual sv_frame_t getFrameForRow(int row) const {
+    sv_frame_t getFrameForRow(int row) const override {
         return sv_frame_t(row) * getResolution() + getStartFrame();
     }
-    virtual int getRowForFrame(sv_frame_t frame) const {
+    int getRowForFrame(sv_frame_t frame) const override {
         return int((frame - getStartFrame()) / getResolution());
     }
 

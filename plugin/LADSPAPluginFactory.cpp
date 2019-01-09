@@ -53,7 +53,7 @@ LADSPAPluginFactory::~LADSPAPluginFactory()
 {
     for (std::set<RealTimePluginInstance *>::iterator i = m_instances.begin();
          i != m_instances.end(); ++i) {
-        (*i)->setFactory(0);
+        (*i)->setFactory(nullptr);
         delete *i;
     }
     m_instances.clear();
@@ -148,7 +148,7 @@ LADSPAPluginFactory::getPluginDescriptor(QString identifier) const
         return i->second;
     } 
 
-    return 0;
+    return nullptr;
 }
 
 float
@@ -363,7 +363,7 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
         return instance;
     }
 
-    return 0;
+    return nullptr;
 }
 
 void
@@ -423,7 +423,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
         loadLibrary(soname);
         if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
             SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: loadLibrary failed for " << soname << endl;
-            return 0;
+            return nullptr;
         }
     }
 
@@ -434,10 +434,10 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
 
     if (!fn) {
         SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No descriptor function in library " << soname << endl;
-        return 0;
+        return nullptr;
     }
 
-    const LADSPA_Descriptor *descriptor = 0;
+    const LADSPA_Descriptor *descriptor = nullptr;
     
     int index = 0;
     while ((descriptor = fn(index))) {
@@ -447,7 +447,7 @@ LADSPAPluginFactory::getLADSPADescriptor(QString identifier)
 
     SVCERR << "WARNING: LADSPAPluginFactory::getLADSPADescriptor: No such plugin as " << label << " in library " << soname << endl;
 
-    return 0;
+    return nullptr;
 }
 
 void
@@ -702,7 +702,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         return;
     }
 
-    const LADSPA_Descriptor *descriptor = 0;
+    const LADSPA_Descriptor *descriptor = nullptr;
     
     int index = 0;
     while ((descriptor = fn(index))) {
@@ -723,8 +723,8 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
             ("ladspa", soname, descriptor->Label);
 
 #ifdef HAVE_LRDF
-        char *def_uri = 0;
-        lrdf_defaults *defs = 0;
+        char *def_uri = nullptr;
+        lrdf_defaults *defs = nullptr;
                 
         if (m_lrdfTaxonomy[descriptor->UniqueID] != "") {
             m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->UniqueID];
@@ -868,7 +868,7 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 #ifdef HAVE_LRDF
     lrdf_uris *uris = lrdf_get_instances(uri.toStdString().c_str());
 
-    if (uris != NULL) {
+    if (uris != nullptr) {
         for (unsigned int i = 0; i < uris->count; ++i) {
             m_lrdfTaxonomy[lrdf_get_uid(uris->items[i])] = base;
         }
@@ -877,7 +877,7 @@ LADSPAPluginFactory::generateTaxonomy(QString uri, QString base)
 
     uris = lrdf_get_subclasses(uri.toStdString().c_str());
 
-    if (uris != NULL) {
+    if (uris != nullptr) {
         for (unsigned int i = 0; i < uris->count; ++i) {
             char *label = lrdf_get_label(uris->items[i]);
             generateTaxonomy(uris->items[i],

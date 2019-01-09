@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_TIME_VALUE_MODEL_H_
-#define _SPARSE_TIME_VALUE_MODEL_H_
+#ifndef SV_SPARSE_TIME_VALUE_MODEL_H
+#define SV_SPARSE_TIME_VALUE_MODEL_H
 
 #include "SparseValueModel.h"
 #include "base/PlayParameterRepository.h"
@@ -108,21 +108,21 @@ public:
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
-    QString getTypeName() const { return tr("Sparse Time-Value"); }
+    QString getTypeName() const override { return tr("Sparse Time-Value"); }
 
-    virtual bool canPlay() const { return true; }
-    virtual bool getDefaultPlayAudible() const { return false; } // user must unmute
+    bool canPlay() const override { return true; }
+    bool getDefaultPlayAudible() const override { return false; } // user must unmute
 
     /**
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 4;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -133,7 +133,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 2) {
             return SparseValueModel<TimeValuePoint>::getData
@@ -152,7 +152,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 2) {
             return SparseValueModel<TimeValuePoint>::getSetDataCommand
@@ -176,12 +176,12 @@ public:
         return command->finish();
     }
 
-    virtual bool isColumnTimeValue(int column) const
+    bool isColumnTimeValue(int column) const override
     {
         return (column < 2); 
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 3) return SortAlphabetical;
         return SortNumeric;

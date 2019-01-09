@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RDF_EXPORTER_H_
-#define _RDF_EXPORTER_H_
+#ifndef SV_RDF_EXPORTER_H
+#define SV_RDF_EXPORTER_H
 
 #include <QString>
 
