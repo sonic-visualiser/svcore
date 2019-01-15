@@ -60,6 +60,8 @@ BQAFileReader::BQAFileReader(FileSource source,
 
     m_channelCount = int(m_stream->getChannelCount());
     m_fileRate = sv_samplerate_t(m_stream->getSampleRate());
+    m_title = QString::fromUtf8(m_stream->getTrackName().c_str());
+    m_maker = QString::fromUtf8(m_stream->getArtistName().c_str());
 
     initialiseDecodeCache();
 
@@ -107,8 +109,6 @@ BQAFileReader::BQAFileReader(FileSource source,
         m_decodeThread = new DecodeThread(this);
         m_decodeThread->start();
     }
-
-//!!! todo metadata - maker, title, tags
 }
 
 BQAFileReader::~BQAFileReader()
