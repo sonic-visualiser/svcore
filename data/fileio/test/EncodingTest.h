@@ -142,11 +142,11 @@ private slots:
 
         } else {
 
-#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
-            if (extension == "ogg") {
-                QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
-            }
-#endif
+//#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
+//            if (extension == "ogg") {
+//                QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
+//            }
+//#endif
             
             auto blah = reader->getInterleavedFrames(0, 10);
             
@@ -215,11 +215,11 @@ private slots:
             return;
         }
 
-#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
-        if (extension == "ogg") {
-            QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
-        }
-#endif
+//#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
+//        if (extension == "ogg") {
+//            QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
+//        }
+//#endif
 
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
