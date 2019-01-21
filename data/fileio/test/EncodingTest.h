@@ -101,6 +101,15 @@ private slots:
         
         QFETCH(QString, audiofile);
 
+        if (!AudioFileReaderFactory::isSupported(encodingDir + "/" +
+                                                 audiofile)) {
+#if ( QT_VERSION >= 0x050000 )
+            QSKIP("Known unsupported file, skipping");
+#else
+            QSKIP("Known unsupported file, skipping", SkipSingle);
+#endif
+        }            
+        
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
             AudioFileReaderFactory::createReader
@@ -128,7 +137,13 @@ private slots:
             AudioFileReaderFactory::createReader
             (encodingDir + "/" + audiofile, params);
 
-        QVERIFY(reader != nullptr);
+        if (!reader) {
+#if ( QT_VERSION >= 0x050000 )
+            QSKIP("Unsupported file, skipping");
+#else
+            QSKIP("Unsupported file, skipping", SkipSingle);
+#endif
+        }
 
         QStringList fileAndExt = audiofile.split(".");
         QString file = fileAndExt[0];
@@ -225,7 +240,14 @@ private slots:
         AudioFileReader *reader =
             AudioFileReaderFactory::createReader
             (encodingDir + "/" + audiofile, params);
-        QVERIFY(reader != nullptr);
+        
+        if (!reader) {
+#if ( QT_VERSION >= 0x050000 )
+            QSKIP("Unsupported file, skipping");
+#else
+            QSKIP("Unsupported file, skipping", SkipSingle);
+#endif
+        }
 
         QString title = reader->getTitle();
         QVERIFY(title != QString());

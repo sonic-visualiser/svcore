@@ -58,6 +58,9 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
     m_channelCount = m_original->getChannelCount();
     m_fileRate = m_original->getSampleRate();
 
+    m_title = m_original->getTitle();
+    m_maker = m_original->getMaker();
+
     initialiseDecodeCache();
 
     if (decodeMode == DecodeAtOnce) {

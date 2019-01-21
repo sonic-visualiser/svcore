@@ -50,6 +50,23 @@ AudioFileReaderFactory::getKnownExtensions()
     return rv;
 }
 
+bool
+AudioFileReaderFactory::isSupported(FileSource source)
+{
+#ifdef HAVE_MAD
+    if (MP3FileReader::supports(source)) {
+        return true;
+    }
+#endif
+    if (WavFileReader::supports(source)) {
+        return true;
+    }
+    if (BQAFileReader::supports(source)) {
+        return true;
+    }
+    return false;
+}
+
 AudioFileReader *
 AudioFileReaderFactory::createReader(FileSource source,
                                      Parameters params,
@@ -122,39 +139,33 @@ AudioFileReaderFactory::createReader(FileSource source,
         }
 
 #ifdef HAVE_MAD
-        if (anyReader || MP3FileReader::supports(source)) {
+        // Having said we'll try any reader on the second pass, we
+        // actually don't want to try the mp3 reader for anything not
+        // identified as an mp3 - it can't identify files by header,
+        // it'll try to read any data and then fail with
+        // synchronisation errors - causing misleading and potentially
+        // alarming warning messages at the least
+        if (!anyReader) {
+            if (MP3FileReader::supports(source)) {
 
-            MP3FileReader::GaplessMode gapless =
-                params.gaplessMode == GaplessMode::Gapless ?
-                MP3FileReader::GaplessMode::Gapless :
-                MP3FileReader::GaplessMode::Gappy;
+                MP3FileReader::GaplessMode gapless =
+                    params.gaplessMode == GaplessMode::Gapless ?
+                    MP3FileReader::GaplessMode::Gapless :
+                    MP3FileReader::GaplessMode::Gappy;
             
-            reader = new MP3FileReader
-                (source, decodeMode, cacheMode, gapless,
-                 targetRate, normalised, reporter);
+                reader = new MP3FileReader
+                    (source, decodeMode, cacheMode, gapless,
+                     targetRate, normalised, reporter);
 
-            if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
-                return reader;
-            } else {
-                delete reader;
+                if (reader->isOK()) {
+                    SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
+                    return reader;
+                } else {
+                    delete reader;
+                }
             }
         }
 #endif
-
-        if (anyReader || BQAFileReader::supports(source)) {
-
-            reader = new BQAFileReader
-                (source, decodeMode, cacheMode, 
-                 targetRate, normalised, reporter);
-
-            if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: BQA reader is OK, returning it" << endl;
-                return reader;
-            } else {
-                delete reader;
-            }
-        }
 
         if (anyReader || WavFileReader::supports(source)) {
 
@@ -181,6 +192,20 @@ AudioFileReaderFactory::createReader(FileSource source,
 
             if (reader->isOK()) {
                 SVDEBUG << "AudioFileReaderFactory: WAV file reader is OK, returning it" << endl;
+                return reader;
+            } else {
+                delete reader;
+            }
+        }
+    
+        if (anyReader || BQAFileReader::supports(source)) {
+
+            reader = new BQAFileReader
+                (source, decodeMode, cacheMode, 
+                 targetRate, normalised, reporter);
+
+            if (reader->isOK()) {
+                SVDEBUG << "AudioFileReaderFactory: BQA reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
