@@ -46,6 +46,18 @@ static const char *mapping[][2] = {
 };
 static const int mappingCount = 4;
 
+static const char *testFiles[][2] = {
+    { "id3v2-iso-8859-1", "mp3" },
+    { "id3v2-ucs-2", "mp3" },
+    { utf8_name_tsprk, "flac" },
+    { utf8_name_tsprk, "m4a" },
+    { utf8_name_tsprk, "mp3" },
+    { utf8_name_tsprk, "ogg" },
+    { utf8_name_sprkt, "mp3" },
+    { utf8_name_sprkt, "ogg" },
+};
+static const int testFileCount = 8;
+
 class EncodingTest : public QObject
 {
     Q_OBJECT
@@ -66,15 +78,13 @@ public:
     }
 
 private:
-    const char *strOf(QString s) {
-        return strdup(s.toLocal8Bit().data());
-    }
-
     void addAudioFiles() {
         QTest::addColumn<QString>("audiofile");
-        QStringList files = QDir(encodingDir).entryList(QDir::Files);
-        foreach (QString filename, files) {
-            QTest::newRow(strOf(filename)) << filename;
+        for (int i = 0; i < testFileCount; ++i) {
+            std::string s = testFiles[i][0];
+            s += ".";
+            s += testFiles[i][1];
+            QTest::newRow(strdup(s.c_str())) << QString::fromStdString(s);
         }
     }
 
@@ -84,7 +94,7 @@ private slots:
         if (!QDir(encodingDir).exists()) {
             SVCERR << "ERROR: Audio encoding file directory \"" << encodingDir << "\" does not exist" << endl;
             QVERIFY2(QDir(encodingDir).exists(), "Audio encoding file directory not found");
-        }
+         }
         if (!QDir(outDir).exists() && !QDir().mkpath(outDir)) {
             SVCERR << "ERROR: Audio out directory \"" << outDir << "\" does not exist and could not be created" << endl;
             QVERIFY2(QDir(outDir).exists(), "Audio out directory not found and could not be created");
