@@ -79,14 +79,31 @@ public:
     }
 
 private:
+    const char *strOf(QString s) {
+        return strdup(s.toLocal8Bit().data());
+    }
+
     void addAudioFiles() {
-        QTest::addColumn<QString>("audiofile");
-        for (int i = 0; i < testFileCount; ++i) {
-            std::string s = testFiles[i][0];
-            s += ".";
-            s += testFiles[i][1];
-            QTest::newRow(strdup(s.c_str())) << QString::fromStdString(s);
-        }
+         QTest::addColumn<QString>("audiofile");
+#ifndef Q_OS_MAC
+         // The normal case - populate the file list from the files
+         // actually present in the encodings directory
+         QStringList files = QDir(encodingDir).entryList(QDir::Files);
+         foreach (QString filename, files) {
+             QTest::newRow(strOf(filename)) << filename;
+         }
+#else
+         // Deviant case for Mac - populate the file list from the
+         // hard-coded list of expected files in testFiles. This is
+         // because QDir::entryList is currently broken on APFS (as of
+         // Qt 5.12) because of variant Unicode normalisations.
+         for (int i = 0; i < testFileCount; ++i) {
+             std::string s = testFiles[i][0];
+             s += ".";
+             s += testFiles[i][1];
+             QTest::newRow(strdup(s.c_str())) << QString::fromStdString(s);
+         }
+#endif
     }
 
 private slots:
