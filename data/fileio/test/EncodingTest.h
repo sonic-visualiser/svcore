@@ -53,6 +53,7 @@ static const char *testFiles[][2] = {
     { utf8_name_tsprk, "m4a" },
     { utf8_name_tsprk, "mp3" },
     { utf8_name_tsprk, "ogg" },
+    { utf8_name_tsprk, "opus" },
     { utf8_name_sprkt, "mp3" },
     { utf8_name_sprkt, "ogg" },
 };
