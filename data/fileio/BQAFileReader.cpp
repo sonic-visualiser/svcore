@@ -54,6 +54,7 @@ BQAFileReader::BQAFileReader(FileSource source,
 	    (m_path.toUtf8().data());
     } catch (const std::exception &e) {
 	m_error = e.what();
+        SVDEBUG << "BQAFileReader: createReadStream failed: " << m_error << endl;
 	m_stream = 0;
 	return;
     }
@@ -88,6 +89,7 @@ BQAFileReader::BQAFileReader(FileSource source,
 		}
 	    } catch (const breakfastquay::InvalidFileFormat &f) {
 		m_error = f.what();
+                SVDEBUG << "BQAFileReader: init failed: " << m_error << endl;
 		break;
 	    }
 
@@ -151,6 +153,7 @@ BQAFileReader::DecodeThread::run()
 	    }
 	} catch (const breakfastquay::InvalidFileFormat &f) {
 	    m_reader->m_error = f.what();
+            SVDEBUG << "BQAFileReader: decode failed: " << m_reader->m_error << endl;
 	    break;
 	}
 
