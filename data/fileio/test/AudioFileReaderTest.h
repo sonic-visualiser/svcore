@@ -98,6 +98,11 @@ private:
                 maxLimit = 0.1;
                 rmsLimit = 0.03;
 
+            } else if (format == "opus") {
+
+                maxLimit = 0.06;
+                rmsLimit = 0.015;
+
             } else if (format == "aac") {
 
                 // Terrible performance for this test, load of spill
@@ -147,6 +152,11 @@ private:
 
                 maxLimit = 0.06;
                 rmsLimit = 0.03;
+
+            } else if (format == "opus") {
+
+                maxLimit = 0.06;
+                rmsLimit = 0.015;
 
             } else if (format == "aac") {
 
@@ -295,7 +305,8 @@ private slots:
 
         bool perceptual = (extension == "mp3" ||
                            extension == "aac" ||
-                           extension == "m4a");
+                           extension == "m4a" ||
+                           extension == "opus");
         
         if (perceptual && !gapless) {
             // allow silence at start and end
