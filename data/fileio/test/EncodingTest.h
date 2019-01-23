@@ -46,6 +46,8 @@ static const char *mapping[][2] = {
 };
 static const int mappingCount = 4;
 
+#ifdef Q_OS_MAC
+// see note in addAudioFiles below
 static const char *testFiles[][2] = {
     { "id3v2-iso-8859-1", "mp3" },
     { "id3v2-ucs-2", "mp3" },
@@ -58,6 +60,7 @@ static const char *testFiles[][2] = {
     { utf8_name_sprkt, "ogg" },
 };
 static const int testFileCount = 8;
+#endif
 
 class EncodingTest : public QObject
 {
