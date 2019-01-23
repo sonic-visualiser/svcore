@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _IMAGE_MODEL_H_
-#define _IMAGE_MODEL_H_
+#ifndef SV_IMAGE_MODEL_H
+#define SV_IMAGE_MODEL_H
 
 #include "SparseModel.h"
 #include "base/XmlExportable.h"
@@ -45,7 +45,7 @@ public:
     
     void toXml(QTextStream &stream,
                QString indent = "",
-               QString extraAttributes = "") const
+               QString extraAttributes = "") const override
     {
         stream <<
             QString("%1<point frame=\"%2\" image=\"%3\" label=\"%4\" %5/>\n")
@@ -93,11 +93,11 @@ public:
         SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
     { }
 
-    QString getTypeName() const { return tr("Image"); }
+    QString getTypeName() const override { return tr("Image"); }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         SparseModel<ImagePoint>::toXml
             (out, 
@@ -121,15 +121,15 @@ public:
             m_newPoint.label = newLabel;
         }
 
-        virtual QString getName() const { return tr("Edit Image"); }
+        QString getName() const override { return tr("Edit Image"); }
 
-        virtual void execute() { 
+        void execute() override { 
             m_model->deletePoint(m_oldPoint);
             m_model->addPoint(m_newPoint);
             std::swap(m_oldPoint, m_newPoint);
         }
 
-        virtual void unexecute() { execute(); }
+        void unexecute() override { execute(); }
 
     private:
         ImageModel *m_model;
@@ -141,12 +141,12 @@ public:
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 4;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -157,7 +157,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 2) {
             return SparseModel<ImagePoint>::getData
@@ -174,7 +174,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 2) {
             return SparseModel<ImagePoint>::getSetDataCommand
@@ -198,12 +198,12 @@ public:
         return command->finish();
     }
 
-    virtual bool isColumnTimeValue(int column) const
+    bool isColumnTimeValue(int column) const override
     {
         return (column < 2); 
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column > 2) return SortAlphabetical;
         return SortNumeric;

@@ -162,9 +162,9 @@ protected:
         SetPropertyCommand(PropertyContainer *pc, const PropertyName &pn, int);
         virtual ~SetPropertyCommand() { }
 
-        virtual void execute();
-        virtual void unexecute();
-        virtual QString getName() const;
+        void execute() override;
+        void unexecute() override;
+        QString getName() const override;
 
     protected:
         PropertyContainer *m_pc;

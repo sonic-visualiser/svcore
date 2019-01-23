@@ -52,14 +52,14 @@ public:
         DecodeThreaded // decode in a background thread after construction
     };
 
-    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const;
+    floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const override;
 
-    virtual sv_samplerate_t getNativeRate() const { return m_fileRate; }
+    sv_samplerate_t getNativeRate() const override { return m_fileRate; }
 
-    virtual QString getLocalFilename() const { return m_cacheFileName; }
+    QString getLocalFilename() const override { return m_cacheFileName; }
     
     /// Intermediate cache means all CodedAudioFileReaders are quickly seekable
-    virtual bool isQuicklySeekable() const { return true; }
+    bool isQuicklySeekable() const override { return true; }
 
 signals:
     void progress(int);

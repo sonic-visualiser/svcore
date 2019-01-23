@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _UNIT_DATABASE_H_
-#define _UNIT_DATABASE_H_
+#ifndef SV_UNIT_DATABASE_H
+#define SV_UNIT_DATABASE_H
 
 #include <QObject>
 #include <QString>

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _WINDOW_H_
-#define _WINDOW_H_
+#ifndef SV_WINDOW_H
+#define SV_WINDOW_H
 
 #include <cmath>
 #include <iostream>

@@ -48,20 +48,20 @@ LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
     m_descriptor(descriptor),
     m_blockSize(blockSize),
     m_sampleRate(sampleRate),
-    m_latencyPort(0),
+    m_latencyPort(nullptr),
     m_run(false),
     m_bypassed(false)
 {
     init(idealChannelCount);
 
     if (m_audioPortsIn.size() == 0) {
-        m_inputBuffers = 0;
+        m_inputBuffers = nullptr;
     } else {
         m_inputBuffers  = new sample_t*[m_instanceCount * m_audioPortsIn.size()];
     }
 
     if (m_audioPortsOut.size() == 0) {
-        m_outputBuffers = 0;
+        m_outputBuffers = nullptr;
     } else {
         m_outputBuffers = new sample_t*[m_instanceCount * m_audioPortsOut.size()];
     }

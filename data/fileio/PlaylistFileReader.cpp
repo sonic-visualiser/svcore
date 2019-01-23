@@ -25,7 +25,7 @@
 
 PlaylistFileReader::PlaylistFileReader(QString path) :
     m_source(path),
-    m_file(0)
+    m_file(nullptr)
 {
     if (!m_source.isAvailable()) {
         m_error = QFile::tr("File or URL \"%1\" could not be retrieved")
@@ -37,7 +37,7 @@ PlaylistFileReader::PlaylistFileReader(QString path) :
 
 PlaylistFileReader::PlaylistFileReader(FileSource source) :
     m_source(source),
-    m_file(0)
+    m_file(nullptr)
 {
     if (!m_source.isAvailable()) {
         m_error = QFile::tr("File or URL \"%1\" could not be retrieved")
@@ -83,14 +83,14 @@ PlaylistFileReader::init()
 
     if (!good) {
         delete m_file;
-        m_file = 0;
+        m_file = nullptr;
     }
 }
 
 bool
 PlaylistFileReader::isOK() const
 {
-    return (m_file != 0);
+    return (m_file != nullptr);
 }
 
 QString

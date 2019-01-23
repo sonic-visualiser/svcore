@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _OSC_MESSAGE_H_
-#define _OSC_MESSAGE_H_
+#ifndef SV_OSC_MESSAGE_H
+#define SV_OSC_MESSAGE_H
 
 #include <QString>
 #include <QVariant>

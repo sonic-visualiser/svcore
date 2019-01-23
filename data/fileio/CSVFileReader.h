@@ -52,10 +52,10 @@ public:
 
     virtual ~CSVFileReader();
 
-    virtual bool isOK() const;
-    virtual QString getError() const;
+    bool isOK() const override;
+    QString getError() const override;
 
-    virtual Model *load() const;
+    Model *load() const override;
 
 protected:
     CSVFormat m_format;

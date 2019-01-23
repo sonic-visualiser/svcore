@@ -39,8 +39,8 @@ WavFileWriter::WavFileWriter(QString path,
     m_path(path),
     m_sampleRate(sampleRate),
     m_channels(channels),
-    m_temp(0),
-    m_file(0)
+    m_temp(nullptr),
+    m_file(nullptr)
 {
     SF_INFO fileInfo;
 
@@ -73,13 +73,13 @@ WavFileWriter::WavFileWriter(QString path,
                 .arg(writePath);
             if (m_temp) {
                 delete m_temp;
-                m_temp = 0;
+                m_temp = nullptr;
             }
         }
     } catch (FileOperationFailed &f) {
         m_error = f.what();
-        m_temp = 0;
-        m_file = 0;
+        m_temp = nullptr;
+        m_file = nullptr;
     }
 }
 
@@ -218,12 +218,12 @@ WavFileWriter::close()
 {
     if (m_file) {
         sf_close(m_file);
-        m_file = 0;
+        m_file = nullptr;
     }
     if (m_temp) {
         m_temp->moveToTarget();
         delete m_temp;
-        m_temp = 0;
+        m_temp = nullptr;
     }
     return true;
 }

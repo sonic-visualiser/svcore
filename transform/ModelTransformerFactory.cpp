@@ -59,7 +59,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       sv_frame_t duration,
                                                       UserConfigurator *configurator)
 {
-    ModelTransformer::Input input(0);
+    ModelTransformer::Input input(nullptr);
 
     if (candidateInputModels.empty()) return input;
 
@@ -91,7 +91,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
     SVDEBUG << "ModelTransformer: last configuration for identifier " << transform.getIdentifier() << ": " << configurationXml << endl;
 
-    Vamp::PluginBase *plugin = 0;
+    Vamp::PluginBase *plugin = nullptr;
 
     if (RealTimePluginFactory::instanceFor(id)) {
 
@@ -171,7 +171,7 @@ ModelTransformer *
 ModelTransformerFactory::createTransformer(const Transforms &transforms,
                                            const ModelTransformer::Input &input)
 {
-    ModelTransformer *transformer = 0;
+    ModelTransformer *transformer = nullptr;
 
     QString id = transforms[0].getPluginIdentifier();
 
@@ -201,7 +201,7 @@ ModelTransformerFactory::transform(const Transform &transform,
     Transforms transforms;
     transforms.push_back(transform);
     vector<Model *> mm = transformMultiple(transforms, input, message, handler);
-    if (mm.empty()) return 0;
+    if (mm.empty()) return nullptr;
     else return mm[0];
 }
 

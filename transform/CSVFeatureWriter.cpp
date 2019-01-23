@@ -174,7 +174,7 @@ CSVFeatureWriter::write(QString trackId,
         writeFeature(tt, 
                      stream,
                      features[i], 
-                     m_forceEnd ? &features[i+1] : 0,
+                     m_forceEnd ? &features[i+1] : nullptr,
                      summaryType);
     }
 }

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SPARSE_VALUE_MODEL_H_
-#define _SPARSE_VALUE_MODEL_H_
+#ifndef SV_SPARSE_VALUE_MODEL_H
+#define SV_SPARSE_VALUE_MODEL_H
 
 #include "SparseModel.h"
 #include "base/UnitDatabase.h"
@@ -53,7 +53,7 @@ public:
     using SparseModel<PointType>::getPoints;
     using SparseModel<PointType>::tr;
 
-    QString getTypeName() const { return tr("Sparse Value"); }
+    QString getTypeName() const override { return tr("Sparse Value"); }
 
     virtual float getValueMinimum() const { return m_valueMinimum; }
     virtual float getValueMaximum() const { return m_valueMaximum; }
@@ -64,7 +64,7 @@ public:
         UnitDatabase::getInstance()->registerUnit(units);
     }
 
-    virtual void addPoint(const PointType &point)
+    void addPoint(const PointType &point) override
     {
         bool allChange = false;
 
@@ -84,7 +84,7 @@ public:
         if (allChange) emit modelChanged();
     }
 
-    virtual void deletePoint(const PointType &point)
+    void deletePoint(const PointType &point) override
     {
         SparseModel<PointType>::deletePoint(point);
 
@@ -113,9 +113,9 @@ public:
         }
     }
 
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         std::cerr << "SparseValueModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;

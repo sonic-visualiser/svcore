@@ -301,12 +301,12 @@ SystemMemoryBarrier()
 #endif /* !_WIN32 */
 
 
-static char *startupLocale = 0;
+static char *startupLocale = nullptr;
 
 void
 StoreStartupLocale()
 {
-    char *loc = setlocale(LC_ALL, 0);
+    char *loc = setlocale(LC_ALL, nullptr);
     if (!loc) return;
     if (startupLocale) free(startupLocale);
     startupLocale = strdup(loc);

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PITCH_H_
-#define _PITCH_H_
+#ifndef SV_PITCH_H
+#define SV_PITCH_H
 
 #include <QString>
 

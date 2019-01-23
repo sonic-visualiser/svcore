@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RECENT_FILES_H_
-#define _RECENT_FILES_H_
+#ifndef SV_RECENT_FILES_H
+#define SV_RECENT_FILES_H
 
 #include <QObject>
 #include <QString>

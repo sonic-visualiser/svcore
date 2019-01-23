@@ -19,6 +19,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <set>
+
 #include "base/BaseTypes.h"
 
 class CSVFormat
@@ -77,7 +79,7 @@ public:
         m_modelType(TwoDimensionalModel),
         m_timingType(ExplicitTiming),
         m_timeUnits(TimeSeconds),
-        m_separator(","),
+        m_separator(""),
         m_sampleRate(44100),
         m_windowSize(1024),
         m_columnCount(0),
@@ -120,8 +122,12 @@ public:
     AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
     QChar        getSeparator()     const { 
-        if (m_separator == "") return ' ';
+        if (m_separator == "") return ',';
         else return m_separator[0];
+    }
+    // set rather than QSet to ensure a fixed order
+    std::set<QChar> getPlausibleSeparators() const {
+        return m_plausibleSeparators;
     }
 
     void setModelType(ModelType t)        { m_modelType    = t; }
@@ -157,7 +163,8 @@ protected:
     ModelType    m_modelType;
     TimingType   m_timingType;
     TimeUnits    m_timeUnits;
-    QString      m_separator;
+    QString      m_separator; // "" or a single char - basically QChar option
+    std::set<QChar> m_plausibleSeparators;
     sv_samplerate_t m_sampleRate;
     int          m_windowSize;
 

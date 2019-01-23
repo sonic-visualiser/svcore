@@ -19,8 +19,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _REALTIME_PLUGIN_FACTORY_H_
-#define _REALTIME_PLUGIN_FACTORY_H_
+#ifndef SV_REALTIME_PLUGIN_FACTORY_H
+#define SV_REALTIME_PLUGIN_FACTORY_H
 
 #include <QString>
 #include <vector>

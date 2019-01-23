@@ -40,10 +40,10 @@ WritableWaveFileModel::WritableWaveFileModel(QString path,
                                              sv_samplerate_t sampleRate,
                                              int channels,
                                              Normalisation norm) :
-    m_model(0),
-    m_temporaryWriter(0),
-    m_targetWriter(0),
-    m_reader(0),
+    m_model(nullptr),
+    m_temporaryWriter(nullptr),
+    m_targetWriter(nullptr),
+    m_reader(nullptr),
     m_normalisation(norm),
     m_sampleRate(sampleRate),
     m_channels(channels),
@@ -57,10 +57,10 @@ WritableWaveFileModel::WritableWaveFileModel(QString path,
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
                                              int channels,
                                              Normalisation norm) :
-    m_model(0),
-    m_temporaryWriter(0),
-    m_targetWriter(0),
-    m_reader(0),
+    m_model(nullptr),
+    m_temporaryWriter(nullptr),
+    m_targetWriter(nullptr),
+    m_reader(nullptr),
     m_normalisation(norm),
     m_sampleRate(sampleRate),
     m_channels(channels),
@@ -73,10 +73,10 @@ WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
 
 WritableWaveFileModel::WritableWaveFileModel(sv_samplerate_t sampleRate,
                                              int channels) :
-    m_model(0),
-    m_temporaryWriter(0),
-    m_targetWriter(0),
-    m_reader(0),
+    m_model(nullptr),
+    m_temporaryWriter(nullptr),
+    m_targetWriter(nullptr),
+    m_reader(nullptr),
     m_normalisation(Normalisation::None),
     m_sampleRate(sampleRate),
     m_channels(channels),
@@ -150,7 +150,7 @@ WritableWaveFileModel::init(QString path)
     if (!m_model->isOK()) {
         SVCERR << "WritableWaveFileModel: Error in creating wave file model" << endl;
         delete m_model;
-        m_model = 0;
+        m_model = nullptr;
         return;
     }
     m_model->setStartFrame(m_startFrame);
@@ -291,7 +291,7 @@ WritableWaveFileModel::normaliseToTarget()
     m_targetWriter->close();
 
     delete m_temporaryWriter;
-    m_temporaryWriter = 0;
+    m_temporaryWriter = nullptr;
     QFile::remove(m_temporaryPath);
 }
 

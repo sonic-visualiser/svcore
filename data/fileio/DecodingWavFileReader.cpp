@@ -35,9 +35,9 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
     m_cancelled(false),
     m_processed(0),
     m_completion(0),
-    m_original(0),
+    m_original(nullptr),
     m_reporter(reporter),
-    m_decodeThread(0)
+    m_decodeThread(nullptr)
 {
     SVDEBUG << "DecodingWavFileReader: local path: \"" << m_path
             << "\", decode mode: " << decodeMode << " ("
@@ -93,7 +93,7 @@ DecodingWavFileReader::DecodingWavFileReader(FileSource source,
         if (m_reporter) m_reporter->setProgress(100);
 
         delete m_original;
-        m_original = 0;
+        m_original = nullptr;
 
     } else {
 
@@ -150,7 +150,7 @@ DecodingWavFileReader::DecodeThread::run()
     m_reader->endSerialised();
 
     delete m_reader->m_original;
-    m_reader->m_original = 0;
+    m_reader->m_original = nullptr;
 } 
 
 void

@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _DSSI_PLUGIN_FACTORY_H_
-#define _DSSI_PLUGIN_FACTORY_H_
+#ifndef SV_DSSI_PLUGIN_FACTORY_H
+#define SV_DSSI_PLUGIN_FACTORY_H
 
 #define DSSI_API_LEVEL 2
 
@@ -35,14 +35,14 @@ class DSSIPluginFactory : public LADSPAPluginFactory
 public:
     virtual ~DSSIPluginFactory();
 
-    virtual void enumeratePlugins(std::vector<QString> &list);
+    void enumeratePlugins(std::vector<QString> &list) override;
 
-    virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
+    RealTimePluginInstance *instantiatePlugin(QString identifier,
                                                       int clientId,
                                                       int position,
                                                       sv_samplerate_t sampleRate,
                                                       int blockSize,
-                                                      int channels);
+                                                      int channels) override;
 
     static std::vector<QString> getPluginPath();
 
@@ -50,15 +50,15 @@ protected:
     DSSIPluginFactory();
     friend class RealTimePluginFactory;
 
-    virtual PluginScan::PluginType getPluginType() const {
+    PluginScan::PluginType getPluginType() const override {
         return PluginScan::DSSIPlugin;
     }
 
-    virtual std::vector<QString> getLRDFPath(QString &baseUri);
+    std::vector<QString> getLRDFPath(QString &baseUri) override;
 
-    virtual void discoverPluginsFrom(QString soName);
+    void discoverPluginsFrom(QString soName) override;
 
-    virtual const LADSPA_Descriptor *getLADSPADescriptor(QString identifier);
+    const LADSPA_Descriptor *getLADSPADescriptor(QString identifier) override;
     virtual const DSSI_Descriptor *getDSSIDescriptor(QString identifier);
 
     DSSI_Host_Descriptor m_hostDescriptor;

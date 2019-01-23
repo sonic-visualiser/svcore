@@ -48,31 +48,30 @@ public:
                   Normalisation normalise = Normalisation::None);
     virtual ~WavFileReader();
 
-    virtual QString getLocation() const { return m_source.getLocation(); }
-    virtual QString getError() const { return m_error; }
+    QString getLocation() const override { return m_source.getLocation(); }
+    QString getError() const override { return m_error; }
 
     QString getTitle() const override { return m_title; }
     QString getMaker() const override { return m_maker; }
     
-    virtual QString getLocalFilename() const { return m_path; }
+    QString getLocalFilename() const override { return m_path; }
     
-    virtual bool isQuicklySeekable() const { return m_seekable; }
+    bool isQuicklySeekable() const override { return m_seekable; }
     
     /** 
      * Must be safe to call from multiple threads with different
      * arguments on the same object at the same time.
      */
-    virtual floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count)
-        const;
+    floatvec_t getInterleavedFrames(sv_frame_t start, sv_frame_t count) const override;
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
     static bool supports(FileSource &source);
 
-    virtual int getDecodeCompletion() const { return 100; }
+    int getDecodeCompletion() const override { return 100; }
 
-    bool isUpdating() const { return m_updating; }
+    bool isUpdating() const override { return m_updating; }
 
     void updateFrameCount();
     void updateDone();

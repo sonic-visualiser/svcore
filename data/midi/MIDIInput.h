@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _MIDI_INPUT_H_
-#define _MIDI_INPUT_H_
+#ifndef SV_MIDI_INPUT_H
+#define SV_MIDI_INPUT_H
 
 #include <QObject>
 #include "MIDIEvent.h"

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _TEXT_MATCHER_H_
-#define _TEXT_MATCHER_H_
+#ifndef SV_TEXT_MATCHER_H
+#define SV_TEXT_MATCHER_H
 
 #include <QString>
 #include <QStringList>

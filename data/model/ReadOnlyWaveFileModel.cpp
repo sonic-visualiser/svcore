@@ -42,11 +42,11 @@ ReadOnlyWaveFileModel::m_zoomConstraint;
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate) :
     m_source(source),
     m_path(source.getLocation()),
-    m_reader(0),
+    m_reader(nullptr),
     m_myReader(true),
     m_startFrame(0),
-    m_fillThread(0),
-    m_updateTimer(0),
+    m_fillThread(nullptr),
+    m_updateTimer(nullptr),
     m_lastFillExtent(0),
     m_prevCompletion(0),
     m_exiting(false),
@@ -90,11 +90,11 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader) :
     m_source(source),
     m_path(source.getLocation()),
-    m_reader(0),
+    m_reader(nullptr),
     m_myReader(false),
     m_startFrame(0),
-    m_fillThread(0),
-    m_updateTimer(0),
+    m_fillThread(nullptr),
+    m_updateTimer(nullptr),
     m_lastFillExtent(0),
     m_prevCompletion(0),
     m_exiting(false)
@@ -113,7 +113,7 @@ ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
     m_exiting = true;
     if (m_fillThread) m_fillThread->wait();
     if (m_myReader) delete m_reader;
-    m_reader = 0;
+    m_reader = nullptr;
 
     SVDEBUG << "ReadOnlyWaveFileModel: Destructor exiting; we had caches of "
             << (m_cache[0].size() * sizeof(Range)) << " and "
@@ -597,9 +597,9 @@ ReadOnlyWaveFileModel::cacheFilled()
 {
     m_mutex.lock();
     delete m_fillThread;
-    m_fillThread = 0;
+    m_fillThread = nullptr;
     delete m_updateTimer;
-    m_updateTimer = 0;
+    m_updateTimer = nullptr;
     auto prevFillExtent = m_lastFillExtent;
     m_lastFillExtent = getEndFrame();
     m_mutex.unlock();

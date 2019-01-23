@@ -617,7 +617,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 if (values.size() == 1) dimensions = 2;
                 else if (values.size() > 1) dimensions = 3;
 
-                Model *model = 0;
+                Model *model = nullptr;
 
                 if (modelMap[timeline][type][dimensions].find(haveDuration) ==
                     modelMap[timeline][type][dimensions].end()) {
@@ -809,7 +809,7 @@ RDFImporter::identifyDocumentType(QString url)
     bool haveAnnotations = false;
     bool haveRDF = false;
 
-    BasicStore *store = 0;
+    BasicStore *store = nullptr;
 
     // This is not expected to return anything useful, but if it does
     // anything at all then we know we have RDF

@@ -94,7 +94,7 @@ Model::aboutToDelete()
 void
 Model::sourceModelAboutToBeDeleted()
 {
-    m_sourceModel = 0;
+    m_sourceModel = nullptr;
 }
 
 void
@@ -124,7 +124,7 @@ Model::getAlignmentReference() const
 {
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return 0;
+        return nullptr;
     }
     return m_alignment->getReferenceModel();
 }

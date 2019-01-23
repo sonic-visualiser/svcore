@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SAMPLE_PLAYER_H_
-#define _SAMPLE_PLAYER_H_
+#ifndef SV_SAMPLE_PLAYER_H
+#define SV_SAMPLE_PLAYER_H
 
 #define DSSI_API_LEVEL 2
 

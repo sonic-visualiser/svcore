@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _XML_EXPORTABLE_H_
-#define _XML_EXPORTABLE_H_
+#ifndef SV_XML_EXPORTABLE_H
+#define SV_XML_EXPORTABLE_H
 
 #include <QString>
 

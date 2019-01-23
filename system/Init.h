@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _SV_SYSTEM_INIT_H_
-#define _SV_SYSTEM_INIT_H_
+#ifndef SV_SYSTEM_INIT_H
+#define SV_SYSTEM_INIT_H
 
 extern void svSystemSpecificInitialisation();
 

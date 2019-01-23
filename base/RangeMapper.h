@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _RANGE_MAPPER_H_
-#define _RANGE_MAPPER_H_
+#ifndef SV_RANGE_MAPPER_H
+#define SV_RANGE_MAPPER_H
 
 #include <QString>
 
@@ -89,14 +89,14 @@ public:
                       QString unit = "", bool inverted = false,
                       std::map<int, QString> labels = {});
     
-    virtual int getPositionForValue(double value) const;
-    virtual int getPositionForValueUnclamped(double value) const;
+    int getPositionForValue(double value) const override;
+    int getPositionForValueUnclamped(double value) const override;
 
-    virtual double getValueForPosition(int position) const;
-    virtual double getValueForPositionUnclamped(int position) const;
+    double getValueForPosition(int position) const override;
+    double getValueForPositionUnclamped(int position) const override;
 
-    virtual QString getUnit() const { return m_unit; }
-    virtual QString getLabel(int position) const;
+    QString getUnit() const override { return m_unit; }
+    QString getLabel(int position) const override;
 
 protected:
     int m_minpos;
@@ -131,13 +131,13 @@ public:
                               double minval, double maxval,
                               double &minlog, double &ratio);
 
-    virtual int getPositionForValue(double value) const;
-    virtual int getPositionForValueUnclamped(double value) const;
+    int getPositionForValue(double value) const override;
+    int getPositionForValueUnclamped(double value) const override;
 
-    virtual double getValueForPosition(int position) const;
-    virtual double getValueForPositionUnclamped(int position) const;
+    double getValueForPosition(int position) const override;
+    double getValueForPositionUnclamped(int position) const override;
 
-    virtual QString getUnit() const { return m_unit; }
+    QString getUnit() const override { return m_unit; }
 
 protected:
     int m_minpos;
@@ -175,13 +175,13 @@ public:
     InterpolatingRangeMapper(CoordMap pointMappings,
                              QString unit);
 
-    virtual int getPositionForValue(double value) const;
-    virtual int getPositionForValueUnclamped(double value) const;
+    int getPositionForValue(double value) const override;
+    int getPositionForValueUnclamped(double value) const override;
 
-    virtual double getValueForPosition(int position) const;
-    virtual double getValueForPositionUnclamped(int position) const;
+    double getValueForPosition(int position) const override;
+    double getValueForPositionUnclamped(int position) const override;
 
-    virtual QString getUnit() const { return m_unit; }
+    QString getUnit() const override { return m_unit; }
 
 protected:
     CoordMap m_mappings;
@@ -248,13 +248,13 @@ public:
      */
     MappingType getType() const { return m_type; }
 
-    virtual int getPositionForValue(double value) const;
-    virtual int getPositionForValueUnclamped(double value) const;
+    int getPositionForValue(double value) const override;
+    int getPositionForValueUnclamped(double value) const override;
 
-    virtual double getValueForPosition(int position) const;
-    virtual double getValueForPositionUnclamped(int position) const;
+    double getValueForPosition(int position) const override;
+    double getValueForPositionUnclamped(int position) const override;
 
-    virtual QString getUnit() const { return m_unit; }
+    QString getUnit() const override { return m_unit; }
 
 protected:
     MappingType m_type;

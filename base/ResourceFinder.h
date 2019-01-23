@@ -19,8 +19,8 @@
    development team.
 */
 
-#ifndef _RESOURCE_FINDER_H_
-#define _RESOURCE_FINDER_H_
+#ifndef SV_RESOURCE_FINDER_H
+#define SV_RESOURCE_FINDER_H
 
 #include <QString>
 

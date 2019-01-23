@@ -45,7 +45,7 @@ DSSIPluginFactory::DSSIPluginFactory() :
     LADSPAPluginFactory()
 {
     m_hostDescriptor.DSSI_API_Version = 2;
-    m_hostDescriptor.request_transport_information = NULL;
+    m_hostDescriptor.request_transport_information = nullptr;
     m_hostDescriptor.request_midi_send = DSSIPluginInstance::requestMidiSend;
     m_hostDescriptor.request_non_rt_thread = DSSIPluginInstance::requestNonRTThread;
     m_hostDescriptor.midi_send = DSSIPluginInstance::midiSend;
@@ -134,7 +134,7 @@ DSSIPluginFactory::instantiatePlugin(QString identifier,
         return instance;
     }
 
-    return 0;
+    return nullptr;
 }
 
 const DSSI_Descriptor *
@@ -151,7 +151,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
             }
             return descriptor;
         } else {
-            return 0;
+            return nullptr;
         }
     }
     
@@ -161,7 +161,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
         loadLibrary(soname);
         if (m_libraryHandles.find(soname) == m_libraryHandles.end()) {
             cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: loadLibrary failed for " << soname << endl;
-            return 0;
+            return nullptr;
         }
         firstInLibrary = true;
     }
@@ -173,10 +173,10 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
 
     if (!fn) {
         cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No descriptor function in library " << soname << endl;
-        return 0;
+        return nullptr;
     }
 
-    const DSSI_Descriptor *descriptor = 0;
+    const DSSI_Descriptor *descriptor = nullptr;
     
     int index = 0;
     while ((descriptor = fn(index))) {
@@ -191,7 +191,7 @@ DSSIPluginFactory::getDSSIDescriptor(QString identifier)
 
     cerr << "WARNING: DSSIPluginFactory::getDSSIDescriptor: No such plugin as " << label << " in library " << soname << endl;
 
-    return 0;
+    return nullptr;
 }
 
 const LADSPA_Descriptor *
@@ -199,7 +199,7 @@ DSSIPluginFactory::getLADSPADescriptor(QString identifier)
 {
     const DSSI_Descriptor *dssiDescriptor = getDSSIDescriptor(identifier);
     if (dssiDescriptor) return dssiDescriptor->LADSPA_Plugin;
-    else return 0;
+    else return nullptr;
 }
 
 
@@ -308,7 +308,7 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         return;
     }
 
-    const DSSI_Descriptor *descriptor = 0;
+    const DSSI_Descriptor *descriptor = nullptr;
     
     int index = 0;
     while ((descriptor = fn(index))) {
@@ -337,8 +337,8 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
             ("dssi", soname, ladspaDescriptor->Label);
 
 #ifdef HAVE_LRDF
-        char *def_uri = 0;
-        lrdf_defaults *defs = 0;
+        char *def_uri = nullptr;
+        lrdf_defaults *defs = nullptr;
                 
         QString category = m_taxonomy[identifier];
 

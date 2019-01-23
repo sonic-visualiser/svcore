@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _AGGREGATE_WAVE_MODEL_H_
-#define _AGGREGATE_WAVE_MODEL_H_
+#ifndef SV_AGGREGATE_WAVE_MODEL_H
+#define SV_AGGREGATE_WAVE_MODEL_H
 
 #include "RangeSummarisableTimeValueModel.h"
 #include "PowerOfSqrtTwoZoomConstraint.h"
@@ -39,41 +39,41 @@ public:
     AggregateWaveModel(ChannelSpecList channelSpecs);
     ~AggregateWaveModel();
 
-    bool isOK() const;
-    bool isReady(int *) const;
+    bool isOK() const override;
+    bool isReady(int *) const override;
 
-    QString getTypeName() const { return tr("Aggregate Wave"); }
+    QString getTypeName() const override { return tr("Aggregate Wave"); }
 
     int getComponentCount() const;
     ModelChannelSpec getComponent(int c) const;
 
-    const ZoomConstraint *getZoomConstraint() const { return &m_zoomConstraint; }
+    const ZoomConstraint *getZoomConstraint() const override { return &m_zoomConstraint; }
 
     sv_frame_t getFrameCount() const;
-    int getChannelCount() const;
-    sv_samplerate_t getSampleRate() const;
+    int getChannelCount() const override;
+    sv_samplerate_t getSampleRate() const override;
 
-    float getValueMinimum() const { return -1.0f; }
-    float getValueMaximum() const { return  1.0f; }
+    float getValueMinimum() const override { return -1.0f; }
+    float getValueMaximum() const override { return  1.0f; }
 
-    virtual sv_frame_t getStartFrame() const { return 0; }
-    virtual sv_frame_t getEndFrame() const { return getFrameCount(); }
+    sv_frame_t getStartFrame() const override { return 0; }
+    sv_frame_t getEndFrame() const override { return getFrameCount(); }
 
-    virtual floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const;
+    floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const;
+    std::vector<floatvec_t> getMultiChannelData(int fromchannel, int tochannel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual int getSummaryBlockSize(int desired) const;
+    int getSummaryBlockSize(int desired) const override;
 
-    virtual void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
+    void getSummaries(int channel, sv_frame_t start, sv_frame_t count,
                               RangeBlock &ranges,
-                              int &blockSize) const;
+                              int &blockSize) const override;
 
-    virtual Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const;
+    Range getSummary(int channel, sv_frame_t start, sv_frame_t count) const override;
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
 signals:
     void modelChanged();

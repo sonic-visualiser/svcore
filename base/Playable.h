@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLAYABLE_H_
-#define _PLAYABLE_H_
+#ifndef SV_PLAYABLE_H
+#define SV_PLAYABLE_H
 
 #include <QString>
 

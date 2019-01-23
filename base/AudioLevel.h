@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _AUDIO_LEVEL_H_
-#define _AUDIO_LEVEL_H_
+#ifndef SV_AUDIO_LEVEL_H
+#define SV_AUDIO_LEVEL_H
 
 /**
  * AudioLevel converts audio sample levels between various scales:

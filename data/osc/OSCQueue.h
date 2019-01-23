@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and QMUL.
 */
 
-#ifndef _OSC_QUEUE_H_
-#define _OSC_QUEUE_H_
+#ifndef SV_OSC_QUEUE_H
+#define SV_OSC_QUEUE_H
 
 #include "OSCMessage.h"
 

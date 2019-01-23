@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLUGIN_XML_H_
-#define _PLUGIN_XML_H_
+#ifndef SV_PLUGIN_XML_H
+#define SV_PLUGIN_XML_H
 
 #include "base/XmlExportable.h"
 #include <vamp-hostsdk/PluginBase.h>
@@ -30,9 +30,9 @@ public:
     /**
      * Export plugin settings to XML.
      */
-    virtual void toXml(QTextStream &stream,
+    void toXml(QTextStream &stream,
                        QString indent = "",
-                       QString extraAttributes = "") const;
+                       QString extraAttributes = "") const override;
 
     /**
      * Set the parameters and program of a plugin from a set of XML

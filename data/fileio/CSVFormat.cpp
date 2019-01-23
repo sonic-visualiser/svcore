@@ -39,8 +39,6 @@ CSVFormat::CSVFormat(QString path) :
 bool
 CSVFormat::guessFormatFor(QString path)
 {
-    m_separator = ""; // to prompt guessing for it
-
     m_modelType = TwoDimensionalModel;
     m_timingType = ExplicitTiming;
     m_timeUnits = TimeSeconds;
@@ -108,14 +106,12 @@ CSVFormat::guessSeparator(QString line)
     for (int i = 0; i < candidates.length(); ++i) {
         auto bits = StringBits::split(line, candidates[i], m_allowQuoting);
         if (bits.size() >= 2) {
-            SVDEBUG << "Successfully split the line into:" << endl;
-            for (auto b: bits) {
-                SVDEBUG << b << endl;
+            m_plausibleSeparators.insert(candidates[i]);
+            if (m_separator == "") {
+                m_separator = candidates[i];
+                SVDEBUG << "Estimated column separator: '" << m_separator
+                        << "'" << endl;
             }
-            m_separator = candidates[i];
-            SVDEBUG << "Estimated column separator: '" << m_separator
-                    << "'" << endl;
-            return;
         }
     }
 }
@@ -123,9 +119,7 @@ CSVFormat::guessSeparator(QString line)
 void
 CSVFormat::guessQualities(QString line, int lineno)
 {
-    if (m_separator == "") {
-        guessSeparator(line);
-    }
+    guessSeparator(line);
 
     QStringList list = StringBits::split(line, getSeparator(), m_allowQuoting);
 

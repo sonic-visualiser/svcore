@@ -91,6 +91,18 @@ private slots:
         QCOMPARE(f.getColumnCount(), 3);
     }
     
+    void plausibleSeparators() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("separator-many.csv")));
+        std::set<QChar> p;
+        p.insert(QChar('|'));
+        p.insert(QChar(','));
+        p.insert(QChar(':'));
+        p.insert(QChar(' '));
+        std::set<QChar> actual = f.getPlausibleSeparators();
+        QCOMPARE(actual, p);
+    }
+    
     void comment() {
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("comment.csv")));

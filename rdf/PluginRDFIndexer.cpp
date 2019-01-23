@@ -51,7 +51,7 @@ using Dataquay::RDFException;
 using Dataquay::RDFDuplicateImportException;
 
 PluginRDFIndexer *
-PluginRDFIndexer::m_instance = 0;
+PluginRDFIndexer::m_instance = nullptr;
 
 PluginRDFIndexer *
 PluginRDFIndexer::getInstance() 
@@ -271,7 +271,7 @@ PluginRDFIndexer::pullURL(QString urlString)
     if (FileSource::isRemote(urlString) &&
         FileSource::canHandleScheme(urlString)) {
 
-        CachedFile cf(urlString, 0, "application/rdf+xml");
+        CachedFile cf(urlString, nullptr, "application/rdf+xml");
         if (!cf.isOK()) {
             return false;
         }

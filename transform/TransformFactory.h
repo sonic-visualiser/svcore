@@ -226,7 +226,7 @@ protected:
         UninstalledTransformsPopulateThread(TransformFactory *factory) :
             m_factory(factory) {
         }
-        virtual void run();
+        void run() override;
         TransformFactory *m_factory;
     };
 

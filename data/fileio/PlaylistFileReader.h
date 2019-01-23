@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _PLAYLIST_FILE_READER_H_
-#define _PLAYLIST_FILE_READER_H_
+#ifndef SV_PLAYLIST_FILE_READER_H
+#define SV_PLAYLIST_FILE_READER_H
 
 #include "FileSource.h"
 

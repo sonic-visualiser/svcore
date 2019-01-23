@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and Richard Bown.
 */
 
-#ifndef _LADSPA_PLUGIN_FACTORY_H_
-#define _LADSPA_PLUGIN_FACTORY_H_
+#ifndef SV_LADSPA_PLUGIN_FACTORY_H
+#define SV_LADSPA_PLUGIN_FACTORY_H
 
 #include "RealTimePluginFactory.h"
 #include "api/ladspa.h"
@@ -38,24 +38,24 @@ class LADSPAPluginFactory : public RealTimePluginFactory
 public:
     virtual ~LADSPAPluginFactory();
 
-    virtual void discoverPlugins();
+    void discoverPlugins() override;
 
-    virtual const std::vector<QString> &getPluginIdentifiers() const;
+    const std::vector<QString> &getPluginIdentifiers() const override;
 
-    virtual void enumeratePlugins(std::vector<QString> &list);
+    void enumeratePlugins(std::vector<QString> &list) override;
 
-    virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const;
+    const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const override;
 
-    virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
+    RealTimePluginInstance *instantiatePlugin(QString identifier,
                                                       int clientId,
                                                       int position,
                                                       sv_samplerate_t sampleRate,
                                                       int blockSize,
-                                                      int channels);
+                                                      int channels) override;
 
-    virtual QString getPluginCategory(QString identifier);
+    QString getPluginCategory(QString identifier) override;
 
-    virtual QString getPluginLibraryPath(QString identifier);
+    QString getPluginLibraryPath(QString identifier) override;
     
     float getPortMinimum(const LADSPA_Descriptor *, int port);
     float getPortMaximum(const LADSPA_Descriptor *, int port);
@@ -79,7 +79,7 @@ protected:
     virtual void generateTaxonomy(QString uri, QString base);
     virtual void generateFallbackCategories();
 
-    virtual void releasePlugin(RealTimePluginInstance *, QString);
+    void releasePlugin(RealTimePluginInstance *, QString) override;
 
     virtual const LADSPA_Descriptor *getLADSPADescriptor(QString identifier);
 

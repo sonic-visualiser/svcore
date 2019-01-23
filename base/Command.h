@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _COMMAND_H_
-#define _COMMAND_H_
+#ifndef SV_COMMAND_H
+#define SV_COMMAND_H
 
 #include <QObject>
 #include <QString>
@@ -42,10 +42,10 @@ public:
     virtual void deleteCommand(Command *command);
     virtual bool haveCommands() const;
 
-    virtual void execute();
-    virtual void unexecute();
+    void execute() override;
+    void unexecute() override;
 
-    virtual QString getName() const;
+    QString getName() const override;
     virtual void setName(QString name);
 
 protected:
@@ -66,7 +66,7 @@ public:
     BundleCommand(QString name);
     virtual ~BundleCommand();
 
-    virtual QString getName() const;
+    QString getName() const override;
 };
 
 #endif

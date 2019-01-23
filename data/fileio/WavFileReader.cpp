@@ -28,7 +28,7 @@ using namespace std;
 WavFileReader::WavFileReader(FileSource source,
                              bool fileUpdating,
                              Normalisation normalisation) :
-    m_file(0),
+    m_file(nullptr),
     m_source(source),
     m_path(source.getLocalFilename()),
     m_seekable(false),
@@ -279,7 +279,7 @@ WavFileReader::getSupportedExtensions(set<QString> &extensions)
 {
     int count;
 
-    if (sf_command(0, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
+    if (sf_command(nullptr, SFC_GET_FORMAT_MAJOR_COUNT, &count, sizeof(count))) {
         extensions.insert("wav");
         extensions.insert("aiff");
         extensions.insert("aifc");
@@ -290,7 +290,7 @@ WavFileReader::getSupportedExtensions(set<QString> &extensions)
     SF_FORMAT_INFO info;
     for (int i = 0; i < count; ++i) {
         info.format = i;
-        if (!sf_command(0, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
+        if (!sf_command(nullptr, SFC_GET_FORMAT_MAJOR, &info, sizeof(info))) {
             QString ext = QString(info.extension).toLower();
             extensions.insert(ext);
             if (ext == "oga") {

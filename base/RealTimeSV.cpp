@@ -118,7 +118,7 @@ RealTime::fromXsdDuration(std::string xsdd)
         }
 
         double value = 0.0;
-        char *eptr = 0;
+        char *eptr = nullptr;
 
         if (isdigit(s[i]) || s[i] == '.') {
             value = strtod(&s[i], &eptr);

@@ -26,7 +26,7 @@ FeatureExtractionPluginFactory *
 FeatureExtractionPluginFactory::instance()
 {
     static QMutex mutex;
-    static FeatureExtractionPluginFactory *instance = 0;
+    static FeatureExtractionPluginFactory *instance = nullptr;
 
     QMutexLocker locker(&mutex);
     

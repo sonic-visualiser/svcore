@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam and Richard Bown.
 */
 
-#ifndef _LADSPAPLUGININSTANCE_H_
-#define _LADSPAPLUGININSTANCE_H_
+#ifndef SV_LADSPAPLUGININSTANCE_H
+#define SV_LADSPAPLUGININSTANCE_H
 
 #include <vector>
 #include <set>
@@ -38,49 +38,49 @@ class LADSPAPluginInstance : public RealTimePluginInstance
 public:
     virtual ~LADSPAPluginInstance();
 
-    virtual bool isOK() const { return m_instanceHandles.size() != 0; }
+    bool isOK() const override { return m_instanceHandles.size() != 0; }
 
     int getClientId() const { return m_client; }
-    virtual QString getPluginIdentifier() const { return m_identifier; }
+    QString getPluginIdentifier() const override { return m_identifier; }
     int getPosition() const { return m_position; }
 
-    virtual std::string getIdentifier() const;
-    virtual std::string getName() const;
-    virtual std::string getDescription() const;
-    virtual std::string getMaker() const;
-    virtual int getPluginVersion() const;
-    virtual std::string getCopyright() const;
+    std::string getIdentifier() const override;
+    std::string getName() const override;
+    std::string getDescription() const override;
+    std::string getMaker() const override;
+    int getPluginVersion() const override;
+    std::string getCopyright() const override;
 
-    virtual void run(const RealTime &rt, int count = 0);
+    void run(const RealTime &rt, int count = 0) override;
 
-    virtual int getParameterCount() const;
-    virtual void setParameterValue(int parameter, float value);
-    virtual float getParameterValue(int parameter) const;
-    virtual float getParameterDefault(int parameter) const;
-    virtual int getParameterDisplayHint(int parameter) const;
+    int getParameterCount() const override;
+    void setParameterValue(int parameter, float value) override;
+    float getParameterValue(int parameter) const override;
+    float getParameterDefault(int parameter) const override;
+    int getParameterDisplayHint(int parameter) const override;
     
-    virtual ParameterList getParameterDescriptors() const;
-    virtual float getParameter(std::string) const;
-    virtual void setParameter(std::string, float);
+    ParameterList getParameterDescriptors() const override;
+    float getParameter(std::string) const override;
+    void setParameter(std::string, float) override;
 
-    virtual int getBufferSize() const { return m_blockSize; }
-    virtual int getAudioInputCount() const { return int(m_instanceCount * m_audioPortsIn.size()); }
-    virtual int getAudioOutputCount() const { return int(m_instanceCount * m_audioPortsOut.size()); }
-    virtual sample_t **getAudioInputBuffers() { return m_inputBuffers; }
-    virtual sample_t **getAudioOutputBuffers() { return m_outputBuffers; }
+    int getBufferSize() const override { return m_blockSize; }
+    int getAudioInputCount() const override { return int(m_instanceCount * m_audioPortsIn.size()); }
+    int getAudioOutputCount() const override { return int(m_instanceCount * m_audioPortsOut.size()); }
+    sample_t **getAudioInputBuffers() override { return m_inputBuffers; }
+    sample_t **getAudioOutputBuffers() override { return m_outputBuffers; }
 
-    virtual int getControlOutputCount() const { return int(m_controlPortsOut.size()); }
-    virtual float getControlOutputValue(int n) const;
+    int getControlOutputCount() const override { return int(m_controlPortsOut.size()); }
+    float getControlOutputValue(int n) const override;
 
-    virtual bool isBypassed() const { return m_bypassed; }
-    virtual void setBypassed(bool bypassed) { m_bypassed = bypassed; }
+    bool isBypassed() const override { return m_bypassed; }
+    void setBypassed(bool bypassed) override { m_bypassed = bypassed; }
 
-    virtual sv_frame_t getLatency();
+    sv_frame_t getLatency() override;
 
-    virtual void silence();
-    virtual void setIdealChannelCount(int channels); // may re-instantiate
+    void silence() override;
+    void setIdealChannelCount(int channels) override; // may re-instantiate
 
-    virtual std::string getType() const { return "LADSPA Real-Time Plugin"; }
+    std::string getType() const override { return "LADSPA Real-Time Plugin"; }
 
 protected:
     // To be constructed only by LADSPAPluginFactory

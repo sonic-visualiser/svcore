@@ -20,8 +20,8 @@
 */
 
 
-#ifndef _PROFILER_H_
-#define _PROFILER_H_
+#ifndef SV_PROFILER_H
+#define SV_PROFILER_H
 
 #include "system/System.h"
 

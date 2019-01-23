@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _CACHED_FILE_H_
-#define _CACHED_FILE_H_
+#ifndef SV_CACHED_FILE_H
+#define SV_CACHED_FILE_H
 
 #include <QString>
 #include <QUrl>

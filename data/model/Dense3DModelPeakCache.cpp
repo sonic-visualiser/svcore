@@ -74,7 +74,7 @@ Dense3DModelPeakCache::sourceModelChanged()
 void
 Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
 {
-    m_source = 0;
+    m_source = nullptr;
 }
 
 bool

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _REGION_MODEL_H_
-#define _REGION_MODEL_H_
+#ifndef SV_REGION_MODEL_H
+#define SV_REGION_MODEL_H
 
 #include "IntervalModel.h"
 #include "base/RealTime.h"
@@ -122,11 +122,11 @@ public:
 
     bool haveDistinctValues() const { return m_haveDistinctValues; }
 
-    QString getTypeName() const { return tr("Region"); }
+    QString getTypeName() const override { return tr("Region"); }
 
-    virtual void toXml(QTextStream &out,
+    void toXml(QTextStream &out,
                        QString indent = "",
-                       QString extraAttributes = "") const
+                       QString extraAttributes = "") const override
     {
         std::cerr << "RegionModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;
@@ -142,12 +142,12 @@ public:
      * TabularModel methods.  
      */
     
-    virtual int getColumnCount() const
+    int getColumnCount() const override
     {
         return 5;
     }
 
-    virtual QString getHeading(int column) const
+    QString getHeading(int column) const override
     {
         switch (column) {
         case 0: return tr("Time");
@@ -159,7 +159,7 @@ public:
         }
     }
 
-    virtual QVariant getData(int row, int column, int role) const
+    QVariant getData(int row, int column, int role) const override
     {
         if (column < 4) {
             return IntervalModel<RegionRec>::getData(row, column, role);
@@ -174,7 +174,7 @@ public:
         }
     }
 
-    virtual Command *getSetDataCommand(int row, int column, const QVariant &value, int role)
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (column < 4) {
             return IntervalModel<RegionRec>::getSetDataCommand
@@ -197,13 +197,13 @@ public:
         return command->finish();
     }
 
-    virtual SortType getSortType(int column) const
+    SortType getSortType(int column) const override
     {
         if (column == 4) return SortAlphabetical;
         return SortNumeric;
     }
 
-    virtual void addPoint(const Point &point)
+    void addPoint(const Point &point) override
     {
         if (point.value != 0.f) m_haveDistinctValues = true;
         IntervalModel<RegionRec>::addPoint(point);

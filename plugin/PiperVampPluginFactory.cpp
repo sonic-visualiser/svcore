@@ -174,12 +174,12 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
 
     if (m_origins.find(identifier) == m_origins.end()) {
         SVCERR << "ERROR: No known server for identifier " << identifier << endl;
-        return 0;
+        return nullptr;
     }
     
     auto psd = getPluginStaticData(identifier);
     if (psd.pluginKey == "") {
-        return 0;
+        return nullptr;
     }
 
     SVDEBUG << "PiperVampPluginFactory: Creating PiperAutoPlugin for server "
@@ -194,7 +194,7 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
     
     if (!ap->isOK()) {
         delete ap;
-        return 0;
+        return nullptr;
     }
 
     return ap;

@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FILE_READ_THREAD_H_
-#define _FILE_READ_THREAD_H_
+#ifndef SV_FILE_READ_THREAD_H
+#define SV_FILE_READ_THREAD_H
 
 #include "base/Thread.h"
 
@@ -33,7 +33,7 @@ class FileReadThread : public Thread
 public:
     FileReadThread();
 
-    virtual void run();
+    void run() override;
     virtual void finish();
 
     struct Request {

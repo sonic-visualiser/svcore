@@ -20,7 +20,7 @@
 #include "system/System.h"
 
 MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
-    m_rtmidi(0),
+    m_rtmidi(nullptr),
     m_frameTimer(timer),
     m_buffer(1023)
 {
@@ -47,7 +47,7 @@ MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
 
                 SVDEBUG << "NOTE: MIDIInput: No input ports available" << endl;
                 delete m_rtmidi;
-                m_rtmidi = 0;
+                m_rtmidi = nullptr;
 
             } else {
 
@@ -67,7 +67,7 @@ MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
     } catch (const RtMidiError &e) {
         SVCERR << "ERROR: RtMidi error: " << e.getMessage() << endl;
         delete m_rtmidi;
-        m_rtmidi = 0;
+        m_rtmidi = nullptr;
     }
 }
 

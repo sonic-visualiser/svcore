@@ -13,8 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _FRAME_TIMER_H_
-#define _FRAME_TIMER_H_
+#ifndef SV_FRAME_TIMER_H
+#define SV_FRAME_TIMER_H
 
 #include "BaseTypes.h"
 

@@ -18,8 +18,8 @@
    This file copyright 2000-2006 Chris Cannam.
 */
 
-#ifndef _REALTIME_PLUGIN_INSTANCE_H_
-#define _REALTIME_PLUGIN_INSTANCE_H_
+#ifndef SV_REALTIME_PLUGIN_INSTANCE_H
+#define SV_REALTIME_PLUGIN_INSTANCE_H
 
 #include <vamp-hostsdk/PluginBase.h>
 
@@ -136,7 +136,7 @@ public:
 
     void setFactory(RealTimePluginFactory *f) { m_factory = f; } // ew
 
-    virtual std::string getType() const { return "Real-Time Plugin"; }
+    std::string getType() const override { return "Real-Time Plugin"; }
 
     typedef std::map<std::string, std::string> ConfigurationPairMap;
     virtual ConfigurationPairMap getConfigurePairs() {
