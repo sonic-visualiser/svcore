@@ -31,7 +31,11 @@ class PluginScan::Logger
 #endif
 {
 protected:
-    void log(std::string message) override {
+    void log(std::string message) 
+#ifdef HAVE_PLUGIN_CHECKER_HELPER
+        override
+#endif
+    {
         SVDEBUG << "PluginScan: " << message << endl;
     }
 };
