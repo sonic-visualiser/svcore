@@ -83,7 +83,7 @@ AudioFileSizeEstimator::estimate(FileSource source,
 
         if (extension == "ogg" || extension == "oga" ||
             extension == "m4a" || extension == "mp3" ||
-            extension == "wma") {
+            extension == "wma" || extension == "opus") {
 
             // Usually a lossy file. Compression ratios can vary
             // dramatically, but don't usually exceed about 20x compared

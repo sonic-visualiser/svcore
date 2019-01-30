@@ -141,6 +141,15 @@ public:
     static AudioFileReader *createReader(FileSource source,
                                          Parameters parameters,
                                          ProgressReporter *reporter = 0);
+
+    /**
+     * Return true if the given source has a file extension that
+     * indicates a supported file type. This does not necessarily mean
+     * that it can be opened; conversely it may theoretically be
+     * possible to open some files without supported extensions,
+     * depending on the readers available.
+     */
+    static bool isSupported(FileSource source);
 };
 
 #endif

@@ -19,6 +19,8 @@
 #include "CSVFormatTest.h"
 #include "CSVStreamWriterTest.h"
 
+#include "system/Init.h"
+
 #include <QtTest>
 
 #include <iostream>
@@ -26,6 +28,8 @@
 int main(int argc, char *argv[])
 {
     int good = 0, bad = 0;
+
+    svSystemSpecificInitialisation();
 
     QString testDir;
 

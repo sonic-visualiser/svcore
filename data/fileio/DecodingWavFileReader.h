@@ -37,8 +37,12 @@ public:
                           ProgressReporter *reporter = 0);
     virtual ~DecodingWavFileReader();
 
+    QString getTitle() const override { return m_title; }
+    QString getMaker() const override { return m_maker; }
+    
     QString getError() const override { return m_error; }
     QString getLocation() const override { return m_source.getLocation(); }
+
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
@@ -55,6 +59,8 @@ public slots:
 
 protected:
     FileSource m_source;
+    QString m_title;
+    QString m_maker;
     QString m_path;
     QString m_error;
     bool m_cancelled;

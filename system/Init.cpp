@@ -63,9 +63,11 @@ extern void svSystemSpecificInitialisation()
     // Remove the CWD from the DLL search path, just in case
     SetDllDirectory(L"");
     putenv("PATH=");
+
+    // Some older versions of MinGW require this in order to get
+    // C99/POSIX-standard behaviour for (s)printf formatting
+    putenv("PRINTF_EXPONENT_DIGITS=2");
 #else
 #endif
 }
-
-
 

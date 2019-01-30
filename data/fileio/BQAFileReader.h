@@ -4,8 +4,7 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006-2012 Chris Cannam and QMUL.
-
+    
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
@@ -13,44 +12,48 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_COREAUDIO_FILE_READER_H
-#define SV_COREAUDIO_FILE_READER_H
+#ifndef SV_BQA_FILE_READER_H
+#define SV_BQA_FILE_READER_H
 
-#ifdef HAVE_COREAUDIO
+#include <bqaudiostream/AudioReadStreamFactory.h>
 
 #include "CodedAudioFileReader.h"
-
 #include "base/Thread.h"
 
 #include <set>
 
 class ProgressReporter;
 
-class CoreAudioFileReader : public CodedAudioFileReader
+/**
+ * Audio file reader using bqaudiostream library AudioReadStream
+ * classes.
+ */
+class BQAFileReader : public CodedAudioFileReader
 {
     Q_OBJECT
 
 public:
-    CoreAudioFileReader(FileSource source,
-                        DecodeMode decodeMode,
-                        CacheMode cacheMode,
-                        sv_samplerate_t targetRate = 0,
-                        bool normalised = false,
-                        ProgressReporter *reporter = nullptr);
-    virtual ~CoreAudioFileReader();
+    BQAFileReader(FileSource source,
+                  DecodeMode decodeMode,
+                  CacheMode cacheMode,
+                  sv_samplerate_t targetRate = 0,
+                  bool normalised = false,
+                  ProgressReporter *reporter = 0);
+    virtual ~BQAFileReader();
 
-    virtual QString getError() const { return m_error; }
-    virtual QString getLocation() const { return m_source.getLocation(); }
-    virtual QString getTitle() const { return m_title; }
+    QString getError() const override { return m_error; }
+    QString getLocation() const override { return m_source.getLocation(); }
+    QString getTitle() const override { return m_title; }
+    QString getMaker() const override { return m_maker; }
     
     static void getSupportedExtensions(std::set<QString> &extensions);
     static bool supportsExtension(QString ext);
     static bool supportsContentType(QString type);
     static bool supports(FileSource &source);
 
-    virtual int getDecodeCompletion() const { return m_completion; }
+    int getDecodeCompletion() const override { return m_completion; }
 
-    virtual bool isUpdating() const {
+    bool isUpdating() const override {
         return m_decodeThread && m_decodeThread->isRunning();
     }
 
@@ -62,27 +65,23 @@ protected:
     QString m_path;
     QString m_error;
     QString m_title;
+    QString m_maker;
 
-    class D;
-    D *m_d;
+    breakfastquay::AudioReadStream *m_stream;
 
-    ProgressReporter *m_reporter;
     bool m_cancelled;
     int m_completion;
-
-    class DecodeThread : public Thread
-    {
+    ProgressReporter *m_reporter;
+    
+    class DecodeThread : public Thread {
     public:
-       // DecodeThread(QuickTimeFileReader *reader) : m_reader(reader) { }
+        DecodeThread(BQAFileReader *reader) : m_reader(reader) { }
         virtual void run();
-
     protected:
-       // QuickTimeFileReader *m_reader;
+	BQAFileReader *m_reader;
     };
-
     DecodeThread *m_decodeThread;
 };
 
 #endif
 
-#endif

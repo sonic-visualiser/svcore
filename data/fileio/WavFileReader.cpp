@@ -95,6 +95,15 @@ WavFileReader::WavFileReader(FileSource source,
         if (m_normalisation != Normalisation::None && !m_updating) {
             m_max = getMax();
         }
+        
+        const char *str = sf_get_string(m_file, SF_STR_TITLE);
+        if (str) {
+            m_title = str;
+        }
+        str = sf_get_string(m_file, SF_STR_ARTIST);
+        if (str) {
+            m_maker = str;
+        }
     }
 
     SVDEBUG << "WavFileReader: Filename " << m_path << ", frame count " << m_frameCount << ", channel count " << m_channelCount << ", sample rate " << m_sampleRate << ", format " << m_fileInfo.format << ", seekable " << m_fileInfo.seekable << " adjusted to " << m_seekable << ", normalisation " << int(m_normalisation) << endl;

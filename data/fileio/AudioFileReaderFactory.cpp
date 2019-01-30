@@ -17,9 +17,8 @@
 
 #include "WavFileReader.h"
 #include "DecodingWavFileReader.h"
-#include "OggVorbisFileReader.h"
 #include "MP3FileReader.h"
-#include "CoreAudioFileReader.h"
+#include "BQAFileReader.h"
 #include "AudioFileSizeEstimator.h"
 
 #include "base/StorageAdviser.h"
@@ -28,32 +27,44 @@
 #include <QFileInfo>
 #include <iostream>
 
+using namespace std;
+
 QString
 AudioFileReaderFactory::getKnownExtensions()
 {
-    std::set<QString> extensions;
+    set<QString> extensions;
 
     WavFileReader::getSupportedExtensions(extensions);
 #ifdef HAVE_MAD
     MP3FileReader::getSupportedExtensions(extensions);
 #endif
-#ifdef HAVE_OGGZ
-#ifdef HAVE_FISHSOUND
-    OggVorbisFileReader::getSupportedExtensions(extensions);
-#endif
-#endif
-#ifdef HAVE_COREAUDIO
-    CoreAudioFileReader::getSupportedExtensions(extensions);
-#endif
+    BQAFileReader::getSupportedExtensions(extensions);
 
     QString rv;
-    for (std::set<QString>::const_iterator i = extensions.begin();
+    for (set<QString>::const_iterator i = extensions.begin();
          i != extensions.end(); ++i) {
         if (i != extensions.begin()) rv += " ";
         rv += "*." + *i;
     }
 
     return rv;
+}
+
+bool
+AudioFileReaderFactory::isSupported(FileSource source)
+{
+#ifdef HAVE_MAD
+    if (MP3FileReader::supports(source)) {
+        return true;
+    }
+#endif
+    if (WavFileReader::supports(source)) {
+        return true;
+    }
+    if (BQAFileReader::supports(source)) {
+        return true;
+    }
+    return false;
 }
 
 AudioFileReader *
@@ -126,26 +137,34 @@ AudioFileReaderFactory::createReader(FileSource source,
             SVDEBUG << "AudioFileReaderFactory: Source not officially handled by any reader, trying again with each reader in turn"
                     << endl;
         }
-    
-#ifdef HAVE_OGGZ
-#ifdef HAVE_FISHSOUND
-        // If we have the "real" Ogg reader, use that first. Otherwise
-        // the WavFileReader will likely accept Ogg files (as
-        // libsndfile supports them) but it has no ability to return
-        // file metadata, so we get a slightly less useful result.
-        if (anyReader || OggVorbisFileReader::supports(source)) {
 
-            reader = new OggVorbisFileReader
-                (source, decodeMode, cacheMode, targetRate, normalised, reporter);
+#ifdef HAVE_MAD
+        // Having said we'll try any reader on the second pass, we
+        // actually don't want to try the mp3 reader for anything not
+        // identified as an mp3 - it can't identify files by header,
+        // it'll try to read any data and then fail with
+        // synchronisation errors - causing misleading and potentially
+        // alarming warning messages at the least
+        if (!anyReader) {
+            if (MP3FileReader::supports(source)) {
 
-            if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: Ogg file reader is OK, returning it" << endl;
-                return reader;
-            } else {
-                delete reader;
+                MP3FileReader::GaplessMode gapless =
+                    params.gaplessMode == GaplessMode::Gapless ?
+                    MP3FileReader::GaplessMode::Gapless :
+                    MP3FileReader::GaplessMode::Gappy;
+            
+                reader = new MP3FileReader
+                    (source, decodeMode, cacheMode, gapless,
+                     targetRate, normalised, reporter);
+
+                if (reader->isOK()) {
+                    SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
+                    return reader;
+                } else {
+                    delete reader;
+                }
             }
         }
-#endif
 #endif
 
         if (anyReader || WavFileReader::supports(source)) {
@@ -178,43 +197,20 @@ AudioFileReaderFactory::createReader(FileSource source,
                 delete reader;
             }
         }
+    
+        if (anyReader || BQAFileReader::supports(source)) {
 
-#ifdef HAVE_MAD
-        if (anyReader || MP3FileReader::supports(source)) {
-
-            MP3FileReader::GaplessMode gapless =
-                params.gaplessMode == GaplessMode::Gapless ?
-                MP3FileReader::GaplessMode::Gapless :
-                MP3FileReader::GaplessMode::Gappy;
-            
-            reader = new MP3FileReader
-                (source, decodeMode, cacheMode, gapless,
+            reader = new BQAFileReader
+                (source, decodeMode, cacheMode, 
                  targetRate, normalised, reporter);
 
             if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
+                SVDEBUG << "AudioFileReaderFactory: BQA reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
             }
         }
-#endif
-
-#ifdef HAVE_COREAUDIO
-        if (anyReader || CoreAudioFileReader::supports(source)) {
-
-            reader = new CoreAudioFileReader
-                (source, decodeMode, cacheMode, targetRate, normalised, reporter);
-
-            if (reader->isOK()) {
-                SVDEBUG << "AudioFileReaderFactory: CoreAudio reader is OK, returning it" << endl;
-                return reader;
-            } else {
-                delete reader;
-            }
-        }
-#endif
-
     }
     
     SVCERR << "AudioFileReaderFactory::Failed to create a reader for "

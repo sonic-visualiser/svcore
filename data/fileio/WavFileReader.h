@@ -51,6 +51,9 @@ public:
     QString getLocation() const override { return m_source.getLocation(); }
     QString getError() const override { return m_error; }
 
+    QString getTitle() const override { return m_title; }
+    QString getMaker() const override { return m_maker; }
+    
     QString getLocalFilename() const override { return m_path; }
     
     bool isQuicklySeekable() const override { return m_seekable; }
@@ -80,6 +83,8 @@ protected:
     FileSource m_source;
     QString m_path;
     QString m_error;
+    QString m_title;
+    QString m_maker;
 
     bool m_seekable;
 

@@ -79,14 +79,14 @@ public:
      * may be implemented by subclasses that support file tagging.
      * This is not the same thing as the file name.
      */
-    virtual QString getTitle() const { return ""; }
+    virtual QString getTitle() const = 0;
 
     /**
      * Return the "maker" of the work in the audio file, if known.
      * This could represent almost anything (band, composer,
      * conductor, artist etc).
      */
-    virtual QString getMaker() const { return ""; }
+    virtual QString getMaker() const = 0;
 
     /**
      * Return the local file path of the audio data. This is the

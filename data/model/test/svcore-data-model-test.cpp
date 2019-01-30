@@ -15,6 +15,8 @@
 #include "TestZoomConstraints.h"
 #include "TestWaveformOversampler.h"
 
+#include "system/Init.h"
+
 #include <QtTest>
 
 #include <iostream>
@@ -24,6 +26,8 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     int good = 0, bad = 0;
+
+    svSystemSpecificInitialisation();
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
