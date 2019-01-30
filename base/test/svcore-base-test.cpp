@@ -21,6 +21,8 @@
 #include "TestColumnOp.h"
 #include "TestMovingMedian.h"
 
+#include "system/Init.h"
+
 #include <QtTest>
 
 #include <iostream>
@@ -28,6 +30,10 @@
 int main(int argc, char *argv[])
 {
     int good = 0, bad = 0;
+
+    // This is necessary to ensure correct behaviour of snprintf with
+    // older MinGW implementations
+    svSystemSpecificInitialisation();
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
