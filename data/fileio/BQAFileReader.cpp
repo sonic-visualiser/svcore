@@ -188,10 +188,11 @@ BQAFileReader::supportsExtension(QString extension)
 }
 
 bool
-BQAFileReader::supportsContentType(QString)
+BQAFileReader::supportsContentType(QString type)
 {
-//!!! todo
-    return false;
+    // extremely optimistic, but it's better than rejecting everything
+    //!!! todo: be more sensible
+    return (type.startsWith("audio/"));
 }
 
 bool
