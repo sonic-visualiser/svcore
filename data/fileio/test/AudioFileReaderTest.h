@@ -114,6 +114,11 @@ private:
                 maxLimit = 0.2;
                 rmsLimit = 0.1;
 
+            } else if (format == "wma") {
+
+                maxLimit = 0.05;
+                rmsLimit = 0.01;
+
             } else if (format == "mp3") {
 
                 if (resampled && !gapless) {
@@ -160,8 +165,13 @@ private:
 
             } else if (format == "aac") {
 
-                maxLimit = 0.1;
+                maxLimit = 0.2;
                 rmsLimit = 0.1;
+
+            } else if (format == "wma") {
+
+                maxLimit = 0.05;
+                rmsLimit = 0.01;
 
             } else if (format == "mp3") {
 
@@ -227,9 +237,35 @@ private slots:
                     for (bool norm: norms) {
                         for (bool gapless: gaplesses) {
 
-                            if (format != "mp3" && !gapless) {
-                                continue;
+#ifdef Q_OS_WIN
+                            if (format == "aac") {
+                                if (gapless) {
+                                    // Apparently no support for AAC
+                                    // encoder delay compensation in
+                                    // MediaFoundation, so these tests
+                                    // are only available non-gapless
+                                    continue;
+                                }
+                            } else if (format != "mp3") {
+                                if (!gapless) {
+                                    // All other formats but mp3 are
+                                    // intrinsically gapless, so we
+                                    // can skip the non-gapless option
+                                    continue;
+                                }
                             }
+#else
+                            if (format != "mp3") {
+                                if (!gapless) {
+                                    // All other formats but mp3 are
+                                    // intrinsically gapless
+                                    // everywhere except for Windows
+                                    // (see above), so we can skip the
+                                    // non-gapless option
+                                    continue;
+                                }                                    
+                            }
+#endif
                         
                             QString desc = testName
                                 (format, filename, rate, norm, gapless);
@@ -306,6 +342,7 @@ private slots:
         bool perceptual = (extension == "mp3" ||
                            extension == "aac" ||
                            extension == "m4a" ||
+                           extension == "wma" ||
                            extension == "opus");
         
         if (perceptual && !gapless) {
@@ -383,7 +420,11 @@ private slots:
             // "something else" otherwise.
             
             if (gapless) {
-                if (format == "aac") {
+                if (format == "aac"
+#ifdef Q_OS_WIN
+                    || (format == "mp3" && (readRate != fileRate))
+#endif
+                    ) {
                     // ouch!
                     if (offset == -1) offset = 0;
                 }
