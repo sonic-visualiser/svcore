@@ -39,13 +39,14 @@ int main(int argc, char *argv[])
     testDir = "../sonic-visualiser/svcore/data/fileio/test";
 #endif
 
-    if (argc > 1) {
-        testDir = argv[1];
-    }
-
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
     app.setApplicationName("test-svcore-data-fileio");
+
+    if (argc == 3 && string(argv[1]) == "--testdir") {
+        testDir = argv[2];
+        argc = 1;
+    }        
 
     if (testDir != "") {
         SVCERR << "Setting test directory base path to \"" << testDir << "\"" << endl;
