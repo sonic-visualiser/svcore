@@ -56,8 +56,8 @@ public:
     virtual ~SparseModel() { }
     
     bool isOK() const override { return true; }
-    virtual sv_frame_t getStartFrame() const;
-    virtual sv_frame_t getEndFrame() const;
+    sv_frame_t getStartFrame() const override;
+    sv_frame_t getEndFrame() const override;
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
 
     // Number of frames of the underlying sample rate that this model
@@ -164,9 +164,9 @@ public:
 
     virtual QString getXmlOutputType() const { return "sparse"; }
 
-    virtual void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const;
+    void toXml(QTextStream &out,
+               QString indent = "",
+               QString extraAttributes = "") const override;
 
     QString toDelimitedDataString(QString delimiter) const override {
         return toDelimitedDataStringWithOptions

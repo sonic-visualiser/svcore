@@ -114,8 +114,8 @@ public:
     }
 
     void toXml(QTextStream &stream,
-                       QString indent = "",
-                       QString extraAttributes = "") const override
+               QString indent = "",
+               QString extraAttributes = "") const override
     {
         std::cerr << "SparseValueModel::toXml: extraAttributes = \"" 
                   << extraAttributes.toStdString() << std::endl;

@@ -78,6 +78,8 @@ MutexLocker::Printer::Printer(const char *name) :
 #ifdef DEBUG_MUTEX_LOCKER
     cerr << "MutexLocker: Locking   \"" << m_name << "\" in "
               << (void *)QThread::currentThreadId() << endl;
+#else
+    (void)m_name;
 #endif
 }
 
