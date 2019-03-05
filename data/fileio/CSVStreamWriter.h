@@ -58,6 +58,7 @@ writeInChunks(OutStream& oss,
 
     sv_frame_t nFramesWritten = 0;
     int previousProgress = 0;
+    bool started = false;
 
     for (const auto& extents : selections) {
         const auto startFrame = extents.getStartFrame();
@@ -76,7 +77,12 @@ writeInChunks(OutStream& oss,
             ).trimmed();
 
             if ( data != "" ) {
-                oss << data << (end < finalFrameOfLastRegion ? "\n" : "");
+                if (started) {
+                    oss << "\n";
+                } else {
+                    started = true;
+                }
+                oss << data;
             }
 
             nFramesWritten += end - start;

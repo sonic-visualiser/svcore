@@ -318,8 +318,8 @@ private slots:
             2
         );
 
-//        qDebug("\n%s\n", expectedOutput.toLocal8Bit().data());
-//        qDebug("\n%s\n", oss.str().c_str());
+//        qDebug("\n->>%s<<-\n", expectedOutput.toLocal8Bit().data());
+//        qDebug("\n->>%s<<-\n", oss.str().c_str());
         QVERIFY( wroteSparseModel == true );
         QVERIFY( oss.str() == expectedOutput.toStdString() );
     }

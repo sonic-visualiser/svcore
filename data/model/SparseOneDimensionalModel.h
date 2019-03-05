@@ -67,6 +67,10 @@ public:
             return p1.frame < p2.frame;
         }
     };
+
+    bool operator==(const OneDimensionalPoint &p) const {
+        return (frame == p.frame && label == p.label);
+    }
 };
 
 

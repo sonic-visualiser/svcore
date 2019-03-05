@@ -580,7 +580,7 @@ SparseModel<PointType>::getEndFrame() const
     sv_frame_t f = 0;
     if (!m_points.empty()) {
         PointListConstIterator i(m_points.end());
-        f = (--i)->frame + 1;
+        f = (--i)->frame + getResolution();
     }
     if (m_extendTo > f) {
         return m_extendTo;
