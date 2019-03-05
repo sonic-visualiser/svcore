@@ -16,102 +16,67 @@
 #include "Clipboard.h"
 
 Clipboard::Point::Point(sv_frame_t frame, QString label) :
-    m_haveFrame(true),
-    m_frame(frame),
     m_haveValue(false),
-    m_value(0),
-    m_haveDuration(false),
-    m_duration(0),
-    m_haveLabel(true),
-    m_label(label),
     m_haveLevel(false),
-    m_level(0.f),
+    m_haveFrame(true),
+    m_haveDuration(false),
     m_haveReferenceFrame(false),
-    m_referenceFrame(frame)
+    m_haveLabel(true),
+    m_value(0),
+    m_level(0.f),
+    m_frame(frame),
+    m_duration(0),
+    m_referenceFrame(frame),
+    m_label(label)
 {
 }
 
 Clipboard::Point::Point(sv_frame_t frame, float value, QString label) :
-    m_haveFrame(true),
-    m_frame(frame),
     m_haveValue(true),
-    m_value(value),
-    m_haveDuration(false),
-    m_duration(0),
-    m_haveLabel(true),
-    m_label(label),
     m_haveLevel(false),
-    m_level(0.f),
+    m_haveFrame(true),
+    m_haveDuration(false),
     m_haveReferenceFrame(false),
-    m_referenceFrame(frame)
+    m_haveLabel(true),
+    m_value(value),
+    m_level(0.f),
+    m_frame(frame),
+    m_duration(0),
+    m_referenceFrame(frame),
+    m_label(label)
 {
 }
 
 Clipboard::Point::Point(sv_frame_t frame, float value, sv_frame_t duration, QString label) :
-    m_haveFrame(true),
-    m_frame(frame),
     m_haveValue(true),
-    m_value(value),
-    m_haveDuration(true),
-    m_duration(duration),
-    m_haveLabel(true),
-    m_label(label),
     m_haveLevel(false),
-    m_level(0.f),
+    m_haveFrame(true),
+    m_haveDuration(true),
     m_haveReferenceFrame(false),
-    m_referenceFrame(frame)
+    m_haveLabel(true),
+    m_value(value),
+    m_level(0.f),
+    m_frame(frame),
+    m_duration(duration),
+    m_referenceFrame(frame),
+    m_label(label)
 {
 }
 
 Clipboard::Point::Point(sv_frame_t frame, float value, sv_frame_t duration, float level, QString label) :
-    m_haveFrame(true),
-    m_frame(frame),
     m_haveValue(true),
-    m_value(value),
-    m_haveDuration(true),
-    m_duration(duration),
-    m_haveLabel(true),
-    m_label(label),
     m_haveLevel(true),
-    m_level(level),
+    m_haveFrame(true),
+    m_haveDuration(true),
     m_haveReferenceFrame(false),
-    m_referenceFrame(frame)
+    m_haveLabel(true),
+    m_value(value),
+    m_level(level),
+    m_frame(frame),
+    m_duration(duration),
+    m_referenceFrame(frame),
+    m_label(label)
 {
-}
-
-Clipboard::Point::Point(const Point &point) :
-    m_haveFrame(point.m_haveFrame),
-    m_frame(point.m_frame),
-    m_haveValue(point.m_haveValue),
-    m_value(point.m_value),
-    m_haveDuration(point.m_haveDuration),
-    m_duration(point.m_duration),
-    m_haveLabel(point.m_haveLabel),
-    m_label(point.m_label),
-    m_haveLevel(point.m_haveLevel),
-    m_level(point.m_level),
-    m_haveReferenceFrame(point.m_haveReferenceFrame),
-    m_referenceFrame(point.m_referenceFrame)
-{
-}
-
-Clipboard::Point &
-Clipboard::Point::operator=(const Point &point)
-{
-    if (this == &point) return *this;
-    m_haveFrame = point.m_haveFrame;
-    m_frame = point.m_frame;
-    m_haveValue = point.m_haveValue;
-    m_value = point.m_value;
-    m_haveDuration = point.m_haveDuration;
-    m_duration = point.m_duration;
-    m_haveLabel = point.m_haveLabel;
-    m_label = point.m_label;
-    m_haveLevel = point.m_haveLevel;
-    m_level = point.m_level;
-    m_haveReferenceFrame = point.m_haveReferenceFrame;
-    m_referenceFrame = point.m_referenceFrame;
-    return *this;
 }
 
 bool

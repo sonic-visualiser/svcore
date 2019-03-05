@@ -31,8 +31,9 @@ public:
         Point(sv_frame_t frame, float value, QString label);
         Point(sv_frame_t frame, float value, sv_frame_t duration, QString label);
         Point(sv_frame_t frame, float value, sv_frame_t duration, float level, QString label);
-        Point(const Point &point);
-        Point &operator=(const Point &point);
+
+        Point(const Point &point) =default;
+        Point &operator=(const Point &point) =default;
 
         bool haveFrame() const;
         sv_frame_t getFrame() const;
@@ -61,18 +62,20 @@ public:
         void setReferenceFrame(sv_frame_t);
 
     private:
-        bool m_haveFrame;
-        sv_frame_t m_frame;
-        bool m_haveValue;
+        // Order of fields here is chosen to minimise overall size of struct.
+        // If you change something, check what difference it makes to packing.
+        bool m_haveValue : 1;
+        bool m_haveLevel : 1;
+        bool m_haveFrame : 1;
+        bool m_haveDuration : 1;
+        bool m_haveReferenceFrame : 1;
+        bool m_haveLabel : 1;
         float m_value;
-        bool m_haveDuration;
-        sv_frame_t m_duration;
-        bool m_haveLabel;
-        QString m_label;
-        bool m_haveLevel;
         float m_level;
-        bool m_haveReferenceFrame;
+        sv_frame_t m_frame;
+        sv_frame_t m_duration;
         sv_frame_t m_referenceFrame;
+        QString m_label;
     };
 
     Clipboard();
