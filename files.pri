@@ -16,6 +16,7 @@ SVCORE_HEADERS = \
            base/Playable.h \
            base/PlayParameterRepository.h \
            base/PlayParameters.h \
+           base/Point.h \
            base/Preferences.h \
            base/Profiler.h \
            base/ProgressPrinter.h \

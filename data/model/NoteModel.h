@@ -91,6 +91,12 @@ public:
             return p1.frame < p2.frame;
         }
     };
+
+    bool operator==(const Note &other) const {
+        // ew
+        Comparator c;
+        return !(c(*this, other) || c(other, *this));
+    }
 };
 
 

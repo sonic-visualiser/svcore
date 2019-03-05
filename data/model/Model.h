@@ -55,9 +55,10 @@ public:
     virtual sv_frame_t getStartFrame() const = 0;
 
     /**
-     * Return the audio frame at the end of the model, i.e. 1 more
-     * than the final frame contained within the model. The end frame
-     * minus the start frame should yield the total duration in frames
+     * Return the audio frame at the end of the model, i.e. the final
+     * frame contained within the model plus 1 (or plus the model's
+     * "resolution" granularity, if more than 1). The end frame minus
+     * the start frame should yield the total duration in frames
      * spanned by the model. This is consistent with the definition of
      * the end frame of a Selection object.
      */
