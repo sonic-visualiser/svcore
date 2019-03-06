@@ -50,7 +50,6 @@ writeInChunks(OutStream& oss,
             return acc + (current.getEndFrame() - current.getStartFrame());
         }
     );
-    const auto finalFrameOfLastRegion = (*selections.crbegin()).getEndFrame();
 
     const auto wasCancelled = [&reporter]() { 
         return reporter && reporter->wasCancelled(); 
