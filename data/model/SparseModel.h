@@ -34,6 +34,8 @@
 #include <QMutex>
 #include <QTextStream>
 
+#include "base/PointSeries.h" //!!!
+
 /**
  * Model containing sparse data (points with some properties).  The
  * properties depend on the point type.

@@ -30,14 +30,14 @@ Clipboard::empty() const
     return m_points.empty();
 }
 
-const Clipboard::PointList &
+const PointVector &
 Clipboard::getPoints() const
 {
     return m_points;
 }
 
 void
-Clipboard::setPoints(const PointList &pl)
+Clipboard::setPoints(const PointVector &pl)
 {
     m_points = pl;
 }
@@ -51,7 +51,7 @@ Clipboard::addPoint(const Point &point)
 bool
 Clipboard::haveReferenceFrames() const
 {
-    for (PointList::const_iterator i = m_points.begin();
+    for (PointVector::const_iterator i = m_points.begin();
          i != m_points.end(); ++i) {
         if (i->haveReferenceFrame()) return true;
     } 
@@ -61,7 +61,7 @@ Clipboard::haveReferenceFrames() const
 bool
 Clipboard::referenceFramesDiffer() const
 {
-    for (PointList::const_iterator i = m_points.begin();
+    for (PointVector::const_iterator i = m_points.begin();
          i != m_points.end(); ++i) {
         if (i->referenceFrameDiffers()) return true;
     } 

@@ -118,7 +118,7 @@ public:
                QString extraAttributes = "") const override
     {
         std::cerr << "SparseValueModel::toXml: extraAttributes = \"" 
-                  << extraAttributes.toStdString() << std::endl;
+                  << extraAttributes.toStdString() << "\"" << std::endl;
 
         SparseModel<PointType>::toXml
             (stream,

@@ -146,7 +146,7 @@ public:
                        QString extraAttributes = "") const override
     {
         std::cerr << "NoteModel::toXml: extraAttributes = \"" 
-                  << extraAttributes.toStdString() << std::endl;
+                  << extraAttributes.toStdString() << "\"" << std::endl;
 
         IntervalModel<Note>::toXml
             (out,

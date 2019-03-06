@@ -20,6 +20,7 @@
 #include "TestVampRealTime.h"
 #include "TestColumnOp.h"
 #include "TestMovingMedian.h"
+#include "TestPointSeries.h"
 
 #include "system/Init.h"
 
@@ -81,6 +82,11 @@ int main(int argc, char *argv[])
     }
     {
         TestMovingMedian t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+    {
+        TestPointSeries t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }

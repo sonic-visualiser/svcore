@@ -26,19 +26,17 @@ public:
     Clipboard();
     ~Clipboard();
 
-    typedef std::vector<Point> PointList;
-
     void clear();
     bool empty() const;
-    const PointList &getPoints() const;
-    void setPoints(const PointList &points);
+    const PointVector &getPoints() const;
+    void setPoints(const PointVector &points);
     void addPoint(const Point &point);
 
     bool haveReferenceFrames() const;
     bool referenceFramesDiffer() const;
 
 protected:
-    PointList m_points;
+     PointVector m_points;
 };
 
 #endif

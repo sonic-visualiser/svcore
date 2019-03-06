@@ -4,6 +4,7 @@ TEST_HEADERS = \
 	     TestMovingMedian.h \
 	     TestOurRealTime.h \
 	     TestPitch.h \
+	     TestPointSeries.h \
 	     TestRangeMapper.h \
 	     TestScaleTickIntervals.h \
 	     TestStringBits.h \
