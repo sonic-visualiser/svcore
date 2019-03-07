@@ -23,8 +23,8 @@
 #include "MIDIFileWriter.h"
 
 #include "data/midi/MIDIEvent.h"
-#include "model/NoteData.h"
 
+#include "base/NoteData.h"
 #include "base/Pitch.h"
 
 #include <QCoreApplication>

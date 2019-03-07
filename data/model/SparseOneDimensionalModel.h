@@ -17,7 +17,7 @@
 #define SV_SPARSE_ONE_DIMENSIONAL_MODEL_H
 
 #include "SparseModel.h"
-#include "NoteData.h"
+#include "base/NoteData.h"
 #include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 

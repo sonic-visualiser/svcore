@@ -7,16 +7,18 @@ SVCORE_HEADERS = \
            base/ColumnOp.h \
            base/Command.h \
            base/Debug.h \
+           base/Event.h \
+           base/EventSeries.h \
            base/Exceptions.h \
            base/HelperExecPath.h \
            base/HitCount.h \
            base/LogRange.h \
            base/MagnitudeRange.h \
+           base/NoteData.h \
            base/Pitch.h \
            base/Playable.h \
            base/PlayParameterRepository.h \
            base/PlayParameters.h \
-           base/Point.h \
            base/Preferences.h \
            base/Profiler.h \
            base/ProgressPrinter.h \

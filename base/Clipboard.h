@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include "Point.h"
+#include "Event.h"
 
 class Clipboard
 {
@@ -28,15 +28,15 @@ public:
 
     void clear();
     bool empty() const;
-    const PointVector &getPoints() const;
-    void setPoints(const PointVector &points);
-    void addPoint(const Point &point);
+    const EventVector &getPoints() const;
+    void setPoints(const EventVector &points);
+    void addPoint(const Event &point);
 
     bool haveReferenceFrames() const;
     bool referenceFramesDiffer() const;
 
 protected:
-     PointVector m_points;
+     EventVector m_points;
 };
 
 #endif

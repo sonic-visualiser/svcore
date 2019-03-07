@@ -17,7 +17,7 @@
 #define SV_NOTE_MODEL_H
 
 #include "IntervalModel.h"
-#include "NoteData.h"
+#include "base/NoteData.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
 #include "base/Pitch.h"

@@ -13,113 +13,157 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_POINT_H
-#define SV_POINT_H
-
-#include <QString>
-#include <vector>
+#ifndef SV_EVENT_H
+#define SV_EVENT_H
 
 #include "BaseTypes.h"
+#include "NoteData.h"
 #include "XmlExportable.h"
 
-//!!! given that these can have size (i.e. duration), maybe Point
-//!!! isn't really an ideal name... perhaps I should go back to dull
-//!!! old Event
+#include <vector>
+#include <stdexcept>
 
-class Point
+#include <QString>
+
+/**
+ * An immutable type used for point and event representation in sparse
+ * models, as well as for interchange within the clipboard. An event
+ * always has a frame and (possibly empty) label, and optionally has
+ * numerical value, level, duration in frames, and a mapped reference
+ * frame. Event has an operator< defining a total ordering, by frame
+ * first and then by the other properties.
+ * 
+ * Event is based on the Clipboard::Point type up to SV v3.2.1 and is
+ * intended also to replace the custom point types previously found in
+ * sparse models.
+ */
+class Event
 {
 public:
-    Point(sv_frame_t frame, QString label) :
+    Event(sv_frame_t frame) :
+        m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_value(0.f), m_level(0.f), m_frame(frame),
+        m_duration(0), m_referenceFrame(0), m_label() { }
+        
+    Event(sv_frame_t frame, QString label) :
         m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
         m_value(0.f), m_level(0.f), m_frame(frame),
         m_duration(0), m_referenceFrame(0), m_label(label) { }
         
-    Point(sv_frame_t frame, float value, QString label) :
+    Event(sv_frame_t frame, float value, QString label) :
         m_haveValue(true), m_haveLevel(false), m_haveReferenceFrame(false),
         m_value(value), m_level(0.f), m_frame(frame),
         m_duration(0), m_referenceFrame(0), m_label(label) { }
         
-    Point(sv_frame_t frame, float value, sv_frame_t duration, QString label) :
+    Event(sv_frame_t frame, float value, sv_frame_t duration, QString label) :
         m_haveValue(true), m_haveLevel(false), m_haveReferenceFrame(false),
         m_value(value), m_level(0.f), m_frame(frame),
-        m_duration(duration), m_referenceFrame(0), m_label(label) { }
+        m_duration(duration), m_referenceFrame(0), m_label(label) {
+        if (m_duration < 0) throw std::logic_error("duration must be >= 0");
+    }
         
-    Point(sv_frame_t frame, float value, sv_frame_t duration,
+    Event(sv_frame_t frame, float value, sv_frame_t duration,
           float level, QString label) :
         m_haveValue(true), m_haveLevel(true), m_haveReferenceFrame(false),
         m_value(value), m_level(level), m_frame(frame),
-        m_duration(duration), m_referenceFrame(0), m_label(label) { }
+        m_duration(duration), m_referenceFrame(0), m_label(label) {
+        if (m_duration < 0) throw std::logic_error("duration must be >= 0");
+    }
 
-    Point(const Point &point) =default;
-    Point &operator=(const Point &point) =default;
-    Point &operator=(Point &&point) =default;
+    Event(const Event &event) =default;
+    Event &operator=(const Event &event) =default;
+    Event &operator=(Event &&event) =default;
     
     sv_frame_t getFrame() const { return m_frame; }
 
-    Point withFrame(sv_frame_t frame) const {
-        Point p(*this);
+    Event withFrame(sv_frame_t frame) const {
+        Event p(*this);
         p.m_frame = frame;
         return p;
     }
     
-    bool haveValue() const { return m_haveValue; }
+    bool hasValue() const { return m_haveValue; }
     float getValue() const { return m_value; }
     
-    Point withValue(float value) const {
-        Point p(*this);
+    Event withValue(float value) const {
+        Event p(*this);
         p.m_haveValue = true;
         p.m_value = value;
         return p;
     }
+    Event withoutValue() const {
+        Event p(*this);
+        p.m_haveValue = false;
+        p.m_value = 0.f;
+        return p;
+    }
     
-    bool haveDuration() const { return m_duration != 0; }
+    bool hasDuration() const { return m_duration != 0; }
     sv_frame_t getDuration() const { return m_duration; }
 
-    Point withDuration(sv_frame_t duration) const {
-        Point p(*this);
+    Event withDuration(sv_frame_t duration) const {
+        Event p(*this);
         p.m_duration = duration;
+        if (duration < 0) throw std::logic_error("duration must be >= 0");
+        return p;
+    }
+    Event withoutDuration() const {
+        Event p(*this);
+        p.m_duration = 0;
         return p;
     }
     
     QString getLabel() const { return m_label; }
 
-    Point withLabel(QString label) const {
-        Point p(*this);
+    Event withLabel(QString label) const {
+        Event p(*this);
         p.m_label = label;
         return p;
     }
     
-    bool haveLevel() const { return m_haveLevel; }
+    bool hasLevel() const { return m_haveLevel; }
     float getLevel() const { return m_level; }
-    Point withLevel(float level) const {
-        Point p(*this);
+
+    Event withLevel(float level) const {
+        Event p(*this);
         p.m_haveLevel = true;
         p.m_level = level;
         return p;
     }
+    Event withoutLevel() const {
+        Event p(*this);
+        p.m_haveLevel = false;
+        p.m_level = 0.f;
+        return p;
+    }
     
-    bool haveReferenceFrame() const { return m_haveReferenceFrame; }
+    bool hasReferenceFrame() const { return m_haveReferenceFrame; }
     sv_frame_t getReferenceFrame() const { return m_referenceFrame; }
         
-    bool referenceFrameDiffers() const { // from point frame
+    bool referenceFrameDiffers() const { // from event frame
         return m_haveReferenceFrame && (m_referenceFrame != m_frame);
     }
     
-    Point withReferenceFrame(sv_frame_t frame) const {
-        Point p(*this);
+    Event withReferenceFrame(sv_frame_t frame) const {
+        Event p(*this);
         p.m_haveReferenceFrame = true;
         p.m_referenceFrame = frame;
         return p;
     }
+    Event withoutReferenceFrame() const {
+        Event p(*this);
+        p.m_haveReferenceFrame = false;
+        p.m_referenceFrame = 0;
+        return p;
+    }
 
-    bool operator==(const Point &p) const {
+    bool operator==(const Event &p) const {
 
         if (m_frame != p.m_frame) return false;
+        if (m_duration != p.m_duration) return false;
 
         if (m_haveValue != p.m_haveValue) return false;
         if (m_haveValue && (m_value != p.m_value)) return false;
-
-        if (m_duration != p.m_duration) return false;
 
         if (m_haveLevel != p.m_haveLevel) return false;
         if (m_haveLevel && (m_level != p.m_level)) return false;
@@ -133,16 +177,15 @@ public:
         return true;
     }
 
-    bool operator<(const Point &p) const {
+    bool operator<(const Event &p) const {
 
         if (m_frame != p.m_frame) return m_frame < p.m_frame;
+        if (m_duration != p.m_duration) return m_duration < p.m_duration;
 
-        // points without a property sort before points with that property
+        // events without a property sort before events with that property
 
         if (m_haveValue != p.m_haveValue) return !m_haveValue;
         if (m_haveValue && (m_value != p.m_value)) return m_value < p.m_value;
-        
-        if (m_duration != p.m_duration) return m_duration < p.m_duration;
         
         if (m_haveLevel != p.m_haveLevel) return !m_haveLevel;
         if (m_haveLevel && (m_level != p.m_level)) return m_level < p.m_level;
@@ -161,6 +204,7 @@ public:
                QString indent = "",
                QString extraAttributes = "") const {
 
+        // For I/O purposes these are points, not events
         stream << indent << QString("<point frame=\"%1\" ").arg(m_frame);
         if (m_haveValue) stream << QString("value=\"%1\" ").arg(m_value);
         if (m_duration) stream << QString("duration=\"%1\" ").arg(m_duration);
@@ -180,6 +224,45 @@ public:
         out.flush();
         return s;
     }
+
+    NoteData toNoteData(sv_samplerate_t sampleRate, bool valueIsMidiPitch) {
+
+        sv_frame_t duration;
+        if (m_duration > 0) {
+            duration = m_duration;
+        } else {
+            duration = sv_frame_t(sampleRate / 6); // arbitrary short duration
+        }
+
+        int midiPitch;
+        float frequency = 0.f;
+        if (m_haveValue) {
+            if (valueIsMidiPitch) {
+                midiPitch = int(roundf(m_value));
+            } else {
+                frequency = m_value;
+                midiPitch = Pitch::getPitchForFrequency(frequency);
+            }
+        } else {
+            midiPitch = 64;
+            valueIsMidiPitch = true;
+        }
+
+        int velocity = 100;
+        if (m_haveLevel) {
+            if (m_level > 0.f && m_level <= 1.f) {
+                velocity = int(roundf(m_level * 127.f));
+            }
+        }
+
+        NoteData n(m_frame, duration, midiPitch, velocity);
+        n.isMidiPitchQuantized = valueIsMidiPitch;
+        if (!valueIsMidiPitch) {
+            n.frequency = frequency;
+        }
+
+        return n;
+    }
     
 private:
     // The order of fields here is chosen to minimise overall size of struct.
@@ -196,6 +279,6 @@ private:
     QString m_label;
 };
 
-typedef std::vector<Point> PointVector;
+typedef std::vector<Event> EventVector;
 
 #endif

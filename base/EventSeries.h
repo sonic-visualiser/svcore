@@ -12,26 +12,35 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_POINT_SERIES_H
-#define SV_POINT_SERIES_H
+#ifndef SV_EVENT_SERIES_H
+#define SV_EVENT_SERIES_H
 
-#include "Point.h"
+#include "Event.h"
 
 #include <set>
 
-//#define DEBUG_POINT_SERIES 1
+//#define DEBUG_EVENT_SERIES 1
 
-class PointSeries
+/**
+ * Container storing a series of events, with or without durations,
+ * and supporting the ability to query which events span a given frame
+ * time. To that end, in addition to the series of events, it stores a
+ * series of "seam points", which are the frame positions at which the
+ * set of simultaneous events changes (i.e. an event of non-zero
+ * duration starts or ends). These are updated when event is added or
+ * removed.
+ */
+class EventSeries
 {
 public:
-    PointSeries() : m_count(0) { }
+    EventSeries() : m_count(0) { }
     
-    void add(const Point &p) {
+    void add(const Event &p) {
 
-        m_points.insert(p);
+        m_events.insert(p);
         ++m_count;
 
-        if (p.haveDuration()) {
+        if (p.hasDuration()) {
             sv_frame_t frame = p.getFrame();
             sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
@@ -43,7 +52,7 @@ public:
 
             for (auto i = i0; i != i1; ++i) {
                 if (i == m_seams.end()) {
-                    SVCERR << "ERROR: PointSeries::add: "
+                    SVCERR << "ERROR: EventSeries::add: "
                            << "reached end of seam map"
                            << endl;
                     break;
@@ -52,46 +61,50 @@ public:
             }
         }
 
-#ifdef DEBUG_POINT_SERIES
+#ifdef DEBUG_EVENT_SERIES
         std::cerr << "after add:" << std::endl;
-        dumpPoints();
+        dumpEvents();
         dumpSeams();
 #endif
     }
 
-    void remove(const Point &p) {
+    void remove(const Event &p) {
 
         // erase first itr that matches p; if there is more than one
         // p, erase(p) would remove all of them, but we only want to
         // remove (any) one
-        auto pitr = m_points.find(p);
-        if (pitr == m_points.end()) {
-            return; // we don't know this point
+        auto pitr = m_events.find(p);
+        if (pitr == m_events.end()) {
+            return; // we don't know this event
         } else {
-            m_points.erase(pitr);
+            m_events.erase(pitr);
             --m_count;
         }
 
-        if (p.haveDuration()) {
+        if (p.hasDuration()) {
             sv_frame_t frame = p.getFrame();
             sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
             auto i0 = m_seams.find(frame);
             auto i1 = m_seams.find(endFrame);
 
-#ifdef DEBUG_POINT_SERIES
-            // This should be impossible if we found p in m_points above
+#ifdef DEBUG_EVENT_SERIES
+            // This should be impossible if we found p in m_events above
             if (i0 == m_seams.end() || i1 == m_seams.end()) {
-                SVCERR << "ERROR: PointSeries::remove: either frame " << frame
+                SVCERR << "ERROR: EventSeries::remove: either frame " << frame
                        << " or endFrame " << endFrame
-                       << " for point not found in seam map: point is "
+                       << " for event not found in seam map: event is "
                        << p.toXmlString() << endl;
             }
 #endif
 
             for (auto i = i0; i != i1; ++i) {
                 if (i == m_seams.end()) {
-                    SVCERR << "ERROR: PointSeries::remove: "
+                    // This can happen only if we have a negative
+                    // duration, which Event forbids, but we don't
+                    // protect against it in this class, so we'll
+                    // leave this check in
+                    SVCERR << "ERROR: EventSeries::remove: "
                            << "reached end of seam map"
                            << endl;
                     break;
@@ -105,21 +118,21 @@ public:
             }
 
             // Shall we "garbage-collect" here? We could be leaving
-            // lots of empty point-sets, or consecutive identical
+            // lots of empty event-sets, or consecutive identical
             // ones, which are a pure irrelevance that take space and
             // slow us down. But a lot depends on whether callers ever
             // really delete anything much.
         }
 
-#ifdef DEBUG_POINT_SERIES
+#ifdef DEBUG_EVENT_SERIES
         std::cerr << "after remove:" << std::endl;
-        dumpPoints();
+        dumpEvents();
         dumpSeams();
 #endif
     }
 
-    bool contains(const Point &p) {
-        return m_points.find(p) != m_points.end();
+    bool contains(const Event &p) {
+        return m_events.find(p) != m_events.end();
     }
 
     int count() const {
@@ -131,26 +144,26 @@ public:
     }
     
     void clear() {
-        m_points.clear();
+        m_events.clear();
         m_seams.clear();
         m_count = 0;
     }
 
     /**
-     * Retrieve all points that span the given frame. A point without
-     * duration spans a frame if its own frame is equal to it. A point
+     * Retrieve all events that span the given frame. A event without
+     * duration spans a frame if its own frame is equal to it. A event
      * with duration spans a frame if its start frame is less than or
      * equal to it and its end frame (start + duration) is greater
      * than it.
      */
-    PointVector getPointsSpanning(sv_frame_t frame) const {
-        PointVector span;
+    EventVector getEventsSpanning(sv_frame_t frame) const {
+        EventVector span;
 
-        // first find any zero-duration points
-        auto pitr = m_points.lower_bound(Point(frame, QString()));
-        if (pitr != m_points.end()) {
+        // first find any zero-duration events
+        auto pitr = m_events.lower_bound(Event(frame, QString()));
+        if (pitr != m_events.end()) {
             while (pitr->getFrame() == frame) {
-                if (!pitr->haveDuration()) {
+                if (!pitr->hasDuration()) {
                     span.push_back(*pitr);
                 }
                 ++pitr;
@@ -176,11 +189,11 @@ public:
 private:
     int m_count;
 
-    typedef std::multiset<Point> PointMultiset;
-    PointMultiset m_points;
+    typedef std::multiset<Event> EventMultiset;
+    EventMultiset m_events;
 
-    typedef std::map<sv_frame_t, std::multiset<Point>> FramePointsMap;
-    FramePointsMap m_seams;
+    typedef std::map<sv_frame_t, std::multiset<Event>> FrameEventsMap;
+    FrameEventsMap m_seams;
 
     /** Create a seam at the given frame, copying from the prior seam
      *  if there is one. If a seam already exists at the given frame,
@@ -202,10 +215,10 @@ private:
         }
     }
 
-#ifdef DEBUG_POINT_SERIES
-    void dumpPoints() const {
-        std::cerr << "POINTS [" << std::endl;
-        for (const auto &p: m_points) {
+#ifdef DEBUG_EVENT_SERIES
+    void dumpEvents() const {
+        std::cerr << "EVENTS [" << std::endl;
+        for (const auto &p: m_events) {
             std::cerr << p.toXmlString("  ");
         }
         std::cerr << "]" << std::endl;
