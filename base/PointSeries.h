@@ -19,6 +19,8 @@
 
 #include <set>
 
+//#define DEBUG_POINT_SERIES 1
+
 class PointSeries
 {
 public:
@@ -33,26 +35,28 @@ public:
             sv_frame_t frame = p.getFrame();
             sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
-            std::set<Point> active;
-            auto itr = m_seams.lower_bound(frame);
-            if (itr == m_seams.end() || itr->first > frame) {
-                if (itr != m_seams.begin()) {
-                    --itr;
+            createSeam(frame);
+            createSeam(endFrame);
+            
+            auto i0 = m_seams.find(frame); // must succeed after createSeam
+            auto i1 = m_seams.find(endFrame); // likewise
+
+            for (auto i = i0; i != i1; ++i) {
+                if (i == m_seams.end()) {
+                    SVCERR << "ERROR: PointSeries::add: "
+                           << "reached end of seam map"
+                           << endl;
+                    break;
                 }
+                i->second.insert(p);
             }
-            if (itr != m_seams.end()) {
-                active = itr->second;
-            }
-            active.insert(p);
-            m_seams[frame] = active;
-
-            for (itr = m_seams.find(frame); itr->first < endFrame; ++itr) {
-                active = itr->second;
-                itr->second.insert(p);
-            }
-
-            m_seams[endFrame] = active;
         }
+
+#ifdef DEBUG_POINT_SERIES
+        std::cerr << "after add:" << std::endl;
+        dumpPoints();
+        dumpSeams();
+#endif
     }
 
     void remove(const Point &p) {
@@ -72,17 +76,32 @@ public:
             sv_frame_t frame = p.getFrame();
             sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
-            auto itr = m_seams.find(frame);
-            if (itr == m_seams.end()) {
-                SVCERR << "WARNING: PointSeries::remove: frame " << frame
+            auto i0 = m_seams.find(frame);
+            auto i1 = m_seams.find(endFrame);
+
+#ifdef DEBUG_POINT_SERIES
+            // This should be impossible if we found p in m_points above
+            if (i0 == m_seams.end() || i1 == m_seams.end()) {
+                SVCERR << "ERROR: PointSeries::remove: either frame " << frame
+                       << " or endFrame " << endFrame
                        << " for point not found in seam map: point is "
                        << p.toXmlString() << endl;
-                return;
             }
+#endif
 
-            while (itr != m_seams.end() && itr->first <= endFrame) {
-                itr->second.erase(p);
-                ++itr;
+            for (auto i = i0; i != i1; ++i) {
+                if (i == m_seams.end()) {
+                    SVCERR << "ERROR: PointSeries::remove: "
+                           << "reached end of seam map"
+                           << endl;
+                    break;
+                }
+                // Can't just erase(p) as that would erase all of
+                // them, if there are several identical ones
+                auto si = i->second.find(p);
+                if (si != i->second.end()) {
+                    i->second.erase(si);
+                }
             }
 
             // Shall we "garbage-collect" here? We could be leaving
@@ -91,6 +110,12 @@ public:
             // slow us down. But a lot depends on whether callers ever
             // really delete anything much.
         }
+
+#ifdef DEBUG_POINT_SERIES
+        std::cerr << "after remove:" << std::endl;
+        dumpPoints();
+        dumpSeams();
+#endif
     }
 
     bool contains(const Point &p) {
@@ -118,14 +143,86 @@ public:
      * equal to it and its end frame (start + duration) is greater
      * than it.
      */
-    PointVector getPointsSpanning(sv_frame_t frame) {
-        return {};
+    PointVector getPointsSpanning(sv_frame_t frame) const {
+        PointVector span;
+
+        // first find any zero-duration points
+        auto pitr = m_points.lower_bound(Point(frame, QString()));
+        if (pitr != m_points.end()) {
+            while (pitr->getFrame() == frame) {
+                if (!pitr->haveDuration()) {
+                    span.push_back(*pitr);
+                }
+                ++pitr;
+            }
+        }
+
+        // now any non-zero-duration ones from the seam map
+        auto sitr = m_seams.lower_bound(frame);
+        if (sitr == m_seams.end() || sitr->first > frame) {
+            if (sitr != m_seams.begin()) {
+                --sitr;
+            }                
+        }
+        if (sitr != m_seams.end() && sitr->first <= frame) {
+            for (auto p: sitr->second) {
+                span.push_back(p);
+            }
+        }
+        
+        return span;
     }
 
 private:
     int m_count;
-    std::multiset<Point> m_points;
-    std::map<sv_frame_t, std::set<Point>> m_seams;
+
+    typedef std::multiset<Point> PointMultiset;
+    PointMultiset m_points;
+
+    typedef std::map<sv_frame_t, std::multiset<Point>> FramePointsMap;
+    FramePointsMap m_seams;
+
+    /** Create a seam at the given frame, copying from the prior seam
+     *  if there is one. If a seam already exists at the given frame,
+     *  leave it untouched.
+     */
+    void createSeam(sv_frame_t frame) {
+        auto itr = m_seams.lower_bound(frame);
+        if (itr == m_seams.end() || itr->first > frame) {
+            if (itr != m_seams.begin()) {
+                --itr;
+            }
+        }
+        if (itr == m_seams.end()) {
+            m_seams[frame] = {};
+        } else if (itr->first < frame) {
+            m_seams[frame] = itr->second;
+        } else if (itr->first > frame) { // itr must be begin()
+            m_seams[frame] = {};
+        }
+    }
+
+#ifdef DEBUG_POINT_SERIES
+    void dumpPoints() const {
+        std::cerr << "POINTS [" << std::endl;
+        for (const auto &p: m_points) {
+            std::cerr << p.toXmlString("  ");
+        }
+        std::cerr << "]" << std::endl;
+    }
+    
+    void dumpSeams() const {
+        std::cerr << "SEAMS [" << std::endl;
+        for (const auto &s: m_seams) {
+            std::cerr << "  " << s.first << " -> {" << std::endl;
+            for (const auto &p: s.second) {
+                std::cerr << p.toXmlString("    ");
+            }
+            std::cerr << "  }" << std::endl;
+        }
+        std::cerr << "]" << std::endl;
+    }
+#endif
 };
 
 #endif

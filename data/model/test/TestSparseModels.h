@@ -136,11 +136,11 @@ private slots:
 
     void note_extents() {
         NoteModel m(100, 10, false);
-        NoteModel::Point p1(20, 123.4, 40, 0.8, "note 1");
+        NoteModel::Point p1(20, 123.4f, 40, 0.8f, "note 1");
         m.addPoint(p1);
         QCOMPARE(m.isEmpty(), false);
         QCOMPARE(m.getPointCount(), 1);
-        NoteModel::Point p2(50, 124.3, 30, 0.9, "note 2");
+        NoteModel::Point p2(50, 124.3f, 30, 0.9f, "note 2");
         m.addPoint(p2);
         QCOMPARE(m.isEmpty(), false);
         QCOMPARE(m.getPointCount(), 2);
@@ -163,9 +163,9 @@ private slots:
              
     void note_sample() {
         NoteModel m(100, 10, false);
-        NoteModel::Point p1(20, 123.4, 20, 0.8, "note 1");
-        NoteModel::Point p2(20, 124.3, 10, 0.9, "note 2");
-        NoteModel::Point p3(50, 126.3, 30, 0.9, "note 3");
+        NoteModel::Point p1(20, 123.4f, 20, 0.8f, "note 1");
+        NoteModel::Point p2(20, 124.3f, 10, 0.9f, "note 2");
+        NoteModel::Point p3(50, 126.3f, 30, 0.9f, "note 3");
         m.addPoint(p1);
         m.addPoint(p2);
         m.addPoint(p3);
@@ -193,9 +193,9 @@ private slots:
 
     void note_xml() {
         NoteModel m(100, 10, false);
-        NoteModel::Point p1(20, 123.4, 20, 0.8, "note 1");
-        NoteModel::Point p2(20, 124.3, 10, 0.9, "note 2");
-        NoteModel::Point p3(50, 126.3, 30, 0.9, "note 3");
+        NoteModel::Point p1(20, 123.4f, 20, 0.8f, "note 1");
+        NoteModel::Point p2(20, 124.3f, 10, 0.9f, "note 2");
+        NoteModel::Point p3(50, 126.3f, 30, 0.9f, "note 3");
         m.setScaleUnits("Hz");
         m.addPoint(p1);
         m.addPoint(p2);
