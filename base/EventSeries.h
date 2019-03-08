@@ -197,10 +197,11 @@ public:
      * is less than f + d and its start frame plus its duration is
      * greater than f.
      * 
-     * Note that getEventsSpanning(f, 0) is not equivalent to
-     * getEventsCovering(f). The latter includes durationless events
-     * at f and events starting at f, both of which are excluded from
-     * the former.
+     * Note: Passing a duration of zero is seldom useful here; you
+     * probably want getEventsCovering instead. getEventsSpanning(f,
+     * 0) is not equivalent to getEventsCovering(f). The latter
+     * includes durationless events at f and events starting at f,
+     * both of which are excluded from the former.
      */
     EventVector getEventsSpanning(sv_frame_t frame,
                                   sv_frame_t duration) const {
