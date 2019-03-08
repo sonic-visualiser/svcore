@@ -112,7 +112,8 @@ public:
         p.m_duration = 0;
         return p;
     }
-    
+
+    bool hasLabel() const { return m_label != QString(); }
     QString getLabel() const { return m_label; }
 
     Event withLabel(QString label) const {
