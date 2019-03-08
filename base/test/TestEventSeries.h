@@ -301,6 +301,23 @@ private slots:
         QCOMPARE(s.getEventsCovering(130), EventVector());
     }
     
+    void disjointEventsWithDurationSpan() {
+
+        EventSeries s;
+        Event a(10, 1.0f, 20, QString("a"));
+        Event b(100, 1.2f, 30, QString("b"));
+        s.add(a);
+        s.add(b);
+        QCOMPARE(s.getEventsSpanning(0, 10), EventVector());
+        QCOMPARE(s.getEventsSpanning(10, 10), EventVector({ a }));
+        QCOMPARE(s.getEventsSpanning(15, 85), EventVector({ a }));
+        QCOMPARE(s.getEventsSpanning(30, 5), EventVector());
+        QCOMPARE(s.getEventsSpanning(99, 1), EventVector());
+        QCOMPARE(s.getEventsSpanning(100, 1), EventVector({ b }));
+        QCOMPARE(s.getEventsSpanning(120, 20), EventVector({ b }));
+        QCOMPARE(s.getEventsSpanning(130, 109), EventVector());
+    }
+    
     void overlappingEventsWithAndWithoutDurationCover() {
 
         EventSeries s;
@@ -316,6 +333,23 @@ private slots:
         cover.push_back(p);
         cover.push_back(a);
         QCOMPARE(s.getEventsCovering(20), cover);
+    }
+    
+    void overlappingEventsWithAndWithoutDurationSpan() {
+
+        EventSeries s;
+        Event p(20, QString("p"));
+        Event a(10, 1.0f, 20, QString("a"));
+        s.add(p);
+        s.add(a);
+        EventVector span;
+        span.push_back(a);
+        QCOMPARE(s.getEventsSpanning(5, 10), span);
+        QCOMPARE(s.getEventsSpanning(25, 5), span);
+        span.clear();
+        span.push_back(p);
+        span.push_back(a);
+        QCOMPARE(s.getEventsSpanning(20, 1), span);
     }
 
     void overlappingEventsWithDurationCover() {
@@ -333,6 +367,24 @@ private slots:
         QCOMPARE(s.getEventsCovering(30), EventVector({ c }));
         QCOMPARE(s.getEventsCovering(40), EventVector({ c }));
         QCOMPARE(s.getEventsCovering(50), EventVector());
+    }
+
+    void overlappingEventsWithDurationSpan() {
+
+        EventSeries s;
+        Event a(20, 1.0f, 10, QString("a"));
+        Event b(10, 1.0f, 20, QString("b"));
+        Event c(10, 1.0f, 40, QString("c"));
+        s.add(a);
+        s.add(b);
+        s.add(c);
+        QCOMPARE(s.getEventsSpanning(10, 5), EventVector({ b, c }));
+        QCOMPARE(s.getEventsSpanning(20, 15), EventVector({ b, c, a }));
+        QCOMPARE(s.getEventsSpanning(0, 100), EventVector({ b, c, a }));
+        QCOMPARE(s.getEventsSpanning(25, 4), EventVector({ b, c, a }));
+        QCOMPARE(s.getEventsSpanning(30, 4), EventVector({ c }));
+        QCOMPARE(s.getEventsSpanning(40, 15), EventVector({ c }));
+        QCOMPARE(s.getEventsSpanning(50, 10), EventVector());
     }
 
     void eventPatternCover() {
@@ -353,6 +405,26 @@ private slots:
         s.add(dd);
         s.add(e);
         QCOMPARE(s.getEventsCovering(8), EventVector({ a, b, d, dd }));
+    }
+
+    void eventPatternSpan() {
+
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getEventsSpanning(6, 2), EventVector({ a, b, c, cc, d, dd }));
     }
 
     void eventPatternAddRemove() {
