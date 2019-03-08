@@ -32,6 +32,13 @@
  * starts or ends) associated with a set of the events that are active
  * at or from that position. These are updated when an event is added
  * or removed.
+ *
+ * Performance is highly dependent on the extent of overlapping events
+ * and the order in which events are added. Each event (with duration)
+ * that is added requires updating all the seams within the extent of
+ * that event, taking a number of ordered-set updates proportional to
+ * the number of events already existing within its extent. Add events
+ * in order of start frame if possible.
  */
 class EventSeries
 {
@@ -348,15 +355,15 @@ private:
 
 #ifdef DEBUG_EVENT_SERIES
     void dumpEvents() const {
-        std::cerr << "EVENTS [" << std::endl;
+        std::cerr << "EVENTS (" << m_events.size() << ") [" << std::endl;
         for (const auto &i: m_events) {
-            std::cerr << i.first.toXmlString("  ");
+            std::cerr << "  " << i.second << "x " << i.first.toXmlString();
         }
         std::cerr << "]" << std::endl;
     }
     
     void dumpSeams() const {
-        std::cerr << "SEAMS [" << std::endl;
+        std::cerr << "SEAMS (" << m_seams.size() << ") [" << std::endl;
         for (const auto &s: m_seams) {
             std::cerr << "  " << s.first << " -> {" << std::endl;
             for (const auto &p: s.second) {
