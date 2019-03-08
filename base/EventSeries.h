@@ -53,8 +53,9 @@ public:
         ++m_count;
 
         if (p.hasDuration()) {
-            sv_frame_t frame = p.getFrame();
-            sv_frame_t endFrame = p.getFrame() + p.getDuration();
+
+            const sv_frame_t frame = p.getFrame();
+            const sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
             createSeam(frame);
             createSeam(endFrame);
@@ -101,8 +102,8 @@ public:
 
         if (p.hasDuration() && isUnique) {
             
-            sv_frame_t frame = p.getFrame();
-            sv_frame_t endFrame = p.getFrame() + p.getDuration();
+            const sv_frame_t frame = p.getFrame();
+            const sv_frame_t endFrame = p.getFrame() + p.getDuration();
 
             const auto i0 = m_seams.find(frame);
             const auto i1 = m_seams.find(endFrame);
@@ -190,15 +191,16 @@ public:
      * greater than f.
      * 
      * Note that getEventsSpanning(f, 0) is not equivalent to
-     * getEventsCovering(f) - they have different behaviour in the
-     * case of events starting exactly at f, which are included in the
-     * latter but not the former.
+     * getEventsCovering(f). The latter includes durationless events
+     * at f and events starting at f, both of which are excluded from
+     * the former.
      */
-    EventVector getEventsSpanning(sv_frame_t f, sv_frame_t d) const {
+    EventVector getEventsSpanning(sv_frame_t frame,
+                                  sv_frame_t duration) const {
         EventVector span;
 
-        sv_frame_t start = f;
-        sv_frame_t end = f + d;
+        const sv_frame_t start = frame;
+        const sv_frame_t end = frame + duration;
         
         // first find any zero-duration events
         
