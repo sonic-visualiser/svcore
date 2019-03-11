@@ -74,6 +74,8 @@ private slots:
 
     /*
 
+(T540p, Core i5-4330M @ 2.80GHz, 16G)
+
 cf5196881e3e:
 
                  Time for 1000 short events =      1.169ms
@@ -119,6 +121,21 @@ Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 7804ms
 
 7.97user 0.29system 0:08.31elapsed 99%CPU (0avgtext+0avgdata 706388maxresident)k
 0inputs+40outputs (0major+182225minor)pagefaults 0swaps
+
+1c21ddac220e (with simpler code):
+
+                 Time for 1000 short events =      1.12ms
+                 Time for 10000 short events =     14.997ms
+                 Time for 100000 short events =    238.818ms
+                 Time for 1000000 short events =   3765.09ms
+                 Time for 1000 longish events =    1.657ms
+                 Time for 10000 longish events =   1130.59ms
+                 Time for 100000 longish events =  1840.98ms
+
+Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 8081ms
+
+7.88user 0.23system 0:08.19elapsed 99%CPU (0avgtext+0avgdata 781688maxresident)k
+0inputs+40outputs (0major+200425minor)pagefaults 0swaps
 
     */
 };
