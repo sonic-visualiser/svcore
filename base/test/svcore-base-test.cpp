@@ -21,6 +21,7 @@
 #include "TestColumnOp.h"
 #include "TestMovingMedian.h"
 #include "TestEventSeries.h"
+#include "StressEventSeries.h"
 
 #include "system/Init.h"
 
@@ -90,7 +91,14 @@ int main(int argc, char *argv[])
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
-
+/*
+    {
+        StressEventSeries t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+*/
+    
     if (bad > 0) {
         SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;
         return 1;

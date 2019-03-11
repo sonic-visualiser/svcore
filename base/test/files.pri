@@ -8,7 +8,8 @@ TEST_HEADERS = \
 	     TestRangeMapper.h \
 	     TestScaleTickIntervals.h \
 	     TestStringBits.h \
-	     TestVampRealTime.h
+	     TestVampRealTime.h \
+	     StressEventSeries.h
 	     
 TEST_SOURCES += \
 	     svcore-base-test.cpp
