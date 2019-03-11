@@ -40,6 +40,11 @@
 class Event
 {
 public:
+    Event() :
+        m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_value(0.f), m_level(0.f), m_frame(0),
+        m_duration(0), m_referenceFrame(0), m_label() { }
+    
     Event(sv_frame_t frame) :
         m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
         m_value(0.f), m_level(0.f), m_frame(frame),
@@ -264,6 +269,16 @@ public:
 
         return n;
     }
+
+    uint hash(uint seed = 0) const {
+        uint h = qHash(m_label, seed);
+        if (m_haveValue) h ^= qHash(m_value);
+        if (m_haveLevel) h ^= qHash(m_level);
+        h ^= qHash(m_frame);
+        h ^= qHash(m_duration);
+        if (m_haveReferenceFrame) h ^= qHash(m_referenceFrame);
+        return h;
+    }
     
 private:
     // The order of fields here is chosen to minimise overall size of struct.
@@ -279,6 +294,10 @@ private:
     sv_frame_t m_referenceFrame;
     QString m_label;
 };
+
+inline uint qHash(const Event &e, uint seed = 0) {
+    return e.hash(seed);
+}
 
 typedef std::vector<Event> EventVector;
 
