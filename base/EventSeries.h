@@ -19,9 +19,6 @@
 
 #include <set>
 
-#include <QHash>
-#include <QMap>
-
 //#define DEBUG_EVENT_SERIES 1
 
 /**
@@ -81,7 +78,7 @@ public:
                            << endl;
                     break;
                 }
-                i.value().insert(p);
+                i->second.insert(p);
             }
         }
 
@@ -103,7 +100,7 @@ public:
         if (pitr == m_events.end()) {
             return; // we don't know this event
         } else {
-            if (--(pitr.value()) == 0) {
+            if (--(pitr->second) == 0) {
                 isUnique = true;
                 m_events.erase(pitr);
             }
@@ -135,7 +132,7 @@ public:
                     throw std::logic_error("unexpectedly reached end of map");
                 }
                 
-                i.value().remove(p);
+                i->second.erase(p);
             }
 
             // Tidy up by removing any entries that are now identical
@@ -150,8 +147,8 @@ public:
             }
 
             for (auto i = i0; i != m_seams.end(); ++i) {
-                if (pitr != m_seams.end() && i.value() == pitr.value()) {
-                    redundant.push_back(i.key());
+                if (pitr != m_seams.end() && i->second == pitr->second) {
+                    redundant.push_back(i->first);
                 }
                 pitr = i;
                 if (i == i1) {
@@ -160,7 +157,7 @@ public:
             }
 
             for (sv_frame_t f: redundant) {
-                m_seams.remove(f);
+                m_seams.erase(f);
             }
         }
 
@@ -215,11 +212,11 @@ public:
         
         // first find any zero-duration events
         
-        auto pitr = m_events.lowerBound(Event(start, QString()));
-        while (pitr != m_events.end() && pitr.key().getFrame() < end) {
-            if (!pitr.key().hasDuration()) {
-                for (int i = 0; i < pitr.value(); ++i) {
-                    span.push_back(pitr.key());
+        auto pitr = m_events.lower_bound(Event(start, QString()));
+        while (pitr != m_events.end() && pitr->first.getFrame() < end) {
+            if (!pitr->first.hasDuration()) {
+                for (int i = 0; i < pitr->second; ++i) {
+                    span.push_back(pitr->first);
                 }
             }
             ++pitr;
@@ -228,20 +225,20 @@ public:
         // now any non-zero-duration ones from the seam map
 
         std::set<Event> found;
-        auto sitr = m_seams.lowerBound(start);
-        if (sitr == m_seams.end() || sitr.key() > start) {
+        auto sitr = m_seams.lower_bound(start);
+        if (sitr == m_seams.end() || sitr->first > start) {
             if (sitr != m_seams.begin()) {
                 --sitr;
             }                
         }
-        while (sitr != m_seams.end() && sitr.key() < end) {
-            for (const auto &p: sitr.value()) {
+        while (sitr != m_seams.end() && sitr->first < end) {
+            for (const auto &p: sitr->second) {
                 found.insert(p);
             }
             ++sitr;
         }
         for (const auto &p: found) {
-            int n = m_events.value(p);
+            int n = m_events.at(p);
             if (n < 1) {
                 throw std::logic_error("event is in seams but not events");
             }
@@ -265,39 +262,33 @@ public:
 
         // first find any zero-duration events
         
-        auto pitr = m_events.lowerBound(Event(frame, QString()));
-        while (pitr != m_events.end() && pitr.key().getFrame() == frame) {
-            if (!pitr.key().hasDuration()) {
-                for (int i = 0; i < pitr.value(); ++i) {
-                    cover.push_back(pitr.key());
+        auto pitr = m_events.lower_bound(Event(frame, QString()));
+        while (pitr != m_events.end() && pitr->first.getFrame() == frame) {
+            if (!pitr->first.hasDuration()) {
+                for (int i = 0; i < pitr->second; ++i) {
+                    cover.push_back(pitr->first);
                 }
             }
             ++pitr;
         }
 
-        // now any non-zero-duration ones from the seam map. We insert
-        // these into a std::set to recover the ordering, lost by QSet
+        // now any non-zero-duration ones from the seam map
         
-        std::set<Event> found;
-        auto sitr = m_seams.lowerBound(frame);
-        if (sitr == m_seams.end() || sitr.key() > frame) {
+        auto sitr = m_seams.lower_bound(frame);
+        if (sitr == m_seams.end() || sitr->first > frame) {
             if (sitr != m_seams.begin()) {
                 --sitr;
             }                
         }
-        if (sitr != m_seams.end() && sitr.key() <= frame) {
-            for (const auto &p: sitr.value()) {
-                found.insert(p);
-            }
-            ++sitr;
-        }
-        for (const auto &p: found) {
-            int n = m_events.value(p);
-            if (n < 1) {
-                throw std::logic_error("event is in seams but not events");
-            }
-            for (int i = 0; i < n; ++i) {
-                cover.push_back(p);
+        if (sitr != m_seams.end() && sitr->first <= frame) {
+            for (const auto &p: sitr->second) {
+                int n = m_events.at(p);
+                if (n < 1) {
+                    throw std::logic_error("event is in seams but not events");
+                }
+                for (int i = 0; i < n; ++i) {
+                    cover.push_back(p);
+                }
             }
         }
         
@@ -310,7 +301,7 @@ private:
      * m_events.size() if the series contains duplicate events.
      */
     int m_count;
-    
+
     /**
      * The (ordered) Events map acts as a list of all the events in
      * the series. For reasons of backward compatibility, we have to
@@ -325,7 +316,7 @@ private:
      * different "key" in this map - we only add or delete them or
      * change their counts.
      */
-    typedef QMap<Event, int> Events;
+    typedef std::map<Event, int> Events;
     Events m_events;
 
     /**
@@ -340,7 +331,7 @@ private:
      * Only events with duration appear in this map; point events
      * appear only in m_events.
      */
-    typedef QMap<sv_frame_t, QSet<Event>> FrameEventMap;
+    typedef std::map<sv_frame_t, std::set<Event>> FrameEventMap;
     FrameEventMap m_seams;
 
     /** Create a seam at the given frame, copying from the prior seam
@@ -348,17 +339,17 @@ private:
      *  leave it untouched.
      */
     void createSeam(sv_frame_t frame) {
-        auto itr = m_seams.lowerBound(frame);
-        if (itr == m_seams.end() || itr.key() > frame) {
+        auto itr = m_seams.lower_bound(frame);
+        if (itr == m_seams.end() || itr->first > frame) {
             if (itr != m_seams.begin()) {
                 --itr;
             }
         }
         if (itr == m_seams.end()) {
             m_seams[frame] = {};
-        } else if (itr.key() < frame) {
-            m_seams[frame] = itr.value();
-        } else if (itr.key() > frame) { // itr must be begin()
+        } else if (itr->first < frame) {
+            m_seams[frame] = itr->second;
+        } else if (itr->first > frame) { // itr must be begin()
             m_seams[frame] = {};
         }
     }

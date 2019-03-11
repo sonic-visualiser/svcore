@@ -72,7 +72,9 @@ private slots:
     void longish_4() { longish_n(10000); }
     void longish_5() { longish_n(100000); }
 
-    /* cf5196881e3e+
+    /*
+
+cf5196881e3e:
 
                  Time for 1000 short events =      1.169ms
                  Time for 10000 short events =     20.566ms
@@ -86,6 +88,23 @@ Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 12785ms
 
 13.40user 0.37system 0:13.84elapsed 99%CPU (0avgtext+0avgdata 1052000maxresident)k
 0inputs+40outputs (0major+260249minor)pagefaults 0swaps
+
+
+dcd510bd89db:
+
+                 Time for 1000 short events =      1.824ms
+                 Time for 10000 short events =     19.203ms
+                 Time for 100000 short events =    270.631ms
+                 Time for 1000000 short events =   4425.2ms
+                 Time for 1000 longish events =    2.395ms
+                 Time for 10000 longish events =   83.623ms
+                 Time for 100000 longish events =  5958.28ms
+
+Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 13116ms
+
+13.64user 0.26system 0:13.98elapsed 99%CPU (0avgtext+0avgdata 948104maxresident)k
+0inputs+40outputs (0major+234387minor)pagefaults 0swaps
+
     */
 };
 
