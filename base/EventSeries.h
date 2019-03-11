@@ -59,6 +59,8 @@ public:
         ++m_events[p];
         ++m_count;
 
+        sv_id_t id = Event::getId(p);
+        
         if (p.hasDuration()) {
 
             const sv_frame_t frame = p.getFrame();
@@ -78,7 +80,16 @@ public:
                            << endl;
                     break;
                 }
-                i->second.insert(p);
+/*                bool found = false;
+                for (auto eid: i->second) {
+                    if (eid == id) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {*/
+                    i->second.push_back(id);
+//                }
             }
         }
 
@@ -107,6 +118,8 @@ public:
             --m_count;
         }
 
+        sv_id_t id = Event::getId(p);
+        
         if (p.hasDuration() && isUnique) {
             
             const sv_frame_t frame = p.getFrame();
@@ -131,13 +144,20 @@ public:
                     // duration, which Event forbids
                     throw std::logic_error("unexpectedly reached end of map");
                 }
-                
-                i->second.erase(p);
+                for (size_t j = 0; j < i->second.size(); ) {
+                    if (i->second[j] == id) {
+                        i->second.erase(i->second.begin() + j);
+                    } else {
+                        ++j;
+                    }
+                }
             }
 
             // Tidy up by removing any entries that are now identical
             // to their predecessors
 
+//!!! won't work as vector is not consistently ordered
+            
             std::vector<sv_frame_t> redundant;
 
             auto pitr = m_seams.end();
@@ -232,8 +252,8 @@ public:
             }                
         }
         while (sitr != m_seams.end() && sitr->first < end) {
-            for (const auto &p: sitr->second) {
-                found.insert(p);
+            for (const auto &id: sitr->second) {
+                found.insert(Event::getEventForId(id));
             }
             ++sitr;
         }
@@ -274,6 +294,7 @@ public:
 
         // now any non-zero-duration ones from the seam map
         
+        std::set<Event> found;
         auto sitr = m_seams.lower_bound(frame);
         if (sitr == m_seams.end() || sitr->first > frame) {
             if (sitr != m_seams.begin()) {
@@ -281,14 +302,18 @@ public:
             }                
         }
         if (sitr != m_seams.end() && sitr->first <= frame) {
-            for (const auto &p: sitr->second) {
-                int n = m_events.at(p);
-                if (n < 1) {
-                    throw std::logic_error("event is in seams but not events");
-                }
-                for (int i = 0; i < n; ++i) {
-                    cover.push_back(p);
-                }
+            for (const auto &id: sitr->second) {
+                found.insert(Event::getEventForId(id));
+            }
+            ++sitr;
+        }
+        for (const auto &p: found) {
+            int n = m_events.at(p);
+            if (n < 1) {
+                throw std::logic_error("event is in seams but not events");
+            }
+            for (int i = 0; i < n; ++i) {
+                cover.push_back(p);
             }
         }
         
@@ -331,7 +356,7 @@ private:
      * Only events with duration appear in this map; point events
      * appear only in m_events.
      */
-    typedef std::map<sv_frame_t, std::set<Event>> FrameEventMap;
+    typedef std::map<sv_frame_t, std::vector<sv_id_t>> FrameEventMap;
     FrameEventMap m_seams;
 
     /** Create a seam at the given frame, copying from the prior seam
