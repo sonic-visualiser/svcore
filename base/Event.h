@@ -19,6 +19,7 @@
 #include "BaseTypes.h"
 #include "NoteData.h"
 #include "XmlExportable.h"
+#include "DataExportOptions.h"
 
 #include <vector>
 #include <stdexcept>
@@ -41,27 +42,32 @@ class Event
 {
 public:
     Event() :
-        m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_haveValue(false), m_haveLevel(false),
+        m_haveDuration(false), m_haveReferenceFrame(false),
         m_value(0.f), m_level(0.f), m_frame(0),
         m_duration(0), m_referenceFrame(0), m_label() { }
     
     Event(sv_frame_t frame) :
-        m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_haveValue(false), m_haveLevel(false),
+        m_haveDuration(false), m_haveReferenceFrame(false),
         m_value(0.f), m_level(0.f), m_frame(frame),
         m_duration(0), m_referenceFrame(0), m_label() { }
         
     Event(sv_frame_t frame, QString label) :
-        m_haveValue(false), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_haveValue(false), m_haveLevel(false), 
+        m_haveDuration(false), m_haveReferenceFrame(false),
         m_value(0.f), m_level(0.f), m_frame(frame),
         m_duration(0), m_referenceFrame(0), m_label(label) { }
         
     Event(sv_frame_t frame, float value, QString label) :
-        m_haveValue(true), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_haveValue(true), m_haveLevel(false), 
+        m_haveDuration(false), m_haveReferenceFrame(false),
         m_value(value), m_level(0.f), m_frame(frame),
         m_duration(0), m_referenceFrame(0), m_label(label) { }
         
     Event(sv_frame_t frame, float value, sv_frame_t duration, QString label) :
-        m_haveValue(true), m_haveLevel(false), m_haveReferenceFrame(false),
+        m_haveValue(true), m_haveLevel(false), 
+        m_haveDuration(true), m_haveReferenceFrame(false),
         m_value(value), m_level(0.f), m_frame(frame),
         m_duration(duration), m_referenceFrame(0), m_label(label) {
         if (m_duration < 0) throw std::logic_error("duration must be >= 0");
@@ -69,7 +75,8 @@ public:
         
     Event(sv_frame_t frame, float value, sv_frame_t duration,
           float level, QString label) :
-        m_haveValue(true), m_haveLevel(true), m_haveReferenceFrame(false),
+        m_haveValue(true), m_haveLevel(true), 
+        m_haveDuration(true), m_haveReferenceFrame(false),
         m_value(value), m_level(level), m_frame(frame),
         m_duration(duration), m_referenceFrame(0), m_label(label) {
         if (m_duration < 0) throw std::logic_error("duration must be >= 0");
@@ -103,17 +110,19 @@ public:
         return p;
     }
     
-    bool hasDuration() const { return m_duration != 0; }
+    bool hasDuration() const { return m_haveDuration; }
     sv_frame_t getDuration() const { return m_duration; }
 
     Event withDuration(sv_frame_t duration) const {
         Event p(*this);
         p.m_duration = duration;
+        p.m_haveDuration = true;
         if (duration < 0) throw std::logic_error("duration must be >= 0");
         return p;
     }
     Event withoutDuration() const {
         Event p(*this);
+        p.m_haveDuration = false;
         p.m_duration = 0;
         return p;
     }
@@ -166,7 +175,9 @@ public:
     bool operator==(const Event &p) const {
 
         if (m_frame != p.m_frame) return false;
-        if (m_duration != p.m_duration) return false;
+
+        if (m_haveDuration != p.m_haveDuration) return false;
+        if (m_haveDuration && (m_duration != p.m_duration)) return false;
 
         if (m_haveValue != p.m_haveValue) return false;
         if (m_haveValue && (m_value != p.m_value)) return false;
@@ -185,16 +196,32 @@ public:
 
     bool operator<(const Event &p) const {
 
-        if (m_frame != p.m_frame) return m_frame < p.m_frame;
-        if (m_duration != p.m_duration) return m_duration < p.m_duration;
+        if (m_frame != p.m_frame) {
+            return m_frame < p.m_frame;
+        }
 
         // events without a property sort before events with that property
 
-        if (m_haveValue != p.m_haveValue) return !m_haveValue;
-        if (m_haveValue && (m_value != p.m_value)) return m_value < p.m_value;
+        if (m_haveDuration != p.m_haveDuration) {
+            return !m_haveDuration;
+        }
+        if (m_haveDuration && (m_duration != p.m_duration)) {
+            return m_duration < p.m_duration;
+        }
+
+        if (m_haveValue != p.m_haveValue) {
+            return !m_haveValue;
+        }
+        if (m_haveValue && (m_value != p.m_value)) {
+            return m_value < p.m_value;
+        }
         
-        if (m_haveLevel != p.m_haveLevel) return !m_haveLevel;
-        if (m_haveLevel && (m_level != p.m_level)) return m_level < p.m_level;
+        if (m_haveLevel != p.m_haveLevel) {
+            return !m_haveLevel;
+        }
+        if (m_haveLevel && (m_level != p.m_level)) {
+            return m_level < p.m_level;
+        }
 
         if (m_haveReferenceFrame != p.m_haveReferenceFrame) {
             return !m_haveReferenceFrame;
@@ -213,7 +240,7 @@ public:
         // For I/O purposes these are points, not events
         stream << indent << QString("<point frame=\"%1\" ").arg(m_frame);
         if (m_haveValue) stream << QString("value=\"%1\" ").arg(m_value);
-        if (m_duration) stream << QString("duration=\"%1\" ").arg(m_duration);
+        if (m_haveDuration) stream << QString("duration=\"%1\" ").arg(m_duration);
         if (m_haveLevel) stream << QString("level=\"%1\" ").arg(m_level);
         if (m_haveReferenceFrame) stream << QString("referenceFrame=\"%1\" ")
                                       .arg(m_referenceFrame);
@@ -231,10 +258,11 @@ public:
         return s;
     }
 
-    NoteData toNoteData(sv_samplerate_t sampleRate, bool valueIsMidiPitch) {
+    NoteData toNoteData(sv_samplerate_t sampleRate,
+                        bool valueIsMidiPitch) {
 
         sv_frame_t duration;
-        if (m_duration > 0) {
+        if (m_haveDuration && m_duration > 0) {
             duration = m_duration;
         } else {
             duration = sv_frame_t(sampleRate / 6); // arbitrary short duration
@@ -270,12 +298,40 @@ public:
         return n;
     }
 
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions opts,
+                                  sv_samplerate_t sampleRate) const {
+        QStringList list;
+
+        list << RealTime::frame2RealTime(m_frame, sampleRate)
+            .toString().c_str();
+        
+        if (m_haveValue) {
+            list << QString("%1").arg(m_value);
+        }
+        
+        if (m_haveDuration) {
+            list << RealTime::frame2RealTime(m_duration, sampleRate)
+                .toString().c_str();
+        }
+        
+        if (m_haveLevel) {
+            if (!(opts & DataExportOmitLevels)) {
+                list << QString("%1").arg(m_level);
+            }
+        }
+        
+        if (m_label != "") list << m_label;
+        
+        return list.join(delimiter);
+    }
+
     uint hash(uint seed = 0) const {
         uint h = qHash(m_label, seed);
         if (m_haveValue) h ^= qHash(m_value);
         if (m_haveLevel) h ^= qHash(m_level);
         h ^= qHash(m_frame);
-        h ^= qHash(m_duration);
+        if (m_haveDuration) h ^= qHash(m_duration);
         if (m_haveReferenceFrame) h ^= qHash(m_referenceFrame);
         return h;
     }
@@ -286,6 +342,7 @@ private:
     // If you change something, check what difference it makes to packing.
     bool m_haveValue : 1;
     bool m_haveLevel : 1;
+    bool m_haveDuration : 1;
     bool m_haveReferenceFrame : 1;
     float m_value;
     float m_level;
