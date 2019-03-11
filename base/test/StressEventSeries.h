@@ -105,6 +105,21 @@ Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 13116ms
 13.64user 0.26system 0:13.98elapsed 99%CPU (0avgtext+0avgdata 948104maxresident)k
 0inputs+40outputs (0major+234387minor)pagefaults 0swaps
 
+895186c43fce:
+
+                 Time for 1000 short events =      1.706ms
+                 Time for 10000 short events =     23.192ms
+                 Time for 100000 short events =    310.605ms
+                 Time for 1000000 short events =   4675.7ms
+                 Time for 1000 longish events =    2.186ms
+                 Time for 10000 longish events =   760.659ms
+                 Time for 100000 longish events =  1335.57ms
+
+Totals: 9 passed, 0 failed, 0 skipped, 0 blacklisted, 7804ms
+
+7.97user 0.29system 0:08.31elapsed 99%CPU (0avgtext+0avgdata 706388maxresident)k
+0inputs+40outputs (0major+182225minor)pagefaults 0swaps
+
     */
 };
 

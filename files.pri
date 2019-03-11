@@ -152,7 +152,6 @@ SVCORE_SOURCES = \
            base/ColumnOp.cpp \
            base/Command.cpp \
            base/Debug.cpp \
-           base/Event.cpp \
            base/Exceptions.cpp \
            base/HelperExecPath.cpp \
            base/LogRange.cpp \

@@ -56,12 +56,17 @@ public:
     
     void add(const Event &p) {
 
+        bool isUnique = true;
+
+        auto pitr = m_events.find(p);
+        if (pitr != m_events.end()) {
+            isUnique = false;
+        }
+
         ++m_events[p];
         ++m_count;
 
-        sv_id_t id = Event::getId(p);
-        
-        if (p.hasDuration()) {
+        if (p.hasDuration() && isUnique) {
 
             const sv_frame_t frame = p.getFrame();
             const sv_frame_t endFrame = p.getFrame() + p.getDuration();
@@ -80,16 +85,7 @@ public:
                            << endl;
                     break;
                 }
-/*                bool found = false;
-                for (auto eid: i->second) {
-                    if (eid == id) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {*/
-                    i->second.push_back(id);
-//                }
+                i->second.push_back(p);
             }
         }
 
@@ -118,8 +114,6 @@ public:
             --m_count;
         }
 
-        sv_id_t id = Event::getId(p);
-        
         if (p.hasDuration() && isUnique) {
             
             const sv_frame_t frame = p.getFrame();
@@ -138,6 +132,10 @@ public:
             }
 #endif
 
+            // Remove any and all instances of p from the seam map; we
+            // are only supposed to get here if we are removing the
+            // last instance of p from the series anyway
+            
             for (auto i = i0; i != i1; ++i) {
                 if (i == m_seams.end()) {
                     // This can happen only if we have a negative
@@ -145,7 +143,7 @@ public:
                     throw std::logic_error("unexpectedly reached end of map");
                 }
                 for (size_t j = 0; j < i->second.size(); ) {
-                    if (i->second[j] == id) {
+                    if (i->second[j] == p) {
                         i->second.erase(i->second.begin() + j);
                     } else {
                         ++j;
@@ -155,8 +153,6 @@ public:
 
             // Tidy up by removing any entries that are now identical
             // to their predecessors
-
-//!!! won't work as vector is not consistently ordered
             
             std::vector<sv_frame_t> redundant;
 
@@ -167,7 +163,8 @@ public:
             }
 
             for (auto i = i0; i != m_seams.end(); ++i) {
-                if (pitr != m_seams.end() && i->second == pitr->second) {
+                if (pitr != m_seams.end() &&
+                    seamsEqual(i->second, pitr->second)) {
                     redundant.push_back(i->first);
                 }
                 pitr = i;
@@ -178,6 +175,13 @@ public:
 
             for (sv_frame_t f: redundant) {
                 m_seams.erase(f);
+            }
+
+            // And remove any empty seams from the start of the map
+            
+            while (m_seams.begin() != m_seams.end() &&
+                   m_seams.begin()->second.empty()) {
+                m_seams.erase(m_seams.begin());
             }
         }
 
@@ -252,8 +256,8 @@ public:
             }                
         }
         while (sitr != m_seams.end() && sitr->first < end) {
-            for (const auto &id: sitr->second) {
-                found.insert(Event::getEventForId(id));
+            for (const auto &p: sitr->second) {
+                found.insert(p);
             }
             ++sitr;
         }
@@ -302,8 +306,8 @@ public:
             }                
         }
         if (sitr != m_seams.end() && sitr->first <= frame) {
-            for (const auto &id: sitr->second) {
-                found.insert(Event::getEventForId(id));
+            for (const auto &p: sitr->second) {
+                found.insert(p);
             }
             ++sitr;
         }
@@ -354,9 +358,12 @@ private:
      * onward and disappearing again at its end frame.
      *
      * Only events with duration appear in this map; point events
-     * appear only in m_events.
+     * appear only in m_events. Note that unlike m_events, we only
+     * store one instance of each event here, even if we hold many -
+     * we refer back to m_events when we need to know how many
+     * identical copies of a given event we have.
      */
-    typedef std::map<sv_frame_t, std::vector<sv_id_t>> FrameEventMap;
+    typedef std::map<sv_frame_t, std::vector<Event>> FrameEventMap;
     FrameEventMap m_seams;
 
     /** Create a seam at the given frame, copying from the prior seam
@@ -377,6 +384,39 @@ private:
         } else if (itr->first > frame) { // itr must be begin()
             m_seams[frame] = {};
         }
+    }
+
+    bool seamsEqual(const std::vector<Event> &s1,
+                    const std::vector<Event> &s2) const {
+        
+        if (s1.size() != s2.size()) {
+            return false;
+        }
+
+        // precondition: no event appears more than once in s1 or more
+        // than once in s2
+
+#ifdef DEBUG_EVENT_SERIES
+        for (int i = 0; in_range_for(s1, i); ++i) {
+            for (int j = i + 1; in_range_for(s1, j); ++j) {
+                if (s1[i] == s1[j] || s2[i] == s2[j]) {
+                    throw std::runtime_error
+                        ("debug error: duplicate event in s1 or s2");
+                }
+            }
+        }
+#endif
+
+        std::set<Event> ee;
+        for (const auto &e: s1) {
+            ee.insert(e);
+        }
+        for (const auto &e: s2) {
+            if (ee.find(e) == ee.end()) {
+                return false;
+            }
+        }
+        return true;
     }
 
 #ifdef DEBUG_EVENT_SERIES

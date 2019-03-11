@@ -279,27 +279,6 @@ public:
         if (m_haveReferenceFrame) h ^= qHash(m_referenceFrame);
         return h;
     }
-
-    static sv_id_t getId(const Event &ev) {
-        sv_id_t id;
-        if (!m_ids.contains(ev)) {
-            id = m_nextId;
-            ++m_nextId;
-            m_ids[ev] = id;
-            m_rids[id] = ev;
-            return id;
-        } else {
-            return m_ids.value(ev);
-        }
-    }
-
-    static Event getEventForId(sv_id_t id) {
-        if (!m_rids.contains(id)) {
-            throw std::runtime_error("unknown event id");
-        } else {
-            return m_rids.value(id);
-        }
-    }
     
 private:
     // The order of fields here is chosen to minimise overall size of struct.
@@ -314,10 +293,6 @@ private:
     sv_frame_t m_duration;
     sv_frame_t m_referenceFrame;
     QString m_label;
-
-    static sv_id_t m_nextId;
-    static QHash<Event, sv_id_t> m_ids;
-    static QHash<sv_id_t, Event> m_rids;
 };
 
 inline uint qHash(const Event &e, uint seed = 0) {
