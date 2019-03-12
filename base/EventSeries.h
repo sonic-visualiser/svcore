@@ -16,6 +16,7 @@
 #define SV_EVENT_SERIES_H
 
 #include "Event.h"
+#include "XmlExportable.h"
 
 #include <set>
 
@@ -40,10 +41,10 @@
  * the number of events already existing within its extent. Add events
  * in order of start frame if possible.
  */
-class EventSeries
+class EventSeries : public XmlExportable
 {
 public:
-    EventSeries() : m_count(0) { }
+    EventSeries() { }
     ~EventSeries() =default;
 
     EventSeries(const EventSeries &) =default;
@@ -54,161 +55,12 @@ public:
         return m_events == other.m_events;
     }
     
-    void add(const Event &p) {
-
-        bool isUnique = true;
-
-        auto pitr = m_events.find(p);
-        if (pitr != m_events.end()) {
-            isUnique = false;
-        }
-
-        ++m_events[p];
-        ++m_count;
-
-        if (p.hasDuration() && isUnique) {
-
-            const sv_frame_t frame = p.getFrame();
-            const sv_frame_t endFrame = p.getFrame() + p.getDuration();
-
-            createSeam(frame);
-            createSeam(endFrame);
-
-            // These calls must both succeed after calling createSeam above
-            const auto i0 = m_seams.find(frame);
-            const auto i1 = m_seams.find(endFrame);
-
-            for (auto i = i0; i != i1; ++i) {
-                if (i == m_seams.end()) {
-                    SVCERR << "ERROR: EventSeries::add: "
-                           << "reached end of seam map"
-                           << endl;
-                    break;
-                }
-                i->second.push_back(p);
-            }
-        }
-
-#ifdef DEBUG_EVENT_SERIES
-        std::cerr << "after add:" << std::endl;
-        dumpEvents();
-        dumpSeams();
-#endif
-    }
-
-    void remove(const Event &p) {
-
-        // If we are removing the last (unique) example of an event,
-        // then we also need to remove it from the seam map. If this
-        // is only one of multiple identical events, then we don't.
-        bool isUnique = false;
-        
-        auto pitr = m_events.find(p);
-        if (pitr == m_events.end()) {
-            return; // we don't know this event
-        } else {
-            if (--(pitr->second) == 0) {
-                isUnique = true;
-                m_events.erase(pitr);
-            }
-            --m_count;
-        }
-
-        if (p.hasDuration() && isUnique) {
-            
-            const sv_frame_t frame = p.getFrame();
-            const sv_frame_t endFrame = p.getFrame() + p.getDuration();
-
-            const auto i0 = m_seams.find(frame);
-            const auto i1 = m_seams.find(endFrame);
-
-#ifdef DEBUG_EVENT_SERIES
-            // This should be impossible if we found p in m_events above
-            if (i0 == m_seams.end() || i1 == m_seams.end()) {
-                SVCERR << "ERROR: EventSeries::remove: either frame " << frame
-                       << " or endFrame " << endFrame
-                       << " for event not found in seam map: event is "
-                       << p.toXmlString() << endl;
-            }
-#endif
-
-            // Remove any and all instances of p from the seam map; we
-            // are only supposed to get here if we are removing the
-            // last instance of p from the series anyway
-            
-            for (auto i = i0; i != i1; ++i) {
-                if (i == m_seams.end()) {
-                    // This can happen only if we have a negative
-                    // duration, which Event forbids
-                    throw std::logic_error("unexpectedly reached end of map");
-                }
-                for (size_t j = 0; j < i->second.size(); ) {
-                    if (i->second[j] == p) {
-                        i->second.erase(i->second.begin() + j);
-                    } else {
-                        ++j;
-                    }
-                }
-            }
-
-            // Tidy up by removing any entries that are now identical
-            // to their predecessors
-            
-            std::vector<sv_frame_t> redundant;
-
-            auto pitr = m_seams.end();
-            if (i0 != m_seams.begin()) {
-                pitr = i0;
-                --pitr;
-            }
-
-            for (auto i = i0; i != m_seams.end(); ++i) {
-                if (pitr != m_seams.end() &&
-                    seamsEqual(i->second, pitr->second)) {
-                    redundant.push_back(i->first);
-                }
-                pitr = i;
-                if (i == i1) {
-                    break;
-                }
-            }
-
-            for (sv_frame_t f: redundant) {
-                m_seams.erase(f);
-            }
-
-            // And remove any empty seams from the start of the map
-            
-            while (m_seams.begin() != m_seams.end() &&
-                   m_seams.begin()->second.empty()) {
-                m_seams.erase(m_seams.begin());
-            }
-        }
-
-#ifdef DEBUG_EVENT_SERIES
-        std::cerr << "after remove:" << std::endl;
-        dumpEvents();
-        dumpSeams();
-#endif
-    }
-
-    bool contains(const Event &p) {
-        return m_events.find(p) != m_events.end();
-    }
-
-    int count() const {
-        return m_count;
-    }
-
-    bool isEmpty() const {
-        return m_count == 0;
-    }
-    
-    void clear() {
-        m_events.clear();
-        m_seams.clear();
-        m_count = 0;
-    }
+    void clear();
+    void add(const Event &p);
+    void remove(const Event &p);
+    bool contains(const Event &p) const;
+    bool isEmpty() const;
+    int count() const;
 
     /**
      * Retrieve all events any part of which falls within the span in
@@ -228,51 +80,7 @@ public:
      * both of which are excluded from the former.
      */
     EventVector getEventsSpanning(sv_frame_t frame,
-                                  sv_frame_t duration) const {
-        EventVector span;
-
-        const sv_frame_t start = frame;
-        const sv_frame_t end = frame + duration;
-        
-        // first find any zero-duration events
-        
-        auto pitr = m_events.lower_bound(Event(start, QString()));
-        while (pitr != m_events.end() && pitr->first.getFrame() < end) {
-            if (!pitr->first.hasDuration()) {
-                for (int i = 0; i < pitr->second; ++i) {
-                    span.push_back(pitr->first);
-                }
-            }
-            ++pitr;
-        }
-
-        // now any non-zero-duration ones from the seam map
-
-        std::set<Event> found;
-        auto sitr = m_seams.lower_bound(start);
-        if (sitr == m_seams.end() || sitr->first > start) {
-            if (sitr != m_seams.begin()) {
-                --sitr;
-            }                
-        }
-        while (sitr != m_seams.end() && sitr->first < end) {
-            for (const auto &p: sitr->second) {
-                found.insert(p);
-            }
-            ++sitr;
-        }
-        for (const auto &p: found) {
-            int n = m_events.at(p);
-            if (n < 1) {
-                throw std::logic_error("event is in seams but not events");
-            }
-            for (int i = 0; i < n; ++i) {
-                span.push_back(p);
-            }
-        }
-            
-        return span;
-    }
+                                  sv_frame_t duration) const;
 
     /**
      * Retrieve all events that cover the given frame. An event without
@@ -281,73 +89,32 @@ public:
      * equal to it and its end frame (start + duration) is greater
      * than it.
      */
-    EventVector getEventsCovering(sv_frame_t frame) const {
-        EventVector cover;
+    EventVector getEventsCovering(sv_frame_t frame) const;
 
-        // first find any zero-duration events
-        
-        auto pitr = m_events.lower_bound(Event(frame, QString()));
-        while (pitr != m_events.end() && pitr->first.getFrame() == frame) {
-            if (!pitr->first.hasDuration()) {
-                for (int i = 0; i < pitr->second; ++i) {
-                    cover.push_back(pitr->first);
-                }
-            }
-            ++pitr;
-        }
-
-        // now any non-zero-duration ones from the seam map
-        
-        std::set<Event> found;
-        auto sitr = m_seams.lower_bound(frame);
-        if (sitr == m_seams.end() || sitr->first > frame) {
-            if (sitr != m_seams.begin()) {
-                --sitr;
-            }                
-        }
-        if (sitr != m_seams.end() && sitr->first <= frame) {
-            for (const auto &p: sitr->second) {
-                found.insert(p);
-            }
-            ++sitr;
-        }
-        for (const auto &p: found) {
-            int n = m_events.at(p);
-            if (n < 1) {
-                throw std::logic_error("event is in seams but not events");
-            }
-            for (int i = 0; i < n; ++i) {
-                cover.push_back(p);
-            }
-        }
-        
-        return cover;
-    }
-
+    /**
+     * Emit to XML as a dataset element.
+     */
+    void toXml(QTextStream &out,
+               QString indent,
+               QString extraAttributes) const override;
+    
 private:
     /**
-     * Total number of events in the series. Will exceed
-     * m_events.size() if the series contains duplicate events.
+     * This vector contains all events in the series, in the normal
+     * sort order. For backward compatibility we must support series
+     * containing multiple instances of identical events, so
+     * consecutive events in this vector will not always be distinct.
+     * The vector is used in preference to a multiset or map<Event,
+     * int> in order to allow indexing by "row number" as well as by
+     * properties such as frame.
+     * 
+     * Because events are immutable, we do not have to worry about the
+     * order changing once an event is inserted - we only add or
+     * delete them.
      */
-    int m_count;
-
-    /**
-     * The (ordered) Events map acts as a list of all the events in
-     * the series. For reasons of backward compatibility, we have to
-     * handle series containing multiple instances of identical
-     * events; the int indexed against each event records the number
-     * of instances of that event. We do this in preference to using a
-     * multiset, in order to support the case in which we have
-     * obtained a set of distinct events (from the seam container
-     * below) and then need to return the correct number of each.
-     *
-     * Because events are immutable, we never have to move one to a
-     * different "key" in this map - we only add or delete them or
-     * change their counts.
-     */
-    typedef std::map<Event, int> Events;
+    typedef std::vector<Event> Events;
     Events m_events;
-
+    
     /**
      * The FrameEventMap maps from frame number to a set of events. In
      * the seam map this is used to represent the events that are
@@ -423,7 +190,7 @@ private:
     void dumpEvents() const {
         std::cerr << "EVENTS (" << m_events.size() << ") [" << std::endl;
         for (const auto &i: m_events) {
-            std::cerr << "  " << i.second << "x " << i.first.toXmlString();
+            std::cerr << "  " << i.toXmlString();
         }
         std::cerr << "]" << std::endl;
     }
