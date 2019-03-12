@@ -98,6 +98,8 @@ public:
      * If there are multiple events identical to e in the series,
      * assume that the event passed in is the first one (i.e. never
      * set preceding equal to e).
+     *
+     * It is acceptable for preceding to alias e when this is called.
      */
     bool getEventPreceding(const Event &e, Event &preceding) const;
 
@@ -110,6 +112,8 @@ public:
      * If there are multiple events identical to e in the series,
      * assume that the event passed in is the last one (i.e. never set
      * following equal to e).
+     *
+     * It is acceptable for following to alias e when this is called.
      */
     bool getEventFollowing(const Event &e, Event &following) const;
 

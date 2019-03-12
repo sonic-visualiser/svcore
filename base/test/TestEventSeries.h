@@ -477,6 +477,7 @@ private slots:
         s.add(b);
         s.add(c);
         s.add(d);
+        s.add(d); // again
         s.add(a);
         s.add(cc);
         s.add(dd);
@@ -510,6 +511,7 @@ private slots:
         s.add(b);
         s.add(c);
         s.add(d);
+        s.add(d); // again
         s.add(a);
         s.add(cc);
         s.add(dd);

@@ -293,9 +293,11 @@ EventSeries::getEventFollowing(const Event &e, Event &following) const
     if (pitr == m_events.end() || *pitr != e) {
         return false;
     }
-    ++pitr;
-    if (pitr == m_events.end()) {
-        return false;
+    while (*pitr == e) {
+        ++pitr;
+        if (pitr == m_events.end()) {
+            return false;
+        }
     }
     following = *pitr;
     return true;
