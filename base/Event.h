@@ -194,6 +194,10 @@ public:
         return true;
     }
 
+    bool operator!=(const Event &p) const {
+        return !operator==(p);
+    }
+
     bool operator<(const Event &p) const {
 
         if (m_frame != p.m_frame) {
