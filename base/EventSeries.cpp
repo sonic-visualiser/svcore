@@ -24,7 +24,7 @@ int
 EventSeries::count() const
 {
     if (m_events.size() > INT_MAX) {
-        throw std::runtime_error("too many events");
+        throw std::logic_error("too many events");
     }
     return int(m_events.size());
 }
@@ -269,6 +269,45 @@ EventSeries::getEventsCovering(sv_frame_t frame) const
     }
         
     return cover;
+}
+
+bool
+EventSeries::getEventPreceding(const Event &e, Event &preceding) const
+{
+    auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
+    if (pitr == m_events.end() || *pitr != e) {
+        return false;
+    }
+    if (pitr == m_events.begin()) {
+        return false;
+    }
+    --pitr;
+    preceding = *pitr;
+    return true;
+}
+
+bool
+EventSeries::getEventFollowing(const Event &e, Event &following) const
+{
+    auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
+    if (pitr == m_events.end() || *pitr != e) {
+        return false;
+    }
+    ++pitr;
+    if (pitr == m_events.end()) {
+        return false;
+    }
+    following = *pitr;
+    return true;
+}
+
+Event
+EventSeries::getEventByIndex(int index) const
+{
+    if (index < 0 || index >= count()) {
+        throw std::logic_error("index out of range");
+    }
+    return m_events[index];
 }
 
 void

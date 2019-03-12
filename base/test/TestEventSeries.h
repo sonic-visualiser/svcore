@@ -463,6 +463,72 @@ private slots:
         QCOMPARE(s.count(), 0);
         QCOMPARE(s.isEmpty(), true);
     }
+
+    void preceding() {
+        
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        Event p;
+        QCOMPARE(s.getEventPreceding(e, p), true);
+        QCOMPARE(p, dd);
+        QCOMPARE(s.getEventPreceding(p, p), true);
+        QCOMPARE(p, d);
+        QCOMPARE(s.getEventPreceding(p, p), true);
+        QCOMPARE(p, cc);
+        QCOMPARE(s.getEventPreceding(p, p), true);
+        QCOMPARE(p, c);
+        QCOMPARE(s.getEventPreceding(p, p), true);
+        QCOMPARE(p, b);
+        QCOMPARE(s.getEventPreceding(p, p), true);
+        QCOMPARE(p, a);
+        QCOMPARE(s.getEventPreceding(p, p), false);
+    }
+    
+    void following() {
+        
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        Event p;
+        QCOMPARE(s.getEventFollowing(a, p), true);
+        QCOMPARE(p, b);
+        QCOMPARE(s.getEventFollowing(p, p), true);
+        QCOMPARE(p, c);
+        QCOMPARE(s.getEventFollowing(p, p), true);
+        QCOMPARE(p, cc);
+        QCOMPARE(s.getEventFollowing(p, p), true);
+        QCOMPARE(p, d);
+        QCOMPARE(s.getEventFollowing(p, p), true);
+        QCOMPARE(p, dd);
+        QCOMPARE(s.getEventFollowing(p, p), true);
+        QCOMPARE(p, e);
+        QCOMPARE(s.getEventFollowing(p, p), false);
+    }
 };
 
 #endif

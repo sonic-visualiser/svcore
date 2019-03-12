@@ -34,12 +34,10 @@
  * at or from that position. These are updated when an event is added
  * or removed.
  *
- * Performance is highly dependent on the extent of overlapping events
- * and the order in which events are added. Each event (with duration)
- * that is added requires updating all the seams within the extent of
- * that event, taking a number of ordered-set updates proportional to
- * the number of events already existing within its extent. Add events
- * in order of start frame if possible.
+ * This class is highly optimised for inserting events in increasing
+ * order of start frame. Inserting (or deleting) events in the middle
+ * does work, and should be acceptable in interactive use, but it is
+ * very slow in bulk.
  */
 class EventSeries : public XmlExportable
 {
@@ -56,9 +54,9 @@ public:
     }
     
     void clear();
-    void add(const Event &p);
-    void remove(const Event &p);
-    bool contains(const Event &p) const;
+    void add(const Event &e);
+    void remove(const Event &e);
+    bool contains(const Event &e) const;
     bool isEmpty() const;
     int count() const;
 
@@ -91,6 +89,36 @@ public:
      */
     EventVector getEventsCovering(sv_frame_t frame) const;
 
+    /**
+     * If e is in the series and is not the first event in it, set
+     * preceding to the event immediate preceding it according to the
+     * standard event ordering and return true. Otherwise leave
+     * preceding unchanged and return false.
+     *
+     * If there are multiple events identical to e in the series,
+     * assume that the event passed in is the first one (i.e. never
+     * set preceding equal to e).
+     */
+    bool getEventPreceding(const Event &e, Event &preceding) const;
+
+    /**
+     * If e is in the series and is not the final event in it, set
+     * following to the event immediate following it according to the
+     * standard event ordering and return true. Otherwise leave
+     * following unchanged and return false.
+     *
+     * If there are multiple events identical to e in the series,
+     * assume that the event passed in is the last one (i.e. never set
+     * following equal to e).
+     */
+    bool getEventFollowing(const Event &e, Event &following) const;
+
+    /**
+     * Return the event at the given numerical index in the series,
+     * where 0 = the first event and count()-1 = the last.
+     */
+    Event getEventByIndex(int index) const;
+    
     /**
      * Emit to XML as a dataset element.
      */
