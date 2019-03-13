@@ -42,7 +42,7 @@
 class EventSeries : public XmlExportable
 {
 public:
-    EventSeries() { }
+    EventSeries() : m_finalDurationlessEventFrame(0) { }
     ~EventSeries() =default;
 
     EventSeries(const EventSeries &) =default;
@@ -60,6 +60,18 @@ public:
     bool isEmpty() const;
     int count() const;
 
+    /**
+     * Return the frame of the first event in the series. If there are
+     * no events, return 0.
+     */
+    sv_frame_t getStartFrame() const;
+
+    /**
+     * Return the frame plus duration of the event in the series that
+     * ends last. If there are no events, return 0.
+     */
+    sv_frame_t getEndFrame() const;
+    
     /**
      * Retrieve all events any part of which falls within the range in
      * frames defined by the given frame f and duration d.
@@ -149,6 +161,13 @@ public:
      * where 0 = the first event and count()-1 = the last.
      */
     Event getEventByIndex(int index) const;
+
+    /**
+     * Return the index of the first event in the series that does not
+     * compare inferior to the given event. If there is no such event,
+     * return count().
+     */
+    int getIndexForEvent(const Event &e) const;
     
     /**
      * Emit to XML as a dataset element.
@@ -192,6 +211,17 @@ private:
     typedef std::map<sv_frame_t, std::vector<Event>> FrameEventMap;
     FrameEventMap m_seams;
 
+    /**
+     * The frame of the last durationless event we have in the series.
+     * This is to support a fast-ish getEndFrame(): we can easily keep
+     * this up-to-date when events are added or removed, and we can
+     * easily find the end frame of the last with-duration event from
+     * the seam map, but it's not so easy to continuously update an
+     * overall end frame or to find the last frame of all events
+     * without this.
+     */
+    sv_frame_t m_finalDurationlessEventFrame;
+    
     /** Create a seam at the given frame, copying from the prior seam
      *  if there is one. If a seam already exists at the given frame,
      *  leave it untouched.

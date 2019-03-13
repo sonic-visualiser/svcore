@@ -40,6 +40,10 @@ EventSeries::add(const Event &p)
     }
     m_events.insert(pitr, p);
 
+    if (!p.hasDuration() && p.getFrame() > m_finalDurationlessEventFrame) {
+        m_finalDurationlessEventFrame = p.getFrame();
+    }
+    
     if (p.hasDuration() && isUnique) {
 
         const sv_frame_t frame = p.getFrame();
@@ -92,6 +96,17 @@ EventSeries::remove(const Event &p)
 
     m_events.erase(pitr);
 
+    if (!p.hasDuration() && isUnique &&
+        p.getFrame() == m_finalDurationlessEventFrame) {
+        m_finalDurationlessEventFrame = 0;
+        for (auto ritr = m_events.rbegin(); ritr != m_events.rend(); ++ritr) {
+            if (!ritr->hasDuration()) {
+                m_finalDurationlessEventFrame = ritr->getFrame();
+                break;
+            }
+        }
+    }
+    
     if (p.hasDuration() && isUnique) {
             
         const sv_frame_t frame = p.getFrame();
@@ -181,6 +196,33 @@ EventSeries::clear()
 {
     m_events.clear();
     m_seams.clear();
+    m_finalDurationlessEventFrame = 0;
+}
+
+sv_frame_t
+EventSeries::getStartFrame() const
+{
+    if (m_events.empty()) return 0;
+    return m_events.begin()->getFrame();
+}
+
+sv_frame_t
+EventSeries::getEndFrame() const
+{
+    sv_frame_t latest = 0;
+
+    if (m_events.empty()) return latest;
+    
+    latest = m_finalDurationlessEventFrame;
+
+    if (m_seams.empty()) return latest;
+    
+    sv_frame_t lastSeam = m_seams.rbegin()->first;
+    if (lastSeam > latest) {
+        latest = lastSeam;
+    }
+
+    return latest;
 }
 
 EventVector
@@ -360,6 +402,13 @@ EventSeries::getEventByIndex(int index) const
         throw std::logic_error("index out of range");
     }
     return m_events[index];
+}
+
+int
+EventSeries::getIndexForEvent(const Event &e) const
+{
+    auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
+    return distance(m_events.begin(), pitr);
 }
 
 void

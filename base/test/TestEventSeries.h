@@ -284,6 +284,27 @@ private slots:
         QCOMPARE(s.getEventsSpanning(10, 0), EventVector());
     }
 
+    void multipleEventsEndFrame() {
+
+        EventSeries s;
+        Event a(10, QString("a"));
+        Event b(11, QString("b"));
+        Event c(40, QString("c"));
+        s.add(c);
+        s.add(a);
+        s.add(b);
+        s.add(b);
+        QCOMPARE(s.getEndFrame(), 40);
+        s.remove(c);
+        QCOMPARE(s.getEndFrame(), 11);
+        s.remove(b);
+        QCOMPARE(s.getEndFrame(), 11);
+        s.remove(a);
+        QCOMPARE(s.getEndFrame(), 11);
+        s.remove(b);
+        QCOMPARE(s.getEndFrame(), 0);
+    }
+
     void disjointEventsWithDurationCover() {
 
         EventSeries s;
@@ -468,6 +489,26 @@ private slots:
                  EventVector({ b, c, cc, d, dd }));
     }
 
+    void eventPatternEndFrame() {
+
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getEndFrame(), 18);
+    }
+
     void eventPatternAddRemove() {
 
         // This is mostly here to exercise the innards of EventSeries
@@ -492,17 +533,21 @@ private slots:
         QCOMPARE(s.count(), 7);
         s.remove(d);
         QCOMPARE(s.getEventsCovering(8), EventVector({ a, b, dd }));
+        QCOMPARE(s.getEndFrame(), 18);
         s.remove(e);
         s.remove(a);
         QCOMPARE(s.getEventsCovering(8), EventVector({ b, dd }));
+        QCOMPARE(s.getEndFrame(), 16);
         s.remove(cc);
         s.remove(c);
         s.remove(dd);
         QCOMPARE(s.getEventsCovering(8), EventVector({ b }));
+        QCOMPARE(s.getEndFrame(), 9);
         s.remove(b);
         QCOMPARE(s.getEventsCovering(8), EventVector());
         QCOMPARE(s.count(), 0);
         QCOMPARE(s.isEmpty(), true);
+        QCOMPARE(s.getEndFrame(), 0);
     }
 
     void preceding() {
