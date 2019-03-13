@@ -1032,7 +1032,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
 //                    SVDEBUG << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << endl;
 
-                    model->addPoint(note);
+                    model->add(note);
                     break;
                 }
 

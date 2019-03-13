@@ -103,7 +103,7 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = true;
-            EventVector ee(m->getPoints());
+            EventVector ee(m->getAllEvents());
             for (auto e: ee) {
                 f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.duration = RealTime::frame2RealTime(e.getDuration(), sr).toVampRealTime();

@@ -745,8 +745,8 @@ RDFImporterImpl::fillModel(Model *model,
                     level = values[1];
                 }
             }
-            Event point(ftime, value, fduration, level, label);
-            nm->addPoint(point);
+            Event e(ftime, value, fduration, level, label);
+            nm->add(e);
         } else {
             float value = 0.f, duration = 1.f, level = 1.f;
             if (!values.empty()) {
@@ -758,9 +758,9 @@ RDFImporterImpl::fillModel(Model *model,
                     }
                 }
             }
-            Event point(ftime, value, sv_frame_t(lrintf(duration)),
+            Event e(ftime, value, sv_frame_t(lrintf(duration)),
                         level, label);
-            nm->addPoint(point);
+            nm->add(e);
         }
         return;
     }

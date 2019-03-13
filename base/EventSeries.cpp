@@ -363,6 +363,12 @@ EventSeries::getEventsCovering(sv_frame_t frame) const
     return cover;
 }
 
+EventVector
+EventSeries::getAllEvents() const
+{
+    return m_events;
+}
+
 bool
 EventSeries::getEventPreceding(const Event &e, Event &preceding) const
 {

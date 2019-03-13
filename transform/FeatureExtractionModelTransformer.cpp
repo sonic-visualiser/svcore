@@ -1073,10 +1073,10 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
             NoteModel *model = getConformingOutput<NoteModel>(n);
             if (!model) return;
-            model->addPoint(Event(frame, value, // value is pitch
-                                  duration,
-                                  velocity / 127.f,
-                                  feature.label.c_str()));
+            model->add(Event(frame, value, // value is pitch
+                             duration,
+                             velocity / 127.f,
+                             feature.label.c_str()));
         } else {
 
             RegionModel *model = getConformingOutput<RegionModel>(n);

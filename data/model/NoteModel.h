@@ -37,7 +37,8 @@ class NoteModel : public Model,
     Q_OBJECT
     
 public:
-    NoteModel(sv_samplerate_t sampleRate, int resolution,
+    NoteModel(sv_samplerate_t sampleRate,
+              int resolution,
               bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
@@ -82,6 +83,7 @@ public:
     sv_frame_t getStartFrame() const override { return m_events.getStartFrame(); }
     sv_frame_t getEndFrame() const override { return m_events.getEndFrame(); }
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    int getResolution() const { return m_resolution; }
 
     bool canPlay() const override { return true; }
     QString getDefaultPlayClipId() const override {
@@ -145,30 +147,133 @@ public:
             m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
         }        
     }
+
+    /**
+     * Query methods.
+     */
+
+    int getEventCount() const {
+        return m_events.count();
+    }
+    bool isEmpty() const {
+        return m_events.isEmpty();
+    }
+    bool containsEvent(const Event &e) const {
+        return m_events.contains(e);
+    }
+    EventVector getAllEvents() const {
+        return m_events.getAllEvents();
+    }
+    EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsSpanning(f, duration);
+    }
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsWithin(f, duration);
+    }
+    EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsStartingWithin(f, duration);
+    }
+    EventVector getEventsCovering(sv_frame_t f) const {
+        return m_events.getEventsCovering(f);
+    }
+
+    /**
+     * Editing commands and methods.
+     */
     
-    void toXml(QTextStream &out,
-               QString indent = "",
-               QString extraAttributes = "") const override {
+    class EditCommand : public Command
+    {
+    public:
+        //!!! borrowed ptr
+        EditCommand(NoteModel *model, QString name) :
+            m_model(model), m_name(name) { }
 
-        //!!! what is valueQuantization used for?
+        QString getName() const override {
+            return m_name;
+        }
+
+        void add(Event e) {
+            m_add.insert(e);
+        }
+
+        void remove(Event e) {
+            m_remove.insert(e);
+        }
         
-        Model::toXml
-            (out,
-             indent,
-             QString("type=\"sparse\" dimensions=\"3\" resolution=\"%1\" "
-                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"note\" "
-                     "valueQuantization=\"%4\" minimum=\"%5\" maximum=\"%6\" "
-                     "units=\"%7\" %8")
-             .arg(m_resolution)
-             .arg(m_notifyOnAdd ? "true" : "false")
-             .arg(getObjectExportId(&m_events))
-             .arg(m_valueQuantization)
-             .arg(m_valueMinimum)
-             .arg(m_valueMaximum)
-             .arg(m_units)
-             .arg(extraAttributes));
+        void execute() override {
+            for (const Event &e: m_add) m_model->add(e);
+            for (const Event &e: m_remove) m_model->remove(e);
+        }
 
-        m_events.toXml(out, indent, QString("dimensions=\"3\""));
+        void unexecute() override {
+            for (const Event &e: m_remove) m_model->add(e);
+            for (const Event &e: m_add) m_model->remove(e);
+        }
+
+        EditCommand *finish() {
+            if (m_add.empty() && m_remove.empty()) {
+                delete this;
+                return nullptr;
+            } else {
+                return this;
+            }
+        }
+
+    private:
+        NoteModel *m_model;
+        std::set<Event> m_add;
+        std::set<Event> m_remove;
+        QString m_name;
+    };
+
+    void add(Event e) {
+
+        bool allChange = false;
+           
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.add(e);
+//!!!???        if (point.getLabel() != "") m_hasTextLabels = true;
+
+            float v = e.getValue();
+            if (!ISNAN(v) && !ISINF(v)) {
+                if (!m_haveExtents || v < m_valueMinimum) {
+                    m_valueMinimum = v; allChange = true;
+                }
+                if (!m_haveExtents || v > m_valueMaximum) {
+                    m_valueMaximum = v; allChange = true;
+                }
+                m_haveExtents = true;
+            }
+            
+            sv_frame_t f = e.getFrame();
+
+            if (!m_notifyOnAdd) {
+                if (m_sinceLastNotifyMin == -1 || f < m_sinceLastNotifyMin) {
+                    m_sinceLastNotifyMin = f;
+                }
+                if (m_sinceLastNotifyMax == -1 || f > m_sinceLastNotifyMax) {
+                    m_sinceLastNotifyMax = f;
+                }
+            }
+        }
+        
+        if (m_notifyOnAdd) {
+            emit modelChangedWithin(e.getFrame(),
+                                    e.getFrame() + e.getDuration() + m_resolution);
+        }
+        if (allChange) {
+            emit modelChanged();
+        }
+    }
+    
+    void remove(Event e) {
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.remove(e);
+        }
+        emit modelChangedWithin(e.getFrame(),
+                                e.getFrame() + e.getDuration() + m_resolution);
     }
 
     /**
@@ -232,117 +337,6 @@ public:
         }
     }
 
-    class EditCommand : public Command
-    {
-    public:
-        //!!! borrowed ptr
-        EditCommand(NoteModel *model, QString name) :
-            m_model(model), m_name(name) { }
-
-        QString getName() const override {
-            return m_name;
-        }
-
-        void addPoint(Event e) {
-            m_add.insert(e);
-        }
-        void deletePoint(Event e) {
-            m_remove.insert(e);
-        }
-        
-        void execute() override {
-            for (const Event &e: m_add) m_model->addPoint(e);
-            for (const Event &e: m_remove) m_model->deletePoint(e);
-        }
-
-        void unexecute() override {
-            for (const Event &e: m_remove) m_model->addPoint(e);
-            for (const Event &e: m_add) m_model->deletePoint(e);
-        }
-
-    private:
-        NoteModel *m_model;
-        std::set<Event> m_add;
-        std::set<Event> m_remove;
-        QString m_name;
-    };
-
-    //!!! rename Point to Note throughout? Just because we can now?
-    void addPoint(Event e) {
-
-        bool allChange = false;
-           
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.add(e);
-//!!!???        if (point.getLabel() != "") m_hasTextLabels = true;
-
-            float v = e.getValue();
-            if (!ISNAN(v) && !ISINF(v)) {
-                if (!m_haveExtents || v < m_valueMinimum) {
-                    m_valueMinimum = v; allChange = true;
-                }
-                if (!m_haveExtents || v > m_valueMaximum) {
-                    m_valueMaximum = v; allChange = true;
-                }
-                m_haveExtents = true;
-            }
-            
-            sv_frame_t f = e.getFrame();
-
-            if (!m_notifyOnAdd) {
-                if (m_sinceLastNotifyMin == -1 || f < m_sinceLastNotifyMin) {
-                    m_sinceLastNotifyMin = f;
-                }
-                if (m_sinceLastNotifyMax == -1 || f > m_sinceLastNotifyMax) {
-                    m_sinceLastNotifyMax = f;
-                }
-            }
-        }
-        
-        if (m_notifyOnAdd) {
-            emit modelChangedWithin(e.getFrame(),
-                                    e.getFrame() + e.getDuration() + m_resolution);
-        }
-        if (allChange) {
-            emit modelChanged();
-        }
-    }
-    
-    void deletePoint(Event e) {
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.remove(e);
-        }
-        emit modelChangedWithin(e.getFrame(),
-                                e.getFrame() + e.getDuration() + m_resolution);
-    }
-    
-    EventVector getPoints() const /*!!! override? - and/or rename? */ {
-        EventVector ee;
-        for (int i = 0; i < m_events.count(); ++i) {
-            ee.push_back(m_events.getEventByIndex(i));
-        }
-        return ee;
-    }
-
-    //!!! bleah
-    EventVector getPoints(sv_frame_t start, sv_frame_t end) const {
-        return m_events.getEventsSpanning(start, end - start);        
-    }
-    
-    int getPointCount() const {
-        return m_events.count();
-    }
-
-    bool isEmpty() const {
-        return m_events.isEmpty();
-    }
-
-    bool containsPoint(const Event &e) const {
-        return m_events.contains(e);
-    }
-
     Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
         if (row < 0 || row >= m_events.count()) return nullptr;
@@ -362,9 +356,9 @@ public:
         }
 
         EditCommand *command = new EditCommand(this, tr("Edit Data"));
-        command->deletePoint(e0);
-        command->addPoint(e1);
-        return command;
+        command->remove(e0);
+        command->add(e1);
+        return command->finish();
     }
 
     SortType getSortType(int column) const override
@@ -403,6 +397,35 @@ public:
                                          getScaleUnits() != "Hz"));
         }
         return notes;
+    }
+
+    /**
+     * XmlExportable methods.
+     */
+    
+    void toXml(QTextStream &out,
+               QString indent = "",
+               QString extraAttributes = "") const override {
+
+        //!!! what is valueQuantization used for?
+        
+        Model::toXml
+            (out,
+             indent,
+             QString("type=\"sparse\" dimensions=\"3\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"note\" "
+                     "valueQuantization=\"%4\" minimum=\"%5\" maximum=\"%6\" "
+                     "units=\"%7\" %8")
+             .arg(m_resolution)
+             .arg(m_notifyOnAdd ? "true" : "false")
+             .arg(getObjectExportId(&m_events))
+             .arg(m_valueQuantization)
+             .arg(m_valueMinimum)
+             .arg(m_valueMaximum)
+             .arg(m_units)
+             .arg(extraAttributes));
+
+        m_events.toXml(out, indent, QString("dimensions=\"3\""));
     }
 
 protected:

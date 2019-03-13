@@ -454,7 +454,7 @@ CSVFileReader::load() const
 
                 float level = ((value >= 0.f && value <= 1.f) ? value : 1.f);
                 Event note(frameNo, pitch, duration, level, label);
-                model2b->addPoint(note);
+                model2b->add(note);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 

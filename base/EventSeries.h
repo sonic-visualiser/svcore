@@ -127,6 +127,11 @@ public:
      * than it.
      */
     EventVector getEventsCovering(sv_frame_t frame) const;
+
+    /**
+     * Retrieve all events, in their natural order.
+     */
+    EventVector getAllEvents() const;
     
     /**
      * If e is in the series and is not the first event in it, set

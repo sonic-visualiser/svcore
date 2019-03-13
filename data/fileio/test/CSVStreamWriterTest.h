@@ -297,7 +297,7 @@ private slots:
         NoteModel notes(8 /* sampleRate */, 4 /* resolution */);
         sv_frame_t startFrame = 0;
         for (const auto& note : cMajorPentatonic) {
-            notes.addPoint({startFrame, note, 4, 1.f, ""});
+            notes.add({startFrame, note, 4, 1.f, ""});
             startFrame += 8;
         }
 //        qDebug("Create Expected Output\n");
