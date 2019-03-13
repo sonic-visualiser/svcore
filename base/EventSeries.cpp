@@ -230,6 +230,33 @@ EventSeries::getEventsSpanning(sv_frame_t frame,
 }
 
 EventVector
+EventSeries::getEventsWithin(sv_frame_t frame,
+                             sv_frame_t duration) const
+{
+    EventVector span;
+    
+    const sv_frame_t start = frame;
+    const sv_frame_t end = frame + duration;
+
+    // because we don't need to "look back" at events that started
+    // earlier than the start of the given range, we can do this
+    // entirely from m_events
+
+    auto pitr = lower_bound(m_events.begin(), m_events.end(),
+                            Event(start));
+    while (pitr != m_events.end() && pitr->getFrame() < end) {
+        if (!pitr->hasDuration()) {
+            span.push_back(*pitr);
+        } else if (pitr->getFrame() + pitr->getDuration() <= end) {
+            span.push_back(*pitr);
+        }
+        ++pitr;
+    }
+            
+    return span;
+}
+
+EventVector
 EventSeries::getEventsCovering(sv_frame_t frame) const
 {
     EventVector cover;
