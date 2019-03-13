@@ -265,7 +265,7 @@ public:
     }
 
     NoteData toNoteData(sv_samplerate_t sampleRate,
-                        bool valueIsMidiPitch) {
+                        bool valueIsMidiPitch) const {
 
         sv_frame_t duration;
         if (m_haveDuration && m_duration > 0) {
