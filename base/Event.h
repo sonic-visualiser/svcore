@@ -95,7 +95,7 @@ public:
     }
     
     bool hasValue() const { return m_haveValue; }
-    float getValue() const { return m_value; }
+    float getValue() const { return m_haveValue ? m_value : 0.f; }
     
     Event withValue(float value) const {
         Event p(*this);
@@ -111,7 +111,7 @@ public:
     }
     
     bool hasDuration() const { return m_haveDuration; }
-    sv_frame_t getDuration() const { return m_duration; }
+    sv_frame_t getDuration() const { return m_haveDuration ? m_duration : 0; }
 
     Event withDuration(sv_frame_t duration) const {
         Event p(*this);
@@ -137,7 +137,7 @@ public:
     }
     
     bool hasLevel() const { return m_haveLevel; }
-    float getLevel() const { return m_level; }
+    float getLevel() const { return m_haveLevel ? m_level : 0.f; }
 
     Event withLevel(float level) const {
         Event p(*this);
@@ -153,7 +153,9 @@ public:
     }
     
     bool hasReferenceFrame() const { return m_haveReferenceFrame; }
-    sv_frame_t getReferenceFrame() const { return m_referenceFrame; }
+    sv_frame_t getReferenceFrame() const {
+        return m_haveReferenceFrame ? m_referenceFrame : m_frame;
+    }
         
     bool referenceFrameDiffers() const { // from event frame
         return m_haveReferenceFrame && (m_referenceFrame != m_frame);
