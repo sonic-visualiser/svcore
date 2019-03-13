@@ -61,15 +61,15 @@ public:
     int count() const;
 
     /**
-     * Retrieve all events any part of which falls within the span in
+     * Retrieve all events any part of which falls within the range in
      * frames defined by the given frame f and duration d.
      *
-     * - An event without duration is within the span if its own frame
-     * is greater than or equal to f and less than f + d.
+     * - An event without duration is spanned by the range if its own
+     * frame is greater than or equal to f and less than f + d.
      * 
-     * - An event with duration is within the span if its start frame
-     * is less than f + d and its start frame plus its duration is
-     * greater than f.
+     * - An event with duration is spanned by the range if its start
+     * frame is less than f + d and its start frame plus its duration
+     * is greater than f.
      * 
      * Note: Passing a duration of zero is seldom useful here; you
      * probably want getEventsCovering instead. getEventsSpanning(f,
@@ -81,6 +81,20 @@ public:
                                   sv_frame_t duration) const;
 
     /**
+     * Retrieve all events falling wholly within the range in frames
+     * defined by the given frame f and duration d.
+     *
+     * - An event without duration is within the range if its own
+     * frame is greater than or equal to f and less than f + d.
+     * 
+     * - An event with duration is within the range if its start frame
+     * is greater than or equal to f and its start frame plus its
+     * duration is less than or equal to f + d.
+     */
+    EventVector getEventsWithin(sv_frame_t frame,
+                                sv_frame_t duration) const;
+
+    /**
      * Retrieve all events that cover the given frame. An event without
      * duration covers a frame if its own frame is equal to it. An event
      * with duration covers a frame if its start frame is less than or
@@ -88,7 +102,7 @@ public:
      * than it.
      */
     EventVector getEventsCovering(sv_frame_t frame) const;
-
+    
     /**
      * If e is in the series and is not the first event in it, set
      * preceding to the event immediate preceding it according to the
