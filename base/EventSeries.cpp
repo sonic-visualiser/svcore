@@ -408,7 +408,9 @@ int
 EventSeries::getIndexForEvent(const Event &e) const
 {
     auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
-    return distance(m_events.begin(), pitr);
+    auto d = distance(m_events.begin(), pitr);
+    if (d < 0 || d > INT_MAX) return 0;
+    return int(d);
 }
 
 void
