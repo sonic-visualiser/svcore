@@ -252,7 +252,7 @@ public:
                                       .arg(m_referenceFrame);
         stream << QString("label=\"%1\" ")
             .arg(XmlExportable::encodeEntities(m_label));
-        stream << extraAttributes << ">\n";
+        stream << extraAttributes << "/>\n";
     }
 
     QString toXmlString(QString indent = "",
