@@ -18,6 +18,7 @@
 
 #include "SparseModel.h"
 #include "base/NoteData.h"
+#include "base/NoteExportable.h"
 #include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
@@ -188,12 +189,18 @@ public:
      */
 
     NoteList getNotes() const override {
-        return getNotesWithin(getStartFrame(), getEndFrame());
+        return getNotesStartingWithin(getStartFrame(),
+                                      getEndFrame() - getStartFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const override {
+    NoteList getNotesActiveAt(sv_frame_t frame) const override {
+        return getNotesStartingWithin(frame, 1);
+    }
+
+    NoteList getNotesStartingWithin(sv_frame_t startFrame,
+                                    sv_frame_t duration) const override {
         
-        PointList points = getPoints(startFrame, endFrame);
+        PointList points = getPoints(startFrame, startFrame + duration);
         NoteList notes;
 
         for (PointList::iterator pli =

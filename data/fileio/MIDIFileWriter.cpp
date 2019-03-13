@@ -25,6 +25,7 @@
 #include "data/midi/MIDIEvent.h"
 
 #include "base/NoteData.h"
+#include "base/NoteExportable.h"
 #include "base/Pitch.h"
 
 #include <QCoreApplication>

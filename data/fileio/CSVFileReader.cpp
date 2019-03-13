@@ -453,8 +453,8 @@ CSVFileReader::load() const
             } else if (modelType == CSVFormat::TwoDimensionalModelWithDurationAndPitch) {
 
                 float level = ((value >= 0.f && value <= 1.f) ? value : 1.f);
-                NoteModel::Point point(frameNo, pitch, duration, level, label);
-                model2b->addPoint(point);
+                Event note(frameNo, pitch, duration, level, label);
+                model2b->addPoint(note);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 

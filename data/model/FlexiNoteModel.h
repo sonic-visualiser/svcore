@@ -18,6 +18,7 @@
 
 #include "IntervalModel.h"
 #include "base/NoteData.h"
+#include "base/NoteExportable.h"
 #include "base/RealTime.h"
 #include "base/Pitch.h"
 #include "base/PlayParameterRepository.h"
@@ -230,10 +231,15 @@ public:
 
     NoteList getNotes() const 
     override {
-        return getNotesWithin(getStartFrame(), getEndFrame());
+        return getNotesStartingWithin(getStartFrame(), getEndFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const 
+    //!!!:
+    NoteList getNotesActiveAt(sv_frame_t) const override {
+        return {};
+    }
+    
+    NoteList getNotesStartingWithin(sv_frame_t startFrame, sv_frame_t endFrame) const 
     override {    
             PointList points = getPoints(startFrame, endFrame);
         NoteList notes;

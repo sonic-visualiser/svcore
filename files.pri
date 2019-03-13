@@ -15,6 +15,7 @@ SVCORE_HEADERS = \
            base/LogRange.h \
            base/MagnitudeRange.h \
            base/NoteData.h \
+           base/NoteExportable.h \
            base/Pitch.h \
            base/Playable.h \
            base/PlayParameterRepository.h \

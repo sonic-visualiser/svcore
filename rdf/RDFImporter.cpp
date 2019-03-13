@@ -745,7 +745,7 @@ RDFImporterImpl::fillModel(Model *model,
                     level = values[1];
                 }
             }
-            NoteModel::Point point(ftime, value, fduration, level, label);
+            Event point(ftime, value, fduration, level, label);
             nm->addPoint(point);
         } else {
             float value = 0.f, duration = 1.f, level = 1.f;
@@ -758,8 +758,8 @@ RDFImporterImpl::fillModel(Model *model,
                     }
                 }
             }
-            NoteModel::Point point(ftime, value, sv_frame_t(lrintf(duration)),
-                                   level, label);
+            Event point(ftime, value, sv_frame_t(lrintf(duration)),
+                        level, label);
             nm->addPoint(point);
         }
         return;

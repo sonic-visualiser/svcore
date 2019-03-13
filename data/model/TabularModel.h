@@ -19,6 +19,8 @@
 #include <QVariant>
 #include <QString>
 
+#include "base/RealTime.h"
+
 class Command;
 
 /**
@@ -55,6 +57,22 @@ public:
     virtual Command *getSetDataCommand(int /* row */, int /* column */, const QVariant &, int /* role */) { return 0; }
     virtual Command *getInsertRowCommand(int /* beforeRow */) { return 0; }
     virtual Command *getRemoveRowCommand(int /* row */) { return 0; }
+
+    QVariant adaptFrameForRole(sv_frame_t frame,
+                               sv_samplerate_t rate,
+                               int role) const {
+        if (role == SortRole) return int(frame);
+        RealTime rt = RealTime::frame2RealTime(frame, rate);
+        if (role == Qt::EditRole) return rt.toString().c_str();
+        else return rt.toText().c_str();
+    }
+
+    QVariant adaptValueForRole(float value,
+                               QString unit,
+                               int role) const {
+        if (role == SortRole || role == Qt::EditRole) return value;
+        else return QString("%1 %2").arg(value).arg(unit);
+    }
 };
 
 #endif

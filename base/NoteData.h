@@ -47,11 +47,4 @@ struct NoteData
 
 typedef std::vector<NoteData> NoteList;
 
-class NoteExportable
-{
-public:
-    virtual NoteList getNotes() const = 0;
-    virtual NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const = 0;
-};
-
 #endif

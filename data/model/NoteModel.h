@@ -16,156 +16,192 @@
 #ifndef SV_NOTE_MODEL_H
 #define SV_NOTE_MODEL_H
 
-#include "IntervalModel.h"
+#include "Model.h"
+#include "TabularModel.h"
+#include "base/UnitDatabase.h"
+#include "base/EventSeries.h"
 #include "base/NoteData.h"
+#include "base/NoteExportable.h"
 #include "base/RealTime.h"
 #include "base/PlayParameterRepository.h"
 #include "base/Pitch.h"
+#include "system/System.h"
 
-/**
- * NoteModel -- a concrete IntervalModel for notes.
- */
+#include <QMutex>
+#include <QMutexLocker>
 
-/**
- * Note type for use in a sparse model.  All we mean by a "note" is
- * something that has an onset time, a single value, a duration, and a
- * level.  Like other points, it can also have a label.  With this
- * point type, the model can be thought of as representing a simple
- * MIDI-type piano roll, except that the y coordinates (values) do not
- * have to be discrete integers.
- */
-
-struct Note
-{
-public:
-    Note(sv_frame_t _frame) : frame(_frame), value(0.0f), duration(0), level(1.f) { }
-    Note(sv_frame_t _frame, float _value, sv_frame_t _duration, float _level, QString _label) :
-        frame(_frame), value(_value), duration(_duration), level(_level), label(_label) { }
-
-    int getDimensions() const { return 3; }
-
-    sv_frame_t frame;
-    float value;
-    sv_frame_t duration;
-    float level;
-    QString label;
-
-    QString getLabel() const { return label; }
-    
-    void toXml(QTextStream &stream,
-               QString indent = "",
-               QString extraAttributes = "") const
-    {
-        stream <<
-            QString("%1<point frame=\"%2\" value=\"%3\" duration=\"%4\" level=\"%5\" label=\"%6\" %7/>\n")
-            .arg(indent).arg(frame).arg(value).arg(duration).arg(level)
-            .arg(XmlExportable::encodeEntities(label)).arg(extraAttributes);
-    }
-
-    QString toDelimitedDataString(QString delimiter, DataExportOptions opts, sv_samplerate_t sampleRate) const {
-        QStringList list;
-        list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
-        list << QString("%1").arg(value);
-        list << RealTime::frame2RealTime(duration, sampleRate).toString().c_str();
-        if (!(opts & DataExportOmitLevels)) {
-            list << QString("%1").arg(level);
-        }
-        if (label != "") list << label;
-        return list.join(delimiter);
-    }
-
-    struct Comparator {
-        bool operator()(const Note &p1,
-                        const Note &p2) const {
-            if (p1.frame != p2.frame) return p1.frame < p2.frame;
-            if (p1.value != p2.value) return p1.value < p2.value;
-            if (p1.duration != p2.duration) return p1.duration < p2.duration;
-            if (p1.level != p2.level) return p1.level < p2.level;
-            return p1.label < p2.label;
-        }
-    };
-    
-    struct OrderComparator {
-        bool operator()(const Note &p1,
-                        const Note &p2) const {
-            return p1.frame < p2.frame;
-        }
-    };
-
-    bool operator==(const Note &other) const {
-        // ew
-        Comparator c;
-        return !(c(*this, other) || c(other, *this));
-    }
-};
-
-
-class NoteModel : public IntervalModel<Note>, public NoteExportable
+class NoteModel : public Model,
+                  public TabularModel,
+                  public NoteExportable
 {
     Q_OBJECT
     
 public:
     NoteModel(sv_samplerate_t sampleRate, int resolution,
               bool notifyOnAdd = true) :
-        IntervalModel<Note>(sampleRate, resolution, notifyOnAdd),
-        m_valueQuantization(0)
-    {
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_valueMinimum(0.f),
+        m_valueMaximum(0.f),
+        m_haveExtents(false),
+        m_valueQuantization(0),
+        m_units(""),
+        m_extendTo(0),
+        m_notifyOnAdd(notifyOnAdd),
+        m_sinceLastNotifyMin(-1),
+        m_sinceLastNotifyMax(-1),
+        m_completion(0) {
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     NoteModel(sv_samplerate_t sampleRate, int resolution,
               float valueMinimum, float valueMaximum,
               bool notifyOnAdd = true) :
-        IntervalModel<Note>(sampleRate, resolution,
-                            valueMinimum, valueMaximum,
-                            notifyOnAdd),
-        m_valueQuantization(0)
-    {
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_valueMinimum(valueMinimum),
+        m_valueMaximum(valueMaximum),
+        m_haveExtents(true),
+        m_valueQuantization(0),
+        m_units(""),
+        m_extendTo(0),
+        m_notifyOnAdd(notifyOnAdd),
+        m_sinceLastNotifyMin(-1),
+        m_sinceLastNotifyMax(-1),
+        m_completion(0) {
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    virtual ~NoteModel()
-    {
+    virtual ~NoteModel() {
         PlayParameterRepository::getInstance()->removePlayable(this);
+    }
+    
+    QString getTypeName() const override { return tr("Note"); }
+
+    bool isOK() const override { return true; }
+    sv_frame_t getStartFrame() const override { return m_events.getStartFrame(); }
+    sv_frame_t getEndFrame() const override { return m_events.getEndFrame(); }
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+
+    bool canPlay() const override { return true; }
+    QString getDefaultPlayClipId() const override {
+        return "elecpiano";
+    }
+
+    QString getScaleUnits() const { return m_units; }
+    void setScaleUnits(QString units) {
+        m_units = units;
+        UnitDatabase::getInstance()->registerUnit(units);
     }
 
     float getValueQuantization() const { return m_valueQuantization; }
     void setValueQuantization(float q) { m_valueQuantization = q; }
 
-    QString getTypeName() const override { return tr("Note"); }
+    float getValueMinimum() const { return m_valueMinimum; }
+    float getValueMaximum() const { return m_valueMaximum; }
+    
+    int getCompletion() const { return m_completion; }
 
-    bool canPlay() const override { return true; }
+    void setCompletion(int completion, bool update = true) {
 
-    QString getDefaultPlayClipId() const override
-    {
-        return "elecpiano";
+        bool emitCompletionChanged = true;
+        bool emitGeneralModelChanged = false;
+        bool emitRegionChanged = false;
+
+        {
+            QMutexLocker locker(&m_mutex);
+
+            if (m_completion != completion) {
+                m_completion = completion;
+
+                if (completion == 100) {
+
+                    if (m_notifyOnAdd) {
+                        emitCompletionChanged = false;
+                    }
+
+                    m_notifyOnAdd = true; // henceforth
+                    emitGeneralModelChanged = true;
+
+                } else if (!m_notifyOnAdd) {
+
+                    if (update &&
+                        m_sinceLastNotifyMin >= 0 &&
+                        m_sinceLastNotifyMax >= 0) {
+                        emitRegionChanged = true;
+                    }
+                }
+            }
+        }
+
+        if (emitCompletionChanged) {
+            emit completionChanged();
+        }
+        if (emitGeneralModelChanged) {
+            emit modelChanged();
+        }
+        if (emitRegionChanged) {
+            emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
+            m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
+        }        
     }
-
+    
     void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const override
-    {
-        std::cerr << "NoteModel::toXml: extraAttributes = \"" 
-                  << extraAttributes.toStdString() << "\"" << std::endl;
+               QString indent = "",
+               QString extraAttributes = "") const override {
 
-        IntervalModel<Note>::toXml
+        //!!! what is valueQuantization used for?
+        
+        Model::toXml
             (out,
              indent,
-             QString("%1 subtype=\"note\" valueQuantization=\"%2\"")
-             .arg(extraAttributes).arg(m_valueQuantization));
+             QString("type=\"sparse\" dimensions=\"3\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"note\" "
+                     "valueQuantization=\"%4\" minimum=\"%5\" maximum=\"%6\" "
+                     "units=\"%7\" %8")
+             .arg(m_resolution)
+             .arg(m_notifyOnAdd ? "true" : "false")
+             .arg(getObjectExportId(&m_events))
+             .arg(m_valueQuantization)
+             .arg(m_valueMinimum)
+             .arg(m_valueMaximum)
+             .arg(m_units)
+             .arg(extraAttributes));
+
+        m_events.toXml(out, indent, QString("dimensions=\"3\""));
     }
 
     /**
      * TabularModel methods.  
      */
+
+    int getRowCount() const override {
+        return m_events.count();
+    }
     
-    int getColumnCount() const override
-    {
+    int getColumnCount() const override {
         return 6;
     }
 
-    QString getHeading(int column) const override
-    {
+    bool isColumnTimeValue(int column) const override {
+        // NB duration is not a "time value" -- that's for columns
+        // whose sort ordering is exactly that of the frame time
+        return (column < 2);
+    }
+
+    sv_frame_t getFrameForRow(int row) const override {
+        if (row < 0 || row >= m_events.count()) {
+            return 0;
+        }
+        Event e = m_events.getEventByIndex(row);
+        return e.getFrame();
+    }
+
+    int getRowForFrame(sv_frame_t frame) const override {
+        return m_events.getIndexForEvent(Event(frame));
+    }
+    
+    QString getHeading(int column) const override {
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
@@ -177,44 +213,158 @@ public:
         }
     }
 
-    QVariant getData(int row, int column, int role) const override
-    {
-        if (column < 4) {
-            return IntervalModel<Note>::getData(row, column, role);
+    QVariant getData(int row, int column, int role) const override {
+
+        if (row < 0 || row >= m_events.count()) {
+            return QVariant();
         }
 
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        Event e = m_events.getEventByIndex(row);
 
         switch (column) {
-        case 4: return i->level;
-        case 5: return i->label;
+        case 0: return adaptFrameForRole(e.getFrame(), getSampleRate(), role);
+        case 1: return int(e.getFrame());
+        case 2: return adaptValueForRole(e.getValue(), getScaleUnits(), role);
+        case 3: return int(e.getDuration());
+        case 4: return e.getLevel();
+        case 5: return e.getLabel();
         default: return QVariant();
         }
     }
 
+    class EditCommand : public Command
+    {
+    public:
+        //!!! borrowed ptr
+        EditCommand(NoteModel *model, QString name) :
+            m_model(model), m_name(name) { }
+
+        QString getName() const override {
+            return m_name;
+        }
+
+        void addPoint(Event e) {
+            m_add.insert(e);
+        }
+        void deletePoint(Event e) {
+            m_remove.insert(e);
+        }
+        
+        void execute() override {
+            for (const Event &e: m_add) m_model->addPoint(e);
+            for (const Event &e: m_remove) m_model->deletePoint(e);
+        }
+
+        void unexecute() override {
+            for (const Event &e: m_remove) m_model->addPoint(e);
+            for (const Event &e: m_add) m_model->deletePoint(e);
+        }
+
+    private:
+        NoteModel *m_model;
+        std::set<Event> m_add;
+        std::set<Event> m_remove;
+        QString m_name;
+    };
+
+    //!!! rename Point to Note throughout? Just because we can now?
+    void addPoint(Event e) {
+
+        bool allChange = false;
+           
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.add(e);
+//!!!???        if (point.getLabel() != "") m_hasTextLabels = true;
+
+            float v = e.getValue();
+            if (!ISNAN(v) && !ISINF(v)) {
+                if (!m_haveExtents || v < m_valueMinimum) {
+                    m_valueMinimum = v; allChange = true;
+                }
+                if (!m_haveExtents || v > m_valueMaximum) {
+                    m_valueMaximum = v; allChange = true;
+                }
+                m_haveExtents = true;
+            }
+            
+            sv_frame_t f = e.getFrame();
+
+            if (!m_notifyOnAdd) {
+                if (m_sinceLastNotifyMin == -1 || f < m_sinceLastNotifyMin) {
+                    m_sinceLastNotifyMin = f;
+                }
+                if (m_sinceLastNotifyMax == -1 || f > m_sinceLastNotifyMax) {
+                    m_sinceLastNotifyMax = f;
+                }
+            }
+        }
+        
+        if (m_notifyOnAdd) {
+            emit modelChangedWithin(e.getFrame(),
+                                    e.getFrame() + e.getDuration() + m_resolution);
+        }
+        if (allChange) {
+            emit modelChanged();
+        }
+    }
+    
+    void deletePoint(Event e) {
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.remove(e);
+        }
+        emit modelChangedWithin(e.getFrame(),
+                                e.getFrame() + e.getDuration() + m_resolution);
+    }
+    
+    EventVector getPoints() const /*!!! override? - and/or rename? */ {
+        EventVector ee;
+        for (int i = 0; i < m_events.count(); ++i) {
+            ee.push_back(m_events.getEventByIndex(i));
+        }
+        return ee;
+    }
+
+    //!!! bleah
+    EventVector getPoints(sv_frame_t start, sv_frame_t end) const {
+        return m_events.getEventsSpanning(start, end - start);        
+    }
+    
+    int getPointCount() const {
+        return m_events.count();
+    }
+
+    bool isEmpty() const {
+        return m_events.isEmpty();
+    }
+
+    bool containsPoint(const Event &e) const {
+        return m_events.contains(e);
+    }
+
     Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
     {
-        if (column < 4) {
-            return IntervalModel<Note>::getSetDataCommand
-                (row, column, value, role);
-        }
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        if (role != Qt::EditRole) return nullptr;
 
-        if (role != Qt::EditRole) return 0;
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return 0;
-        EditCommand *command = new EditCommand(this, tr("Edit Data"));
-
-        Point point(*i);
-        command->deletePoint(point);
+        Event e0 = m_events.getEventByIndex(row);
+        Event e1;
 
         switch (column) {
-        case 4: point.level = float(value.toDouble()); break;
-        case 5: point.label = value.toString(); break;
+        case 0: e1 = e0.withFrame(sv_frame_t(round(value.toDouble() *
+                                                   getSampleRate()))); break;
+        case 1: e1 = e0.withFrame(value.toInt()); break;
+        case 2: e1 = e0.withValue(float(value.toDouble())); break;
+        case 3: e1 = e0.withDuration(value.toInt()); break;
+        case 4: e1 = e0.withLevel(float(value.toDouble())); break;
+        case 5: e1 = e0.withLabel(value.toString()); break;
         }
 
-        command->addPoint(point);
-        return command->finish();
+        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+        command->deletePoint(e0);
+        command->addPoint(e1);
+        return command;
     }
 
     SortType getSortType(int column) const override
@@ -228,45 +378,57 @@ public:
      */
 
     NoteList getNotes() const override {
-        return getNotesWithin(getStartFrame(), getEndFrame());
+        return getNotesStartingWithin(getStartFrame(),
+                                      getEndFrame() - getStartFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const override {
-        
-        PointList points = getPoints(startFrame, endFrame);
+    NoteList getNotesActiveAt(sv_frame_t frame) const override {
+
         NoteList notes;
-
-        for (PointList::iterator pli =
-                 points.begin(); pli != points.end(); ++pli) {
-
-            sv_frame_t duration = pli->duration;
-            if (duration == 0 || duration == 1) {
-                duration = sv_frame_t(getSampleRate() / 20);
-            }
-
-            int pitch = int(lrintf(pli->value));
-            
-            int velocity = 100;
-            if (pli->level > 0.f && pli->level <= 1.f) {
-                velocity = int(lrintf(pli->level * 127));
-            }
-
-            NoteData note(pli->frame, duration, pitch, velocity);
-
-            if (getScaleUnits() == "Hz") {
-                note.frequency = pli->value;
-                note.midiPitch = Pitch::getPitchForFrequency(note.frequency);
-                note.isMidiPitchQuantized = false;
-            }
-        
-            notes.push_back(note);
+        EventVector ee = m_events.getEventsCovering(frame);
+        for (const auto &e: ee) {
+            notes.push_back(e.toNoteData(getSampleRate(),
+                                         getScaleUnits() != "Hz"));
         }
-        
+        return notes;
+    }
+    
+    NoteList getNotesStartingWithin(sv_frame_t startFrame,
+                                    sv_frame_t duration) const override {
+
+        NoteList notes;
+        EventVector ee = m_events.getEventsStartingWithin(startFrame, duration);
+        for (const auto &e: ee) {
+            notes.push_back(e.toNoteData(getSampleRate(),
+                                         getScaleUnits() != "Hz"));
+        }
         return notes;
     }
 
 protected:
+    sv_samplerate_t m_sampleRate;
+    int m_resolution;
+
+    float m_valueMinimum;
+    float m_valueMaximum;
+    bool m_haveExtents;
     float m_valueQuantization;
+    QString m_units;
+    
+    sv_frame_t m_extendTo;
+
+    bool m_notifyOnAdd;
+    sv_frame_t m_sinceLastNotifyMin;
+    sv_frame_t m_sinceLastNotifyMax;
+
+    EventSeries m_events;
+
+    int m_completion;
+
+    mutable QMutex m_mutex;
+
+    //!!! do we have general docs for ownership and synchronisation of models?
+    // this might be a good opportunity to stop using bare pointers to them
 };
 
 #endif
