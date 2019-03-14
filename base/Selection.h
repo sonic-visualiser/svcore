@@ -49,6 +49,7 @@ public:
     bool isEmpty() const;
     sv_frame_t getStartFrame() const;
     sv_frame_t getEndFrame() const;
+    sv_frame_t getDuration() const { return getEndFrame() - getStartFrame(); }
     bool contains(sv_frame_t frame) const;
 
     bool operator<(const Selection &) const;
