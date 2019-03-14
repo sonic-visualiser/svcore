@@ -192,6 +192,10 @@ public:
             return m_name;
         }
 
+        void setName(QString name) {
+            m_name = name;
+        }
+
         void add(Event e) {
             m_add.insert(e);
         }
@@ -201,13 +205,21 @@ public:
         }
         
         void execute() override {
-            for (const Event &e: m_add) m_model->add(e);
-            for (const Event &e: m_remove) m_model->remove(e);
+            for (const Event &e: m_add) {
+                m_model->add(e);
+            }
+            for (const Event &e: m_remove) {
+                m_model->remove(e);
+            }
         }
 
         void unexecute() override {
-            for (const Event &e: m_remove) m_model->add(e);
-            for (const Event &e: m_add) m_model->remove(e);
+            for (const Event &e: m_remove) {
+                m_model->add(e);
+            }
+            for (const Event &e: m_add) {
+                m_model->remove(e);
+            }
         }
 
         EditCommand *finish() {
@@ -215,6 +227,7 @@ public:
                 delete this;
                 return nullptr;
             } else {
+                execute();
                 return this;
             }
         }
