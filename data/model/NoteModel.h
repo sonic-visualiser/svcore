@@ -37,9 +37,16 @@ class NoteModel : public Model,
     Q_OBJECT
     
 public:
+    enum Subtype {
+        NORMAL_NOTE,
+        FLEXI_NOTE
+    };
+    
     NoteModel(sv_samplerate_t sampleRate,
               int resolution,
-              bool notifyOnAdd = true) :
+              bool notifyOnAdd = true,
+              Subtype subtype = NORMAL_NOTE) :
+        m_subtype(subtype),
         m_sampleRate(sampleRate),
         m_resolution(resolution),
         m_valueMinimum(0.f),
@@ -52,12 +59,18 @@ public:
         m_sinceLastNotifyMin(-1),
         m_sinceLastNotifyMax(-1),
         m_completion(0) {
+        if (subtype == FLEXI_NOTE) {
+            m_valueMinimum = 33.f;
+            m_valueMaximum = 88.f;
+        }
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
     NoteModel(sv_samplerate_t sampleRate, int resolution,
               float valueMinimum, float valueMaximum,
-              bool notifyOnAdd = true) :
+              bool notifyOnAdd = true,
+              Subtype subtype = NORMAL_NOTE) :
+        m_subtype(subtype),
         m_sampleRate(sampleRate),
         m_resolution(resolution),
         m_valueMinimum(valueMinimum),
@@ -76,8 +89,9 @@ public:
     virtual ~NoteModel() {
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
-    
+
     QString getTypeName() const override { return tr("Note"); }
+    Subtype getSubtype() const { return m_subtype; }
 
     bool isOK() const override { return true; }
     sv_frame_t getStartFrame() const override { return m_events.getStartFrame(); }
@@ -186,7 +200,7 @@ public:
     public:
         //!!! borrowed ptr
         EditCommand(NoteModel *model, QString name) :
-            m_model(model), m_name(name) { }
+            m_model(model), m_executed(false), m_name(name) { }
 
         QString getName() const override {
             return m_name;
@@ -197,45 +211,44 @@ public:
         }
 
         void add(Event e) {
-            m_add.insert(e);
+            m_adding.insert(e);
+            m_model->add(e);
+            m_executed = true;
         }
 
         void remove(Event e) {
-            m_remove.insert(e);
+            m_removing.insert(e);
+            m_model->remove(e);
+            m_executed = true;
         }
         
         void execute() override {
-            for (const Event &e: m_add) {
-                m_model->add(e);
-            }
-            for (const Event &e: m_remove) {
-                m_model->remove(e);
-            }
+            if (m_executed) return;
+            for (const Event &e: m_adding) m_model->add(e);
+            for (const Event &e: m_removing) m_model->remove(e);
+            m_executed = true;
         }
 
         void unexecute() override {
-            for (const Event &e: m_remove) {
-                m_model->add(e);
-            }
-            for (const Event &e: m_add) {
-                m_model->remove(e);
-            }
+            for (const Event &e: m_removing) m_model->add(e);
+            for (const Event &e: m_adding) m_model->remove(e);
+            m_executed = false;
         }
 
         EditCommand *finish() {
-            if (m_add.empty() && m_remove.empty()) {
+            if (m_adding.empty() && m_removing.empty()) {
                 delete this;
                 return nullptr;
             } else {
-                execute();
                 return this;
             }
         }
 
     private:
         NoteModel *m_model;
-        std::set<Event> m_add;
-        std::set<Event> m_remove;
+        bool m_executed;
+        std::set<Event> m_adding;
+        std::set<Event> m_removing;
         QString m_name;
     };
 
@@ -426,22 +439,24 @@ public:
             (out,
              indent,
              QString("type=\"sparse\" dimensions=\"3\" resolution=\"%1\" "
-                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"note\" "
-                     "valueQuantization=\"%4\" minimum=\"%5\" maximum=\"%6\" "
-                     "units=\"%7\" %8")
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"%4\" "
+                     "valueQuantization=\"%5\" minimum=\"%6\" maximum=\"%7\" "
+                     "units=\"%8\" %9")
              .arg(m_resolution)
              .arg(m_notifyOnAdd ? "true" : "false")
              .arg(getObjectExportId(&m_events))
+             .arg(m_subtype == FLEXI_NOTE ? "flexinote" : "note")
              .arg(m_valueQuantization)
              .arg(m_valueMinimum)
              .arg(m_valueMaximum)
              .arg(m_units)
              .arg(extraAttributes));
-
+        
         m_events.toXml(out, indent, QString("dimensions=\"3\""));
     }
 
 protected:
+    Subtype m_subtype;
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 

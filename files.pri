@@ -87,7 +87,6 @@ SVCORE_HEADERS = \
            data/model/Model.h \
            data/model/ModelDataTableModel.h \
            data/model/NoteModel.h \
-           data/model/FlexiNoteModel.h \
            data/model/PathModel.h \
            data/model/PowerOfSqrtTwoZoomConstraint.h \
            data/model/PowerOfTwoZoomConstraint.h \

@@ -27,12 +27,12 @@
 #include <QString>
 
 /**
- * An immutable type used for point and event representation in sparse
- * models, as well as for interchange within the clipboard. An event
- * always has a frame and (possibly empty) label, and optionally has
- * numerical value, level, duration in frames, and a mapped reference
- * frame. Event has an operator< defining a total ordering, by frame
- * first and then by the other properties.
+ * An immutable(-ish) type used for point and event representation in
+ * sparse models, as well as for interchange within the clipboard. An
+ * event always has a frame and (possibly empty) label, and optionally
+ * has numerical value, level, duration in frames, and a mapped
+ * reference frame. Event has an operator< defining a total ordering,
+ * by frame first and then by the other properties.
  * 
  * Event is based on the Clipboard::Point type up to SV v3.2.1 and is
  * intended also to replace the custom point types previously found in
@@ -83,6 +83,10 @@ public:
     }
 
     Event(const Event &event) =default;
+
+    // We would ideally like Event to be immutable - but we have to
+    // have these because otherwise we can't put Events in vectors
+    // etc. Let's call it conceptually immutable
     Event &operator=(const Event &event) =default;
     Event &operator=(Event &&event) =default;
     
