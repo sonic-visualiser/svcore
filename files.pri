@@ -80,6 +80,7 @@ SVCORE_HEADERS = \
            data/model/DenseThreeDimensionalModel.h \
            data/model/DenseTimeValueModel.h \
            data/model/EditableDenseThreeDimensionalModel.h \
+           data/model/EventCommands.h \
            data/model/FFTModel.h \
            data/model/ImageModel.h \
            data/model/IntervalModel.h \

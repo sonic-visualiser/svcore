@@ -18,6 +18,7 @@
 
 #include "Model.h"
 #include "TabularModel.h"
+#include "EventCommands.h"
 #include "base/UnitDatabase.h"
 #include "base/EventSeries.h"
 #include "base/NoteData.h"
@@ -32,7 +33,8 @@
 
 class NoteModel : public Model,
                   public TabularModel,
-                  public NoteExportable
+                  public NoteExportable,
+                  public EventEditable
 {
     Q_OBJECT
     
@@ -192,67 +194,9 @@ public:
     }
 
     /**
-     * Editing commands and methods.
+     * Editing methods.
      */
-    
-    class EditCommand : public Command
-    {
-    public:
-        //!!! borrowed ptr
-        EditCommand(NoteModel *model, QString name) :
-            m_model(model), m_executed(false), m_name(name) { }
-
-        QString getName() const override {
-            return m_name;
-        }
-
-        void setName(QString name) {
-            m_name = name;
-        }
-
-        void add(Event e) {
-            m_adding.insert(e);
-            m_model->add(e);
-            m_executed = true;
-        }
-
-        void remove(Event e) {
-            m_removing.insert(e);
-            m_model->remove(e);
-            m_executed = true;
-        }
-        
-        void execute() override {
-            if (m_executed) return;
-            for (const Event &e: m_adding) m_model->add(e);
-            for (const Event &e: m_removing) m_model->remove(e);
-            m_executed = true;
-        }
-
-        void unexecute() override {
-            for (const Event &e: m_removing) m_model->add(e);
-            for (const Event &e: m_adding) m_model->remove(e);
-            m_executed = false;
-        }
-
-        EditCommand *finish() {
-            if (m_adding.empty() && m_removing.empty()) {
-                delete this;
-                return nullptr;
-            } else {
-                return this;
-            }
-        }
-
-    private:
-        NoteModel *m_model;
-        bool m_executed;
-        std::set<Event> m_adding;
-        std::set<Event> m_removing;
-        QString m_name;
-    };
-
-    void add(Event e) {
+    void add(Event e) override {
 
         bool allChange = false;
            
@@ -293,7 +237,7 @@ public:
         }
     }
     
-    void remove(Event e) {
+    void remove(Event e) override {
         {
             QMutexLocker locker(&m_mutex);
             m_events.remove(e);
@@ -381,7 +325,8 @@ public:
         case 5: e1 = e0.withLabel(value.toString()); break;
         }
 
-        EditCommand *command = new EditCommand(this, tr("Edit Data"));
+        ChangeEventsCommand *command =
+            new ChangeEventsCommand(this, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();
