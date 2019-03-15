@@ -447,8 +447,8 @@ CSVFileReader::load() const
 
             } else if (modelType == CSVFormat::TwoDimensionalModelWithDuration) {
 
-                RegionModel::Point point(frameNo, value, duration, label);
-                model2a->addPoint(point);
+                Event region(frameNo, value, duration, label);
+                model2a->add(region);
 
             } else if (modelType == CSVFormat::TwoDimensionalModelWithDurationAndPitch) {
 
@@ -581,31 +581,30 @@ CSVFileReader::load() const
                 }
             }
 
-            map<RegionModel::Point, RegionModel::Point,
-                RegionModel::Point::Comparator> pointMap;
-            for (RegionModel::PointList::const_iterator i =
-                     model2a->getPoints().begin();
-                 i != model2a->getPoints().end(); ++i) {
-                RegionModel::Point p(*i);
-                int count = labelCountMap[p.label];
-                v = countLabelValueMap[count][p.label];
-              //  SVCERR << "mapping from label \"" << p.label << "\" (count " << count << ") to value " << v << endl;
-                RegionModel::Point pp(p.frame, v, p.duration, p.label);
-                pointMap[p] = pp;
+            map<Event, Event> eventMap;
+
+            EventVector allEvents = model2a->getAllEvents();
+            for (const Event &e: allEvents) {
+                int count = labelCountMap[e.getLabel()];
+                v = countLabelValueMap[count][e.getLabel()];
+                // SVCERR << "mapping from label \"" << p.label
+                //       << "\" (count " << count
+                //       << ") to value " << v << endl;
+                eventMap[e] = Event(e.getFrame(), v,
+                                    e.getDuration(), e.getLabel());
             }
 
-            for (map<RegionModel::Point, RegionModel::Point>::iterator i = 
-                     pointMap.begin(); i != pointMap.end(); ++i) {
+            for (const auto &i: eventMap) {
                 // There could be duplicate regions; if so replace
                 // them all -- but we need to check we're not
                 // replacing a region by itself (or else this will
                 // never terminate)
-                if (i->first.value == i->second.value) {
+                if (i.first.getValue() == i.second.getValue()) {
                     continue;
                 }
-                while (model2a->containsPoint(i->first)) {
-                    model2a->deletePoint(i->first);
-                    model2a->addPoint(i->second);
+                while (model2a->containsEvent(i.first)) {
+                    model2a->remove(i.first);
+                    model2a->add(i.second);
                 }
             }
         }

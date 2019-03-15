@@ -1057,17 +1057,17 @@ FeatureExtractionModelTransformer::addFeature(int n,
                         label = QString("[%1] %2").arg(i+1).arg(label);
                     }
 
-                    model->addPoint(RegionModel::Point(frame,
-                                                       value,
-                                                       duration,
-                                                       label));
+                    model->add(Event(frame,
+                                     value,
+                                     duration,
+                                     label));
                 }
             } else {
             
-                model->addPoint(RegionModel::Point(frame,
-                                                   value,
-                                                   duration,
-                                                   feature.label.c_str()));
+                model->add(Event(frame,
+                                 value,
+                                 duration,
+                                 feature.label.c_str()));
             }
         }
         

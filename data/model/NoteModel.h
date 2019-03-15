@@ -307,8 +307,8 @@ public:
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
-    {
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+        
         if (row < 0 || row >= m_events.count()) return nullptr;
         if (role != Qt::EditRole) return nullptr;
 

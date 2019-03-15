@@ -779,8 +779,8 @@ RDFImporterImpl::fillModel(Model *model,
             value = values[0];
         }
         if (haveDuration) {
-            RegionModel::Point point(ftime, value, fduration, label);
-            rm->addPoint(point);
+            Event e(ftime, value, fduration, label);
+            rm->add(e);
         } else {
             // This won't actually happen -- we only create region models
             // if we do have duration -- but just for completeness
@@ -791,9 +791,8 @@ RDFImporterImpl::fillModel(Model *model,
                     duration = values[1];
                 }
             }
-            RegionModel::Point point(ftime, value,
-                                     sv_frame_t(lrintf(duration)), label);
-            rm->addPoint(point);
+            Event e(ftime, value, sv_frame_t(lrintf(duration)), label);
+            rm->add(e);
         }
         return;
     }
