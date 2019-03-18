@@ -10,6 +10,7 @@ SVCORE_HEADERS = \
            base/Event.h \
            base/EventSeries.h \
            base/Exceptions.h \
+           base/Extents.h \
            base/HelperExecPath.h \
            base/HitCount.h \
            base/LogRange.h \
