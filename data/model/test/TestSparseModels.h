@@ -205,8 +205,13 @@ private slots:
         QTextStream str(&xml, QIODevice::WriteOnly);
         m.toXml(str);
         str.flush();
+
+        //!!! This is not guaranteed - object export ids are in order
+        //!!! of model pointer value, which is not trustworthy -
+        //!!! replace them with something else
+        
         QString expected =
-            "<model id='3' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='3' resolution='10' notifyOnAdd='false' dataset='2' subtype='note' valueQuantization='0' minimum='123.4' maximum='126.3' units='Hz' />\n"
+            "<model id='3' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='3' resolution='10' notifyOnAdd='true' dataset='2' subtype='note' valueQuantization='0' minimum='123.4' maximum='126.3' units='Hz' />\n"
             "<dataset id='2' dimensions='3'>\n"
             "  <point frame='20' value='124.3' duration='10' level='0.9' label='note 2' />\n"
             "  <point frame='20' value='123.4' duration='20' level='0.8' label='note 1' />\n"

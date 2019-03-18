@@ -442,8 +442,8 @@ CSVFileReader::load() const
 
             } else if (modelType == CSVFormat::TwoDimensionalModel) {
 
-                SparseTimeValueModel::Point point(frameNo, value, label);
-                model2->addPoint(point);
+                Event point(frameNo, value, label);
+                model2->add(point);
 
             } else if (modelType == CSVFormat::TwoDimensionalModelWithDuration) {
 

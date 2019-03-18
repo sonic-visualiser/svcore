@@ -347,8 +347,8 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
 
             for (int j = 0; j < values.size(); ++j) {
                 float f = values[j].toFloat();
-                SparseTimeValueModel::Point point(j * hopSize, f, "");
-                m->addPoint(point);
+                Event e(j * hopSize, f, "");
+                m->add(e);
             }
 
             getDenseModelTitle(m, feature, type);
@@ -728,9 +728,8 @@ RDFImporterImpl::fillModel(Model *model,
     SparseTimeValueModel *stvm =
         dynamic_cast<SparseTimeValueModel *>(model);
     if (stvm) {
-        SparseTimeValueModel::Point point
-            (ftime, values.empty() ? 0.f : values[0], label);
-        stvm->addPoint(point);
+        Event e(ftime, values.empty() ? 0.f : values[0], label);
+        stvm->add(e);
         return;
     }
 

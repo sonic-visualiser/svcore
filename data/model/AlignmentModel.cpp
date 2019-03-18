@@ -238,12 +238,11 @@ AlignmentModel::constructPath() const
         
     m_path->clear();
 
-    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
-        
-    for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-        sv_frame_t frame = i->frame;
-        double value = i->value;
+    EventVector points = m_rawPath->getAllEvents();
+
+    for (const auto &p: points) {
+        sv_frame_t frame = p.getFrame();
+        double value = p.getValue();
         sv_frame_t rframe = lrint(value * m_aligned->getSampleRate());
         m_path->addPoint(PathPoint(frame, rframe));
     }

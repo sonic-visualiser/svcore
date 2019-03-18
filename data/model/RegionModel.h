@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -19,6 +18,7 @@
 #include "EventCommands.h"
 #include "TabularModel.h"
 #include "Model.h"
+#include "DeferredNotifier.h"
 
 #include "base/RealTime.h"
 #include "base/EventSeries.h"
@@ -49,9 +49,10 @@ public:
         m_haveExtents(false),
         m_valueQuantization(0),
         m_haveDistinctValues(false),
-        m_notifyOnAdd(notifyOnAdd),
-        m_sinceLastNotifyMin(-1),
-        m_sinceLastNotifyMax(-1),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(0) {
     }
 
@@ -65,9 +66,10 @@ public:
         m_haveExtents(false),
         m_valueQuantization(0),
         m_haveDistinctValues(false),
-        m_notifyOnAdd(notifyOnAdd),
-        m_sinceLastNotifyMin(-1),
-        m_sinceLastNotifyMax(-1),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(0) {
     }
 
@@ -100,46 +102,22 @@ public:
 
     void setCompletion(int completion, bool update = true) {
 
-        bool emitCompletionChanged = true;
-        bool emitGeneralModelChanged = false;
-        bool emitRegionChanged = false;
-
-        {
-            QMutexLocker locker(&m_mutex);
-
-            if (m_completion != completion) {
-                m_completion = completion;
-
-                if (completion == 100) {
-
-                    if (m_notifyOnAdd) {
-                        emitCompletionChanged = false;
-                    }
-
-                    m_notifyOnAdd = true; // henceforth
-                    emitGeneralModelChanged = true;
-
-                } else if (!m_notifyOnAdd) {
-
-                    if (update &&
-                        m_sinceLastNotifyMin >= 0 &&
-                        m_sinceLastNotifyMax >= 0) {
-                        emitRegionChanged = true;
-                    }
-                }
-            }
+        {   QMutexLocker locker(&m_mutex);
+            if (m_completion == completion) return;
+            m_completion = completion;
         }
 
-        if (emitCompletionChanged) {
-            emit completionChanged();
+        if (update) {
+            m_notifier.makeDeferredNotifications();
         }
-        if (emitGeneralModelChanged) {
+        
+        emit completionChanged();
+
+        if (completion == 100) {
+            // henceforth:
+            m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
             emit modelChanged();
         }
-        if (emitRegionChanged) {
-            emit modelChangedWithin(m_sinceLastNotifyMin, m_sinceLastNotifyMax);
-            m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
-        }        
     }
 
     /**
@@ -197,23 +175,10 @@ public:
             if (e.hasValue() && e.getValue() != 0.f) {
                 m_haveDistinctValues = true;
             }
-            
-            sv_frame_t f = e.getFrame();
-
-            if (!m_notifyOnAdd) {
-                if (m_sinceLastNotifyMin == -1 || f < m_sinceLastNotifyMin) {
-                    m_sinceLastNotifyMin = f;
-                }
-                if (m_sinceLastNotifyMax == -1 || f > m_sinceLastNotifyMax) {
-                    m_sinceLastNotifyMax = f;
-                }
-            }
         }
         
-        if (m_notifyOnAdd) {
-            emit modelChangedWithin(e.getFrame(),
-                                    e.getFrame() + e.getDuration() + m_resolution);
-        }
+        m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
+
         if (allChange) {
             emit modelChanged();
         }
@@ -269,6 +234,11 @@ public:
         }
     }
 
+    SortType getSortType(int column) const override {
+        if (column == 4) return SortAlphabetical;
+        return SortNumeric;
+    }
+
     QVariant getData(int row, int column, int role) const override {
 
         if (row < 0 || row >= m_events.count()) {
@@ -311,12 +281,6 @@ public:
         return command->finish();
     }
 
-    SortType getSortType(int column) const override
-    {
-        if (column == 4) return SortAlphabetical;
-        return SortNumeric;
-    }
-
     
     /**
      * XmlExportable methods.
@@ -331,14 +295,16 @@ public:
              QString("type=\"sparse\" dimensions=\"3\" resolution=\"%1\" "
                      "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"%4\" "
                      "valueQuantization=\"%5\" minimum=\"%6\" maximum=\"%7\" "
-                     "%8")
+                     "units=\"%8\" %9")
              .arg(m_resolution)
-             .arg(m_notifyOnAdd ? "true" : "false")
+             .arg("true") // always true after model reaches 100% -
+                          // subsequent events are always notified
              .arg(getObjectExportId(&m_events))
              .arg("region")
              .arg(m_valueQuantization)
              .arg(m_valueMinimum)
              .arg(m_valueMaximum)
+             .arg(encodeEntities(m_units))
              .arg(extraAttributes));
         
         m_events.toXml(out, indent, QString("dimensions=\"3\""));
@@ -354,14 +320,10 @@ protected:
     float m_valueQuantization;
     bool m_haveDistinctValues;
     QString m_units;
-    
-    bool m_notifyOnAdd;
-    sv_frame_t m_sinceLastNotifyMin;
-    sv_frame_t m_sinceLastNotifyMax;
+    DeferredNotifier m_notifier;
+    int m_completion;
 
     EventSeries m_events;
-
-    int m_completion;
 
     mutable QMutex m_mutex;
 };

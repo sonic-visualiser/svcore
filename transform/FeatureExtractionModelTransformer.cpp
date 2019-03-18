@@ -1004,8 +1004,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
 //                          << " for output " << n << " bin " << i << std::endl;
             }
 
-            targetModel->addPoint
-                (SparseTimeValueModel::Point(frame, value, label));
+            targetModel->add(Event(frame, value, label));
         }
 
     } else if (isOutput<NoteModel>(n) || isOutput<RegionModel>(n)) {

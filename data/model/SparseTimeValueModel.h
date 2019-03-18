@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -16,76 +15,43 @@
 #ifndef SV_SPARSE_TIME_VALUE_MODEL_H
 #define SV_SPARSE_TIME_VALUE_MODEL_H
 
-#include "SparseValueModel.h"
-#include "base/PlayParameterRepository.h"
+#include "EventCommands.h"
+#include "TabularModel.h"
+#include "Model.h"
+#include "DeferredNotifier.h"
+
 #include "base/RealTime.h"
+#include "base/EventSeries.h"
+#include "base/UnitDatabase.h"
+#include "base/PlayParameterRepository.h"
+
+#include "system/System.h"
 
 /**
- * Time/value point type for use in a SparseModel or SparseValueModel.
- * With this point type, the model basically represents a wiggly-line
- * plot with points at arbitrary intervals of the model resolution.
+ * A model representing a wiggly-line plot with points at arbitrary
+ * intervals of the model resolution.
  */
-
-struct TimeValuePoint
-{
-public:
-    TimeValuePoint(sv_frame_t _frame) : frame(_frame), value(0.0f) { }
-    TimeValuePoint(sv_frame_t _frame, float _value, QString _label) : 
-        frame(_frame), value(_value), label(_label) { }
-
-    int getDimensions() const { return 2; }
-    
-    sv_frame_t frame;
-    float value;
-    QString label;
-
-    QString getLabel() const { return label; }
-    
-    void toXml(QTextStream &stream, QString indent = "",
-               QString extraAttributes = "") const
-    {
-        stream << QString("%1<point frame=\"%2\" value=\"%3\" label=\"%4\" %5/>\n")
-            .arg(indent).arg(frame).arg(value).arg(XmlExportable::encodeEntities(label))
-            .arg(extraAttributes);
-    }
-
-    QString toDelimitedDataString(QString delimiter, DataExportOptions, sv_samplerate_t sampleRate) const
-    {
-        QStringList list;
-        list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
-        list << QString("%1").arg(value);
-        if (label != "") list << label;
-        return list.join(delimiter);
-    }
-
-    struct Comparator {
-        bool operator()(const TimeValuePoint &p1,
-                        const TimeValuePoint &p2) const {
-            if (p1.frame != p2.frame) return p1.frame < p2.frame;
-            if (p1.value != p2.value) return p1.value < p2.value;
-            return p1.label < p2.label;
-        }
-    };
-    
-    struct OrderComparator {
-        bool operator()(const TimeValuePoint &p1,
-                        const TimeValuePoint &p2) const {
-            return p1.frame < p2.frame;
-        }
-    };
-};
-
-
-class SparseTimeValueModel : public SparseValueModel<TimeValuePoint>
+class SparseTimeValueModel : public Model,
+                             public TabularModel,
+                             public EventEditable
 {
     Q_OBJECT
     
 public:
-    SparseTimeValueModel(sv_samplerate_t sampleRate, int resolution,
+    SparseTimeValueModel(sv_samplerate_t sampleRate,
+                         int resolution,
                          bool notifyOnAdd = true) :
-        SparseValueModel<TimeValuePoint>(sampleRate, resolution,
-                                         notifyOnAdd)
-    {
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_valueMinimum(0.f),
+        m_valueMaximum(0.f),
+        m_haveExtents(false),
+        m_haveTextLabels(false),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(0) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
         PlayParameterRepository::getInstance()->addPlayable(this);
@@ -94,36 +60,172 @@ public:
     SparseTimeValueModel(sv_samplerate_t sampleRate, int resolution,
                          float valueMinimum, float valueMaximum,
                          bool notifyOnAdd = true) :
-        SparseValueModel<TimeValuePoint>(sampleRate, resolution,
-                                         valueMinimum, valueMaximum,
-                                         notifyOnAdd)
-    {
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_valueMinimum(valueMinimum),
+        m_valueMaximum(valueMaximum),
+        m_haveExtents(false),
+        m_haveTextLabels(false),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(0) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    virtual ~SparseTimeValueModel()
-    {
+    virtual ~SparseTimeValueModel() {
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
     QString getTypeName() const override { return tr("Sparse Time-Value"); }
 
+    bool isOK() const override { return true; }
+    sv_frame_t getStartFrame() const override { return m_events.getStartFrame(); }
+    sv_frame_t getEndFrame() const override { return m_events.getEndFrame(); }
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    int getResolution() const { return m_resolution; }
+
     bool canPlay() const override { return true; }
     bool getDefaultPlayAudible() const override { return false; } // user must unmute
 
+    QString getScaleUnits() const { return m_units; }
+    void setScaleUnits(QString units) {
+        m_units = units;
+        UnitDatabase::getInstance()->registerUnit(units);
+    }
+
+    bool hasTextLabels() const { return m_haveTextLabels; }
+    
+    float getValueMinimum() const { return m_valueMinimum; }
+    float getValueMaximum() const { return m_valueMaximum; }
+    
+    int getCompletion() const { return m_completion; }
+
+    void setCompletion(int completion, bool update = true) {
+
+        {   QMutexLocker locker(&m_mutex);
+            if (m_completion == completion) return;
+            m_completion = completion;
+        }
+
+        if (update) {
+            m_notifier.makeDeferredNotifications();
+        }
+        
+        emit completionChanged();
+
+        if (completion == 100) {
+            // henceforth:
+            m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
+            emit modelChanged();
+        }
+    }
+    
+    /**
+     * Query methods.
+     */
+
+    int getEventCount() const {
+        return m_events.count();
+    }
+    bool isEmpty() const {
+        return m_events.isEmpty();
+    }
+    bool containsEvent(const Event &e) const {
+        return m_events.contains(e);
+    }
+    EventVector getAllEvents() const {
+        return m_events.getAllEvents();
+    }
+    EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsSpanning(f, duration);
+    }
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsWithin(f, duration);
+    }
+    EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsStartingWithin(f, duration);
+    }
+    EventVector getEventsCovering(sv_frame_t f) const {
+        return m_events.getEventsCovering(f);
+    }
+    
+    /**
+     * Editing methods.
+     */
+    void add(Event e) override {
+
+        bool allChange = false;
+           
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.add(e);
+
+            if (e.getLabel() != "") {
+                m_haveTextLabels = true;
+            }
+
+            float v = e.getValue();
+            if (!ISNAN(v) && !ISINF(v)) {
+                if (!m_haveExtents || v < m_valueMinimum) {
+                    m_valueMinimum = v; allChange = true;
+                }
+                if (!m_haveExtents || v > m_valueMaximum) {
+                    m_valueMaximum = v; allChange = true;
+                }
+                m_haveExtents = true;
+            }
+        }
+        
+        m_notifier.update(e.getFrame(), m_resolution);
+
+        if (allChange) {
+            emit modelChanged();
+        }
+    }
+    
+    void remove(Event e) override {
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.remove(e);
+        }
+        emit modelChangedWithin(e.getFrame(), e.getFrame() + m_resolution);
+    }
+    
     /**
      * TabularModel methods.  
      */
     
-    int getColumnCount() const override
-    {
+    int getRowCount() const override {
+        return m_events.count();
+    }
+
+    int getColumnCount() const override {
         return 4;
     }
 
-    QString getHeading(int column) const override
-    {
+    bool isColumnTimeValue(int column) const override {
+        // NB duration is not a "time value" -- that's for columns
+        // whose sort ordering is exactly that of the frame time
+        return (column < 2);
+    }
+
+    sv_frame_t getFrameForRow(int row) const override {
+        if (row < 0 || row >= m_events.count()) {
+            return 0;
+        }
+        Event e = m_events.getEventByIndex(row);
+        return e.getFrame();
+    }
+
+    int getRowForFrame(sv_frame_t frame) const override {
+        return m_events.getIndexForEvent(Event(frame));
+    }
+    
+    QString getHeading(int column) const override {
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
@@ -133,59 +235,91 @@ public:
         }
     }
 
-    QVariant getData(int row, int column, int role) const override
-    {
-        if (column < 2) {
-            return SparseValueModel<TimeValuePoint>::getData
-                (row, column, role);
+    SortType getSortType(int column) const override {
+        if (column == 3) return SortAlphabetical;
+        return SortNumeric;
+    }
+
+    QVariant getData(int row, int column, int role) const override {
+        
+        if (row < 0 || row >= m_events.count()) {
+            return QVariant();
         }
 
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        Event e = m_events.getEventByIndex(row);
 
         switch (column) {
-        case 2:
-            if (role == Qt::EditRole || role == SortRole) return i->value;
-            else return QString("%1 %2").arg(i->value).arg(getScaleUnits());
-        case 3: return i->label;
+        case 0: return adaptFrameForRole(e.getFrame(), getSampleRate(), role);
+        case 1: return int(e.getFrame());
+        case 2: return adaptValueForRole(e.getValue(), getScaleUnits(), role);
+        case 3: return e.getLabel();
         default: return QVariant();
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
-    {
-        if (column < 2) {
-            return SparseValueModel<TimeValuePoint>::getSetDataCommand
-                (row, column, value, role);
-        }
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        if (role != Qt::EditRole) return nullptr;
 
-        if (role != Qt::EditRole) return 0;
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return 0;
-        EditCommand *command = new EditCommand(this, tr("Edit Data"));
-
-        Point point(*i);
-        command->deletePoint(point);
+        Event e0 = m_events.getEventByIndex(row);
+        Event e1;
 
         switch (column) {
-        case 2: point.value = float(value.toDouble()); break;
-        case 3: point.label = value.toString(); break;
+        case 0: e1 = e0.withFrame(sv_frame_t(round(value.toDouble() *
+                                                   getSampleRate()))); break;
+        case 1: e1 = e0.withFrame(value.toInt()); break;
+        case 2: e1 = e0.withValue(float(value.toDouble())); break;
+        case 3: e1 = e0.withLabel(value.toString()); break;
         }
 
-        command->addPoint(point);
+        ChangeEventsCommand *command =
+            new ChangeEventsCommand(this, tr("Edit Data"));
+        command->remove(e0);
+        command->add(e1);
         return command->finish();
     }
+    
+    /**
+     * XmlExportable methods.
+     */
+    void toXml(QTextStream &out,
+               QString indent = "",
+               QString extraAttributes = "") const override {
 
-    bool isColumnTimeValue(int column) const override
-    {
-        return (column < 2); 
+        Model::toXml
+            (out,
+             indent,
+             QString("type=\"sparse\" dimensions=\"2\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" "
+                     "minimum=\"%4\" maximum=\"%5\" "
+                     "units=\"%6\" %7")
+             .arg(m_resolution)
+             .arg("true") // always true after model reaches 100% -
+                          // subsequent events are always notified
+             .arg(getObjectExportId(&m_events))
+             .arg(m_valueMinimum)
+             .arg(m_valueMaximum)
+             .arg(encodeEntities(m_units))
+             .arg(extraAttributes));
+        
+        m_events.toXml(out, indent, QString("dimensions=\"2\""));
     }
+  
+protected:
+    sv_samplerate_t m_sampleRate;
+    int m_resolution;
 
-    SortType getSortType(int column) const override
-    {
-        if (column == 3) return SortAlphabetical;
-        return SortNumeric;
-    }
+    float m_valueMinimum;
+    float m_valueMaximum;
+    bool m_haveExtents;
+    bool m_haveTextLabels;
+    QString m_units;
+    DeferredNotifier m_notifier;
+    int m_completion;
+
+    EventSeries m_events;
+
+    mutable QMutex m_mutex;  
 };
 
 
