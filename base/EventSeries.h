@@ -161,6 +161,23 @@ public:
      */
     bool getEventFollowing(const Event &e, Event &following) const;
 
+    enum Direction {
+        Forward,
+        Backward
+    };
+
+    /**
+     * Return the first event for which the given predicate returns
+     * true, searching events with start frames increasingly far from
+     * the given frame in the given direction. If the direction is
+     * Forward then the search includes events starting at the given
+     * frame, otherwise it does not.
+     */
+    bool getNearestEventMatching(sv_frame_t startSearchAt,
+                                 std::function<bool(const Event &)> predicate,
+                                 Direction direction,
+                                 Event &found) const;
+    
     /**
      * Return the event at the given numerical index in the series,
      * where 0 = the first event and count()-1 = the last.
@@ -173,7 +190,7 @@ public:
      * return count().
      */
     int getIndexForEvent(const Event &e) const;
-    
+
     /**
      * Emit to XML as a dataset element.
      */

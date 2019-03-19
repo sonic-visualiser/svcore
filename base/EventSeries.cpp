@@ -401,6 +401,43 @@ EventSeries::getEventFollowing(const Event &e, Event &following) const
     return true;
 }
 
+bool
+EventSeries::getNearestEventMatching(sv_frame_t startSearchAt,
+                                     std::function<bool(const Event &)> predicate,
+                                     Direction direction,
+                                     Event &found) const
+{
+    auto pitr = lower_bound(m_events.begin(), m_events.end(),
+                            Event(startSearchAt));
+
+    while (true) {
+
+        if (direction == Backward) {
+            if (pitr == m_events.begin()) {
+                break;
+            } else {
+                --pitr;
+            }
+        } else {
+            if (pitr == m_events.end()) {
+                break;
+            }
+        }
+
+        const Event &e = *pitr;
+        if (predicate(e)) {
+            found = e;
+            return true;
+        }
+
+        if (direction == Forward) {
+            ++pitr;
+        }
+    }
+
+    return false;
+}
+
 Event
 EventSeries::getEventByIndex(int index) const
 {

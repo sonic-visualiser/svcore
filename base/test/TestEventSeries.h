@@ -617,6 +617,80 @@ private slots:
         QCOMPARE(p, e);
         QCOMPARE(s.getEventFollowing(p, p), false);
     }
+    
+    void matchingForward() {
+        
+        EventSeries s;
+        Event p;
+        QCOMPARE(s.getNearestEventMatching
+                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                  EventSeries::Forward, p), false);
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(d); // again
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getNearestEventMatching
+                 (0, [](const Event &e) { return e.getDuration() < 4; },
+                  EventSeries::Forward, p), true);
+        QCOMPARE(p, c);
+        QCOMPARE(s.getNearestEventMatching
+                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                  EventSeries::Forward, p), true);
+        QCOMPARE(p, e);
+        QCOMPARE(s.getNearestEventMatching
+                 (6, [](const Event &e) { return e.getDuration() > 4; },
+                  EventSeries::Forward, p), true);
+        QCOMPARE(p, d);
+        QCOMPARE(s.getNearestEventMatching
+                 (20, [](const Event &e) { return e.getDuration() > 4; },
+                  EventSeries::Forward, p), false);
+    }
+    
+    void matchingBackward() {
+        
+        EventSeries s;
+        Event p;
+        QCOMPARE(s.getNearestEventMatching
+                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                  EventSeries::Backward, p), false);
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(d); // again
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getNearestEventMatching
+                 (0, [](const Event &e) { return e.getDuration() < 4; },
+                  EventSeries::Backward, p), false);
+        QCOMPARE(s.getNearestEventMatching
+                 (6, [](const Event &e) { return e.getDuration() > 4; },
+                  EventSeries::Backward, p), true);
+        QCOMPARE(p, b);
+        QCOMPARE(s.getNearestEventMatching
+                 (20, [](const Event &e) { return e.getDuration() > 4; },
+                  EventSeries::Backward, p), true);
+        QCOMPARE(p, dd);
+    }
 };
 
 #endif
