@@ -150,6 +150,13 @@ public:
     EventVector getEventsStartingAt(sv_frame_t f) const {
         return m_events.getEventsStartingAt(f);
     }
+    bool getNearestEventMatching(sv_frame_t startSearchAt,
+                                 std::function<bool(Event)> predicate,
+                                 EventSeries::Direction direction,
+                                 Event &found) const {
+        return m_events.getNearestEventMatching
+            (startSearchAt, predicate, direction, found);
+    }
 
     /**
      * Editing methods.
