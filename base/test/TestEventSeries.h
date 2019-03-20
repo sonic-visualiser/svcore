@@ -468,6 +468,36 @@ private slots:
         QCOMPARE(s.getEventsWithin(2, 7), EventVector({ b, c, cc }));
     }
 
+    void eventPatternWithinWithOverspill() {
+
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getEventsWithin(0, 0, 0), EventVector());
+        QCOMPARE(s.getEventsWithin(0, 0, 1), EventVector({ a }));
+        QCOMPARE(s.getEventsWithin(0, 0, 2), EventVector({ a, b }));
+        QCOMPARE(s.getEventsWithin(20, 1, 0), EventVector());
+        QCOMPARE(s.getEventsWithin(20, 1, 1), EventVector({ e }));
+        QCOMPARE(s.getEventsWithin(20, 1, 2), EventVector({ dd, e }));
+        QCOMPARE(s.getEventsWithin(2, 7, 0), EventVector({ b, c, cc }));
+        QCOMPARE(s.getEventsWithin(2, 7, 1), EventVector({ a, b, c, cc, d }));
+        QCOMPARE(s.getEventsWithin(2, 7, 2), EventVector({ a, b, c, cc, d, dd }));
+        QCOMPARE(s.getEventsWithin(2, 7, 3), EventVector({ a, b, c, cc, d, dd, e }));
+        QCOMPARE(s.getEventsWithin(2, 7, 4), EventVector({ a, b, c, cc, d, dd, e }));
+    }
+
     void eventPatternStartingWithin() {
 
         EventSeries s;
@@ -623,7 +653,7 @@ private slots:
         EventSeries s;
         Event p;
         QCOMPARE(s.getNearestEventMatching
-                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                 (6, [](Event e) { return e.getDuration() < 4; },
                   EventSeries::Forward, p), false);
         Event a(0, 1.0f, 18, QString("a"));
         Event b(3, 2.0f, 6, QString("b"));
@@ -641,19 +671,19 @@ private slots:
         s.add(dd);
         s.add(e);
         QCOMPARE(s.getNearestEventMatching
-                 (0, [](const Event &e) { return e.getDuration() < 4; },
+                 (0, [](Event e) { return e.getDuration() < 4; },
                   EventSeries::Forward, p), true);
         QCOMPARE(p, c);
         QCOMPARE(s.getNearestEventMatching
-                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                 (6, [](Event e) { return e.getDuration() < 4; },
                   EventSeries::Forward, p), true);
         QCOMPARE(p, e);
         QCOMPARE(s.getNearestEventMatching
-                 (6, [](const Event &e) { return e.getDuration() > 4; },
+                 (6, [](Event e) { return e.getDuration() > 4; },
                   EventSeries::Forward, p), true);
         QCOMPARE(p, d);
         QCOMPARE(s.getNearestEventMatching
-                 (20, [](const Event &e) { return e.getDuration() > 4; },
+                 (20, [](Event e) { return e.getDuration() > 4; },
                   EventSeries::Forward, p), false);
     }
     
@@ -662,7 +692,7 @@ private slots:
         EventSeries s;
         Event p;
         QCOMPARE(s.getNearestEventMatching
-                 (6, [](const Event &e) { return e.getDuration() < 4; },
+                 (6, [](Event e) { return e.getDuration() < 4; },
                   EventSeries::Backward, p), false);
         Event a(0, 1.0f, 18, QString("a"));
         Event b(3, 2.0f, 6, QString("b"));
@@ -680,14 +710,14 @@ private slots:
         s.add(dd);
         s.add(e);
         QCOMPARE(s.getNearestEventMatching
-                 (0, [](const Event &e) { return e.getDuration() < 4; },
+                 (0, [](Event e) { return e.getDuration() < 4; },
                   EventSeries::Backward, p), false);
         QCOMPARE(s.getNearestEventMatching
-                 (6, [](const Event &e) { return e.getDuration() > 4; },
+                 (6, [](Event e) { return e.getDuration() > 4; },
                   EventSeries::Backward, p), true);
         QCOMPARE(p, b);
         QCOMPARE(s.getNearestEventMatching
-                 (20, [](const Event &e) { return e.getDuration() > 4; },
+                 (20, [](Event e) { return e.getDuration() > 4; },
                   EventSeries::Backward, p), true);
         QCOMPARE(p, dd);
     }

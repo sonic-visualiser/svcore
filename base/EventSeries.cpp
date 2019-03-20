@@ -273,28 +273,52 @@ EventSeries::getEventsSpanning(sv_frame_t frame,
 
 EventVector
 EventSeries::getEventsWithin(sv_frame_t frame,
-                             sv_frame_t duration) const
+                             sv_frame_t duration,
+                             int overspill) const
 {
     EventVector span;
     
     const sv_frame_t start = frame;
     const sv_frame_t end = frame + duration;
 
-    // because we don't need to "look back" at events that started
-    // earlier than the start of the given range, we can do this
-    // entirely from m_events
+    // because we don't need to "look back" at events that end within
+    // but started without, we can do this entirely from m_events.
+    // The core operation is very simple, it's just overspill that
+    // complicates it.
 
-    auto pitr = lower_bound(m_events.begin(), m_events.end(),
-                            Event(start));
+    Events::const_iterator reference = 
+        lower_bound(m_events.begin(), m_events.end(), Event(start));
+
+    Events::const_iterator first = reference;
+    for (int i = 0; i < overspill; ++i) {
+        if (first == m_events.begin()) break;
+        --first;
+    }
+    for (int i = 0; i < overspill; ++i) {
+        if (first == reference) break;
+        span.push_back(*first);
+        ++first;
+    }
+
+    Events::const_iterator pitr = reference;
+    Events::const_iterator last = reference;
+
     while (pitr != m_events.end() && pitr->getFrame() < end) {
-        if (!pitr->hasDuration()) {
+        if (!pitr->hasDuration() ||
+            (pitr->getFrame() + pitr->getDuration() <= end)) {
             span.push_back(*pitr);
-        } else if (pitr->getFrame() + pitr->getDuration() <= end) {
-            span.push_back(*pitr);
+            last = pitr;
+            ++last;
         }
         ++pitr;
     }
-            
+
+    for (int i = 0; i < overspill; ++i) {
+        if (last == m_events.end()) break;
+        span.push_back(*last);
+        ++last;
+    }
+    
     return span;
 }
 

@@ -102,9 +102,14 @@ public:
      * - An event with duration is within the range if its start frame
      * is greater than or equal to f and its start frame plus its
      * duration is less than or equal to f + d.
+     *
+     * If overspill is greater than zero, also include that number of
+     * additional events (where they exist) both before and after the
+     * edges of the range.
      */
     EventVector getEventsWithin(sv_frame_t frame,
-                                sv_frame_t duration) const;
+                                sv_frame_t duration,
+                                int overspill = 0) const;
 
     /**
      * Retrieve all events starting within the range in frames defined
