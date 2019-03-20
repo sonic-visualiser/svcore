@@ -51,7 +51,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
         PlayParameterRepository::getInstance()->addPlayable(this);
@@ -70,7 +70,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
         PlayParameterRepository::getInstance()->addPlayable(this);
@@ -105,7 +105,7 @@ public:
     int getCompletion() const { return m_completion; }
 
     void setCompletion(int completion, bool update = true) {
-
+        
         {   QMutexLocker locker(&m_mutex);
             if (m_completion == completion) return;
             m_completion = completion;
@@ -143,14 +143,22 @@ public:
     EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
         return m_events.getEventsSpanning(f, duration);
     }
-    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration) const {
-        return m_events.getEventsWithin(f, duration);
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration,
+                                int overspill = 0) const {
+        return m_events.getEventsWithin(f, duration, overspill);
     }
     EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
         return m_events.getEventsStartingWithin(f, duration);
     }
     EventVector getEventsCovering(sv_frame_t f) const {
         return m_events.getEventsCovering(f);
+    }
+    bool getNearestEventMatching(sv_frame_t startSearchAt,
+                                 std::function<bool(Event)> predicate,
+                                 EventSeries::Direction direction,
+                                 Event &found) const {
+        return m_events.getNearestEventMatching
+            (startSearchAt, predicate, direction, found);
     }
     
     /**
@@ -162,7 +170,7 @@ public:
            
         {
             QMutexLocker locker(&m_mutex);
-            m_events.add(e);
+            m_events.add(e.withoutDuration()); // can't have duration here
 
             if (e.getLabel() != "") {
                 m_haveTextLabels = true;

@@ -61,7 +61,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
         if (subtype == FLEXI_NOTE) {
             m_valueMinimum = 33.f;
             m_valueMaximum = 88.f;
@@ -86,7 +86,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 

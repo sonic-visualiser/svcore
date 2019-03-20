@@ -53,7 +53,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
     }
 
     RegionModel(sv_samplerate_t sampleRate, int resolution,
@@ -70,7 +70,7 @@ public:
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
-        m_completion(0) {
+        m_completion(100) {
     }
 
     virtual ~RegionModel() {
@@ -123,7 +123,6 @@ public:
     /**
      * Query methods.
      */
-
     int getEventCount() const {
         return m_events.count();
     }
@@ -159,7 +158,6 @@ public:
         {
             QMutexLocker locker(&m_mutex);
             m_events.add(e);
-//!!!???        if (point.getLabel() != "") m_hasTextLabels = true;
 
             float v = e.getValue();
             if (!ISNAN(v) && !ISINF(v)) {
