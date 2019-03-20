@@ -437,8 +437,8 @@ CSVFileReader::load() const
 
             if (modelType == CSVFormat::OneDimensionalModel) {
             
-                SparseOneDimensionalModel::Point point(frameNo, label);
-                model1->addPoint(point);
+                Event point(frameNo, label);
+                model1->add(point);
 
             } else if (modelType == CSVFormat::TwoDimensionalModel) {
 

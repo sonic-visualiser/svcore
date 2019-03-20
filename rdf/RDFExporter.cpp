@@ -120,12 +120,11 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = false;
-            const SparseOneDimensionalModel::PointList &pl(m->getPoints());
-            for (SparseOneDimensionalModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.values.clear();
-                f.label = i->label.toStdString();
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;

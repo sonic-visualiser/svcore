@@ -709,8 +709,8 @@ RDFImporterImpl::fillModel(Model *model,
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
     if (sodm) {
-        SparseOneDimensionalModel::Point point(ftime, label);
-        sodm->addPoint(point);
+        Event point(ftime, label);
+        sodm->add(point);
         return;
     }
 

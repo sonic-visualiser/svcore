@@ -977,8 +977,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
             getConformingOutput<SparseOneDimensionalModel>(n);
         if (!model) return;
 
-        model->addPoint(SparseOneDimensionalModel::Point
-                       (frame, feature.label.c_str()));
+        model->add(Event(frame, feature.label.c_str()));
         
     } else if (isOutput<SparseTimeValueModel>(n)) {
 

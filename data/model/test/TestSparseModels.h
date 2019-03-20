@@ -33,76 +33,78 @@ private slots:
     void s1d_empty() {
         SparseOneDimensionalModel m(100, 10, false);
         QCOMPARE(m.isEmpty(), true);
-        QCOMPARE(m.getPointCount(), 0);
-        QCOMPARE(m.getPoints().begin(), m.getPoints().end());
+        QCOMPARE(m.getEventCount(), 0);
+        QCOMPARE(m.getAllEvents().size(), 0);
         QCOMPARE(m.getStartFrame(), 0);
         QCOMPARE(m.getEndFrame(), 0);
         QCOMPARE(m.getSampleRate(), 100);
         QCOMPARE(m.getResolution(), 10);
         QCOMPARE(m.isSparse(), true);
 
-        SparseOneDimensionalModel::Point p(10);
-        m.addPoint(p);
+        Event p(10);
+        m.add(p);
+/*!!!
         m.clear();
         QCOMPARE(m.isEmpty(), true);
-        QCOMPARE(m.getPointCount(), 0);
-        QCOMPARE(m.getPoints().begin(), m.getPoints().end());
+        QCOMPARE(m.getEventCount(), 0);
+        QCOMPARE(m.getAllEvents().size(), 0);
         QCOMPARE(m.getStartFrame(), 0);
         QCOMPARE(m.getEndFrame(), 0);
 
-        m.addPoint(p);
-        m.deletePoint(p);
+        m.add(p);
+*/
+        m.remove(p);
         QCOMPARE(m.isEmpty(), true);
-        QCOMPARE(m.getPointCount(), 0);
-        QCOMPARE(m.getPoints().begin(), m.getPoints().end());
+        QCOMPARE(m.getEventCount(), 0);
+        QCOMPARE(m.getAllEvents().size(), 0);
         QCOMPARE(m.getStartFrame(), 0);
         QCOMPARE(m.getEndFrame(), 0);
     }
 
     void s1d_extents() {
         SparseOneDimensionalModel m(100, 10, false);
-        SparseOneDimensionalModel::Point p1(20);
-        m.addPoint(p1);
+        Event p1(20);
+        m.add(p1);
         QCOMPARE(m.isEmpty(), false);
-        QCOMPARE(m.getPointCount(), 1);
-        SparseOneDimensionalModel::Point p2(50);
-        m.addPoint(p2);
+        QCOMPARE(m.getEventCount(), 1);
+        Event p2(50);
+        m.add(p2);
         QCOMPARE(m.isEmpty(), false);
-        QCOMPARE(m.getPointCount(), 2);
-        QCOMPARE(m.getPoints().size(), 2);
-        QCOMPARE(*m.getPoints().begin(), p1);
-        QCOMPARE(*m.getPoints().rbegin(), p2);
+        QCOMPARE(m.getEventCount(), 2);
+        QCOMPARE(m.getAllEvents().size(), 2);
+        QCOMPARE(*m.getAllEvents().begin(), p1);
+        QCOMPARE(*m.getAllEvents().rbegin(), p2);
         QCOMPARE(m.getStartFrame(), 20);
         QCOMPARE(m.getEndFrame(), 60);
-        QCOMPARE(m.containsPoint(p1), true);
-        m.deletePoint(p1);
-        QCOMPARE(m.getPointCount(), 1);
-        QCOMPARE(m.getPoints().size(), 1);
-        QCOMPARE(*m.getPoints().begin(), p2);
+        QCOMPARE(m.containsEvent(p1), true);
+        m.remove(p1);
+        QCOMPARE(m.getEventCount(), 1);
+        QCOMPARE(m.getAllEvents().size(), 1);
+        QCOMPARE(*m.getAllEvents().begin(), p2);
         QCOMPARE(m.getStartFrame(), 50);
         QCOMPARE(m.getEndFrame(), 60);
-        QCOMPARE(m.containsPoint(p1), false);
+        QCOMPARE(m.containsEvent(p1), false);
     }
              
     void s1d_sample() {
         SparseOneDimensionalModel m(100, 10, false);
-        SparseOneDimensionalModel::Point p1(20), p2(20), p3(50);
-        m.addPoint(p1);
-        m.addPoint(p2);
-        m.addPoint(p3);
-        QCOMPARE(m.getPoints().size(), 3);
-        QCOMPARE(*m.getPoints().begin(), p1);
-        QCOMPARE(*m.getPoints().rbegin(), p3);
+        Event p1(20), p2(20), p3(50);
+        m.add(p1);
+        m.add(p2);
+        m.add(p3);
+        QCOMPARE(m.getAllEvents().size(), 3);
+        QCOMPARE(*m.getAllEvents().begin(), p1);
+        QCOMPARE(*m.getAllEvents().rbegin(), p3);
 /*!!!
-        auto pp = m.getPoints(20, 30);
+        auto pp = m.getAllEvents(20, 30);
         QCOMPARE(pp.size(), 2);
         QCOMPARE(*pp.begin(), p1);
         QCOMPARE(*pp.rbegin(), p2);
         
-        pp = m.getPoints(40, 50);
+        pp = m.getAllEvents(40, 50);
         QCOMPARE(pp.size(), 0);
 
-        pp = m.getPoints(50, 50);
+        pp = m.getAllEvents(50, 50);
         QCOMPARE(pp.size(), 1);
         QCOMPARE(*pp.begin(), p3);
 */
@@ -111,17 +113,17 @@ private slots:
     void s1d_xml() {
         SparseOneDimensionalModel m(100, 10, false);
         m.setObjectName("This \"&\" that");
-        SparseOneDimensionalModel::Point p1(20), p2(20), p3(50);
-        p2.label = "Label &'\">";
-        m.addPoint(p1);
-        m.addPoint(p2);
-        m.addPoint(p3);
+        Event p1(20), p2(20), p3(50);
+        p2 = p2.withLabel("Label &'\">");
+        m.add(p1);
+        m.add(p2);
+        m.add(p3);
         QString xml;
         QTextStream str(&xml, QIODevice::WriteOnly);
         m.toXml(str);
         str.flush();
         QString expected =
-            "<model id='1' name='This &quot;&amp;&quot; that' sampleRate='100' start='20' end='60' type='sparse' dimensions='1' resolution='10' notifyOnAdd='false' dataset='0' />\n"
+            "<model id='1' name='This &quot;&amp;&quot; that' sampleRate='100' start='20' end='60' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='0' />\n"
             "<dataset id='0' dimensions='1'>\n"
             "  <point frame='20' label='' />\n"
             "  <point frame='20' label='Label &amp;&apos;&quot;&gt;' />\n"

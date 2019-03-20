@@ -171,8 +171,7 @@ public:
 
         bool allChange = false;
            
-        {
-            QMutexLocker locker(&m_mutex);
+        {   QMutexLocker locker(&m_mutex);
             m_events.add(e.withoutDuration()); // can't have duration here
 
             if (e.getLabel() != "") {
