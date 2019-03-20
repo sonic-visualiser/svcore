@@ -93,6 +93,15 @@ public:
                                   sv_frame_t duration) const;
 
     /**
+     * Retrieve all events that cover the given frame. An event without
+     * duration covers a frame if its own frame is equal to it. An event
+     * with duration covers a frame if its start frame is less than or
+     * equal to it and its end frame (start + duration) is greater
+     * than it.
+     */
+    EventVector getEventsCovering(sv_frame_t frame) const;
+
+    /**
      * Retrieve all events falling wholly within the range in frames
      * defined by the given frame f and duration d.
      *
@@ -113,25 +122,19 @@ public:
 
     /**
      * Retrieve all events starting within the range in frames defined
-     * by the given frame f and duration d.
-     *
-     * - An event without duration starts within the range if its own
-     * frame is greater than or equal to f and less than f + d.
-     * 
-     * - An event with duration starts within the range if its start
-     * frame is greater than or equal to f.
+     * by the given frame f and duration d. An event (regardless of
+     * whether it has duration or not) starts within the range if its
+     * start frame is greater than or equal to f and less than f + d.
      */
     EventVector getEventsStartingWithin(sv_frame_t frame,
                                         sv_frame_t duration) const;
 
     /**
-     * Retrieve all events that cover the given frame. An event without
-     * duration covers a frame if its own frame is equal to it. An event
-     * with duration covers a frame if its start frame is less than or
-     * equal to it and its end frame (start + duration) is greater
-     * than it.
+     * Retrieve all events starting at exactly the given frame.
      */
-    EventVector getEventsCovering(sv_frame_t frame) const;
+    EventVector getEventsStartingAt(sv_frame_t frame) const {
+        return getEventsStartingWithin(frame, 1);
+    }
 
     /**
      * Retrieve all events, in their natural order.

@@ -519,6 +519,27 @@ private slots:
                  EventVector({ b, c, cc, d, dd }));
     }
 
+    void eventPatternStartingAt() {
+
+        EventSeries s;
+        Event a(0, 1.0f, 18, QString("a"));
+        Event b(3, 2.0f, 6, QString("b"));
+        Event c(5, 3.0f, 2, QString("c"));
+        Event cc(5, 3.1f, 2, QString("cc"));
+        Event d(6, 4.0f, 10, QString("d"));
+        Event dd(6, 4.5f, 10, QString("dd"));
+        Event e(14, 5.0f, 3, QString("e"));
+        s.add(b);
+        s.add(c);
+        s.add(d);
+        s.add(a);
+        s.add(cc);
+        s.add(dd);
+        s.add(e);
+        QCOMPARE(s.getEventsStartingAt(2), EventVector());
+        QCOMPARE(s.getEventsStartingAt(5), EventVector({ c, cc }));
+    }
+
     void eventPatternEndFrame() {
 
         EventSeries s;

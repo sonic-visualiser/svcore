@@ -143,6 +143,9 @@ public:
     EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
         return m_events.getEventsSpanning(f, duration);
     }
+    EventVector getEventsCovering(sv_frame_t f) const {
+        return m_events.getEventsCovering(f);
+    }
     EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration,
                                 int overspill = 0) const {
         return m_events.getEventsWithin(f, duration, overspill);
@@ -150,8 +153,8 @@ public:
     EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
         return m_events.getEventsStartingWithin(f, duration);
     }
-    EventVector getEventsCovering(sv_frame_t f) const {
-        return m_events.getEventsCovering(f);
+    EventVector getEventsStartingAt(sv_frame_t f) const {
+        return m_events.getEventsStartingAt(f);
     }
     bool getNearestEventMatching(sv_frame_t startSearchAt,
                                  std::function<bool(Event)> predicate,
