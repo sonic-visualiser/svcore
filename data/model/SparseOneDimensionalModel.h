@@ -47,6 +47,7 @@ public:
                               bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
+        m_haveTextLabels(false),
         m_notifier(this,
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
@@ -78,6 +79,8 @@ public:
 
     bool canPlay() const override { return true; }
     QString getDefaultPlayClipId() const override { return "tap"; }
+    
+    bool hasTextLabels() const { return m_haveTextLabels; }
     
     int getCompletion() const { return m_completion; }
 
@@ -148,6 +151,10 @@ public:
 
         {   QMutexLocker locker(&m_mutex);
             m_events.add(e.withoutValue().withoutDuration());
+
+            if (e.getLabel() != "") {
+                m_haveTextLabels = true;
+            }
         }
         
         m_notifier.update(e.getFrame(), m_resolution);
@@ -290,6 +297,7 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 
+    bool m_haveTextLabels;
     DeferredNotifier m_notifier;
     int m_completion;
 
