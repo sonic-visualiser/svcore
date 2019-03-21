@@ -43,16 +43,6 @@ private slots:
 
         Event p(10);
         m.add(p);
-/*!!!
-        m.clear();
-        QCOMPARE(m.isEmpty(), true);
-        QCOMPARE(m.getEventCount(), 0);
-        QCOMPARE(m.getAllEvents().size(), 0);
-        QCOMPARE(m.getStartFrame(), 0);
-        QCOMPARE(m.getEndFrame(), 0);
-
-        m.add(p);
-*/
         m.remove(p);
         QCOMPARE(m.isEmpty(), true);
         QCOMPARE(m.getEventCount(), 0);
@@ -95,19 +85,20 @@ private slots:
         QCOMPARE(m.getAllEvents().size(), 3);
         QCOMPARE(*m.getAllEvents().begin(), p1);
         QCOMPARE(*m.getAllEvents().rbegin(), p3);
-/*!!!
-        auto pp = m.getAllEvents(20, 30);
+
+        // The EventSeries that is used internally is tested more
+        // thoroughly in its own test suite. This is just a check
+        auto pp = m.getEventsWithin(20, 10);
         QCOMPARE(pp.size(), 2);
         QCOMPARE(*pp.begin(), p1);
         QCOMPARE(*pp.rbegin(), p2);
         
-        pp = m.getAllEvents(40, 50);
+        pp = m.getEventsWithin(40, 10);
         QCOMPARE(pp.size(), 0);
 
-        pp = m.getAllEvents(50, 50);
+        pp = m.getEventsStartingAt(50);
         QCOMPARE(pp.size(), 1);
         QCOMPARE(*pp.begin(), p3);
-*/
     }
 
     void s1d_xml() {

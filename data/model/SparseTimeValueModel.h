@@ -81,10 +81,19 @@ public:
     }
 
     QString getTypeName() const override { return tr("Sparse Time-Value"); }
-
+    bool isSparse() const { return true; }
     bool isOK() const override { return true; }
-    sv_frame_t getStartFrame() const override { return m_events.getStartFrame(); }
-    sv_frame_t getEndFrame() const override { return m_events.getEndFrame(); }
+
+    sv_frame_t getStartFrame() const override {
+        return m_events.getStartFrame();
+    }
+    sv_frame_t getEndFrame() const override {
+        if (m_events.isEmpty()) return 0;
+        sv_frame_t e = m_events.getEndFrame() + 1;
+        if (e % m_resolution == 0) return e;
+        else return (e / m_resolution + 1) * m_resolution;
+    }
+    
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
     int getResolution() const { return m_resolution; }
 

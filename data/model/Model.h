@@ -56,11 +56,12 @@ public:
 
     /**
      * Return the audio frame at the end of the model, i.e. the final
-     * frame contained within the model plus 1 (or plus the model's
-     * "resolution" granularity, if more than 1). The end frame minus
-     * the start frame should yield the total duration in frames
-     * spanned by the model. This is consistent with the definition of
-     * the end frame of a Selection object.
+     * frame contained within the model plus 1 (rounded up to the
+     * model's "resolution" granularity, if more than 1). The end
+     * frame minus the start frame should yield the total duration in
+     * frames (as a multiple of the resolution) spanned by the
+     * model. This is broadly consistent with the definition of the
+     * end frame of a Selection object.
      */
     virtual sv_frame_t getEndFrame() const = 0;
 
