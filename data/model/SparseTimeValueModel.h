@@ -227,8 +227,6 @@ public:
     }
 
     bool isColumnTimeValue(int column) const override {
-        // NB duration is not a "time value" -- that's for columns
-        // whose sort ordering is exactly that of the frame time
         return (column < 2);
     }
 

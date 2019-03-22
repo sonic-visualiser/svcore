@@ -151,14 +151,13 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = false;
-            const TextModel::PointList &pl(m->getPoints());
             m_fw->setFixedEventTypeURI("af:Text");
-            for (TextModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.values.clear();
-                f.values.push_back(i->height);
-                f.label = i->label.toStdString();
+                f.values.push_back(e.getValue());
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;

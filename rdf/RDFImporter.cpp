@@ -717,11 +717,11 @@ RDFImporterImpl::fillModel(Model *model,
     TextModel *tm =
         dynamic_cast<TextModel *>(model);
     if (tm) {
-        TextModel::Point point
+        Event e
             (ftime,
              values.empty() ? 0.5f : values[0] < 0.f ? 0.f : values[0] > 1.f ? 1.f : values[0], // I was young and feckless once too
              label);
-        tm->addPoint(point);
+        tm->add(e);
         return;
     }
 

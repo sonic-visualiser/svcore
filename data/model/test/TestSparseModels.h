@@ -17,6 +17,7 @@
 
 #include "../SparseOneDimensionalModel.h"
 #include "../NoteModel.h"
+#include "../TextModel.h"
 
 #include <QObject>
 #include <QtTest>
@@ -209,6 +210,34 @@ private slots:
             "  <point frame='20' value='124.3' duration='10' level='0.9' label='note 2' />\n"
             "  <point frame='20' value='123.4' duration='20' level='0.8' label='note 1' />\n"
             "  <point frame='50' value='126.3' duration='30' level='0.9' label='note 3' />\n"
+            "</dataset>\n";
+        expected.replace("\'", "\"");
+        if (xml != expected) {
+            cerr << "Obtained xml:\n" << xml
+                 << "\nExpected:\n" << expected << endl;
+        }
+        QCOMPARE(xml, expected);
+    }
+
+    void text_xml() {
+        TextModel m(100, 10, false);
+        Event p1(20, 1.0f, "text 1");
+        Event p2(20, 0.0f, "text 2");
+        Event p3(50, 0.3f, "text 3");
+        m.add(p1);
+        m.add(p2);
+        m.add(p3);
+        QString xml;
+        QTextStream str(&xml, QIODevice::WriteOnly);
+        m.toXml(str);
+        str.flush();
+
+        QString expected =
+            "<model id='5' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='4' subtype='text' />\n"
+            "<dataset id='4' dimensions='2'>\n"
+            "  <point frame='20' height='0' label='text 2' />\n"
+            "  <point frame='20' height='1' label='text 1' />\n"
+            "  <point frame='50' height='0.3' label='text 3' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
         if (xml != expected) {
