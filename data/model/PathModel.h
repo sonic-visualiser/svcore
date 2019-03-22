@@ -179,7 +179,6 @@ public:
         
     }
     
-
 protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;

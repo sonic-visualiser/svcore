@@ -253,9 +253,9 @@ private slots:
         PathPoint p1(20, 30);
         PathPoint p2(40, 60);
         PathPoint p3(50, 49);
-        m.addPoint(p1);
-        m.addPoint(p2);
-        m.addPoint(p3);
+        m.add(p1);
+        m.add(p2);
+        m.add(p3);
         QString xml;
         QTextStream str(&xml, QIODevice::WriteOnly);
         m.toXml(str);
@@ -275,7 +275,7 @@ private slots:
         }
         QCOMPARE(xml, expected);
     }
-        
+
 };
 
 #endif

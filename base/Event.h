@@ -139,6 +139,15 @@ public:
         p.m_label = label;
         return p;
     }
+
+    bool hasUri() const { return m_uri != QString(); }
+    QString getURI() const { return m_uri; }
+
+    Event withURI(QString uri) const {
+        Event p(*this);
+        p.m_uri = uri;
+        return p;
+    }
     
     bool hasLevel() const { return m_haveLevel; }
     float getLevel() const { return m_haveLevel ? m_level : 0.f; }
@@ -196,6 +205,7 @@ public:
             (m_referenceFrame != p.m_referenceFrame)) return false;
         
         if (m_label != p.m_label) return false;
+        if (m_uri != p.m_uri) return false;
         
         return true;
     }
@@ -240,7 +250,10 @@ public:
             return m_referenceFrame < p.m_referenceFrame;
         }
         
-        return m_label < p.m_label;
+        if (m_label != p.m_label) {
+            return m_label < p.m_label;
+        }
+        return m_uri < p.m_uri;
     }
 
     void toXml(QTextStream &stream,
@@ -256,6 +269,10 @@ public:
                                       .arg(m_referenceFrame);
         stream << QString("label=\"%1\" ")
             .arg(XmlExportable::encodeEntities(m_label));
+        if (m_uri != QString()) {
+            stream << QString("uri=\"%1\" ")
+                .arg(XmlExportable::encodeEntities(m_uri));
+        }
         stream << extraAttributes << "/>\n";
     }
 
@@ -332,6 +349,7 @@ public:
         }
         
         if (m_label != "") list << m_label;
+        if (m_uri != "") list << m_uri;
         
         return list.join(delimiter);
     }
@@ -343,6 +361,7 @@ public:
         h ^= qHash(m_frame);
         if (m_haveDuration) h ^= qHash(m_duration);
         if (m_haveReferenceFrame) h ^= qHash(m_referenceFrame);
+        h ^= qHash(m_uri);
         return h;
     }
     
@@ -360,6 +379,7 @@ private:
     sv_frame_t m_duration;
     sv_frame_t m_referenceFrame;
     QString m_label;
+    QString m_uri;
 };
 
 inline uint qHash(const Event &e, uint seed = 0) {
