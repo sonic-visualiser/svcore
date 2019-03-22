@@ -18,6 +18,7 @@
 #include "../SparseOneDimensionalModel.h"
 #include "../NoteModel.h"
 #include "../TextModel.h"
+#include "../PathModel.h"
 
 #include <QObject>
 #include <QtTest>
@@ -238,6 +239,34 @@ private slots:
             "  <point frame='20' height='0' label='text 2' />\n"
             "  <point frame='20' height='1' label='text 1' />\n"
             "  <point frame='50' height='0.3' label='text 3' />\n"
+            "</dataset>\n";
+        expected.replace("\'", "\"");
+        if (xml != expected) {
+            cerr << "Obtained xml:\n" << xml
+                 << "\nExpected:\n" << expected << endl;
+        }
+        QCOMPARE(xml, expected);
+    }
+    
+    void path_xml() {
+        PathModel m(100, 10, false);
+        PathPoint p1(20, 30);
+        PathPoint p2(40, 60);
+        PathPoint p3(50, 49);
+        m.addPoint(p1);
+        m.addPoint(p2);
+        m.addPoint(p3);
+        QString xml;
+        QTextStream str(&xml, QIODevice::WriteOnly);
+        m.toXml(str);
+        str.flush();
+
+        QString expected =
+            "<model id='7' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='4' subtype='path' />\n"
+            "<dataset id='6' dimensions='2'>\n"
+            "  <point frame='20' mapframe='30' />\n"
+            "  <point frame='40' mapframe='60' />\n"
+            "  <point frame='50' mapframe='49' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
         if (xml != expected) {

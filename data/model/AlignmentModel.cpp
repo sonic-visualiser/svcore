@@ -244,7 +244,7 @@ AlignmentModel::constructPath() const
         sv_frame_t frame = p.getFrame();
         double value = p.getValue();
         sv_frame_t rframe = lrint(value * m_aligned->getSampleRate());
-        m_path->addPoint(PathPoint(frame, rframe));
+        m_path->add(PathPoint(frame, rframe));
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -275,7 +275,7 @@ AlignmentModel::constructReversePath() const
          i != points.end(); ++i) {
         sv_frame_t frame = i->frame;
         sv_frame_t rframe = i->mapframe;
-        m_reversePath->addPoint(PathPoint(rframe, frame));
+        m_reversePath->add(PathPoint(rframe, frame));
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -306,7 +306,7 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
     cerr << "AlignmentModel::align: frame " << frame << " requested" << endl;
 #endif
 
-    PathModel::Point point(frame);
+    PathPoint point(frame);
     PathModel::PointList::const_iterator i = points.lower_bound(point);
     if (i == points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL

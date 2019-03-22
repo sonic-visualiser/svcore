@@ -38,7 +38,6 @@
  * Model containing sparse data (points with some properties).  The
  * properties depend on the point type.
  */
-
 template <typename PointType>
 class SparseModel : public Model,
                     public TabularModel
@@ -995,7 +994,6 @@ SparseModel<PointType>::EditCommand::addCommand(Command *command,
 
     MacroCommand::addCommand(command);
 }
-
 
 #endif
 
