@@ -43,6 +43,7 @@ public:
 
     bool isEmpty() const { return getMessagesAvailable() == 0; }
     int getMessagesAvailable() const;
+    void postMessage(OSCMessage);
     OSCMessage readMessage();
 
     QString getOSCURL() const;
@@ -59,7 +60,6 @@ protected:
                                  int, lo_message, void *);
 #endif
 
-    void postMessage(OSCMessage);
     bool parseOSCPath(QString path, int &target, int &targetData, QString &method);
 
     RingBuffer<OSCMessage *> m_buffer;
