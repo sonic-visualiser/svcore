@@ -30,6 +30,8 @@
 
 #include <unistd.h>
 
+#include <QThread>
+
 void
 OSCQueue::oscError(int num, const char *msg, const char *path)
 {
@@ -155,6 +157,9 @@ OSCQueue::readMessage()
     OSCMessage *message = m_buffer.readOne();
     OSCMessage rmessage = *message;
     delete message;
+    SVDEBUG << "OSCQueue::readMessage: In thread "
+            << QThread::currentThreadId() << ": message follows:\n"
+            << rmessage.toString() << endl;
     return rmessage;
 }
 

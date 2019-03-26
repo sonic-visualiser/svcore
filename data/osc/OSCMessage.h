@@ -50,6 +50,18 @@ public:
     int getArgCount() const;
     const QVariant &getArg(int i) const;
 
+    // For debugging purposes, not for interchange
+    QString toString() const {
+        QString s = QString("[%1][%2] %3")
+            .arg(m_target)
+            .arg(m_targetData)
+            .arg(m_method);
+        for (auto a: m_args) {
+            s.push_back(" \"" + a.toString() + "\"");
+        }
+        return s;
+    }
+
 private:
     int m_target;
     int m_targetData;
