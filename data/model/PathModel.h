@@ -76,7 +76,7 @@ public:
         m_end(0) {
     }
 
-    QString getTypeName() const override { return tr("Text"); }
+    QString getTypeName() const override { return tr("Path"); }
     bool isSparse() const { return true; }
     bool isOK() const override { return true; }
 
