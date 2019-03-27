@@ -85,7 +85,6 @@ SVCORE_HEADERS = \
            data/model/EventCommands.h \
            data/model/FFTModel.h \
            data/model/ImageModel.h \
-           data/model/IntervalModel.h \
            data/model/Labeller.h \
            data/model/Model.h \
            data/model/ModelDataTableModel.h \
@@ -96,10 +95,8 @@ SVCORE_HEADERS = \
            data/model/RangeSummarisableTimeValueModel.h \
            data/model/RegionModel.h \
            data/model/RelativelyFineZoomConstraint.h \
-           data/model/SparseModel.h \
            data/model/SparseOneDimensionalModel.h \
            data/model/SparseTimeValueModel.h \
-           data/model/SparseValueModel.h \
            data/model/TabularModel.h \
            data/model/TextModel.h \
            data/model/WaveformOversampler.h \
