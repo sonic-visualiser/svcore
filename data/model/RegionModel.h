@@ -107,7 +107,7 @@ public:
     float getValueMinimum() const { return m_valueMinimum; }
     float getValueMaximum() const { return m_valueMaximum; }
     
-    int getCompletion() const { return m_completion; }
+    int getCompletion() const override { return m_completion; }
 
     void setCompletion(int completion, bool update = true) {
 

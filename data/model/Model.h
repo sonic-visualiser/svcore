@@ -133,22 +133,42 @@ public:
     /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
-     * background thread.  The default implementation is appropriate
-     * for a thread that does not background any work but carries out
-     * all its calculation from the constructor or accessors.
+     * background thread.
      *
-     * If "completion" is non-NULL, this function should return
-     * through it an estimated percentage value showing how far
-     * through the background operation it thinks it is (for progress
-     * reporting).
+     * If "completion" is non-NULL, return through it an estimated
+     * percentage value showing how far through the background
+     * operation it thinks it is (for progress reporting). This should
+     * be identical to the value returned by getCompletion().
+     *
+     * A model that carries out all its calculation from the
+     * constructor or accessor functions would typically return true
+     * (and completion == 100) as long as isOK() is true. Other models
+     * may make the return value here depend on the internal
+     * completion status.
      *
      * See also getCompletion().
      */
-    virtual bool isReady(int *completion = 0) const {
-        bool ok = isOK();
-        if (completion) *completion = (ok ? 100 : 0);
-        return ok;
+    virtual bool isReady(int *cp = nullptr) const {
+        int c = getCompletion();
+        if (cp) *cp = c;
+        if (!isOK()) return false;
+        else return (c == 100);
     }
+    
+    /**
+     * Return an estimated percentage value showing how far through
+     * any background operation used to calculate or load the model
+     * data the model thinks it is. Must return 100 when the model is
+     * complete.
+     *
+     * A model that carries out all its calculation from the
+     * constructor or accessor functions might return 0 if isOK() is
+     * false and 100 if isOK() is true. Other models may make the
+     * return value here depend on the internal completion status.
+     *
+     * See also isReady().
+     */
+    virtual int getCompletion() const = 0;
 
     /**
      * If this model imposes a zoom constraint, i.e. some limit to the
