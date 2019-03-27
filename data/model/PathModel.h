@@ -115,6 +115,9 @@ public:
     /**
      * Query methods.
      */
+    int getPointCount() const {
+        return int(m_points.size());
+    }
     const PointList &getPoints() const {
         return m_points;
     }

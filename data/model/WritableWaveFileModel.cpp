@@ -221,15 +221,6 @@ WritableWaveFileModel::isOK() const
     return (m_model && m_model->isOK());
 }
 
-bool
-WritableWaveFileModel::isReady(int *completion) const
-{
-    int c = getCompletion();
-    if (completion) *completion = c;
-    if (!isOK()) return false;
-    return (c == 100);
-}
-
 void
 WritableWaveFileModel::setWriteProportion(int proportion)
 {

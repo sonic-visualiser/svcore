@@ -41,6 +41,11 @@ public:
     sv_frame_t getEndFrame() const override;
     sv_samplerate_t getSampleRate() const override;
     bool isReady(int *completion = 0) const override;
+    int getCompletion() const override {
+        int c = 0;
+        (void)isReady(&c);
+        return c;
+    }
     const ZoomConstraint *getZoomConstraint() const override;
 
     QString getTypeName() const override { return tr("Alignment"); }

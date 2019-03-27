@@ -20,8 +20,6 @@
 
 #include <iostream>
 
-const int Model::COMPLETION_UNKNOWN = -1;
-
 Model::~Model()
 {
     SVDEBUG << "Model::~Model(" << this << ")" << endl;

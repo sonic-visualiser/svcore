@@ -81,8 +81,8 @@ public:
     QString getDefaultPlayClipId() const override { return "tap"; }
     
     bool hasTextLabels() const { return m_haveTextLabels; }
-    
-    int getCompletion() const { return m_completion; }
+        
+    int getCompletion() const override { return m_completion; }
 
     void setCompletion(int completion, bool update = true) {
         
