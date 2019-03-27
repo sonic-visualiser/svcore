@@ -485,12 +485,21 @@ EventSeries::toXml(QTextStream &out,
                    QString indent,
                    QString extraAttributes) const
 {
+    toXml(out, indent, extraAttributes, Event::ExportNameOptions());
+}
+
+void
+EventSeries::toXml(QTextStream &out,
+                   QString indent,
+                   QString extraAttributes,
+                   Event::ExportNameOptions options) const
+{
     out << indent << QString("<dataset id=\"%1\" %2>\n")
         .arg(getObjectExportId(this))
         .arg(extraAttributes);
     
     for (const auto &p: m_events) {
-        p.toXml(out, indent + "  ");
+        p.toXml(out, indent + "  ", "", options);
     }
     
     out << indent << "</dataset>\n";
