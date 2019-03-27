@@ -140,16 +140,15 @@ public:
      * If "completion" is non-NULL, this function should return
      * through it an estimated percentage value showing how far
      * through the background operation it thinks it is (for progress
-     * reporting).  If it has no way to calculate progress, it may
-     * return the special value COMPLETION_UNKNOWN.  See also
-     * getCompletion().
+     * reporting).
+     *
+     * See also getCompletion().
      */
     virtual bool isReady(int *completion = 0) const {
         bool ok = isOK();
         if (completion) *completion = (ok ? 100 : 0);
         return ok;
     }
-    static const int COMPLETION_UNKNOWN;
 
     /**
      * If this model imposes a zoom constraint, i.e. some limit to the
