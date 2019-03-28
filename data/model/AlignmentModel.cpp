@@ -417,9 +417,9 @@ AlignmentModel::toXml(QTextStream &stream,
 
     Model::toXml(stream, indent,
                  QString("type=\"alignment\" reference=\"%1\" aligned=\"%2\" path=\"%3\" %4")
-                 .arg(getObjectExportId(m_reference))
-                 .arg(getObjectExportId(m_aligned))
-                 .arg(getObjectExportId(m_path))
+                 .arg(m_reference->getExportId())
+                 .arg(m_aligned->getExportId())
+                 .arg(m_path->getExportId())
                  .arg(extraAttributes));
 }
 

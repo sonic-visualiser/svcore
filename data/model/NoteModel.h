@@ -373,7 +373,7 @@ public:
              .arg(m_resolution)
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
-             .arg(getObjectExportId(&m_events))
+             .arg(m_events.getExportId())
              .arg(m_subtype == FLEXI_NOTE ? "flexinote" : "note")
              .arg(m_valueQuantization)
              .arg(m_valueMinimum)

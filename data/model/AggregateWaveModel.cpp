@@ -233,7 +233,7 @@ AggregateWaveModel::toXml(QTextStream &out,
 {
     QStringList componentStrings;
     for (const auto &c: m_components) {
-        componentStrings.push_back(QString("%1").arg(getObjectExportId(c.model)));
+        componentStrings.push_back(QString("%1").arg(c.model->getExportId()));
     }
     Model::toXml(out, indent,
                  QString("type=\"aggregatewave\" components=\"%1\" %2")

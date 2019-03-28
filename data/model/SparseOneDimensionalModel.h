@@ -285,7 +285,7 @@ public:
              .arg(m_resolution)
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
-             .arg(getObjectExportId(&m_events))
+             .arg(m_events.getExportId())
              .arg(extraAttributes));
         
         m_events.toXml(out, indent, QString("dimensions=\"1\""));

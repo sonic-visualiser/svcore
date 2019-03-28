@@ -68,19 +68,17 @@ XmlExportable::encodeColour(int ri, int gi, int bi)
 }
 
 int
-XmlExportable::getObjectExportId(const void * object)
+XmlExportable::getExportId() const
 {
-    static QMutex mutex;
-    QMutexLocker locker(&mutex);
-
-    static std::map<const void *, int> idMap;
-    static int maxId = 0;
-    
-    if (idMap.find(object) == idMap.end()) {
-        idMap[object] = maxId++;
+    if (m_exportId == -1) {
+        static QMutex mutex;
+        static int lastId = 0;
+        QMutexLocker locker(&mutex);
+        if (m_exportId == -1) {
+            m_exportId = ++lastId;
+        }
     }
-
-    return idMap[object];
+    return m_exportId;
 }
 
 

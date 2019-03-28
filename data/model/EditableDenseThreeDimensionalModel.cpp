@@ -526,7 +526,11 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 {
     QReadLocker locker(&m_lock);
 
-    // For historical reasons we read and write "resolution" as "windowSize"
+    // For historical reasons we read and write "resolution" as "windowSize".
+
+    // Our dataset doesn't have its own export ID, we just use
+    // ours. Actually any model could do that, since datasets aren't
+    // in the same id-space as models when re-read
 
     SVDEBUG << "EditableDenseThreeDimensionalModel::toXml" << endl;
 
@@ -537,13 +541,13 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
          .arg(m_yBinCount)
          .arg(m_minimum)
          .arg(m_maximum)
-         .arg(getObjectExportId(&m_data))
+         .arg(getExportId())
          .arg(m_startFrame)
          .arg(extraAttributes));
 
     out << indent;
     out << QString("<dataset id=\"%1\" dimensions=\"3\" separator=\" \">\n")
-        .arg(getObjectExportId(&m_data));
+        .arg(getExportId());
 
     for (int i = 0; i < (int)m_binNames.size(); ++i) {
         if (m_binNames[i] != "") {

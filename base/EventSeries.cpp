@@ -495,7 +495,7 @@ EventSeries::toXml(QTextStream &out,
                    Event::ExportNameOptions options) const
 {
     out << indent << QString("<dataset id=\"%1\" %2>\n")
-        .arg(getObjectExportId(this))
+        .arg(getExportId())
         .arg(extraAttributes);
     
     for (const auto &p: m_events) {

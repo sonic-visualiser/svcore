@@ -167,6 +167,10 @@ public:
     void toXml(QTextStream &out,
                        QString indent = "",
                        QString extraAttributes = "") const override {
+
+        // Our dataset doesn't have its own export ID, we just use
+        // ours. Actually any model could do that, since datasets
+        // aren't in the same id-space as models when re-read
         
         Model::toXml
             (out,
@@ -176,11 +180,11 @@ public:
              .arg(m_resolution)
              .arg("true") // always true after model reaches 100% -
                           // subsequent points are always notified
-             .arg(getObjectExportId(&m_points))
+             .arg(getExportId())
              .arg(extraAttributes));
 
         out << indent << QString("<dataset id=\"%1\" dimensions=\"2\">\n")
-            .arg(getObjectExportId(&m_points));
+            .arg(getExportId());
         
         for (PathPoint p: m_points) {
             p.toXml(out, indent + "  ", "");
