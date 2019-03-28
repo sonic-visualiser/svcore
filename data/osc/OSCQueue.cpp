@@ -91,24 +91,37 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
 
 #endif
    
-OSCQueue::OSCQueue() :
+OSCQueue::OSCQueue(bool withNetworkPort) :
 #ifdef HAVE_LIBLO
     m_thread(nullptr),
 #endif
+    m_withPort(withNetworkPort),
     m_buffer(OSC_MESSAGE_QUEUE_SIZE)
 {
     Profiler profiler("OSCQueue::OSCQueue");
 
 #ifdef HAVE_LIBLO
-    m_thread = lo_server_thread_new(nullptr, oscError);
+    if (m_withPort) {
+        m_thread = lo_server_thread_new(nullptr, oscError);
 
-    lo_server_thread_add_method(m_thread, nullptr, nullptr,
-                                oscMessageHandler, this);
+        lo_server_thread_add_method(m_thread, nullptr, nullptr,
+                                    oscMessageHandler, this);
 
-    lo_server_thread_start(m_thread);
+        lo_server_thread_start(m_thread);
 
-    cout << "OSCQueue::OSCQueue: Base OSC URL is "
-              << lo_server_thread_get_url(m_thread) << endl;
+        SVDEBUG << "OSCQueue::OSCQueue: Started OSC thread, URL is "
+             << lo_server_thread_get_url(m_thread) << endl;
+            
+        cout << "OSCQueue::OSCQueue: Base OSC URL is "
+             << lo_server_thread_get_url(m_thread) << endl;
+    }
+#else
+    if (m_withPort) {
+        SVDEBUG << "OSCQueue::OSCQueue: Note: OSC port support not "
+                << "compiled in; not opening port, falling back to "
+                << "internal-only queue" << endl;
+        m_withPort = false;
+    }
 #endif
 }
 
@@ -128,11 +141,15 @@ OSCQueue::~OSCQueue()
 bool
 OSCQueue::isOK() const
 {
+    if (!m_withPort) {
+        return true;
+    } else {
 #ifdef HAVE_LIBLO
-    return (m_thread != nullptr);
+        return (m_thread != nullptr);
 #else
-    return false;
+        return false;
 #endif
+    }
 }
 
 QString
@@ -140,7 +157,9 @@ OSCQueue::getOSCURL() const
 {
     QString url = "";
 #ifdef HAVE_LIBLO
-    url = lo_server_thread_get_url(m_thread);
+    if (m_thread) {
+        url = lo_server_thread_get_url(m_thread);
+    }
 #endif
     return url;
 }
@@ -185,8 +204,9 @@ OSCQueue::postMessage(OSCMessage message)
     OSCMessage *mp = new OSCMessage(message);
     m_buffer.write(&mp, 1);
     SVDEBUG << "OSCQueue::postMessage: Posted OSC message: target "
-              << message.getTarget() << ", target data " << message.getTargetData()
-              << ", method " << message.getMethod() << endl;
+            << message.getTarget() << ", target data "
+            << message.getTargetData() << ", method "
+            << message.getMethod() << endl;
     emit messagesAvailable();
 }
 
@@ -225,7 +245,8 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
         return false;
     }
 
-    SVDEBUG << "OSCQueue::parseOSCPath: good path \"" << path              << "\"" << endl;
+    SVDEBUG << "OSCQueue::parseOSCPath: good path \"" << path
+            << "\"" << endl;
 
     return true;
 }
