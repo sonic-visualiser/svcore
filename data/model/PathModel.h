@@ -179,7 +179,14 @@ public:
              .arg(getObjectExportId(&m_points))
              .arg(extraAttributes));
 
+        out << indent << QString("<dataset id=\"%1\" dimensions=\"2\">\n")
+            .arg(getObjectExportId(&m_points));
         
+        for (PathPoint p: m_points) {
+            p.toXml(out, indent + "  ", "");
+        }
+
+        out << indent << "</dataset>\n";
     }
     
 protected:
