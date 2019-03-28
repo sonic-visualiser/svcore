@@ -487,28 +487,16 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 }
 
 QString
-EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) const
-{
-    QReadLocker locker(&m_lock);
-    QString s;
-    for (int i = 0; in_range_for(m_data, i); ++i) {
-        QStringList list;
-        for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
-            list << QString("%1").arg(m_data.at(i).at(j));
-        }
-        s += list.join(delimiter) + "\n";
-    }
-    return s;
-}
-
-QString
-EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
+EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter,
+                                                          DataExportOptions,
+                                                          sv_frame_t startFrame,
+                                                          sv_frame_t duration) const
 {
     QReadLocker locker(&m_lock);
     QString s;
     for (int i = 0; in_range_for(m_data, i); ++i) {
         sv_frame_t fr = m_startFrame + i * m_resolution;
-        if (fr >= f0 && fr < f1) {
+        if (fr >= startFrame && fr < startFrame + duration) {
             QStringList list;
             for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));

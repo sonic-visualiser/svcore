@@ -63,6 +63,11 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const override;
 
+    QString toDelimitedDataString(QString, DataExportOptions,
+                                  sv_frame_t, sv_frame_t) const override {
+        return "";
+    }
+
 signals:
     void modelChanged();
     void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);

@@ -29,22 +29,23 @@ DenseTimeValueModel::~DenseTimeValueModel()
 }
         
 QString
-DenseTimeValueModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
+DenseTimeValueModel::toDelimitedDataString(QString delimiter,
+                                           DataExportOptions,
+                                           sv_frame_t startFrame,
+                                           sv_frame_t duration) const
 {
     int ch = getChannelCount();
 
-//    cerr << "f0 = " << f0 << ", f1 = " << f1 << endl;
+    if (duration <= 0) return "";
 
-    if (f1 <= f0) return "";
-
-    auto data = getMultiChannelData(0, ch - 1, f0, f1 - f0);
+    auto data = getMultiChannelData(0, ch - 1, startFrame, duration);
 
     if (data.empty() || data[0].empty()) return "";
     
     QStringList list;
     for (sv_frame_t i = 0; in_range_for(data[0], i); ++i) {
         QStringList parts;
-        parts << QString("%1").arg(f0 + i);
+        parts << QString("%1").arg(startFrame + i);
         for (int c = 0; in_range_for(data, c); ++c) {
             parts << QString("%1").arg(data[c][i]);
         }

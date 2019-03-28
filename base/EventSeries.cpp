@@ -14,6 +14,16 @@
 
 #include "EventSeries.h"
 
+EventSeries
+EventSeries::fromEvents(const EventVector &v)
+{
+    EventSeries s;
+    for (const auto &e: v) {
+        s.add(e);
+    }
+    return s;
+}
+
 bool
 EventSeries::isEmpty() const
 {
@@ -505,4 +515,68 @@ EventSeries::toXml(QTextStream &out,
     out << indent << "</dataset>\n";
 }
 
+QString
+EventSeries::toDelimitedDataString(QString delimiter,
+                                   DataExportOptions options,
+                                   sv_frame_t startFrame,
+                                   sv_frame_t duration,
+                                   sv_samplerate_t sampleRate,
+                                   sv_frame_t resolution,
+                                   Event fillEvent) const
+{
+    QString s;
+
+    const sv_frame_t end = startFrame + duration;
+
+    auto pitr = lower_bound(m_events.begin(), m_events.end(),
+                            Event(startFrame));
+            
+    if (!(options & DataExportFillGaps)) {
+        
+        while (pitr != m_events.end() && pitr->getFrame() < end) {
+            s += pitr->toDelimitedDataString(delimiter,
+                                             options,
+                                             sampleRate);
+            s += "\n";
+            ++pitr;
+        }
+
+    } else {
+        
+        // find frame time of first point in range (if any)
+        sv_frame_t first = startFrame;
+        if (pitr != m_events.end()) {
+            first = pitr->getFrame();
+        }
+
+        // project back to first frame time in range according to
+        // resolution.  e.g. if f0 = 2, first = 9, resolution = 4 then
+        // we start at 5 (because 1 is too early and we need to arrive
+        // at 9 to match the first actual point). This method is
+        // stupid but easy to understand:
+        sv_frame_t f = first;
+        while (f >= startFrame + resolution) f -= resolution;
+        
+        // now progress, either writing the next point (if within
+        // distance) or a default fill point
+        while (f < end) {
+            if (pitr != m_events.end() && pitr->getFrame() <= f) {
+                s += pitr->toDelimitedDataString
+                    (delimiter,
+                     options & ~DataExportFillGaps,
+                     sampleRate);
+                ++pitr;
+            } else {
+                s += fillEvent.withFrame(f).toDelimitedDataString
+                    (delimiter,
+                     options & ~DataExportFillGaps,
+                     sampleRate);
+            }
+            s += "\n";
+            f += resolution;
+        }
+    }
+    
+    return s;
+}
 

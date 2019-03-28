@@ -52,6 +52,8 @@ public:
     bool operator==(const EventSeries &other) const {
         return m_events == other.m_events;
     }
+
+    static EventSeries fromEvents(const EventVector &ee);
     
     void clear();
     void add(const Event &e);
@@ -213,6 +215,18 @@ public:
                QString indent,
                QString extraAttributes,
                Event::ExportNameOptions) const;
+
+    /**
+     * Emit events starting within the given range to a delimited
+     * (e.g. comma-separated) data format.
+     */
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration,
+                                  sv_samplerate_t sampleRate,
+                                  sv_frame_t resolution,
+                                  Event fillEvent) const;
     
 private:
     /**

@@ -326,7 +326,21 @@ public:
         
         m_events.toXml(out, indent, QString("dimensions=\"3\""));
     }
-    
+
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override {
+        return m_events.toDelimitedDataString
+            (delimiter,
+             options,
+             startFrame,
+             duration,
+             m_sampleRate,
+             m_resolution,
+             Event().withValue(0.f).withDuration(m_resolution));
+    }
+
 protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;

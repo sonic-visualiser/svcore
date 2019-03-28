@@ -188,8 +188,10 @@ public:
 
     QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 
-    QString toDelimitedDataString(QString delimiter) const override;
-    QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const override;
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override;
 
     void toXml(QTextStream &out,
                        QString indent = "",

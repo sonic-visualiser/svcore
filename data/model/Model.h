@@ -257,21 +257,10 @@ public:
                QString indent = "",
                QString extraAttributes = "") const override;
 
-    virtual QString toDelimitedDataString(QString delimiter) const {
-        return toDelimitedDataStringSubset
-            (delimiter, getStartFrame(), getEndFrame());
-    }
-    virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
-        return toDelimitedDataStringSubsetWithOptions
-            (delimiter, opts, getStartFrame(), getEndFrame());
-    }
-    virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
-        return "";
-    }
-    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions, sv_frame_t f0, sv_frame_t f1) const {
-        // Default implementation supports no options
-        return toDelimitedDataStringSubset(delimiter, f0, f1);
-    }
+    virtual QString toDelimitedDataString(QString delimiter,
+                                          DataExportOptions options,
+                                          sv_frame_t startFrame,
+                                          sv_frame_t duration) const = 0;
 
 public slots:
     void aboutToDelete();

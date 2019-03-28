@@ -192,6 +192,24 @@ public:
 
         out << indent << "</dataset>\n";
     }
+
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override {
+
+        QString s;
+        for (PathPoint p: m_points) {
+            if (p.frame < startFrame) continue;
+            if (p.frame >= startFrame + duration) break;
+            s += QString("%1%2%3\n")
+                .arg(p.frame)
+                .arg(delimiter)
+                .arg(p.mapframe);
+        }
+
+        return s;
+    }
     
 protected:
     sv_samplerate_t m_sampleRate;

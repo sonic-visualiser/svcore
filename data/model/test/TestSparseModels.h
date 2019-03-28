@@ -300,7 +300,6 @@ private slots:
         }
         QCOMPARE(xml, expected);
     }
-
 };
 
 #endif

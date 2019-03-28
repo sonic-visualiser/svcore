@@ -68,11 +68,11 @@ writeInChunks(OutStream& oss,
 
             const auto start = readPtr;
             const auto end = std::min(start + blockSize, endFrame);
-            const auto data = model.toDelimitedDataStringSubsetWithOptions(
+            const auto data = model.toDelimitedDataString(
                 delimiter,
                 options,
                 start,
-                end
+                end - start
             ).trimmed();
 
             if ( data != "" ) {

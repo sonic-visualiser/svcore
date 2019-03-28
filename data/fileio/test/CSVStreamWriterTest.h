@@ -303,7 +303,9 @@ private slots:
 //        qDebug("Create Expected Output\n");
 
         // NB. removed end line break
-        const auto expectedOutput = notes.toDelimitedDataString(",").trimmed();
+        const auto expectedOutput =
+            notes.toDelimitedDataString(",", {}, 0, notes.getEndFrame())
+            .trimmed();
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;
@@ -321,6 +323,7 @@ private slots:
 //        qDebug("\n->>%s<<-\n", expectedOutput.toLocal8Bit().data());
 //        qDebug("\n->>%s<<-\n", oss.str().c_str());
         QVERIFY( wroteSparseModel == true );
+        QVERIFY( oss.str() != std::string() );
         QVERIFY( oss.str() == expectedOutput.toStdString() );
     }
 };
