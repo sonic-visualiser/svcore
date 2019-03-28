@@ -256,21 +256,44 @@ public:
         return m_uri < p.m_uri;
     }
 
+    struct ExportNameOptions {
+
+        ExportNameOptions() :
+            valueAtttributeName("value"),
+            uriAttributeName("uri") { }
+
+        QString valueAtttributeName;
+        QString uriAttributeName;
+    };
+    
     void toXml(QTextStream &stream,
                QString indent = "",
-               QString extraAttributes = "") const {
+               QString extraAttributes = "",
+               ExportNameOptions opts = ExportNameOptions()) const {
 
         // For I/O purposes these are points, not events
         stream << indent << QString("<point frame=\"%1\" ").arg(m_frame);
-        if (m_haveValue) stream << QString("value=\"%1\" ").arg(m_value);
-        if (m_haveDuration) stream << QString("duration=\"%1\" ").arg(m_duration);
-        if (m_haveLevel) stream << QString("level=\"%1\" ").arg(m_level);
-        if (m_haveReferenceFrame) stream << QString("referenceFrame=\"%1\" ")
-                                      .arg(m_referenceFrame);
-        stream << QString("label=\"%1\" ")
-            .arg(XmlExportable::encodeEntities(m_label));
+        if (m_haveValue) {
+            stream << QString("%1=\"%2\" ")
+                .arg(opts.valueAtttributeName).arg(m_value);
+        }
+        if (m_haveDuration) {
+            stream << QString("duration=\"%1\" ").arg(m_duration);
+        }
+        if (m_haveLevel) {
+            stream << QString("level=\"%1\" ").arg(m_level);
+        }
+        if (m_haveReferenceFrame) {
+            stream << QString("referenceFrame=\"%1\" ")
+                .arg(m_referenceFrame);
+        }
+        if (m_label != "") {
+            stream << QString("label=\"%1\" ")
+                .arg(XmlExportable::encodeEntities(m_label));
+        }
         if (m_uri != QString()) {
-            stream << QString("uri=\"%1\" ")
+            stream << QString("%1=\"%2\" ")
+                .arg(opts.uriAttributeName)
                 .arg(XmlExportable::encodeEntities(m_uri));
         }
         stream << extraAttributes << "/>\n";

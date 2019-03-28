@@ -137,7 +137,7 @@ public:
     void add(Event e) override {
 
         {   QMutexLocker locker(&m_mutex);
-            m_events.add(e.withoutDuration());
+            m_events.add(e.withoutDuration().withoutLevel());
         }
         
         m_notifier.update(e.getFrame(), m_resolution);
@@ -250,8 +250,11 @@ public:
                           // subsequent events are always notified
              .arg(getObjectExportId(&m_events))
              .arg(extraAttributes));
+
+        Event::ExportNameOptions options;
+        options.valueAtttributeName = "height";
         
-        m_events.toXml(out, indent, QString("dimensions=\"2\""));
+        m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }
   
 protected:

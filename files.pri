@@ -104,6 +104,7 @@ SVCORE_HEADERS = \
            data/model/ReadOnlyWaveFileModel.h \
            data/model/WritableWaveFileModel.h \
            data/osc/OSCMessage.h \
+           data/osc/OSCMessageCallback.h \
            data/osc/OSCQueue.h \
 	   plugin/PluginScan.h \
            plugin/DSSIPluginFactory.h \

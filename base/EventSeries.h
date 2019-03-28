@@ -205,6 +205,14 @@ public:
     void toXml(QTextStream &out,
                QString indent,
                QString extraAttributes) const override;
+
+    /**
+     * Emit to XML as a dataset element.
+     */
+    void toXml(QTextStream &out,
+               QString indent,
+               QString extraAttributes,
+               Event::ExportNameOptions) const;
     
 private:
     /**

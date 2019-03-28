@@ -76,7 +76,7 @@ public:
         m_end(0) {
     }
 
-    QString getTypeName() const override { return tr("Text"); }
+    QString getTypeName() const override { return tr("Path"); }
     bool isSparse() const { return true; }
     bool isOK() const override { return true; }
 
@@ -179,7 +179,14 @@ public:
              .arg(getObjectExportId(&m_points))
              .arg(extraAttributes));
 
+        out << indent << QString("<dataset id=\"%1\" dimensions=\"2\">\n")
+            .arg(getObjectExportId(&m_points));
         
+        for (PathPoint p: m_points) {
+            p.toXml(out, indent + "  ", "");
+        }
+
+        out << indent << "</dataset>\n";
     }
     
 protected:

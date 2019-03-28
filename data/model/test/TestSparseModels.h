@@ -19,6 +19,7 @@
 #include "../NoteModel.h"
 #include "../TextModel.h"
 #include "../PathModel.h"
+#include "../ImageModel.h"
 
 #include <QObject>
 #include <QtTest>
@@ -106,8 +107,9 @@ private slots:
     void s1d_xml() {
         SparseOneDimensionalModel m(100, 10, false);
         m.setObjectName("This \"&\" that");
-        Event p1(20), p2(20), p3(50);
-        p2 = p2.withLabel("Label &'\">");
+        Event p1(20);
+        Event p2(20, "Label &'\">");
+        Event p3(50, 12.4f, 16, ""); // value + duration should not be saved
         m.add(p1);
         m.add(p2);
         m.add(p3);
@@ -118,9 +120,9 @@ private slots:
         QString expected =
             "<model id='1' name='This &quot;&amp;&quot; that' sampleRate='100' start='20' end='60' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='0' />\n"
             "<dataset id='0' dimensions='1'>\n"
-            "  <point frame='20' label='' />\n"
+            "  <point frame='20' />\n"
             "  <point frame='20' label='Label &amp;&apos;&quot;&gt;' />\n"
-            "  <point frame='50' label='' />\n"
+            "  <point frame='50' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
         if (xml != expected) {
@@ -226,7 +228,7 @@ private slots:
         Event p2(20, 0.0f, "text 2");
         Event p3(50, 0.3f, "text 3");
         m.add(p1);
-        m.add(p2);
+        m.add(p2.withLevel(0.8f));
         m.add(p3);
         QString xml;
         QTextStream str(&xml, QIODevice::WriteOnly);
@@ -267,6 +269,28 @@ private slots:
             "  <point frame='20' mapframe='30' />\n"
             "  <point frame='40' mapframe='60' />\n"
             "  <point frame='50' mapframe='49' />\n"
+            "</dataset>\n";
+        expected.replace("\'", "\"");
+        if (xml != expected) {
+            cerr << "Obtained xml:\n" << xml
+                 << "\nExpected:\n" << expected << endl;
+        }
+        QCOMPARE(xml, expected);
+    }
+
+    void image_xml() {
+        ImageModel m(100, 10, false);
+        Event p1(20, 30, 40, "a label"); // value + duration should not be saved
+        m.add(p1.withURI("/path/to/thing.png").withLevel(0.8f));
+        QString xml;
+        QTextStream str(&xml, QIODevice::WriteOnly);
+        m.toXml(str);
+        str.flush();
+
+        QString expected =
+            "<model id='4' name='' sampleRate='100' start='20' end='30' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='2' subtype='image' />\n"
+            "<dataset id='2' dimensions='1'>\n"
+            "  <point frame='20' label='a label' image='/path/to/thing.png' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
         if (xml != expected) {

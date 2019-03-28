@@ -142,7 +142,7 @@ public:
     void add(Event e) override {
 
         {   QMutexLocker locker(&m_mutex);
-            m_events.add(e.withoutDuration());
+            m_events.add(e.withoutDuration().withoutValue().withoutLevel());
         }
         
         m_notifier.update(e.getFrame(), m_resolution);
@@ -255,8 +255,11 @@ public:
                           // subsequent events are always notified
              .arg(getObjectExportId(&m_events))
              .arg(extraAttributes));
+
+        Event::ExportNameOptions options;
+        options.uriAttributeName = "image";
         
-        m_events.toXml(out, indent, QString("dimensions=\"1\""));
+        m_events.toXml(out, indent, QString("dimensions=\"1\""), options);
     }
   
 protected:

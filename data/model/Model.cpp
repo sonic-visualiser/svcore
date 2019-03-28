@@ -22,7 +22,7 @@
 
 Model::~Model()
 {
-//    SVDEBUG << "Model::~Model(" << this << ")" << endl;
+    SVDEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
         SVDEBUG << "NOTE: Model(" << this << ", \""
@@ -73,9 +73,10 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-//    SVDEBUG << "Model(" << this << ", \""
-//            << objectName() << "\", type uri <"
-//            << m_typeUri << ">)::aboutToDelete()" << endl;
+    SVDEBUG << "Model(" << this << ", \""
+            << objectName() << "\", type name \""
+            << getTypeName() << "\", type uri <"
+            << m_typeUri << ">)::aboutToDelete()" << endl;
 
     if (m_aboutToDelete) {
         SVDEBUG << "WARNING: Model(" << this << ", \""
@@ -98,6 +99,9 @@ Model::sourceModelAboutToBeDeleted()
 void
 Model::setAlignment(AlignmentModel *alignment)
 {
+    SVDEBUG << "Model(" << this << "): accepting alignment model "
+            << alignment << endl;
+    
     if (m_alignment) {
         m_alignment->aboutToDelete();
         delete m_alignment;

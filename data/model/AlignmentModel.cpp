@@ -54,6 +54,8 @@ AlignmentModel::AlignmentModel(Model *reference,
 
 AlignmentModel::~AlignmentModel()
 {
+    SVDEBUG << "AlignmentModel(" << this << ")::~AlignmentModel()" << endl;
+    
     if (m_inputModel) m_inputModel->aboutToDelete();
     delete m_inputModel;
 
@@ -201,8 +203,8 @@ AlignmentModel::pathCompletionChanged()
         m_rawPath->isReady(&completion);
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "AlignmentModel::pathCompletionChanged: completion = "
-                  << completion << endl;
+        SVCERR << "AlignmentModel::pathCompletionChanged: completion = "
+               << completion << endl;
 #endif
 
         m_pathComplete = (completion == 100);
@@ -211,7 +213,8 @@ AlignmentModel::pathCompletionChanged()
 
             constructPath();
             constructReversePath();
-            
+
+            SVDEBUG << "AlignmentModel: path complete, deleting input" << endl;
             if (m_inputModel) m_inputModel->aboutToDelete();
             delete m_inputModel;
             m_inputModel = nullptr;
