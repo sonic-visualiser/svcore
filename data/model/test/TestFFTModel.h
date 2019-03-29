@@ -152,6 +152,8 @@ private slots:
              { { {}, { 0.f, 2.f }, {}, {}, {} } }, 4);
         test(&mwm, RectangularWindow, 8, 8, 8, 3,
              { { {}, {}, {}, {}, {} } }, 4);
+        test(&mwm, RectangularWindow, 4, 4, 7, 3, // prime transform size
+             { { {}, {}, {} } }, 6);
     }
     
     void cosine_simple_rect() {
