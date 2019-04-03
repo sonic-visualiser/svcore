@@ -72,10 +72,11 @@ XmlExportable::getExportId() const
 {
     if (m_exportId == -1) {
         static QMutex mutex;
-        static int lastId = 0;
+        static int nextId = 0;
         QMutexLocker locker(&mutex);
         if (m_exportId == -1) {
-            m_exportId = ++lastId;
+            m_exportId = nextId;
+            ++nextId;
         }
     }
     return m_exportId;
