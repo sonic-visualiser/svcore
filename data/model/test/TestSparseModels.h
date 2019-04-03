@@ -123,11 +123,11 @@ private slots:
         m.toXml(str);
         str.flush();
         QString expected =
-            "<model id='2' name='This &quot;&amp;&quot; that' sampleRate='100' start='20' end='60' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='1' />\n"
-            "<dataset id='1' dimensions='1'>\n"
-            "  <point frame='20' />\n"
+            "<model id='1' name='This &quot;&amp;&quot; that' sampleRate='100' start='20' end='60' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='0' />\n"
+            "<dataset id='0' dimensions='1'>\n"
+            "  <point frame='20' label='' />\n"
             "  <point frame='20' label='Label &amp;&apos;&quot;&gt;' />\n"
-            "  <point frame='50' />\n"
+            "  <point frame='50' label='' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
         if (xml != expected) {
@@ -209,8 +209,8 @@ private slots:
         str.flush();
         
         QString expected =
-            "<model id='4' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='3' resolution='10' notifyOnAdd='true' dataset='3' subtype='note' valueQuantization='0' minimum='123.4' maximum='126.3' units='Hz' />\n"
-            "<dataset id='3' dimensions='3'>\n"
+            "<model id='3' name='' sampleRate='100' start='20' end='80' type='sparse' dimensions='3' resolution='10' notifyOnAdd='true' dataset='2' subtype='note' valueQuantization='0' minimum='123.4' maximum='126.3' units='Hz' />\n"
+            "<dataset id='2' dimensions='3'>\n"
             "  <point frame='20' value='124.3' duration='10' level='0.9' label='note 2' />\n"
             "  <point frame='20' value='123.4' duration='20' level='0.8' label='note 1' />\n"
             "  <point frame='50' value='126.3' duration='30' level='0.9' label='note 3' />\n"
@@ -237,8 +237,8 @@ private slots:
         str.flush();
 
         QString expected =
-            "<model id='6' name='' sampleRate='100' start='20' end='60' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='5' subtype='text' />\n"
-            "<dataset id='5' dimensions='2'>\n"
+            "<model id='5' name='' sampleRate='100' start='20' end='60' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='4' subtype='text' />\n"
+            "<dataset id='4' dimensions='2'>\n"
             "  <point frame='20' height='0' label='text 2' />\n"
             "  <point frame='20' height='1' label='text 1' />\n"
             "  <point frame='50' height='0.3' label='text 3' />\n"
@@ -265,8 +265,8 @@ private slots:
         str.flush();
 
         QString expected =
-            "<model id='7' name='' sampleRate='100' start='20' end='60' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='7' subtype='path' />\n"
-            "<dataset id='7' dimensions='2'>\n"
+            "<model id='6' name='' sampleRate='100' start='20' end='60' type='sparse' dimensions='2' resolution='10' notifyOnAdd='true' dataset='6' subtype='path' />\n"
+            "<dataset id='6' dimensions='2'>\n"
             "  <point frame='20' mapframe='30' />\n"
             "  <point frame='40' mapframe='60' />\n"
             "  <point frame='50' mapframe='49' />\n"
@@ -289,8 +289,8 @@ private slots:
         str.flush();
 
         QString expected =
-            "<model id='9' name='' sampleRate='100' start='20' end='30' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='8' subtype='image' />\n"
-            "<dataset id='8' dimensions='1'>\n"
+            "<model id='8' name='' sampleRate='100' start='20' end='30' type='sparse' dimensions='1' resolution='10' notifyOnAdd='true' dataset='7' subtype='image' />\n"
+            "<dataset id='7' dimensions='1'>\n"
             "  <point frame='20' label='a label' image='/path/to/thing.png' />\n"
             "</dataset>\n";
         expected.replace("\'", "\"");
