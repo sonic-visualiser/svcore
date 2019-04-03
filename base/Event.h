@@ -287,10 +287,10 @@ public:
             stream << QString("referenceFrame=\"%1\" ")
                 .arg(m_referenceFrame);
         }
-        if (m_label != "") {
-            stream << QString("label=\"%1\" ")
-                .arg(XmlExportable::encodeEntities(m_label));
-        }
+
+        stream << QString("label=\"%1\" ")
+            .arg(XmlExportable::encodeEntities(m_label));
+        
         if (m_uri != QString()) {
             stream << QString("%1=\"%2\" ")
                 .arg(opts.uriAttributeName)
