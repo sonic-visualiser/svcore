@@ -63,7 +63,7 @@ public:
         m_resolution(resolution),
         m_valueMinimum(valueMinimum),
         m_valueMaximum(valueMaximum),
-        m_haveExtents(false),
+        m_haveExtents(true),
         m_valueQuantization(0),
         m_haveDistinctValues(false),
         m_notifier(this,
