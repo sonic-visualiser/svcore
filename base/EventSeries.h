@@ -19,6 +19,7 @@
 #include "XmlExportable.h"
 
 #include <set>
+#include <functional>
 
 //#define DEBUG_EVENT_SERIES 1
 
