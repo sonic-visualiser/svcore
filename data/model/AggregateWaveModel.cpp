@@ -46,6 +46,7 @@ AggregateWaveModel::AggregateWaveModel(ChannelSpecList channelSpecs) :
 
 AggregateWaveModel::~AggregateWaveModel()
 {
+    SVDEBUG << "AggregateWaveModel::~AggregateWaveModel" << endl;
 }
 
 void
@@ -61,7 +62,7 @@ AggregateWaveModel::componentModelAboutToBeDeleted()
 bool
 AggregateWaveModel::isOK() const
 {
-    if (m_invalidated) {
+    if (m_invalidated || m_components.empty()) {
         return false;
     }
     for (ChannelSpecList::const_iterator i = m_components.begin();
@@ -120,13 +121,15 @@ AggregateWaveModel::getChannelCount() const
 sv_samplerate_t
 AggregateWaveModel::getSampleRate() const
 {
-    if (m_components.empty()) return 0;
+    if (m_invalidated || m_components.empty()) return 0;
     return m_components.begin()->model->getSampleRate();
 }
 
 floatvec_t
 AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
+    if (m_invalidated || m_components.empty()) return {};
+    
     int ch0 = channel, ch1 = channel;
     if (channel == -1) {
         ch0 = 0;

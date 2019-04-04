@@ -61,9 +61,12 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 
     m_fft.initFloat();
 
-    connect(model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
+    connect(model, SIGNAL(modelChanged()),
+            this, SIGNAL(modelChanged()));
     connect(model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
             this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    connect(model, SIGNAL(aboutToBeDeleted()),
+            this, SLOT(sourceModelAboutToBeDeleted()));
 }
 
 FFTModel::~FFTModel()
@@ -273,6 +276,8 @@ FFTModel::fvec
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
     Profiler profiler("FFTModel::getSourceDataUncached");
+
+    if (!m_model) return {};
     
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
