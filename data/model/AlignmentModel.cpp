@@ -21,11 +21,9 @@
 
 AlignmentModel::AlignmentModel(Model *reference,
                                Model *aligned,
-                               Model *inputModel,
                                SparseTimeValueModel *path) :
     m_reference(reference),
     m_aligned(aligned),
-    m_inputModel(inputModel),
     m_rawPath(path),
     m_path(nullptr),
     m_reversePath(nullptr),
@@ -54,9 +52,6 @@ AlignmentModel::AlignmentModel(Model *reference,
 
 AlignmentModel::~AlignmentModel()
 {
-    if (m_inputModel) m_inputModel->aboutToDelete();
-    delete m_inputModel;
-
     if (m_rawPath) m_rawPath->aboutToDelete();
     delete m_rawPath;
 
@@ -212,9 +207,6 @@ AlignmentModel::pathCompletionChanged()
             constructPath();
             constructReversePath();
             
-            if (m_inputModel) m_inputModel->aboutToDelete();
-            delete m_inputModel;
-            m_inputModel = nullptr;
         }
     }
 

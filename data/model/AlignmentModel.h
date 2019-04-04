@@ -32,8 +32,7 @@ class AlignmentModel : public Model
 public:
     AlignmentModel(Model *reference,
                    Model *aligned,
-                   Model *inputModel, // probably an AggregateWaveModel; may be null; I take ownership
-                   SparseTimeValueModel *path); // I take ownership
+                   SparseTimeValueModel *path);
     ~AlignmentModel();
 
     bool isOK() const override;
@@ -71,8 +70,6 @@ protected slots:
 protected:
     Model *m_reference; // I don't own this
     Model *m_aligned; // I don't own this
-
-    Model *m_inputModel; // I own this
 
     SparseTimeValueModel *m_rawPath; // I own this
     mutable PathModel *m_path; // I own this
