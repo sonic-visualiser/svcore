@@ -35,11 +35,21 @@ public:
         LayerFileNoMidiNonSV,
     };
 
-    virtual QString getOpenFileName(FileType type, QString fallbackLocation = "") = 0;
-    virtual QString getSaveFileName(FileType type, QString fallbackLocation = "") = 0;
-    virtual void registerLastOpenedFilePath(FileType type, QString path) = 0;
+    virtual QString getOpenFileName(FileType type,
+                                    QString fallbackLocation = "") = 0;
 
-    virtual QString find(FileType type, QString location, QString lastKnownLocation = "") = 0;
+    virtual QStringList getOpenFileNames(FileType type,
+                                         QString fallbackLocation = "") = 0;
+
+    virtual QString getSaveFileName(FileType type,
+                                    QString fallbackLocation = "") = 0;
+
+    virtual void registerLastOpenedFilePath(FileType type,
+                                            QString path) = 0;
+
+    virtual QString find(FileType type,
+                         QString location,
+                         QString lastKnownLocation = "") = 0;
 
     static FileFinder *getInstance() {
         FFContainer *container = FFContainer::getInstance();
