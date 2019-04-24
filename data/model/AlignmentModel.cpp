@@ -52,7 +52,9 @@ AlignmentModel::AlignmentModel(Model *reference,
 
 AlignmentModel::~AlignmentModel()
 {
-    SVDEBUG << "AlignmentModel(" << this << ")::~AlignmentModel()" << endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+    SVCERR << "AlignmentModel(" << this << ")::~AlignmentModel()" << endl;
+#endif
 
     if (m_rawPath) m_rawPath->aboutToDelete();
     delete m_rawPath;
@@ -209,7 +211,9 @@ AlignmentModel::pathCompletionChanged()
             constructPath();
             constructReversePath();
 
-            SVDEBUG << "AlignmentModel: path complete" << endl;
+#ifdef DEBUG_ALIGNMENT_MODEL
+            SVCERR << "AlignmentModel: path complete" << endl;
+#endif
         }
     }
 
