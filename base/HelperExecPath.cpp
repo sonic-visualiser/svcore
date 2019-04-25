@@ -58,9 +58,17 @@ HelperExecPath::getHelperExecutable(QString basename)
 QStringList
 HelperExecPath::getHelperDirPaths()
 {
+    // Helpers are expected to exist either in the same directory as
+    // this executable was found, or in either a subdirectory called
+    // helpers, or on the Mac only, a sibling called Resources.
+
     QStringList dirs;
     QString myDir = QCoreApplication::applicationDirPath();
+#ifdef Q_OS_MAC
+    dirs.push_back(myDir + "/../Resources");
+#else
     dirs.push_back(myDir + "/helpers");
+#endif
     dirs.push_back(myDir);
     return dirs;
 }
@@ -76,9 +84,6 @@ HelperExecPath::getHelperCandidatePaths(QString basename)
 QList<HelperExecPath::HelperExec>
 HelperExecPath::search(QString basename, QStringList &candidates)
 {
-    // Helpers are expected to exist either in the same directory as
-    // this executable was found, or in a subdirectory called helpers.
-
     QString extension = "";
 #ifdef _WIN32
     extension = ".exe";
