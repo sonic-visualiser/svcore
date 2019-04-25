@@ -61,7 +61,7 @@ public:
     }
 
     QString getTypeName() const override { return tr("Sparse 1-D"); }
-    bool isSparse() const { return true; }
+    bool isSparse() const override { return true; }
     bool isOK() const override { return true; }
 
     sv_frame_t getStartFrame() const override {

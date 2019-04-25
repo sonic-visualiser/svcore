@@ -55,7 +55,7 @@ public:
     }
 
     QString getTypeName() const override { return tr("Image"); }
-    bool isSparse() const { return true; }
+    bool isSparse() const override { return true; }
     bool isOK() const override { return true; }
 
     sv_frame_t getStartFrame() const override {
@@ -71,7 +71,7 @@ public:
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
     int getResolution() const { return m_resolution; }
     
-    int getCompletion() const { return m_completion; }
+    int getCompletion() const override { return m_completion; }
 
     void setCompletion(int completion, bool update = true) {
         
