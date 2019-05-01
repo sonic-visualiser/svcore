@@ -34,7 +34,7 @@ private:
         cerr << "                 " << message;
         for (int i = 0; i < 34 - message.size(); ++i) cerr << " ";
         cerr << double(end - start) * 1000.0 / double(CLOCKS_PER_SEC)
-             << "ms" << endl;
+             << "ms" << std::endl;
     }        
     
     void short_n(int n) {

@@ -23,14 +23,13 @@
 #include "base/Profiler.h"
 
 #include <iostream>
+#include <QThread>
 
 #define OSC_MESSAGE_QUEUE_SIZE 1023
 
 #ifdef HAVE_LIBLO
 
 #include <unistd.h>
-
-#include <QThread>
 
 void
 OSCQueue::oscError(int num, const char *msg, const char *path)

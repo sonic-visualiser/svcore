@@ -132,7 +132,7 @@ private slots:
         expected.replace("\'", "\"");
         if (xml != expected) {
             cerr << "Obtained xml:\n" << xml
-                 << "\nExpected:\n" << expected << endl;
+                 << "\nExpected:\n" << expected << std::endl;
         }
         QCOMPARE(xml, expected);
     }
@@ -218,7 +218,7 @@ private slots:
         expected.replace("\'", "\"");
         if (xml != expected) {
             cerr << "Obtained xml:\n" << xml
-                 << "\nExpected:\n" << expected << endl;
+                 << "\nExpected:\n" << expected << std::endl;
         }
         QCOMPARE(xml, expected);
     }
@@ -246,7 +246,7 @@ private slots:
         expected.replace("\'", "\"");
         if (xml != expected) {
             cerr << "Obtained xml:\n" << xml
-                 << "\nExpected:\n" << expected << endl;
+                 << "\nExpected:\n" << expected << std::endl;
         }
         QCOMPARE(xml, expected);
     }
@@ -274,7 +274,7 @@ private slots:
         expected.replace("\'", "\"");
         if (xml != expected) {
             cerr << "Obtained xml:\n" << xml
-                 << "\nExpected:\n" << expected << endl;
+                 << "\nExpected:\n" << expected << std::endl;
         }
         QCOMPARE(xml, expected);
     }
@@ -296,7 +296,7 @@ private slots:
         expected.replace("\'", "\"");
         if (xml != expected) {
             cerr << "Obtained xml:\n" << xml
-                 << "\nExpected:\n" << expected << endl;
+                 << "\nExpected:\n" << expected << std::endl;
         }
         QCOMPARE(xml, expected);
     }
