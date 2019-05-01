@@ -48,6 +48,13 @@ AlignmentModel::AlignmentModel(Model *reference,
     if (m_rawPath && m_rawPath->isReady()) {
         pathCompletionChanged();
     }
+
+    if (m_reference == m_aligned) {
+        // Trivial alignment, e.g. of main model to itself, which we
+        // record so that we can distinguish the reference model for
+        // alignments from an unaligned model. No path required
+        m_pathComplete = true;
+    }
 }
 
 AlignmentModel::~AlignmentModel()
@@ -101,14 +108,14 @@ AlignmentModel::isReady(int *completion) const
     if (!m_pathBegun && m_rawPath) {
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: path not begun" << endl;
+        SVCERR << "AlignmentModel::isReady: path not begun" << endl;
 #endif
         return false;
     }
     if (m_pathComplete) {
         if (completion) *completion = 100;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: path complete" << endl;
+        SVCERR << "AlignmentModel::isReady: path complete" << endl;
 #endif
         return true;
     }
@@ -118,7 +125,7 @@ AlignmentModel::isReady(int *completion) const
         // set at all yet (this case)
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: no raw path" << endl;
+        SVCERR << "AlignmentModel::isReady: no raw path" << endl;
 #endif
         return false;
     }

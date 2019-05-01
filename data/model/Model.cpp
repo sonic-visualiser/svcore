@@ -20,6 +20,8 @@
 
 #include <iostream>
 
+//#define DEBUG_COMPLETION 1
+
 Model::~Model()
 {
     SVDEBUG << "Model::~Model(" << this << ")" << endl;
@@ -163,15 +165,20 @@ Model::alignFromReference(sv_frame_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-//    SVDEBUG << "Model::getAlignmentCompletion: m_alignment = "
-//            << m_alignment << endl;
+#ifdef DEBUG_COMPLETION
+    SVCERR << "Model(" << this << ")::getAlignmentCompletion: m_alignment = "
+           << m_alignment << endl;
+#endif
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
         else return 100;
     }
     int completion = 0;
     (void)m_alignment->isReady(&completion);
-//    SVDEBUG << " -> " << completion << endl;
+#ifdef DEBUG_COMPLETION
+    SVCERR << "Model(" << this << ")::getAlignmentCompletion: completion = " << completion
+           << endl;
+#endif
     return completion;
 }
 
