@@ -21,6 +21,7 @@
 #include "../WavFileWriter.h"
 
 #include "AudioTestData.h"
+#include "UnsupportedFormat.h"
 
 #include <cmath>
 
@@ -73,7 +74,7 @@ private:
             bitdepth = bits[2].toInt();
         }
     }
-    
+
     void getExpectedThresholds(QString format,
                                QString filename,
                                bool resampled,
@@ -305,11 +306,13 @@ private slots:
             (audioDir + "/" + format + "/" + audiofile, params);
         
         if (!reader) {
+            if (isLegitimatelyUnsupported(format)) {
 #if ( QT_VERSION >= 0x050000 )
-            QSKIP("Unsupported file, skipping");
+                QSKIP("Unsupported file, skipping");
 #else
-            QSKIP("Unsupported file, skipping", SkipSingle);
+                QSKIP("Unsupported file, skipping", SkipSingle);
 #endif
+            }
         }
 
         QString extension;

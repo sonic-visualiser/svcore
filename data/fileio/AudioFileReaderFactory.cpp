@@ -78,12 +78,12 @@ AudioFileReaderFactory::createReader(FileSource source,
     SVDEBUG << "AudioFileReaderFactory: local filename \"" << source.getLocalFilename() << "\", content type \"" << source.getContentType() << "\"" << endl;
 
     if (!source.isOK()) {
-        SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Failed to retrieve source (transmission error?): " << source.getErrorString() << endl;
         return nullptr;
     }
 
     if (!source.isAvailable()) {
-        SVCERR << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
+        SVDEBUG << "AudioFileReaderFactory::createReader(\"" << source.getLocation() << "\": Source not found" << endl;
         return nullptr;
     }
 
@@ -213,11 +213,11 @@ AudioFileReaderFactory::createReader(FileSource source,
         }
     }
     
-    SVCERR << "AudioFileReaderFactory::Failed to create a reader for "
-           << "url \"" << source.getLocation()
-           << "\" (local filename \"" << source.getLocalFilename()
-           << "\", content type \""
-           << source.getContentType() << "\")" << endl;
+    SVDEBUG << "AudioFileReaderFactory::Failed to create a reader for "
+            << "url \"" << source.getLocation()
+            << "\" (local filename \"" << source.getLocalFilename()
+            << "\", content type \""
+            << source.getContentType() << "\")" << endl;
     return nullptr;
 }
 
