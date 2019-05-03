@@ -22,6 +22,8 @@
 #include "../AudioFileReader.h"
 #include "../WavFileWriter.h"
 
+#include "UnsupportedFormat.h"
+
 #include <cmath>
 
 #include <QObject>
@@ -132,13 +134,18 @@ private slots:
         
         QFETCH(QString, audiofile);
 
+        QStringList fileAndExt = audiofile.split(".");
+        QString extension = fileAndExt[1];
+
         if (!AudioFileReaderFactory::isSupported(encodingDir + "/" +
                                                  audiofile)) {
+            if (isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
-            QSKIP("Known unsupported file, skipping");
+                QSKIP("Known unsupported file, skipping");
 #else
-            QSKIP("Known unsupported file, skipping", SkipSingle);
+                QSKIP("Known unsupported file, skipping", SkipSingle);
 #endif
+            }
         }            
         
         AudioFileReaderFactory::Parameters params;
@@ -163,22 +170,26 @@ private slots:
         
         QFETCH(QString, audiofile);
 
+        QStringList fileAndExt = audiofile.split(".");
+        QString file = fileAndExt[0];
+        QString extension = fileAndExt[1];
+
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
             AudioFileReaderFactory::createReader
             (encodingDir + "/" + audiofile, params);
 
         if (!reader) {
+            if (isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
-            QSKIP("Unsupported file, skipping");
+                QSKIP("Unsupported file, skipping");
 #else
-            QSKIP("Unsupported file, skipping", SkipSingle);
+                QSKIP("Unsupported file, skipping", SkipSingle);
 #endif
+            }
         }
 
-        QStringList fileAndExt = audiofile.split(".");
-        QString file = fileAndExt[0];
-        QString extension = fileAndExt[1];
+        QVERIFY(reader != nullptr);
 
         if (extension == "wav") {
 
@@ -188,12 +199,6 @@ private slots:
 
         } else {
 
-//#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
-//            if (extension == "ogg") {
-//                QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
-//            }
-//#endif
-            
             auto blah = reader->getInterleavedFrames(0, 10);
             
             QString title = reader->getTitle();
@@ -261,24 +266,22 @@ private slots:
             return;
         }
 
-//#if (!defined (HAVE_OGGZ) || !defined(HAVE_FISHSOUND))
-//        if (extension == "ogg") {
-//            QSKIP("Lack native Ogg Vorbis reader, so won't be getting metadata");
-//        }
-//#endif
-
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
             AudioFileReaderFactory::createReader
             (encodingDir + "/" + audiofile, params);
         
         if (!reader) {
+            if (isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
-            QSKIP("Unsupported file, skipping");
+                QSKIP("Unsupported file, skipping");
 #else
-            QSKIP("Unsupported file, skipping", SkipSingle);
+                QSKIP("Unsupported file, skipping", SkipSingle);
 #endif
+            }
         }
+
+        QVERIFY(reader != nullptr);
 
         QString title = reader->getTitle();
         QVERIFY(title != QString());
