@@ -315,6 +315,8 @@ private slots:
             }
         }
 
+        QVERIFY(reader != nullptr);
+
         QString extension;
         sv_samplerate_t fileRate;
         int channels;
