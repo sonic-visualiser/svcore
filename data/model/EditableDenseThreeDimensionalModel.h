@@ -49,6 +49,9 @@ public:
                                        bool notifyOnAdd = true);
 
     bool isOK() const override;
+    bool isReady(int *completion = 0) const override;
+    void setCompletion(int completion, bool update = true);
+    int getCompletion() const override;
 
     sv_samplerate_t getSampleRate() const override;
     sv_frame_t getStartFrame() const override;
@@ -182,9 +185,6 @@ public:
      * than a linear one.
      */
     bool shouldUseLogValueScale() const override;
-
-    virtual void setCompletion(int completion, bool update = true);
-    int getCompletion() const override { return m_completion; }
 
     QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 

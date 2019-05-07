@@ -57,6 +57,13 @@ EditableDenseThreeDimensionalModel::isOK() const
     return true;
 }
 
+bool
+EditableDenseThreeDimensionalModel::isReady(int *completion) const
+{
+    if (completion) *completion = getCompletion();
+    return true;
+}
+
 sv_samplerate_t
 EditableDenseThreeDimensionalModel::getSampleRate() const
 {
@@ -484,6 +491,12 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
             emit completionChanged();
         }            
     }
+}
+
+int
+EditableDenseThreeDimensionalModel::getCompletion() const
+{
+    return m_completion;
 }
 
 QString
