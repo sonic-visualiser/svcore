@@ -25,6 +25,7 @@
 #include <vamp-hostsdk/PluginBase.h>
 
 #include <QMap>
+#include <QMutex>
 #include <map>
 #include <set>
 #include <vector>
@@ -145,6 +146,8 @@ public:
                                            QString &message,
                                            AdditionalModelHandler *handler = 0);
 
+    bool haveRunningTransformers() const;
+    
 signals:
     void transformFailed(QString transformName, QString message);
                                                                                
@@ -157,6 +160,8 @@ protected:
     ModelTransformer *createTransformer(const Transforms &transforms,
                                         const ModelTransformer::Input &input);
 
+    mutable QMutex m_mutex;
+    
     typedef std::map<TransformId, QString> TransformerConfigurationMap;
     TransformerConfigurationMap m_lastConfigurations;
 
