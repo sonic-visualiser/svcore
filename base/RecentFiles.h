@@ -18,15 +18,21 @@
 
 #include <QObject>
 #include <QString>
+#include <QMutex>
 #include <vector>
 #include <deque>
 
 /**
- * RecentFiles manages a list of the names of recently-used objects,
- * saving and restoring that list via QSettings.  The names do not
- * actually have to refer to files.
+ * RecentFiles manages a list of recently-used identifier strings,
+ * saving and restoring that list via QSettings.  The identifiers do
+ * not actually have to refer to files.
+ *
+ * Each entry must have a non-empty identifier, which is typically a
+ * filename, path, URI, or internal id, and may optionally also have a
+ * label, which is typically a user-visible convenience.
+ *
+ * RecentFiles is thread-safe - all access is serialised.
  */
-
 class RecentFiles : public QObject
 {
     Q_OBJECT
@@ -35,42 +41,81 @@ public:
     /**
      * Construct a RecentFiles object that saves and restores in the
      * given QSettings group and truncates when the given count of
-     * strings is reached.
+     * identifiers is reached.
      */
-    RecentFiles(QString settingsGroup = "RecentFiles", int maxCount = 10);
+    RecentFiles(QString settingsGroup = "RecentFiles",
+                int maxCount = 10);
 
     virtual ~RecentFiles();
 
-    QString getSettingsGroup() const { return m_settingsGroup; }
-
-    int getMaxCount() const { return m_maxCount; }
-
-    std::vector<QString> getRecent() const;
+    /**
+     * Return the settingsGroup as passed to the constructor.
+     */
+    QString getSettingsGroup() const {
+        return m_settingsGroup;
+    }
 
     /**
-     * Add a name that should be treated as a literal string.
+     * Return the maxCount as passed to the constructor.
      */
-    void add(QString name);
+    int getMaxCount() const {
+        return m_maxCount;
+    }
+
+    /**
+     * Return the list of recent identifiers, without labels.
+     */
+    std::vector<QString> getRecentIdentifiers() const;
+
+    /**
+     * Return the list of recent identifiers, without labels. This is
+     * an alias for getRecentIdentifiers included for backward
+     * compatibility.
+     */
+    std::vector<QString> getRecent() const {
+        return getRecentIdentifiers();
+    }
+
+    /**
+     * Return the list of recent identifiers, with labels. Each
+     * returned entry is a pair of identifier and label in that order.
+     */
+    std::vector<std::pair<QString, QString>> getRecentEntries() const;
     
     /**
-     * Add a name that is known to be either a file path or a URL.  If
-     * it looks like a URL, add it literally; otherwise treat it as a
-     * file path and canonicalise it appropriately.  Also takes into
-     * account the user preference for whether to include temporary
-     * files in the recent files menu: the file will not be added if
-     * the preference is set and the file appears to be a temporary
-     * one.
+     * Add a literal identifier, optionally with a label.
+     *
+     * If the identifier already exists in the recent entries list, it
+     * is moved to the front of the list and its label is replaced
+     * with the given one.
      */
-    void addFile(QString name);
+    void add(QString identifier, QString label = "");
+    
+    /**
+     * Add a name that is known to be either a file path or a URL,
+     * optionally with a label.  If it looks like a URL, add it
+     * literally; otherwise treat it as a file path and canonicalise
+     * it appropriately.  Also take into account the user preference
+     * for whether to include temporary files in the recent files
+     * menu: the file will not be added if the preference is set and
+     * the file appears to be a temporary one.
+     *
+     * If the identifier derived from the file path already exists in
+     * the recent entries list, it is moved to the front of the list
+     * and its label is replaced with the given one.
+     */
+    void addFile(QString filepath, QString label = "");
 
 signals:
     void recentChanged();
 
-protected:
-    QString m_settingsGroup;
-    int m_maxCount;
+private:
+    mutable QMutex m_mutex;
 
-    std::deque<QString> m_names;
+    const QString m_settingsGroup;
+    const int m_maxCount;
+
+    std::deque<std::pair<QString, QString>> m_entries; // identifier, label
 
     void read();
     void write();
