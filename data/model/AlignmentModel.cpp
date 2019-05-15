@@ -76,8 +76,9 @@ AlignmentModel::~AlignmentModel()
 bool
 AlignmentModel::isOK() const
 {
+    if (m_error != "") return false;
     if (m_rawPath) return m_rawPath->isOK();
-    else return true;
+    return true;
 }
 
 sv_frame_t

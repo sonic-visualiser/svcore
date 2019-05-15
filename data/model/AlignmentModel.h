@@ -36,6 +36,10 @@ public:
     ~AlignmentModel();
 
     bool isOK() const override;
+
+    void setError(QString error) { m_error = error; }
+    QString getError() const { return m_error; }
+
     sv_frame_t getStartFrame() const override;
     sv_frame_t getEndFrame() const override;
     sv_samplerate_t getSampleRate() const override;
@@ -86,6 +90,7 @@ protected:
     mutable PathModel *m_reversePath; // I own this
     bool m_pathBegun;
     bool m_pathComplete;
+    QString m_error;
 
     void constructPath() const;
     void constructReversePath() const;
