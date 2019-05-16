@@ -86,7 +86,7 @@ private slots:
 
         AudioFileReader *reader =
             AudioFileReaderFactory::createReader(path, {});
-        QCOMPARE((void *)reader, nullptr);
+        QCOMPARE((void *)reader, 0);
     }
 
 };
