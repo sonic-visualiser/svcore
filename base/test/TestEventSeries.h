@@ -294,15 +294,15 @@ private slots:
         s.add(a);
         s.add(b);
         s.add(b);
-        QCOMPARE(s.getEndFrame(), 40);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(40));
         s.remove(c);
-        QCOMPARE(s.getEndFrame(), 11);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(11));
         s.remove(b);
-        QCOMPARE(s.getEndFrame(), 11);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(11));
         s.remove(a);
-        QCOMPARE(s.getEndFrame(), 11);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(11));
         s.remove(b);
-        QCOMPARE(s.getEndFrame(), 0);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(0));
     }
 
     void disjointEventsWithDurationCover() {
@@ -557,7 +557,7 @@ private slots:
         s.add(cc);
         s.add(dd);
         s.add(e);
-        QCOMPARE(s.getEndFrame(), 18);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(18));
     }
 
     void eventPatternAddRemove() {
@@ -584,21 +584,21 @@ private slots:
         QCOMPARE(s.count(), 7);
         s.remove(d);
         QCOMPARE(s.getEventsCovering(8), EventVector({ a, b, dd }));
-        QCOMPARE(s.getEndFrame(), 18);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(18));
         s.remove(e);
         s.remove(a);
         QCOMPARE(s.getEventsCovering(8), EventVector({ b, dd }));
-        QCOMPARE(s.getEndFrame(), 16);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(16));
         s.remove(cc);
         s.remove(c);
         s.remove(dd);
         QCOMPARE(s.getEventsCovering(8), EventVector({ b }));
-        QCOMPARE(s.getEndFrame(), 9);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(9));
         s.remove(b);
         QCOMPARE(s.getEventsCovering(8), EventVector());
         QCOMPARE(s.count(), 0);
         QCOMPARE(s.isEmpty(), true);
-        QCOMPARE(s.getEndFrame(), 0);
+        QCOMPARE(s.getEndFrame(), sv_frame_t(0));
     }
 
     void preceding() {
