@@ -373,6 +373,10 @@ AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
 
     m_rawPath = rawpath;
 
+    if (!m_rawPath) {
+        return;
+    }
+
     connect(m_rawPath, SIGNAL(modelChanged()),
             this, SLOT(pathChanged()));
 
