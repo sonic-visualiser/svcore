@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WIN
     // incredible to have to hardcode this, but I just can't figure out how to
     // get QMAKE_POST_LINK to add an arg to its command successfully on Windows
-    testDir = "../sonic-visualiser/svcore/data/fileio/test";
+    testDir = "svcore/data/fileio/test";
 #endif
 
     QCoreApplication app(argc, argv);
