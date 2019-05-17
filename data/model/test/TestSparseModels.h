@@ -43,8 +43,8 @@ private slots:
         QCOMPARE(m.isEmpty(), true);
         QCOMPARE(m.getEventCount(), 0);
         QCOMPARE(m.getAllEvents().size(), size_t(0));
-        QCOMPARE(m.getStartFrame(), 0);
-        QCOMPARE(m.getEndFrame(), 0);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(0));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(0));
         QCOMPARE(m.getSampleRate(), 100.0);
         QCOMPARE(m.getResolution(), 10);
         QCOMPARE(m.isSparse(), true);
@@ -55,8 +55,8 @@ private slots:
         QCOMPARE(m.isEmpty(), true);
         QCOMPARE(m.getEventCount(), 0);
         QCOMPARE(m.getAllEvents().size(), size_t(0));
-        QCOMPARE(m.getStartFrame(), 0);
-        QCOMPARE(m.getEndFrame(), 0);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(0));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(0));
     }
 
     void s1d_extents() {
@@ -72,15 +72,15 @@ private slots:
         QCOMPARE(m.getAllEvents().size(), size_t(2));
         QCOMPARE(*m.getAllEvents().begin(), p1);
         QCOMPARE(*m.getAllEvents().rbegin(), p2);
-        QCOMPARE(m.getStartFrame(), 20);
-        QCOMPARE(m.getEndFrame(), 60);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(20));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(60));
         QCOMPARE(m.containsEvent(p1), true);
         m.remove(p1);
         QCOMPARE(m.getEventCount(), 1);
         QCOMPARE(m.getAllEvents().size(), size_t(1));
         QCOMPARE(*m.getAllEvents().begin(), p2);
-        QCOMPARE(m.getStartFrame(), 50);
-        QCOMPARE(m.getEndFrame(), 60);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(50));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(60));
         QCOMPARE(m.containsEvent(p1), false);
     }
              
@@ -150,8 +150,8 @@ private slots:
         QCOMPARE(m.getAllEvents().size(), size_t(2));
         QCOMPARE(*m.getAllEvents().begin(), p1);
         QCOMPARE(*m.getAllEvents().rbegin(), p2);
-        QCOMPARE(m.getStartFrame(), 20);
-        QCOMPARE(m.getEndFrame(), 80);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(20));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(80));
         QCOMPARE(m.containsEvent(p1), true);
         QCOMPARE(m.getValueMinimum(), 123.4f);
         QCOMPARE(m.getValueMaximum(), 124.3f);
@@ -159,8 +159,8 @@ private slots:
         QCOMPARE(m.getEventCount(), 1);
         QCOMPARE(m.getAllEvents().size(), size_t(1));
         QCOMPARE(*m.getAllEvents().begin(), p2);
-        QCOMPARE(m.getStartFrame(), 50);
-        QCOMPARE(m.getEndFrame(), 80);
+        QCOMPARE(m.getStartFrame(), sv_frame_t(50));
+        QCOMPARE(m.getEndFrame(), sv_frame_t(80));
         QCOMPARE(m.containsEvent(p1), false);
     }
              
