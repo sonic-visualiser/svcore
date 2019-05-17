@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -16,110 +15,187 @@
 #ifndef SV_SPARSE_ONE_DIMENSIONAL_MODEL_H
 #define SV_SPARSE_ONE_DIMENSIONAL_MODEL_H
 
-#include "SparseModel.h"
-#include "NoteData.h"
+#include "EventCommands.h"
+#include "TabularModel.h"
+#include "Model.h"
+#include "DeferredNotifier.h"
+
+#include "base/NoteData.h"
+#include "base/EventSeries.h"
+#include "base/NoteExportable.h"
 #include "base/PlayParameterRepository.h"
 #include "base/RealTime.h"
 
+#include "system/System.h"
+
 #include <QStringList>
 
-struct OneDimensionalPoint
-{
-public:
-    OneDimensionalPoint(sv_frame_t _frame) : frame(_frame) { }
-    OneDimensionalPoint(sv_frame_t _frame, QString _label) : frame(_frame), label(_label) { }
-
-    int getDimensions() const { return 1; }
-    
-    sv_frame_t frame;
-    QString label;
-
-    QString getLabel() const { return label; }
-
-    void toXml(QTextStream &stream,
-               QString indent = "",
-               QString extraAttributes = "") const
-    {
-        stream << QString("%1<point frame=\"%2\" label=\"%3\" %4/>\n")
-            .arg(indent).arg(frame).arg(XmlExportable::encodeEntities(label))
-            .arg(extraAttributes);
-    }
-
-    QString toDelimitedDataString(QString delimiter, DataExportOptions, sv_samplerate_t sampleRate) const
-    {
-        QStringList list;
-        list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
-        if (label != "") list << label;
-        return list.join(delimiter);
-    }
-
-    struct Comparator {
-        bool operator()(const OneDimensionalPoint &p1,
-                        const OneDimensionalPoint &p2) const {
-            if (p1.frame != p2.frame) return p1.frame < p2.frame;
-            return p1.label < p2.label;
-        }
-    };
-    
-    struct OrderComparator {
-        bool operator()(const OneDimensionalPoint &p1,
-                        const OneDimensionalPoint &p2) const {
-            return p1.frame < p2.frame;
-        }
-    };
-};
-
-
-class SparseOneDimensionalModel : public SparseModel<OneDimensionalPoint>,
+/**
+ * A model representing a series of time instants with optional labels
+ * but without values.
+ */
+class SparseOneDimensionalModel : public Model,
+                                  public TabularModel,
+                                  public EventEditable,
                                   public NoteExportable
 {
     Q_OBJECT
     
 public:
-    SparseOneDimensionalModel(sv_samplerate_t sampleRate, int resolution,
+    SparseOneDimensionalModel(sv_samplerate_t sampleRate,
+                              int resolution,
                               bool notifyOnAdd = true) :
-        SparseModel<OneDimensionalPoint>(sampleRate, resolution, notifyOnAdd)
-    {
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_haveTextLabels(false),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(100) {
         PlayParameterRepository::getInstance()->addPlayable(this);
     }
 
-    virtual ~SparseOneDimensionalModel()
-    {
+    virtual ~SparseOneDimensionalModel() {
         PlayParameterRepository::getInstance()->removePlayable(this);
     }
 
-    bool canPlay() const override { return true; }
-
-    QString getDefaultPlayClipId() const override
-    {
-        return "tap";
-    }
-
-    int getIndexOf(const Point &point)
-    {
-        // slow
-        int i = 0;
-        Point::Comparator comparator;
-        for (PointList::const_iterator j = m_points.begin();
-             j != m_points.end(); ++j, ++i) {
-            if (!comparator(*j, point) && !comparator(point, *j)) return i;
-        }
-        return -1;
-    }
-
     QString getTypeName() const override { return tr("Sparse 1-D"); }
+    bool isSparse() const override { return true; }
+    bool isOK() const override { return true; }
 
+    sv_frame_t getStartFrame() const override {
+        return m_events.getStartFrame();
+    }
+    sv_frame_t getEndFrame() const override {
+        if (m_events.isEmpty()) return 0;
+        sv_frame_t e = m_events.getEndFrame() + 1;
+        if (e % m_resolution == 0) return e;
+        else return (e / m_resolution + 1) * m_resolution;
+    }
+    
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    int getResolution() const { return m_resolution; }
+
+    bool canPlay() const override { return true; }
+    QString getDefaultPlayClipId() const override { return "tap"; }
+    
+    bool hasTextLabels() const { return m_haveTextLabels; }
+        
+    int getCompletion() const override { return m_completion; }
+
+    void setCompletion(int completion, bool update = true) {
+        
+        {   QMutexLocker locker(&m_mutex);
+            if (m_completion == completion) return;
+            m_completion = completion;
+        }
+
+        if (update) {
+            m_notifier.makeDeferredNotifications();
+        }
+        
+        emit completionChanged();
+
+        if (completion == 100) {
+            // henceforth:
+            m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
+            emit modelChanged();
+        }
+    }
+    
+    /**
+     * Query methods.
+     */
+
+    int getEventCount() const {
+        return m_events.count();
+    }
+    bool isEmpty() const {
+        return m_events.isEmpty();
+    }
+    bool containsEvent(const Event &e) const {
+        return m_events.contains(e);
+    }
+    EventVector getAllEvents() const {
+        return m_events.getAllEvents();
+    }
+    EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsSpanning(f, duration);
+    }
+    EventVector getEventsCovering(sv_frame_t f) const {
+        return m_events.getEventsCovering(f);
+    }
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration,
+                                int overspill = 0) const {
+        return m_events.getEventsWithin(f, duration, overspill);
+    }
+    EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsStartingWithin(f, duration);
+    }
+    EventVector getEventsStartingAt(sv_frame_t f) const {
+        return m_events.getEventsStartingAt(f);
+    }
+    bool getNearestEventMatching(sv_frame_t startSearchAt,
+                                 std::function<bool(Event)> predicate,
+                                 EventSeries::Direction direction,
+                                 Event &found) const {
+        return m_events.getNearestEventMatching
+            (startSearchAt, predicate, direction, found);
+    }
+
+    /**
+     * Editing methods.
+     */
+    void add(Event e) override {
+
+        {   QMutexLocker locker(&m_mutex);
+            m_events.add(e.withoutValue().withoutDuration());
+
+            if (e.getLabel() != "") {
+                m_haveTextLabels = true;
+            }
+        }
+        
+        m_notifier.update(e.getFrame(), m_resolution);
+    }
+    
+    void remove(Event e) override {
+        {   QMutexLocker locker(&m_mutex);
+            m_events.remove(e);
+        }
+        emit modelChangedWithin(e.getFrame(), e.getFrame() + m_resolution);
+    }
+    
     /**
      * TabularModel methods.  
      */
     
-    int getColumnCount() const override
-    {
+    int getRowCount() const override {
+        return m_events.count();
+    }
+
+    int getColumnCount() const override {
         return 3;
     }
 
-    QString getHeading(int column) const override
-    {
+    bool isColumnTimeValue(int column) const override {
+        return (column < 2);
+    }
+
+    sv_frame_t getFrameForRow(int row) const override {
+        if (row < 0 || row >= m_events.count()) {
+            return 0;
+        }
+        Event e = m_events.getEventByIndex(row);
+        return e.getFrame();
+    }
+
+    int getRowForFrame(sv_frame_t frame) const override {
+        return m_events.getIndexForEvent(Event(frame));
+    }
+    
+    QString getHeading(int column) const override {
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
@@ -128,55 +204,46 @@ public:
         }
     }
 
-    QVariant getData(int row, int column, int role) const override
-    {
-        if (column < 2) {
-            return SparseModel<OneDimensionalPoint>::getData
-                (row, column, role);
+    SortType getSortType(int column) const override {
+        if (column == 2) return SortAlphabetical;
+        return SortNumeric;
+    }
+
+    QVariant getData(int row, int column, int role) const override {
+        
+        if (row < 0 || row >= m_events.count()) {
+            return QVariant();
         }
 
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        Event e = m_events.getEventByIndex(row);
 
         switch (column) {
-        case 2: return i->label;
+        case 0: return adaptFrameForRole(e.getFrame(), getSampleRate(), role);
+        case 1: return int(e.getFrame());
+        case 2: return e.getLabel();
         default: return QVariant();
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
-    {
-        if (column < 2) {
-            return SparseModel<OneDimensionalPoint>::getSetDataCommand
-                (row, column, value, role);
-        }
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        if (role != Qt::EditRole) return nullptr;
 
-        if (role != Qt::EditRole) return 0;
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return 0;
-        EditCommand *command = new EditCommand(this, tr("Edit Data"));
-
-        Point point(*i);
-        command->deletePoint(point);
+        Event e0 = m_events.getEventByIndex(row);
+        Event e1;
 
         switch (column) {
-        case 2: point.label = value.toString(); break;
+        case 0: e1 = e0.withFrame(sv_frame_t(round(value.toDouble() *
+                                                   getSampleRate()))); break;
+        case 1: e1 = e0.withFrame(value.toInt()); break;
+        case 2: e1 = e0.withLabel(value.toString()); break;
         }
 
-        command->addPoint(point);
+        ChangeEventsCommand *command =
+            new ChangeEventsCommand(this, tr("Edit Data"));
+        command->remove(e0);
+        command->add(e1);
         return command->finish();
-    }
-
-
-    bool isColumnTimeValue(int column) const override
-    {
-        return (column < 2); 
-    }
-
-    SortType getSortType(int column) const override
-    {
-        if (column == 2) return SortAlphabetical;
-        return SortNumeric;
     }
 
     /**
@@ -184,26 +251,70 @@ public:
      */
 
     NoteList getNotes() const override {
-        return getNotesWithin(getStartFrame(), getEndFrame());
+        return getNotesStartingWithin(getStartFrame(),
+                                      getEndFrame() - getStartFrame());
     }
 
-    NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const override {
+    NoteList getNotesActiveAt(sv_frame_t frame) const override {
+        return getNotesStartingWithin(frame, 1);
+    }
+
+    NoteList getNotesStartingWithin(sv_frame_t startFrame,
+                                    sv_frame_t duration) const override {
         
-        PointList points = getPoints(startFrame, endFrame);
         NoteList notes;
-
-        for (PointList::iterator pli =
-                 points.begin(); pli != points.end(); ++pli) {
-
-            notes.push_back
-                (NoteData(pli->frame,
-                          sv_frame_t(getSampleRate() / 6), // arbitrary short duration
-                          64,   // default pitch
-                          100)); // default velocity
+        EventVector ee = m_events.getEventsStartingWithin(startFrame, duration);
+        for (const auto &e: ee) {
+            notes.push_back(e.toNoteData(getSampleRate(), true));
         }
-
         return notes;
     }
+    
+    /**
+     * XmlExportable methods.
+     */
+    void toXml(QTextStream &out,
+               QString indent = "",
+               QString extraAttributes = "") const override {
+
+        Model::toXml
+            (out,
+             indent,
+             QString("type=\"sparse\" dimensions=\"1\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" %4")
+             .arg(m_resolution)
+             .arg("true") // always true after model reaches 100% -
+                          // subsequent events are always notified
+             .arg(m_events.getExportId())
+             .arg(extraAttributes));
+        
+        m_events.toXml(out, indent, QString("dimensions=\"1\""));
+    }
+
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override {
+        return m_events.toDelimitedDataString(delimiter,
+                                              options,
+                                              startFrame,
+                                              duration,
+                                              m_sampleRate,
+                                              m_resolution,
+                                              Event());
+    }
+    
+protected:
+    sv_samplerate_t m_sampleRate;
+    int m_resolution;
+
+    bool m_haveTextLabels;
+    DeferredNotifier m_notifier;
+    int m_completion;
+
+    EventSeries m_events;
+
+    mutable QMutex m_mutex;  
 };
 
 #endif

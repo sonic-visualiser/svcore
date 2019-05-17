@@ -17,8 +17,11 @@
 
 #include <vector>
 
-#include "base/Pitch.h"
+#include "Pitch.h"
 
+/**
+ * Note record used when constructing synthetic events for sonification.
+ */
 struct NoteData
 {
     NoteData(sv_frame_t _start, sv_frame_t _dur, int _mp, int _vel) :
@@ -43,12 +46,5 @@ struct NoteData
 };
 
 typedef std::vector<NoteData> NoteList;
-
-class NoteExportable
-{
-public:
-    virtual NoteList getNotes() const = 0;
-    virtual NoteList getNotesWithin(sv_frame_t startFrame, sv_frame_t endFrame) const = 0;
-};
 
 #endif

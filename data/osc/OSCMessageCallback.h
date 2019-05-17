@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2006 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -13,30 +12,14 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_CLIPBOARD_H
-#define SV_CLIPBOARD_H
+#ifndef SV_OSC_MESSAGE_CALLBACK_H
+#define SV_OSC_MESSAGE_CALLBACK_H
 
-#include <vector>
+class OSCMessage;
 
-#include "Event.h"
-
-class Clipboard
-{
+class OSCMessageCallback {
 public:
-    Clipboard();
-    ~Clipboard();
-
-    void clear();
-    bool empty() const;
-    const EventVector &getPoints() const;
-    void setPoints(const EventVector &points);
-    void addPoint(const Event &point);
-
-    bool haveReferenceFrames() const;
-    bool referenceFramesDiffer() const;
-
-protected:
-     EventVector m_points;
+    virtual void handleOSCMessage(const OSCMessage &) = 0;
 };
 
 #endif

@@ -120,7 +120,7 @@ public:
 
     QString getTypeName() const override { return tr("Dense 3-D"); }
 
-    virtual int getCompletion() const = 0;
+    virtual int getCompletion() const override = 0;
 
     /*
        TabularModel methods.

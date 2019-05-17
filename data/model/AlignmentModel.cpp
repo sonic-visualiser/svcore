@@ -48,10 +48,21 @@ AlignmentModel::AlignmentModel(Model *reference,
     if (m_rawPath && m_rawPath->isReady()) {
         pathCompletionChanged();
     }
+
+    if (m_reference == m_aligned) {
+        // Trivial alignment, e.g. of main model to itself, which we
+        // record so that we can distinguish the reference model for
+        // alignments from an unaligned model. No path required
+        m_pathComplete = true;
+    }
 }
 
 AlignmentModel::~AlignmentModel()
 {
+#ifdef DEBUG_ALIGNMENT_MODEL
+    SVCERR << "AlignmentModel(" << this << ")::~AlignmentModel()" << endl;
+#endif
+
     if (m_rawPath) m_rawPath->aboutToDelete();
     delete m_rawPath;
 
@@ -65,8 +76,9 @@ AlignmentModel::~AlignmentModel()
 bool
 AlignmentModel::isOK() const
 {
+    if (m_error != "") return false;
     if (m_rawPath) return m_rawPath->isOK();
-    else return true;
+    return true;
 }
 
 sv_frame_t
@@ -97,14 +109,14 @@ AlignmentModel::isReady(int *completion) const
     if (!m_pathBegun && m_rawPath) {
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: path not begun" << endl;
+        SVCERR << "AlignmentModel::isReady: path not begun" << endl;
 #endif
         return false;
     }
     if (m_pathComplete) {
         if (completion) *completion = 100;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: path complete" << endl;
+        SVCERR << "AlignmentModel::isReady: path complete" << endl;
 #endif
         return true;
     }
@@ -114,7 +126,7 @@ AlignmentModel::isReady(int *completion) const
         // set at all yet (this case)
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
-        SVDEBUG << "AlignmentModel::isReady: no raw path" << endl;
+        SVCERR << "AlignmentModel::isReady: no raw path" << endl;
 #endif
         return false;
     }
@@ -196,8 +208,8 @@ AlignmentModel::pathCompletionChanged()
         m_rawPath->isReady(&completion);
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "AlignmentModel::pathCompletionChanged: completion = "
-                  << completion << endl;
+        SVCERR << "AlignmentModel::pathCompletionChanged: completion = "
+               << completion << endl;
 #endif
 
         m_pathComplete = (completion == 100);
@@ -206,7 +218,10 @@ AlignmentModel::pathCompletionChanged()
 
             constructPath();
             constructReversePath();
-            
+
+#ifdef DEBUG_ALIGNMENT_MODEL
+            SVCERR << "AlignmentModel: path complete" << endl;
+#endif
         }
     }
 
@@ -230,14 +245,13 @@ AlignmentModel::constructPath() const
         
     m_path->clear();
 
-    SparseTimeValueModel::PointList points = m_rawPath->getPoints();
-        
-    for (SparseTimeValueModel::PointList::const_iterator i = points.begin();
-         i != points.end(); ++i) {
-        sv_frame_t frame = i->frame;
-        double value = i->value;
+    EventVector points = m_rawPath->getAllEvents();
+
+    for (const auto &p: points) {
+        sv_frame_t frame = p.getFrame();
+        double value = p.getValue();
         sv_frame_t rframe = lrint(value * m_aligned->getSampleRate());
-        m_path->addPoint(PathPoint(frame, rframe));
+        m_path->add(PathPoint(frame, rframe));
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -268,7 +282,7 @@ AlignmentModel::constructReversePath() const
          i != points.end(); ++i) {
         sv_frame_t frame = i->frame;
         sv_frame_t rframe = i->mapframe;
-        m_reversePath->addPoint(PathPoint(rframe, frame));
+        m_reversePath->add(PathPoint(rframe, frame));
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -299,7 +313,7 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
     cerr << "AlignmentModel::align: frame " << frame << " requested" << endl;
 #endif
 
-    PathModel::Point point(frame);
+    PathPoint point(frame);
     PathModel::PointList::const_iterator i = points.lower_bound(point);
     if (i == points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -359,6 +373,10 @@ AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
 
     m_rawPath = rawpath;
 
+    if (!m_rawPath) {
+        return;
+    }
+
     connect(m_rawPath, SIGNAL(modelChanged()),
             this, SLOT(pathChanged()));
 
@@ -407,9 +425,9 @@ AlignmentModel::toXml(QTextStream &stream,
 
     Model::toXml(stream, indent,
                  QString("type=\"alignment\" reference=\"%1\" aligned=\"%2\" path=\"%3\" %4")
-                 .arg(getObjectExportId(m_reference))
-                 .arg(getObjectExportId(m_aligned))
-                 .arg(getObjectExportId(m_path))
+                 .arg(m_reference->getExportId())
+                 .arg(m_aligned->getExportId())
+                 .arg(m_path->getExportId())
                  .arg(extraAttributes));
 }
 

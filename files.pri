@@ -7,11 +7,16 @@ SVCORE_HEADERS = \
            base/ColumnOp.h \
            base/Command.h \
            base/Debug.h \
+           base/Event.h \
+           base/EventSeries.h \
            base/Exceptions.h \
+           base/Extents.h \
            base/HelperExecPath.h \
            base/HitCount.h \
            base/LogRange.h \
            base/MagnitudeRange.h \
+           base/NoteData.h \
+           base/NoteExportable.h \
            base/Pitch.h \
            base/Playable.h \
            base/PlayParameterRepository.h \
@@ -75,25 +80,23 @@ SVCORE_HEADERS = \
            data/model/Dense3DModelPeakCache.h \
            data/model/DenseThreeDimensionalModel.h \
            data/model/DenseTimeValueModel.h \
+           data/model/DeferredNotifier.h \
            data/model/EditableDenseThreeDimensionalModel.h \
+           data/model/EventCommands.h \
            data/model/FFTModel.h \
            data/model/ImageModel.h \
-           data/model/IntervalModel.h \
            data/model/Labeller.h \
            data/model/Model.h \
            data/model/ModelDataTableModel.h \
            data/model/NoteModel.h \
-           data/model/FlexiNoteModel.h \
            data/model/PathModel.h \
            data/model/PowerOfSqrtTwoZoomConstraint.h \
            data/model/PowerOfTwoZoomConstraint.h \
            data/model/RangeSummarisableTimeValueModel.h \
            data/model/RegionModel.h \
            data/model/RelativelyFineZoomConstraint.h \
-           data/model/SparseModel.h \
            data/model/SparseOneDimensionalModel.h \
            data/model/SparseTimeValueModel.h \
-           data/model/SparseValueModel.h \
            data/model/TabularModel.h \
            data/model/TextModel.h \
            data/model/WaveformOversampler.h \
@@ -101,6 +104,7 @@ SVCORE_HEADERS = \
            data/model/ReadOnlyWaveFileModel.h \
            data/model/WritableWaveFileModel.h \
            data/osc/OSCMessage.h \
+           data/osc/OSCMessageCallback.h \
            data/osc/OSCQueue.h \
 	   plugin/PluginScan.h \
            plugin/DSSIPluginFactory.h \
@@ -149,6 +153,7 @@ SVCORE_SOURCES = \
            base/ColumnOp.cpp \
            base/Command.cpp \
            base/Debug.cpp \
+           base/EventSeries.cpp \
            base/Exceptions.cpp \
            base/HelperExecPath.cpp \
            base/LogRange.cpp \

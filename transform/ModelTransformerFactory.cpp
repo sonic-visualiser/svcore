@@ -34,6 +34,7 @@
 #include <set>
 
 #include <QRegExp>
+#include <QMutexLocker>
 
 using std::vector;
 
@@ -59,6 +60,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       sv_frame_t duration,
                                                       UserConfigurator *configurator)
 {
+    QMutexLocker locker(&m_mutex);
+    
     ModelTransformer::Input input(nullptr);
 
     if (candidateInputModels.empty()) return input;
@@ -213,6 +216,8 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
 {
     SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
     
+    QMutexLocker locker(&m_mutex);
+    
     ModelTransformer *t = createTransformer(transforms, input);
     if (!t) return vector<Model *>();
 
@@ -255,6 +260,8 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
 void
 ModelTransformerFactory::transformerFinished()
 {
+    QMutexLocker locker(&m_mutex);
+    
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
@@ -299,17 +306,21 @@ ModelTransformerFactory::modelAboutToBeDeleted(Model *m)
 {
     TransformerSet affected;
 
-    for (TransformerSet::iterator i = m_runningTransformers.begin();
-         i != m_runningTransformers.end(); ++i) {
+    {
+        QMutexLocker locker(&m_mutex);
+    
+        for (TransformerSet::iterator i = m_runningTransformers.begin();
+             i != m_runningTransformers.end(); ++i) {
 
-        ModelTransformer *t = *i;
+            ModelTransformer *t = *i;
 
-        if (t->getInputModel() == m) {
-            affected.insert(t);
-        } else {
-            vector<Model *> mm = t->getOutputModels();
-            for (int i = 0; i < (int)mm.size(); ++i) {
-                if (mm[i] == m) affected.insert(t);
+            if (t->getInputModel() == m) {
+                affected.insert(t);
+            } else {
+                vector<Model *> mm = t->getOutputModels();
+                for (int i = 0; i < (int)mm.size(); ++i) {
+                    if (mm[i] == m) affected.insert(t);
+                }
             }
         }
     }
@@ -327,3 +338,10 @@ ModelTransformerFactory::modelAboutToBeDeleted(Model *m)
     }
 }
 
+bool
+ModelTransformerFactory::haveRunningTransformers() const
+{
+    QMutexLocker locker(&m_mutex);
+    
+    return (!m_runningTransformers.empty());
+}

@@ -55,11 +55,13 @@ public:
     virtual sv_frame_t getStartFrame() const = 0;
 
     /**
-     * Return the audio frame at the end of the model, i.e. 1 more
-     * than the final frame contained within the model. The end frame
-     * minus the start frame should yield the total duration in frames
-     * spanned by the model. This is consistent with the definition of
-     * the end frame of a Selection object.
+     * Return the audio frame at the end of the model, i.e. the final
+     * frame contained within the model plus 1 (rounded up to the
+     * model's "resolution" granularity, if more than 1). The end
+     * frame minus the start frame should yield the total duration in
+     * frames (as a multiple of the resolution) spanned by the
+     * model. This is broadly consistent with the definition of the
+     * end frame of a Selection object.
      */
     virtual sv_frame_t getEndFrame() const = 0;
 
@@ -131,23 +133,42 @@ public:
     /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
-     * background thread.  The default implementation is appropriate
-     * for a thread that does not background any work but carries out
-     * all its calculation from the constructor or accessors.
+     * background thread.
      *
-     * If "completion" is non-NULL, this function should return
-     * through it an estimated percentage value showing how far
-     * through the background operation it thinks it is (for progress
-     * reporting).  If it has no way to calculate progress, it may
-     * return the special value COMPLETION_UNKNOWN.  See also
-     * getCompletion().
+     * If "completion" is non-NULL, return through it an estimated
+     * percentage value showing how far through the background
+     * operation it thinks it is (for progress reporting). This should
+     * be identical to the value returned by getCompletion().
+     *
+     * A model that carries out all its calculation from the
+     * constructor or accessor functions would typically return true
+     * (and completion == 100) as long as isOK() is true. Other models
+     * may make the return value here depend on the internal
+     * completion status.
+     *
+     * See also getCompletion().
      */
-    virtual bool isReady(int *completion = 0) const {
-        bool ok = isOK();
-        if (completion) *completion = (ok ? 100 : 0);
-        return ok;
+    virtual bool isReady(int *cp = nullptr) const {
+        int c = getCompletion();
+        if (cp) *cp = c;
+        if (!isOK()) return false;
+        else return (c == 100);
     }
-    static const int COMPLETION_UNKNOWN;
+    
+    /**
+     * Return an estimated percentage value showing how far through
+     * any background operation used to calculate or load the model
+     * data the model thinks it is. Must return 100 when the model is
+     * complete.
+     *
+     * A model that carries out all its calculation from the
+     * constructor or accessor functions might return 0 if isOK() is
+     * false and 100 if isOK() is true. Other models may make the
+     * return value here depend on the internal completion status.
+     *
+     * See also isReady().
+     */
+    virtual int getCompletion() const = 0;
 
     /**
      * If this model imposes a zoom constraint, i.e. some limit to the
@@ -236,21 +257,10 @@ public:
                QString indent = "",
                QString extraAttributes = "") const override;
 
-    virtual QString toDelimitedDataString(QString delimiter) const {
-        return toDelimitedDataStringSubset
-            (delimiter, getStartFrame(), getEndFrame());
-    }
-    virtual QString toDelimitedDataStringWithOptions(QString delimiter, DataExportOptions opts) const {
-        return toDelimitedDataStringSubsetWithOptions
-            (delimiter, opts, getStartFrame(), getEndFrame());
-    }
-    virtual QString toDelimitedDataStringSubset(QString, sv_frame_t /* f0 */, sv_frame_t /* f1 */) const {
-        return "";
-    }
-    virtual QString toDelimitedDataStringSubsetWithOptions(QString delimiter, DataExportOptions, sv_frame_t f0, sv_frame_t f1) const {
-        // Default implementation supports no options
-        return toDelimitedDataStringSubset(delimiter, f0, f1);
-    }
+    virtual QString toDelimitedDataString(QString delimiter,
+                                          DataExportOptions options,
+                                          sv_frame_t startFrame,
+                                          sv_frame_t duration) const = 0;
 
 public slots:
     void aboutToDelete();

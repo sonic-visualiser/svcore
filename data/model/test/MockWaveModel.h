@@ -51,6 +51,7 @@ public:
     sv_frame_t getEndFrame() const override { return m_data[0].size(); }
     sv_samplerate_t getSampleRate() const override { return 44100; }
     bool isOK() const override { return true; }
+    int getCompletion() const override { return 100; }
     
     QString getTypeName() const override { return tr("Mock Wave"); }
 

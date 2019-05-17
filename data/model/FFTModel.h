@@ -88,6 +88,10 @@ public:
     }
     virtual QString getError() const { return ""; } //!!!???
     virtual sv_frame_t getFillExtent() const { return getEndFrame(); }
+    QString toDelimitedDataString(QString, DataExportOptions,
+                                  sv_frame_t, sv_frame_t) const override {
+        return "";
+    }
 
     // FFTModel methods:
     //

@@ -36,16 +36,19 @@ class OSCQueue : public QObject
     Q_OBJECT
 
 public:
-    OSCQueue();
+    OSCQueue(bool withNetworkPort);
     virtual ~OSCQueue();
 
     bool isOK() const;
 
     bool isEmpty() const { return getMessagesAvailable() == 0; }
     int getMessagesAvailable() const;
+    void postMessage(OSCMessage);
     OSCMessage readMessage();
 
     QString getOSCURL() const;
+
+    bool hasPort() const { return m_withPort; }
 
 signals:
     void messagesAvailable();
@@ -59,9 +62,9 @@ protected:
                                  int, lo_message, void *);
 #endif
 
-    void postMessage(OSCMessage);
     bool parseOSCPath(QString path, int &target, int &targetData, QString &method);
 
+    bool m_withPort;
     RingBuffer<OSCMessage *> m_buffer;
 };
 

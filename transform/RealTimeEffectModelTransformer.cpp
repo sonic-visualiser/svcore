@@ -266,8 +266,7 @@ RealTimeEffectModelTransformer::run()
             if (pointFrame > latency) pointFrame -= latency;
             else pointFrame = 0;
 
-            stvm->addPoint(SparseTimeValueModel::Point
-                           (pointFrame, value, ""));
+            stvm->add(Event(pointFrame, value, ""));
 
         } else if (wwfm) {
 

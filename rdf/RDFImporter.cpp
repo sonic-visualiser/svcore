@@ -347,8 +347,8 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
 
             for (int j = 0; j < values.size(); ++j) {
                 float f = values[j].toFloat();
-                SparseTimeValueModel::Point point(j * hopSize, f, "");
-                m->addPoint(point);
+                Event e(j * hopSize, f, "");
+                m->add(e);
             }
 
             getDenseModelTitle(m, feature, type);
@@ -709,28 +709,27 @@ RDFImporterImpl::fillModel(Model *model,
     SparseOneDimensionalModel *sodm =
         dynamic_cast<SparseOneDimensionalModel *>(model);
     if (sodm) {
-        SparseOneDimensionalModel::Point point(ftime, label);
-        sodm->addPoint(point);
+        Event point(ftime, label);
+        sodm->add(point);
         return;
     }
 
     TextModel *tm =
         dynamic_cast<TextModel *>(model);
     if (tm) {
-        TextModel::Point point
+        Event e
             (ftime,
              values.empty() ? 0.5f : values[0] < 0.f ? 0.f : values[0] > 1.f ? 1.f : values[0], // I was young and feckless once too
              label);
-        tm->addPoint(point);
+        tm->add(e);
         return;
     }
 
     SparseTimeValueModel *stvm =
         dynamic_cast<SparseTimeValueModel *>(model);
     if (stvm) {
-        SparseTimeValueModel::Point point
-            (ftime, values.empty() ? 0.f : values[0], label);
-        stvm->addPoint(point);
+        Event e(ftime, values.empty() ? 0.f : values[0], label);
+        stvm->add(e);
         return;
     }
 
@@ -745,8 +744,8 @@ RDFImporterImpl::fillModel(Model *model,
                     level = values[1];
                 }
             }
-            NoteModel::Point point(ftime, value, fduration, level, label);
-            nm->addPoint(point);
+            Event e(ftime, value, fduration, level, label);
+            nm->add(e);
         } else {
             float value = 0.f, duration = 1.f, level = 1.f;
             if (!values.empty()) {
@@ -758,9 +757,9 @@ RDFImporterImpl::fillModel(Model *model,
                     }
                 }
             }
-            NoteModel::Point point(ftime, value, sv_frame_t(lrintf(duration)),
-                                   level, label);
-            nm->addPoint(point);
+            Event e(ftime, value, sv_frame_t(lrintf(duration)),
+                        level, label);
+            nm->add(e);
         }
         return;
     }
@@ -779,8 +778,8 @@ RDFImporterImpl::fillModel(Model *model,
             value = values[0];
         }
         if (haveDuration) {
-            RegionModel::Point point(ftime, value, fduration, label);
-            rm->addPoint(point);
+            Event e(ftime, value, fduration, label);
+            rm->add(e);
         } else {
             // This won't actually happen -- we only create region models
             // if we do have duration -- but just for completeness
@@ -791,9 +790,8 @@ RDFImporterImpl::fillModel(Model *model,
                     duration = values[1];
                 }
             }
-            RegionModel::Point point(ftime, value,
-                                     sv_frame_t(lrintf(duration)), label);
-            rm->addPoint(point);
+            Event e(ftime, value, sv_frame_t(lrintf(duration)), label);
+            rm->add(e);
         }
         return;
     }

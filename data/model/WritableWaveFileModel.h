@@ -139,7 +139,6 @@ public:
     int getWriteProportion() const;
     
     bool isOK() const override;
-    bool isReady(int *) const override;
     
     /**
      * Return the generation completion percentage of this model. This
@@ -147,7 +146,7 @@ public:
      * -- it just contains varying amounts of data depending on how
      * much has been written.
      */
-    virtual int getCompletion() const { return 100; }
+    int getCompletion() const override { return 100; }
 
     const ZoomConstraint *getZoomConstraint() const override {
         static PowerOfSqrtTwoZoomConstraint zc;

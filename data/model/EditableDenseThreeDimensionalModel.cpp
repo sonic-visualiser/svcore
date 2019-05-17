@@ -57,6 +57,13 @@ EditableDenseThreeDimensionalModel::isOK() const
     return true;
 }
 
+bool
+EditableDenseThreeDimensionalModel::isReady(int *completion) const
+{
+    if (completion) *completion = getCompletion();
+    return true;
+}
+
 sv_samplerate_t
 EditableDenseThreeDimensionalModel::getSampleRate() const
 {
@@ -486,29 +493,23 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
     }
 }
 
-QString
-EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter) const
+int
+EditableDenseThreeDimensionalModel::getCompletion() const
 {
-    QReadLocker locker(&m_lock);
-    QString s;
-    for (int i = 0; in_range_for(m_data, i); ++i) {
-        QStringList list;
-        for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
-            list << QString("%1").arg(m_data.at(i).at(j));
-        }
-        s += list.join(delimiter) + "\n";
-    }
-    return s;
+    return m_completion;
 }
 
 QString
-EditableDenseThreeDimensionalModel::toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const
+EditableDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter,
+                                                          DataExportOptions,
+                                                          sv_frame_t startFrame,
+                                                          sv_frame_t duration) const
 {
     QReadLocker locker(&m_lock);
     QString s;
     for (int i = 0; in_range_for(m_data, i); ++i) {
         sv_frame_t fr = m_startFrame + i * m_resolution;
-        if (fr >= f0 && fr < f1) {
+        if (fr >= startFrame && fr < startFrame + duration) {
             QStringList list;
             for (int j = 0; in_range_for(m_data.at(i), j); ++j) {
                 list << QString("%1").arg(m_data.at(i).at(j));
@@ -526,7 +527,11 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
 {
     QReadLocker locker(&m_lock);
 
-    // For historical reasons we read and write "resolution" as "windowSize"
+    // For historical reasons we read and write "resolution" as "windowSize".
+
+    // Our dataset doesn't have its own export ID, we just use
+    // ours. Actually any model could do that, since datasets aren't
+    // in the same id-space as models when re-read
 
     SVDEBUG << "EditableDenseThreeDimensionalModel::toXml" << endl;
 
@@ -537,13 +542,13 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
          .arg(m_yBinCount)
          .arg(m_minimum)
          .arg(m_maximum)
-         .arg(getObjectExportId(&m_data))
+         .arg(getExportId())
          .arg(m_startFrame)
          .arg(extraAttributes));
 
     out << indent;
     out << QString("<dataset id=\"%1\" dimensions=\"3\" separator=\" \">\n")
-        .arg(getObjectExportId(&m_data));
+        .arg(getExportId());
 
     for (int i = 0; i < (int)m_binNames.size(); ++i) {
         if (m_binNames[i] != "") {

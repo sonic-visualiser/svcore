@@ -1027,12 +1027,12 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
                     float level = float((*i)->getVelocity()) / 128.f;
 
-                    Note note(startFrame, (*i)->getPitch(),
-                              endFrame - startFrame, level, noteLabel);
+                    Event note(startFrame, (*i)->getPitch(),
+                               endFrame - startFrame, level, noteLabel);
 
 //                    SVDEBUG << "Adding note " << startFrame << "," << (endFrame-startFrame) << " : " << int((*i)->getPitch()) << endl;
 
-                    model->addPoint(note);
+                    model->add(note);
                     break;
                 }
 

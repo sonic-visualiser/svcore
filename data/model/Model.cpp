@@ -20,11 +20,11 @@
 
 #include <iostream>
 
-const int Model::COMPLETION_UNKNOWN = -1;
+//#define DEBUG_COMPLETION 1
 
 Model::~Model()
 {
-//    SVDEBUG << "Model::~Model(" << this << ")" << endl;
+    SVDEBUG << "Model::~Model(" << this << ")" << endl;
 
     if (!m_aboutToDelete) {
         SVDEBUG << "NOTE: Model(" << this << ", \""
@@ -75,9 +75,10 @@ Model::setSourceModel(Model *model)
 void
 Model::aboutToDelete()
 {
-//    SVDEBUG << "Model(" << this << ", \""
-//            << objectName() << "\", type uri <"
-//            << m_typeUri << ">)::aboutToDelete()" << endl;
+    SVDEBUG << "Model(" << this << ", \""
+            << objectName() << "\", type name \""
+            << getTypeName() << "\", type uri <"
+            << m_typeUri << ">)::aboutToDelete()" << endl;
 
     if (m_aboutToDelete) {
         SVDEBUG << "WARNING: Model(" << this << ", \""
@@ -100,6 +101,9 @@ Model::sourceModelAboutToBeDeleted()
 void
 Model::setAlignment(AlignmentModel *alignment)
 {
+    SVDEBUG << "Model(" << this << "): accepting alignment model "
+            << alignment << endl;
+    
     if (m_alignment) {
         m_alignment->aboutToDelete();
         delete m_alignment;
@@ -161,15 +165,20 @@ Model::alignFromReference(sv_frame_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
-//    SVDEBUG << "Model::getAlignmentCompletion: m_alignment = "
-//            << m_alignment << endl;
+#ifdef DEBUG_COMPLETION
+    SVCERR << "Model(" << this << ")::getAlignmentCompletion: m_alignment = "
+           << m_alignment << endl;
+#endif
     if (!m_alignment) {
         if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
         else return 100;
     }
     int completion = 0;
     (void)m_alignment->isReady(&completion);
-//    SVDEBUG << " -> " << completion << endl;
+#ifdef DEBUG_COMPLETION
+    SVCERR << "Model(" << this << ")::getAlignmentCompletion: completion = " << completion
+           << endl;
+#endif
     return completion;
 }
 
@@ -200,7 +209,7 @@ Model::toXml(QTextStream &stream, QString indent,
 {
     stream << indent;
     stream << QString("<model id=\"%1\" name=\"%2\" sampleRate=\"%3\" start=\"%4\" end=\"%5\" %6/>\n")
-        .arg(getObjectExportId(this))
+        .arg(getExportId())
         .arg(encodeEntities(objectName()))
         .arg(getSampleRate())
         .arg(getStartFrame())

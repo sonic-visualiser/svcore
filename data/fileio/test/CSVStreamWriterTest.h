@@ -297,13 +297,15 @@ private slots:
         NoteModel notes(8 /* sampleRate */, 4 /* resolution */);
         sv_frame_t startFrame = 0;
         for (const auto& note : cMajorPentatonic) {
-            notes.addPoint({startFrame, note, 4, 1.f, ""});
+            notes.add({startFrame, note, 4, 1.f, ""});
             startFrame += 8;
         }
 //        qDebug("Create Expected Output\n");
 
         // NB. removed end line break
-        const auto expectedOutput = notes.toDelimitedDataString(",").trimmed();
+        const auto expectedOutput =
+            notes.toDelimitedDataString(",", {}, 0, notes.getEndFrame())
+            .trimmed();
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;
@@ -318,9 +320,10 @@ private slots:
             2
         );
 
-//        qDebug("\n%s\n", expectedOutput.toLocal8Bit().data());
-//        qDebug("\n%s\n", oss.str().c_str());
+//        qDebug("\n->>%s<<-\n", expectedOutput.toLocal8Bit().data());
+//        qDebug("\n->>%s<<-\n", oss.str().c_str());
         QVERIFY( wroteSparseModel == true );
+        QVERIFY( oss.str() != std::string() );
         QVERIFY( oss.str() == expectedOutput.toStdString() );
     }
 };

@@ -16,10 +16,10 @@
 #ifndef SV_LABELLER_H
 #define SV_LABELLER_H
 
-#include "SparseModel.h"
-#include "SparseValueModel.h"
-
 #include "base/Selection.h"
+#include "base/Event.h"
+
+#include "EventCommands.h"
 
 #include <QObject>
 
@@ -62,6 +62,9 @@ public:
     //
     // 4. re-label a set of points that have already been added to a
     // model
+    //
+    // 5. generate new labelled points in the gaps between other
+    // points (subdivide), or remove them (winnow)
 
     Labeller(ValueType type = ValueNone) :
         m_type(type),
@@ -151,113 +154,160 @@ public:
         }
     }
 
-    template <typename PointType>
-    void label(PointType &newPoint, PointType *prevPoint = 0) {
+    enum Application {
+        AppliesToThisEvent,
+        AppliesToPreviousEvent
+    };
+    typedef std::pair<Application, Event> Relabelling;
+    typedef std::pair<Application, Event> Revaluing;
+
+    /** 
+     * Return a labelled event based on the given event, previous
+     * event if supplied, and internal labeller state. The returned
+     * event replaces either the event provided or the previous event,
+     * depending on the Application value in the returned pair.
+     */
+    Relabelling
+    label(Event e, const Event *prev = nullptr) {
+
+        QString label = e.getLabel();
+
         if (m_type == ValueNone) {
-            newPoint.label = "";
+            label = "";
         } else if (m_type == ValueFromTwoLevelCounter) {
-            newPoint.label = tr("%1.%2").arg(m_counter2).arg(m_counter);
+            label = tr("%1.%2").arg(m_counter2).arg(m_counter);
             incrementCounter();
         } else if (m_type == ValueFromFrameNumber) {
             // avoid going through floating-point value
-            newPoint.label = tr("%1").arg(newPoint.frame);
+            label = tr("%1").arg(e.getFrame());
         } else {
-            float value = getValueFor<PointType>(newPoint, prevPoint);
-            if (actingOnPrevPoint() && prevPoint) {
-                prevPoint->label = QString("%1").arg(value);
-            } else {
-                newPoint.label = QString("%1").arg(value);
-            }
+            float value = getValueFor(e, prev);
+            label = QString("%1").arg(value);
+        }
+
+        if (actingOnPrevEvent() && prev) {
+            return { AppliesToPreviousEvent, prev->withLabel(label) };
+        } else {
+            return { AppliesToThisEvent, e.withLabel(label) };
         }
     }
-        
-    /**
-     * Relabel all points in the given model that lie within the given
-     * multi-selection, according to the labelling properties of this
-     * labeller.  Return a command that has been executed but not yet
-     * added to the history.
+
+    /** 
+     * Return an event with a value following the labelling scheme,
+     * based on the given event, previous event if supplied, and
+     * internal labeller state. The returned event replaces either the
+     * event provided or the previous event, depending on the
+     * Application value in the returned pair.
      */
-    template <typename PointType>
-    Command *labelAll(SparseModel<PointType> &model, MultiSelection *ms) {
+    Revaluing
+    revalue(Event e, const Event *prev = nullptr) {
 
-        auto points(model.getPoints());
-        auto command = new typename SparseModel<PointType>::EditCommand
-            (&model, tr("Label Points"));
+        float value = e.getValue();
+        
+        if (m_type == ValueFromExistingNeighbour) {
+            if (!prev) {
+                std::cerr << "ERROR: Labeller::setValue: Previous point required but not provided" << std::endl;
+            } else {
+                return { AppliesToThisEvent, e.withValue(prev->getValue()) };
+            }
+        } else {
+            value = getValueFor(e, prev);
+        }
 
-        PointType prevPoint(0);
-        bool havePrevPoint(false);
+        if (actingOnPrevEvent() && prev) {
+            return { AppliesToPreviousEvent, prev->withValue(value) };
+        } else {
+            return { AppliesToThisEvent, e.withValue(value) };
+        }
+    }
+    
+    /**
+     * Relabel all events in the given event vector that lie within
+     * the given multi-selection, according to the labelling
+     * properties of this labeller.  Return a command that has been
+     * executed but not yet added to the history.
+     */
+    Command *labelAll(EventEditable *editable,
+                      MultiSelection *ms,
+                      const EventVector &allEvents) {
 
-        for (auto p: points) {
+        ChangeEventsCommand *command = new ChangeEventsCommand
+            (editable, tr("Label Points"));
+
+        Event prev;
+        bool havePrev = false;
+
+        for (auto p: allEvents) {
 
             if (ms) {
-                Selection s(ms->getContainingSelection(p.frame, false));
-                if (!s.contains(p.frame)) {
-                    prevPoint = p;
-                    havePrevPoint = true;
+                Selection s(ms->getContainingSelection(p.getFrame(), false));
+                if (!s.contains(p.getFrame())) {
+                    prev = p;
+                    havePrev = true;
                     continue;
                 }
             }
 
-            if (actingOnPrevPoint()) {
-                if (havePrevPoint) {
-                    command->deletePoint(prevPoint);
-                    label<PointType>(p, &prevPoint);
-                    command->addPoint(prevPoint);
-                }
+            auto labelling = label(p, havePrev ? &prev : nullptr);
+
+            if (labelling.first == AppliesToThisEvent) {
+                command->remove(p);
             } else {
-                command->deletePoint(p);
-                label<PointType>(p, &prevPoint);
-                command->addPoint(p);
+                command->remove(prev);
             }
 
-            prevPoint = p;
-            havePrevPoint = true;
+            command->add(labelling.second);
+
+            prev = p;
+            havePrev = true;
         }
 
         return command->finish();
     }
 
     /**
-     * For each point in the given model (except the last), if that
-     * point lies within the given multi-selection, add n-1 new points
-     * at equally spaced intervals between it and the following point.
-     * Return a command that has been executed but not yet added to
-     * the history.
+     * For each event in the given event vector (except the last), if
+     * that event lies within the given multi-selection, add n-1 new
+     * events at equally spaced intervals between it and the following
+     * event.  Return a command that has been executed but not yet
+     * added to the history.
      */
-    template <typename PointType>
-    Command *subdivide(SparseModel<PointType> &model, MultiSelection *ms, int n) {
-        
-        auto points(model.getPoints());
-        auto command = new typename SparseModel<PointType>::EditCommand
-            (&model, tr("Subdivide Points"));
+    Command *subdivide(EventEditable *editable,
+                       MultiSelection *ms,
+                       const EventVector &allEvents,
+                       int n) {
 
-        for (auto i = points.begin(); i != points.end(); ++i) {
+        ChangeEventsCommand *command = new ChangeEventsCommand
+            (editable, tr("Subdivide Points"));
+
+        for (auto i = allEvents.begin(); i != allEvents.end(); ++i) {
 
             auto j = i;
             // require a "next point" even if it's not in selection
-            if (++j == points.end()) {
+            if (++j == allEvents.end()) {
                 break;
             }
 
             if (ms) {
-                Selection s(ms->getContainingSelection(i->frame, false));
-                if (!s.contains(i->frame)) {
+                Selection s(ms->getContainingSelection(i->getFrame(), false));
+                if (!s.contains(i->getFrame())) {
                     continue;
                 }
             }
 
-            PointType p(*i);
-            PointType nextP(*j);
+            Event p(*i);
+            Event nextP(*j);
 
             // n is the number of subdivisions, so we add n-1 new
             // points equally spaced between p and nextP
 
             for (int m = 1; m < n; ++m) {
-                sv_frame_t f = p.frame + (m * (nextP.frame - p.frame)) / n;
-                PointType newPoint(p);
-                newPoint.frame = f;
-                newPoint.label = tr("%1.%2").arg(p.label).arg(m+1);
-                command->addPoint(newPoint);
+                sv_frame_t f = p.getFrame() +
+                    (m * (nextP.getFrame() - p.getFrame())) / n;
+                Event newPoint = p
+                    .withFrame(f)
+                    .withLabel(tr("%1.%2").arg(p.getLabel()).arg(m+1));
+                command->add(newPoint);
             }
         }
 
@@ -265,23 +315,27 @@ public:
     }
 
     /**
+     * The opposite of subdivide. Given an event vector, a
+     * multi-selection, and a number n, remove all but every nth event
+     * from the vector within the extents of the multi-selection.
      * Return a command that has been executed but not yet added to
      * the history.
      */
-    template <typename PointType>
-    Command *winnow(SparseModel<PointType> &model, MultiSelection *ms, int n) {
-        
-        auto points(model.getPoints());
-        auto command = new typename SparseModel<PointType>::EditCommand
-            (&model, tr("Winnow Points"));
+    Command *winnow(EventEditable *editable,
+                    MultiSelection *ms,
+                    const EventVector &allEvents,
+                    int n) {
+
+        ChangeEventsCommand *command = new ChangeEventsCommand
+            (editable, tr("Winnow Points"));
 
         int counter = 0;
         
-        for (auto p: points) {
+        for (auto p: allEvents) {
 
             if (ms) {
-                Selection s(ms->getContainingSelection(p.frame, false));
-                if (!s.contains(p.frame)) {
+                Selection s(ms->getContainingSelection(p.getFrame(), false));
+                if (!s.contains(p.getFrame())) {
                     counter = 0;
                     continue;
                 }
@@ -295,28 +349,10 @@ public:
                 continue;
             }
             
-            command->deletePoint(p);
+            command->remove(p);
         }
 
         return command->finish();
-    }
-
-    template <typename PointType>
-    void setValue(PointType &newPoint, PointType *prevPoint = 0) {
-        if (m_type == ValueFromExistingNeighbour) {
-            if (!prevPoint) {
-                std::cerr << "ERROR: Labeller::setValue: Previous point required but not provided" << std::endl;
-            } else {
-                newPoint.value = prevPoint->value;
-            }
-        } else {
-            float value = getValueFor<PointType>(newPoint, prevPoint);
-            if (actingOnPrevPoint() && prevPoint) {
-                prevPoint->value = value;
-            } else {
-                newPoint.value = value;
-            }
-        }
     }
 
     bool requiresPrevPoint() const {
@@ -326,15 +362,14 @@ public:
                 m_type == ValueFromDurationToNext);
     }
 
-    bool actingOnPrevPoint() const {
+    bool actingOnPrevEvent() const {
         return (m_type == ValueFromDurationToNext ||
                 m_type == ValueFromTempoToNext);
     }
 
 protected:
-    template <typename PointType>
-    float getValueFor(PointType &newPoint, PointType *prevPoint)
-    {
+    float getValueFor(Event p, const Event *prev) {
+        
         float value = 0.f;
 
         switch (m_type) {
@@ -355,14 +390,14 @@ protected:
             break;
 
         case ValueFromFrameNumber:
-            value = float(newPoint.frame);
+            value = float(p.getFrame());
             break;
             
         case ValueFromRealTime: 
             if (m_rate == 0.0) {
                 std::cerr << "ERROR: Labeller::getValueFor: Real-time conversion required, but no sample rate set" << std::endl;
             } else {
-                value = float(double(newPoint.frame) / m_rate);
+                value = float(double(p.getFrame()) / m_rate);
             }
             break;
 
@@ -372,10 +407,10 @@ protected:
         case ValueFromTempoFromPrevious:
             if (m_rate == 0.0) {
                 std::cerr << "ERROR: Labeller::getValueFor: Real-time conversion required, but no sample rate set" << std::endl;
-            } else if (!prevPoint) {
+            } else if (!prev) {
                 std::cerr << "ERROR: Labeller::getValueFor: Time difference required, but only one point provided" << std::endl;
             } else {
-                sv_frame_t f0 = prevPoint->frame, f1 = newPoint.frame;
+                sv_frame_t f0 = prev->getFrame(), f1 = p.getFrame();
                 if (m_type == ValueFromDurationToNext ||
                     m_type == ValueFromDurationFromPrevious) {
                     value = float(double(f1 - f0) / m_rate);
@@ -394,9 +429,9 @@ protected:
             break;
 
         case ValueFromLabel:
-            if (newPoint.label != "") {
+            if (p.getLabel() != "") {
                 // more forgiving than QString::toFloat()
-                value = float(atof(newPoint.label.toLocal8Bit()));
+                value = float(atof(p.getLabel().toLocal8Bit()));
             } else {
                 value = 0.f;
             }

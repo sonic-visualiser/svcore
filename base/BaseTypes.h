@@ -55,5 +55,11 @@ typedef std::vector<float, breakfastquay::StlAllocator<float>> floatvec_t;
 typedef std::vector<std::complex<float>,
                     breakfastquay::StlAllocator<std::complex<float>>> complexvec_t;
 
+typedef uint64_t sv_id_t;
+
+enum {
+    ID_NOTHING = 0
+};
+
 #endif
 

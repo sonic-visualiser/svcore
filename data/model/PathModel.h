@@ -17,25 +17,25 @@
 #define SV_PATH_MODEL_H
 
 #include "Model.h"
-#include "SparseModel.h"
+#include "DeferredNotifier.h"
 #include "base/RealTime.h"
 #include "base/BaseTypes.h"
 
-#include <QStringList>
+#include "base/XmlExportable.h"
+#include "base/RealTime.h"
 
+#include <QStringList>
+#include <set>
 
 struct PathPoint
 {
-    PathPoint(sv_frame_t _frame) : frame(_frame), mapframe(_frame) { }
+    PathPoint(sv_frame_t _frame) :
+        frame(_frame), mapframe(_frame) { }
     PathPoint(sv_frame_t _frame, sv_frame_t _mapframe) :
         frame(_frame), mapframe(_mapframe) { }
 
-    int getDimensions() const { return 2; }
-
     sv_frame_t frame;
     sv_frame_t mapframe;
-
-    QString getLabel() const { return ""; }
 
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const {
@@ -51,44 +51,178 @@ struct PathPoint
         return list.join(delimiter);
     }
 
-    struct Comparator {
-        bool operator()(const PathPoint &p1, const PathPoint &p2) const {
-            if (p1.frame != p2.frame) return p1.frame < p2.frame;
-            return p1.mapframe < p2.mapframe;
-        }
-    };
-    
-    struct OrderComparator {
-        bool operator()(const PathPoint &p1, const PathPoint &p2) const {
-            return p1.frame < p2.frame;
-        }
-    };
+    bool operator<(const PathPoint &p2) const {
+        if (frame != p2.frame) return frame < p2.frame;
+        return mapframe < p2.mapframe;
+    }
 };
 
-class PathModel : public SparseModel<PathPoint>
+class PathModel : public Model
 {
 public:
-    PathModel(sv_samplerate_t sampleRate, int resolution, bool notify = true) :
-        SparseModel<PathPoint>(sampleRate, resolution, notify) { }
+    typedef std::set<PathPoint> PointList;
 
-    void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const override
-    {
-        SparseModel<PathPoint>::toXml
-            (out, 
-             indent,
-             QString("%1 subtype=\"path\"")
-             .arg(extraAttributes));
+    PathModel(sv_samplerate_t sampleRate,
+              int resolution,
+              bool notifyOnAdd = true) :
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(100),
+        m_start(0),
+        m_end(0) {
+    }
+
+    QString getTypeName() const override { return tr("Path"); }
+    bool isSparse() const override { return true; }
+    bool isOK() const override { return true; }
+
+    sv_frame_t getStartFrame() const override {
+        return m_start;
+    }
+    sv_frame_t getEndFrame() const override {
+        return m_end;
+    }
+    
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    int getResolution() const { return m_resolution; }
+    
+    int getCompletion() const override { return m_completion; }
+
+    void setCompletion(int completion, bool update = true) {
+        
+        {   QMutexLocker locker(&m_mutex);
+            if (m_completion == completion) return;
+            m_completion = completion;
+        }
+
+        if (update) {
+            m_notifier.makeDeferredNotifications();
+        }
+        
+        emit completionChanged();
+
+        if (completion == 100) {
+            // henceforth:
+            m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
+            emit modelChanged();
+        }
     }
 
     /**
-     * TabularModel is inherited via SparseModel, but we don't need it here.
+     * Query methods.
      */
-    QString getHeading(int) const override { return ""; }
-    bool isColumnTimeValue(int) const override { return false; }
-    SortType getSortType(int) const override { return SortNumeric; }
+    int getPointCount() const {
+        return int(m_points.size());
+    }
+    const PointList &getPoints() const {
+        return m_points;
+    }
 
+    /**
+     * Editing methods.
+     */
+    void add(PathPoint p) {
+
+        {   QMutexLocker locker(&m_mutex);
+            m_points.insert(p);
+
+            if (m_start == m_end) {
+                m_start = p.frame;
+                m_end = m_start + m_resolution;
+            } else {
+                if (p.frame < m_start) {
+                    m_start = p.frame;
+                }
+                if (p.frame + m_resolution > m_end) {
+                    m_end = p.frame + m_resolution;
+                }
+            }
+        }
+        
+        m_notifier.update(p.frame, m_resolution);
+    }
+    
+    void remove(PathPoint p) {
+        {   QMutexLocker locker(&m_mutex);
+            m_points.erase(p);
+        }
+
+        emit modelChangedWithin(p.frame, p.frame + m_resolution);
+    }
+
+    void clear() {
+        {   QMutexLocker locker(&m_mutex);
+            m_start = m_end = 0;
+            m_points.clear();
+        }
+    }
+
+    /**
+     * XmlExportable methods.
+     */
+    void toXml(QTextStream &out,
+                       QString indent = "",
+                       QString extraAttributes = "") const override {
+
+        // Our dataset doesn't have its own export ID, we just use
+        // ours. Actually any model could do that, since datasets
+        // aren't in the same id-space as models when re-read
+        
+        Model::toXml
+            (out,
+             indent,
+             QString("type=\"sparse\" dimensions=\"2\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"path\" %4")
+             .arg(m_resolution)
+             .arg("true") // always true after model reaches 100% -
+                          // subsequent points are always notified
+             .arg(getExportId())
+             .arg(extraAttributes));
+
+        out << indent << QString("<dataset id=\"%1\" dimensions=\"2\">\n")
+            .arg(getExportId());
+        
+        for (PathPoint p: m_points) {
+            p.toXml(out, indent + "  ", "");
+        }
+
+        out << indent << "</dataset>\n";
+    }
+
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override {
+
+        QString s;
+        for (PathPoint p: m_points) {
+            if (p.frame < startFrame) continue;
+            if (p.frame >= startFrame + duration) break;
+            s += QString("%1%2%3\n")
+                .arg(p.frame)
+                .arg(delimiter)
+                .arg(p.mapframe);
+        }
+
+        return s;
+    }
+    
+protected:
+    sv_samplerate_t m_sampleRate;
+    int m_resolution;
+
+    DeferredNotifier m_notifier;
+    int m_completion;
+
+    sv_frame_t m_start;
+    sv_frame_t m_end;
+    PointList m_points;
+
+    mutable QMutex m_mutex;  
 };
 
 

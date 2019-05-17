@@ -55,8 +55,8 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
     
     if (m_windowSize > m_fftSize) {
         SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
-               << ") must be at least FFT size (" << m_fftSize << ")" << endl;
-        throw invalid_argument("FFTModel window size must be at least FFT size");
+               << ") may not exceed FFT size (" << m_fftSize << ")" << endl;
+        throw invalid_argument("FFTModel window size may not exceed FFT size");
     }
 
     m_fft.initFloat();

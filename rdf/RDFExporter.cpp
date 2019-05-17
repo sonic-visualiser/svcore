@@ -85,14 +85,13 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = true;
-            const RegionModel::PointList &pl(m->getPoints());
-            for (RegionModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
-                f.duration = RealTime::frame2RealTime(i->duration, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
+                f.duration = RealTime::frame2RealTime(e.getDuration(), sr).toVampRealTime();
                 f.values.clear();
-                f.values.push_back(i->value);
-                f.label = i->label.toStdString();
+                f.values.push_back(e.getValue());
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;
@@ -103,15 +102,14 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = true;
-            const NoteModel::PointList &pl(m->getPoints());
-            for (NoteModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
-                f.duration = RealTime::frame2RealTime(i->duration, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
+                f.duration = RealTime::frame2RealTime(e.getDuration(), sr).toVampRealTime();
                 f.values.clear();
-                f.values.push_back(i->value);
-                f.values.push_back(i->level);
-                f.label = i->label.toStdString();
+                f.values.push_back(e.getValue());
+                f.values.push_back(e.getLevel());
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;
@@ -122,12 +120,11 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = false;
-            const SparseOneDimensionalModel::PointList &pl(m->getPoints());
-            for (SparseOneDimensionalModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.values.clear();
-                f.label = i->label.toStdString();
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;
@@ -138,13 +135,12 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = false;
-            const SparseTimeValueModel::PointList &pl(m->getPoints());
-            for (SparseTimeValueModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.values.clear();
-                f.values.push_back(i->value);
-                f.label = i->label.toStdString();
+                f.values.push_back(e.getValue());
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;
@@ -155,14 +151,13 @@ RDFExporter::write()
         if (m) {
             f.hasTimestamp = true;
             f.hasDuration = false;
-            const TextModel::PointList &pl(m->getPoints());
             m_fw->setFixedEventTypeURI("af:Text");
-            for (TextModel::PointList::const_iterator i = pl.begin(); 
-                 i != pl.end(); ++i) {
-                f.timestamp = RealTime::frame2RealTime(i->frame, sr).toVampRealTime();
+            EventVector ee(m->getAllEvents());
+            for (auto e: ee) {
+                f.timestamp = RealTime::frame2RealTime(e.getFrame(), sr).toVampRealTime();
                 f.values.clear();
-                f.values.push_back(i->height);
-                f.label = i->label.toStdString();
+                f.values.push_back(e.getValue());
+                f.label = e.getLabel().toStdString();
                 m_fw->write(trackId, transform, output, features, summaryType);
             }
             return;

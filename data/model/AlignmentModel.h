@@ -36,10 +36,19 @@ public:
     ~AlignmentModel();
 
     bool isOK() const override;
+
+    void setError(QString error) { m_error = error; }
+    QString getError() const { return m_error; }
+
     sv_frame_t getStartFrame() const override;
     sv_frame_t getEndFrame() const override;
     sv_samplerate_t getSampleRate() const override;
     bool isReady(int *completion = 0) const override;
+    int getCompletion() const override {
+        int c = 0;
+        (void)isReady(&c);
+        return c;
+    }
     const ZoomConstraint *getZoomConstraint() const override;
 
     QString getTypeName() const override { return tr("Alignment"); }
@@ -56,6 +65,11 @@ public:
     void toXml(QTextStream &stream,
                        QString indent = "",
                        QString extraAttributes = "") const override;
+
+    QString toDelimitedDataString(QString, DataExportOptions,
+                                  sv_frame_t, sv_frame_t) const override {
+        return "";
+    }
 
 signals:
     void modelChanged();
@@ -76,6 +90,7 @@ protected:
     mutable PathModel *m_reversePath; // I own this
     bool m_pathBegun;
     bool m_pathComplete;
+    QString m_error;
 
     void constructPath() const;
     void constructReversePath() const;

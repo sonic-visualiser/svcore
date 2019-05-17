@@ -97,6 +97,11 @@ public:
         return m_source->getCompletion();
     }
 
+    QString toDelimitedDataString(QString, DataExportOptions,
+                                  sv_frame_t, sv_frame_t) const override {
+        return "";
+    }
+
 protected slots:
     void sourceModelChanged();
     void sourceModelAboutToBeDeleted();

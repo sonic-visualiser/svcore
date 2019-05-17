@@ -14,6 +14,7 @@
 #include "TestFFTModel.h"
 #include "TestZoomConstraints.h"
 #include "TestWaveformOversampler.h"
+#include "TestSparseModels.h"
 
 #include "system/Init.h"
 
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication app(argc, argv);
     app.setOrganizationName("sonic-visualiser");
-    app.setApplicationName("test-model");
+    app.setApplicationName("test-svcore-data-model");
 
     {
         TestFFTModel t;
@@ -47,6 +48,12 @@ int main(int argc, char *argv[])
 
     {
         TestWaveformOversampler t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        TestSparseModels t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }

@@ -50,7 +50,6 @@ writeInChunks(OutStream& oss,
             return acc + (current.getEndFrame() - current.getStartFrame());
         }
     );
-    const auto finalFrameOfLastRegion = (*selections.crbegin()).getEndFrame();
 
     const auto wasCancelled = [&reporter]() { 
         return reporter && reporter->wasCancelled(); 
@@ -58,6 +57,7 @@ writeInChunks(OutStream& oss,
 
     sv_frame_t nFramesWritten = 0;
     int previousProgress = 0;
+    bool started = false;
 
     for (const auto& extents : selections) {
         const auto startFrame = extents.getStartFrame();
@@ -68,15 +68,20 @@ writeInChunks(OutStream& oss,
 
             const auto start = readPtr;
             const auto end = std::min(start + blockSize, endFrame);
-            const auto data = model.toDelimitedDataStringSubsetWithOptions(
+            const auto data = model.toDelimitedDataString(
                 delimiter,
                 options,
                 start,
-                end
+                end - start
             ).trimmed();
 
             if ( data != "" ) {
-                oss << data << (end < finalFrameOfLastRegion ? "\n" : "");
+                if (started) {
+                    oss << "\n";
+                } else {
+                    started = true;
+                }
+                oss << data;
             }
 
             nFramesWritten += end - start;

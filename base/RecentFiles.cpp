@@ -20,6 +20,7 @@
 #include <QFileInfo>
 #include <QSettings>
 #include <QRegExp>
+#include <QMutexLocker>
 
 RecentFiles::RecentFiles(QString settingsGroup, int maxCount) :
     m_settingsGroup(settingsGroup),
@@ -36,16 +37,26 @@ RecentFiles::~RecentFiles()
 void
 RecentFiles::read()
 {
-    m_names.clear();
+    // Private method - called only from constructor - no mutex lock required
+    
+    m_entries.clear();
     QSettings settings;
     settings.beginGroup(m_settingsGroup);
 
     for (int i = 0; i < 100; ++i) {
-        QString key = QString("recent-%1").arg(i);
-        QString name = settings.value(key, "").toString();
-        if (name == "") break;
-        if (i < m_maxCount) m_names.push_back(name);
-        else settings.setValue(key, "");
+
+        QString idKey = QString("recent-%1").arg(i);
+        QString identifier = settings.value(idKey, "").toString();
+        if (identifier == "") break;
+
+        QString labelKey = QString("recent-%1-label").arg(i);
+        QString label = settings.value(labelKey, "").toString();
+        
+        if (i < m_maxCount) m_entries.push_back({ identifier, label });
+        else {
+            settings.setValue(idKey, "");
+            settings.setValue(labelKey, "");
+        }
     }
 
     settings.endGroup();
@@ -54,14 +65,22 @@ RecentFiles::read()
 void
 RecentFiles::write()
 {
+    // Private method - must be serialised at call site
+    
     QSettings settings;
     settings.beginGroup(m_settingsGroup);
 
     for (int i = 0; i < m_maxCount; ++i) {
-        QString key = QString("recent-%1").arg(i);
-        QString name = "";
-        if (i < (int)m_names.size()) name = m_names[i];
-        settings.setValue(key, name);
+        QString idKey = QString("recent-%1").arg(i);
+        QString labelKey = QString("recent-%1-label").arg(i);
+        QString identifier;
+        QString label;
+        if (in_range_for(m_entries, i)) {
+            identifier = m_entries[i].first;
+            label = m_entries[i].second;
+        }
+        settings.setValue(idKey, identifier);
+        settings.setValue(labelKey, label);
     }
 
     settings.endGroup();
@@ -70,67 +89,92 @@ RecentFiles::write()
 void
 RecentFiles::truncateAndWrite()
 {
-    while (int(m_names.size()) > m_maxCount) {
-        m_names.pop_back();
+    // Private method - must be serialised at call site
+    
+    while (int(m_entries.size()) > m_maxCount) {
+        m_entries.pop_back();
     }
     write();
 }
 
 std::vector<QString>
-RecentFiles::getRecent() const
+RecentFiles::getRecentIdentifiers() const
 {
-    std::vector<QString> names;
-    for (int i = 0; i < m_maxCount; ++i) {
-        if (i < (int)m_names.size()) {
-            names.push_back(m_names[i]);
-        }
-    }
-    return names;
-}
+    QMutexLocker locker(&m_mutex);
 
-void
-RecentFiles::add(QString name)
-{
-    bool have = false;
-    for (int i = 0; i < int(m_names.size()); ++i) {
-        if (m_names[i] == name) {
-            have = true;
-            break;
+    std::vector<QString> identifiers;
+    for (int i = 0; i < m_maxCount; ++i) {
+        if (i < (int)m_entries.size()) {
+            identifiers.push_back(m_entries[i].first);
         }
     }
     
-    if (!have) {
-        m_names.push_front(name);
-    } else {
-        std::deque<QString> newnames;
-        newnames.push_back(name);
-        for (int i = 0; i < int(m_names.size()); ++i) {
-            if (m_names[i] == name) continue;
-            newnames.push_back(m_names[i]);
-        }
-        m_names = newnames;
-    }
+    return identifiers;
+}
 
-    truncateAndWrite();
+std::vector<std::pair<QString, QString>>
+RecentFiles::getRecentEntries() const
+{
+    QMutexLocker locker(&m_mutex);
+
+    std::vector<std::pair<QString, QString>> entries;
+    for (int i = 0; i < m_maxCount; ++i) {
+        if (i < (int)m_entries.size()) {
+            entries.push_back(m_entries[i]);
+        }
+    }
+    
+    return entries;
+}
+
+void
+RecentFiles::add(QString identifier, QString label)
+{
+    {
+        QMutexLocker locker(&m_mutex);
+
+        bool have = false;
+        for (int i = 0; i < int(m_entries.size()); ++i) {
+            if (m_entries[i].first == identifier) {
+                have = true;
+                break;
+            }
+        }
+    
+        if (!have) {
+            m_entries.push_front({ identifier, label });
+        } else {
+            std::deque<std::pair<QString, QString>> newEntries;
+            newEntries.push_back({ identifier, label });
+            for (int i = 0; in_range_for(m_entries, i); ++i) {
+                if (m_entries[i].first == identifier) continue;
+                newEntries.push_back(m_entries[i]);
+            }
+            m_entries = newEntries;
+        }
+
+        truncateAndWrite();
+    }
+    
     emit recentChanged();
 }
 
 void
-RecentFiles::addFile(QString name)
+RecentFiles::addFile(QString filepath, QString label)
 {
     static QRegExp schemeRE("^[a-zA-Z]{2,5}://");
     static QRegExp tempRE("[\\/][Tt]e?mp[\\/]");
-    if (schemeRE.indexIn(name) == 0) {
-        add(name);
+    if (schemeRE.indexIn(filepath) == 0) {
+        add(filepath, label);
     } else {
-        QString absPath = QFileInfo(name).absoluteFilePath();
+        QString absPath = QFileInfo(filepath).absoluteFilePath();
         if (tempRE.indexIn(absPath) != -1) {
             Preferences *prefs = Preferences::getInstance();
             if (prefs && !prefs->getOmitTempsFromRecentFiles()) {
-                add(absPath);
+                add(absPath, label);
             }
         } else {
-            add(absPath);
+            add(absPath, label);
         }
     }
 }

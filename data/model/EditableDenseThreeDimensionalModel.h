@@ -49,6 +49,9 @@ public:
                                        bool notifyOnAdd = true);
 
     bool isOK() const override;
+    bool isReady(int *completion = 0) const override;
+    void setCompletion(int completion, bool update = true);
+    int getCompletion() const override;
 
     sv_samplerate_t getSampleRate() const override;
     sv_frame_t getStartFrame() const override;
@@ -183,13 +186,12 @@ public:
      */
     bool shouldUseLogValueScale() const override;
 
-    virtual void setCompletion(int completion, bool update = true);
-    int getCompletion() const override { return m_completion; }
-
     QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 
-    QString toDelimitedDataString(QString delimiter) const override;
-    QString toDelimitedDataStringSubset(QString delimiter, sv_frame_t f0, sv_frame_t f1) const override;
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override;
 
     void toXml(QTextStream &out,
                        QString indent = "",

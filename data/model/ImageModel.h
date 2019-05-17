@@ -16,138 +16,174 @@
 #ifndef SV_IMAGE_MODEL_H
 #define SV_IMAGE_MODEL_H
 
-#include "SparseModel.h"
+#include "EventCommands.h"
+#include "TabularModel.h"
+#include "Model.h"
+#include "DeferredNotifier.h"
+
+#include "base/EventSeries.h"
 #include "base/XmlExportable.h"
 #include "base/RealTime.h"
+
+#include "system/System.h"
 
 #include <QStringList>
 
 /**
- * Image point type for use in a SparseModel.  This represents an
- * image, identified by filename, at a given time.  The filename can
- * be empty, in which case we instead have a space to put an image in.
+ * A model representing image annotations, identified by filename or
+ * URI, at a given time, with an optional label. The filename can be
+ * empty, in which case we instead have a space to put an image in.
  */
 
-struct ImagePoint : public XmlExportable
-{
-public:
-    ImagePoint(sv_frame_t _frame) : frame(_frame) { }
-    ImagePoint(sv_frame_t _frame, QString _image, QString _label) :
-        frame(_frame), image(_image), label(_label) { }
-
-    int getDimensions() const { return 1; }
-    
-    sv_frame_t frame;
-    QString image;
-    QString label;
-
-    QString getLabel() const { return label; }
-    
-    void toXml(QTextStream &stream,
-               QString indent = "",
-               QString extraAttributes = "") const override
-    {
-        stream <<
-            QString("%1<point frame=\"%2\" image=\"%3\" label=\"%4\" %5/>\n")
-            .arg(indent).arg(frame)
-            .arg(encodeEntities(image))
-            .arg(encodeEntities(label))
-            .arg(extraAttributes);
-    }
-
-    QString toDelimitedDataString(QString delimiter, DataExportOptions, sv_samplerate_t sampleRate) const
-    {
-        QStringList list;
-        list << RealTime::frame2RealTime(frame, sampleRate).toString().c_str();
-        list << image;
-        if (label != "") list << label;
-        return list.join(delimiter);
-    }
-
-    struct Comparator {
-        bool operator()(const ImagePoint &p1,
-                        const ImagePoint &p2) const {
-            if (p1.frame != p2.frame) return p1.frame < p2.frame;
-            if (p1.label != p2.label) return p1.label < p2.label;
-            return p1.image < p2.image;
-        }
-    };
-    
-    struct OrderComparator {
-        bool operator()(const ImagePoint &p1,
-                        const ImagePoint &p2) const {
-            return p1.frame < p2.frame;
-        }
-    };
-};
-
-
-// Make this a class rather than a typedef so it can be predeclared.
-
-class ImageModel : public SparseModel<ImagePoint>
+class ImageModel : public Model,
+                   public TabularModel,
+                   public EventEditable
 {
     Q_OBJECT
 
 public:
-    ImageModel(sv_samplerate_t sampleRate, int resolution, bool notifyOnAdd = true) :
-        SparseModel<ImagePoint>(sampleRate, resolution, notifyOnAdd)
-    { }
+    ImageModel(sv_samplerate_t sampleRate,
+               int resolution,
+               bool notifyOnAdd = true) :
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_notifier(this,
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(100) {
+    }
 
     QString getTypeName() const override { return tr("Image"); }
+    bool isSparse() const override { return true; }
+    bool isOK() const override { return true; }
 
-    void toXml(QTextStream &out,
-                       QString indent = "",
-                       QString extraAttributes = "") const override
-    {
-        SparseModel<ImagePoint>::toXml
-            (out, 
-             indent,
-             QString("%1 subtype=\"image\"")
-             .arg(extraAttributes));
+    sv_frame_t getStartFrame() const override {
+        return m_events.getStartFrame();
+    }
+    sv_frame_t getEndFrame() const override {
+        if (m_events.isEmpty()) return 0;
+        sv_frame_t e = m_events.getEndFrame() + 1;
+        if (e % m_resolution == 0) return e;
+        else return (e / m_resolution + 1) * m_resolution;
+    }
+    
+    sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
+    int getResolution() const { return m_resolution; }
+    
+    int getCompletion() const override { return m_completion; }
+
+    void setCompletion(int completion, bool update = true) {
+        
+        {   QMutexLocker locker(&m_mutex);
+            if (m_completion == completion) return;
+            m_completion = completion;
+        }
+
+        if (update) {
+            m_notifier.makeDeferredNotifications();
+        }
+        
+        emit completionChanged();
+
+        if (completion == 100) {
+            // henceforth:
+            m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
+            emit modelChanged();
+        }
+    }
+    
+    /**
+     * Query methods.
+     */
+
+    //!!! todo: go through all models, weeding out the methods here
+    //!!! that are not used
+    
+    int getEventCount() const {
+        return m_events.count();
+    }
+    bool isEmpty() const {
+        return m_events.isEmpty();
+    }
+    bool containsEvent(const Event &e) const {
+        return m_events.contains(e);
+    }
+    EventVector getAllEvents() const {
+        return m_events.getAllEvents();
+    }
+    EventVector getEventsSpanning(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsSpanning(f, duration);
+    }
+    EventVector getEventsCovering(sv_frame_t f) const {
+        return m_events.getEventsCovering(f);
+    }
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration,
+                                int overspill = 0) const {
+        return m_events.getEventsWithin(f, duration, overspill);
+    }
+    EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsStartingWithin(f, duration);
+    }
+    EventVector getEventsStartingAt(sv_frame_t f) const {
+        return m_events.getEventsStartingAt(f);
+    }
+    bool getNearestEventMatching(sv_frame_t startSearchAt,
+                                 std::function<bool(Event)> predicate,
+                                 EventSeries::Direction direction,
+                                 Event &found) const {
+        return m_events.getNearestEventMatching
+            (startSearchAt, predicate, direction, found);
     }
 
     /**
-     * Command to change the image for a point.
+     * Editing methods.
      */
-    class ChangeImageCommand : public Command
-    {
-    public:
-        ChangeImageCommand(ImageModel *model,
-                           const ImagePoint &point,
-                           QString newImage,
-                           QString newLabel) :
-            m_model(model), m_oldPoint(point), m_newPoint(point) {
-            m_newPoint.image = newImage;
-            m_newPoint.label = newLabel;
+    void add(Event e) override {
+
+        {   QMutexLocker locker(&m_mutex);
+            m_events.add(e.withoutDuration().withoutValue().withoutLevel());
         }
-
-        QString getName() const override { return tr("Edit Image"); }
-
-        void execute() override { 
-            m_model->deletePoint(m_oldPoint);
-            m_model->addPoint(m_newPoint);
-            std::swap(m_oldPoint, m_newPoint);
+        
+        m_notifier.update(e.getFrame(), m_resolution);
+    }
+    
+    void remove(Event e) override {
+        {   QMutexLocker locker(&m_mutex);
+            m_events.remove(e);
         }
-
-        void unexecute() override { execute(); }
-
-    private:
-        ImageModel *m_model;
-        ImagePoint m_oldPoint;
-        ImagePoint m_newPoint;
-    };
+        emit modelChangedWithin(e.getFrame(), e.getFrame() + m_resolution);
+    }
 
     /**
      * TabularModel methods.  
      */
     
-    int getColumnCount() const override
-    {
+    int getRowCount() const override {
+        return m_events.count();
+    }
+
+    int getColumnCount() const override {
         return 4;
     }
 
-    QString getHeading(int column) const override
-    {
+    bool isColumnTimeValue(int column) const override {
+        return (column < 2);
+    }
+
+    sv_frame_t getFrameForRow(int row) const override {
+        if (row < 0 || row >= m_events.count()) {
+            return 0;
+        }
+        Event e = m_events.getEventByIndex(row);
+        return e.getFrame();
+    }
+
+    int getRowForFrame(sv_frame_t frame) const override {
+        return m_events.getIndexForEvent(Event(frame));
+    }
+    
+    QString getHeading(int column) const override {
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
@@ -157,61 +193,100 @@ public:
         }
     }
 
-    QVariant getData(int row, int column, int role) const override
-    {
-        if (column < 2) {
-            return SparseModel<ImagePoint>::getData
-                (row, column, role);
+    SortType getSortType(int column) const override {
+        if (column >= 2) return SortAlphabetical;
+        return SortNumeric;
+    }
+
+    QVariant getData(int row, int column, int role) const override {
+        
+        if (row < 0 || row >= m_events.count()) {
+            return QVariant();
         }
 
-        PointListConstIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return QVariant();
+        Event e = m_events.getEventByIndex(row);
 
         switch (column) {
-        case 2: return i->image;
-        case 3: return i->label;
+        case 0: return adaptFrameForRole(e.getFrame(), getSampleRate(), role);
+        case 1: return int(e.getFrame());
+        case 2: return e.getURI();
+        case 3: return e.getLabel();
         default: return QVariant();
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override
-    {
-        if (column < 2) {
-            return SparseModel<ImagePoint>::getSetDataCommand
-                (row, column, value, role);
-        }
+    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+        
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        if (role != Qt::EditRole) return nullptr;
 
-        if (role != Qt::EditRole) return 0;
-        PointListIterator i = getPointListIteratorForRow(row);
-        if (i == m_points.end()) return 0;
-        EditCommand *command = new EditCommand(this, tr("Edit Data"));
-
-        Point point(*i);
-        command->deletePoint(point);
+        Event e0 = m_events.getEventByIndex(row);
+        Event e1;
 
         switch (column) {
-        case 2: point.image = value.toString(); break;
-        case 3: point.label = value.toString(); break;
+        case 0: e1 = e0.withFrame(sv_frame_t(round(value.toDouble() *
+                                                   getSampleRate()))); break;
+        case 1: e1 = e0.withFrame(value.toInt()); break;
+        case 2: e1 = e0.withURI(value.toString()); break;
+        case 3: e1 = e0.withLabel(value.toString()); break;
         }
 
-        command->addPoint(point);
+        ChangeEventsCommand *command =
+            new ChangeEventsCommand(this, tr("Edit Data"));
+        command->remove(e0);
+        command->add(e1);
         return command->finish();
     }
+    
+    /**
+     * XmlExportable methods.
+     */
+    void toXml(QTextStream &out,
+               QString indent = "",
+               QString extraAttributes = "") const override {
 
-    bool isColumnTimeValue(int column) const override
-    {
-        return (column < 2); 
+        Model::toXml
+            (out,
+             indent,
+             QString("type=\"sparse\" dimensions=\"1\" resolution=\"%1\" "
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"image\" %4")
+             .arg(m_resolution)
+             .arg("true") // always true after model reaches 100% -
+                          // subsequent events are always notified
+             .arg(m_events.getExportId())
+             .arg(extraAttributes));
+
+        Event::ExportNameOptions options;
+        options.uriAttributeName = "image";
+        
+        m_events.toXml(out, indent, QString("dimensions=\"1\""), options);
     }
 
-    SortType getSortType(int column) const override
-    {
-        if (column > 2) return SortAlphabetical;
-        return SortNumeric;
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override {
+        return m_events.toDelimitedDataString(delimiter,
+                                              options,
+                                              startFrame,
+                                              duration,
+                                              m_sampleRate,
+                                              m_resolution,
+                                              Event().withValue(0.f));
     }
+    
+protected:
+    sv_samplerate_t m_sampleRate;
+    int m_resolution;
+
+    DeferredNotifier m_notifier;
+    int m_completion;
+
+    EventSeries m_events;
+
+    mutable QMutex m_mutex;  
 };
 
 
 #endif
 
-
-    

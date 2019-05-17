@@ -41,6 +41,11 @@ public:
 
     bool isOK() const override;
     bool isReady(int *) const override;
+    int getCompletion() const override {
+        int c = 0;
+        (void)isReady(&c);
+        return c;
+    }
 
     QString getTypeName() const override { return tr("Aggregate Wave"); }
 

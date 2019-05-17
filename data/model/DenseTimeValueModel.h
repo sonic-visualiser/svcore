@@ -82,8 +82,10 @@ public:
     bool canPlay() const override { return true; }
     QString getDefaultPlayClipId() const override { return ""; }
 
-    QString toDelimitedDataStringSubset(QString delimiter,
-                                        sv_frame_t f0, sv_frame_t f1) const override;
+    QString toDelimitedDataString(QString delimiter,
+                                  DataExportOptions options,
+                                  sv_frame_t startFrame,
+                                  sv_frame_t duration) const override;
 
     QString getTypeName() const override { return tr("Dense Time-Value"); }
 };

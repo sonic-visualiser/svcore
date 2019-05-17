@@ -25,7 +25,15 @@ class QTextStream;
 class XmlExportable
 {
 public:
+    XmlExportable() : m_exportId(-1) { }
     virtual ~XmlExportable() { }
+
+    /**
+     * Return the numerical export identifier for this object.  It's
+     * allocated the first time this is called, so objects on which
+     * this is never called do not get allocated one.
+     */
+    int getExportId() const;
 
     /**
      * Stream this exportable object out to XML on a text stream.
@@ -46,7 +54,8 @@ public:
 
     static QString encodeColour(int r, int g, int b); 
 
-    static int getObjectExportId(const void *); // thread-safe
+private:
+    mutable int m_exportId;
 };
 
 #endif
