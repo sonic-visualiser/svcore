@@ -18,6 +18,8 @@
 #include <windows.h>
 #endif
 
+#include <iostream>
+
 bool
 UnsupportedFormat::isLegitimatelyUnsupported(QString format)
 {
@@ -36,7 +38,7 @@ UnsupportedFormat::isLegitimatelyUnsupported(QString format)
         RtlGetVersion(&osInfo);
 
         if (osInfo.wProductType != VER_NT_WORKSTATION) {
-            cerr << "NOTE: We appear to be running on Windows Server (wProductType = " << osInfo.wProductType << ") - assuming encumbered media codecs might not be installed and being lenient about them" << endl;
+            std::cerr << "NOTE: We appear to be running on Windows Server (wProductType = " << osInfo.wProductType << ") - assuming encumbered media codecs might not be installed and being lenient about them" << std::endl;
             return (format == "aac" ||
                     format == "apple_lossless" ||
                     format == "m4a" ||
@@ -44,7 +46,8 @@ UnsupportedFormat::isLegitimatelyUnsupported(QString format)
         }
         
     } else {
-        cerr << "WARNING: Failed to find RtlGetVersion in NTDLL" << endl;
+        std::cerr << "WARNING: Failed to find RtlGetVersion in NTDLL"
+                  << std::endl;
     }
     
     return (format == "apple_lossless");
