@@ -13,4 +13,5 @@ TEST_HEADERS += \
      
 TEST_SOURCES += \
 	../../model/test/MockWaveModel.cpp \
+        UnsupportedFormat.cpp \
 	svcore-data-fileio-test.cpp

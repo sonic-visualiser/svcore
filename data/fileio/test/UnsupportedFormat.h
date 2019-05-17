@@ -4,7 +4,6 @@
     Sonic Visualiser
     An audio file viewer and annotation editor.
     Centre for Digital Music, Queen Mary, University of London.
-    This file copyright 2013 Chris Cannam.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
@@ -16,20 +15,12 @@
 #ifndef SV_UNSUPPORTED_FORMAT_H
 #define SV_UNSUPPORTED_FORMAT_H
 
-static bool isLegitimatelyUnsupported(QString format) {
+#include <QString>
 
-#ifdef Q_OS_WIN
-    return (format == "apple_lossless");
-#else
-#ifdef Q_OS_MAC
-    return (format == "wma");
-#else
-    return (format == "aac" ||
-            format == "apple_lossless" ||
-            format == "m4a" ||
-            format == "wma");
-#endif
-#endif
-}
+struct UnsupportedFormat {
+
+    static bool isLegitimatelyUnsupported(QString format);
+
+};
 
 #endif

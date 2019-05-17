@@ -306,7 +306,7 @@ private slots:
             (audioDir + "/" + format + "/" + audiofile, params);
         
         if (!reader) {
-            if (isLegitimatelyUnsupported(format)) {
+            if (UnsupportedFormat::isLegitimatelyUnsupported(format)) {
 #if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
 #else

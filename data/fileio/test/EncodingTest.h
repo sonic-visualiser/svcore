@@ -139,7 +139,7 @@ private slots:
 
         if (!AudioFileReaderFactory::isSupported(encodingDir + "/" +
                                                  audiofile)) {
-            if (isLegitimatelyUnsupported(extension)) {
+            if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
                 QSKIP("Known unsupported file, skipping");
 #else
@@ -180,7 +180,7 @@ private slots:
             (encodingDir + "/" + audiofile, params);
 
         if (!reader) {
-            if (isLegitimatelyUnsupported(extension)) {
+            if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
 #else
@@ -272,7 +272,7 @@ private slots:
             (encodingDir + "/" + audiofile, params);
         
         if (!reader) {
-            if (isLegitimatelyUnsupported(extension)) {
+            if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
 #if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
 #else
