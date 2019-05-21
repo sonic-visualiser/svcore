@@ -19,7 +19,15 @@
 static bool isLegitimatelyUnsupported(QString format) {
 
 #ifdef Q_OS_WIN
-    return (format == "apple_lossless");
+    if (sizeof(void *) == 4) {
+        // Our 32-bit MinGW build lacks MediaFoundation support
+        return (format == "aac" ||
+                format == "apple_lossless" ||
+                format == "m4a" ||
+                format == "wma");
+    } else {
+        return (format == "apple_lossless");
+    }
 #else
 #ifdef Q_OS_MAC
     return (format == "wma");
