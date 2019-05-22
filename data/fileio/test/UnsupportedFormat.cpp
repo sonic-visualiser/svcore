@@ -24,6 +24,15 @@ bool
 UnsupportedFormat::isLegitimatelyUnsupported(QString format)
 {
 #ifdef Q_OS_WIN
+
+    if (sizeof(void *) == 4) {
+        // Our 32-bit MinGW build lacks MediaFoundation support
+        return (format == "aac" ||
+                format == "apple_lossless" ||
+                format == "m4a" ||
+                format == "wma");
+    }
+
     // Our CI tests run on Windows Server, which annoyingly seems to
     // come without codecs for WMA and AAC
     
@@ -49,6 +58,9 @@ UnsupportedFormat::isLegitimatelyUnsupported(QString format)
         std::cerr << "WARNING: Failed to find RtlGetVersion in NTDLL"
                   << std::endl;
     }
+
+    // If none of the above applies, then we should have everything
+    // except this:
     
     return (format == "apple_lossless");
     
