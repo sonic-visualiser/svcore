@@ -196,6 +196,9 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const override;
 
+signals:
+    void writeCompleted();
+    
 protected:
     ReadOnlyWaveFileModel *m_model;
 
