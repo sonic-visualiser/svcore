@@ -119,7 +119,7 @@ MIDIInput::postEvent(MIDIEvent e)
             SVCERR << "ERROR: MIDIInput::postEvent: MIDI event queue is full and not clearing -- abandoning incoming event" << endl;
             return;
         }
-        SVCERR << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << " is full!" << endl;
+        SVCERR << "WARNING: MIDIInput::postEvent: MIDI event queue (capacity " << m_buffer.getSize() << ") is full!" << endl;
         SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
