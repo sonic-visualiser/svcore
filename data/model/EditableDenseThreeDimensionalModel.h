@@ -55,7 +55,7 @@ public:
 
     sv_samplerate_t getSampleRate() const override;
     sv_frame_t getStartFrame() const override;
-    sv_frame_t getEndFrame() const override;
+    sv_frame_t getTrueEndFrame() const override;
 
     /**
      * Set the frame offset of the first column.

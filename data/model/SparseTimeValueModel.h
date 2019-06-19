@@ -87,7 +87,7 @@ public:
     sv_frame_t getStartFrame() const override {
         return m_events.getStartFrame();
     }
-    sv_frame_t getEndFrame() const override {
+    sv_frame_t getTrueEndFrame() const override {
         if (m_events.isEmpty()) return 0;
         sv_frame_t e = m_events.getEndFrame() + 1;
         if (e % m_resolution == 0) return e;

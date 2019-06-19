@@ -83,7 +83,7 @@ public:
     sv_frame_t getStartFrame() const override {
         return m_start;
     }
-    sv_frame_t getEndFrame() const override {
+    sv_frame_t getTrueEndFrame() const override {
         return m_end;
     }
     

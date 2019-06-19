@@ -90,7 +90,7 @@ AlignmentModel::getStartFrame() const
 }
 
 sv_frame_t
-AlignmentModel::getEndFrame() const
+AlignmentModel::getTrueEndFrame() const
 {
     sv_frame_t a = m_reference->getEndFrame();
     sv_frame_t b = m_aligned->getEndFrame();

@@ -62,7 +62,7 @@ public:
     float getValueMaximum() const override { return  1.0f; }
 
     sv_frame_t getStartFrame() const override { return 0; }
-    sv_frame_t getEndFrame() const override { return getFrameCount(); }
+    sv_frame_t getTrueEndFrame() const override { return getFrameCount(); }
 
     floatvec_t getData(int channel, sv_frame_t start, sv_frame_t count) const override;
 

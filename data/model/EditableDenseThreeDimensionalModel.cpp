@@ -83,7 +83,7 @@ EditableDenseThreeDimensionalModel::setStartFrame(sv_frame_t f)
 }
 
 sv_frame_t
-EditableDenseThreeDimensionalModel::getEndFrame() const
+EditableDenseThreeDimensionalModel::getTrueEndFrame() const
 {
     return m_resolution * m_data.size() + (m_resolution - 1);
 }

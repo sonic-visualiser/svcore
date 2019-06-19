@@ -37,7 +37,7 @@ public:
     QString getLocation() const override = 0;
 
     sv_frame_t getStartFrame() const override = 0;
-    sv_frame_t getEndFrame() const override = 0;
+    sv_frame_t getTrueEndFrame() const override = 0;
 
     virtual void setStartFrame(sv_frame_t startFrame) = 0;
 

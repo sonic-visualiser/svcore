@@ -62,8 +62,36 @@ public:
      * frames (as a multiple of the resolution) spanned by the
      * model. This is broadly consistent with the definition of the
      * end frame of a Selection object.
+     *
+     * If the end has been extended by extendEndFrame() beyond the
+     * true end frame, return the extended end instead. This is
+     * usually the behaviour you want.
      */
-    virtual sv_frame_t getEndFrame() const = 0;
+    sv_frame_t getEndFrame() const {
+        sv_frame_t trueEnd = getTrueEndFrame();
+        if (m_extendTo > trueEnd) {
+            return m_extendTo;
+        } else {
+            return trueEnd;
+        }
+    }
+
+    /**
+     * Return the audio frame at the end of the model. This is
+     * identical to getEndFrame(), except that it ignores any extended
+     * duration set with extendEndFrame().
+     */
+    virtual sv_frame_t getTrueEndFrame() const = 0;
+
+    /**
+     * Extend the end of the model. If this is set to something beyond
+     * the true end of the data within the model, then getEndFrame()
+     * will return this value instead of the true end. (This is used
+     * by the Tony application.)
+     */
+    void extendEndFrame(sv_frame_t to) {
+        m_extendTo = to;
+    }
 
     /**
      * Return the frame rate in frames per second.
@@ -315,7 +343,8 @@ protected:
         m_sourceModel(0), 
         m_alignment(0), 
         m_abandoning(false), 
-        m_aboutToDelete(false) { }
+        m_aboutToDelete(false),
+        m_extendTo(0) { }
 
     // Not provided.
     Model(const Model &);
@@ -327,7 +356,8 @@ protected:
     QString m_typeUri;
     bool m_abandoning;
     bool m_aboutToDelete;
-
+    sv_frame_t m_extendTo;
+    
     int getNextId();
 };
 

@@ -65,7 +65,7 @@ public:
     float getValueAt(int x, int y) const override { return getMagnitudeAt(x, y); }
     bool isOK() const override { return m_model && m_model->isOK(); }
     sv_frame_t getStartFrame() const override { return 0; }
-    sv_frame_t getEndFrame() const override {
+    sv_frame_t getTrueEndFrame() const override {
         return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
     sv_samplerate_t getSampleRate() const override {

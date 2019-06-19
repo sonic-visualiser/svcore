@@ -77,7 +77,7 @@ public:
     float getValueMaximum() const override { return  1.0f; }
 
     sv_frame_t getStartFrame() const override { return m_startFrame; }
-    sv_frame_t getEndFrame() const override { return m_startFrame + getFrameCount(); }
+    sv_frame_t getTrueEndFrame() const override { return m_startFrame + getFrameCount(); }
 
     void setStartFrame(sv_frame_t startFrame) override { m_startFrame = startFrame; }
 

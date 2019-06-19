@@ -41,7 +41,7 @@ public:
     QString getError() const { return m_error; }
 
     sv_frame_t getStartFrame() const override;
-    sv_frame_t getEndFrame() const override;
+    sv_frame_t getTrueEndFrame() const override;
     sv_samplerate_t getSampleRate() const override;
     bool isReady(int *completion = 0) const override;
     int getCompletion() const override {

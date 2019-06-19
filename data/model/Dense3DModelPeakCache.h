@@ -40,8 +40,8 @@ public:
         return m_source->getStartFrame();
     }
 
-    sv_frame_t getEndFrame() const override {
-        return m_source->getEndFrame();
+    sv_frame_t getTrueEndFrame() const override {
+        return m_source->getTrueEndFrame();
     }
 
     int getResolution() const override {
