@@ -32,11 +32,14 @@
 
 #include <iostream>
 #include <set>
+#include <map>
 
 #include <QRegExp>
 #include <QMutexLocker>
 
 using std::vector;
+using std::set;
+using std::map;
 
 ModelTransformerFactory *
 ModelTransformerFactory::m_instance = new ModelTransformerFactory;
@@ -53,7 +56,7 @@ ModelTransformerFactory::~ModelTransformerFactory()
 
 ModelTransformer::Input
 ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
-                                                      const std::vector<Model *> &candidateInputModels,
+                                                      const vector<Model *> &candidateInputModels,
                                                       Model *defaultInputModel,
                                                       AudioPlaySource *source,
                                                       sv_frame_t startFrame,
@@ -260,8 +263,6 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
 void
 ModelTransformerFactory::transformerFinished()
 {
-    QMutexLocker locker(&m_mutex);
-    
     QObject *s = sender();
     ModelTransformer *transformer = dynamic_cast<ModelTransformer *>(s);
     
@@ -272,6 +273,8 @@ ModelTransformerFactory::transformerFinished()
         return;
     }
 
+    m_mutex.lock();
+    
     if (m_runningTransformers.find(transformer) == m_runningTransformers.end()) {
         cerr << "WARNING: ModelTransformerFactory::transformerFinished(" 
                   << transformer
@@ -281,16 +284,34 @@ ModelTransformerFactory::transformerFinished()
 
     m_runningTransformers.erase(transformer);
 
+    map<AdditionalModelHandler *, vector<Model *>> toNotifyOfMore;
+    vector<AdditionalModelHandler *> toNotifyOfNoMore;
+    
     if (m_handlers.find(transformer) != m_handlers.end()) {
         if (transformer->willHaveAdditionalOutputModels()) {
             vector<Model *> mm = transformer->detachAdditionalOutputModels();
-            m_handlers[transformer]->moreModelsAvailable(mm);
+            toNotifyOfMore[m_handlers[transformer]] = mm;
         } else {
-            m_handlers[transformer]->noMoreModelsAvailable();
+            toNotifyOfNoMore.push_back(m_handlers[transformer]);
         }
         m_handlers.erase(transformer);
     }
 
+    m_mutex.unlock();
+
+    // These calls have to be made without the mutex held, as they may
+    // ultimately call back on us (e.g. we have one baroque situation
+    // where this could trigger a command to create a layer, which
+    // triggers the command history to clip the stack, which deletes a
+    // spare old model, which calls back on our modelAboutToBeDeleted)
+    
+    for (const auto &i: toNotifyOfMore) {
+        i.first->moreModelsAvailable(i.second);
+    }
+    for (AdditionalModelHandler *handler: toNotifyOfNoMore) {
+        handler->noMoreModelsAvailable();
+    }
+    
     if (transformer->isAbandoned()) {
         if (transformer->getMessage() != "") {
             emit transformFailed("", transformer->getMessage());
