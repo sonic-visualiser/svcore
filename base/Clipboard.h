@@ -36,7 +36,7 @@ public:
     bool referenceFramesDiffer() const;
 
 protected:
-     EventVector m_points;
+    EventVector m_points;
 };
 
 #endif
