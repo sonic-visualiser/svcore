@@ -27,19 +27,37 @@ PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 
 AggregateWaveModel::AggregateWaveModel(ChannelSpecList channelSpecs) :
-    m_components(channelSpecs),
-    m_invalidated(false)
+    m_components(channelSpecs)
 {
-    for (ChannelSpecList::const_iterator i = channelSpecs.begin();
-         i != channelSpecs.end(); ++i) {
+    sv_samplerate_t overallRate = 0;
 
-        connect(i->model, SIGNAL(aboutToBeDeleted()),
-                this, SLOT(componentModelAboutToBeDeleted()));
-        
-        if (i->model->getSampleRate() !=
-            channelSpecs.begin()->model->getSampleRate()) {
-            SVDEBUG << "AggregateWaveModel::AggregateWaveModel: WARNING: Component models do not all have the same sample rate" << endl;
-            break;
+    for (int channel = 0; in_range_for(m_components, channel); ++channel) {
+
+        auto model = ModelById::getAs<RangeSummarisableTimeValueModel>
+            (m_components[channel].model);
+
+        if (!model) {
+            SVCERR << "AggregateWaveModel: WARNING: component for channel "
+                   << channel << " is not found or is of wrong model type"
+                   << endl;
+            continue;
+        }
+
+        sv_samplerate_t rate = model->getSampleRate();
+
+        if (!rate) {
+            SVCERR << "AggregateWaveModel: WARNING: component for channel "
+                   << channel << " reports zero sample rate" << endl;
+
+        } else if (!overallRate) {
+
+            overallRate = rate;
+
+        } else if (rate != overallRate) {
+            SVCERR << "AggregateWaveModel: WARNING: component for channel "
+                   << channel << " has different sample rate from earlier "
+                   << "channels (has " << rate << ", expected " << overallRate
+                   << ")" << endl;
         }
     }
 }
@@ -49,25 +67,15 @@ AggregateWaveModel::~AggregateWaveModel()
     SVDEBUG << "AggregateWaveModel::~AggregateWaveModel" << endl;
 }
 
-void
-AggregateWaveModel::componentModelAboutToBeDeleted()
-{
-    SVDEBUG << "AggregateWaveModel::componentModelAboutToBeDeleted: invalidating"
-            << endl;
-    m_components.clear();
-    m_invalidated = true;
-    emit modelInvalidated();
-}
-
 bool
 AggregateWaveModel::isOK() const
 {
-    if (m_invalidated || m_components.empty()) {
+    if (m_components.empty()) {
         return false;
     }
-    for (ChannelSpecList::const_iterator i = m_components.begin();
-         i != m_components.end(); ++i) {
-        if (!i->model->isOK()) {
+    for (const auto &c: m_components) {
+        auto model = ModelById::get(c.model);
+        if (!model || !model->isOK()) {
             return false;
         }
     }
@@ -80,10 +88,11 @@ AggregateWaveModel::isReady(int *completion) const
     if (completion) *completion = 100;
 
     bool ready = true;
-    for (ChannelSpecList::const_iterator i = m_components.begin();
-         i != m_components.end(); ++i) {
+    for (auto c: m_components) {
         int completionHere = 100;
-        if (!i->model->isReady(&completionHere)) {
+        auto model = ModelById::get(c.model);
+        if (!model) continue;
+        if (!model->isReady(&completionHere)) {
             ready = false;
         }
         if (completion && completionHere < *completion) {
@@ -103,10 +112,10 @@ sv_frame_t
 AggregateWaveModel::getFrameCount() const
 {
     sv_frame_t count = 0;
-    for (ChannelSpecList::const_iterator i = m_components.begin();
-         i != m_components.end(); ++i) {
-        sv_frame_t thisCount =
-            i->model->getEndFrame() - i->model->getStartFrame();
+    for (auto c: m_components) {
+        auto model = ModelById::get(c.model);
+        if (!model) continue;
+        sv_frame_t thisCount = model->getEndFrame() - model->getStartFrame();
         if (thisCount > count) count = thisCount;
     }
     return count;
@@ -121,19 +130,23 @@ AggregateWaveModel::getChannelCount() const
 sv_samplerate_t
 AggregateWaveModel::getSampleRate() const
 {
-    if (m_invalidated || m_components.empty()) return 0;
-    return m_components.begin()->model->getSampleRate();
+    if (m_components.empty()) return 0;
+    auto model = ModelById::get(m_components.begin()->model);
+    if (!model) return 0;
+    return model->getSampleRate();
 }
 
 floatvec_t
 AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) const
 {
-    if (m_invalidated || m_components.empty()) return {};
-    
+    if (m_components.empty()) return {};
+
     int ch0 = channel, ch1 = channel;
     if (channel == -1) {
         ch0 = 0;
         ch1 = getChannelCount()-1;
+    } else if (!in_range_for(m_components, channel)) {
+        return {};
     }
 
     floatvec_t result(count, 0.f);
@@ -141,8 +154,11 @@ AggregateWaveModel::getData(int channel, sv_frame_t start, sv_frame_t count) con
     
     for (int c = ch0; c <= ch1; ++c) {
 
-        auto here = m_components[c].model->getData(m_components[c].channel,
-                                                   start, count);
+        auto model = ModelById::getAs<RangeSummarisableTimeValueModel>
+            (m_components[c].model);
+        if (!model) continue;
+
+        auto here = model->getData(m_components[c].channel, start, count);
         if (sv_frame_t(here.size()) > longest) {
             longest = sv_frame_t(here.size());
         }
@@ -236,7 +252,9 @@ AggregateWaveModel::toXml(QTextStream &out,
 {
     QStringList componentStrings;
     for (const auto &c: m_components) {
-        componentStrings.push_back(QString("%1").arg(c.model->getExportId()));
+        auto model = ModelById::get(c.model);
+        if (!model) continue;
+        componentStrings.push_back(QString("%1").arg(model->getExportId()));
     }
     Model::toXml(out, indent,
                  QString("type=\"aggregatewave\" components=\"%1\" %2")

@@ -28,9 +28,8 @@ class AggregateWaveModel : public RangeSummarisableTimeValueModel
 public:
     struct ModelChannelSpec
     {
-        ModelChannelSpec(RangeSummarisableTimeValueModel *m, int c) :
-            model(m), channel(c) { }
-        RangeSummarisableTimeValueModel *model;
+        ModelChannelSpec(ModelId m, int c) : model(m), channel(c) { }
+        ModelId model;
         int channel;
     };
 
@@ -84,18 +83,16 @@ signals:
     void modelChanged();
     void modelChangedWithin(sv_frame_t, sv_frame_t);
     void completionChanged();
-    void modelInvalidated();
 
 protected slots:
+    //!!! hm, these were never connected up anyway!
     void componentModelChanged();
     void componentModelChangedWithin(sv_frame_t, sv_frame_t);
     void componentModelCompletionChanged();
-    void componentModelAboutToBeDeleted();
 
 protected:
     ChannelSpecList m_components;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
-    bool m_invalidated; // because one of its component models is aboutToBeDeleted
 };
 
 #endif

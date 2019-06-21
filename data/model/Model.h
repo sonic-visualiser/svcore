@@ -327,6 +327,7 @@ signals:
      * there is nothing in the model to guarantee that this signal
      * will be emitted before the actual deletion.
      */
+    //!!! our goal is to get rid of (the need for) this
     void aboutToBeDeleted();
 
 protected:
