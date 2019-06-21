@@ -150,7 +150,6 @@ SVCORE_HEADERS = \
 	   
 SVCORE_SOURCES = \
            base/AudioLevel.cpp \
-           base/ById.cpp \
            base/Clipboard.cpp \
            base/ColumnOp.cpp \
            base/Command.cpp \

@@ -96,7 +96,8 @@ WritableWaveFileModel::init(QString path)
             // so the filename only needs to be unique within that -
             // model ID should be ok
             QDir dir(TempDirectory::getInstance()->getPath());
-            path = dir.filePath(QString("written_%1.wav").arg(getId()));
+            path = dir.filePath(QString("written_%1.wav")
+                                .arg(getId().toString()));
         } catch (const DirectoryCreationFailed &f) {
             SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
@@ -126,7 +127,8 @@ WritableWaveFileModel::init(QString path)
         // Temp dir is exclusive to this run of the application, so
         // the filename only needs to be unique within that
         QDir dir(TempDirectory::getInstance()->getPath());
-        m_temporaryPath = dir.filePath(QString("prenorm_%1.wav").arg(getId()));
+        m_temporaryPath = dir.filePath(QString("prenorm_%1.wav")
+                                       .arg(getId().toString()));
 
         m_temporaryWriter = new WavFileWriter
             (m_temporaryPath, m_sampleRate, m_channels,

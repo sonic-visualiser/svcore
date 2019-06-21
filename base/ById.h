@@ -17,31 +17,77 @@
 
 #include <memory>
 #include <map>
+#include <typeinfo>
+#include <iostream>
+#include <climits>
 
 #include <QMutex>
+#include <QString>
 
-typedef int Id;
+template <typename T>
+struct SvId {
+    int id;
 
+    bool operator<(const SvId &other) const { return id < other.id; }
+
+    QString toString() const {
+        return QString("%1").arg(id);
+    }
+};
+
+template <typename T>
 class WithId
 {
 public:
+    typedef SvId<T> Id;
+    
     WithId() :
         m_id(getNextId()) {
     }
 
+    /**
+     * Return an id for this object. The id is a unique identifier for
+     * this object among all objects that implement WithId within this
+     * single run of the application.
+     */
     Id getId() const {
-        return m_id;
+        Id id;
+        id.id = m_id;
+        return id;
     }
 
 private:
-    Id m_id;
-    static int getNextId();
+    int m_id;
+
+    static int getNextId() {
+        static int nextId = 0;
+        static QMutex mutex;
+        QMutexLocker locker(&mutex);
+        int i = nextId;
+        if (nextId == INT_MAX) {
+            nextId = INT_MIN;
+        }
+        ++nextId;
+        return i;
+    }
 };
 
-template <typename Item>
+template <typename Item, typename Id>
 class ById
 {
 public:
+    ~ById() {
+        QMutexLocker locker(&m_mutex);
+        for (const auto &p: m_items) {
+            if (p.second && p.second.use_count() > 0) {
+                std::cerr << "WARNING: ById map destroyed with use count of "
+                          << p.second.use_count() << " for item with type "
+                          << typeid(*p.second.get()).name()
+                          << " and id " << p.first.id << std::endl;
+            }
+        }
+    }
+    
     void add(std::shared_ptr<Item> item) {
         QMutexLocker locker(&m_mutex);
         m_items[item->getId()] = item;
@@ -72,34 +118,36 @@ private:
     mutable QMutex m_mutex;
     std::map<Id, std::shared_ptr<Item>> m_items;
 };
-/*
-class Imagined : public WithId {
-};
 
-class ImaginedById
+template <typename Item, typename Id>
+class StaticById
 {
 public:
-    static void add(std::shared_ptr<Imagined> imagined) {
-        m_byId.add(imagined);
+    static void add(std::shared_ptr<Item> imagined) {
+        byId().add(imagined);
     }
 
     static void release(Id id) {
-        m_byId.release(id);
+        byId().release(id);
     }
 
-    static std::shared_ptr<Imagined> get(Id id) {
-        return m_byId.get(id);
+    static std::shared_ptr<Item> get(Id id) {
+        return byId().get(id);
     }
 
     template <typename Derived>
     static
     std::shared_ptr<Derived> getAs(Id id) {
-        return m_byId.getAs<Derived>(id);
+        return std::dynamic_pointer_cast<Derived>(get(id));
     }
 
 private:
-    static ById<Imagined> m_byId;
+    static
+    ById<Item, Id> &byId() {
+        static ById<Item, Id> b;
+        return b;
+    }
 };
-*/
+
 #endif
 
