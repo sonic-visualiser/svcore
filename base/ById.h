@@ -15,6 +15,8 @@
 #ifndef SV_BY_ID_H
 #define SV_BY_ID_H
 
+#include "Debug.h"
+
 #include <memory>
 #include <map>
 #include <typeinfo>
@@ -80,17 +82,23 @@ public:
         QMutexLocker locker(&m_mutex);
         for (const auto &p: m_items) {
             if (p.second && p.second.use_count() > 0) {
-                std::cerr << "WARNING: ById map destroyed with use count of "
-                          << p.second.use_count() << " for item with type "
-                          << typeid(*p.second.get()).name()
-                          << " and id " << p.first.id << std::endl;
+                SVCERR << "WARNING: ById map destroyed with use count of "
+                       << p.second.use_count() << " for item with type "
+                       << typeid(*p.second.get()).name()
+                       << " and id " << p.first.id << endl;
             }
         }
     }
     
     void add(std::shared_ptr<Item> item) {
         QMutexLocker locker(&m_mutex);
-        m_items[item->getId()] = item;
+        auto id = item->getId();
+        if (m_items.find(id) != m_items.end()) {
+            SVCERR << "WARNING: ById::add: item with id " << id
+                   << " is already recorded, replacing it (item type is "
+                   << typeid(*item.get()).name() << ")" << endl;
+        }
+        m_items[id] = item;
     }
 
     void
