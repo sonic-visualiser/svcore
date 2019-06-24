@@ -41,10 +41,11 @@ public:
     public:
         Range() : 
             m_new(true), m_min(0.f), m_max(0.f), m_absmean(0.f) { }
-        Range(const Range &r) : 
-            m_new(true), m_min(r.m_min), m_max(r.m_max), m_absmean(r.m_absmean) { }
         Range(float min, float max, float absmean) :
-            m_new(true), m_min(min), m_max(max), m_absmean(absmean) { }
+            m_new(false), m_min(min), m_max(max), m_absmean(absmean) { }
+
+        Range(const Range &r) =default;
+        Range &operator=(const Range &) =default;
 
         float min() const { return m_min; }
         float max() const { return m_max; }
