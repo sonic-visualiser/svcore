@@ -87,8 +87,8 @@ protected:
 
     ModelId m_pathSource; // a SparseTimeValueModel
 
-    std::unique_ptr<PathModel> m_path;
-    std::unique_ptr<PathModel> m_reversePath;
+    mutable std::unique_ptr<PathModel> m_path;
+    mutable std::unique_ptr<PathModel> m_reversePath;
     bool m_pathBegun;
     bool m_pathComplete;
     QString m_error;

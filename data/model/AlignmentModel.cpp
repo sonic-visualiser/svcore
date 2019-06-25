@@ -30,27 +30,7 @@ AlignmentModel::AlignmentModel(ModelId reference,
     m_pathBegun(false),
     m_pathComplete(false)
 {
-    auto pathSourceModel = ModelById::getAs<SparseTimeValueModel>(pathSource);
-    
-    if (pathSourceModel) {
-
-        connect(pathSourceModel.get(), SIGNAL(modelChanged()),
-                this, SLOT(pathSourceChanged()));
-
-        connect(pathSourceModel.get(),
-                SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-                this, SLOT(pathSourceChangedWithin(sv_frame_t, sv_frame_t)));
-        
-        connect(pathSourceModel.get(), SIGNAL(completionChanged()),
-                this, SLOT(pathSourceCompletionChanged()));
-
-        constructPath();
-        constructReversePath();
-
-        if (pathSourceModel->isReady()) {
-            pathSourceCompletionChanged();
-        }
-    }
+    setPathFrom(pathSource);
 
     if (m_reference == m_aligned) {
         // Trivial alignment, e.g. of main model to itself, which we
@@ -80,36 +60,60 @@ bool
 AlignmentModel::isOK() const
 {
     if (m_error != "") return false;
-    if (m_pathSource) return m_pathSource->isOK();
+    if (m_pathSource.isNone()) return true;
+    auto pathSourceModel =
+        ModelById::getAs<SparseTimeValueModel>(m_pathSource);
+    if (pathSourceModel) {
+        return pathSourceModel->isOK();
+    }
     return true;
 }
 
 sv_frame_t
 AlignmentModel::getStartFrame() const
 {
-    sv_frame_t a = m_reference->getStartFrame();
-    sv_frame_t b = m_aligned->getStartFrame();
-    return std::min(a, b);
+    auto reference = ModelById::get(m_reference);
+    auto aligned = ModelById::get(m_aligned);
+    
+    if (reference && aligned) {
+        sv_frame_t a = reference->getStartFrame();
+        sv_frame_t b = aligned->getStartFrame();
+        return std::min(a, b);
+    } else {
+        return 0;
+    }
 }
 
 sv_frame_t
 AlignmentModel::getTrueEndFrame() const
 {
-    sv_frame_t a = m_reference->getEndFrame();
-    sv_frame_t b = m_aligned->getEndFrame();
-    return std::max(a, b);
+    auto reference = ModelById::get(m_reference);
+    auto aligned = ModelById::get(m_aligned);
+
+    if (reference && aligned) {
+        sv_frame_t a = reference->getEndFrame();
+        sv_frame_t b = aligned->getEndFrame();
+        return std::max(a, b);
+    } else {
+        return 0;
+    }
 }
 
 sv_samplerate_t
 AlignmentModel::getSampleRate() const
 {
-    return m_reference->getSampleRate();
+    auto reference = ModelById::get(m_reference);
+    if (reference) {
+        return reference->getSampleRate();
+    } else {
+        return 0;
+    }
 }
 
 bool
 AlignmentModel::isReady(int *completion) const
 {
-    if (!m_pathBegun && m_pathSource) {
+    if (!m_pathBegun && !m_pathSource.isNone()) {
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
         SVCERR << "AlignmentModel::isReady: path not begun" << endl;
@@ -123,9 +127,9 @@ AlignmentModel::isReady(int *completion) const
 #endif
         return true;
     }
-    if (!m_pathSource) {
+    if (m_pathSource.isNone()) {
         // lack of raw path could mean path is complete (in which case
-        // m_pathComplete true above) or else no alignment has been
+        // m_pathComplete true above) or else no path source has been
         // set at all yet (this case)
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -133,7 +137,13 @@ AlignmentModel::isReady(int *completion) const
 #endif
         return false;
     }
-    return m_pathSource->isReady(completion);
+    auto pathSourceModel =
+        ModelById::getAs<SparseTimeValueModel>(m_pathSource);
+    if (pathSourceModel) {
+        return pathSourceModel->isReady(completion);
+    } else {
+        return true; // there is no meaningful answer here
+    }
 }
 
 const ZoomConstraint *
@@ -142,13 +152,13 @@ AlignmentModel::getZoomConstraint() const
     return nullptr;
 }
 
-const Model *
+ModelId
 AlignmentModel::getReferenceModel() const
 {
     return m_reference;
 }
 
-const Model *
+ModelId
 AlignmentModel::getAlignedModel() const
 {
     return m_aligned;
@@ -161,10 +171,11 @@ AlignmentModel::toReference(sv_frame_t frame) const
     cerr << "AlignmentModel::toReference(" << frame << ")" << endl;
 #endif
     if (!m_path) {
-        if (!m_pathSource) return frame;
+        if (m_pathSource.isNone()) return frame;
         constructPath();
+        if (!m_path) return frame;
     }
-    return align(m_path, frame);
+    return align(*m_path, frame);
 }
 
 sv_frame_t
@@ -174,20 +185,24 @@ AlignmentModel::fromReference(sv_frame_t frame) const
     cerr << "AlignmentModel::fromReference(" << frame << ")" << endl;
 #endif
     if (!m_reversePath) {
-        if (!m_pathSource) return frame;
+        if (m_pathSource.isNone()) return frame;
         constructReversePath();
+        if (!m_reversePath) return frame;
     }
-    return align(m_reversePath, frame);
+    return align(*m_reversePath, frame);
 }
 
 void
 AlignmentModel::pathSourceChanged()
 {
     if (m_pathComplete) {
+/*!!!
         cerr << "AlignmentModel: deleting raw path model" << endl;
         if (m_pathSource) m_pathSource->aboutToDelete();
         delete m_pathSource;
         m_pathSource = nullptr;
+*/
+        m_pathSource = {};
     }
 }
 
@@ -202,13 +217,16 @@ AlignmentModel::pathSourceChangedWithin(sv_frame_t, sv_frame_t)
 void
 AlignmentModel::pathSourceCompletionChanged()
 {
-    if (!m_pathSource) return;
+    auto pathSourceModel =
+        ModelById::getAs<SparseTimeValueModel>(m_pathSource);
+    if (!pathSourceModel) return;
+    
     m_pathBegun = true;
 
     if (!m_pathComplete) {
 
         int completion = 0;
-        m_pathSource->isReady(&completion);
+        pathSourceModel->isReady(&completion);
 
 #ifdef DEBUG_ALIGNMENT_MODEL
         SVCERR << "AlignmentModel::pathCompletionChanged: completion = "
@@ -234,26 +252,32 @@ AlignmentModel::pathSourceCompletionChanged()
 void
 AlignmentModel::constructPath() const
 {
+    auto alignedModel = ModelById::get(m_aligned);
+    if (!alignedModel) return;
+    
+    auto pathSourceModel =
+        ModelById::getAs<SparseTimeValueModel>(m_pathSource);
     if (!m_path) {
-        if (!m_pathSource) {
+        if (pathSourceModel) {
             cerr << "ERROR: AlignmentModel::constructPath: "
                       << "No raw path available" << endl;
             return;
         }
-        m_path = new PathModel
-            (m_pathSource->getSampleRate(), m_pathSource->getResolution(), false);
+        m_path.reset(new PathModel
+                     (pathSourceModel->getSampleRate(),
+                      pathSourceModel->getResolution(), false));
     } else {
-        if (!m_pathSource) return;
+        if (!pathSourceModel) return;
     }
         
     m_path->clear();
 
-    EventVector points = m_pathSource->getAllEvents();
+    EventVector points = pathSourceModel->getAllEvents();
 
     for (const auto &p: points) {
         sv_frame_t frame = p.getFrame();
         double value = p.getValue();
-        sv_frame_t rframe = lrint(value * m_aligned->getSampleRate());
+        sv_frame_t rframe = lrint(value * alignedModel->getSampleRate());
         m_path->add(PathPoint(frame, rframe));
     }
 
@@ -271,8 +295,9 @@ AlignmentModel::constructReversePath() const
                       << "No forward path available" << endl;
             return;
         }
-        m_reversePath = new PathModel
-            (m_path->getSampleRate(), m_path->getResolution(), false);
+        m_reversePath.reset(new PathModel
+                            (m_path->getSampleRate(),
+                             m_path->getResolution(), false));
     } else {
         if (!m_path) return;
     }
@@ -294,16 +319,14 @@ AlignmentModel::constructReversePath() const
 }
 
 sv_frame_t
-AlignmentModel::align(PathModel *path, sv_frame_t frame) const
+AlignmentModel::align(const PathModel &path, sv_frame_t frame) const
 {
-    if (!path) return frame;
-
     // The path consists of a series of points, each with frame equal
     // to the frame on the source model and mapframe equal to the
     // frame on the target model.  Both should be monotonically
     // increasing.
 
-    const PathModel::PointList &points = path->getPoints();
+    const PathModel::PointList &points = path.getPoints();
 
     if (points.empty()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -369,39 +392,39 @@ AlignmentModel::align(PathModel *path, sv_frame_t frame) const
 }
 
 void
-AlignmentModel::setPathFrom(SparseTimeValueModel *rawpath)
+AlignmentModel::setPathFrom(ModelId pathSource)
 {
-    if (m_pathSource) m_pathSource->aboutToDelete();
-    delete m_pathSource;
-
-    m_pathSource = rawpath;
-
-    if (!m_pathSource) {
-        return;
-    }
-
-    connect(m_pathSource, SIGNAL(modelChanged()),
-            this, SLOT(pathChanged()));
-
-    connect(m_pathSource, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-            this, SLOT(pathChangedWithin(sv_frame_t, sv_frame_t)));
-        
-    connect(m_pathSource, SIGNAL(completionChanged()),
-            this, SLOT(pathCompletionChanged()));
+    m_pathSource = pathSource;
     
-    constructPath();
-    constructReversePath();
+    auto pathSourceModel =
+        ModelById::getAs<SparseTimeValueModel>(m_pathSource);
+    
+    if (pathSourceModel) {
 
-    if (m_pathSource->isReady()) {
-        pathCompletionChanged();
-    }        
+        connect(pathSourceModel.get(), SIGNAL(modelChanged()),
+                this, SLOT(pathSourceChanged()));
+
+        connect(pathSourceModel.get(),
+                SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+                this, SLOT(pathSourceChangedWithin(sv_frame_t, sv_frame_t)));
+        
+        connect(pathSourceModel.get(), SIGNAL(completionChanged()),
+                this, SLOT(pathSourceCompletionChanged()));
+
+        constructPath();
+        constructReversePath();
+
+        if (pathSourceModel->isReady()) {
+            pathSourceCompletionChanged();
+        }
+    }
 }
 
 void
-AlignmentModel::setPath(PathModel *path)
+AlignmentModel::setPath(const PathModel &path)
 {
-    if (m_path) m_path->aboutToDelete();
-    delete m_path;
+//!!!    if (m_path) m_path->aboutToDelete();
+//    delete m_path;
     m_path = path;
     m_pathComplete = true;
 #ifdef DEBUG_ALIGNMENT_MODEL
