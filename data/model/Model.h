@@ -40,6 +40,8 @@ class Model : public QObject,
     Q_OBJECT
 
 public:
+    typedef Id ModelId;
+    
     virtual ~Model();
 
     /**
@@ -139,17 +141,22 @@ public:
      * to this will depend on the model's context -- it's possible
      * nothing at all will change.
      */
+    //!!! aim to lose this
+    /*!!!
     virtual void abandon() {
         m_abandoning = true;
     }
-
+    */
+    
     /**
      * Query whether the model has been marked as abandoning.
      */
+    //!!! aim to lose this
+    /*!!!
     virtual bool isAbandoning() const { 
         return m_abandoning;
     }
-
+    */
     /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
@@ -200,28 +207,33 @@ public:
     }
 
     /**
-     * If this model was derived from another, return the model it was
-     * derived from.  The assumption is that the source model's
-     * alignment will also apply to this model, unless some other
-     * property (such as a specific alignment model set on this model)
-     * indicates otherwise.
+     * If this model was derived from another, return the id of the
+     * model it was derived from.  The assumption is that the source
+     * model's alignment will also apply to this model, unless some
+     * other property (such as a specific alignment model set on this
+     * model) indicates otherwise.
      */
-    virtual Model *getSourceModel() const {
+    virtual ModelId getSourceModel() const {
         return m_sourceModel;
     }
 
     /**
      * Set the source model for this model.
      */
-    virtual void setSourceModel(Model *model);
+    virtual void setSourceModel(ModelId model);
 
     /**
-     * Specify an aligment between this model's timeline and that of a
-     * reference model.  The alignment model records both the
-     * reference and the alignment.  This model takes ownership of the
-     * alignment model.
+     * Specify an alignment between this model's timeline and that of
+     * a reference model. The alignment model, of type AlignmentModel,
+     * records both the reference and the alignment. This model "takes
+     * ownership" of alignmentModel, in that we take responsibility
+     * for calling ModelById::release() for it from our own destructor
+     * (no other class needs to know about the alignment model).
+
+     *!!! I don't think the above is a good idea - I think document
+          should record alignment models and release them
      */
-    virtual void setAlignment(AlignmentModel *alignment);
+    virtual void setAlignment(ModelId alignmentModel);
 
     /**
      * Retrieve the alignment model for this model.  This is not a
@@ -232,13 +244,13 @@ public:
      * application for this function is in streaming out alignments to
      * the session file.
      */
-    virtual const AlignmentModel *getAlignment() const;
+    virtual const ModelId getAlignment() const;
 
     /**
      * Return the reference model for the current alignment timeline,
      * if any.
      */
-    virtual const Model *getAlignmentReference() const;
+    virtual const ModelId getAlignmentReference() const;
 
     /**
      * Return the frame number of the reference model that corresponds
@@ -282,10 +294,12 @@ public:
                                           sv_frame_t startFrame,
                                           sv_frame_t duration) const = 0;
 
+    /*!!!
 public slots:
     void aboutToDelete();
     void sourceModelAboutToBeDeleted();
-
+    */
+    
 signals:
     /**
      * Emitted when a model has been edited (or more data retrieved
@@ -328,29 +342,27 @@ signals:
      * will be emitted before the actual deletion.
      */
     //!!! our goal is to get rid of (the need for) this
-    void aboutToBeDeleted();
+//!!!    void aboutToBeDeleted();
 
 protected:
     Model() :
-        m_sourceModel(0), 
-        m_alignment(0), 
-        m_abandoning(false), 
-        m_aboutToDelete(false),
+//!!!        m_abandoning(false), 
+//!!!        m_aboutToDelete(false),
         m_extendTo(0) { }
 
     // Not provided.
-    Model(const Model &);
-    Model &operator=(const Model &); 
+    Model(const Model &) =delete;
+    Model &operator=(const Model &) =delete;
 
-    Model *m_sourceModel;
-    AlignmentModel *m_alignment;
+    ModelId m_sourceModel;
+    ModelId m_alignmentModel;
     QString m_typeUri;
-    bool m_abandoning;
-    bool m_aboutToDelete;
+//!!!    bool m_abandoning;
+//!!!    bool m_aboutToDelete;
     sv_frame_t m_extendTo;
 };
 
-typedef Model::Id ModelId;
+typedef Model::ModelId ModelId;
 typedef StaticById<Model, ModelId> ModelById;
 
 #endif

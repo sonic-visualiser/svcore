@@ -57,6 +57,12 @@ struct PathPoint
     }
 };
 
+//!!! pretty sure there is no good reason for this to be a model any
+//!!! more - it used to use implementation inheritance from
+//!!! SparseModel but that's no longer a thing. Should just be a
+//!!! simple container now, to be passed around by value/reference
+//!!! rather than on heap
+
 class PathModel : public Model
 {
 public:

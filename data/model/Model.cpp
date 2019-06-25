@@ -34,30 +34,40 @@ Model::~Model()
                 << endl;
     }
 
-    if (m_alignment) {
-        m_alignment->aboutToDelete();
-        delete m_alignment;
+    if (!m_alignmentModel.isNone()) {
+        ModelById::release(m_alignmentModel);
     }
 }
 
 void
-Model::setSourceModel(Model *model)
+Model::setSourceModel(ModelId modelId)
 {
+/*!!!
     if (m_sourceModel) {
         disconnect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
                    this, SLOT(sourceModelAboutToBeDeleted()));
     }
+*/
+    
+    m_sourceModel = modelId;
 
-    m_sourceModel = model;
-
+    auto model = ModelById::get(m_sourceModel);
+    if (model) {
+        connect(model.get(), SIGNAL(alignmentCompletionChanged()),
+                this, SIGNAL(alignmentCompletionChanged()));
+    }
+        
+    
+/*
     if (m_sourceModel) {
         connect(m_sourceModel, SIGNAL(alignmentCompletionChanged()),
                 this, SIGNAL(alignmentCompletionChanged()));
         connect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
                 this, SLOT(sourceModelAboutToBeDeleted()));
     }
+*/
 }
-
+/*!!!
 void
 Model::aboutToDelete()
 {
@@ -83,40 +93,38 @@ Model::sourceModelAboutToBeDeleted()
 {
     m_sourceModel = nullptr;
 }
-
+*/
 void
-Model::setAlignment(AlignmentModel *alignment)
+Model::setAlignment(ModelId alignmentModel)
 {
     SVDEBUG << "Model(" << this << "): accepting alignment model "
-            << alignment << endl;
+            << alignmentModel << endl;
     
-    if (m_alignment) {
-        m_alignment->aboutToDelete();
-        delete m_alignment;
+    if (!m_alignmentModel.isNone()) {
+        ModelById::release(m_alignmentModel);
     }
     
-    m_alignment = alignment;
+    m_alignmentModel = alignmentModel;
 
-    if (m_alignment) {
-        connect(m_alignment, SIGNAL(completionChanged()),
+    auto model = ModelById::get(m_alignmentModel);
+    if (model) {
+        connect(model.get(), SIGNAL(completionChanged()),
                 this, SIGNAL(alignmentCompletionChanged()));
     }
 }
 
-const AlignmentModel *
+const ModelId
 Model::getAlignment() const
 {
-    return m_alignment;
+    return m_alignmentModel;
 }
 
-const Model *
+const ModelId
 Model::getAlignmentReference() const
 {
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return nullptr;
-    }
-    return m_alignment->getReferenceModel();
+    auto model = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    if (model) return model->getReferenceModel();
+    else return {};
 }
 
 sv_frame_t

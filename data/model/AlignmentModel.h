@@ -30,9 +30,9 @@ class AlignmentModel : public Model
     Q_OBJECT
 
 public:
-    AlignmentModel(Model *reference,
-                   Model *aligned,
-                   SparseTimeValueModel *path);
+    AlignmentModel(ModelId reference /* any model */,
+                   ModelId aligned /* any model */,
+                   ModelId path /* a SparseTimeValueModel */);
     ~AlignmentModel();
 
     bool isOK() const override;
@@ -53,14 +53,14 @@ public:
 
     QString getTypeName() const override { return tr("Alignment"); }
 
-    const Model *getReferenceModel() const;
-    const Model *getAlignedModel() const;
+    ModelId getReferenceModel() const;
+    ModelId getAlignedModel() const;
 
     sv_frame_t toReference(sv_frame_t frame) const;
     sv_frame_t fromReference(sv_frame_t frame) const;
 
-    void setPathFrom(SparseTimeValueModel *rawpath);
-    void setPath(PathModel *path);
+    void setPathFrom(ModelId pathSource); // a SparseTimeValueModel
+    void setPath(const PathModel &path);
 
     void toXml(QTextStream &stream,
                        QString indent = "",
@@ -77,17 +77,18 @@ signals:
     void completionChanged();
 
 protected slots:
-    void pathChanged();
-    void pathChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
-    void pathCompletionChanged();
+    void pathSourceChanged();
+    void pathSourceChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
+    void pathSourceCompletionChanged();
 
 protected:
-    Model *m_reference; // I don't own this
-    Model *m_aligned; // I don't own this
+    ModelId m_reference;
+    ModelId m_aligned;
 
-    SparseTimeValueModel *m_rawPath; // I own this
-    mutable PathModel *m_path; // I own this
-    mutable PathModel *m_reversePath; // I own this
+    ModelId m_pathSource; // a SparseTimeValueModel
+
+    std::unique_ptr<PathModel> m_path;
+    std::unique_ptr<PathModel> m_reversePath;
     bool m_pathBegun;
     bool m_pathComplete;
     QString m_error;
@@ -95,7 +96,7 @@ protected:
     void constructPath() const;
     void constructReversePath() const;
 
-    sv_frame_t align(PathModel *path, sv_frame_t frame) const;
+    sv_frame_t align(const PathModel &path, sv_frame_t frame) const;
 };
 
 #endif

@@ -26,9 +26,23 @@
 
 template <typename T>
 struct SvId {
+    
     int id;
 
+    enum {
+        // The value NO_ID (-1) is never allocated by WithId
+        NO_ID = -1
+    };
+    
+    SvId() : id(NO_ID) {}
+
+    SvId(const SvId &) =default;
+    SvId &operator=(const SvId &) =default;
+
+    bool operator==(const SvId &other) const { return id == other.id; }
     bool operator<(const SvId &other) const { return id < other.id; }
+
+    bool isNone() const { return id == NO_ID; }
 
     QString toString() const {
         return QString("%1").arg(id);
@@ -66,8 +80,12 @@ private:
         int i = nextId;
         if (nextId == INT_MAX) {
             nextId = INT_MIN;
+        } else {
+            ++nextId;
+            if (nextId == 0 || nextId == Id::NO_ID) {
+                throw std::runtime_error("Internal ID limit exceeded!");
+            }
         }
-        ++nextId;
         return i;
     }
 };
