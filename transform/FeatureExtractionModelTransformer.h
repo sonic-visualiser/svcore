@@ -95,27 +95,23 @@ protected:
     QWaitCondition m_outputsCondition;
     void awaitOutputModels() override;
     
-    // just casts:
-/*!!!
-    DenseTimeValueModel *getConformingInput();
-
-    template <typename ModelClass> bool isOutput(int n) {
-        return dynamic_cast<ModelClass *>(m_outputs[n]) != 0;
-    }
-
-    template <typename ModelClass> ModelClass *getConformingOutput(int n) {
-        if ((int)m_outputs.size() > n) {
-            ModelClass *mc = dynamic_cast<ModelClass *>(m_outputs[n]);
-            if (!mc) {
-                std::cerr << "FeatureExtractionModelTransformer::getOutput: Output model not conformable" << std::endl;
-            }
-            return mc;
+    template <typename T> bool isOutputType(int n) {
+        if (!ModelById::getAs<T>(m_outputs[n])) {
+            return false;
         } else {
-            std::cerr << "FeatureExtractionModelTransformer::getOutput: No such output number " << n << std::endl;
-            return 0;
+            return true;
         }
     }
-*/
+
+    template <typename T> bool setOutputCompletion(int n, int completion) {
+        auto model = ModelById::getAs<T>(m_outputs[n]);
+        if (!model) {
+            return false;
+        } else {
+            model->setCompletion(completion, true);
+            return true;
+        }
+    }
 };
 
 #endif
