@@ -25,7 +25,12 @@ class QTextStream;
 class XmlExportable
 {
 public:
-    XmlExportable() : m_exportId(-1) { }
+    enum {
+        // The value NO_ID (-1) is never allocated as an export id
+        NO_ID = -1
+    };
+
+    XmlExportable() : m_exportId(NO_ID) { }
     virtual ~XmlExportable() { }
 
     /**

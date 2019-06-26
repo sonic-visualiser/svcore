@@ -17,7 +17,7 @@
 #define SV_ALIGNMENT_MODEL_H
 
 #include "Model.h"
-#include "PathModel.h"
+#include "Path.h"
 #include "base/RealTime.h"
 
 #include <QString>
@@ -60,7 +60,7 @@ public:
     sv_frame_t fromReference(sv_frame_t frame) const;
 
     void setPathFrom(ModelId pathSource); // a SparseTimeValueModel
-    void setPath(const PathModel &path);
+    void setPath(const Path &path);
 
     void toXml(QTextStream &stream,
                        QString indent = "",
@@ -72,12 +72,9 @@ public:
     }
 
 signals:
-    void modelChanged();
-    void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
     void completionChanged();
 
 protected slots:
-    void pathSourceChanged();
     void pathSourceChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
     void pathSourceCompletionChanged();
 
@@ -87,8 +84,8 @@ protected:
 
     ModelId m_pathSource; // a SparseTimeValueModel
 
-    mutable std::unique_ptr<PathModel> m_path;
-    mutable std::unique_ptr<PathModel> m_reversePath;
+    mutable std::unique_ptr<Path> m_path;
+    mutable std::unique_ptr<Path> m_reversePath;
     bool m_pathBegun;
     bool m_pathComplete;
     QString m_error;
@@ -96,7 +93,7 @@ protected:
     void constructPath() const;
     void constructReversePath() const;
 
-    sv_frame_t align(const PathModel &path, sv_frame_t frame) const;
+    sv_frame_t performAlignment(const Path &path, sv_frame_t frame) const;
 };
 
 #endif

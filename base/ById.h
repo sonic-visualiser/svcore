@@ -26,6 +26,8 @@
 #include <QMutex>
 #include <QString>
 
+#include "XmlExportable.h"
+
 template <typename T>
 struct SvId {
     
@@ -139,6 +141,21 @@ public:
     std::shared_ptr<Derived> getAs(Id id) const {
         return std::dynamic_pointer_cast<Derived>(get(id));
     }
+
+    /**
+     * If the Item type is an XmlExportable, return the export ID of
+     * the given item ID. The export ID is a simple int, and is only
+     * allocated when first requested, so objects that are never
+     * exported don't get one.
+     */
+    int getExportId(Id id) const {
+        auto exportable = getAs<XmlExportable>(id);
+        if (exportable) {
+            return exportable->getExportId();
+        } else {
+            return XmlExportable::NO_ID;
+        }
+    }
     
 private:
     mutable QMutex m_mutex;
@@ -167,6 +184,10 @@ public:
         return std::dynamic_pointer_cast<Derived>(get(id));
     }
 
+    static int getExportId(Id id) {
+        return byId().getExportId(id);
+    }
+    
 private:
     static
     ById<Item, Id> &byId() {
