@@ -54,6 +54,19 @@ struct SvId {
 };
 
 template <typename T>
+std::ostream &
+operator<<(std::ostream &ostr, const SvId<T> &id)
+{
+    // For diagnostic purposes only. Do not use these IDs for
+    // serialisation - see XmlExportable instead.
+    if (id.isNone()) {
+        return (ostr << "<none>");
+    } else {
+        return (ostr << "#" << id.id);
+    }
+}
+
+template <typename T>
 class WithId
 {
 public:
@@ -113,6 +126,9 @@ public:
     void add(std::shared_ptr<Item> item) {
         QMutexLocker locker(&m_mutex);
         auto id = item->getId();
+        if (id.isNone()) {
+            throw std::logic_error("item id should never be None");
+        }
         if (m_items.find(id) != m_items.end()) {
             SVCERR << "WARNING: ById::add: item with id " << id
                    << " is already recorded, replacing it (item type is "
@@ -128,12 +144,13 @@ public:
     }
 
     std::shared_ptr<Item> get(Id id) const {
+        if (id.isNone()) return {}; // this id is never issued: avoid locking
         QMutexLocker locker(&m_mutex);
         const auto &itr = m_items.find(id);
         if (itr != m_items.end()) {
             return itr->second;
         } else {
-            return std::shared_ptr<Item>();
+            return {};
         }
     }
 
@@ -144,9 +161,11 @@ public:
 
     /**
      * If the Item type is an XmlExportable, return the export ID of
-     * the given item ID. The export ID is a simple int, and is only
-     * allocated when first requested, so objects that are never
-     * exported don't get one.
+     * the given item ID. A call to this function will fail to compile
+     * if the Item is not an XmlExportable.
+     *
+     * The export ID is a simple int, and is only allocated when first
+     * requested, so objects that are never exported don't get one.
      */
     int getExportId(Id id) const {
         auto exportable = getAs<XmlExportable>(id);

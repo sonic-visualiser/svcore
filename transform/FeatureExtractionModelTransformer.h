@@ -38,9 +38,11 @@ public:
     FeatureExtractionModelTransformer(Input input,
                                       const Transform &transform);
 
-    // Obtain outputs for a set of transforms that all use the same
-    // plugin and input (but with different outputs). i.e. run the
-    // plugin once only and collect more than one output from it.
+    /**
+     * Obtain outputs for a set of transforms that all use the same
+     * plugin and input (but with different outputs). i.e. run the
+     * plugin once only and collect more than one output from it.
+     */
     FeatureExtractionModelTransformer(Input input,
                                       const Transforms &relatedTransforms);
 
@@ -57,16 +59,27 @@ protected:
     void run() override;
 
     Vamp::Plugin *m_plugin;
-    std::vector<Vamp::Plugin::OutputDescriptor *> m_descriptors; // per transform
-    std::vector<int> m_fixedRateFeatureNos; // to assign times to FixedSampleRate features
-    std::vector<int> m_outputNos; // list of plugin output indexes required for this group of transforms
+
+    // descriptors per transform
+    std::vector<Vamp::Plugin::OutputDescriptor> m_descriptors;
+
+    // to assign times to FixedSampleRate features
+    std::vector<int> m_fixedRateFeatureNos;
+
+    // list of plugin output indexes required for this group of transforms
+    std::vector<int> m_outputNos;
 
     void createOutputModels(int n);
 
-    std::map<int, bool> m_needAdditionalModels; // transformNo -> necessity
-    typedef std::map<int, std::map<int, SparseTimeValueModel *> > AdditionalModelMap;
+    // map from transformNo -> necessity
+    std::map<int, bool> m_needAdditionalModels;
+
+    // map from transformNo -> binNo -> SparseTimeValueModel id
+    typedef std::map<int, std::map<int, ModelId> > AdditionalModelMap;
+    
     AdditionalModelMap m_additionalModels;
-    SparseTimeValueModel *getAdditionalModel(int transformNo, int binNo);
+    
+    ModelId getAdditionalModel(int transformNo, int binNo);
 
     void addFeature(int n,
                     sv_frame_t blockFrame,
@@ -83,7 +96,7 @@ protected:
     void awaitOutputModels() override;
     
     // just casts:
-
+/*!!!
     DenseTimeValueModel *getConformingInput();
 
     template <typename ModelClass> bool isOutput(int n) {
@@ -102,6 +115,7 @@ protected:
             return 0;
         }
     }
+*/
 };
 
 #endif

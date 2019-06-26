@@ -24,8 +24,8 @@
 
 Model::~Model()
 {
-    SVDEBUG << "Model::~Model(" << this << ")" << endl;
-
+    SVDEBUG << "Model::~Model: " << this << " with id " << getId() << endl;
+/*!!!
     if (!m_aboutToDelete) {
         SVDEBUG << "NOTE: Model(" << this << ", \""
                 << objectName() << "\", type uri <"
@@ -33,10 +33,13 @@ Model::~Model()
                 << "with no aboutToDelete notification"
                 << endl;
     }
-
+*/
+    //!!! see notes in header - sort this out
+    /*
     if (!m_alignmentModel.isNone()) {
         ModelById::release(m_alignmentModel);
     }
+    */
 }
 
 void
@@ -130,29 +133,39 @@ Model::getAlignmentReference() const
 sv_frame_t
 Model::alignToReference(sv_frame_t frame) const
 {
-//    cerr << "Model(" << this << ")::alignToReference(" << frame << ")" << endl;
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->alignToReference(frame);
-        else return frame;
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->alignToReference(frame);
+        }
+        return frame;
     }
-    sv_frame_t refFrame = m_alignment->toReference(frame);
-    const Model *m = m_alignment->getReferenceModel();
-    if (m && refFrame > m->getEndFrame()) refFrame = m->getEndFrame();
-//    cerr << "have alignment, aligned is " << refFrame << endl;
+    
+    sv_frame_t refFrame = alignmentModel->toReference(frame);
+    auto refModel = ModelById::get(alignmentModel->getReferenceModel());
+    if (refModel && refFrame > refModel->getEndFrame()) {
+        refFrame = refModel->getEndFrame();
+    }
     return refFrame;
 }
 
 sv_frame_t
 Model::alignFromReference(sv_frame_t refFrame) const
 {
-//    cerr << "Model(" << this << ")::alignFromReference(" << refFrame << ")" << endl;
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->alignFromReference(refFrame);
-        else return refFrame;
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->alignFromReference(refFrame);
+        }
+        return refFrame;
     }
-    sv_frame_t frame = m_alignment->fromReference(refFrame);
+    
+    sv_frame_t frame = alignmentModel->fromReference(refFrame);
     if (frame > getEndFrame()) frame = getEndFrame();
-//    cerr << "have alignment, aligned is " << frame << endl;
     return frame;
 }
 
@@ -160,17 +173,26 @@ int
 Model::getAlignmentCompletion() const
 {
 #ifdef DEBUG_COMPLETION
-    SVCERR << "Model(" << this << ")::getAlignmentCompletion: m_alignment = "
-           << m_alignment << endl;
+    SVCERR << "Model(" << this
+           << ")::getAlignmentCompletion: m_alignmentModel = "
+           << m_alignmentModel << endl;
 #endif
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
-        else return 100;
+
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->getAlignmentCompletion();
+        }
+        return 100;
     }
+    
     int completion = 0;
-    (void)m_alignment->isReady(&completion);
+    (void)alignmentModel->isReady(&completion);
 #ifdef DEBUG_COMPLETION
-    SVCERR << "Model(" << this << ")::getAlignmentCompletion: completion = " << completion
+    SVCERR << "Model(" << this
+           << ")::getAlignmentCompletion: completion = " << completion
            << endl;
 #endif
     return completion;
@@ -179,21 +201,24 @@ Model::getAlignmentCompletion() const
 QString
 Model::getTitle() const
 {
-    if (m_sourceModel) return m_sourceModel->getTitle();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getTitle();
     else return "";
 }
 
 QString
 Model::getMaker() const
 {
-    if (m_sourceModel) return m_sourceModel->getMaker();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getMaker();
     else return "";
 }
 
 QString
 Model::getLocation() const
 {
-    if (m_sourceModel) return m_sourceModel->getLocation();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getLocation();
     else return "";
 }
 

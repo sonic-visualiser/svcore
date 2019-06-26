@@ -668,7 +668,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
                     if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
                         cerr << "source model for " << model << " is " << m_audioModelMap[source] << endl;
-                        model->setSourceModel(m_audioModelMap[source]);
+                        model->setSourceModel(m_audioModelMap[source]->getId());
                     }
 
                     QString title = m_store->complete

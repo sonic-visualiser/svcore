@@ -47,6 +47,14 @@ public:
     bool isOK();
     QString getErrorString() const;
 
+    /**
+     * Return a list of models imported from the RDF source.  The
+     * models were heap-allocated by this class and are not registered
+     * with any other owner; the caller takes ownership and must
+     * arrange for them to be deleted manually or managed by a smart
+     * pointer.
+     */
+    //!!! todo: ModelId-ise
     std::vector<Model *> getDataModels(ProgressReporter *reporter);
 
     enum RDFDocumentType {
