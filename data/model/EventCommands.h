@@ -18,6 +18,7 @@
 
 #include "base/Event.h"
 #include "base/Command.h"
+#include "base/ById.h"
 
 /**
  * Interface for classes that can be modified through these commands
@@ -29,66 +30,111 @@ public:
     virtual void remove(Event e) = 0;
 };
 
+template <typename Base>
+class WithEditable
+{
+    typedef typename Base::Id Id;
+    Id m_id;
+    
+protected:
+    WithEditable(Id id) : m_id(id) { }
+
+    std::shared_ptr<EventEditable> getEditable() {
+        auto base = StaticById<Base, Id>::get(m_id);
+        if (!base) return {}; // acceptable - item has expired
+        auto editable = std::dynamic_pointer_cast<EventEditable>(base);
+        if (!editable) {
+            SVCERR << "WARNING: Id passed to EventEditable command is not that of an EventEditable" << endl;
+        }
+        return editable;
+    }
+};
+
 /**
- * Command to add an event to an editable containing events, with undo.
+ * Command to add an event to an editable containing events, with
+ * undo.  The template parameter must be a type that can be
+ * dynamic_cast to EventEditable and that has a ById store.
  */
-class AddEventCommand : public Command
+template <typename Base>
+class AddEventCommand : public Command,
+                        public WithEditable<Base>
 {
 public:
-    AddEventCommand(EventEditable *editable, const Event &e, QString name) :
-        m_editable(editable), m_event(e), m_name(name) { }
+    AddEventCommand(typename Base::Id editable, const Event &e, QString name) :
+        WithEditable<Base>(editable), m_event(e), m_name(name) { }
 
     QString getName() const override { return m_name; }
     Event getEvent() const { return m_event; }
 
-    void execute() override { m_editable->add(m_event); }
-    void unexecute() override { m_editable->remove(m_event); }
+    void execute() override {
+        auto editable = getEditable();
+        if (editable) editable->add(m_event);
+    }
+    void unexecute() override {
+        auto editable = getEditable();
+        if (editable) editable->remove(m_event);
+    }
 
 private:
-    EventEditable *m_editable;
     Event m_event;
     QString m_name;
+    using WithEditable<Base>::getEditable;
 };
 
 /**
  * Command to remove an event from an editable containing events, with
- * undo.
+ * undo.  The template parameter must be a type that implements
+ * EventBase and that has a ById store.
  */
-class RemoveEventCommand : public Command
+template <typename Base>
+class RemoveEventCommand : public Command,
+                           public WithEditable<Base>
 {
 public:
-    RemoveEventCommand(EventEditable *editable, const Event &e, QString name) :
-        m_editable(editable), m_event(e), m_name(name) { }
+    RemoveEventCommand(typename Base::Id editable, const Event &e, QString name) :
+        WithEditable<Base>(editable), m_event(e), m_name(name) { }
 
     QString getName() const override { return m_name; }
     Event getEvent() const { return m_event; }
 
-    void execute() override { m_editable->remove(m_event); }
-    void unexecute() override { m_editable->add(m_event); }
+    void execute() override {
+        auto editable = getEditable();
+        if (editable) editable->remove(m_event);
+    }
+    void unexecute() override {
+        auto editable = getEditable();
+        if (editable) editable->add(m_event);
+    }
 
 private:
-    EventEditable *m_editable;
     Event m_event;
     QString m_name;
+    using WithEditable<Base>::getEditable;
 };
 
 /**
  * Command to add or remove a series of events to or from an editable,
  * with undo. Creates and immediately executes a sub-command for each
  * add/remove requested. Consecutive add/remove pairs for the same
- * point are collapsed.
+ * point are collapsed.  The template parameter must be a type that
+ * implements EventBase and that has a ById store.
  */
+template <typename Base>
 class ChangeEventsCommand : public MacroCommand
 {
+    typedef typename Base::Id Id;
+    
 public:
-    ChangeEventsCommand(EventEditable *editable, QString name) :
+    ChangeEventsCommand(Id editable, QString name) :
         MacroCommand(name), m_editable(editable) { }
 
     void add(Event e) {
-        addCommand(new AddEventCommand(m_editable, e, getName()), true);
+        addCommand(new AddEventCommand<Base>(m_editable, e, getName()),
+                   true);
     }
     void remove(Event e) {
-        addCommand(new RemoveEventCommand(m_editable, e, getName()), true);
+        addCommand(new RemoveEventCommand<Base>(m_editable, e, getName()),
+                   true);
     }
 
     /**
@@ -120,10 +166,10 @@ protected:
             return;
         }
         
-        RemoveEventCommand *r =
-            dynamic_cast<RemoveEventCommand *>(command);
-        AddEventCommand *a =
-            dynamic_cast<AddEventCommand *>(*m_commands.rbegin());
+        RemoveEventCommand<Base> *r =
+            dynamic_cast<RemoveEventCommand<Base> *>(command);
+        AddEventCommand<Base> *a =
+            dynamic_cast<AddEventCommand<Base> *>(*m_commands.rbegin());
         if (r && a) {
             if (a->getEvent() == r->getEvent()) {
                 deleteCommand(a);
@@ -134,7 +180,7 @@ protected:
         MacroCommand::addCommand(command);
     }
 
-    EventEditable *m_editable;
+    Id m_editable;
 };
 
 #endif

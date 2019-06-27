@@ -362,7 +362,7 @@ protected:
     sv_frame_t m_extendTo;
 };
 
-typedef Model::ModelId ModelId;
-typedef StaticById<Model, ModelId> ModelById;
+typedef Model::Id ModelId;
+typedef StaticById<Model, Model::Id> ModelById;
 
 #endif

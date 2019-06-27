@@ -96,6 +96,16 @@ public:
 
         // For historical reasons we serialise a Path as a model,
         // although the class itself no longer is.
+
+        // We also write start and end frames - which our API no
+        // longer exposes - just for backward compatibility
+
+        sv_frame_t start = 0;
+        sv_frame_t end = 0;
+        if (!m_points.empty()) {
+            start = m_points.begin()->frame;
+            end = m_points.rbegin()->frame + m_resolution;
+        }
         
         // Our dataset doesn't have its own export ID, we just use
         // ours. Actually any model could do that, since datasets
@@ -104,11 +114,14 @@ public:
         
         out << indent;
         out << QString("<model id=\"%1\" name=\"\" sampleRate=\"%2\" "
-                       "type=\"sparse\" dimensions=\"2\" resolution=\"%3\" "
-                       "notifyOnAdd=\"true\" dataset=\"%4\" "
-                       "subtype=\"path\" %5/>\n")
+                       "start=\"%3\" end=\"%4\" type=\"sparse\" "
+                       "dimensions=\"2\" resolution=\"%5\" "
+                       "notifyOnAdd=\"true\" dataset=\"%6\" "
+                       "subtype=\"path\" %7/>\n")
             .arg(getExportId())
             .arg(m_sampleRate)
+            .arg(start)
+            .arg(end)
             .arg(m_resolution)
             .arg(getExportId())
             .arg(extraAttributes);

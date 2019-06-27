@@ -226,8 +226,7 @@ public:
         case 3: e1 = e0.withLabel(value.toString()); break;
         }
 
-        ChangeEventsCommand *command =
-            new ChangeEventsCommand(this, tr("Edit Data"));
+        auto command = new ChangeEventsCommand<Model>(getId(), tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

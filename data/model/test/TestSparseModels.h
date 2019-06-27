@@ -18,7 +18,7 @@
 #include "../SparseOneDimensionalModel.h"
 #include "../NoteModel.h"
 #include "../TextModel.h"
-#include "../PathModel.h"
+#include "../Path.h"
 #include "../ImageModel.h"
 
 #include <QObject>
@@ -252,7 +252,7 @@ private slots:
     }
     
     void path_xml() {
-        PathModel m(100, 10, false);
+        Path m(100, 10);
         PathPoint p1(20, 30);
         PathPoint p2(40, 60);
         PathPoint p3(50, 49);
