@@ -33,7 +33,7 @@ class AlignmentModel;
  * of data on a time scale based on an audio frame rate.
  */
 class Model : public QObject,
-              public WithId<Model>,
+              public WithTypedId<Model>,
               public XmlExportable,
               public Playable
 {
@@ -363,6 +363,6 @@ protected:
 };
 
 typedef Model::Id ModelId;
-typedef StaticById<Model, Model::Id> ModelById;
+typedef TypedById<Model, Model::Id> ModelById;
 
 #endif

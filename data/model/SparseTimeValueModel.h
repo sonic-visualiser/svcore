@@ -54,7 +54,7 @@ public:
         m_completion(100) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
     }
 
     SparseTimeValueModel(sv_samplerate_t sampleRate, int resolution,
@@ -73,11 +73,11 @@ public:
         m_completion(100) {
         // Model is playable, but may not sound (if units not Hz or
         // range unsuitable)
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
     }
 
     virtual ~SparseTimeValueModel() {
-        PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable(getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Sparse Time-Value"); }
@@ -289,7 +289,7 @@ public:
         case 3: e1 = e0.withLabel(value.toString()); break;
         }
 
-        auto command = new ChangeEventsCommand<Model>(getId(), tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

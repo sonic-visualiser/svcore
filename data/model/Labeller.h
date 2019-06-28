@@ -225,17 +225,16 @@ public:
      * Relabel all events in the given event vector that lie within
      * the given multi-selection, according to the labelling
      * properties of this labeller.  Return a command that has been
-     * executed but not yet added to the history. The template
-     * parameter must be a type that can be dynamic_cast to
-     * EventEditable and that has a ById store.
+     * executed but not yet added to the history.  The id must be that
+     * of a type that can be retrieved from the AnyById store and
+     * dynamic_cast to EventEditable.
      */
-    template <typename EditableBase>
-    Command *labelAll(typename EditableBase::Id editable,
+    Command *labelAll(int editableId,
                       MultiSelection *ms,
                       const EventVector &allEvents) {
 
-        auto command = new ChangeEventsCommand<EditableBase>
-            (editable, tr("Label Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Label Points"));
 
         Event prev;
         bool havePrev = false;
@@ -273,18 +272,17 @@ public:
      * that event lies within the given multi-selection, add n-1 new
      * events at equally spaced intervals between it and the following
      * event.  Return a command that has been executed but not yet
-     * added to the history. The template parameter must be a type
-     * that can be dynamic_cast to EventEditable and that has a ById
-     * store.
+     * added to the history.  The id must be that of a type that can
+     * be retrieved from the AnyById store and dynamic_cast to
+     * EventEditable.
      */
-    template <typename EditableBase>
-    Command *subdivide(typename EditableBase::Id editable,
+    Command *subdivide(int editableId,
                        MultiSelection *ms,
                        const EventVector &allEvents,
                        int n) {
 
-        auto command = new ChangeEventsCommand<EditableBase>
-            (editable, tr("Subdivide Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Subdivide Points"));
 
         for (auto i = allEvents.begin(); i != allEvents.end(); ++i) {
 
@@ -325,18 +323,17 @@ public:
      * multi-selection, and a number n, remove all but every nth event
      * from the vector within the extents of the multi-selection.
      * Return a command that has been executed but not yet added to
-     * the history. The template parameter must be a type
-     * that can be dynamic_cast to EventEditable and that has a ById
-     * store.
+     * the history. The id must be that of a type that can be
+     * retrieved from the AnyById store and dynamic_cast to
+     * EventEditable.
      */
-    template <typename EditableBase>
-    Command *winnow(typename EditableBase::Id editable,
+    Command *winnow(int editableId,
                     MultiSelection *ms,
                     const EventVector &allEvents,
                     int n) {
 
-        auto command = new ChangeEventsCommand<EditableBase>
-            (editable, tr("Winnow Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Winnow Points"));
 
         int counter = 0;
         

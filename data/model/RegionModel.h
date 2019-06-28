@@ -291,7 +291,7 @@ public:
         case 4: e1 = e0.withLabel(value.toString()); break;
         }
 
-        auto command = new ChangeEventsCommand<Model>(getId(), tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

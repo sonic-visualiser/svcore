@@ -35,11 +35,37 @@ public:
 
     virtual ~PlayParameterRepository();
 
-    void addPlayable(const Playable *playable);
-    void removePlayable(const Playable *playable);
-    void copyParameters(const Playable *from, const Playable *to);
+    /**
+     * Register a playable.
+     * 
+     * The id must be of an object that is registered with the ById
+     * store and that can be dynamic_cast to Playable.
+     */
+    void addPlayable(int playableId);
 
-    PlayParameters *getPlayParameters(const Playable *playable);
+    /**
+     * Unregister a playable.
+     * 
+     * The id must be of an object that is registered with the ById
+     * store and that can be dynamic_cast to Playable.
+     */
+    void removePlayable(int playableId);
+
+    /**
+     * Copy the play parameters from one playable to another.
+     * 
+     * The ids must be of objects that are registered with the ById
+     * store and that can be dynamic_cast to Playable.
+     */
+    void copyParameters(int fromId, int toId);
+
+    /**
+     * Retrieve the play parameters for a playable.
+     * 
+     * The id must be of an object that is registered with the ById
+     * store and that can be dynamic_cast to Playable.
+     */
+    PlayParameters *getPlayParameters(int playableId);
 
     void clear();
 
@@ -64,14 +90,14 @@ public:
 
 signals:
     void playParametersChanged(PlayParameters *);
-    void playClipIdChanged(const Playable *, QString);
+    void playClipIdChanged(int playableId, QString);
 
 protected slots:
     void playParametersChanged();
     void playClipIdChanged(QString);
 
 protected:
-    typedef std::map<const Playable *, PlayParameters *> PlayableParameterMap;
+    typedef std::map<int, PlayParameters *> PlayableParameterMap;
     PlayableParameterMap m_playParameters;
 
     static PlayParameterRepository *m_instance;

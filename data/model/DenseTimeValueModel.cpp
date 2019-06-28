@@ -20,12 +20,12 @@
 
 DenseTimeValueModel::DenseTimeValueModel()
 {
-    PlayParameterRepository::getInstance()->addPlayable(this);
+    PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
 }
 
 DenseTimeValueModel::~DenseTimeValueModel()
 {
-    PlayParameterRepository::getInstance()->removePlayable(this);
+    PlayParameterRepository::getInstance()->removePlayable(getId().untyped);
 }
         
 QString

@@ -1,4 +1,5 @@
 TEST_HEADERS = \
+	     TestById.h \
 	     TestColumnOp.h \
 	     TestLogRange.h \
 	     TestMovingMedian.h \

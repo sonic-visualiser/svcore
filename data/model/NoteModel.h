@@ -66,7 +66,7 @@ public:
             m_valueMinimum = 33.f;
             m_valueMaximum = 88.f;
         }
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
     }
 
     NoteModel(sv_samplerate_t sampleRate, int resolution,
@@ -87,11 +87,11 @@ public:
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(100) {
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
     }
 
     virtual ~NoteModel() {
-        PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable(getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Note"); }
@@ -308,7 +308,7 @@ public:
         case 5: e1 = e0.withLabel(value.toString()); break;
         }
 
-        auto command = new ChangeEventsCommand<Model>(getId(), tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

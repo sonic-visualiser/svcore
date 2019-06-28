@@ -53,11 +53,11 @@ public:
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(100) {
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
     }
 
     virtual ~SparseOneDimensionalModel() {
-        PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable(getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Sparse 1-D"); }
@@ -239,7 +239,7 @@ public:
         case 2: e1 = e0.withLabel(value.toString()); break;
         }
 
-        auto command = new ChangeEventsCommand<Model>(getId(), tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

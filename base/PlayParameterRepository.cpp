@@ -17,6 +17,8 @@
 #include "PlayParameters.h"
 #include "Playable.h"
 
+#include "ById.h"
+
 #include <iostream>
 
 PlayParameterRepository *
@@ -33,19 +35,25 @@ PlayParameterRepository::~PlayParameterRepository()
 }
 
 void
-PlayParameterRepository::addPlayable(const Playable *playable)
+PlayParameterRepository::addPlayable(int playableId)
 {
 //    cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  endl;
 
-    if (!getPlayParameters(playable)) {
+    if (!getPlayParameters(playableId)) {
 
+        auto playable = AnyById::getAs<Playable>(playableId);
+        if (!playable) {
+            SVCERR << "ERROR: id passed to PlayParameterRepository::addPlayable is not that of a Playable" << endl;
+            return;
+        }
+        
         // Give all playables the same type of play parameters for the
         // moment
 
 //        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
 
         PlayParameters *params = new PlayParameters;
-        m_playParameters[playable] = params;
+        m_playParameters[playableId] = params;
 
         params->setPlayClipId
             (playable->getDefaultPlayClipId());
@@ -65,18 +73,18 @@ PlayParameterRepository::addPlayable(const Playable *playable)
 }    
 
 void
-PlayParameterRepository::removePlayable(const Playable *playable)
+PlayParameterRepository::removePlayable(int playableId)
 {
-    if (m_playParameters.find(playable) == m_playParameters.end()) {
-        cerr << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playable << endl;
+    if (m_playParameters.find(playableId) == m_playParameters.end()) {
+        SVCERR << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playableId << endl;
         return;
     }
-    delete m_playParameters[playable];
-    m_playParameters.erase(playable);
+    delete m_playParameters[playableId];
+    m_playParameters.erase(playableId);
 }
 
 void
-PlayParameterRepository::copyParameters(const Playable *from, const Playable *to)
+PlayParameterRepository::copyParameters(int from, int to)
 {
     if (!getPlayParameters(from)) {
         cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << endl;
@@ -90,10 +98,12 @@ PlayParameterRepository::copyParameters(const Playable *from, const Playable *to
 }
 
 PlayParameters *
-PlayParameterRepository::getPlayParameters(const Playable *playable) 
+PlayParameterRepository::getPlayParameters(int playableId) 
 {
-    if (m_playParameters.find(playable) == m_playParameters.end()) return nullptr;
-    return m_playParameters.find(playable)->second;
+    if (m_playParameters.find(playableId) == m_playParameters.end()) {
+        return nullptr;
+    }
+    return m_playParameters.find(playableId)->second;
 }
 
 void

@@ -18,145 +18,147 @@
 #include "Debug.h"
 
 #include <memory>
-#include <map>
-#include <typeinfo>
 #include <iostream>
 #include <climits>
+#include <stdexcept>
 
 #include <QMutex>
 #include <QString>
 
 #include "XmlExportable.h"
 
+struct IdAlloc {
+
+    // The value NO_ID (-1) is never allocated
+    static const int NO_ID = -1;
+    
+    static int getNextId();
+};
+
 template <typename T>
-struct SvId {
+struct TypedId {
     
-    int id;
-
-    enum {
-        // The value NO_ID (-1) is never allocated by WithId
-        NO_ID = -1
-    };
+    int untyped;
     
-    SvId() : id(NO_ID) {}
+    TypedId() : untyped(IdAlloc::NO_ID) {}
 
-    SvId(const SvId &) =default;
-    SvId &operator=(const SvId &) =default;
+    TypedId(const TypedId &) =default;
+    TypedId &operator=(const TypedId &) =default;
 
-    bool operator==(const SvId &other) const { return id == other.id; }
-    bool operator<(const SvId &other) const { return id < other.id; }
-
-    bool isNone() const { return id == NO_ID; }
-
-    QString toString() const {
-        return QString("%1").arg(id);
+    bool operator==(const TypedId &other) const {
+        return untyped == other.untyped;
+    }
+    bool operator!=(const TypedId &other) const {
+        return untyped != other.untyped;
+    }
+    bool operator<(const TypedId &other) const {
+        return untyped < other.untyped;
+    }
+    bool isNone() const {
+        return untyped == IdAlloc::NO_ID;
     }
 };
 
 template <typename T>
 std::ostream &
-operator<<(std::ostream &ostr, const SvId<T> &id)
+operator<<(std::ostream &ostr, const TypedId<T> &id)
 {
     // For diagnostic purposes only. Do not use these IDs for
     // serialisation - see XmlExportable instead.
     if (id.isNone()) {
         return (ostr << "<none>");
     } else {
-        return (ostr << "#" << id.id);
+        return (ostr << "#" << id.untyped);
     }
 }
 
-template <typename T>
 class WithId
 {
 public:
-    typedef SvId<T> Id;
-    
     WithId() :
-        m_id(getNextId()) {
+        m_id(IdAlloc::getNextId()) {
+    }
+    virtual ~WithId() {
     }
 
     /**
-     * Return an id for this object. The id is a unique identifier for
+     * Return an id for this object. The id is a unique number for
      * this object among all objects that implement WithId within this
      * single run of the application.
      */
-    Id getId() const {
-        Id id;
-        id.id = m_id;
-        return id;
+    int getUntypedId() const {
+        return m_id;
     }
 
 private:
     int m_id;
+};
 
-    static int getNextId() {
-        static int nextId = 0;
-        static QMutex mutex;
-        QMutexLocker locker(&mutex);
-        int i = nextId;
-        if (nextId == INT_MAX) {
-            nextId = INT_MIN;
-        } else {
-            ++nextId;
-            if (nextId == 0 || nextId == Id::NO_ID) {
-                throw std::runtime_error("Internal ID limit exceeded!");
-            }
-        }
-        return i;
+template <typename T>
+class WithTypedId : virtual public WithId
+{
+public:
+    typedef TypedId<T> Id;
+    
+    WithTypedId() : WithId() { }
+
+    /**
+     * Return an id for this object. The id is a unique value for this
+     * object among all objects that implement WithTypedId within this
+     * single run of the application.
+     */
+    Id getId() const {
+        Id id;
+        id.untyped = getUntypedId();
+        return id;
     }
 };
 
-template <typename Item, typename Id>
-class ById
+class AnyById
 {
 public:
-    ~ById() {
-        QMutexLocker locker(&m_mutex);
-        for (const auto &p: m_items) {
-            if (p.second && p.second.use_count() > 0) {
-                SVCERR << "WARNING: ById map destroyed with use count of "
-                       << p.second.use_count() << " for item with type "
-                       << typeid(*p.second.get()).name()
-                       << " and id " << p.first.id << endl;
-            }
-        }
+    static void add(int, std::shared_ptr<WithId>);
+    static void release(int);
+    static std::shared_ptr<WithId> get(int);
+
+    template <typename Derived>
+    static std::shared_ptr<Derived> getAs(int id) {
+        std::shared_ptr<WithId> p = get(id);
+        return std::dynamic_pointer_cast<Derived>(p);
     }
-    
-    void add(std::shared_ptr<Item> item) {
-        QMutexLocker locker(&m_mutex);
+
+private:
+    class Impl;
+    static Impl &impl();
+};
+
+template <typename Item, typename Id>
+class TypedById
+{
+public:
+    static void add(std::shared_ptr<Item> item) {
         auto id = item->getId();
         if (id.isNone()) {
             throw std::logic_error("item id should never be None");
         }
-        if (m_items.find(id) != m_items.end()) {
-            SVCERR << "WARNING: ById::add: item with id " << id
-                   << " is already recorded, replacing it (item type is "
-                   << typeid(*item.get()).name() << ")" << endl;
-        }
-        m_items[id] = item;
+        AnyById::add(id.untyped, item);
     }
 
-    void
-    release(Id id) {
-        QMutexLocker locker(&m_mutex);
-        m_items.erase(id);
+    static void release(Id id) {
+        AnyById::release(id.untyped);
     }
-
-    std::shared_ptr<Item> get(Id id) const {
-        if (id.isNone()) return {}; // this id is never issued: avoid locking
-        QMutexLocker locker(&m_mutex);
-        const auto &itr = m_items.find(id);
-        if (itr != m_items.end()) {
-            return itr->second;
-        } else {
-            return {};
-        }
+    static void release(std::shared_ptr<Item> item) {
+        release(item->getId());
     }
 
     template <typename Derived>
-    std::shared_ptr<Derived> getAs(Id id) const {
-        return std::dynamic_pointer_cast<Derived>(get(id));
+    static std::shared_ptr<Derived> getAs(Id id) {
+        if (id.isNone()) return {}; // this id is never issued: avoid locking
+        return AnyById::getAs<Derived>(id.untyped);
+    }
+
+    static std::shared_ptr<Item> get(Id id) {
+        return getAs<Item>(id);
     }
 
     /**
@@ -167,51 +169,13 @@ public:
      * The export ID is a simple int, and is only allocated when first
      * requested, so objects that are never exported don't get one.
      */
-    int getExportId(Id id) const {
+    static int getExportId(Id id) {
         auto exportable = getAs<XmlExportable>(id);
         if (exportable) {
             return exportable->getExportId();
         } else {
             return XmlExportable::NO_ID;
         }
-    }
-    
-private:
-    mutable QMutex m_mutex;
-    std::map<Id, std::shared_ptr<Item>> m_items;
-};
-
-template <typename Item, typename Id>
-class StaticById
-{
-public:
-    static void add(std::shared_ptr<Item> imagined) {
-        byId().add(imagined);
-    }
-
-    static void release(Id id) {
-        byId().release(id);
-    }
-
-    static std::shared_ptr<Item> get(Id id) {
-        return byId().get(id);
-    }
-
-    template <typename Derived>
-    static
-    std::shared_ptr<Derived> getAs(Id id) {
-        return std::dynamic_pointer_cast<Derived>(get(id));
-    }
-
-    static int getExportId(Id id) {
-        return byId().getExportId(id);
-    }
-    
-private:
-    static
-    ById<Item, Id> &byId() {
-        static ById<Item, Id> b;
-        return b;
     }
 };
 
