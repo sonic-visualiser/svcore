@@ -883,7 +883,8 @@ FileSource::createCacheFile()
 
     QDir dir;
     try {
-        dir = TempDirectory::getInstance()->getSubDirectoryPath("download");
+        dir.setPath(TempDirectory::getInstance()->
+                    getSubDirectoryPath("download"));
     } catch (const DirectoryCreationFailed &f) {
 #ifdef DEBUG_FILE_SOURCE
         cerr << "FileSource::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << endl;
