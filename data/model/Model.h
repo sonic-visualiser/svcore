@@ -141,7 +141,7 @@ public:
      * to this will depend on the model's context -- it's possible
      * nothing at all will change.
      */
-    //!!! aim to lose this
+    //!!! aim to lose this (???)
     /*!!!
     virtual void abandon() {
         m_abandoning = true;
