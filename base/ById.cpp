@@ -60,6 +60,9 @@ public:
     }
         
     void add(int id, std::shared_ptr<WithId> item) {
+        if (id == IdAlloc::NO_ID) {
+            throw std::logic_error("cannot add item with id of NO_ID");
+        }
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) != m_items.end()) {
             SVCERR << "ById::add: item with id " << id
@@ -73,6 +76,9 @@ public:
     }
 
     void release(int id) {
+        if (id == IdAlloc::NO_ID) {
+            return;
+        }
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) == m_items.end()) {
             SVCERR << "ById::release: unknown item id " << id << endl;
@@ -82,6 +88,9 @@ public:
     }
     
     std::shared_ptr<WithId> get(int id) const {
+        if (id == IdAlloc::NO_ID) {
+            return {}; // this id cannot be added: avoid locking
+        }
         QMutexLocker locker(&m_mutex);
         const auto &itr = m_items.find(id);
         if (itr != m_items.end()) {

@@ -50,7 +50,7 @@ public:
      * unless the channel is -1 in which case merge all available
      * channels.
      */
-    FFTModel(const DenseTimeValueModel *model,
+    FFTModel(ModelId model, // a DenseTimeValueModel
              int channel,
              WindowType windowType,
              int windowSize,
@@ -63,14 +63,12 @@ public:
     int getWidth() const override;
     int getHeight() const override;
     float getValueAt(int x, int y) const override { return getMagnitudeAt(x, y); }
-    bool isOK() const override { return m_model && m_model->isOK(); }
+    bool isOK() const override;
     sv_frame_t getStartFrame() const override { return 0; }
     sv_frame_t getTrueEndFrame() const override {
         return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
-    sv_samplerate_t getSampleRate() const override {
-        return isOK() ? m_model->getSampleRate() : 0;
-    }
+    sv_samplerate_t getSampleRate() const override;
     int getResolution() const override { return m_windowIncrement; }
     virtual int getYBinCount() const { return getHeight(); }
     float getMinimumLevel() const override { return 0.f; } // Can't provide
@@ -79,13 +77,7 @@ public:
     virtual Column getPhases(int x) const;
     QString getBinName(int n) const override;
     bool shouldUseLogValueScale() const override { return true; }
-    int getCompletion() const override {
-        int c = 100;
-        if (m_model) {
-            if (m_model->isReady(&c)) return 100;
-        }
-        return c;
-    }
+    int getCompletion() const override;
     virtual QString getError() const { return ""; } //!!!???
     virtual sv_frame_t getFillExtent() const { return getEndFrame(); }
     QString toDelimitedDataString(QString, DataExportOptions,
@@ -143,14 +135,11 @@ public:
 
     QString getTypeName() const override { return tr("FFT"); }
 
-public slots:
-    void sourceModelAboutToBeDeleted();
-
 private:
-    FFTModel(const FFTModel &); // not implemented
-    FFTModel &operator=(const FFTModel &); // not implemented
+    FFTModel(const FFTModel &) =delete;
+    FFTModel &operator=(const FFTModel &) =delete;
 
-    const DenseTimeValueModel *m_model;
+    const ModelId m_model; // a DenseTimeValueModel
     int m_channel;
     WindowType m_windowType;
     int m_windowSize;

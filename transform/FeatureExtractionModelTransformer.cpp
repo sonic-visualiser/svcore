@@ -677,8 +677,7 @@ FeatureExtractionModelTransformer::run()
     if (frequencyDomain) {
         for (int ch = 0; ch < channelCount; ++ch) {
             FFTModel *model = new FFTModel
-//!!!                (input->getId(),
-                (nullptr,
+                (input->getId(),
                  channelCount == 1 ? m_input.getChannel() : ch,
                  primaryTransform.getWindowType(),
                  blockSize,

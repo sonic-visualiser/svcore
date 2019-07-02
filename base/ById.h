@@ -27,6 +27,8 @@
 
 #include "XmlExportable.h"
 
+//!!! todo: docs
+
 struct IdAlloc {
 
     // The value NO_ID (-1) is never allocated
@@ -153,7 +155,6 @@ public:
 
     template <typename Derived>
     static std::shared_ptr<Derived> getAs(Id id) {
-        if (id.isNone()) return {}; // this id is never issued: avoid locking
         return AnyById::getAs<Derived>(id.untyped);
     }
 

@@ -32,13 +32,13 @@ using namespace std;
 static HitCount inSmallCache("FFTModel: Small FFT cache");
 static HitCount inSourceCache("FFTModel: Source data cache");
 
-FFTModel::FFTModel(const DenseTimeValueModel *model,
+FFTModel::FFTModel(ModelId modelId,
                    int channel,
                    WindowType windowType,
                    int windowSize,
                    int windowIncrement,
                    int fftSize) :
-    m_model(model),
+    m_model(modelId),
     m_channel(channel),
     m_windowType(windowType),
     m_windowSize(windowSize),
@@ -61,32 +61,51 @@ FFTModel::FFTModel(const DenseTimeValueModel *model,
 
     m_fft.initFloat();
 
-    connect(model, SIGNAL(modelChanged()),
-            this, SIGNAL(modelChanged()));
-    connect(model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-            this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
-    connect(model, SIGNAL(aboutToBeDeleted()),
-            this, SLOT(sourceModelAboutToBeDeleted()));
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    if (model) {
+        connect(model.get(), SIGNAL(modelChanged()),
+                this, SIGNAL(modelChanged()));
+        connect(model.get(), SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+                this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    }
 }
 
 FFTModel::~FFTModel()
 {
 }
 
-void
-FFTModel::sourceModelAboutToBeDeleted()
+bool
+FFTModel::isOK() const
 {
-    if (m_model) {
-        SVDEBUG << "FFTModel[" << this << "]::sourceModelAboutToBeDeleted(" << m_model << ")" << endl;
-        m_model = nullptr;
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    return (model && model->isOK());
+}
+
+int
+FFTModel::getCompletion() const
+{
+    int c = 100;
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    if (model) {
+        if (model->isReady(&c)) return 100;
     }
+    return c;
+}
+
+sv_samplerate_t
+FFTModel::getSampleRate() const
+{
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    if (model) return model->getSampleRate();
+    else return 0;
 }
 
 int
 FFTModel::getWidth() const
 {
-    if (!m_model) return 0;
-    return int((m_model->getEndFrame() - m_model->getStartFrame())
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    if (!model) return 0;
+    return int((model->getEndFrame() - model->getStartFrame())
                / m_windowIncrement) + 1;
 }
 
@@ -277,7 +296,8 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
     Profiler profiler("FFTModel::getSourceDataUncached");
 
-    if (!m_model) return {};
+    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
+    if (!model) return {};
     
     decltype(range.first) pfx = 0;
     if (range.first < 0) {
@@ -285,14 +305,14 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
         range = { 0, range.second };
     }
 
-    auto data = m_model->getData(m_channel,
-                                 range.first,
-                                 range.second - range.first);
+    auto data = model->getData(m_channel,
+                               range.first,
+                               range.second - range.first);
 
     if (data.empty()) {
         SVDEBUG << "NOTE: empty source data for range (" << range.first << ","
                 << range.second << ") (model end frame "
-                << m_model->getEndFrame() << ")" << endl;
+                << model->getEndFrame() << ")" << endl;
     }
     
     // don't return a partial frame
@@ -304,7 +324,7 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     }
     
     if (m_channel == -1) {
-        int channels = m_model->getChannelCount();
+        int channels = model->getChannelCount();
         if (channels > 1) {
             int n = int(data.size());
             float factor = 1.f / float(channels);
