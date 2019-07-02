@@ -38,14 +38,14 @@ public:
      *  will have sourceFrameCount * oversampleBy samples, except when
      *  truncated because the end of the model was reached.
      */
-    static floatvec_t getOversampledData(const DenseTimeValueModel *source,
+    static floatvec_t getOversampledData(const DenseTimeValueModel &source,
                                          int channel,
                                          sv_frame_t sourceStartFrame,
                                          sv_frame_t sourceFrameCount,
                                          int oversampleBy);
 
 private:
-    static floatvec_t getFixedRatioData(const DenseTimeValueModel *source,
+    static floatvec_t getFixedRatioData(const DenseTimeValueModel &source,
                                         int channel,
                                         sv_frame_t sourceStartFrame,
                                         sv_frame_t sourceFrameCount);

@@ -19,7 +19,7 @@
 #include "data/model/DenseTimeValueModel.h"
 
 floatvec_t
-WaveformOversampler::getOversampledData(const DenseTimeValueModel *source,
+WaveformOversampler::getOversampledData(const DenseTimeValueModel &source,
                                         int channel,
                                         sv_frame_t sourceStartFrame,
                                         sv_frame_t sourceFrameCount,
@@ -53,14 +53,14 @@ WaveformOversampler::getOversampledData(const DenseTimeValueModel *source,
 }
 
 floatvec_t
-WaveformOversampler::getFixedRatioData(const DenseTimeValueModel *source,
+WaveformOversampler::getFixedRatioData(const DenseTimeValueModel &source,
                                        int channel,
                                        sv_frame_t sourceStartFrame,
                                        sv_frame_t sourceFrameCount)
 {
     Profiler profiler("WaveformOversampler::getFixedRatioData");
     
-    sv_frame_t sourceLength = source->getEndFrame();
+    sv_frame_t sourceLength = source.getEndFrame();
     
     if (sourceStartFrame + sourceFrameCount > sourceLength) {
         sourceFrameCount = sourceLength - sourceStartFrame;
@@ -84,7 +84,7 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel *source,
         i1 = sourceLength;
     }
     
-    floatvec_t sourceData = source->getData(channel, i0, i1 - i0);
+    floatvec_t sourceData = source.getData(channel, i0, i1 - i0);
     
     for (sv_frame_t i = i0; i < i1; ++i) {
         float v = sourceData[i - i0];
