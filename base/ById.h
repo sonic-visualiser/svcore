@@ -121,8 +121,14 @@ class AnyById
 public:
     static void add(int, std::shared_ptr<WithId>);
     static void release(int);
-    static std::shared_ptr<WithId> get(int);
+    static std::shared_ptr<WithId> get(int); 
 
+    template <typename Derived>
+    static bool isa(int id) {
+        std::shared_ptr<WithId> p = get(id);
+        return bool(std::dynamic_pointer_cast<Derived>(p));
+    }
+   
     template <typename Derived>
     static std::shared_ptr<Derived> getAs(int id) {
         std::shared_ptr<WithId> p = get(id);
@@ -151,6 +157,11 @@ public:
     }
     static void release(std::shared_ptr<Item> item) {
         release(item->getId());
+    }
+
+    template <typename Derived>
+    static bool isa(Id id) {
+        return AnyById::isa<Derived>(id.untyped);
     }
 
     template <typename Derived>
