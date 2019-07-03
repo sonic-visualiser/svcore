@@ -22,19 +22,18 @@
 #include <algorithm>
 #include <iostream>
 
-ModelDataTableModel::ModelDataTableModel(TabularModel *m) :
+ModelDataTableModel::ModelDataTableModel(ModelId m) :
     m_model(m),
     m_sortColumn(0),
     m_sortOrdering(Qt::AscendingOrder),
     m_currentRow(0)
 {
-    Model *baseModel = dynamic_cast<Model *>(m);
-
-    connect(baseModel, SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-    connect(baseModel, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-            this, SLOT(modelChangedWithin(sv_frame_t, sv_frame_t)));
-    connect(baseModel, SIGNAL(aboutToBeDeleted()),
-            this, SLOT(modelAboutToBeDeleted()));
+    auto model = ModelById::get(m);
+    if (model) {
+        connect(model.get(), SIGNAL(modelChanged()), this, SLOT(modelChanged()));
+        connect(model.get(), SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
+                this, SLOT(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    }
 }
 
 ModelDataTableModel::~ModelDataTableModel()
@@ -44,19 +43,21 @@ ModelDataTableModel::~ModelDataTableModel()
 QVariant
 ModelDataTableModel::data(const QModelIndex &index, int role) const
 {
-    if (!m_model) return QVariant();
+    auto model = getTabularModel();
+    if (!model) return QVariant();
     if (role != Qt::EditRole && role != Qt::DisplayRole) return QVariant();
     if (!index.isValid()) return QVariant();
-    QVariant d = m_model->getData(getUnsorted(index.row()), index.column(), role);
+    QVariant d = model->getData(getUnsorted(index.row()), index.column(), role);
     return d;
 }
 
 bool
 ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (!m_model) return false;
+    auto model = getTabularModel();
+    if (!model) return false;
     if (!index.isValid()) return false;
-    Command *command = m_model->getSetDataCommand(getUnsorted(index.row()),
+    Command *command = model->getSetDataCommand(getUnsorted(index.row()),
                                                   index.column(),
                                                   value, role);
     if (command) {
@@ -70,10 +71,11 @@ ModelDataTableModel::setData(const QModelIndex &index, const QVariant &value, in
 bool
 ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
 {
-    if (!m_model) return false;
+    auto model = getTabularModel();
+    if (!model) return false;
     if (parent.isValid()) return false;
 
-    Command *command = m_model->getInsertRowCommand(getUnsorted(row));
+    Command *command = model->getInsertRowCommand(getUnsorted(row));
 
     if (command) {
         emit addCommand(command);
@@ -85,10 +87,11 @@ ModelDataTableModel::insertRow(int row, const QModelIndex &parent)
 bool
 ModelDataTableModel::removeRow(int row, const QModelIndex &parent)
 {
-    if (!m_model) return false;
+    auto model = getTabularModel();
+    if (!model) return false;
     if (parent.isValid()) return false;
 
-    Command *command = m_model->getRemoveRowCommand(getUnsorted(row));
+    Command *command = model->getRemoveRowCommand(getUnsorted(row));
 
     if (command) {
         emit addCommand(command);
@@ -108,13 +111,14 @@ ModelDataTableModel::flags(const QModelIndex &) const
 QVariant
 ModelDataTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (!m_model) return QVariant();
+    auto model = getTabularModel();
+    if (!model) return QVariant();
 
     if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
         return section + 1;
     }
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        return m_model->getHeading(section);
+        return model->getHeading(section);
     } 
     return QVariant();
 }
@@ -134,38 +138,44 @@ ModelDataTableModel::parent(const QModelIndex &) const
 int
 ModelDataTableModel::rowCount(const QModelIndex &parent) const
 {
-    if (!m_model) return 0;
+    auto model = getTabularModel();
+    if (!model) return 0;
     if (parent.isValid()) return 0;
-    int count = m_model->getRowCount();
+    int count = model->getRowCount();
     return count;
 }
 
 int
 ModelDataTableModel::columnCount(const QModelIndex &parent) const
 {
-    if (!m_model) return 0;
+    auto model = getTabularModel();
+    if (!model) return 0;
     if (parent.isValid()) return 0;
-    return m_model->getColumnCount();
+    return model->getColumnCount();
 }
 
 QModelIndex 
 ModelDataTableModel::getModelIndexForFrame(sv_frame_t frame) const
 {
-    if (!m_model) return createIndex(0, 0);
-    int row = m_model->getRowForFrame(frame);
+    auto model = getTabularModel();
+    if (!model) return createIndex(0, 0);
+    int row = model->getRowForFrame(frame);
     return createIndex(getSorted(row), 0, (void *)nullptr);
 }
 
 sv_frame_t
 ModelDataTableModel::getFrameForModelIndex(const QModelIndex &index) const
 {
-    if (!m_model) return 0;
-    return m_model->getFrameForRow(getUnsorted(index.row()));
+    auto model = getTabularModel();
+    if (!model) return 0;
+    return model->getFrameForRow(getUnsorted(index.row()));
 }
 
 QModelIndex
 ModelDataTableModel::findText(QString text) const
 {
+    auto model = getTabularModel();
+    if (!model) return QModelIndex();
     if (text == "") return QModelIndex();
     int rows = rowCount();
     int cols = columnCount();
@@ -173,10 +183,10 @@ ModelDataTableModel::findText(QString text) const
     for (int row = 1; row <= rows; ++row) {
         int wrapped = (row + current) % rows;
         for (int col = 0; col < cols; ++col) {
-            if (m_model->getSortType(col) != TabularModel::SortAlphabetical) {
+            if (model->getSortType(col) != TabularModel::SortAlphabetical) {
                 continue;
             }
-            QString cell = m_model->getData(getUnsorted(wrapped), col,
+            QString cell = model->getData(getUnsorted(wrapped), col,
                                             Qt::DisplayRole).toString();
             if (cell.contains(text, Qt::CaseInsensitive)) {
                 return createIndex(wrapped, col);
@@ -243,19 +253,13 @@ ModelDataTableModel::modelChangedWithin(sv_frame_t f0, sv_frame_t f1)
     emit layoutChanged();
 }
 
-void
-ModelDataTableModel::modelAboutToBeDeleted()
-{
-    m_model = nullptr;
-    emit modelRemoved();
-}
-
 int
 ModelDataTableModel::getSorted(int row) const
 {
-    if (!m_model) return row;
+    auto model = getTabularModel();
+    if (!model) return row;
 
-    if (m_model->isColumnTimeValue(m_sortColumn)) {
+    if (model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
             return row;
         } else {
@@ -280,9 +284,10 @@ ModelDataTableModel::getSorted(int row) const
 int
 ModelDataTableModel::getUnsorted(int row) const
 {
-    if (!m_model) return row;
+    auto model = getTabularModel();
+    if (!model) return row;
 
-    if (m_model->isColumnTimeValue(m_sortColumn)) {
+    if (model->isColumnTimeValue(m_sortColumn)) {
         if (m_sortOrdering == Qt::AscendingOrder) {
             return row;
         } else {
@@ -309,9 +314,10 @@ ModelDataTableModel::getUnsorted(int row) const
 void
 ModelDataTableModel::resort() const
 {
-    if (!m_model) return;
+    auto model = getTabularModel();
+    if (!model) return;
 
-    bool numeric = (m_model->getSortType(m_sortColumn) ==
+    bool numeric = (model->getSortType(m_sortColumn) ==
                     TabularModel::SortNumeric);
 
 //    cerr << "resort: numeric == " << numeric << endl;
@@ -342,15 +348,16 @@ ModelDataTableModel::resort() const
 void
 ModelDataTableModel::resortNumeric() const
 {
-    if (!m_model) return;
+    auto model = getTabularModel();
+    if (!model) return;
 
     typedef std::multimap<double, int> MapType;
 
     MapType rowMap;
-    int rows = m_model->getRowCount();
+    int rows = model->getRowCount();
 
     for (int i = 0; i < rows; ++i) {
-        QVariant value = m_model->getData(i, m_sortColumn, TabularModel::SortRole);
+        QVariant value = model->getData(i, m_sortColumn, TabularModel::SortRole);
         rowMap.insert(MapType::value_type(value.toDouble(), i));
     }
 
@@ -365,16 +372,17 @@ ModelDataTableModel::resortNumeric() const
 void
 ModelDataTableModel::resortAlphabetical() const
 {
-    if (!m_model) return;
+    auto model = getTabularModel();
+    if (!model) return;
 
     typedef std::multimap<QString, int> MapType;
 
     MapType rowMap;
-    int rows = m_model->getRowCount();
+    int rows = model->getRowCount();
 
     for (int i = 0; i < rows; ++i) {
         QVariant value =
-            m_model->getData(i, m_sortColumn, TabularModel::SortRole);
+            model->getData(i, m_sortColumn, TabularModel::SortRole);
         rowMap.insert(MapType::value_type(value.toString(), i));
     }
 
