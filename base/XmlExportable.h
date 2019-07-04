@@ -30,6 +30,8 @@ public:
         NO_ID = -1
     };
 
+    typedef int ExportId;
+    
     XmlExportable() : m_exportId(NO_ID) { }
     virtual ~XmlExportable() { }
 
@@ -38,7 +40,7 @@ public:
      * allocated the first time this is called, so objects on which
      * this is never called do not get allocated one.
      */
-    int getExportId() const;
+    ExportId getExportId() const;
 
     /**
      * Stream this exportable object out to XML on a text stream.

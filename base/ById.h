@@ -29,6 +29,18 @@
 
 //!!! todo: docs
 
+//!!! further possibilities:
+//
+//    - id can only be queried when an object is added to ById (maybe
+//      add() returns the id, and there is a ById::idOf, but the
+//      object has no public getId())
+//
+//    - get() returns a pointer wrapper that cannot be shared/copied
+//      again by the caller (except by the usual C++ trickery)
+//
+// also to do: review how often we are calling getAs<...> when we
+// could just be using get
+
 struct IdAlloc {
 
     // The value NO_ID (-1) is never allocated
@@ -144,12 +156,13 @@ template <typename Item, typename Id>
 class TypedById
 {
 public:
-    static void add(std::shared_ptr<Item> item) {
+    static Id add(std::shared_ptr<Item> item) {
         auto id = item->getId();
         if (id.isNone()) {
             throw std::logic_error("item id should never be None");
         }
         AnyById::add(id.untyped, item);
+        return id;
     }
 
     static void release(Id id) {
