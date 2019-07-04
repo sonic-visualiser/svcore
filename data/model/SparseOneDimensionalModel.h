@@ -53,11 +53,13 @@ public:
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(100) {
-        PlayParameterRepository::getInstance()->addPlayable(getId().untyped);
+        PlayParameterRepository::getInstance()->addPlayable
+            (getId().untyped, this);
     }
 
     virtual ~SparseOneDimensionalModel() {
-        PlayParameterRepository::getInstance()->removePlayable(getId().untyped);
+        PlayParameterRepository::getInstance()->removePlayable
+            (getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Sparse 1-D"); }

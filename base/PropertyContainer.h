@@ -21,6 +21,7 @@
 #include <QString>
 #include <QObject>
 #include <vector>
+#include <memory>
 
 class PlayParameters;
 class RangeMapper;
@@ -111,7 +112,13 @@ public:
     virtual QString getPropertyContainerName() const = 0;
     virtual QString getPropertyContainerIconName() const = 0;
 
-    virtual PlayParameters *getPlayParameters() { return 0; }
+    /**
+     * Return the play parameters for this layer, if any. The return
+     * value is a shared_ptr that, if not null, can be passed to
+     * e.g. PlayParameterRepository::EditCommand to change the
+     * parameters.
+     */
+    virtual std::shared_ptr<PlayParameters> getPlayParameters() { return {}; }
 
 signals:
     void propertyChanged(PropertyContainer::PropertyName);

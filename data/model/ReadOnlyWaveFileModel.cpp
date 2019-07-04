@@ -21,12 +21,12 @@
 #include "system/System.h"
 
 #include "base/Preferences.h"
+#include "base/PlayParameterRepository.h"
 
 #include <QFileInfo>
 #include <QTextStream>
 
 #include <iostream>
-//#include <unistd.h>
 #include <cmath>
 #include <sndfile.h>
 
@@ -85,6 +85,9 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     if (isOK()) fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader) :
@@ -106,10 +109,16 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
 {
+    PlayParameterRepository::getInstance()->removePlayable
+        (getId().untyped);
+    
     m_exiting = true;
     if (m_fillThread) m_fillThread->wait();
     if (m_myReader) delete m_reader;

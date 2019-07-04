@@ -22,6 +22,7 @@
 class Playable;
 
 #include <map>
+#include <memory>
 
 #include <QObject>
 #include <QString>
@@ -36,43 +37,33 @@ public:
     virtual ~PlayParameterRepository();
 
     /**
-     * Register a playable.
-     * 
-     * The id must be of an object that is registered with the ById
-     * store and that can be dynamic_cast to Playable.
+     * Register a playable. The id can be anything you like, so long
+     * as it is unique among playables.
      */
-    void addPlayable(int playableId);
+    void addPlayable(int id, const Playable *);
 
     /**
-     * Unregister a playable.
-     * 
-     * The id must be of an object that is registered with the ById
-     * store and that can be dynamic_cast to Playable.
+     * Unregister a playable. This must happen before a playable is
+     * deleted.
      */
-    void removePlayable(int playableId);
+    void removePlayable(int id);
 
     /**
      * Copy the play parameters from one playable to another.
-     * 
-     * The ids must be of objects that are registered with the ById
-     * store and that can be dynamic_cast to Playable.
      */
     void copyParameters(int fromId, int toId);
 
     /**
      * Retrieve the play parameters for a playable.
-     * 
-     * The id must be of an object that is registered with the ById
-     * store and that can be dynamic_cast to Playable.
      */
-    PlayParameters *getPlayParameters(int playableId);
+    std::shared_ptr<PlayParameters> getPlayParameters(int id);
 
     void clear();
 
     class EditCommand : public Command
     {
     public:
-        EditCommand(PlayParameters *params);
+        EditCommand(std::shared_ptr<PlayParameters> params);
         void setPlayMuted(bool);
         void setPlayAudible(bool);
         void setPlayPan(float);
@@ -83,13 +74,13 @@ public:
         QString getName() const override;
 
     protected:
-        PlayParameters *m_params;
+        std::shared_ptr<PlayParameters> m_params;
         PlayParameters m_from;
         PlayParameters m_to;
     };
 
 signals:
-    void playParametersChanged(PlayParameters *);
+    void playParametersChanged(int playableId);
     void playClipIdChanged(int playableId, QString);
 
 protected slots:
@@ -97,7 +88,7 @@ protected slots:
     void playClipIdChanged(QString);
 
 protected:
-    typedef std::map<int, PlayParameters *> PlayableParameterMap;
+    typedef std::map<int, std::shared_ptr<PlayParameters>> PlayableParameterMap;
     PlayableParameterMap m_playParameters;
 
     static PlayParameterRepository *m_instance;

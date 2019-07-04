@@ -19,6 +19,7 @@
 
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
+#include "base/PlayParameterRepository.h"
 
 #include "fileio/WavFileWriter.h"
 #include "fileio/WavFileReader.h"
@@ -160,10 +161,16 @@ WritableWaveFileModel::init(QString path)
     connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
     connect(m_model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
             this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
 {
+    PlayParameterRepository::getInstance()->removePlayable
+        (getId().untyped);
+    
     delete m_model;
     delete m_targetWriter;
     delete m_temporaryWriter;
