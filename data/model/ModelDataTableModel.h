@@ -75,7 +75,6 @@ signals:
 protected slots:
     void modelChanged();
     void modelChangedWithin(sv_frame_t, sv_frame_t);
-    void modelAboutToBeDeleted();
 
 protected:
     std::shared_ptr<TabularModel> getTabularModel() const {
