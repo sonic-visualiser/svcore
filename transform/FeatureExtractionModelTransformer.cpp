@@ -648,17 +648,29 @@ FeatureExtractionModelTransformer::run()
     if (m_abandoned) return;
 
     ModelId inputId = getInputModel();
-    auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
-    if (!input) {
-        abandon();
-        return;
-    }
 
-    sv_samplerate_t sampleRate = input->getSampleRate();
+    sv_samplerate_t sampleRate;
+    int channelCount;
+    sv_frame_t startFrame;
+    sv_frame_t endFrame;
+    
+    { // scope so as not to have this borrowed pointer retained around
+      // the edges of the process loop
+        auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
+        if (!input) {
+            abandon();
+            return;
+        }
 
-    int channelCount = input->getChannelCount();
-    if ((int)m_plugin->getMaxChannelCount() < channelCount) {
-        channelCount = 1;
+        sampleRate = input->getSampleRate();
+
+        channelCount = input->getChannelCount();
+        if ((int)m_plugin->getMaxChannelCount() < channelCount) {
+            channelCount = 1;
+        }
+
+        startFrame = input->getStartFrame();
+        endFrame = input->getEndFrame();
     }
 
     float **buffers = new float*[channelCount];
@@ -695,9 +707,6 @@ FeatureExtractionModelTransformer::run()
             fftModels.push_back(model);
         }
     }
-
-    sv_frame_t startFrame = input->getStartFrame();
-    sv_frame_t endFrame = input->getEndFrame();
 
     RealTime contextStartRT = primaryTransform.getStartTime();
     RealTime contextDurationRT = primaryTransform.getDuration();
@@ -760,6 +769,11 @@ FeatureExtractionModelTransformer::run()
             int completion = int
                 ((((blockFrame - contextStart) / stepSize) * 99) /
                  (contextDuration / stepSize + 1));
+
+            if (!ModelById::get(inputId)) {
+                abandon();
+                return;
+            }
 
             // channelCount is either input->channelCount or 1
 
