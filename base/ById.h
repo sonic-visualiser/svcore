@@ -95,6 +95,9 @@ public:
     virtual ~WithId() {
     }
 
+protected:
+    friend class AnyById;
+    
     /**
      * Return an id for this object. The id is a unique number for
      * this object among all objects that implement WithId within this
@@ -116,6 +119,10 @@ public:
     
     WithTypedId() : WithId() { }
 
+protected:
+    template <typename Item, typename Id>
+    friend class TypedById;
+    
     /**
      * Return an id for this object. The id is a unique value for this
      * object among all objects that implement WithTypedId within this
@@ -131,7 +138,7 @@ public:
 class AnyById
 {
 public:
-    static void add(int, std::shared_ptr<WithId>);
+    static int add(std::shared_ptr<WithId>);
     static void release(int);
     static std::shared_ptr<WithId> get(int); 
 
@@ -157,11 +164,8 @@ class TypedById
 {
 public:
     static Id add(std::shared_ptr<Item> item) {
-        auto id = item->getId();
-        if (id.isNone()) {
-            throw std::logic_error("item id should never be None");
-        }
-        AnyById::add(id.untyped, item);
+        Id id;
+        id.untyped = AnyById::add(item);
         return id;
     }
 
@@ -185,7 +189,7 @@ public:
     static std::shared_ptr<Item> get(Id id) {
         return getAs<Item>(id);
     }
-
+    
     /**
      * If the Item type is an XmlExportable, return the export ID of
      * the given item ID. A call to this function will fail to compile

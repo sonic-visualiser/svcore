@@ -90,8 +90,7 @@ private:
 
     ModelId makeMock(std::vector<Sort> sorts, int length, int pad) {
         auto mwm = std::make_shared<MockWaveModel>(sorts, length, pad);
-        ModelById::add(mwm);
-        return mwm->getId();
+        return ModelById::add(mwm);
     }
 
     void releaseMock(ModelId id) {

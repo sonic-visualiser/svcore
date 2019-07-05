@@ -59,9 +59,10 @@ public:
         }
     }
         
-    void add(int id, std::shared_ptr<WithId> item) {
+    int add(std::shared_ptr<WithId> item) {
+        int id = item->getUntypedId();
         if (id == IdAlloc::NO_ID) {
-            throw std::logic_error("cannot add item with id of NO_ID");
+            throw std::logic_error("item id should never be NO_ID");
         }
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) != m_items.end()) {
@@ -73,12 +74,14 @@ public:
             throw std::logic_error("item id is already recorded in add");
         }
         m_items[id] = item;
+        return id;
     }
 
     void release(int id) {
         if (id == IdAlloc::NO_ID) {
             return;
         }
+        SVCERR << "ById::release(" << id << ")" << endl;
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) == m_items.end()) {
             SVCERR << "ById::release: unknown item id " << id << endl;
@@ -105,10 +108,10 @@ private:
     std::unordered_map<int, std::shared_ptr<WithId>> m_items;
 };
 
-void
-AnyById::add(int id, std::shared_ptr<WithId> item)
+int
+AnyById::add(std::shared_ptr<WithId> item)
 {
-    impl().add(id, item);
+    return impl().add(item);
 }
 
 void

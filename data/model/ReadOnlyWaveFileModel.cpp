@@ -590,14 +590,14 @@ ReadOnlyWaveFileModel::fillTimerTimedOut()
         SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
         if (fillExtent > m_lastFillExtent) {
-            emit modelChangedWithin(m_lastFillExtent, fillExtent);
+            emit modelChangedWithin(getId(), m_lastFillExtent, fillExtent);
             m_lastFillExtent = fillExtent;
         }
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
         SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: no thread" << endl;
 #endif
-        emit modelChanged();
+        emit modelChanged(getId());
     }
 }
 
@@ -616,10 +616,10 @@ ReadOnlyWaveFileModel::cacheFilled()
     SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::cacheFilled, about to emit things" << endl;
 #endif
     if (getEndFrame() > prevFillExtent) {
-        emit modelChangedWithin(prevFillExtent, getEndFrame());
+        emit modelChangedWithin(getId(), prevFillExtent, getEndFrame());
     }
-    emit modelChanged();
-    emit ready();
+    emit modelChanged(getId());
+    emit ready(getId());
 }
 
 void

@@ -58,7 +58,7 @@ public:
     bool isOK();
     QString getErrorString() const;
 
-    std::vector<Model *> getDataModels(ProgressReporter *);
+    std::vector<ModelId> getDataModels(ProgressReporter *);
 
 protected:
     BasicStore *m_store;
@@ -66,22 +66,22 @@ protected:
 
     QString m_uristring;
     QString m_errorString;
-    std::map<QString, Model *> m_audioModelMap;
+    std::map<QString, ModelId> m_audioModelMap;
     sv_samplerate_t m_sampleRate;
 
-    std::map<Model *, std::map<QString, float> > m_labelValueMap;
+    std::map<ModelId, std::map<QString, float> > m_labelValueMap;
 
-    void getDataModelsAudio(std::vector<Model *> &, ProgressReporter *);
-    void getDataModelsSparse(std::vector<Model *> &, ProgressReporter *);
-    void getDataModelsDense(std::vector<Model *> &, ProgressReporter *);
+    void getDataModelsAudio(std::vector<ModelId> &, ProgressReporter *);
+    void getDataModelsSparse(std::vector<ModelId> &, ProgressReporter *);
+    void getDataModelsDense(std::vector<ModelId> &, ProgressReporter *);
 
-    void getDenseModelTitle(Model *, QString, QString);
+    QString getDenseModelTitle(QString featureUri, QString featureTypeUri);
 
     void getDenseFeatureProperties(QString featureUri,
                                    sv_samplerate_t &sampleRate, int &windowLength,
                                    int &hopSize, int &width, int &height);
 
-    void fillModel(Model *, sv_frame_t, sv_frame_t,
+    void fillModel(ModelId, sv_frame_t, sv_frame_t,
                    bool, std::vector<float> &, QString);
 };
 
@@ -119,7 +119,7 @@ RDFImporter::getErrorString() const
     return m_d->getErrorString();
 }
 
-std::vector<Model *>
+std::vector<ModelId>
 RDFImporter::getDataModels(ProgressReporter *r)
 {
     return m_d->getDataModels(r);
@@ -169,10 +169,10 @@ RDFImporterImpl::getErrorString() const
     return m_errorString;
 }
 
-std::vector<Model *>
+std::vector<ModelId>
 RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 {
-    std::vector<Model *> models;
+    std::vector<ModelId> models;
 
     getDataModelsAudio(models, reporter);
 
@@ -206,7 +206,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 }
 
 void
-RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
+RDFImporterImpl::getDataModelsAudio(std::vector<ModelId> &models,
                                     ProgressReporter *reporter)
 {
     Nodes sigs = m_store->match
@@ -270,24 +270,25 @@ RDFImporterImpl::getDataModelsAudio(std::vector<Model *> &models,
             reporter->setMessage(RDFImporter::tr("Importing audio referenced in RDF..."));
         }
         fs->waitForData();
-        ReadOnlyWaveFileModel *newModel = new ReadOnlyWaveFileModel(*fs, m_sampleRate);
+        auto newModel = std::make_shared<ReadOnlyWaveFileModel>
+            (*fs, m_sampleRate);
         if (newModel->isOK()) {
             cerr << "Successfully created wave file model from source at \"" << source << "\"" << endl;
-            models.push_back(newModel);
-            m_audioModelMap[signal] = newModel;
+            auto modelId = ModelById::add(newModel);
+            models.push_back(modelId);
+            m_audioModelMap[signal] = modelId;
             if (m_sampleRate == 0) {
                 m_sampleRate = newModel->getSampleRate();
             }
         } else {
             m_errorString = QString("Failed to create wave file model from source at \"%1\"").arg(source);
-            delete newModel;
         }
         delete fs;
     }
 }
 
 void
-RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
+RDFImporterImpl::getDataModelsDense(std::vector<ModelId> &models,
                                     ProgressReporter *reporter)
 {
     if (reporter) {
@@ -342,7 +343,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
 
         if (height == 1) {
 
-            SparseTimeValueModel *m = new SparseTimeValueModel
+            auto m = std::make_shared<SparseTimeValueModel>
                 (sampleRate, hopSize, false);
 
             for (int j = 0; j < values.size(); ++j) {
@@ -351,16 +352,13 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                 m->add(e);
             }
 
-            getDenseModelTitle(m, feature, type);
-        
+            m->setObjectName(getDenseModelTitle(feature, type));
             m->setRDFTypeURI(type);
-
-            models.push_back(m);
+            models.push_back(ModelById::add(m));
 
         } else {
 
-            EditableDenseThreeDimensionalModel *m =
-                new EditableDenseThreeDimensionalModel
+            auto m = std::make_shared<EditableDenseThreeDimensionalModel>
                 (sampleRate, hopSize, height, 
                  EditableDenseThreeDimensionalModel::NoCompression, false);
             
@@ -380,18 +378,15 @@ RDFImporterImpl::getDataModelsDense(std::vector<Model *> &models,
                 m->setColumn(x++, column);
             }
 
-            getDenseModelTitle(m, feature, type);
-        
+            m->setObjectName(getDenseModelTitle(feature, type));
             m->setRDFTypeURI(type);
-
-            models.push_back(m);
+            models.push_back(ModelById::add(m));
         }
     }
 }
 
-void
-RDFImporterImpl::getDenseModelTitle(Model *m,
-                                    QString featureUri,
+QString
+RDFImporterImpl::getDenseModelTitle(QString featureUri,
                                     QString featureTypeUri)
 {
     Node n = m_store->complete
@@ -399,8 +394,7 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
 
     if (n.type == Node::Literal && n.value != "") {
         SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal) \"" << n.value << "\"" << endl;
-        m->setObjectName(n.value);
-        return;
+        return n.value;
     }
 
     n = m_store->complete
@@ -408,11 +402,11 @@ RDFImporterImpl::getDenseModelTitle(Model *m,
 
     if (n.type == Node::Literal && n.value != "") {
         SVDEBUG << "RDFImporterImpl::getDenseModelTitle: Title (from signal type) \"" << n.value << "\"" << endl;
-        m->setObjectName(n.value);
-        return;
+        return n.value;
     }
 
     SVDEBUG << "RDFImporterImpl::getDenseModelTitle: No title available for feature <" << featureUri << ">" << endl;
+    return {};
 }
 
 void
@@ -481,7 +475,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
 }
 
 void
-RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
+RDFImporterImpl::getDataModelsSparse(std::vector<ModelId> &models,
                                      ProgressReporter *reporter)
 {
     if (reporter) {
@@ -510,8 +504,8 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
         (Triple(Node(), expand("a"), expand("mo:Signal"))).subjects();
 
     // Map from timeline uri to event type to dimensionality to
-    // presence of duration to model ptr.  Whee!
-    std::map<QString, std::map<QString, std::map<int, std::map<bool, Model *> > > >
+    // presence of duration to model id.  Whee!
+    std::map<QString, std::map<QString, std::map<int, std::map<bool, ModelId> > > >
         modelMap;
 
     foreach (Node sig, sigs) {
@@ -617,7 +611,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                 if (values.size() == 1) dimensions = 2;
                 else if (values.size() > 1) dimensions = 3;
 
-                Model *model = nullptr;
+                ModelId modelId;
 
                 if (modelMap[timeline][type][dimensions].find(haveDuration) ==
                     modelMap[timeline][type][dimensions].end()) {
@@ -628,7 +622,9 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                       << ", time = " << time << ", duration = " << duration
                       << endl;
 */
-            
+
+                    Model *model = nullptr;
+                    
                     if (!haveDuration) {
 
                         if (dimensions == 1) {
@@ -668,7 +664,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 
                     if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
                         cerr << "source model for " << model << " is " << m_audioModelMap[source] << endl;
-                        model->setSourceModel(m_audioModelMap[source]->getId());
+                        model->setSourceModel(m_audioModelMap[source]);
                     }
 
                     QString title = m_store->complete
@@ -680,16 +676,20 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
                     }
                     model->setObjectName(title);
 
-                    modelMap[timeline][type][dimensions][haveDuration] = model;
-                    models.push_back(model);
+                    modelId = ModelById::add(std::shared_ptr<Model>(model));
+                    modelMap[timeline][type][dimensions][haveDuration] = modelId;
+                    models.push_back(modelId);
                 }
 
-                model = modelMap[timeline][type][dimensions][haveDuration];
+                modelId = modelMap[timeline][type][dimensions][haveDuration];
 
-                if (model) {
-                    sv_frame_t ftime = RealTime::realTime2Frame(time, m_sampleRate);
-                    sv_frame_t fduration = RealTime::realTime2Frame(duration, m_sampleRate);
-                    fillModel(model, ftime, fduration, haveDuration, values, label);
+                if (!modelId.isNone()) {
+                    sv_frame_t ftime =
+                        RealTime::realTime2Frame(time, m_sampleRate);
+                    sv_frame_t fduration =
+                        RealTime::realTime2Frame(duration, m_sampleRate);
+                    fillModel(modelId, ftime, fduration,
+                              haveDuration, values, label);
                 }
             }
         }
@@ -697,7 +697,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<Model *> &models,
 }
 
 void
-RDFImporterImpl::fillModel(Model *model,
+RDFImporterImpl::fillModel(ModelId modelId,
                            sv_frame_t ftime,
                            sv_frame_t fduration,
                            bool haveDuration,
@@ -706,17 +706,13 @@ RDFImporterImpl::fillModel(Model *model,
 {
 //    SVDEBUG << "RDFImporterImpl::fillModel: adding point at frame " << ftime << endl;
 
-    SparseOneDimensionalModel *sodm =
-        dynamic_cast<SparseOneDimensionalModel *>(model);
-    if (sodm) {
+    if (auto sodm = ModelById::getAs<SparseOneDimensionalModel>(modelId)) {
         Event point(ftime, label);
         sodm->add(point);
         return;
     }
 
-    TextModel *tm =
-        dynamic_cast<TextModel *>(model);
-    if (tm) {
+    if (auto tm = ModelById::getAs<TextModel>(modelId)) {
         Event e
             (ftime,
              values.empty() ? 0.5f : values[0] < 0.f ? 0.f : values[0] > 1.f ? 1.f : values[0], // I was young and feckless once too
@@ -725,17 +721,13 @@ RDFImporterImpl::fillModel(Model *model,
         return;
     }
 
-    SparseTimeValueModel *stvm =
-        dynamic_cast<SparseTimeValueModel *>(model);
-    if (stvm) {
+    if (auto stvm = ModelById::getAs<SparseTimeValueModel>(modelId)) {
         Event e(ftime, values.empty() ? 0.f : values[0], label);
         stvm->add(e);
         return;
     }
 
-    NoteModel *nm =
-        dynamic_cast<NoteModel *>(model);
-    if (nm) {
+    if (auto nm = ModelById::getAs<NoteModel>(modelId)) {
         if (haveDuration) {
             float value = 0.f, level = 1.f;
             if (!values.empty()) {
@@ -764,16 +756,14 @@ RDFImporterImpl::fillModel(Model *model,
         return;
     }
 
-    RegionModel *rm = 
-        dynamic_cast<RegionModel *>(model);
-    if (rm) {
+    if (auto rm = ModelById::getAs<RegionModel>(modelId)) {
         float value = 0.f;
         if (values.empty()) {
             // no values? map each unique label to a distinct value
-            if (m_labelValueMap[model].find(label) == m_labelValueMap[model].end()) {
-                m_labelValueMap[model][label] = rm->getValueMaximum() + 1.f;
+            if (m_labelValueMap[modelId].find(label) == m_labelValueMap[modelId].end()) {
+                m_labelValueMap[modelId][label] = rm->getValueMaximum() + 1.f;
             }
-            value = m_labelValueMap[model][label];
+            value = m_labelValueMap[modelId][label];
         } else {
             value = values[0];
         }

@@ -58,6 +58,7 @@ public:
         m_units(""),
         m_extendTo(0),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
@@ -84,6 +85,7 @@ public:
         m_units(""),
         m_extendTo(0),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
@@ -145,12 +147,12 @@ public:
             m_notifier.makeDeferredNotifications();
         }
         
-        emit completionChanged();
+        emit completionChanged(getId());
 
         if (completion == 100) {
             // henceforth:
             m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
 
@@ -219,7 +221,7 @@ public:
         m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
 
         if (allChange) {
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
     
@@ -228,7 +230,8 @@ public:
             QMutexLocker locker(&m_mutex);
             m_events.remove(e);
         }
-        emit modelChangedWithin(e.getFrame(),
+        emit modelChangedWithin(getId(),
+                                e.getFrame(),
                                 e.getFrame() + e.getDuration() + m_resolution);
     }
 

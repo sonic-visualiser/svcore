@@ -63,8 +63,8 @@ public:
     void setPath(const Path &path);
 
     void toXml(QTextStream &stream,
-                       QString indent = "",
-                       QString extraAttributes = "") const override;
+               QString indent = "",
+               QString extraAttributes = "") const override;
 
     QString toDelimitedDataString(QString, DataExportOptions,
                                   sv_frame_t, sv_frame_t) const override {
@@ -72,11 +72,11 @@ public:
     }
 
 signals:
-    void completionChanged();
+    void completionChanged(ModelId);
 
 protected slots:
-    void pathSourceChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
-    void pathSourceCompletionChanged();
+    void pathSourceChangedWithin(ModelId, sv_frame_t startFrame, sv_frame_t endFrame);
+    void pathSourceCompletionChanged(ModelId);
 
 protected:
     ModelId m_reference;

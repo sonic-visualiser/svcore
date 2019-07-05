@@ -49,6 +49,7 @@ public:
         m_resolution(resolution),
         m_haveTextLabels(false),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
@@ -97,12 +98,12 @@ public:
             m_notifier.makeDeferredNotifications();
         }
         
-        emit completionChanged();
+        emit completionChanged(getId());
 
         if (completion == 100) {
             // henceforth:
             m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
     
@@ -166,7 +167,8 @@ public:
         {   QMutexLocker locker(&m_mutex);
             m_events.remove(e);
         }
-        emit modelChangedWithin(e.getFrame(), e.getFrame() + m_resolution);
+        emit modelChangedWithin(getId(),
+                                e.getFrame(), e.getFrame() + m_resolution);
     }
     
     /**

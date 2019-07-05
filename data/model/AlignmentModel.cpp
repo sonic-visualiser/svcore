@@ -194,7 +194,7 @@ AlignmentModel::fromReference(sv_frame_t frame) const
 }
 
 void
-AlignmentModel::pathSourceChangedWithin(sv_frame_t, sv_frame_t)
+AlignmentModel::pathSourceChangedWithin(ModelId, sv_frame_t, sv_frame_t)
 {
     if (!m_pathComplete) return;
     constructPath();
@@ -202,7 +202,7 @@ AlignmentModel::pathSourceChangedWithin(sv_frame_t, sv_frame_t)
 }    
 
 void
-AlignmentModel::pathSourceCompletionChanged()
+AlignmentModel::pathSourceCompletionChanged(ModelId)
 {
     auto pathSourceModel =
         ModelById::getAs<SparseTimeValueModel>(m_pathSource);
@@ -233,7 +233,7 @@ AlignmentModel::pathSourceCompletionChanged()
         }
     }
 
-    emit completionChanged();
+    emit completionChanged(getId());
 }
 
 void
@@ -392,17 +392,17 @@ AlignmentModel::setPathFrom(ModelId pathSource)
     if (pathSourceModel) {
 
         connect(pathSourceModel.get(),
-                SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-                this, SLOT(pathSourceChangedWithin(sv_frame_t, sv_frame_t)));
+                SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
+                this, SLOT(pathSourceChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
         
-        connect(pathSourceModel.get(), SIGNAL(completionChanged()),
-                this, SLOT(pathSourceCompletionChanged()));
+        connect(pathSourceModel.get(), SIGNAL(completionChanged(ModelId)),
+                this, SLOT(pathSourceCompletionChanged(ModelId)));
 
         constructPath();
         constructReversePath();
 
         if (pathSourceModel->isReady()) {
-            pathSourceCompletionChanged();
+            pathSourceCompletionChanged(m_pathSource);
         }
     }
 }

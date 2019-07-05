@@ -22,8 +22,8 @@
 #include <vector>
 
 #include "base/BaseTypes.h"
+#include "data/model/Model.h"
 
-class Model;
 class RDFImporterImpl;
 class ProgressReporter;
 
@@ -48,14 +48,11 @@ public:
     QString getErrorString() const;
 
     /**
-     * Return a list of models imported from the RDF source.  The
-     * models were heap-allocated by this class and are not registered
-     * with any other owner; the caller takes ownership and must
-     * arrange for them to be deleted manually or managed by a smart
-     * pointer.
+     * Return a list of models imported from the RDF source. The
+     * models have been newly created and registered with ById; the
+     * caller must arrange to release them.
      */
-    //!!! todo: ModelId-ise
-    std::vector<Model *> getDataModels(ProgressReporter *reporter);
+    std::vector<ModelId> getDataModels(ProgressReporter *reporter);
 
     enum RDFDocumentType {
         AudioRefAndAnnotations,

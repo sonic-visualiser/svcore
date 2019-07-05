@@ -38,8 +38,8 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                    EditableDenseThreeDimensionalModel::NoCompression,
                    false));
 
-    connect(source.get(), SIGNAL(modelChanged()),
-            this, SLOT(sourceModelChanged()));
+    connect(source.get(), SIGNAL(modelChanged(ModelId)),
+            this, SLOT(sourceModelChanged(ModelId)));
 }
 
 Dense3DModelPeakCache::~Dense3DModelPeakCache()
@@ -61,7 +61,7 @@ Dense3DModelPeakCache::getValueAt(int column, int n) const
 }
 
 void
-Dense3DModelPeakCache::sourceModelChanged()
+Dense3DModelPeakCache::sourceModelChanged(ModelId)
 {
     if (m_coverage.size() > 0) {
         // The last peak may have come from an incomplete read, which

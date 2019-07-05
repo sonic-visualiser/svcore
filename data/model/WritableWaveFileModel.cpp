@@ -256,8 +256,8 @@ WritableWaveFileModel::writeComplete()
     
     m_reader->updateDone();
     m_proportion = 100;
-    emit modelChanged();
-    emit writeCompleted();
+    emit modelChanged(getId());
+    emit writeCompleted(getId());
 }
 
 void

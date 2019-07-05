@@ -56,8 +56,8 @@ Model::setSourceModel(ModelId modelId)
 
     auto model = ModelById::get(m_sourceModel);
     if (model) {
-        connect(model.get(), SIGNAL(alignmentCompletionChanged()),
-                this, SIGNAL(alignmentCompletionChanged()));
+        connect(model.get(), SIGNAL(alignmentCompletionChanged(ModelId)),
+                this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
         
     

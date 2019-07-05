@@ -517,8 +517,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
     if (out) {
         out->setSourceModel(getInputModel());
-        ModelById::add(out);
-        m_outputs.push_back(out->getId());
+        m_outputs.push_back(ModelById::add(out));
     }
 }
 
@@ -604,8 +603,8 @@ FeatureExtractionModelTransformer::getAdditionalModel(int n, int binNo)
     additional->setScaleUnits(baseModel->getScaleUnits());
     additional->setRDFTypeURI(baseModel->getRDFTypeURI());
 
-    ModelId additionalId = additional->getId();
-    ModelById::add(std::shared_ptr<SparseTimeValueModel>(additional));
+    ModelId additionalId = ModelById::add
+        (std::shared_ptr<SparseTimeValueModel>(additional));
     m_additionalModels[n][binNo] = additionalId;
     return additionalId;
 }
@@ -648,7 +647,8 @@ FeatureExtractionModelTransformer::run()
     }
     if (m_abandoned) return;
 
-    auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+    ModelId inputId = getInputModel();
+    auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
     if (!input) {
         abandon();
         return;
@@ -677,7 +677,7 @@ FeatureExtractionModelTransformer::run()
     if (frequencyDomain) {
         for (int ch = 0; ch < channelCount; ++ch) {
             FFTModel *model = new FFTModel
-                (input->getId(),
+                (inputId,
                  channelCount == 1 ? m_input.getChannel() : ch,
                  primaryTransform.getWindowType(),
                  blockSize,

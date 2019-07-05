@@ -294,24 +294,18 @@ public:
                                           sv_frame_t startFrame,
                                           sv_frame_t duration) const = 0;
 
-    /*!!!
-public slots:
-    void aboutToDelete();
-    void sourceModelAboutToBeDeleted();
-    */
-    
 signals:
     /**
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChanged();
+    void modelChanged(ModelId myId);
 
     /**
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
+    void modelChangedWithin(ModelId myId, sv_frame_t startFrame, sv_frame_t endFrame);
 
     /**
      * Emitted when some internal processing has advanced a stage, but
@@ -319,35 +313,23 @@ signals:
      * updating any progress meters or other monitoring, but not
      * refreshing the actual view.
      */
-    void completionChanged();
+    void completionChanged(ModelId myId);
 
     /**
      * Emitted when internal processing is complete (i.e. when
      * isReady() would return true, with completion at 100).
      */
-    void ready();
+    void ready(ModelId myId);
 
     /**
      * Emitted when the completion percentage changes for the
      * calculation of this model's alignment model.
      */
-    void alignmentCompletionChanged();
-
-    /**
-     * Emitted when something notifies this model (through calling
-     * aboutToDelete() that it is about to delete it.  Note that this
-     * depends on an external agent such as a Document object or
-     * owning model telling the model that it is about to delete it;
-     * there is nothing in the model to guarantee that this signal
-     * will be emitted before the actual deletion.
-     */
-    //!!! our goal is to get rid of (the need for) this
-//!!!    void aboutToBeDeleted();
+    void alignmentCompletionChanged(ModelId myId);
 
 protected:
     Model() :
 //!!!        m_abandoning(false), 
-//!!!        m_aboutToDelete(false),
         m_extendTo(0) { }
 
     // Not provided.
@@ -358,7 +340,6 @@ protected:
     ModelId m_alignmentModel;
     QString m_typeUri;
 //!!!    bool m_abandoning;
-//!!!    bool m_aboutToDelete;
     sv_frame_t m_extendTo;
 };
 

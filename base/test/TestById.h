@@ -23,7 +23,10 @@ using namespace std;
 
 struct WithoutId {};
 
-struct A : public WithTypedId<A> {};
+// We'll need to change access levels for getId() and getUntypedId()
+// to test the raw calls
+
+struct A : public WithTypedId<A> { public: using WithTypedId<A>::getId; };
 struct B1 : public A {};
 struct B2 : public A {};
 
@@ -31,7 +34,7 @@ struct M {};
 
 typedef TypedById<A, A::Id> AById;
 
-struct X : virtual public WithId {};
+struct X : virtual public WithId { public: using WithId::getUntypedId; };
 struct Y : public X, public B2, public M {};
 
 class TestById : public QObject
@@ -77,13 +80,14 @@ private slots:
 
     void anySimple() {
         auto a = std::make_shared<A>();
-        AnyById::add(a->getId().untyped, a);
+        int id = AnyById::add(a);
+        QCOMPARE(id, a->getId().untyped);
 
-        auto aa = AnyById::getAs<A>(a->getId().untyped);
+        auto aa = AnyById::getAs<A>(id);
         QVERIFY(!!aa);
         QCOMPARE(aa->getId(), a->getId());
         QCOMPARE(aa.get(), a.get()); // same object, not just same id!
-        AnyById::release(a->getId().untyped);
+        AnyById::release(id);
     }
     
     void typedEmpty() {
@@ -102,15 +106,27 @@ private slots:
         AById::release(a);
     }
 
-    void typedRelease() {
+    void typedReleaseById() {
         auto a = std::make_shared<A>();
-        AById::add(a);
+        auto aid = AById::add(a);
 
-        auto aa = AById::get(a->getId());
+        auto aa = AById::get(aid);
+        QVERIFY(!!aa);
+        AById::release(aid);
+
+        aa = AById::get(aid);
+        QVERIFY(!aa);
+    }
+
+    void typedReleaseByItem() {
+        auto a = std::make_shared<A>();
+        auto aid = AById::add(a);
+
+        auto aa = AById::get(aid);
         QVERIFY(!!aa);
         AById::release(a);
 
-        aa = AById::get(a->getId());
+        aa = AById::get(aid);
         QVERIFY(!aa);
     }
 

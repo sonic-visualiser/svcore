@@ -116,7 +116,7 @@ public:
     }
 
 protected slots:
-    void sourceModelChanged();
+    void sourceModelChanged(ModelId);
 
 private:
     ModelId m_source;

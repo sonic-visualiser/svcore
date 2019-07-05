@@ -93,8 +93,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
         auto model = std::make_shared<WritableWaveFileModel>
             (input->getSampleRate(), outputChannels);
 
-        ModelById::add(model);
-        m_outputs.push_back(model->getId());
+        m_outputs.push_back(ModelById::add(model));
 
     } else {
         
@@ -103,8 +102,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
              0.0, 0.0, false);
         if (m_units != "") model->setScaleUnits(m_units);
 
-        ModelById::add(model);
-        m_outputs.push_back(model->getId());
+        m_outputs.push_back(ModelById::add(model));
     }
 }
 
