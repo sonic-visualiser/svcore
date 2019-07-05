@@ -31,15 +31,14 @@
 
 //!!! further possibilities:
 //
-//    - id can only be queried when an object is added to ById (maybe
-//      add() returns the id, and there is a ById::idOf, but the
-//      object has no public getId())
-//
 //    - get() returns a pointer wrapper that cannot be shared/copied
 //      again by the caller (except by the usual C++ trickery)
 //
 // also to do: review how often we are calling getAs<...> when we
 // could just be using get
+
+//!!! NB we still haven't solved the problem of what to do for a
+//!!! user-initiated cancel of a transform
 
 struct IdAlloc {
 
