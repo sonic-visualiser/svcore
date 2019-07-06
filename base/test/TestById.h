@@ -51,7 +51,8 @@ private slots:
         A a;
         X x;
         if (a.getId().untyped == x.getUntypedId()) {
-            cerr << "ERROR: a and x have the same id: " << a.getId() << endl;
+            std::cerr << "ERROR: a and x have the same id: " << a.getId()
+                      << std::endl;
         }
         QVERIFY(a.getId().untyped != x.getUntypedId());
 
@@ -184,7 +185,8 @@ private slots:
         AById::add(a);
         try {
             AById::add(a);
-            cerr << "Failed to catch expected exception in duplicateAdd" << endl;
+            std::cerr << "Failed to catch expected exception in duplicateAdd"
+                      << std::endl;
             QVERIFY(false);
         } catch (const std::logic_error &) {
         }
@@ -197,7 +199,8 @@ private slots:
         AById::add(a);
         try {
             AById::release(b1);
-            cerr << "Failed to catch expected exception in unknownRelease" << endl;
+            std::cerr << "Failed to catch expected exception in unknownRelease"
+                      << std::endl;
             QVERIFY(false);
         } catch (const std::logic_error &) {
         }
