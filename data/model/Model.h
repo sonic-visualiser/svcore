@@ -133,31 +133,6 @@ public:
     virtual bool isSparse() const { return false; }
 
     /**
-     * Mark the model as abandoning. This means that the application
-     * no longer needs it, so it can stop doing any background
-     * calculations it may be involved in. Note that as far as the
-     * model API is concerned, this does nothing more than tell the
-     * model to return true from isAbandoning().  The actual response
-     * to this will depend on the model's context -- it's possible
-     * nothing at all will change.
-     */
-    //!!! aim to lose this (???)
-    /*!!!
-    virtual void abandon() {
-        m_abandoning = true;
-    }
-    */
-    
-    /**
-     * Query whether the model has been marked as abandoning.
-     */
-    //!!! aim to lose this
-    /*!!!
-    virtual bool isAbandoning() const { 
-        return m_abandoning;
-    }
-    */
-    /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
      * background thread.
@@ -329,7 +304,6 @@ signals:
 
 protected:
     Model() :
-//!!!        m_abandoning(false), 
         m_extendTo(0) { }
 
     // Not provided.
@@ -339,7 +313,6 @@ protected:
     ModelId m_sourceModel;
     ModelId m_alignmentModel;
     QString m_typeUri;
-//!!!    bool m_abandoning;
     sv_frame_t m_extendTo;
 };
 

@@ -142,6 +142,25 @@ RealTimeEffectModelTransformer::run()
         return;
     }
 
+    sv_samplerate_t sampleRate;
+    int channelCount;
+    sv_frame_t startFrame;
+    sv_frame_t endFrame;
+
+    { // scope so as not to have this borrowed pointer retained around
+      // the edges of the process loop
+        auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+        if (!input) {
+            abandon();
+            return;
+        }
+
+        sampleRate = input->getSampleRate();
+        channelCount = input->getChannelCount();
+        startFrame = input->getStartFrame();
+        endFrame = input->getEndFrame();
+    }
+
     auto stvm = ModelById::getAs<SparseTimeValueModel>(m_outputs[0]);
     auto wwfm = ModelById::getAs<WritableWaveFileModel>(m_outputs[0]);
 
@@ -153,16 +172,11 @@ RealTimeEffectModelTransformer::run()
         return;
     }
 
-    sv_samplerate_t sampleRate = input->getSampleRate();
-    int channelCount = input->getChannelCount();
     if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
     sv_frame_t blockSize = m_plugin->getBufferSize();
 
     float **inbufs = m_plugin->getAudioInputBuffers();
-
-    sv_frame_t startFrame = input->getStartFrame();
-    sv_frame_t endFrame = input->getEndFrame();
 
     Transform transform = m_transforms[0];
     
@@ -204,6 +218,12 @@ RealTimeEffectModelTransformer::run()
              (1 + ((contextDuration) / blockSize)));
 
         sv_frame_t got = 0;
+
+        auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+        if (!input) {
+            abandon();
+            return;
+        }
 
         if (channelCount == 1) {
             if (inbufs && inbufs[0]) {

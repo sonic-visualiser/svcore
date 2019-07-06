@@ -25,15 +25,6 @@
 Model::~Model()
 {
     SVDEBUG << "Model::~Model: " << this << " with id " << getId() << endl;
-/*!!!
-    if (!m_aboutToDelete) {
-        SVDEBUG << "NOTE: Model(" << this << ", \""
-                << objectName() << "\", type uri <"
-                << m_typeUri << ">)::~Model(): Model deleted "
-                << "with no aboutToDelete notification"
-                << endl;
-    }
-*/
     //!!! see notes in header - sort this out
     /*
     if (!m_alignmentModel.isNone()) {
@@ -45,13 +36,6 @@ Model::~Model()
 void
 Model::setSourceModel(ModelId modelId)
 {
-/*!!!
-    if (m_sourceModel) {
-        disconnect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
-                   this, SLOT(sourceModelAboutToBeDeleted()));
-    }
-*/
-    
     m_sourceModel = modelId;
 
     auto model = ModelById::get(m_sourceModel);
@@ -59,44 +43,8 @@ Model::setSourceModel(ModelId modelId)
         connect(model.get(), SIGNAL(alignmentCompletionChanged(ModelId)),
                 this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
-        
-    
-/*
-    if (m_sourceModel) {
-        connect(m_sourceModel, SIGNAL(alignmentCompletionChanged()),
-                this, SIGNAL(alignmentCompletionChanged()));
-        connect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
-                this, SLOT(sourceModelAboutToBeDeleted()));
-    }
-*/
-}
-/*!!!
-void
-Model::aboutToDelete()
-{
-    SVDEBUG << "Model(" << this << ", \""
-            << objectName() << "\", type name \""
-            << getTypeName() << "\", type uri <"
-            << m_typeUri << ">)::aboutToDelete()" << endl;
-
-    if (m_aboutToDelete) {
-        SVDEBUG << "WARNING: Model(" << this << ", \""
-                << objectName() << "\", type uri <"
-                << m_typeUri << ">)::aboutToDelete: "
-                << "aboutToDelete called more than once for the same model"
-                << endl;
-    }
-
-    emit aboutToBeDeleted();
-    m_aboutToDelete = true;
 }
 
-void
-Model::sourceModelAboutToBeDeleted()
-{
-    m_sourceModel = nullptr;
-}
-*/
 void
 Model::setAlignment(ModelId alignmentModel)
 {
