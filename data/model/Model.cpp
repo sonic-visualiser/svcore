@@ -59,8 +59,8 @@ Model::setAlignment(ModelId alignmentModel)
 
     auto model = ModelById::get(m_alignmentModel);
     if (model) {
-        connect(model.get(), SIGNAL(completionChanged()),
-                this, SIGNAL(alignmentCompletionChanged()));
+        connect(model.get(), SIGNAL(completionChanged(ModelId)),
+                this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
 }
 
