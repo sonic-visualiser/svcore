@@ -50,10 +50,16 @@ public:
             SVCERR << "WARNING: ById map is not empty at close; some items have not been released" << endl;
             SVCERR << "         Unreleased items are:" << endl;
             for (const auto &p: m_items) {
-                if (p.second && p.second.use_count() > 0) {
-                    SVCERR << "         - id #" << p.first
-                           << ": type " << typeid(*p.second.get()).name()
-                           << ", use count " << p.second.use_count() << endl;
+                auto ptr = p.second;
+                if (ptr && ptr.use_count() > 0) {
+                    QString message = QString("id #%1: type %2")
+                        .arg(p.first).arg(typeid(*ptr.get()).name());
+                    if (auto qobj = std::dynamic_pointer_cast<QObject>(ptr)) {
+                        message += QString(", object name \"%1\"")
+                            .arg(qobj->objectName());
+                    }
+                    message += QString(", use count %1").arg(ptr.use_count());
+                    SVCERR << "         - " << message << endl; 
                 }
             }
         }
