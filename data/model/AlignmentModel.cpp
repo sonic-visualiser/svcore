@@ -245,9 +245,10 @@ AlignmentModel::constructPath() const
     auto pathSourceModel =
         ModelById::getAs<SparseTimeValueModel>(m_pathSource);
     if (!m_path) {
-        if (pathSourceModel) {
+        if (!pathSourceModel) {
             cerr << "ERROR: AlignmentModel::constructPath: "
-                      << "No raw path available" << endl;
+                 << "No raw path available (id is " << m_pathSource
+                 << ")" << endl;
             return;
         }
         m_path.reset(new Path
