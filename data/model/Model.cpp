@@ -25,12 +25,6 @@
 Model::~Model()
 {
     SVDEBUG << "Model::~Model: " << this << " with id " << getId() << endl;
-    //!!! see notes in header - sort this out
-    /*
-    if (!m_alignmentModel.isNone()) {
-        ModelById::release(m_alignmentModel);
-    }
-    */
 }
 
 void
@@ -50,15 +44,15 @@ Model::setAlignment(ModelId alignmentModel)
 {
     SVDEBUG << "Model(" << this << "): accepting alignment model "
             << alignmentModel << endl;
-    
-    if (!m_alignmentModel.isNone()) {
-        ModelById::release(m_alignmentModel);
+
+    if (auto model = ModelById::get(m_alignmentModel)) {
+        disconnect(model.get(), SIGNAL(completionChanged(ModelId)),
+                   this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
     
     m_alignmentModel = alignmentModel;
 
-    auto model = ModelById::get(m_alignmentModel);
-    if (model) {
+    if (auto model = ModelById::get(m_alignmentModel)) {
         connect(model.get(), SIGNAL(completionChanged(ModelId)),
                 this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }

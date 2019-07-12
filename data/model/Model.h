@@ -200,13 +200,7 @@ public:
     /**
      * Specify an alignment between this model's timeline and that of
      * a reference model. The alignment model, of type AlignmentModel,
-     * records both the reference and the alignment. This model "takes
-     * ownership" of alignmentModel, in that we take responsibility
-     * for calling ModelById::release() for it from our own destructor
-     * (no other class needs to know about the alignment model).
-
-     *!!! I don't think the above is a good idea - I think document
-          should record alignment models and release them
+     * records both the reference and the alignment.
      */
     virtual void setAlignment(ModelId alignmentModel);
 

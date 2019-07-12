@@ -82,7 +82,8 @@ protected:
     ModelId m_reference;
     ModelId m_aligned;
 
-    ModelId m_pathSource; // a SparseTimeValueModel
+    ModelId m_pathSource; // a SparseTimeValueModel, which we need a
+                          // handle on only while it's still being generated
 
     mutable std::unique_ptr<Path> m_path;
     mutable std::unique_ptr<Path> m_reversePath;

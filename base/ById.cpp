@@ -70,6 +70,8 @@ public:
         if (id == IdAlloc::NO_ID) {
             throw std::logic_error("item id should never be NO_ID");
         }
+        SVCERR << "ById::add(#" << id << ") of type "
+               << typeid(*item.get()).name() << endl;
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) != m_items.end()) {
             SVCERR << "ById::add: item with id " << id
@@ -87,7 +89,7 @@ public:
         if (id == IdAlloc::NO_ID) {
             return;
         }
-        SVCERR << "ById::release(" << id << ")" << endl;
+        SVCERR << "ById::release(#" << id << ")" << endl;
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) == m_items.end()) {
             SVCERR << "ById::release: unknown item id " << id << endl;
