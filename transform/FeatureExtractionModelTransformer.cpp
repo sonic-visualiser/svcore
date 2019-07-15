@@ -770,10 +770,35 @@ FeatureExtractionModelTransformer::run()
                 ((((blockFrame - contextStart) / stepSize) * 99) /
                  (contextDuration / stepSize + 1));
 
+            bool haveAllModels = true;
             if (!ModelById::get(inputId)) {
-                abandon();
-                return;
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+                SVDEBUG << "FeatureExtractionModelTransformer::run: Input model " << inputId << " no longer exists" << endl;
+#endif
+                haveAllModels = false;
+            } else {
+                SVDEBUG << "Input model " << inputId << " still exists" << endl;
             }
+            for (auto mid: m_outputs) {
+                if (!ModelById::get(mid)) {
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+                    SVDEBUG << "FeatureExtractionModelTransformer::run: Output model " << mid << " no longer exists" << endl;
+#endif
+                    haveAllModels = false;
+                } else {
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+                    SVDEBUG << "Output model " << mid << " still exists" << endl;
+#endif
+                }
+            }
+            if (!haveAllModels) {
+                abandon();
+                break;
+            }
+            
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+            SVDEBUG << "FeatureExtractionModelTransformer::run: All models still exist" << endl;
+#endif
 
             // channelCount is either input->channelCount or 1
 
@@ -838,6 +863,9 @@ FeatureExtractionModelTransformer::run()
                 for (int fi = 0; in_range_for(features[m_outputNos[j]], fi); ++fi) {
                     auto feature = features[m_outputNos[j]][fi];
                     addFeature(j, blockFrame, feature);
+                    if (m_abandoned) {
+                        break;
+                    }
                 }
             }
         }
@@ -1109,9 +1137,11 @@ FeatureExtractionModelTransformer::addFeature(int n,
         } else {
             model->setColumn(int(frame / model->getResolution()), values);
         }
+    } else {
+        
+        SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type - possibly a deleted model" << endl;
+        abandon();
     }
-
-    SVDEBUG << "FeatureExtractionModelTransformer::addFeature: Unknown output model type!" << endl;
 }
 
 void
