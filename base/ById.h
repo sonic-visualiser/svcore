@@ -27,18 +27,76 @@
 
 #include "XmlExportable.h"
 
-//!!! todo: docs
+/*
+ * ById - central pool of objects to be retrieved by persistent id.
+ *
+ * This is a pretty simple mechanism for obtaining safe "borrowed"
+ * references to shared objects, including across threads, based on an
+ * object ID.
+ *
+ * A class (call it C) inherits WithTypedId<C>. This produces a type
+ * C::Id containing a numerical id. Each instance of C (or subclass
+ * thereof) has an internal id of type C::Id whose value is unique
+ * among all ids ever possessed by any instances of all classes that
+ * use this id mechanism (within a single run of the program).
+ *
+ * Then we have a static store of type TypedById<C, C::Id>. This holds
+ * a set of heap-allocated C objects (or subclass thereof) and hands
+ * out shared_ptr references to them when queried by id. The
+ * application calls add() to pass an object to the store (which takes
+ * ownership of it), and the application calls release() when it
+ * thinks it has finished with an object, to request the store to
+ * delete it.
+ *
+ * Note that an object's id can't (without shenanigans) be queried
+ * directly from that object - it is returned when the object is added
+ * to a ById store. So if you have an object id, you know that the
+ * object must have been added to a store at some point.
+ *
+ * The goal is to improve code that would previously have retained a
+ * bare pointer to a heap-allocated object that it did not own. For
+ * example, in Sonic Visualiser we have a Model hierarchy of complex
+ * mutable objects, and any given model may be referred to by many
+ * different layers, transforms (as both source and target) etc. Using
+ * bare pointers for those references means that we need everything to
+ * be notified (and act properly on the notification) if a model is
+ * about to be deleted. Using a Model::Id instead gives the code a
+ * guarantee: if the model has been deleted since you last looked at
+ * it, then the ById store will return a null shared_ptr from its
+ * get() function for that id; but if it returns a non-null
+ * shared_ptr, then the object being pointed to can't be deleted while
+ * that shared_ptr is in scope.
+ *
+ * Example:
+ *
+ * class Thing : public WithTypedId<Thing> { Thing(int x) { } };
+ * typedef TypedById<Thing, Thing::Id> ThingById;
+ *
+ * // application creates a new Thing
+ * // ...
+ * auto thing = std::make_shared<Thing>(10);
+ * auto thingId = ThingById::add(thing);
+ *
+ * // application then passes thingId to something else, without
+ * // storing the shared_ptr anywhere - the ById store manages that
+ * 
+ * // code elsewhere now has the thingId, and needs to use the Thing
+ * // ...
+ * void doSomething() {
+ *     auto thing = ThingById::get(m_thingId);
+ *     if (!thing) { // the Thing has been deleted, stop acting on it
+ *         return;   // (this may be an error or it may be unexceptional)
+ *     }
+ *     // now we have a guarantee that the thing ptr will be valid
+ *     // until it goes out of scope when doSomething returns
+ * }
+ *
+ * // application wants to be rid of the Thing
+ * ThingById::release(thingId);
+ */
 
-//!!! further possibilities:
-//
-//    - get() returns a pointer wrapper that cannot be shared/copied
-//      again by the caller (except by the usual C++ trickery)
-//
-// also to do: review how often we are calling getAs<...> when we
-// could just be using get
-
-//!!! NB we still haven't solved the problem of what to do for a
-//!!! user-initiated cancel of a transform
+//!!! to do: review how often we are calling getAs<...> when we could
+// just be using get
 
 struct IdAlloc {
 
