@@ -777,7 +777,9 @@ FeatureExtractionModelTransformer::run()
 #endif
                 haveAllModels = false;
             } else {
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
                 SVDEBUG << "Input model " << inputId << " still exists" << endl;
+#endif
             }
             for (auto mid: m_outputs) {
                 if (!ModelById::get(mid)) {
