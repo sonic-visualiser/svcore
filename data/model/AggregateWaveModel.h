@@ -85,7 +85,6 @@ signals:
     void completionChanged();
 
 protected slots:
-    //!!! hm, these were never connected up anyway!
     void componentModelChanged();
     void componentModelChangedWithin(sv_frame_t, sv_frame_t);
     void componentModelCompletionChanged();
