@@ -225,14 +225,16 @@ public:
      * Relabel all events in the given event vector that lie within
      * the given multi-selection, according to the labelling
      * properties of this labeller.  Return a command that has been
-     * executed but not yet added to the history.
+     * executed but not yet added to the history.  The id must be that
+     * of a type that can be retrieved from the AnyById store and
+     * dynamic_cast to EventEditable.
      */
-    Command *labelAll(EventEditable *editable,
+    Command *labelAll(int editableId,
                       MultiSelection *ms,
                       const EventVector &allEvents) {
 
-        ChangeEventsCommand *command = new ChangeEventsCommand
-            (editable, tr("Label Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Label Points"));
 
         Event prev;
         bool havePrev = false;
@@ -270,15 +272,17 @@ public:
      * that event lies within the given multi-selection, add n-1 new
      * events at equally spaced intervals between it and the following
      * event.  Return a command that has been executed but not yet
-     * added to the history.
+     * added to the history.  The id must be that of a type that can
+     * be retrieved from the AnyById store and dynamic_cast to
+     * EventEditable.
      */
-    Command *subdivide(EventEditable *editable,
+    Command *subdivide(int editableId,
                        MultiSelection *ms,
                        const EventVector &allEvents,
                        int n) {
 
-        ChangeEventsCommand *command = new ChangeEventsCommand
-            (editable, tr("Subdivide Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Subdivide Points"));
 
         for (auto i = allEvents.begin(); i != allEvents.end(); ++i) {
 
@@ -319,15 +323,17 @@ public:
      * multi-selection, and a number n, remove all but every nth event
      * from the vector within the extents of the multi-selection.
      * Return a command that has been executed but not yet added to
-     * the history.
+     * the history. The id must be that of a type that can be
+     * retrieved from the AnyById store and dynamic_cast to
+     * EventEditable.
      */
-    Command *winnow(EventEditable *editable,
+    Command *winnow(int editableId,
                     MultiSelection *ms,
                     const EventVector &allEvents,
                     int n) {
 
-        ChangeEventsCommand *command = new ChangeEventsCommand
-            (editable, tr("Winnow Points"));
+        auto command = new ChangeEventsCommand
+            (editableId, tr("Winnow Points"));
 
         int counter = 0;
         

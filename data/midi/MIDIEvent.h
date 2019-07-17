@@ -162,6 +162,9 @@ public:
         m_metaMessage(sysEx)
     { }
 
+    MIDIEvent(const MIDIEvent &) =default;
+    MIDIEvent& operator=(const MIDIEvent &) =default;
+    
     ~MIDIEvent() { }
 
     void setTime(const unsigned long &time) { m_deltaTime = time; }
@@ -195,8 +198,6 @@ public:
     friend bool operator<(const MIDIEvent &a, const MIDIEvent &b);
 
 private:
-    MIDIEvent& operator=(const MIDIEvent);
-
     unsigned long  m_deltaTime;
     unsigned long  m_duration;
     MIDIByte       m_eventCode;

@@ -197,7 +197,7 @@ public:
                        QString extraAttributes = "") const override;
 
 signals:
-    void writeCompleted();
+    void writeCompleted(ModelId);
     
 protected:
     ReadOnlyWaveFileModel *m_model;

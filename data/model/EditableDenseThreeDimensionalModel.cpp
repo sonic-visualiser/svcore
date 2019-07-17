@@ -359,15 +359,16 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 
     if (m_notifyOnAdd) {
         if (allChange) {
-            emit modelChanged();
+            emit modelChanged(getId());
         } else {
-            emit modelChangedWithin(windowStart, windowStart + m_resolution);
+            emit modelChangedWithin(getId(),
+                                    windowStart, windowStart + m_resolution);
         }
     } else {
         if (allChange) {
             m_sinceLastNotifyMin = -1;
             m_sinceLastNotifyMax = -1;
-            emit modelChanged();
+            emit modelChanged(getId());
         } else {
             if (m_sinceLastNotifyMin == -1 ||
                 windowStart < m_sinceLastNotifyMin) {
@@ -393,14 +394,14 @@ EditableDenseThreeDimensionalModel::setBinName(int n, QString name)
 {
     while ((int)m_binNames.size() <= n) m_binNames.push_back("");
     m_binNames[n] = name;
-    emit modelChanged();
+    emit modelChanged(getId());
 }
 
 void
 EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 {
     m_binNames = names;
-    emit modelChanged();
+    emit modelChanged(getId());
 }
 
 bool
@@ -474,21 +475,22 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
         if (completion == 100) {
 
             m_notifyOnAdd = true; // henceforth
-            emit modelChanged();
+            emit modelChanged(getId());
 
         } else if (!m_notifyOnAdd) {
 
             if (update &&
                 m_sinceLastNotifyMin >= 0 &&
                 m_sinceLastNotifyMax >= 0) {
-                emit modelChangedWithin(m_sinceLastNotifyMin,
+                emit modelChangedWithin(getId(),
+                                        m_sinceLastNotifyMin,
                                         m_sinceLastNotifyMax + m_resolution);
                 m_sinceLastNotifyMin = m_sinceLastNotifyMax = -1;
             } else {
-                emit completionChanged();
+                emit completionChanged(getId());
             }
         } else {
-            emit completionChanged();
+            emit completionChanged(getId());
         }            
     }
 }

@@ -72,7 +72,7 @@ private:
                    sv_frame_t sourceFrameCount,
                    int oversampleBy) {
         return WaveformOversampler::getOversampledData
-            (m_sourceModel, 0,
+            (*m_sourceModel, 0,
              sourceStartFrame, sourceFrameCount, oversampleBy);
     }
     

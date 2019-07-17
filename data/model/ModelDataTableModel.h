@@ -22,6 +22,9 @@
 
 #include "base/BaseTypes.h"
 
+#include "TabularModel.h"
+#include "Model.h"
+
 class TabularModel;
 class Command;
 
@@ -30,7 +33,7 @@ class ModelDataTableModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    ModelDataTableModel(TabularModel *m);
+    ModelDataTableModel(ModelId modelId); // a TabularModel
     virtual ~ModelDataTableModel();
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -72,10 +75,13 @@ signals:
 protected slots:
     void modelChanged();
     void modelChangedWithin(sv_frame_t, sv_frame_t);
-    void modelAboutToBeDeleted();
 
 protected:
-    TabularModel *m_model;
+    std::shared_ptr<TabularModel> getTabularModel() const {
+        return ModelById::getAs<TabularModel>(m_model);
+    }
+    
+    ModelId m_model;
     int m_sortColumn;
     Qt::SortOrder m_sortOrdering;
     int m_currentRow;

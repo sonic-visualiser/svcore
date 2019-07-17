@@ -38,8 +38,9 @@ public:
         FragmentMap fragments;
 
         Match() : score(0) { }
-        Match(const Match &m) :
-            key(m.key), score(m.score), fragments(m.fragments) { }
+
+        Match(const Match &m) =default;
+        Match &operator=(const Match &m) =default;
 
         bool operator<(const Match &m) const; // sort by score first
     };

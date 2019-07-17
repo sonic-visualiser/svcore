@@ -30,7 +30,8 @@ public:
         NOTIFY_DEFERRED
     };
     
-    DeferredNotifier(Model *m, Mode mode) : m_model(m), m_mode(mode) { }
+    DeferredNotifier(Model *m, ModelId id, Mode mode) :
+        m_model(m), m_modelId(id), m_mode(mode) { }
 
     Mode getMode() const {
         return m_mode;
@@ -41,7 +42,7 @@ public:
     
     void update(sv_frame_t frame, sv_frame_t duration) {
         if (m_mode == NOTIFY_ALWAYS) {
-            m_model->modelChangedWithin(frame, frame + duration);
+            m_model->modelChangedWithin(m_modelId, frame, frame + duration);
         } else {
             QMutexLocker locker(&m_mutex);
             m_extents.sample(frame);
@@ -60,7 +61,7 @@ public:
             }
         }
         if (shouldEmit) {
-            m_model->modelChangedWithin(from, to);
+            m_model->modelChangedWithin(m_modelId, from, to);
             QMutexLocker locker(&m_mutex);
             m_extents.reset();
         }
@@ -68,6 +69,7 @@ public:
 
 private:
     Model *m_model;
+    ModelId m_modelId;
     Mode m_mode;
     QMutex m_mutex;
     Extents<sv_frame_t> m_extents;

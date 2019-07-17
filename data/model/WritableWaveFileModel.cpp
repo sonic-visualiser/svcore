@@ -19,6 +19,7 @@
 
 #include "base/TempDirectory.h"
 #include "base/Exceptions.h"
+#include "base/PlayParameterRepository.h"
 
 #include "fileio/WavFileWriter.h"
 #include "fileio/WavFileReader.h"
@@ -96,7 +97,8 @@ WritableWaveFileModel::init(QString path)
             // so the filename only needs to be unique within that -
             // model ID should be ok
             QDir dir(TempDirectory::getInstance()->getPath());
-            path = dir.filePath(QString("written_%1.wav").arg(getId()));
+            path = dir.filePath(QString("written_%1.wav")
+                                .arg(getId().untyped));
         } catch (const DirectoryCreationFailed &f) {
             SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
@@ -126,7 +128,8 @@ WritableWaveFileModel::init(QString path)
         // Temp dir is exclusive to this run of the application, so
         // the filename only needs to be unique within that
         QDir dir(TempDirectory::getInstance()->getPath());
-        m_temporaryPath = dir.filePath(QString("prenorm_%1.wav").arg(getId()));
+        m_temporaryPath = dir.filePath(QString("prenorm_%1.wav")
+                                       .arg(getId().untyped));
 
         m_temporaryWriter = new WavFileWriter
             (m_temporaryPath, m_sampleRate, m_channels,
@@ -158,10 +161,16 @@ WritableWaveFileModel::init(QString path)
     connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
     connect(m_model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
             this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
 {
+    PlayParameterRepository::getInstance()->removePlayable
+        (getId().untyped);
+    
     delete m_model;
     delete m_targetWriter;
     delete m_temporaryWriter;
@@ -247,8 +256,8 @@ WritableWaveFileModel::writeComplete()
     
     m_reader->updateDone();
     m_proportion = 100;
-    emit modelChanged();
-    emit writeCompleted();
+    emit modelChanged(getId());
+    emit writeCompleted(getId());
 }
 
 void

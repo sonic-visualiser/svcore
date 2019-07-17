@@ -3,6 +3,7 @@ SVCORE_HEADERS = \
            base/AudioPlaySource.h \
            base/AudioRecordTarget.h \
            base/BaseTypes.h \
+           base/ById.h \
            base/Clipboard.h \
            base/ColumnOp.h \
            base/Command.h \
@@ -89,7 +90,7 @@ SVCORE_HEADERS = \
            data/model/Model.h \
            data/model/ModelDataTableModel.h \
            data/model/NoteModel.h \
-           data/model/PathModel.h \
+           data/model/Path.h \
            data/model/PowerOfSqrtTwoZoomConstraint.h \
            data/model/PowerOfTwoZoomConstraint.h \
            data/model/RangeSummarisableTimeValueModel.h \
@@ -149,6 +150,7 @@ SVCORE_HEADERS = \
 	   
 SVCORE_SOURCES = \
            base/AudioLevel.cpp \
+           base/ById.cpp \
            base/Clipboard.cpp \
            base/ColumnOp.cpp \
            base/Command.cpp \

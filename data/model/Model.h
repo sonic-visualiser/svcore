@@ -19,6 +19,7 @@
 #include <vector>
 #include <QObject>
 
+#include "base/ById.h"
 #include "base/XmlExportable.h"
 #include "base/Playable.h"
 #include "base/BaseTypes.h"
@@ -27,20 +28,20 @@
 class ZoomConstraint;
 class AlignmentModel;
 
-typedef int ModelId;
-
 /** 
  * Model is the base class for all data models that represent any sort
  * of data on a time scale based on an audio frame rate.
  */
-
 class Model : public QObject,
+              public WithTypedId<Model>,
               public XmlExportable,
               public Playable
 {
     Q_OBJECT
 
 public:
+    typedef Id ModelId;
+    
     virtual ~Model();
 
     /**
@@ -132,33 +133,6 @@ public:
     virtual bool isSparse() const { return false; }
 
     /**
-     * Return an id for this model. The id is guaranteed to be a
-     * unique identifier for this model among all models that may ever
-     * exist within this single run of the application.
-     */
-    ModelId getId() const { return m_id; }
-    
-    /**
-     * Mark the model as abandoning. This means that the application
-     * no longer needs it, so it can stop doing any background
-     * calculations it may be involved in. Note that as far as the
-     * model API is concerned, this does nothing more than tell the
-     * model to return true from isAbandoning().  The actual response
-     * to this will depend on the model's context -- it's possible
-     * nothing at all will change.
-     */
-    virtual void abandon() {
-        m_abandoning = true;
-    }
-
-    /**
-     * Query whether the model has been marked as abandoning.
-     */
-    virtual bool isAbandoning() const { 
-        return m_abandoning;
-    }
-
-    /**
      * Return true if the model has finished loading or calculating
      * all its data, for a model that is capable of calculating in a
      * background thread.
@@ -208,28 +182,27 @@ public:
     }
 
     /**
-     * If this model was derived from another, return the model it was
-     * derived from.  The assumption is that the source model's
-     * alignment will also apply to this model, unless some other
-     * property (such as a specific alignment model set on this model)
-     * indicates otherwise.
+     * If this model was derived from another, return the id of the
+     * model it was derived from.  The assumption is that the source
+     * model's alignment will also apply to this model, unless some
+     * other property (such as a specific alignment model set on this
+     * model) indicates otherwise.
      */
-    virtual Model *getSourceModel() const {
+    virtual ModelId getSourceModel() const {
         return m_sourceModel;
     }
 
     /**
      * Set the source model for this model.
      */
-    virtual void setSourceModel(Model *model);
+    virtual void setSourceModel(ModelId model);
 
     /**
-     * Specify an aligment between this model's timeline and that of a
-     * reference model.  The alignment model records both the
-     * reference and the alignment.  This model takes ownership of the
-     * alignment model.
+     * Specify an alignment between this model's timeline and that of
+     * a reference model. The alignment model, of type AlignmentModel,
+     * records both the reference and the alignment.
      */
-    virtual void setAlignment(AlignmentModel *alignment);
+    virtual void setAlignment(ModelId alignmentModel);
 
     /**
      * Retrieve the alignment model for this model.  This is not a
@@ -240,13 +213,13 @@ public:
      * application for this function is in streaming out alignments to
      * the session file.
      */
-    virtual const AlignmentModel *getAlignment() const;
+    virtual const ModelId getAlignment() const;
 
     /**
      * Return the reference model for the current alignment timeline,
      * if any.
      */
-    virtual const Model *getAlignmentReference() const;
+    virtual const ModelId getAlignmentReference() const;
 
     /**
      * Return the frame number of the reference model that corresponds
@@ -290,22 +263,18 @@ public:
                                           sv_frame_t startFrame,
                                           sv_frame_t duration) const = 0;
 
-public slots:
-    void aboutToDelete();
-    void sourceModelAboutToBeDeleted();
-
 signals:
     /**
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChanged();
+    void modelChanged(ModelId myId);
 
     /**
      * Emitted when a model has been edited (or more data retrieved
      * from cache, in the case of a cached model that generates slowly)
      */
-    void modelChangedWithin(sv_frame_t startFrame, sv_frame_t endFrame);
+    void modelChangedWithin(ModelId myId, sv_frame_t startFrame, sv_frame_t endFrame);
 
     /**
      * Emitted when some internal processing has advanced a stage, but
@@ -313,52 +282,35 @@ signals:
      * updating any progress meters or other monitoring, but not
      * refreshing the actual view.
      */
-    void completionChanged();
+    void completionChanged(ModelId myId);
 
     /**
      * Emitted when internal processing is complete (i.e. when
      * isReady() would return true, with completion at 100).
      */
-    void ready();
+    void ready(ModelId myId);
 
     /**
      * Emitted when the completion percentage changes for the
      * calculation of this model's alignment model.
      */
-    void alignmentCompletionChanged();
-
-    /**
-     * Emitted when something notifies this model (through calling
-     * aboutToDelete() that it is about to delete it.  Note that this
-     * depends on an external agent such as a Document object or
-     * owning model telling the model that it is about to delete it;
-     * there is nothing in the model to guarantee that this signal
-     * will be emitted before the actual deletion.
-     */
-    void aboutToBeDeleted();
+    void alignmentCompletionChanged(ModelId myId);
 
 protected:
     Model() :
-        m_id(getNextId()),
-        m_sourceModel(0), 
-        m_alignment(0), 
-        m_abandoning(false), 
-        m_aboutToDelete(false),
         m_extendTo(0) { }
 
     // Not provided.
-    Model(const Model &);
-    Model &operator=(const Model &); 
+    Model(const Model &) =delete;
+    Model &operator=(const Model &) =delete;
 
-    const ModelId m_id;
-    Model *m_sourceModel;
-    AlignmentModel *m_alignment;
+    ModelId m_sourceModel;
+    ModelId m_alignmentModel;
     QString m_typeUri;
-    bool m_abandoning;
-    bool m_aboutToDelete;
     sv_frame_t m_extendTo;
-    
-    int getNextId();
 };
+
+typedef Model::Id ModelId;
+typedef TypedById<Model, Model::Id> ModelById;
 
 #endif

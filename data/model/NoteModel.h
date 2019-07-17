@@ -58,6 +58,7 @@ public:
         m_units(""),
         m_extendTo(0),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
@@ -66,7 +67,8 @@ public:
             m_valueMinimum = 33.f;
             m_valueMaximum = 88.f;
         }
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable
+            (getId().untyped, this);
     }
 
     NoteModel(sv_samplerate_t sampleRate, int resolution,
@@ -83,15 +85,18 @@ public:
         m_units(""),
         m_extendTo(0),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(100) {
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable
+            (getId().untyped, this);
     }
 
     virtual ~NoteModel() {
-        PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable
+            (getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Note"); }
@@ -142,12 +147,12 @@ public:
             m_notifier.makeDeferredNotifications();
         }
         
-        emit completionChanged();
+        emit completionChanged(getId());
 
         if (completion == 100) {
             // henceforth:
             m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
 
@@ -216,7 +221,7 @@ public:
         m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
 
         if (allChange) {
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
     
@@ -225,7 +230,8 @@ public:
             QMutexLocker locker(&m_mutex);
             m_events.remove(e);
         }
-        emit modelChangedWithin(e.getFrame(),
+        emit modelChangedWithin(getId(),
+                                e.getFrame(),
                                 e.getFrame() + e.getDuration() + m_resolution);
     }
 
@@ -308,8 +314,7 @@ public:
         case 5: e1 = e0.withLabel(value.toString()); break;
         }
 
-        ChangeEventsCommand *command =
-            new ChangeEventsCommand(this, tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

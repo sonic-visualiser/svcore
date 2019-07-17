@@ -36,9 +36,6 @@ protected:
     QString m_units;
     RealTimePluginInstance *m_plugin;
     int m_outputNo;
-
-    // just casts
-    DenseTimeValueModel *getConformingInput();
 };
 
 #endif

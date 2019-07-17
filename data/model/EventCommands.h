@@ -18,6 +18,7 @@
 
 #include "base/Event.h"
 #include "base/Command.h"
+#include "base/ById.h"
 
 /**
  * Interface for classes that can be modified through these commands
@@ -29,45 +30,77 @@ public:
     virtual void remove(Event e) = 0;
 };
 
+class WithEditable
+{
+protected:
+    WithEditable(int editableId) : m_editableId(editableId) { }
+
+    std::shared_ptr<EventEditable> getEditable() {
+        auto editable = AnyById::getAs<EventEditable>(m_editableId);
+        if (!editable) {
+            SVCERR << "WARNING: Id passed to EventEditable command is not that of an EventEditable" << endl;
+        }
+        return editable;
+    }
+
+private:
+    int m_editableId;
+};
+
 /**
- * Command to add an event to an editable containing events, with undo.
+ * Command to add an event to an editable containing events, with
+ * undo.  The id must be that of a type that can be retrieved from the
+ * AnyById store and dynamic_cast to EventEditable.
  */
-class AddEventCommand : public Command
+class AddEventCommand : public Command,
+                        public WithEditable
 {
 public:
-    AddEventCommand(EventEditable *editable, const Event &e, QString name) :
-        m_editable(editable), m_event(e), m_name(name) { }
+    AddEventCommand(int editableId, const Event &e, QString name) :
+        WithEditable(editableId), m_event(e), m_name(name) { }
 
     QString getName() const override { return m_name; }
     Event getEvent() const { return m_event; }
 
-    void execute() override { m_editable->add(m_event); }
-    void unexecute() override { m_editable->remove(m_event); }
+    void execute() override {
+        auto editable = getEditable();
+        if (editable) editable->add(m_event);
+    }
+    void unexecute() override {
+        auto editable = getEditable();
+        if (editable) editable->remove(m_event);
+    }
 
 private:
-    EventEditable *m_editable;
     Event m_event;
     QString m_name;
 };
 
 /**
  * Command to remove an event from an editable containing events, with
- * undo.
+ * undo.  The id must be that of a type that can be retrieved from the
+ * AnyById store and dynamic_cast to EventEditable.
  */
-class RemoveEventCommand : public Command
+class RemoveEventCommand : public Command,
+                           public WithEditable
 {
 public:
-    RemoveEventCommand(EventEditable *editable, const Event &e, QString name) :
-        m_editable(editable), m_event(e), m_name(name) { }
+    RemoveEventCommand(int editableId, const Event &e, QString name) :
+        WithEditable(editableId), m_event(e), m_name(name) { }
 
     QString getName() const override { return m_name; }
     Event getEvent() const { return m_event; }
 
-    void execute() override { m_editable->remove(m_event); }
-    void unexecute() override { m_editable->add(m_event); }
+    void execute() override {
+        auto editable = getEditable();
+        if (editable) editable->remove(m_event);
+    }
+    void unexecute() override {
+        auto editable = getEditable();
+        if (editable) editable->add(m_event);
+    }
 
 private:
-    EventEditable *m_editable;
     Event m_event;
     QString m_name;
 };
@@ -76,19 +109,20 @@ private:
  * Command to add or remove a series of events to or from an editable,
  * with undo. Creates and immediately executes a sub-command for each
  * add/remove requested. Consecutive add/remove pairs for the same
- * point are collapsed.
+ * point are collapsed.  The id must be that of a type that can be
+ * retrieved from the AnyById store and dynamic_cast to EventEditable.
  */
 class ChangeEventsCommand : public MacroCommand
 {
 public:
-    ChangeEventsCommand(EventEditable *editable, QString name) :
-        MacroCommand(name), m_editable(editable) { }
+    ChangeEventsCommand(int editableId, QString name) :
+        MacroCommand(name), m_editableId(editableId) { }
 
     void add(Event e) {
-        addCommand(new AddEventCommand(m_editable, e, getName()), true);
+        addCommand(new AddEventCommand(m_editableId, e, getName()), true);
     }
     void remove(Event e) {
-        addCommand(new RemoveEventCommand(m_editable, e, getName()), true);
+        addCommand(new RemoveEventCommand(m_editableId, e, getName()), true);
     }
 
     /**
@@ -134,7 +168,7 @@ protected:
         MacroCommand::addCommand(command);
     }
 
-    EventEditable *m_editable;
+    int m_editableId;
 };
 
 #endif

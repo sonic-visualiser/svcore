@@ -46,11 +46,11 @@ public:
         virtual bool configure(ModelTransformer::Input &input,
                                Transform &transform,
                                Vamp::PluginBase *plugin,
-                               Model *&inputModel,
+                               ModelId &inputModel,
                                AudioPlaySource *source,
                                sv_frame_t startFrame,
                                sv_frame_t duration,
-                               const QMap<QString, Model *> &modelMap,
+                               const QMap<QString, ModelId> &modelMap,
                                QStringList candidateModelNames,
                                QString defaultModelName) = 0;
     };
@@ -59,14 +59,14 @@ public:
      * Fill out the configuration for the given transform (may include
      * asking the user by calling back on the UserConfigurator).
      * Returns the selected input model and channel if the transform
-     * is acceptable, or an input with a null model if the operation
+     * is acceptable, or an input with no model if the operation
      * should be cancelled.  Audio play source may be used to audition
      * effects plugins, if provided.
      */
     ModelTransformer::Input
     getConfigurationForTransform(Transform &transform,
-                                 const std::vector<Model *> &candidateInputModels,
-                                 Model *defaultInputModel,
+                                 std::vector<ModelId> candidateInputModels,
+                                 ModelId defaultInputModel,
                                  AudioPlaySource *source = 0,
                                  sv_frame_t startFrame = 0,
                                  sv_frame_t duration = 0,
@@ -77,7 +77,7 @@ public:
         virtual ~AdditionalModelHandler() { }
 
         // Exactly one of these functions will be called
-        virtual void moreModelsAvailable(std::vector<Model *> models) = 0;
+        virtual void moreModelsAvailable(std::vector<ModelId> models) = 0;
         virtual void noMoreModelsAvailable() = 0;
     };
     
@@ -104,10 +104,10 @@ public:
      * The returned model is owned by the caller and must be deleted
      * when no longer needed.
      */
-    Model *transform(const Transform &transform,
-                     const ModelTransformer::Input &input,
-                     QString &message,
-                     AdditionalModelHandler *handler = 0);
+    ModelId transform(const Transform &transform,
+                      const ModelTransformer::Input &input,
+                      QString &message,
+                      AdditionalModelHandler *handler = 0);
 
     /**
      * Return the multiple output models resulting from applying the
@@ -141,7 +141,7 @@ public:
      * The returned models are owned by the caller and must be deleted
      * when no longer needed.
      */
-    std::vector<Model *> transformMultiple(const Transforms &transform,
+    std::vector<ModelId> transformMultiple(const Transforms &transform,
                                            const ModelTransformer::Input &input,
                                            QString &message,
                                            AdditionalModelHandler *handler = 0);
@@ -153,8 +153,6 @@ signals:
                                                                                
 protected slots:
     void transformerFinished();
-
-    void modelAboutToBeDeleted(Model *);
 
 protected:
     ModelTransformer *createTransformer(const Transforms &transforms,

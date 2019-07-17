@@ -34,36 +34,34 @@
  * available to the user of the ModelTransformer immediately, but may
  * be initially empty until the background thread has populated it.
  */
-
 class ModelTransformer : public Thread
 {
 public:
     virtual ~ModelTransformer();
 
-    typedef std::vector<Model *> Models;
+    typedef std::vector<ModelId> Models;
 
     class Input {
     public:
-        Input(Model *m) : m_model(m), m_channel(-1) { }
-        Input(Model *m, int c) : m_model(m), m_channel(c) { }
+        Input(ModelId m) : m_model(m), m_channel(-1) { }
+        Input(ModelId m, int c) : m_model(m), m_channel(c) { }
 
-        Model *getModel() const { return m_model; }
-        void setModel(Model *m) { m_model = m; }
+        ModelId getModel() const { return m_model; }
+        void setModel(ModelId m) { m_model = m; }
 
         int getChannel() const { return m_channel; }
         void setChannel(int c) { m_channel = c; }
 
     protected:
-        Model *m_model;
+        ModelId m_model;
         int m_channel;
     };
 
     /**
      * Hint to the processing thread that it should give up, for
-     * example because the process is going to exit or we want to get
-     * rid of the input model.  Caller should still wait() and/or
-     * delete the transform before assuming its input and output
-     * models are no longer required.
+     * example because the process is going to exit or the
+     * model/document context is being replaced.  Caller should still
+     * wait() to be sure that processing has ended.
      */
     void abandon() { m_abandoned = true; }
 
@@ -76,7 +74,7 @@ public:
     /**
      * Return the input model for the transform.
      */
-    Model *getInputModel()  { return m_input.getModel(); }
+    ModelId getInputModel()  { return m_input.getModel(); }
 
     /**
      * Return the input channel spec for the transform.
@@ -84,24 +82,14 @@ public:
     int getInputChannel() { return m_input.getChannel(); }
 
     /**
-     * Return the set of output models created by the transform or
-     * transforms.  Returns an empty list if any transform could not
-     * be initialised; an error message may be available via
-     * getMessage() in this situation.
+     * Return the set of output model IDs created by the transform or
+     * transforms. Returns an empty list if any transform could not be
+     * initialised; an error message may be available via getMessage()
+     * in this situation. The returned models have been added to
+     * ModelById.
      */
     Models getOutputModels() {
         awaitOutputModels();
-        return m_outputs;
-    }
-
-    /**
-     * Return the set of output models, also detaching them from the
-     * transformer so that they will not be deleted when the
-     * transformer is.  The caller takes ownership of the models.
-     */
-    Models detachOutputModels() {
-        awaitOutputModels();
-        m_detached = true; 
         return m_outputs;
     }
 
@@ -122,15 +110,6 @@ public:
     virtual bool willHaveAdditionalOutputModels() { return false; }
 
     /**
-     * Return the set of additional models, also detaching them from
-     * the transformer.  The caller takes ownership of the models.
-     */
-    virtual Models detachAdditionalOutputModels() { 
-        m_detachedAdd = true;
-        return getAdditionalOutputModels();
-    }
-
-    /**
      * Return a warning or error message.  If getOutputModel returned
      * a null pointer, this should contain a fatal error message for
      * the transformer; otherwise it may contain a warning to show to
@@ -145,10 +124,8 @@ protected:
     virtual void awaitOutputModels() = 0;
     
     Transforms m_transforms;
-    Input m_input; // I don't own the model in this
-    Models m_outputs; // I own this, unless...
-    bool m_detached; // ... this is true.
-    bool m_detachedAdd;
+    Input m_input;
+    Models m_outputs;
     bool m_abandoned;
     QString m_message;
 };

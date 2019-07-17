@@ -24,141 +24,90 @@
 
 Model::~Model()
 {
-    SVDEBUG << "Model::~Model(" << this << ")" << endl;
-
-    if (!m_aboutToDelete) {
-        SVDEBUG << "NOTE: Model(" << this << ", \""
-                << objectName() << "\", type uri <"
-                << m_typeUri << ">)::~Model(): Model deleted "
-                << "with no aboutToDelete notification"
-                << endl;
-    }
-
-    if (m_alignment) {
-        m_alignment->aboutToDelete();
-        delete m_alignment;
-    }
-}
-
-int
-Model::getNextId()
-{
-    static int nextId = 0;
-    static QMutex mutex;
-    QMutexLocker locker(&mutex);
-    int i = nextId;
-    if (nextId == INT_MAX) {
-        nextId = INT_MIN;
-    }
-    ++nextId;
-    return i;
+    SVDEBUG << "Model::~Model: " << this << " with id " << getId() << endl;
 }
 
 void
-Model::setSourceModel(Model *model)
+Model::setSourceModel(ModelId modelId)
 {
-    if (m_sourceModel) {
-        disconnect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
-                   this, SLOT(sourceModelAboutToBeDeleted()));
-    }
+    m_sourceModel = modelId;
 
-    m_sourceModel = model;
-
-    if (m_sourceModel) {
-        connect(m_sourceModel, SIGNAL(alignmentCompletionChanged()),
-                this, SIGNAL(alignmentCompletionChanged()));
-        connect(m_sourceModel, SIGNAL(aboutToBeDeleted()),
-                this, SLOT(sourceModelAboutToBeDeleted()));
+    auto model = ModelById::get(m_sourceModel);
+    if (model) {
+        connect(model.get(), SIGNAL(alignmentCompletionChanged(ModelId)),
+                this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
 }
 
 void
-Model::aboutToDelete()
-{
-    SVDEBUG << "Model(" << this << ", \""
-            << objectName() << "\", type name \""
-            << getTypeName() << "\", type uri <"
-            << m_typeUri << ">)::aboutToDelete()" << endl;
-
-    if (m_aboutToDelete) {
-        SVDEBUG << "WARNING: Model(" << this << ", \""
-                << objectName() << "\", type uri <"
-                << m_typeUri << ">)::aboutToDelete: "
-                << "aboutToDelete called more than once for the same model"
-                << endl;
-    }
-
-    emit aboutToBeDeleted();
-    m_aboutToDelete = true;
-}
-
-void
-Model::sourceModelAboutToBeDeleted()
-{
-    m_sourceModel = nullptr;
-}
-
-void
-Model::setAlignment(AlignmentModel *alignment)
+Model::setAlignment(ModelId alignmentModel)
 {
     SVDEBUG << "Model(" << this << "): accepting alignment model "
-            << alignment << endl;
-    
-    if (m_alignment) {
-        m_alignment->aboutToDelete();
-        delete m_alignment;
+            << alignmentModel << endl;
+
+    if (auto model = ModelById::get(m_alignmentModel)) {
+        disconnect(model.get(), SIGNAL(completionChanged(ModelId)),
+                   this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
     
-    m_alignment = alignment;
+    m_alignmentModel = alignmentModel;
 
-    if (m_alignment) {
-        connect(m_alignment, SIGNAL(completionChanged()),
-                this, SIGNAL(alignmentCompletionChanged()));
+    if (auto model = ModelById::get(m_alignmentModel)) {
+        connect(model.get(), SIGNAL(completionChanged(ModelId)),
+                this, SIGNAL(alignmentCompletionChanged(ModelId)));
     }
 }
 
-const AlignmentModel *
+const ModelId
 Model::getAlignment() const
 {
-    return m_alignment;
+    return m_alignmentModel;
 }
 
-const Model *
+const ModelId
 Model::getAlignmentReference() const
 {
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->getAlignmentReference();
-        return nullptr;
-    }
-    return m_alignment->getReferenceModel();
+    auto model = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    if (model) return model->getReferenceModel();
+    else return {};
 }
 
 sv_frame_t
 Model::alignToReference(sv_frame_t frame) const
 {
-//    cerr << "Model(" << this << ")::alignToReference(" << frame << ")" << endl;
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->alignToReference(frame);
-        else return frame;
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->alignToReference(frame);
+        }
+        return frame;
     }
-    sv_frame_t refFrame = m_alignment->toReference(frame);
-    const Model *m = m_alignment->getReferenceModel();
-    if (m && refFrame > m->getEndFrame()) refFrame = m->getEndFrame();
-//    cerr << "have alignment, aligned is " << refFrame << endl;
+    
+    sv_frame_t refFrame = alignmentModel->toReference(frame);
+    auto refModel = ModelById::get(alignmentModel->getReferenceModel());
+    if (refModel && refFrame > refModel->getEndFrame()) {
+        refFrame = refModel->getEndFrame();
+    }
     return refFrame;
 }
 
 sv_frame_t
 Model::alignFromReference(sv_frame_t refFrame) const
 {
-//    cerr << "Model(" << this << ")::alignFromReference(" << refFrame << ")" << endl;
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->alignFromReference(refFrame);
-        else return refFrame;
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->alignFromReference(refFrame);
+        }
+        return refFrame;
     }
-    sv_frame_t frame = m_alignment->fromReference(refFrame);
+    
+    sv_frame_t frame = alignmentModel->fromReference(refFrame);
     if (frame > getEndFrame()) frame = getEndFrame();
-//    cerr << "have alignment, aligned is " << frame << endl;
     return frame;
 }
 
@@ -166,17 +115,26 @@ int
 Model::getAlignmentCompletion() const
 {
 #ifdef DEBUG_COMPLETION
-    SVCERR << "Model(" << this << ")::getAlignmentCompletion: m_alignment = "
-           << m_alignment << endl;
+    SVCERR << "Model(" << this
+           << ")::getAlignmentCompletion: m_alignmentModel = "
+           << m_alignmentModel << endl;
 #endif
-    if (!m_alignment) {
-        if (m_sourceModel) return m_sourceModel->getAlignmentCompletion();
-        else return 100;
+
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    
+    if (!alignmentModel) {
+        auto sourceModel = ModelById::get(m_sourceModel);
+        if (sourceModel) {
+            return sourceModel->getAlignmentCompletion();
+        }
+        return 100;
     }
+    
     int completion = 0;
-    (void)m_alignment->isReady(&completion);
+    (void)alignmentModel->isReady(&completion);
 #ifdef DEBUG_COMPLETION
-    SVCERR << "Model(" << this << ")::getAlignmentCompletion: completion = " << completion
+    SVCERR << "Model(" << this
+           << ")::getAlignmentCompletion: completion = " << completion
            << endl;
 #endif
     return completion;
@@ -185,21 +143,24 @@ Model::getAlignmentCompletion() const
 QString
 Model::getTitle() const
 {
-    if (m_sourceModel) return m_sourceModel->getTitle();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getTitle();
     else return "";
 }
 
 QString
 Model::getMaker() const
 {
-    if (m_sourceModel) return m_sourceModel->getMaker();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getMaker();
     else return "";
 }
 
 QString
 Model::getLocation() const
 {
-    if (m_sourceModel) return m_sourceModel->getLocation();
+    auto source = ModelById::get(m_sourceModel);
+    if (source) return source->getLocation();
     else return "";
 }
 

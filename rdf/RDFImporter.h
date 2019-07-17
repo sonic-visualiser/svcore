@@ -22,8 +22,8 @@
 #include <vector>
 
 #include "base/BaseTypes.h"
+#include "data/model/Model.h"
 
-class Model;
 class RDFImporterImpl;
 class ProgressReporter;
 
@@ -47,7 +47,12 @@ public:
     bool isOK();
     QString getErrorString() const;
 
-    std::vector<Model *> getDataModels(ProgressReporter *reporter);
+    /**
+     * Return a list of models imported from the RDF source. The
+     * models have been newly created and registered with ById; the
+     * caller must arrange to release them.
+     */
+    std::vector<ModelId> getDataModels(ProgressReporter *reporter);
 
     enum RDFDocumentType {
         AudioRefAndAnnotations,

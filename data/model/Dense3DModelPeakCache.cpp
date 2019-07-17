@@ -19,34 +19,36 @@
 
 #include "base/HitCount.h"
 
-Dense3DModelPeakCache::Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
+Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                                              int columnsPerPeak) :
-    m_source(source),
+    m_source(sourceId),
     m_columnsPerPeak(columnsPerPeak)
 {
-    m_cache = new EditableDenseThreeDimensionalModel
-        (source->getSampleRate(),
-         getResolution(),
-         source->getHeight(),
-         EditableDenseThreeDimensionalModel::NoCompression,
-         false);
+    auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+    if (!source) {
+        SVCERR << "WARNING: Dense3DModelPeakCache constructed for unknown or wrong-type source model id " << m_source << endl;
+        m_source = {};
+        return;
+    }
 
-    connect(source, SIGNAL(modelChanged()),
-            this, SLOT(sourceModelChanged()));
-    connect(source, SIGNAL(aboutToBeDeleted()),
-            this, SLOT(sourceModelAboutToBeDeleted()));
+    m_cache.reset(new EditableDenseThreeDimensionalModel
+                  (source->getSampleRate(),
+                   source->getResolution() * m_columnsPerPeak,
+                   source->getHeight(),
+                   EditableDenseThreeDimensionalModel::NoCompression,
+                   false));
+
+    connect(source.get(), SIGNAL(modelChanged(ModelId)),
+            this, SLOT(sourceModelChanged(ModelId)));
 }
 
 Dense3DModelPeakCache::~Dense3DModelPeakCache()
 {
-    if (m_cache) m_cache->aboutToDelete();
-    delete m_cache;
 }
 
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
-    if (!m_source) return Column();
     if (!haveColumn(column)) fillColumn(column);
     return m_cache->getColumn(column);
 }
@@ -54,27 +56,19 @@ Dense3DModelPeakCache::getColumn(int column) const
 float
 Dense3DModelPeakCache::getValueAt(int column, int n) const
 {
-    if (!m_source) return 0.f;
     if (!haveColumn(column)) fillColumn(column);
     return m_cache->getValueAt(column, n);
 }
 
 void
-Dense3DModelPeakCache::sourceModelChanged()
+Dense3DModelPeakCache::sourceModelChanged(ModelId)
 {
-    if (!m_source) return;
     if (m_coverage.size() > 0) {
         // The last peak may have come from an incomplete read, which
         // may since have been filled, so reset it
         m_coverage[m_coverage.size()-1] = false;
     }
     m_coverage.resize(getWidth(), false); // retaining data
-}
-
-void
-Dense3DModelPeakCache::sourceModelAboutToBeDeleted()
-{
-    m_source = nullptr;
 }
 
 bool
@@ -104,7 +98,10 @@ Dense3DModelPeakCache::fillColumn(int column) const
         m_coverage.resize(column + 1, false);
     }
 
-    int sourceWidth = m_source->getWidth();
+    auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+    if (!source) return;
+    
+    int sourceWidth = source->getWidth();
     
     Column peak;
     int n = 0;
@@ -113,7 +110,7 @@ Dense3DModelPeakCache::fillColumn(int column) const
         int sourceColumn = column * m_columnsPerPeak + i;
         if (sourceColumn >= sourceWidth) break;
         
-        Column here = m_source->getColumn(sourceColumn);
+        Column here = source->getColumn(sourceColumn);
 
 //        cerr << "Dense3DModelPeakCache::fillColumn(" << column << "): source col "
 //             << sourceColumn << " of " << sourceWidth

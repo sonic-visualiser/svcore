@@ -21,12 +21,12 @@
 #include "system/System.h"
 
 #include "base/Preferences.h"
+#include "base/PlayParameterRepository.h"
 
 #include <QFileInfo>
 #include <QTextStream>
 
 #include <iostream>
-//#include <unistd.h>
 #include <cmath>
 #include <sndfile.h>
 
@@ -85,6 +85,9 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     if (isOK()) fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader) :
@@ -106,10 +109,16 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
     fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
 }
 
 ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
 {
+    PlayParameterRepository::getInstance()->removePlayable
+        (getId().untyped);
+    
     m_exiting = true;
     if (m_fillThread) m_fillThread->wait();
     if (m_myReader) delete m_reader;
@@ -581,14 +590,14 @@ ReadOnlyWaveFileModel::fillTimerTimedOut()
         SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: extent = " << fillExtent << endl;
 #endif
         if (fillExtent > m_lastFillExtent) {
-            emit modelChangedWithin(m_lastFillExtent, fillExtent);
+            emit modelChangedWithin(getId(), m_lastFillExtent, fillExtent);
             m_lastFillExtent = fillExtent;
         }
     } else {
 #ifdef DEBUG_WAVE_FILE_MODEL
         SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::fillTimerTimedOut: no thread" << endl;
 #endif
-        emit modelChanged();
+        emit modelChanged(getId());
     }
 }
 
@@ -607,10 +616,10 @@ ReadOnlyWaveFileModel::cacheFilled()
     SVDEBUG << "ReadOnlyWaveFileModel(" << objectName() << ")::cacheFilled, about to emit things" << endl;
 #endif
     if (getEndFrame() > prevFillExtent) {
-        emit modelChangedWithin(prevFillExtent, getEndFrame());
+        emit modelChangedWithin(getId(), prevFillExtent, getEndFrame());
     }
-    emit modelChanged();
-    emit ready();
+    emit modelChanged(getId());
+    emit ready(getId());
 }
 
 void

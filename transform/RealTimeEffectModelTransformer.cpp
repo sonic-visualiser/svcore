@@ -58,8 +58,11 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
         return;
     }
 
-    DenseTimeValueModel *input = getConformingInput();
-    if (!input) return;
+    auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+    if (!input) {
+        SVCERR << "RealTimeEffectModelTransformer: Input is absent or of wrong type" << endl;
+        return;
+    }
 
     m_plugin = factory->instantiatePlugin(pluginId, 0, 0,
                                           input->getSampleRate(),
@@ -87,19 +90,19 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
             outputChannels = input->getChannelCount();
         }
 
-        WritableWaveFileModel *model = new WritableWaveFileModel
+        auto model = std::make_shared<WritableWaveFileModel>
             (input->getSampleRate(), outputChannels);
 
-        m_outputs.push_back(model);
+        m_outputs.push_back(ModelById::add(model));
 
     } else {
         
-        SparseTimeValueModel *model = new SparseTimeValueModel
-            (input->getSampleRate(), transform.getBlockSize(), 0.0, 0.0, false);
-
+        auto model = std::make_shared<SparseTimeValueModel>
+            (input->getSampleRate(), transform.getBlockSize(),
+             0.0, 0.0, false);
         if (m_units != "") model->setScaleUnits(m_units);
 
-        m_outputs.push_back(model);
+        m_outputs.push_back(ModelById::add(model));
     }
 }
 
@@ -108,38 +111,58 @@ RealTimeEffectModelTransformer::~RealTimeEffectModelTransformer()
     delete m_plugin;
 }
 
-DenseTimeValueModel *
-RealTimeEffectModelTransformer::getConformingInput()
-{
-    DenseTimeValueModel *dtvm =
-        dynamic_cast<DenseTimeValueModel *>(getInputModel());
-    if (!dtvm) {
-        SVDEBUG << "RealTimeEffectModelTransformer::getConformingInput: WARNING: Input model is not conformable to DenseTimeValueModel" << endl;
-    }
-    return dtvm;
-}
-
 void
 RealTimeEffectModelTransformer::run()
 {
-    DenseTimeValueModel *input = getConformingInput();
-    if (!input) return;
-
-    while (!input->isReady() && !m_abandoned) {
-        SVDEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
-        usleep(500000);
-    }
-    if (m_abandoned) {
-        return;
-    }
     if (m_outputs.empty()) {
+        abandon();
         return;
     }
-    
-    SparseTimeValueModel *stvm =
-        dynamic_cast<SparseTimeValueModel *>(m_outputs[0]);
-    WritableWaveFileModel *wwfm =
-        dynamic_cast<WritableWaveFileModel *>(m_outputs[0]);
+
+    bool ready = false;
+    while (!ready && !m_abandoned) {
+        { // scope so as to release input shared_ptr before sleeping
+            auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+            if (!input) {
+                abandon();
+                return;
+            }
+            ready = input->isReady();
+        }
+        if (!ready) {
+            SVDEBUG << "RealTimeEffectModelTransformer::run: Waiting for input model to be ready..." << endl;
+            usleep(500000);
+        }
+    }
+    if (m_abandoned) return;
+
+    auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+    if (!input) {
+        abandon();
+        return;
+    }
+
+    sv_samplerate_t sampleRate;
+    int channelCount;
+    sv_frame_t startFrame;
+    sv_frame_t endFrame;
+
+    { // scope so as not to have this borrowed pointer retained around
+      // the edges of the process loop
+        auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+        if (!input) {
+            abandon();
+            return;
+        }
+
+        sampleRate = input->getSampleRate();
+        channelCount = input->getChannelCount();
+        startFrame = input->getStartFrame();
+        endFrame = input->getEndFrame();
+    }
+
+    auto stvm = ModelById::getAs<SparseTimeValueModel>(m_outputs[0]);
+    auto wwfm = ModelById::getAs<WritableWaveFileModel>(m_outputs[0]);
 
     if (!stvm && !wwfm) {
         return;
@@ -149,16 +172,11 @@ RealTimeEffectModelTransformer::run()
         return;
     }
 
-    sv_samplerate_t sampleRate = input->getSampleRate();
-    int channelCount = input->getChannelCount();
     if (!wwfm && m_input.getChannel() != -1) channelCount = 1;
 
     sv_frame_t blockSize = m_plugin->getBufferSize();
 
     float **inbufs = m_plugin->getAudioInputBuffers();
-
-    sv_frame_t startFrame = m_input.getModel()->getStartFrame();
-    sv_frame_t endFrame = m_input.getModel()->getEndFrame();
 
     Transform transform = m_transforms[0];
     
@@ -201,6 +219,12 @@ RealTimeEffectModelTransformer::run()
 
         sv_frame_t got = 0;
 
+        auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+        if (!input) {
+            abandon();
+            return;
+        }
+
         if (channelCount == 1) {
             if (inbufs && inbufs[0]) {
                 auto data = input->getData
@@ -241,20 +265,6 @@ RealTimeEffectModelTransformer::run()
                 }
             }
         }
-
-/*
-        cerr << "Input for plugin: " << m_plugin->getAudioInputCount() << " channels "<< endl;
-
-        for (int ch = 0; ch < m_plugin->getAudioInputCount(); ++ch) {
-            cerr << "Input channel " << ch << endl;
-            for (int i = 0; i < 100; ++i) {
-                cerr << inbufs[ch][i] << " ";
-                if (isnan(inbufs[ch][i])) {
-                    cerr << "\n\nWARNING: NaN in audio input" << endl;
-                }
-            }
-        }
-*/
 
         m_plugin->run(RealTime::frame2RealTime(blockFrame, sampleRate));
 

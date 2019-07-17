@@ -20,6 +20,7 @@
 #include "TestVampRealTime.h"
 #include "TestColumnOp.h"
 #include "TestMovingMedian.h"
+#include "TestById.h"
 #include "TestEventSeries.h"
 #include "StressEventSeries.h"
 
@@ -91,13 +92,19 @@ int main(int argc, char *argv[])
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
-/*
+    {
+        TestById t;
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+#ifdef NOT_DEFINED
     {
         StressEventSeries t;
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }
-*/
+#endif
     
     if (bad > 0) {
         SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;

@@ -14,19 +14,8 @@
 */
 
 #include "DenseTimeValueModel.h"
-#include "base/PlayParameterRepository.h"
 
 #include <QStringList>
-
-DenseTimeValueModel::DenseTimeValueModel()
-{
-    PlayParameterRepository::getInstance()->addPlayable(this);
-}
-
-DenseTimeValueModel::~DenseTimeValueModel()
-{
-    PlayParameterRepository::getInstance()->removePlayable(this);
-}
         
 QString
 DenseTimeValueModel::toDelimitedDataString(QString delimiter,

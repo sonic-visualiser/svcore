@@ -49,15 +49,18 @@ public:
         m_resolution(resolution),
         m_haveTextLabels(false),
         m_notifier(this,
+                   getId(),
                    notifyOnAdd ?
                    DeferredNotifier::NOTIFY_ALWAYS :
                    DeferredNotifier::NOTIFY_DEFERRED),
         m_completion(100) {
-        PlayParameterRepository::getInstance()->addPlayable(this);
+        PlayParameterRepository::getInstance()->addPlayable
+            (getId().untyped, this);
     }
 
     virtual ~SparseOneDimensionalModel() {
-        PlayParameterRepository::getInstance()->removePlayable(this);
+        PlayParameterRepository::getInstance()->removePlayable
+            (getId().untyped);
     }
 
     QString getTypeName() const override { return tr("Sparse 1-D"); }
@@ -95,12 +98,12 @@ public:
             m_notifier.makeDeferredNotifications();
         }
         
-        emit completionChanged();
+        emit completionChanged(getId());
 
         if (completion == 100) {
             // henceforth:
             m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
-            emit modelChanged();
+            emit modelChanged(getId());
         }
     }
     
@@ -164,7 +167,8 @@ public:
         {   QMutexLocker locker(&m_mutex);
             m_events.remove(e);
         }
-        emit modelChangedWithin(e.getFrame(), e.getFrame() + m_resolution);
+        emit modelChangedWithin(getId(),
+                                e.getFrame(), e.getFrame() + m_resolution);
     }
     
     /**
@@ -239,8 +243,7 @@ public:
         case 2: e1 = e0.withLabel(value.toString()); break;
         }
 
-        ChangeEventsCommand *command =
-            new ChangeEventsCommand(this, tr("Edit Data"));
+        auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
         return command->finish();

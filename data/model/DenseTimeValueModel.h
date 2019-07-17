@@ -32,9 +32,9 @@ class DenseTimeValueModel : public Model
     Q_OBJECT
 
 public:
-    DenseTimeValueModel();
+    DenseTimeValueModel() { }
 
-    virtual ~DenseTimeValueModel();
+    virtual ~DenseTimeValueModel() { }
 
     /**
      * Return the minimum possible value found in this model type.

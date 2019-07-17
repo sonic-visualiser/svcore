@@ -33,19 +33,15 @@ PlayParameterRepository::~PlayParameterRepository()
 }
 
 void
-PlayParameterRepository::addPlayable(const Playable *playable)
+PlayParameterRepository::addPlayable(int playableId, const Playable *playable)
 {
-//    cerr << "PlayParameterRepository:addPlayable playable = " << playable <<  endl;
-
-    if (!getPlayParameters(playable)) {
-
+    if (!getPlayParameters(playableId)) {
+        
         // Give all playables the same type of play parameters for the
         // moment
 
-//        cerr << "PlayParameterRepository:addPlayable: Adding play parameters for " << playable << endl;
-
-        PlayParameters *params = new PlayParameters;
-        m_playParameters[playable] = params;
+        auto params = std::make_shared<PlayParameters>();
+        m_playParameters[playableId] = params;
 
         params->setPlayClipId
             (playable->getDefaultPlayClipId());
@@ -53,64 +49,65 @@ PlayParameterRepository::addPlayable(const Playable *playable)
         params->setPlayAudible
             (playable->getDefaultPlayAudible());
         
-        connect(params, SIGNAL(playParametersChanged()),
+        connect(params.get(), SIGNAL(playParametersChanged()),
                 this, SLOT(playParametersChanged()));
         
-        connect(params, SIGNAL(playClipIdChanged(QString)),
+        connect(params.get(), SIGNAL(playClipIdChanged(QString)),
                 this, SLOT(playClipIdChanged(QString)));
-
-//        cerr << "Connected play parameters " << params << " for playable "
-//                     << playable << " to this " << this << endl;
     }
 }    
 
 void
-PlayParameterRepository::removePlayable(const Playable *playable)
+PlayParameterRepository::removePlayable(int playableId)
 {
-    if (m_playParameters.find(playable) == m_playParameters.end()) {
-        cerr << "WARNING: PlayParameterRepository::removePlayable: unknown playable " << playable << endl;
+    if (m_playParameters.find(playableId) == m_playParameters.end()) {
         return;
     }
-    delete m_playParameters[playable];
-    m_playParameters.erase(playable);
+    m_playParameters.erase(playableId);
 }
 
 void
-PlayParameterRepository::copyParameters(const Playable *from, const Playable *to)
+PlayParameterRepository::copyParameters(int from, int to)
 {
     if (!getPlayParameters(from)) {
         cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << endl;
         return;
     }
     if (!getPlayParameters(to)) {
-        cerr << "WARNING: PlayParameterRepository::copyParameters: target playable unknown, adding it now" << endl;
-        addPlayable(to);
+        cerr << "ERROR: PlayParameterRepository::copyParameters: target playable unknown" << endl;
+        return;
     }
-    getPlayParameters(to)->copyFrom(getPlayParameters(from));
+    getPlayParameters(to)->copyFrom(getPlayParameters(from).get());
 }
 
-PlayParameters *
-PlayParameterRepository::getPlayParameters(const Playable *playable) 
+std::shared_ptr<PlayParameters>
+PlayParameterRepository::getPlayParameters(int playableId) 
 {
-    if (m_playParameters.find(playable) == m_playParameters.end()) return nullptr;
-    return m_playParameters.find(playable)->second;
+    if (m_playParameters.find(playableId) == m_playParameters.end()) {
+        return nullptr;
+    }
+    return m_playParameters.find(playableId)->second;
 }
 
 void
 PlayParameterRepository::playParametersChanged()
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-    emit playParametersChanged(params);
+    for (auto i: m_playParameters) {
+        if (i.second.get() == params) {
+            emit playParametersChanged(i.first);
+            return;
+        }
+    }
 }
 
 void
 PlayParameterRepository::playClipIdChanged(QString id)
 {
     PlayParameters *params = dynamic_cast<PlayParameters *>(sender());
-    for (PlayableParameterMap::iterator i = m_playParameters.begin();
-         i != m_playParameters.end(); ++i) {
-        if (i->second == params) {
-            emit playClipIdChanged(i->first, id);
+    for (auto i: m_playParameters) {
+        if (i.second.get() == params) {
+            emit playClipIdChanged(i.first, id);
             return;
         }
     }
@@ -119,18 +116,14 @@ PlayParameterRepository::playClipIdChanged(QString id)
 void
 PlayParameterRepository::clear()
 {
-//    cerr << "PlayParameterRepository: PlayParameterRepository::clear" << endl;
-    while (!m_playParameters.empty()) {
-        delete m_playParameters.begin()->second;
-        m_playParameters.erase(m_playParameters.begin());
-    }
+    m_playParameters.clear();
 }
 
-PlayParameterRepository::EditCommand::EditCommand(PlayParameters *params) :
+PlayParameterRepository::EditCommand::EditCommand(std::shared_ptr<PlayParameters> params) :
     m_params(params)
 {
-    m_from.copyFrom(m_params);
-    m_to.copyFrom(m_params);
+    m_from.copyFrom(m_params.get());
+    m_to.copyFrom(m_params.get());
 }
 
 void

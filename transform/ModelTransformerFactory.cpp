@@ -56,8 +56,8 @@ ModelTransformerFactory::~ModelTransformerFactory()
 
 ModelTransformer::Input
 ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
-                                                      const vector<Model *> &candidateInputModels,
-                                                      Model *defaultInputModel,
+                                                      vector<ModelId> candidateInputModels,
+                                                      ModelId defaultInputModel,
                                                       AudioPlaySource *source,
                                                       sv_frame_t startFrame,
                                                       sv_frame_t duration,
@@ -65,26 +65,39 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 {
     QMutexLocker locker(&m_mutex);
     
-    ModelTransformer::Input input(nullptr);
+    ModelTransformer::Input input({});
 
     if (candidateInputModels.empty()) return input;
 
     //!!! This will need revision -- we'll have to have a callback
     //from the dialog for when the candidate input model is changed,
     //as we'll need to reinitialise the channel settings in the dialog
-    Model *inputModel = candidateInputModels[0];
+    ModelId inputModel = candidateInputModels[0];
     QStringList candidateModelNames;
     QString defaultModelName;
-    QMap<QString, Model *> modelMap;
-    for (int i = 0; i < (int)candidateInputModels.size(); ++i) {
-        QString modelName = candidateInputModels[i]->objectName();
+    QMap<QString, ModelId> modelMap;
+
+    sv_samplerate_t defaultSampleRate;
+    {   auto im = ModelById::get(inputModel);
+        if (!im) return input;
+        defaultSampleRate = im->getSampleRate();
+    }
+    
+    for (int i = 0; in_range_for(candidateInputModels, i); ++i) {
+
+        auto model = ModelById::get(candidateInputModels[i]);
+        if (!model) return input;
+        
+        QString modelName = model->objectName();
         QString origModelName = modelName;
         int dupcount = 1;
         while (modelMap.contains(modelName)) {
             modelName = tr("%1 <%2>").arg(origModelName).arg(++dupcount);
         }
+        
         modelMap[modelName] = candidateInputModels[i];
         candidateModelNames.push_back(modelName);
+        
         if (candidateInputModels[i] == defaultInputModel) {
             defaultModelName = modelName;
         }
@@ -105,7 +118,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
         
         RealTimePluginFactory *factory = RealTimePluginFactory::instanceFor(id);
 
-        sv_samplerate_t sampleRate = inputModel->getSampleRate();
+        sv_samplerate_t sampleRate = defaultSampleRate;
         int blockSize = 1024;
         int channels = 1;
         if (source) {
@@ -125,7 +138,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
         Vamp::Plugin *vp =
             FeatureExtractionPluginFactory::instance()->instantiatePlugin
-            (id, float(inputModel->getSampleRate()));
+            (id, float(defaultSampleRate));
 
         plugin = vp;
     }
@@ -196,7 +209,7 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
     return transformer;
 }
 
-Model *
+ModelId
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message,
@@ -206,12 +219,12 @@ ModelTransformerFactory::transform(const Transform &transform,
 
     Transforms transforms;
     transforms.push_back(transform);
-    vector<Model *> mm = transformMultiple(transforms, input, message, handler);
-    if (mm.empty()) return nullptr;
+    vector<ModelId> mm = transformMultiple(transforms, input, message, handler);
+    if (mm.empty()) return {};
     else return mm[0];
 }
 
-vector<Model *>
+vector<ModelId>
 ModelTransformerFactory::transformMultiple(const Transforms &transforms,
                                            const ModelTransformer::Input &input,
                                            QString &message,
@@ -220,9 +233,12 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
     SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
     
     QMutexLocker locker(&m_mutex);
+
+    auto inputModel = ModelById::get(input.getModel());
+    if (!inputModel) return {};
     
     ModelTransformer *t = createTransformer(transforms, input);
-    if (!t) return vector<Model *>();
+    if (!t) return {};
 
     if (handler) {
         m_handlers[t] = handler;
@@ -233,22 +249,24 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
     connect(t, SIGNAL(finished()), this, SLOT(transformerFinished()));
 
     t->start();
-    vector<Model *> models = t->detachOutputModels();
-
+    vector<ModelId> models = t->getOutputModels();
+    
     if (!models.empty()) {
-        QString imn = input.getModel()->objectName();
+        QString imn = inputModel->objectName();
         QString trn =
             TransformFactory::getInstance()->getTransformFriendlyName
             (transforms[0].getIdentifier());
-        for (int i = 0; i < (int)models.size(); ++i) {
+        for (int i = 0; in_range_for(models, i); ++i) {
+            auto model = ModelById::get(models[i]);
+            if (!model) continue;
             if (imn != "") {
                 if (trn != "") {
-                    models[i]->setObjectName(tr("%1: %2").arg(imn).arg(trn));
+                    model->setObjectName(tr("%1: %2").arg(imn).arg(trn));
                 } else {
-                    models[i]->setObjectName(imn);
+                    model->setObjectName(imn);
                 }
             } else if (trn != "") {
-                models[i]->setObjectName(trn);
+                model->setObjectName(trn);
             }
         }
     } else {
@@ -284,12 +302,12 @@ ModelTransformerFactory::transformerFinished()
 
     m_runningTransformers.erase(transformer);
 
-    map<AdditionalModelHandler *, vector<Model *>> toNotifyOfMore;
+    map<AdditionalModelHandler *, vector<ModelId>> toNotifyOfMore;
     vector<AdditionalModelHandler *> toNotifyOfNoMore;
     
     if (m_handlers.find(transformer) != m_handlers.end()) {
         if (transformer->willHaveAdditionalOutputModels()) {
-            vector<Model *> mm = transformer->detachAdditionalOutputModels();
+            vector<ModelId> mm = transformer->getAdditionalOutputModels();
             toNotifyOfMore[m_handlers[transformer]] = mm;
         } else {
             toNotifyOfNoMore.push_back(m_handlers[transformer]);
@@ -299,11 +317,9 @@ ModelTransformerFactory::transformerFinished()
 
     m_mutex.unlock();
 
-    // These calls have to be made without the mutex held, as they may
-    // ultimately call back on us (e.g. we have one baroque situation
-    // where this could trigger a command to create a layer, which
-    // triggers the command history to clip the stack, which deletes a
-    // spare old model, which calls back on our modelAboutToBeDeleted)
+    // We make these calls without the mutex held, in case they
+    // ultimately call back on us - not such a concern as in the old
+    // model lifecycle but just in case
     
     for (const auto &i: toNotifyOfMore) {
         i.first->moreModelsAvailable(i.second);
@@ -320,43 +336,6 @@ ModelTransformerFactory::transformerFinished()
     
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
-}
-
-void
-ModelTransformerFactory::modelAboutToBeDeleted(Model *m)
-{
-    TransformerSet affected;
-
-    {
-        QMutexLocker locker(&m_mutex);
-    
-        for (TransformerSet::iterator i = m_runningTransformers.begin();
-             i != m_runningTransformers.end(); ++i) {
-
-            ModelTransformer *t = *i;
-
-            if (t->getInputModel() == m) {
-                affected.insert(t);
-            } else {
-                vector<Model *> mm = t->getOutputModels();
-                for (int i = 0; i < (int)mm.size(); ++i) {
-                    if (mm[i] == m) affected.insert(t);
-                }
-            }
-        }
-    }
-
-    for (TransformerSet::iterator i = affected.begin();
-         i != affected.end(); ++i) {
-
-        ModelTransformer *t = *i;
-
-        t->abandon();
-
-        t->wait(); // this should eventually call back on
-                   // transformerFinished, which will remove from
-                   // m_runningTransformers and delete.
-    }
 }
 
 bool

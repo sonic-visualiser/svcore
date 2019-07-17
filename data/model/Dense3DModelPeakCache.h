@@ -24,28 +24,33 @@ class Dense3DModelPeakCache : public DenseThreeDimensionalModel
     Q_OBJECT
 
 public:
-    Dense3DModelPeakCache(const DenseThreeDimensionalModel *source,
+    Dense3DModelPeakCache(ModelId source, // a DenseThreeDimensionalModel
                           int columnsPerPeak);
     ~Dense3DModelPeakCache();
 
     bool isOK() const override {
-        return m_source && m_source->isOK(); 
+        auto source = ModelById::get(m_source);
+        return source && source->isOK(); 
     }
 
     sv_samplerate_t getSampleRate() const override {
-        return m_source->getSampleRate();
+        auto source = ModelById::get(m_source);
+        return source ? source->getSampleRate() : 0;
     }
 
     sv_frame_t getStartFrame() const override {
-        return m_source->getStartFrame();
+        auto source = ModelById::get(m_source);
+        return source ? source->getStartFrame() : 0;
     }
 
     sv_frame_t getTrueEndFrame() const override {
-        return m_source->getTrueEndFrame();
+        auto source = ModelById::get(m_source);
+        return source ? source->getTrueEndFrame() : 0;
     }
 
     int getResolution() const override {
-        return m_source->getResolution() * m_columnsPerPeak;
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->getResolution() * m_columnsPerPeak : 1;
     }
 
     virtual int getColumnsPerPeak() const {
@@ -53,7 +58,9 @@ public:
     }
     
     int getWidth() const override {
-        int sourceWidth = m_source->getWidth();
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        if (!source) return 0;
+        int sourceWidth = source->getWidth();
         if ((sourceWidth % m_columnsPerPeak) == 0) {
             return sourceWidth / m_columnsPerPeak;
         } else {
@@ -62,15 +69,18 @@ public:
     }
 
     int getHeight() const override {
-        return m_source->getHeight();
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->getHeight() : 0;
     }
 
     float getMinimumLevel() const override {
-        return m_source->getMinimumLevel();
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->getMinimumLevel() : 0.f;
     }
 
     float getMaximumLevel() const override {
-        return m_source->getMaximumLevel();
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->getMaximumLevel() : 1.f;
     }
 
     /**
@@ -84,17 +94,20 @@ public:
     float getValueAt(int col, int n) const override;
 
     QString getBinName(int n) const override {
-        return m_source->getBinName(n);
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->getBinName(n) : "";
     }
 
     bool shouldUseLogValueScale() const override {
-        return m_source->shouldUseLogValueScale();
+        auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+        return source ? source->shouldUseLogValueScale() : false;
     }
 
     QString getTypeName() const override { return tr("Dense 3-D Peak Cache"); }
 
     int getCompletion() const override {
-        return m_source->getCompletion();
+        auto source = ModelById::get(m_source);
+        return source ? source->getCompletion() : 100;
     }
 
     QString toDelimitedDataString(QString, DataExportOptions,
@@ -103,12 +116,11 @@ public:
     }
 
 protected slots:
-    void sourceModelChanged();
-    void sourceModelAboutToBeDeleted();
+    void sourceModelChanged(ModelId);
 
 private:
-    const DenseThreeDimensionalModel *m_source;
-    mutable EditableDenseThreeDimensionalModel *m_cache;
+    ModelId m_source;
+    mutable std::unique_ptr<EditableDenseThreeDimensionalModel> m_cache;
     mutable std::vector<bool> m_coverage; // must be bool, for space efficiency
                                           // (vector of bool uses 1-bit elements)
     int m_columnsPerPeak;
