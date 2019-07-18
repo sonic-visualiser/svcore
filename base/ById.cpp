@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <typeinfo>
 
+//#define DEBUG_BY_ID 1
+
 int IdAlloc::getNextId()
 {
     static int nextId = 0;
@@ -70,8 +72,10 @@ public:
         if (id == IdAlloc::NO_ID) {
             throw std::logic_error("item id should never be NO_ID");
         }
+#ifdef DEBUG_BY_ID
         SVCERR << "ById::add(#" << id << ") of type "
                << typeid(*item.get()).name() << endl;
+#endif
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) != m_items.end()) {
             SVCERR << "ById::add: item with id " << id
@@ -89,7 +93,9 @@ public:
         if (id == IdAlloc::NO_ID) {
             return;
         }
+#ifdef DEBUG_BY_ID
         SVCERR << "ById::release(#" << id << ")" << endl;
+#endif
         QMutexLocker locker(&m_mutex);
         if (m_items.find(id) == m_items.end()) {
             SVCERR << "ById::release: unknown item id " << id << endl;
