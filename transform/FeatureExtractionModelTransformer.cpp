@@ -414,13 +414,22 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
         if (isNoteModel) {
 
+            QSettings settings;
+            settings.beginGroup("Transformer");
+            bool flexi = settings.value("use-flexi-note-model", false).toBool();
+            settings.endGroup();
+
+            SVCERR << "flexi = " << flexi << endl;
+            
             NoteModel *model;
             if (haveExtents) {
                 model = new NoteModel
-                    (modelRate, modelResolution, minValue, maxValue, false);
+                    (modelRate, modelResolution, minValue, maxValue, false,
+                     flexi ? NoteModel::FLEXI_NOTE : NoteModel::NORMAL_NOTE);
             } else {
                 model = new NoteModel
-                    (modelRate, modelResolution, false);
+                    (modelRate, modelResolution, false,
+                     flexi ? NoteModel::FLEXI_NOTE : NoteModel::NORMAL_NOTE);
             }
             model->setScaleUnits(m_descriptors[n].unit.c_str());
             out.reset(model);
