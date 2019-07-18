@@ -47,15 +47,21 @@ Model::setAlignment(ModelId alignmentModel)
 
     if (auto model = ModelById::get(m_alignmentModel)) {
         disconnect(model.get(), SIGNAL(completionChanged(ModelId)),
-                   this, SIGNAL(alignmentCompletionChanged(ModelId)));
+                   this, SLOT(alignmentModelCompletionChanged(ModelId)));
     }
     
     m_alignmentModel = alignmentModel;
 
     if (auto model = ModelById::get(m_alignmentModel)) {
         connect(model.get(), SIGNAL(completionChanged(ModelId)),
-                this, SIGNAL(alignmentCompletionChanged(ModelId)));
+                this, SLOT(alignmentModelCompletionChanged(ModelId)));
     }
+}
+
+void
+Model::alignmentModelCompletionChanged(ModelId)
+{
+    emit alignmentCompletionChanged(getId());
 }
 
 const ModelId

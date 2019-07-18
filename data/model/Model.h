@@ -292,10 +292,14 @@ signals:
 
     /**
      * Emitted when the completion percentage changes for the
-     * calculation of this model's alignment model.
+     * calculation of this model's alignment model. (The ModelId
+     * provided is that of this model, not the alignment model.)
      */
     void alignmentCompletionChanged(ModelId myId);
 
+private slots:
+    void alignmentModelCompletionChanged(ModelId);
+    
 protected:
     Model() :
         m_extendTo(0) { }
