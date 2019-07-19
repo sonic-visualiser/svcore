@@ -73,8 +73,8 @@ signals:
     void modelRemoved();
 
 protected slots:
-    void modelChanged();
-    void modelChangedWithin(sv_frame_t, sv_frame_t);
+    void modelChanged(ModelId);
+    void modelChangedWithin(ModelId, sv_frame_t, sv_frame_t);
 
 protected:
     std::shared_ptr<TabularModel> getTabularModel() const {

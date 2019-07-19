@@ -79,15 +79,10 @@ public:
                        QString indent = "",
                        QString extraAttributes = "") const override;
 
-signals:
-    void modelChanged();
-    void modelChangedWithin(sv_frame_t, sv_frame_t);
-    void completionChanged();
-
 protected slots:
-    void componentModelChanged();
-    void componentModelChangedWithin(sv_frame_t, sv_frame_t);
-    void componentModelCompletionChanged();
+    void componentModelChanged(ModelId);
+    void componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t);
+    void componentModelCompletionChanged(ModelId);
 
 protected:
     ChannelSpecList m_components;

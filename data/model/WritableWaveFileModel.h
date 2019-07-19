@@ -198,6 +198,10 @@ public:
 
 signals:
     void writeCompleted(ModelId);
+
+protected slots:
+    void componentModelChanged(ModelId);
+    void componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t);
     
 protected:
     ReadOnlyWaveFileModel *m_model;

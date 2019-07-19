@@ -158,9 +158,10 @@ WritableWaveFileModel::init(QString path)
     }
     m_model->setStartFrame(m_startFrame);
 
-    connect(m_model, SIGNAL(modelChanged()), this, SIGNAL(modelChanged()));
-    connect(m_model, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-            this, SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)));
+    connect(m_model, SIGNAL(modelChanged(ModelId)),
+            this, SLOT(componentModelChanged(ModelId)));
+    connect(m_model, SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
+            this, SLOT(componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
     
     PlayParameterRepository::getInstance()->addPlayable
         (getId().untyped, this);
@@ -175,6 +176,18 @@ WritableWaveFileModel::~WritableWaveFileModel()
     delete m_targetWriter;
     delete m_temporaryWriter;
     delete m_reader;
+}
+
+void
+WritableWaveFileModel::componentModelChanged(ModelId)
+{
+    emit modelChanged(getId());
+}
+
+void
+WritableWaveFileModel::componentModelChangedWithin(ModelId, sv_frame_t f0, sv_frame_t f1)
+{
+    emit modelChangedWithin(getId(), f0, f1);
 }
 
 void

@@ -59,6 +59,13 @@ AggregateWaveModel::AggregateWaveModel(ChannelSpecList channelSpecs) :
                    << "channels (has " << rate << ", expected " << overallRate
                    << ")" << endl;
         }
+
+        connect(model.get(), SIGNAL(modelChanged(ModelId)),
+                this, SLOT(componentModelChanged(ModelId)));
+        connect(model.get(), SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
+                this, SLOT(componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
+        connect(model.get(), SIGNAL(completionChanged(ModelId)),
+                this, SLOT(componentModelCompletionChanged(ModelId)));
     }
 }
 
@@ -228,21 +235,21 @@ AggregateWaveModel::getComponent(int c) const
 }
 
 void
-AggregateWaveModel::componentModelChanged()
+AggregateWaveModel::componentModelChanged(ModelId)
 {
-    emit modelChanged();
+    emit modelChanged(getId());
 }
 
 void
-AggregateWaveModel::componentModelChangedWithin(sv_frame_t start, sv_frame_t end)
+AggregateWaveModel::componentModelChangedWithin(ModelId, sv_frame_t start, sv_frame_t end)
 {
-    emit modelChangedWithin(start, end);
+    emit modelChangedWithin(getId(), start, end);
 }
 
 void
-AggregateWaveModel::componentModelCompletionChanged()
+AggregateWaveModel::componentModelCompletionChanged(ModelId)
 {
-    emit completionChanged();
+    emit completionChanged(getId());
 }
 
 void

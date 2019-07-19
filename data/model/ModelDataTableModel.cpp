@@ -30,9 +30,10 @@ ModelDataTableModel::ModelDataTableModel(ModelId m) :
 {
     auto model = ModelById::get(m);
     if (model) {
-        connect(model.get(), SIGNAL(modelChanged()), this, SLOT(modelChanged()));
-        connect(model.get(), SIGNAL(modelChangedWithin(sv_frame_t, sv_frame_t)),
-                this, SLOT(modelChangedWithin(sv_frame_t, sv_frame_t)));
+        connect(model.get(), SIGNAL(modelChanged(ModelId)),
+                this, SLOT(modelChanged(ModelId)));
+        connect(model.get(), SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
+                this, SLOT(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
     }
 }
 
@@ -216,7 +217,7 @@ ModelDataTableModel::sort(int column, Qt::SortOrder sortOrder)
 }
 
 void
-ModelDataTableModel::modelChanged()
+ModelDataTableModel::modelChanged(ModelId)
 {
     SVDEBUG << "ModelDataTableModel::modelChanged" << endl;
     QModelIndex ix0;
@@ -234,7 +235,7 @@ ModelDataTableModel::modelChanged()
 }
 
 void 
-ModelDataTableModel::modelChangedWithin(sv_frame_t f0, sv_frame_t f1)
+ModelDataTableModel::modelChangedWithin(ModelId, sv_frame_t f0, sv_frame_t f1)
 {
     SVDEBUG << "ModelDataTableModel::modelChangedWithin(" << f0 << "," << f1 << ")" << endl;
     QModelIndex ix0 = getModelIndexForFrame(f0);
