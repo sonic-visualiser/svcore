@@ -84,6 +84,7 @@ SVDebug::SVDebug() :
                              << fileName << " for writing";
     } else {
         m_ok = true;
+        cerr << "Log file is " << fileName << endl;
         (*this) << "Debug log started at "
                 << QDateTime::currentDateTime().toString() << endl;
     }
