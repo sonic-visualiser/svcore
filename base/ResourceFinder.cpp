@@ -130,11 +130,11 @@ getOldStyleUserResourcePrefix()
 static QString
 getNewStyleUserResourcePrefix()
 {
-    if (qApp->applicationName() == "") {
-        cerr << "ERROR: Can't use ResourceFinder before setting application name" << endl;
-        throw std::logic_error("Can't use ResourceFinder before setting application name");
+    if (qApp->applicationName() == "" || qApp->organizationName() == "") {
+        cerr << "ERROR: Can't use ResourceFinder before setting application and organization name" << endl;
+        throw std::logic_error("Can't use ResourceFinder before setting application and organization name");
     }
-
+    
 #if QT_VERSION >= 0x050000
 
     // This is expected to be much more reliable than
