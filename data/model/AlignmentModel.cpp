@@ -28,7 +28,8 @@ AlignmentModel::AlignmentModel(ModelId reference,
     m_path(nullptr),
     m_reversePath(nullptr),
     m_pathBegun(false),
-    m_pathComplete(false)
+    m_pathComplete(false),
+    m_relativePitch(0)
 {
     setPathFrom(pathSource);
 

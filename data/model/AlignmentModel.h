@@ -62,6 +62,17 @@ public:
     void setPathFrom(ModelId pathSource); // a SparseTimeValueModel
     void setPath(const Path &path);
 
+    /**
+     * Set the calculated pitch relative to a reference. This is
+     * purely metadata.
+     */
+    void setRelativePitch(int cents) { m_relativePitch = cents; }
+
+    /**
+     * Get the value set with setRelativePitch.
+     */
+    int getRelativePitch() const { return m_relativePitch; }
+
     void toXml(QTextStream &stream,
                QString indent = "",
                QString extraAttributes = "") const override;
@@ -90,6 +101,7 @@ protected:
     bool m_pathBegun;
     bool m_pathComplete;
     QString m_error;
+    int m_relativePitch;
 
     void constructPath() const;
     void constructReversePath() const;
