@@ -639,10 +639,12 @@ FeatureExtractionModelTransformer::run()
 
     Transform primaryTransform = m_transforms[0];
 
+    ModelId inputId = getInputModel();
+
     bool ready = false;
     while (!ready && !m_abandoned) {
         { // scope so as to release input shared_ptr before sleeping
-            auto input = ModelById::getAs<DenseTimeValueModel>(getInputModel());
+            auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
             if (!input) {
                 abandon();
                 return;
@@ -650,13 +652,17 @@ FeatureExtractionModelTransformer::run()
             ready = input->isReady();
         }
         if (!ready) {
-            SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model to be ready..." << endl;
+            SVDEBUG << "FeatureExtractionModelTransformer::run: Waiting for input model "
+                    << inputId << " to be ready..." << endl;
             usleep(500000);
         }
     }
     if (m_abandoned) return;
 
-    ModelId inputId = getInputModel();
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+    SVDEBUG << "FeatureExtractionModelTransformer::run: Input model "
+            << inputId << " is ready, going ahead" << endl;
+#endif
 
     sv_samplerate_t sampleRate;
     int channelCount;
@@ -696,6 +702,9 @@ FeatureExtractionModelTransformer::run()
     std::vector<FFTModel *> fftModels;
 
     if (frequencyDomain) {
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+        SVDEBUG << "FeatureExtractionModelTransformer::run: Input is frequency-domain" << endl;
+#endif
         for (int ch = 0; ch < channelCount; ++ch) {
             FFTModel *model = new FFTModel
                 (inputId,
@@ -711,10 +720,14 @@ FeatureExtractionModelTransformer::run()
                     setCompletion(j, 100);
                 }
                 //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
+                SVDEBUG << "FeatureExtractionModelTransformer::run: Failed to create FFT model for input model " << inputId << ": " << err << endl;
                 throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
             }
             fftModels.push_back(model);
         }
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+        SVDEBUG << "FeatureExtractionModelTransformer::run: Created FFT model(s) for frequency-domain input" << endl;
+#endif
     }
 
     RealTime contextStartRT = primaryTransform.getStartTime();
