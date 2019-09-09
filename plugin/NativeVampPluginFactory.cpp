@@ -53,6 +53,12 @@ PluginDeletionNotifyAdapter::~PluginDeletionNotifyAdapter()
 {
     // see notes in vamp-sdk/hostext/PluginLoader.cpp from which this is drawn
     Vamp::Plugin *p = m_plugin;
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    SVCERR << "PluginDeletionNotifyAdapter::~PluginDeletionNotifyAdapter("
+           << this << " for plugin " << p << ")" << endl;
+#endif
+
     delete m_plugin;
     m_plugin = nullptr;
     // acceptable use after free here, as pluginDeleted uses p only as
@@ -144,7 +150,7 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "NativeVampPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
+        SVCERR << "NativeVampPluginFactory::getPluginIdentifiers: Vamp descriptor found" << endl;
 #endif
 
         const VampPluginDescriptor *descriptor = nullptr;
@@ -183,12 +189,16 @@ NativeVampPluginFactory::getPluginIdentifiers(QString &)
                 m_identifiers.push_back(id);
                 m_libraries[id] = libpath;
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                cerr << "NativeVampPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
+                SVCERR << "NativeVampPluginFactory::getPluginIdentifiers: Found plugin id " << id << " at index " << index << endl;
 #endif
                 ++index;
             }
         }
-            
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+        SVCERR << "NativeVampPluginFactory::getPluginIdentifiers: unloading library " << libraryHandle << endl;
+#endif
+
         if (DLCLOSE(libraryHandle) != 0) {
             SVDEBUG << "WARNING: NativeVampPluginFactory::getPluginIdentifiers: Failed to unload library " << libpath << endl;
         }
@@ -208,7 +218,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
     QString file = "";
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-    cerr << "NativeVampPluginFactory::findPluginFile(\""
+    SVCERR << "NativeVampPluginFactory::findPluginFile(\""
               << soname << "\", \"" << inDir << "\")"
               << endl;
 #endif
@@ -225,7 +235,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
         if (QFileInfo(file).exists() && QFileInfo(file).isFile()) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "NativeVampPluginFactory::findPluginFile: "
+            SVCERR << "NativeVampPluginFactory::findPluginFile: "
                       << "found trivially at " << file << endl;
 #endif
 
@@ -237,7 +247,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
             if (QFileInfo(file).baseName() == QFileInfo(soname).baseName()) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-                cerr << "NativeVampPluginFactory::findPluginFile: "
+                SVCERR << "NativeVampPluginFactory::findPluginFile: "
                           << "found \"" << soname << "\" at " << file << endl;
 #endif
 
@@ -246,7 +256,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "NativeVampPluginFactory::findPluginFile (with dir): "
+        SVCERR << "NativeVampPluginFactory::findPluginFile (with dir): "
                   << "not found" << endl;
 #endif
 
@@ -258,7 +268,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
 
         if (fi.isAbsolute() && fi.exists() && fi.isFile()) {
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-            cerr << "NativeVampPluginFactory::findPluginFile: "
+            SVCERR << "NativeVampPluginFactory::findPluginFile: "
                       << "found trivially at " << soname << endl;
 #endif
             return soname;
@@ -279,7 +289,7 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
         }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "NativeVampPluginFactory::findPluginFile: "
+        SVCERR << "NativeVampPluginFactory::findPluginFile: "
                   << "not found" << endl;
 #endif
 
@@ -303,7 +313,7 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
     PluginIdentifier::parseIdentifier(identifier, type, soname, label);
     if (type != "vamp") {
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "NativeVampPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
+        SVCERR << "NativeVampPluginFactory::instantiatePlugin: Wrong factory for plugin type " << type << endl;
 #endif
         return nullptr;
     }
@@ -316,8 +326,8 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
     } else if (found != soname) {
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "NativeVampPluginFactory::instantiatePlugin: Given library name was " << soname << ", found at " << found << endl;
-        cerr << soname << " -> " << found << endl;
+        SVCERR << "NativeVampPluginFactory::instantiatePlugin: Given library name was " << soname << ", found at " << found << endl;
+        SVCERR << soname << " -> " << found << endl;
 #endif
 
     }        
@@ -356,20 +366,19 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
         rv = new PluginDeletionNotifyAdapter(plugin, this);
     }
 
-//    SVDEBUG << "NativeVampPluginFactory::instantiatePlugin: Constructed Vamp plugin, rv is " << rv << endl;
-
-    //!!! need to dlclose() when plugins from a given library are unloaded
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    if (rv) {
+        SVCERR << "NativeVampPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
+    }
+#endif
 
 done:
     if (!rv) {
+        SVCERR << "NativeVampPluginFactory::instantiatePlugin: Failed to construct plugin" << endl;
         if (DLCLOSE(libraryHandle) != 0) {
             SVDEBUG << "WARNING: NativeVampPluginFactory::instantiatePlugin: Failed to unload library " << soname << endl;
         }
     }
-
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-    cerr << "NativeVampPluginFactory::instantiatePlugin: Instantiated plugin " << label << " from library " << soname << ": descriptor " << descriptor << ", rv "<< rv << ", label " << rv->getName() << ", outputs " << rv->getOutputDescriptors().size() << endl;
-#endif
     
     return rv;
 }
@@ -378,13 +387,24 @@ void
 NativeVampPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
 {
     void *handle = m_handleMap[plugin];
-    if (handle) {
-#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
-        cerr << "unloading library " << handle << " for plugin " << plugin << endl;
-#endif
-        DLCLOSE(handle);
-    }
+    if (!handle) return;
+
     m_handleMap.erase(plugin);
+
+#ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
+    SVCERR << "NativeVampPluginFactory::pluginDeleted: Removed from handle map, which now has " << m_handleMap.size() << " entries" << endl;
+#endif
+
+    for (auto h: m_handleMap) {
+        if (h.second == handle) {
+            // still in use
+            SVDEBUG << "NativeVampPluginFactory::pluginDeleted: Not unloading library " << handle << " as other plugins are still loaded from it" << endl;
+            return;
+        }
+    }
+
+    SVDEBUG << "NativeVampPluginFactory::pluginDeleted: Unloading library " << handle << " after last plugin from this library " << plugin << " was deleted" << endl;
+    DLCLOSE(handle);
 }
 
 QString
@@ -427,18 +447,15 @@ NativeVampPluginFactory::generateTaxonomy()
 //            SVDEBUG << "LADSPAPluginFactory::generateFallbackCategories: about to open " << (path[i]+ "/" + dir[j]) << endl;
 
             if (file.open(QIODevice::ReadOnly)) {
-//                    cerr << "...opened" << endl;
                 QTextStream stream(&file);
                 QString line;
 
                 while (!stream.atEnd()) {
                     line = stream.readLine();
-//                    cerr << "line is: \"" << line << "\"" << endl;
                     QString id = PluginIdentifier::canonicalise
                         (line.section("::", 0, 0));
                     QString cat = line.section("::", 1, 1);
                     m_taxonomy[id] = cat;
-//                    cerr << "NativeVampPluginFactory: set id \"" << id << "\" to cat \"" << cat << "\"" << endl;
                 }
             }
         }
