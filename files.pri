@@ -78,6 +78,7 @@ SVCORE_HEADERS = \
            data/midi/rtmidi/RtMidi.h \
            data/model/AggregateWaveModel.h \
            data/model/AlignmentModel.h \
+           data/model/BasicCompressedDenseThreeDimensionalModel.h \
            data/model/Dense3DModelPeakCache.h \
            data/model/DenseThreeDimensionalModel.h \
            data/model/DenseTimeValueModel.h \
@@ -209,6 +210,7 @@ SVCORE_SOURCES = \
            data/midi/rtmidi/RtMidi.cpp \
            data/model/AggregateWaveModel.cpp \
            data/model/AlignmentModel.cpp \
+           data/model/BasicCompressedDenseThreeDimensionalModel.cpp \
            data/model/Dense3DModelPeakCache.cpp \
            data/model/DenseTimeValueModel.cpp \
            data/model/EditableDenseThreeDimensionalModel.cpp \

@@ -335,10 +335,7 @@ CSVFileReader::load() const
                 
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
-                        (sampleRate,
-                         windowSize,
-                         valueColumns,
-                         EditableDenseThreeDimensionalModel::NoCompression);
+                        (sampleRate, windowSize, valueColumns);
                     model = model3;
                     break;
 

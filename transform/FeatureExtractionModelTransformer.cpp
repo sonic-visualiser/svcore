@@ -25,7 +25,7 @@
 #include "base/Exceptions.h"
 #include "data/model/SparseOneDimensionalModel.h"
 #include "data/model/SparseTimeValueModel.h"
-#include "data/model/EditableDenseThreeDimensionalModel.h"
+#include "data/model/BasicCompressedDenseThreeDimensionalModel.h"
 #include "data/model/DenseTimeValueModel.h"
 #include "data/model/NoteModel.h"
 #include "data/model/RegionModel.h"
@@ -504,11 +504,9 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // has a fixed sample rate and more than one value per result
         // must be a dense 3D model.
 
-        EditableDenseThreeDimensionalModel *model =
-            new EditableDenseThreeDimensionalModel
-            (modelRate, modelResolution, binCount,
-             EditableDenseThreeDimensionalModel::BasicMultirateCompression,
-             false);
+        auto model =
+            new BasicCompressedDenseThreeDimensionalModel
+            (modelRate, modelResolution, binCount, false);
 
         if (!m_descriptors[n].binNames.empty()) {
             std::vector<QString> names;
@@ -1148,10 +1146,10 @@ FeatureExtractionModelTransformer::addFeature(int n,
             }
         }
 
-    } else if (isOutputType<EditableDenseThreeDimensionalModel>(n)) {
+    } else if (isOutputType<BasicCompressedDenseThreeDimensionalModel>(n)) {
 
         auto model = ModelById::getAs
-            <EditableDenseThreeDimensionalModel>(outputId);
+            <BasicCompressedDenseThreeDimensionalModel>(outputId);
         if (!model) return;
         
         DenseThreeDimensionalModel::Column values = feature.values;
@@ -1181,6 +1179,6 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
          setOutputCompletion<SparseTimeValueModel>(n, completion) ||
          setOutputCompletion<NoteModel>(n, completion) ||
          setOutputCompletion<RegionModel>(n, completion) ||
-         setOutputCompletion<EditableDenseThreeDimensionalModel>(n, completion));
+         setOutputCompletion<BasicCompressedDenseThreeDimensionalModel>(n, completion));
 }
 

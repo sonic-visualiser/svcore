@@ -35,7 +35,6 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                   (source->getSampleRate(),
                    source->getResolution() * m_columnsPerPeak,
                    source->getHeight(),
-                   EditableDenseThreeDimensionalModel::NoCompression,
                    false));
 
     connect(source.get(), SIGNAL(modelChanged(ModelId)),

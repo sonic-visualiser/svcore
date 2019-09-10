@@ -13,24 +13,33 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H
-#define SV_EDITABLE_DENSE_THREE_DIMENSIONAL_MODEL_H
+#ifndef SV_BASIC_COMPRESSED_DENSE_THREE_DIMENSIONAL_MODEL_H
+#define SV_BASIC_COMPRESSED_DENSE_THREE_DIMENSIONAL_MODEL_H
 
 #include "DenseThreeDimensionalModel.h"
 
-#include <QMutex>
+#include <QReadWriteLock>
 
 #include <vector>
 
-class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
+class BasicCompressedDenseThreeDimensionalModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
 
 public:
-    EditableDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
-                                       int resolution,
-                                       int height,
-                                       bool notifyOnAdd = true);
+
+    // BasicCompressedDenseThreeDimensionalModel supports a basic
+    // compression method that reduces the size of multirate data
+    // (e.g. wavelet transform outputs) that are stored as plain 3d
+    // grids by about 60% or thereabouts.  However, it can only be
+    // used for models whose columns are set in order from 0 and never
+    // subsequently changed.  For a model that is actually going to be
+    // edited, you need an EditableDenseThreeDimensionalModel.
+
+    BasicCompressedDenseThreeDimensionalModel(sv_samplerate_t sampleRate,
+                                              int resolution,
+                                              int height,
+                                              bool notifyOnAdd = true);
 
     bool isOK() const override;
     bool isReady(int *completion = 0) const override;
@@ -185,6 +194,19 @@ protected:
     typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
 
+    // m_trunc is used for simple compression.  If at least the top N
+    // elements of column x (for N = some proportion of the column
+    // height) are equal to those of an earlier column x', then
+    // m_trunc[x] will contain x-x' and column x will be truncated so
+    // as to remove the duplicate elements.  If the equal elements are
+    // at the bottom, then m_trunc[x] will contain x'-x (a negative
+    // value).  If m_trunc[x] is 0 then the whole of column x is
+    // stored.
+    std::vector<signed char> m_trunc;
+    void truncateAndStore(int index, const Column & values);
+    Column expandAndRetrieve(int index) const;
+    Column rightHeight(const Column &c) const;
+
     std::vector<QString> m_binNames;
     std::vector<float> m_binValues;
     QString m_binValueUnit;
@@ -201,7 +223,7 @@ protected:
     sv_frame_t m_sinceLastNotifyMax;
     int m_completion;
 
-    mutable QMutex m_mutex;
+    mutable QReadWriteLock m_lock;
 };
 
 #endif
