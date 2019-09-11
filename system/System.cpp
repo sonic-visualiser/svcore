@@ -186,21 +186,33 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
 #else
 #ifdef __APPLE__
 
-    unsigned int val;
+    unsigned int val32;
+    int64_t val64;
     int mib[2];
     size_t size_sys;
     
     mib[0] = CTL_HW;
 
-    mib[1] = HW_PHYSMEM;
-    size_sys = sizeof(val);
-    sysctl(mib, 2, &val, &size_sys, NULL, 0);
-    if (val) total = val / 1048576;
+    mib[1] = HW_MEMSIZE;
+    size_sys = sizeof(val64);
+    sysctl(mib, 2, &val64, &size_sys, NULL, 0);
+    if (val64) total = val64 / 1048576;
 
     mib[1] = HW_USERMEM;
-    size_sys = sizeof(val);
-    sysctl(mib, 2, &val, &size_sys, NULL, 0);
-    if (val) available = val / 1048576;
+    size_sys = sizeof(val32);
+    sysctl(mib, 2, &val32, &size_sys, NULL, 0);
+    if (val32) available = val32 / 1048576;
+
+    // The newer memsize sysctl returns a 64-bit value, but usermem is
+    // an old 32-bit value that doesn't seem to have an updated
+    // alternative (?) - so it can't return more than 2G. In practice
+    // it seems to return values far lower than that, even where more
+    // than 2G of real memory is free. So we can't actually tell when
+    // we're getting low on memory at all. Most of the time I think we
+    // just need to use an arbitrary value like this one.
+    if (available < total/4) {
+        available = total/4;
+    }
 
     return;
 
