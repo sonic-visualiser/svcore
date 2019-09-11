@@ -22,7 +22,8 @@
 Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                                              int columnsPerPeak) :
     m_source(sourceId),
-    m_columnsPerPeak(columnsPerPeak)
+    m_columnsPerPeak(columnsPerPeak),
+    m_finalColumnIncomplete(false)
 {
     auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
     if (!source) {
@@ -30,12 +31,6 @@ Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
         m_source = {};
         return;
     }
-
-    m_cache.reset(new EditableDenseThreeDimensionalModel
-                  (source->getSampleRate(),
-                   source->getResolution() * m_columnsPerPeak,
-                   source->getHeight(),
-                   false));
 
     connect(source.get(), SIGNAL(modelChanged(ModelId)),
             this, SLOT(sourceModelChanged(ModelId)));
@@ -49,25 +44,25 @@ Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
     if (!haveColumn(column)) fillColumn(column);
-    return m_cache->getColumn(column);
+    return m_cache.at(column);
 }
 
 float
 Dense3DModelPeakCache::getValueAt(int column, int n) const
 {
     if (!haveColumn(column)) fillColumn(column);
-    return m_cache->getValueAt(column, n);
+    return m_cache.at(column).at(n);
 }
 
 void
 Dense3DModelPeakCache::sourceModelChanged(ModelId)
 {
-    if (m_coverage.size() > 0) {
-        // The last peak may have come from an incomplete read, which
-        // may since have been filled, so reset it
+    if (m_finalColumnIncomplete && m_coverage.size() > 0) {
+        // The last peak came from an incomplete read, which may since
+        // have been filled, so reset it
         m_coverage[m_coverage.size()-1] = false;
+        m_finalColumnIncomplete = false;
     }
-    m_coverage.resize(getWidth(), false); // retaining data
 }
 
 bool
@@ -89,44 +84,46 @@ Dense3DModelPeakCache::fillColumn(int column) const
     Profiler profiler("Dense3DModelPeakCache::fillColumn");
 
     if (!in_range_for(m_coverage, column)) {
-        if (m_coverage.size() > 0) {
+        if (m_finalColumnIncomplete && m_coverage.size() > 0) {
             // The last peak may have come from an incomplete read, which
             // may since have been filled, so reset it
             m_coverage[m_coverage.size()-1] = false;
+            m_finalColumnIncomplete = false;
         }
         m_coverage.resize(column + 1, false);
+        m_cache.resize(column + 1, {});
     }
-
+    
     auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
-    if (!source) return;
+    if (!source) {
+        return;
+    }
     
     int sourceWidth = source->getWidth();
-    
-    Column peak;
-    int n = 0;
-    for (int i = 0; i < m_columnsPerPeak; ++i) {
+    int sourceColumn = column * m_columnsPerPeak;
+    if (sourceColumn >= sourceWidth) {
+        return;
+    }
 
-        int sourceColumn = column * m_columnsPerPeak + i;
-        if (sourceColumn >= sourceWidth) break;
+    Column peak = source->getColumn(sourceColumn);
+    int n = int(peak.size());
+    
+    for (int i = 1; i < m_columnsPerPeak; ++i) {
+
+        ++sourceColumn;
+        if (sourceColumn >= sourceWidth) {
+            m_finalColumnIncomplete = true;
+            break;
+        }
         
         Column here = source->getColumn(sourceColumn);
-
-//        cerr << "Dense3DModelPeakCache::fillColumn(" << column << "): source col "
-//             << sourceColumn << " of " << sourceWidth
-//             << " returned " << here.size() << " elts" << endl;
-        
-        if (i == 0) {
-            peak = here;
-            n = int(peak.size());
-        } else {
-            int m = std::min(n, int(here.size()));
-            for (int j = 0; j < m; ++j) {
-                peak[j] = std::max(here[j], peak[j]);
-            }
+        int m = std::min(n, int(here.size()));
+        for (int j = 0; j < m; ++j) {
+            peak[j] = std::max(here[j], peak[j]);
         }
     }
 
-    m_cache->setColumn(column, peak);
+    m_cache[column] = peak;
     m_coverage[column] = true;
 }
 

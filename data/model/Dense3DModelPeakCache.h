@@ -19,6 +19,15 @@
 #include "DenseThreeDimensionalModel.h"
 #include "EditableDenseThreeDimensionalModel.h"
 
+/**
+ * A DenseThreeDimensionalModel that represents a reduction in the
+ * time dimension of another DenseThreeDimensionalModel. Each column
+ * contains the peak values from a number of consecutive columns in
+ * the source. Each column is populated from the source model when
+ * first requested, and is returned from cache on subsequent requests.
+ *
+ * Dense3DModelPeakCache is not thread-safe.
+ */
 class Dense3DModelPeakCache : public DenseThreeDimensionalModel
 {
     Q_OBJECT
@@ -120,10 +129,12 @@ protected slots:
 
 private:
     ModelId m_source;
-    mutable std::unique_ptr<EditableDenseThreeDimensionalModel> m_cache;
-    mutable std::vector<bool> m_coverage; // must be bool, for space efficiency
-                                          // (vector of bool uses 1-bit elements)
     int m_columnsPerPeak;
+
+    mutable std::vector<std::vector<float>> m_cache;
+    mutable std::vector<bool> m_coverage; // bool for space efficiency
+                                          // (vector of bool is a bitmap)
+    mutable bool m_finalColumnIncomplete;
 
     bool haveColumn(int column) const;
     void fillColumn(int column) const;
