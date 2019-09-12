@@ -93,6 +93,9 @@ public:
     int getWindowIncrement() const { return m_windowIncrement; }
     int getFFTSize() const { return m_fftSize; }
 
+    void setMaximumFrequency(double freq);
+    double getMaximumFrequency() const { return m_maximumFrequency; }
+
 //!!! review which of these are ever actually called
     
     float getMagnitudeAt(int x, int y) const;
@@ -140,6 +143,7 @@ private:
     FFTModel &operator=(const FFTModel &) =delete;
 
     const ModelId m_model; // a DenseTimeValueModel
+    sv_samplerate_t m_sampleRate;
     int m_channel;
     WindowType m_windowType;
     int m_windowSize;
@@ -147,6 +151,7 @@ private:
     int m_fftSize;
     Window<float> m_windower;
     mutable breakfastquay::FFT m_fft;
+    double m_maximumFrequency;
     
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                               int bin, double &dist) const;
@@ -163,8 +168,8 @@ private:
     typedef std::vector<float, breakfastquay::StlAllocator<float>> fvec;
     typedef std::vector<std::complex<float>,
                         breakfastquay::StlAllocator<std::complex<float>>> cvec;
-    
-    const cvec &getFFTColumn(int column) const; // returns ref for immediate use only
+
+    cvec getFFTColumn(int column) const;
     fvec getSourceSamples(int column) const;
     fvec getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
     fvec getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;

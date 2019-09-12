@@ -39,6 +39,7 @@ FFTModel::FFTModel(ModelId modelId,
                    int windowIncrement,
                    int fftSize) :
     m_model(modelId),
+    m_sampleRate(0),
     m_channel(channel),
     m_windowType(windowType),
     m_windowSize(windowSize),
@@ -46,6 +47,7 @@ FFTModel::FFTModel(ModelId modelId,
     m_fftSize(fftSize),
     m_windower(windowType, windowSize),
     m_fft(fftSize),
+    m_maximumFrequency(0.0),
     m_cacheWriteIndex(0),
     m_cacheSize(3)
 {
@@ -63,6 +65,8 @@ FFTModel::FFTModel(ModelId modelId,
 
     auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
     if (model) {
+        m_sampleRate = model->getSampleRate();
+        
         connect(model.get(), SIGNAL(modelChanged(ModelId)),
                 this, SIGNAL(modelChanged(ModelId)));
         connect(model.get(), SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
@@ -95,9 +99,13 @@ FFTModel::getCompletion() const
 sv_samplerate_t
 FFTModel::getSampleRate() const
 {
-    auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
-    if (model) return model->getSampleRate();
-    else return 0;
+    return m_sampleRate;
+}
+
+void
+FFTModel::setMaximumFrequency(double freq)
+{
+    m_maximumFrequency = freq;
 }
 
 int
@@ -112,7 +120,14 @@ FFTModel::getWidth() const
 int
 FFTModel::getHeight() const
 {
-    return m_fftSize / 2 + 1;
+    int height = m_fftSize / 2 + 1;
+    if (m_maximumFrequency != 0.0) {
+        int maxBin = int(ceil(m_maximumFrequency * m_fftSize) / m_sampleRate);
+        if (maxBin >= 0 && maxBin < height) {
+            return maxBin + 1;
+        }
+    }
+    return height;
 }
 
 QString
@@ -120,7 +135,7 @@ FFTModel::getBinName(int n) const
 {
     sv_samplerate_t sr = getSampleRate();
     if (!sr) return "";
-    QString name = tr("%1 Hz").arg((n * sr) / ((getHeight()-1) * 2));
+    QString name = tr("%1 Hz").arg((double(n) * sr) / m_fftSize);
     return name;
 }
 
@@ -178,6 +193,11 @@ FFTModel::getPhaseAt(int x, int y) const
 void
 FFTModel::getValuesAt(int x, int y, float &re, float &im) const
 {
+    if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) {
+        re = 0.f;
+        im = 0.f;
+        return;
+    }
     auto col = getFFTColumn(x);
     re = col[y].real();
     im = col[y].imag();
@@ -339,9 +359,12 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-const FFTModel::cvec &
+FFTModel::cvec
 FFTModel::getFFTColumn(int n) const
 {
+    int h = getHeight();
+    bool truncate = (h < m_fftSize / 2 + 1);
+    
     // The small cache (i.e. the m_cached deque) is for cases where
     // values are looked up individually, and for e.g. peak-frequency
     // spectrograms where values from two consecutive columns are
@@ -351,7 +374,11 @@ FFTModel::getFFTColumn(int n) const
     for (const auto &incache : m_cached) {
         if (incache.n == n) {
             inSmallCache.hit();
-            return incache.col;
+            if (!truncate) {
+                return incache.col;
+            } else {
+                return cvec(incache.col.begin(), incache.col.begin() + h);
+            }
         }
     }
     inSmallCache.miss();
@@ -371,7 +398,11 @@ FFTModel::getFFTColumn(int n) const
 
     m_cacheWriteIndex = (m_cacheWriteIndex + 1) % m_cacheSize;
 
-    return col;
+    if (!truncate) {
+        return col;
+    } else {
+        return cvec(col.begin(), col.begin() + h);
+    }
 }
 
 bool
