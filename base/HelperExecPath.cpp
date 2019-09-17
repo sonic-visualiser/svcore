@@ -72,13 +72,17 @@ HelperExecPath::getHelperDirPaths()
 
     QStringList dirs;
     QString appName = QCoreApplication::applicationName();
-    QString binaryName = QCoreApplication::arguments().at(0);
     QString myDir = QCoreApplication::applicationDirPath();
+    QString binaryName = QFileInfo(QCoreApplication::arguments().at(0))
+        .fileName();
+        
 #ifdef Q_OS_MAC
     dirs.push_back(myDir + "/../Resources");
 #else
 #ifndef Q_OS_WIN32
-    dirs.push_back(myDir + "/../lib/" + binaryName);
+    if (binaryName != "") {
+        dirs.push_back(myDir + "/../lib/" + binaryName);
+    }
     dirs.push_back(myDir + "/../lib/" + appName);
 #endif
     dirs.push_back(myDir + "/helpers");
