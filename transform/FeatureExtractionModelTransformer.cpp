@@ -643,7 +643,7 @@ FeatureExtractionModelTransformer::run()
     while (!ready && !m_abandoned) {
         { // scope so as to release input shared_ptr before sleeping
             auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
-            if (!input) {
+            if (!input || !input->isOK()) {
                 abandon();
                 return;
             }
@@ -717,9 +717,13 @@ FeatureExtractionModelTransformer::run()
                 for (int j = 0; in_range_for(m_outputNos, j); ++j) {
                     setCompletion(j, 100);
                 }
-                //!!! need a better way to handle this -- previously we were using a QMessageBox but that isn't an appropriate thing to do here either
                 SVDEBUG << "FeatureExtractionModelTransformer::run: Failed to create FFT model for input model " << inputId << ": " << err << endl;
-                throw AllocationFailed("Failed to create the FFT model for this feature extraction model transformer: error is: " + err);
+                m_message = "Failed to create the FFT model for this feature extraction model transformer: error is: " + err;
+                for (int cch = 0; cch < ch; ++cch) {
+                    delete fftModels[cch];
+                }
+                abandon();
+                return;
             }
             fftModels.push_back(model);
         }

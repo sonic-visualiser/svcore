@@ -78,7 +78,7 @@ public:
     QString getBinName(int n) const override;
     bool shouldUseLogValueScale() const override { return true; }
     int getCompletion() const override;
-    virtual QString getError() const { return ""; } //!!!???
+    virtual QString getError() const { return m_error; }
     virtual sv_frame_t getFillExtent() const { return getEndFrame(); }
     QString toDelimitedDataString(QString, DataExportOptions,
                                   sv_frame_t, sv_frame_t) const override {
@@ -152,6 +152,7 @@ private:
     Window<float> m_windower;
     mutable breakfastquay::FFT m_fft;
     double m_maximumFrequency;
+    mutable QString m_error;
     
     int getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
                               int bin, double &dist) const;

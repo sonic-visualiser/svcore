@@ -71,6 +71,8 @@ FFTModel::FFTModel(ModelId modelId,
                 this, SIGNAL(modelChanged(ModelId)));
         connect(model.get(), SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
                 this, SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
+    } else {
+        m_error = QString("Model #%1 is not available").arg(m_model.untyped);
     }
 }
 
@@ -82,7 +84,15 @@ bool
 FFTModel::isOK() const
 {
     auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
-    return (model && model->isOK());
+    if (!model) {
+        m_error = QString("Model #%1 is not available").arg(m_model.untyped);
+        return false;
+    }
+    if (!model->isOK()) {
+        m_error = QString("Model #%1 is not OK").arg(m_model.untyped);
+        return false;
+    }
+    return true;
 }
 
 int
