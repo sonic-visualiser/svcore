@@ -370,9 +370,13 @@ public:
                 list << QString("%1").arg(m_level);
             }
         }
-        
-        if (m_label != "") list << m_label;
+
+        // Put URI before label, to preserve the ordering previously
+        // used in the custom Image model exporter. We shouldn't
+        // change the column ordering unless (until?) we provide a
+        // facility for the user to customise it
         if (m_uri != "") list << m_uri;
+        if (m_label != "") list << m_label;
         
         return list.join(delimiter);
     }
