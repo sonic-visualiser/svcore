@@ -208,7 +208,7 @@ public:
     }
 
     int getColumnCount() const override {
-        return 5;
+        return 6;
     }
 
     bool isColumnTimeValue(int column) const override {
@@ -234,8 +234,8 @@ public:
         case 0: return tr("Time");
         case 1: return tr("Frame");
         case 2: return tr("Duration");
-        case 3: return tr("Minimum Frequency");
-        case 4: return tr("Maximum Frequency");
+        case 3: return tr("Min Freq");
+        case 4: return tr("Max Freq");
         case 5: return tr("Label");
         default: return tr("Unknown");
         }
@@ -323,14 +323,34 @@ public:
                                   DataExportOptions options,
                                   sv_frame_t startFrame,
                                   sv_frame_t duration) const override {
-        return m_events.toDelimitedDataString
-            (delimiter,
-             options,
-             startFrame,
-             duration,
-             m_sampleRate,
-             m_resolution,
-             Event().withValue(0.f).withDuration(m_resolution));
+
+        // We need a custom format here
+
+        EventVector ee = m_events.getEventsSpanning(startFrame, duration);
+
+        QString s;
+        
+        for (auto e: ee) {
+
+            QStringList list;
+
+            list << RealTime::frame2RealTime
+                (e.getFrame(), getSampleRate())
+                .toString().c_str()
+                 << RealTime::frame2RealTime
+                (e.getFrame() + e.getDuration(), getSampleRate())
+                .toString().c_str()
+                 << QString("%1").arg(e.getValue())
+                 << QString("%1").arg(e.getValue() + fabsf(e.getLevel()));
+            
+            if (e.getLabel() != "") {
+                list << e.getLabel();
+            }
+
+            s += list.join(delimiter) + "\n";
+        }
+
+        return s;
     }
 
 protected:
