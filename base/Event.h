@@ -259,10 +259,12 @@ public:
     struct ExportNameOptions {
 
         ExportNameOptions() :
-            valueAtttributeName("value"),
+            valueAttributeName("value"),
+            levelAttributeName("level"),
             uriAttributeName("uri") { }
 
-        QString valueAtttributeName;
+        QString valueAttributeName;
+        QString levelAttributeName;
         QString uriAttributeName;
     };
     
@@ -275,13 +277,15 @@ public:
         stream << indent << QString("<point frame=\"%1\" ").arg(m_frame);
         if (m_haveValue) {
             stream << QString("%1=\"%2\" ")
-                .arg(opts.valueAtttributeName).arg(m_value);
+                .arg(opts.valueAttributeName).arg(m_value);
         }
         if (m_haveDuration) {
             stream << QString("duration=\"%1\" ").arg(m_duration);
         }
         if (m_haveLevel) {
-            stream << QString("level=\"%1\" ").arg(m_level);
+            stream << QString("%1=\"%2\" ")
+                .arg(opts.levelAttributeName)
+                .arg(m_level);
         }
         if (m_haveReferenceFrame) {
             stream << QString("referenceFrame=\"%1\" ")

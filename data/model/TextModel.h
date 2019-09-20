@@ -253,7 +253,7 @@ public:
              .arg(extraAttributes));
 
         Event::ExportNameOptions options;
-        options.valueAtttributeName = "height";
+        options.valueAttributeName = "height";
         
         m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }

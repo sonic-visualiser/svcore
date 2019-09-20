@@ -303,24 +303,28 @@ public:
         Model::toXml
             (out,
              indent,
-             QString("type=\"sparse\" dimensions=\"4\" resolution=\"%1\" "
+             QString("type=\"sparse\" dimensions=\"2\" resolution=\"%1\" "
                      "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"%4\" "
                      "minimum=\"%5\" maximum=\"%6\" units=\"%7\" %8")
              .arg(m_resolution)
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
              .arg(m_events.getExportId())
-             .arg("timefrequency")
+             .arg("timefrequencybox")
              .arg(m_frequencyMinimum)
              .arg(m_frequencyMaximum)
              .arg(encodeEntities(m_units))
              .arg(extraAttributes));
+
+        Event::ExportNameOptions options;
+        options.valueAttributeName = "frequency";
+        options.levelAttributeName = "extent";
         
-        m_events.toXml(out, indent, QString("dimensions=\"3\""));
+        m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }
 
     QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
+                                  DataExportOptions,
                                   sv_frame_t startFrame,
                                   sv_frame_t duration) const override {
 
