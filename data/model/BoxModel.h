@@ -12,39 +12,46 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_TEXT_MODEL_H
-#define SV_TEXT_MODEL_H
+#ifndef SV_BOX_MODEL_H
+#define SV_BOX_MODEL_H
 
 #include "EventCommands.h"
 #include "TabularModel.h"
 #include "Model.h"
 #include "DeferredNotifier.h"
 
-#include "base/EventSeries.h"
-#include "base/XmlExportable.h"
 #include "base/RealTime.h"
+#include "base/EventSeries.h"
+#include "base/UnitDatabase.h"
 
 #include "system/System.h"
 
-#include <QStringList>
+#include <QMutex>
 
 /**
- * A model representing casual textual annotations. A piece of text
- * has a given time and y-value in the [0,1) range (indicative of
- * height on the window).
+ * BoxModel -- a model for annotations having start time, duration,
+ * and a value range. We use Events as usual for these, but treat the
+ * "value" as the lower value and "level" as the difference between
+ * lower and upper values, which is expected to be non-negative (if it
+ * is negative, abs(level) will be used).
+ *
+ * This is expected to be used most often for time-frequency boxes.
  */
-class TextModel : public Model,
-                  public TabularModel,
-                  public EventEditable
+class BoxModel : public Model,
+                 public TabularModel,
+                 public EventEditable
 {
     Q_OBJECT
     
 public:
-    TextModel(sv_samplerate_t sampleRate,
-              int resolution,
-              bool notifyOnAdd = true) :
+    BoxModel(sv_samplerate_t sampleRate,
+             int resolution,
+             bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
+        m_valueMinimum(0.f),
+        m_valueMaximum(0.f),
+        m_haveExtents(false),
         m_notifier(this,
                    getId(),
                    notifyOnAdd ?
@@ -53,7 +60,26 @@ public:
         m_completion(100) {
     }
 
-    QString getTypeName() const override { return tr("Text"); }
+    BoxModel(sv_samplerate_t sampleRate, int resolution,
+             float valueMinimum, float valueMaximum,
+             bool notifyOnAdd = true) :
+        m_sampleRate(sampleRate),
+        m_resolution(resolution),
+        m_valueMinimum(valueMinimum),
+        m_valueMaximum(valueMaximum),
+        m_haveExtents(true),
+        m_notifier(this,
+                   getId(),
+                   notifyOnAdd ?
+                   DeferredNotifier::NOTIFY_ALWAYS :
+                   DeferredNotifier::NOTIFY_DEFERRED),
+        m_completion(100) {
+    }
+
+    virtual ~BoxModel() {
+    }
+
+    QString getTypeName() const override { return tr("Box"); }
     bool isSparse() const override { return true; }
     bool isOK() const override { return true; }
 
@@ -62,18 +88,27 @@ public:
     }
     sv_frame_t getTrueEndFrame() const override {
         if (m_events.isEmpty()) return 0;
-        sv_frame_t e = m_events.getEndFrame() + 1;
+        sv_frame_t e = m_events.getEndFrame();
         if (e % m_resolution == 0) return e;
         else return (e / m_resolution + 1) * m_resolution;
     }
-    
+
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
     int getResolution() const { return m_resolution; }
+
+    QString getScaleUnits() const { return m_units; }
+    void setScaleUnits(QString units) {
+        m_units = units;
+        UnitDatabase::getInstance()->registerUnit(units);
+    }
+
+    float getValueMinimum() const { return m_valueMinimum; }
+    float getValueMaximum() const { return m_valueMaximum; }
     
     int getCompletion() const override { return m_completion; }
 
     void setCompletion(int completion, bool update = true) {
-        
+
         {   QMutexLocker locker(&m_mutex);
             if (m_completion == completion) return;
             m_completion = completion;
@@ -91,11 +126,10 @@ public:
             emit modelChanged(getId());
         }
     }
-    
+
     /**
      * Query methods.
      */
-
     int getEventCount() const {
         return m_events.count();
     }
@@ -114,9 +148,8 @@ public:
     EventVector getEventsCovering(sv_frame_t f) const {
         return m_events.getEventsCovering(f);
     }
-    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration,
-                                int overspill = 0) const {
-        return m_events.getEventsWithin(f, duration, overspill);
+    EventVector getEventsWithin(sv_frame_t f, sv_frame_t duration) const {
+        return m_events.getEventsWithin(f, duration);
     }
     EventVector getEventsStartingWithin(sv_frame_t f, sv_frame_t duration) const {
         return m_events.getEventsStartingWithin(f, duration);
@@ -137,34 +170,56 @@ public:
      */
     void add(Event e) override {
 
-        {   QMutexLocker locker(&m_mutex);
-            m_events.add(e.withoutDuration().withoutLevel());
+        bool allChange = false;
+
+        {
+            QMutexLocker locker(&m_mutex);
+            m_events.add(e);
+
+            float f0 = e.getValue();
+            float f1 = f0 + fabsf(e.getLevel());
+            
+            if (!m_haveExtents || f0 < m_valueMinimum) {
+                m_valueMinimum = f0; allChange = true;
+            }
+            if (!m_haveExtents || f1 > m_valueMaximum) {
+                m_valueMaximum = f1; allChange = true;
+            }
+            m_haveExtents = true;
         }
         
-        m_notifier.update(e.getFrame(), m_resolution);
+        m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
+
+        if (allChange) {
+            emit modelChanged(getId());
+        }
     }
     
     void remove(Event e) override {
-        {   QMutexLocker locker(&m_mutex);
+        {
+            QMutexLocker locker(&m_mutex);
             m_events.remove(e);
         }
         emit modelChangedWithin(getId(),
-                                e.getFrame(), e.getFrame() + m_resolution);
+                                e.getFrame(),
+                                e.getFrame() + e.getDuration() + m_resolution);
     }
-
+    
     /**
      * TabularModel methods.  
      */
-    
+
     int getRowCount() const override {
         return m_events.count();
     }
 
     int getColumnCount() const override {
-        return 4;
+        return 6;
     }
 
     bool isColumnTimeValue(int column) const override {
+        // NB duration is not a "time value" -- that's for columns
+        // whose sort ordering is exactly that of the frame time
         return (column < 2);
     }
 
@@ -184,19 +239,21 @@ public:
         switch (column) {
         case 0: return tr("Time");
         case 1: return tr("Frame");
-        case 2: return tr("Height");
-        case 3: return tr("Label");
+        case 2: return tr("Duration");
+        case 3: return tr("Min Freq");
+        case 4: return tr("Max Freq");
+        case 5: return tr("Label");
         default: return tr("Unknown");
         }
     }
 
     SortType getSortType(int column) const override {
-        if (column == 3) return SortAlphabetical;
+        if (column == 5) return SortAlphabetical;
         return SortNumeric;
     }
 
     QVariant getData(int row, int column, int role) const override {
-        
+
         if (row < 0 || row >= m_events.count()) {
             return QVariant();
         }
@@ -206,13 +263,17 @@ public:
         switch (column) {
         case 0: return adaptFrameForRole(e.getFrame(), getSampleRate(), role);
         case 1: return int(e.getFrame());
-        case 2: return e.getValue();
-        case 3: return e.getLabel();
+        case 2: return int(e.getDuration());
+        case 3: return adaptValueForRole(e.getValue(), getScaleUnits(), role);
+        case 4: return adaptValueForRole(e.getValue() + fabsf(e.getLevel()),
+                                         getScaleUnits(), role);
+        case 5: return e.getLabel();
         default: return QVariant();
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+    Command *getSetDataCommand(int row, int column, const QVariant &value,
+                               int role) override {
         
         if (row < 0 || row >= m_events.count()) return nullptr;
         if (role != Qt::EditRole) return nullptr;
@@ -224,8 +285,11 @@ public:
         case 0: e1 = e0.withFrame(sv_frame_t(round(value.toDouble() *
                                                    getSampleRate()))); break;
         case 1: e1 = e0.withFrame(value.toInt()); break;
-        case 2: e1 = e0.withValue(float(value.toDouble())); break;
-        case 3: e1 = e0.withLabel(value.toString()); break;
+        case 2: e1 = e0.withDuration(value.toInt()); break;
+        case 3: e1 = e0.withValue(float(value.toDouble())); break;
+        case 4: e1 = e0.withLevel(fabsf(float(value.toDouble()) -
+                                        e0.getValue())); break;
+        case 5: e1 = e0.withLabel(value.toString()); break;
         }
 
         auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
@@ -233,6 +297,7 @@ public:
         command->add(e1);
         return command->finish();
     }
+
     
     /**
      * XmlExportable methods.
@@ -245,47 +310,72 @@ public:
             (out,
              indent,
              QString("type=\"sparse\" dimensions=\"2\" resolution=\"%1\" "
-                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"text\" %4")
+                     "notifyOnAdd=\"%2\" dataset=\"%3\" subtype=\"%4\" "
+                     "minimum=\"%5\" maximum=\"%6\" units=\"%7\" %8")
              .arg(m_resolution)
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
              .arg(m_events.getExportId())
+             .arg("box")
+             .arg(m_valueMinimum)
+             .arg(m_valueMaximum)
+             .arg(encodeEntities(m_units))
              .arg(extraAttributes));
 
         Event::ExportNameOptions options;
-        options.valueAttributeName = "height";
+        options.levelAttributeName = "extent";
         
         m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }
 
     QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
+                                  DataExportOptions,
                                   sv_frame_t startFrame,
                                   sv_frame_t duration) const override {
-        return m_events.toDelimitedDataString(delimiter,
-                                              options,
-                                              startFrame,
-                                              duration,
-                                              m_sampleRate,
-                                              m_resolution,
-                                              Event().withValue(0.f));
+
+        // We need a custom format here
+
+        EventVector ee = m_events.getEventsSpanning(startFrame, duration);
+
+        QString s;
+        
+        for (auto e: ee) {
+
+            QStringList list;
+
+            list << RealTime::frame2RealTime
+                (e.getFrame(), getSampleRate())
+                .toString().c_str()
+                 << RealTime::frame2RealTime
+                (e.getFrame() + e.getDuration(), getSampleRate())
+                .toString().c_str()
+                 << QString("%1").arg(e.getValue())
+                 << QString("%1").arg(e.getValue() + fabsf(e.getLevel()));
+            
+            if (e.getLabel() != "") {
+                list << e.getLabel();
+            }
+
+            s += list.join(delimiter) + "\n";
+        }
+
+        return s;
     }
-  
+
 protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 
+    float m_valueMinimum;
+    float m_valueMaximum;
+    bool m_haveExtents;
+    QString m_units;
     DeferredNotifier m_notifier;
     int m_completion;
 
     EventSeries m_events;
 
-    mutable QMutex m_mutex;  
-
+    mutable QMutex m_mutex;
 };
 
-
 #endif
-
-
-    

@@ -31,6 +31,7 @@ public:
         TwoDimensionalModel,
         TwoDimensionalModelWithDuration,
         TwoDimensionalModelWithDurationAndPitch,
+        TwoDimensionalModelWithDurationAndExtent,
         ThreeDimensionalModel,
         WaveFileModel
     };
