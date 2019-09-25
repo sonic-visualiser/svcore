@@ -106,12 +106,6 @@ FFTModel::getCompletion() const
     return c;
 }
 
-sv_samplerate_t
-FFTModel::getSampleRate() const
-{
-    return m_sampleRate;
-}
-
 void
 FFTModel::setMaximumFrequency(double freq)
 {
@@ -143,10 +137,13 @@ FFTModel::getHeight() const
 QString
 FFTModel::getBinName(int n) const
 {
-    sv_samplerate_t sr = getSampleRate();
-    if (!sr) return "";
-    QString name = tr("%1 Hz").arg((double(n) * sr) / m_fftSize);
-    return name;
+    return tr("%1 Hz").arg(getBinValue(n));
+}
+
+float
+FFTModel::getBinValue(int n) const
+{
+    return float((m_sampleRate * n) / m_fftSize);
 }
 
 FFTModel::Column

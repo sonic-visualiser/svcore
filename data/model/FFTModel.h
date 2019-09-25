@@ -60,26 +60,45 @@ public:
 
     // DenseThreeDimensionalModel and Model methods:
     //
+    bool isOK() const override;
+    int getCompletion() const override;
+    
     int getWidth() const override;
     int getHeight() const override;
-    float getValueAt(int x, int y) const override { return getMagnitudeAt(x, y); }
-    bool isOK() const override;
-    sv_frame_t getStartFrame() const override { return 0; }
+    
+    float getValueAt(int x, int y) const override {
+        return getMagnitudeAt(x, y);
+    }
+    sv_frame_t getStartFrame() const override {
+        return 0;
+    }
     sv_frame_t getTrueEndFrame() const override {
         return sv_frame_t(getWidth()) * getResolution() + getResolution();
     }
-    sv_samplerate_t getSampleRate() const override;
-    int getResolution() const override { return m_windowIncrement; }
-    virtual int getYBinCount() const { return getHeight(); }
+    sv_samplerate_t getSampleRate() const override {
+        return m_sampleRate;
+    }
+    int getResolution() const override {
+        return m_windowIncrement;
+    }
+    
     float getMinimumLevel() const override { return 0.f; } // Can't provide
     float getMaximumLevel() const override { return 1.f; } // Can't provide
+
     Column getColumn(int x) const override; // magnitudes
-    virtual Column getPhases(int x) const;
+
+    bool hasBinValues() const override {
+        return true;
+    }
+    QString getBinValueUnit() const override {
+        return "Hz";
+    }
+    bool shouldUseLogValueScale() const override {
+        return true;
+    }
+    float getBinValue(int n) const override;
     QString getBinName(int n) const override;
-    bool shouldUseLogValueScale() const override { return true; }
-    int getCompletion() const override;
-    virtual QString getError() const { return m_error; }
-    virtual sv_frame_t getFillExtent() const { return getEndFrame(); }
+
     QString toDelimitedDataString(QString, DataExportOptions,
                                   sv_frame_t, sv_frame_t) const override {
         return "";
@@ -87,6 +106,8 @@ public:
 
     // FFTModel methods:
     //
+    QString getError() const { return m_error; }
+
     int getChannel() const { return m_channel; }
     WindowType getWindowType() const { return m_windowType; }
     int getWindowSize() const { return m_windowSize; }
@@ -100,6 +121,7 @@ public:
     
     float getMagnitudeAt(int x, int y) const;
     float getMaximumMagnitudeAt(int x) const;
+    Column getPhases(int x) const;
     float getPhaseAt(int x, int y) const;
     void getValuesAt(int x, int y, float &real, float &imaginary) const;
     bool getMagnitudesAt(int x, float *values, int minbin = 0, int count = 0) const;
