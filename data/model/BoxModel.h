@@ -12,8 +12,8 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef SV_TIME_FREQUENCY_BOX_MODEL_H
-#define SV_TIME_FREQUENCY_BOX_MODEL_H
+#ifndef SV_BOX_MODEL_H
+#define SV_BOX_MODEL_H
 
 #include "EventCommands.h"
 #include "TabularModel.h"
@@ -29,26 +29,28 @@
 #include <QMutex>
 
 /**
- * TimeFrequencyBoxModel -- a model for annotations having start time,
- * duration, and a frequency range. We use Events as usual for these,
- * but treat the "value" as the lower frequency and "level" as the
- * difference between lower and upper frequencies, which is expected
- * to be non-negative (if it is negative, abs(level) will be used).
+ * BoxModel -- a model for annotations having start time, duration,
+ * and a value range. We use Events as usual for these, but treat the
+ * "value" as the lower value and "level" as the difference between
+ * lower and upper values, which is expected to be non-negative (if it
+ * is negative, abs(level) will be used).
+ *
+ * This is expected to be used most often for time-frequency boxes.
  */
-class TimeFrequencyBoxModel : public Model,
-                              public TabularModel,
-                              public EventEditable
+class BoxModel : public Model,
+                 public TabularModel,
+                 public EventEditable
 {
     Q_OBJECT
     
 public:
-    TimeFrequencyBoxModel(sv_samplerate_t sampleRate,
+    BoxModel(sv_samplerate_t sampleRate,
                           int resolution,
                           bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
-        m_frequencyMinimum(0.f),
-        m_frequencyMaximum(0.f),
+        m_valueMinimum(0.f),
+        m_valueMaximum(0.f),
         m_haveExtents(false),
         m_notifier(this,
                    getId(),
@@ -58,13 +60,13 @@ public:
         m_completion(100) {
     }
 
-    TimeFrequencyBoxModel(sv_samplerate_t sampleRate, int resolution,
-                          float frequencyMinimum, float frequencyMaximum,
+    BoxModel(sv_samplerate_t sampleRate, int resolution,
+                          float valueMinimum, float valueMaximum,
                           bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
-        m_frequencyMinimum(frequencyMinimum),
-        m_frequencyMaximum(frequencyMaximum),
+        m_valueMinimum(valueMinimum),
+        m_valueMaximum(valueMaximum),
         m_haveExtents(true),
         m_notifier(this,
                    getId(),
@@ -74,10 +76,10 @@ public:
         m_completion(100) {
     }
 
-    virtual ~TimeFrequencyBoxModel() {
+    virtual ~BoxModel() {
     }
 
-    QString getTypeName() const override { return tr("Time-Frequency Box"); }
+    QString getTypeName() const override { return tr("Box"); }
     bool isSparse() const override { return true; }
     bool isOK() const override { return true; }
 
@@ -94,10 +96,14 @@ public:
     sv_samplerate_t getSampleRate() const override { return m_sampleRate; }
     int getResolution() const { return m_resolution; }
 
-    QString getScaleUnits() const { return "Hz"; }
+    QString getScaleUnits() const { return m_units; }
+    void setScaleUnits(QString units) {
+        m_units = units;
+        UnitDatabase::getInstance()->registerUnit(units);
+    }
 
-    float getFrequencyMinimum() const { return m_frequencyMinimum; }
-    float getFrequencyMaximum() const { return m_frequencyMaximum; }
+    float getValueMinimum() const { return m_valueMinimum; }
+    float getValueMaximum() const { return m_valueMaximum; }
     
     int getCompletion() const override { return m_completion; }
 
@@ -173,11 +179,11 @@ public:
             float f0 = e.getValue();
             float f1 = f0 + fabsf(e.getLevel());
             
-            if (!m_haveExtents || f0 < m_frequencyMinimum) {
-                m_frequencyMinimum = f0; allChange = true;
+            if (!m_haveExtents || f0 < m_valueMinimum) {
+                m_valueMinimum = f0; allChange = true;
             }
-            if (!m_haveExtents || f1 > m_frequencyMaximum) {
-                m_frequencyMaximum = f1; allChange = true;
+            if (!m_haveExtents || f1 > m_valueMaximum) {
+                m_valueMaximum = f1; allChange = true;
             }
             m_haveExtents = true;
         }
@@ -310,14 +316,13 @@ public:
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
              .arg(m_events.getExportId())
-             .arg("timefrequencybox")
-             .arg(m_frequencyMinimum)
-             .arg(m_frequencyMaximum)
+             .arg("box")
+             .arg(m_valueMinimum)
+             .arg(m_valueMaximum)
              .arg(encodeEntities(m_units))
              .arg(extraAttributes));
 
         Event::ExportNameOptions options;
-        options.valueAttributeName = "frequency";
         options.levelAttributeName = "extent";
         
         m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
@@ -361,8 +366,8 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 
-    float m_frequencyMinimum;
-    float m_frequencyMaximum;
+    float m_valueMinimum;
+    float m_valueMaximum;
     bool m_haveExtents;
     QString m_units;
     DeferredNotifier m_notifier;

@@ -101,7 +101,7 @@ SVCORE_HEADERS = \
            data/model/SparseTimeValueModel.h \
            data/model/TabularModel.h \
            data/model/TextModel.h \
-           data/model/TimeFrequencyBoxModel.h \
+           data/model/BoxModel.h \
            data/model/WaveformOversampler.h \
            data/model/WaveFileModel.h \
            data/model/ReadOnlyWaveFileModel.h \
