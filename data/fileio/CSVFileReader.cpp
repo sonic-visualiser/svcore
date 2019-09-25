@@ -25,6 +25,7 @@
 #include "model/EditableDenseThreeDimensionalModel.h"
 #include "model/RegionModel.h"
 #include "model/NoteModel.h"
+#include "model/BoxModel.h"
 #include "model/WritableWaveFileModel.h"
 #include "DataFileReaderFactory.h"
 
@@ -201,6 +202,7 @@ CSVFileReader::load() const
     SparseTimeValueModel *model2 = nullptr;
     RegionModel *model2a = nullptr;
     NoteModel *model2b = nullptr;
+    BoxModel *model2c = nullptr;
     EditableDenseThreeDimensionalModel *model3 = nullptr;
     WritableWaveFileModel *modelW = nullptr;
     Model *model = nullptr;
@@ -333,6 +335,11 @@ CSVFileReader::load() const
                     model = model2b;
                     break;
                 
+                case CSVFormat::TwoDimensionalModelWithDurationAndExtent:
+                    model2c = new BoxModel(sampleRate, windowSize, false);
+                    model = model2c;
+                    break;
+                
                 case CSVFormat::ThreeDimensionalModel:
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate, windowSize, valueColumns);
@@ -368,7 +375,8 @@ CSVFileReader::load() const
                 if (model) {
                     delete model;
                     model = nullptr;
-                    model1 = nullptr; model2 = nullptr; model2a = nullptr; model2b = nullptr;
+                    model1 = nullptr; model2 = nullptr;
+                    model2a = nullptr; model2b = nullptr; model2c = nullptr;
                     model3 = nullptr; modelW = nullptr;
                 }
                 abandoned = true;
@@ -376,6 +384,7 @@ CSVFileReader::load() const
             }
             
             float value = 0.f;
+            float otherValue = 0.f;
             float pitch = 0.f;
             QString label = "";
 
@@ -407,6 +416,9 @@ CSVFileReader::load() const
                     break;
 
                 case CSVFormat::ColumnValue:
+                    if (haveAnyValue) {
+                        otherValue = value;
+                    }
                     value = s.toFloat();
                     haveAnyValue = true;
                     break;
@@ -452,6 +464,18 @@ CSVFileReader::load() const
                 float level = ((value >= 0.f && value <= 1.f) ? value : 1.f);
                 Event note(frameNo, pitch, duration, level, label);
                 model2b->add(note);
+
+            } else if (modelType == CSVFormat::TwoDimensionalModelWithDurationAndExtent) {
+
+                float level = 0.f;
+                if (value > otherValue) {
+                    level = value - otherValue;
+                    value = otherValue;
+                } else {
+                    level = otherValue - value;
+                }
+                Event box(frameNo, value, duration, level, label);
+                model2c->add(box);
 
             } else if (modelType == CSVFormat::ThreeDimensionalModel) {
 
