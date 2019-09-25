@@ -45,8 +45,8 @@ class BoxModel : public Model,
     
 public:
     BoxModel(sv_samplerate_t sampleRate,
-                          int resolution,
-                          bool notifyOnAdd = true) :
+             int resolution,
+             bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
         m_valueMinimum(0.f),
@@ -61,8 +61,8 @@ public:
     }
 
     BoxModel(sv_samplerate_t sampleRate, int resolution,
-                          float valueMinimum, float valueMaximum,
-                          bool notifyOnAdd = true) :
+             float valueMinimum, float valueMaximum,
+             bool notifyOnAdd = true) :
         m_sampleRate(sampleRate),
         m_resolution(resolution),
         m_valueMinimum(valueMinimum),
