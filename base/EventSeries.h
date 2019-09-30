@@ -21,6 +21,8 @@
 #include <set>
 #include <functional>
 
+#include <QMutex>
+
 //#define DEBUG_EVENT_SERIES 1
 
 /**
@@ -40,7 +42,7 @@
  * does work, and should be acceptable in interactive use, but it is
  * very slow in bulk.
  *
- * EventSeries is not thread-safe.
+ * EventSeries is thread-safe.
  */
 class EventSeries : public XmlExportable
 {
@@ -48,14 +50,12 @@ public:
     EventSeries() : m_finalDurationlessEventFrame(0) { }
     ~EventSeries() =default;
 
-    EventSeries(const EventSeries &) =default;
+    EventSeries(const EventSeries &);
 
-    EventSeries &operator=(const EventSeries &) =delete;
-    EventSeries &operator=(EventSeries &&) =delete;
+    EventSeries &operator=(const EventSeries &);
+    EventSeries &operator=(EventSeries &&);
     
-    bool operator==(const EventSeries &other) const {
-        return m_events == other.m_events;
-    }
+    bool operator==(const EventSeries &other) const;
 
     static EventSeries fromEvents(const EventVector &ee);
     
@@ -233,6 +233,10 @@ public:
                                   Event fillEvent) const;
     
 private:
+    mutable QMutex m_mutex;
+
+    EventSeries::EventSeries(const EventSeries &other, const QMutexLocker &);
+    
     /**
      * This vector contains all events in the series, in the normal
      * sort order. For backward compatibility we must support series
@@ -278,9 +282,12 @@ private:
      */
     sv_frame_t m_finalDurationlessEventFrame;
     
-    /** Create a seam at the given frame, copying from the prior seam
-     *  if there is one. If a seam already exists at the given frame,
-     *  leave it untouched.
+    /** 
+     * Create a seam at the given frame, copying from the prior seam
+     * if there is one. If a seam already exists at the given frame,
+     * leave it untouched.
+     *
+     * Call with m_mutex locked.
      */
     void createSeam(sv_frame_t frame) {
         auto itr = m_seams.lower_bound(frame);
@@ -298,15 +305,21 @@ private:
         }
     }
 
+    /** 
+     * Return true if the two seam map entries contain the same set of
+     * events.
+     *
+     * Precondition: no duplicates, i.e. no event appears more than
+     * once in s1 or more than once in s2.
+     *
+     * Call with m_mutex locked.
+     */
     bool seamsEqual(const std::vector<Event> &s1,
                     const std::vector<Event> &s2) const {
         
         if (s1.size() != s2.size()) {
             return false;
         }
-
-        // precondition: no event appears more than once in s1 or more
-        // than once in s2
 
 #ifdef DEBUG_EVENT_SERIES
         for (int i = 0; in_range_for(s1, i); ++i) {

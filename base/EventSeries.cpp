@@ -14,6 +14,47 @@
 
 #include "EventSeries.h"
 
+#include <QMutexLocker>
+
+EventSeries::EventSeries(const EventSeries &other) :
+    EventSeries(other, QMutexLocker(&other.m_mutex))
+{
+}
+
+EventSeries::EventSeries(const EventSeries &other, const QMutexLocker &) :
+    m_events(other.m_events),
+    m_seams(other.m_seams),
+    m_finalDurationlessEventFrame(other.m_finalDurationlessEventFrame)
+{
+}
+
+EventSeries &
+EventSeries::operator=(const EventSeries &other)
+{
+    QMutexLocker locker(&m_mutex), otherLocker(&other.m_mutex);
+    m_events = other.m_events;
+    m_seams = other.m_seams;
+    m_finalDurationlessEventFrame = other.m_finalDurationlessEventFrame;
+    return *this;
+}
+
+EventSeries &
+EventSeries::operator=(EventSeries &&other)
+{
+    QMutexLocker locker(&m_mutex), otherLocker(&other.m_mutex);
+    m_events = std::move(other.m_events);
+    m_seams = std::move(other.m_seams);
+    m_finalDurationlessEventFrame = std::move(other.m_finalDurationlessEventFrame);
+    return *this;
+}
+
+bool
+EventSeries::operator==(const EventSeries &other) const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_events == other.m_events;
+}
+
 EventSeries
 EventSeries::fromEvents(const EventVector &v)
 {
@@ -27,12 +68,14 @@ EventSeries::fromEvents(const EventVector &v)
 bool
 EventSeries::isEmpty() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_events.empty();
 }
 
 int
 EventSeries::count() const
 {
+    QMutexLocker locker(&m_mutex);
     if (m_events.size() > INT_MAX) {
         throw std::logic_error("too many events");
     }
@@ -42,6 +85,8 @@ EventSeries::count() const
 void
 EventSeries::add(const Event &p)
 {
+    QMutexLocker locker(&m_mutex);
+
     bool isUnique = true;
 
     auto pitr = lower_bound(m_events.begin(), m_events.end(), p);
@@ -87,6 +132,8 @@ EventSeries::add(const Event &p)
 void
 EventSeries::remove(const Event &p)
 {
+    QMutexLocker locker(&m_mutex);
+
     // If we are removing the last (unique) example of an event,
     // then we also need to remove it from the seam map. If this
     // is only one of multiple identical events, then we don't.
@@ -198,12 +245,14 @@ EventSeries::remove(const Event &p)
 bool
 EventSeries::contains(const Event &p) const
 {
+    QMutexLocker locker(&m_mutex);
     return binary_search(m_events.begin(), m_events.end(), p);
 }
 
 void
 EventSeries::clear()
 {
+    QMutexLocker locker(&m_mutex);
     m_events.clear();
     m_seams.clear();
     m_finalDurationlessEventFrame = 0;
@@ -212,6 +261,7 @@ EventSeries::clear()
 sv_frame_t
 EventSeries::getStartFrame() const
 {
+    QMutexLocker locker(&m_mutex);
     if (m_events.empty()) return 0;
     return m_events.begin()->getFrame();
 }
@@ -219,6 +269,8 @@ EventSeries::getStartFrame() const
 sv_frame_t
 EventSeries::getEndFrame() const
 {
+    QMutexLocker locker(&m_mutex);
+
     sv_frame_t latest = 0;
 
     if (m_events.empty()) return latest;
@@ -239,6 +291,8 @@ EventVector
 EventSeries::getEventsSpanning(sv_frame_t frame,
                                sv_frame_t duration) const
 {
+    QMutexLocker locker(&m_mutex);
+
     EventVector span;
     
     const sv_frame_t start = frame;
@@ -286,6 +340,8 @@ EventSeries::getEventsWithin(sv_frame_t frame,
                              sv_frame_t duration,
                              int overspill) const
 {
+    QMutexLocker locker(&m_mutex);
+
     EventVector span;
     
     const sv_frame_t start = frame;
@@ -336,6 +392,8 @@ EventVector
 EventSeries::getEventsStartingWithin(sv_frame_t frame,
                                      sv_frame_t duration) const
 {
+    QMutexLocker locker(&m_mutex);
+
     EventVector span;
     
     const sv_frame_t start = frame;
@@ -358,6 +416,8 @@ EventSeries::getEventsStartingWithin(sv_frame_t frame,
 EventVector
 EventSeries::getEventsCovering(sv_frame_t frame) const
 {
+    QMutexLocker locker(&m_mutex);
+
     EventVector cover;
 
     // first find any zero-duration events
@@ -400,12 +460,16 @@ EventSeries::getEventsCovering(sv_frame_t frame) const
 EventVector
 EventSeries::getAllEvents() const
 {
+    QMutexLocker locker(&m_mutex);
+
     return m_events;
 }
 
 bool
 EventSeries::getEventPreceding(const Event &e, Event &preceding) const
 {
+    QMutexLocker locker(&m_mutex);
+
     auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
     if (pitr == m_events.end() || *pitr != e) {
         return false;
@@ -421,6 +485,8 @@ EventSeries::getEventPreceding(const Event &e, Event &preceding) const
 bool
 EventSeries::getEventFollowing(const Event &e, Event &following) const
 {
+    QMutexLocker locker(&m_mutex);
+
     auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
     if (pitr == m_events.end() || *pitr != e) {
         return false;
@@ -441,6 +507,8 @@ EventSeries::getNearestEventMatching(sv_frame_t startSearchAt,
                                      Direction direction,
                                      Event &found) const
 {
+    QMutexLocker locker(&m_mutex);
+
     auto pitr = lower_bound(m_events.begin(), m_events.end(),
                             Event(startSearchAt));
 
@@ -475,6 +543,8 @@ EventSeries::getNearestEventMatching(sv_frame_t startSearchAt,
 Event
 EventSeries::getEventByIndex(int index) const
 {
+    QMutexLocker locker(&m_mutex);
+
     if (index < 0 || index >= count()) {
         throw std::logic_error("index out of range");
     }
@@ -484,6 +554,8 @@ EventSeries::getEventByIndex(int index) const
 int
 EventSeries::getIndexForEvent(const Event &e) const
 {
+    QMutexLocker locker(&m_mutex);
+
     auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
     auto d = distance(m_events.begin(), pitr);
     if (d < 0 || d > INT_MAX) return 0;
@@ -495,7 +567,17 @@ EventSeries::toXml(QTextStream &out,
                    QString indent,
                    QString extraAttributes) const
 {
-    toXml(out, indent, extraAttributes, Event::ExportNameOptions());
+    QMutexLocker locker(&m_mutex);
+
+    out << indent << QString("<dataset id=\"%1\" %2>\n")
+        .arg(getExportId())
+        .arg(extraAttributes);
+    
+    for (const auto &p: m_events) {
+        p.toXml(out, indent + "  ", "", {});
+    }
+    
+    out << indent << "</dataset>\n";
 }
 
 void
@@ -504,6 +586,8 @@ EventSeries::toXml(QTextStream &out,
                    QString extraAttributes,
                    Event::ExportNameOptions options) const
 {
+    QMutexLocker locker(&m_mutex);
+
     out << indent << QString("<dataset id=\"%1\" %2>\n")
         .arg(getExportId())
         .arg(extraAttributes);
@@ -524,6 +608,8 @@ EventSeries::toDelimitedDataString(QString delimiter,
                                    sv_frame_t resolution,
                                    Event fillEvent) const
 {
+    QMutexLocker locker(&m_mutex);
+
     QString s;
 
     const sv_frame_t end = startFrame + duration;
