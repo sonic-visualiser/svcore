@@ -39,6 +39,8 @@
  * order of start frame. Inserting (or deleting) events in the middle
  * does work, and should be acceptable in interactive use, but it is
  * very slow in bulk.
+ *
+ * EventSeries is not thread-safe.
  */
 class EventSeries : public XmlExportable
 {
@@ -47,8 +49,9 @@ public:
     ~EventSeries() =default;
 
     EventSeries(const EventSeries &) =default;
-    EventSeries &operator=(const EventSeries &) =default;
-    EventSeries &operator=(EventSeries &&) =default;
+
+    EventSeries &operator=(const EventSeries &) =delete;
+    EventSeries &operator=(EventSeries &&) =delete;
     
     bool operator==(const EventSeries &other) const {
         return m_events == other.m_events;
