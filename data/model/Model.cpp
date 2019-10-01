@@ -30,6 +30,8 @@ Model::~Model()
 void
 Model::setSourceModel(ModelId modelId)
 {
+    QMutexLocker locker(&m_mutex);
+    
     m_sourceModel = modelId;
 
     auto model = ModelById::get(m_sourceModel);
@@ -42,6 +44,8 @@ Model::setSourceModel(ModelId modelId)
 void
 Model::setAlignment(ModelId alignmentModel)
 {
+    QMutexLocker locker(&m_mutex);
+
     SVDEBUG << "Model(" << this << "): accepting alignment model "
             << alignmentModel << endl;
 
@@ -67,12 +71,14 @@ Model::alignmentModelCompletionChanged(ModelId)
 const ModelId
 Model::getAlignment() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_alignmentModel;
 }
 
 const ModelId
 Model::getAlignmentReference() const
 {
+    QMutexLocker locker(&m_mutex);
     auto model = ModelById::getAs<AlignmentModel>(m_alignmentModel);
     if (model) return model->getReferenceModel();
     else return {};
@@ -81,10 +87,17 @@ Model::getAlignmentReference() const
 sv_frame_t
 Model::alignToReference(sv_frame_t frame) const
 {
-    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    ModelId alignmentModelId, sourceModelId;
+    {
+        QMutexLocker locker(&m_mutex);
+        alignmentModelId = m_alignmentModel;
+        sourceModelId = m_sourceModel;
+    }
+    
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(alignmentModelId);
     
     if (!alignmentModel) {
-        auto sourceModel = ModelById::get(m_sourceModel);
+        auto sourceModel = ModelById::get(sourceModelId);
         if (sourceModel) {
             return sourceModel->alignToReference(frame);
         }
@@ -102,10 +115,17 @@ Model::alignToReference(sv_frame_t frame) const
 sv_frame_t
 Model::alignFromReference(sv_frame_t refFrame) const
 {
-    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
-    
+    ModelId alignmentModelId, sourceModelId;
+    {
+        QMutexLocker locker(&m_mutex);
+        alignmentModelId = m_alignmentModel;
+        sourceModelId = m_sourceModel;
+    }
+
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(alignmentModelId);
+   
     if (!alignmentModel) {
-        auto sourceModel = ModelById::get(m_sourceModel);
+        auto sourceModel = ModelById::get(sourceModelId);
         if (sourceModel) {
             return sourceModel->alignFromReference(refFrame);
         }
@@ -120,16 +140,23 @@ Model::alignFromReference(sv_frame_t refFrame) const
 int
 Model::getAlignmentCompletion() const
 {
+    ModelId alignmentModelId, sourceModelId;
+    {
+        QMutexLocker locker(&m_mutex);
+        alignmentModelId = m_alignmentModel;
+        sourceModelId = m_sourceModel;
+    }
+
 #ifdef DEBUG_COMPLETION
     SVCERR << "Model(" << this
            << ")::getAlignmentCompletion: m_alignmentModel = "
            << m_alignmentModel << endl;
 #endif
 
-    auto alignmentModel = ModelById::getAs<AlignmentModel>(m_alignmentModel);
+    auto alignmentModel = ModelById::getAs<AlignmentModel>(alignmentModelId);
     
     if (!alignmentModel) {
-        auto sourceModel = ModelById::get(m_sourceModel);
+        auto sourceModel = ModelById::get(sourceModelId);
         if (sourceModel) {
             return sourceModel->getAlignmentCompletion();
         }
@@ -149,6 +176,7 @@ Model::getAlignmentCompletion() const
 QString
 Model::getTitle() const
 {
+    QMutexLocker locker(&m_mutex);
     auto source = ModelById::get(m_sourceModel);
     if (source) return source->getTitle();
     else return "";
@@ -157,6 +185,7 @@ Model::getTitle() const
 QString
 Model::getMaker() const
 {
+    QMutexLocker locker(&m_mutex);
     auto source = ModelById::get(m_sourceModel);
     if (source) return source->getMaker();
     else return "";
@@ -165,6 +194,7 @@ Model::getMaker() const
 QString
 Model::getLocation() const
 {
+    QMutexLocker locker(&m_mutex);
     auto source = ModelById::get(m_sourceModel);
     if (source) return source->getLocation();
     else return "";

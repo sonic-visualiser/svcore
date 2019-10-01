@@ -28,7 +28,6 @@
 #include "base/Pitch.h"
 #include "system/System.h"
 
-#include <QMutex>
 #include <QMutexLocker>
 
 class NoteModel : public Model,
@@ -56,7 +55,6 @@ public:
         m_haveExtents(false),
         m_valueQuantization(0),
         m_units(""),
-        m_extendTo(0),
         m_notifier(this,
                    getId(),
                    notifyOnAdd ?
@@ -83,7 +81,6 @@ public:
         m_haveExtents(true),
         m_valueQuantization(0),
         m_units(""),
-        m_extendTo(0),
         m_notifier(this,
                    getId(),
                    notifyOnAdd ?
@@ -105,9 +102,11 @@ public:
     bool isOK() const override { return true; }
     
     sv_frame_t getStartFrame() const override {
+        QMutexLocker locker(&m_mutex);
         return m_events.getStartFrame();
     }
     sv_frame_t getTrueEndFrame() const override {
+        QMutexLocker locker(&m_mutex);
         if (m_events.isEmpty()) return 0;
         sv_frame_t e = m_events.getEndFrame();
         if (e % m_resolution == 0) return e;
@@ -122,8 +121,12 @@ public:
         return "elecpiano";
     }
 
-    QString getScaleUnits() const { return m_units; }
+    QString getScaleUnits() const {
+        QMutexLocker locker(&m_mutex);
+        return m_units;
+    }
     void setScaleUnits(QString units) {
+        QMutexLocker locker(&m_mutex);
         m_units = units;
         UnitDatabase::getInstance()->registerUnit(units);
     }
@@ -138,7 +141,7 @@ public:
 
     void setCompletion(int completion, bool update = true) {
 
-        {   QMutexLocker locker(&m_mutex);
+        {
             if (m_completion == completion) return;
             m_completion = completion;
         }
@@ -202,20 +205,16 @@ public:
 
         bool allChange = false;
            
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.add(e);
-
-            float v = e.getValue();
-            if (!ISNAN(v) && !ISINF(v)) {
-                if (!m_haveExtents || v < m_valueMinimum) {
-                    m_valueMinimum = v; allChange = true;
-                }
-                if (!m_haveExtents || v > m_valueMaximum) {
-                    m_valueMaximum = v; allChange = true;
-                }
-                m_haveExtents = true;
+        m_events.add(e);
+        float v = e.getValue();
+        if (!ISNAN(v) && !ISINF(v)) {
+            if (!m_haveExtents || v < m_valueMinimum) {
+                m_valueMinimum = v; allChange = true;
             }
+            if (!m_haveExtents || v > m_valueMaximum) {
+                m_valueMaximum = v; allChange = true;
+            }
+            m_haveExtents = true;
         }
         
         m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
@@ -226,10 +225,7 @@ public:
     }
     
     void remove(Event e) override {
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.remove(e);
-        }
+        m_events.remove(e);
         emit modelChangedWithin(getId(),
                                 e.getFrame(),
                                 e.getFrame() + e.getDuration() + m_resolution);
@@ -408,21 +404,15 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 
-    float m_valueMinimum;
-    float m_valueMaximum;
-    bool m_haveExtents;
+    std::atomic<float> m_valueMinimum;
+    std::atomic<float> m_valueMaximum;
+    std::atomic<bool> m_haveExtents;
     float m_valueQuantization;
     QString m_units;
-    sv_frame_t m_extendTo;
     DeferredNotifier m_notifier;
-    int m_completion;
+    std::atomic<int> m_completion;
 
     EventSeries m_events;
-
-    mutable QMutex m_mutex;
-
-    //!!! do we have general docs for ownership and synchronisation of models?
-    // this might be a good opportunity to stop using bare pointers to them
 };
 
 #endif

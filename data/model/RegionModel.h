@@ -26,8 +26,6 @@
 
 #include "system/System.h"
 
-#include <QMutex>
-
 /**
  * RegionModel -- a model for intervals associated with a value, which
  * we call regions for no very compelling reason.
@@ -113,8 +111,7 @@ public:
 
     void setCompletion(int completion, bool update = true) {
 
-        {   QMutexLocker locker(&m_mutex);
-            if (m_completion == completion) return;
+        {   if (m_completion == completion) return;
             m_completion = completion;
         }
 
@@ -176,24 +173,21 @@ public:
 
         bool allChange = false;
            
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.add(e);
-
-            float v = e.getValue();
-            if (!ISNAN(v) && !ISINF(v)) {
-                if (!m_haveExtents || v < m_valueMinimum) {
-                    m_valueMinimum = v; allChange = true;
-                }
-                if (!m_haveExtents || v > m_valueMaximum) {
-                    m_valueMaximum = v; allChange = true;
-                }
-                m_haveExtents = true;
+        m_events.add(e);
+        
+        float v = e.getValue();
+        if (!ISNAN(v) && !ISINF(v)) {
+            if (!m_haveExtents || v < m_valueMinimum) {
+                m_valueMinimum = v; allChange = true;
             }
-
-            if (e.hasValue() && e.getValue() != 0.f) {
-                m_haveDistinctValues = true;
+            if (!m_haveExtents || v > m_valueMaximum) {
+                m_valueMaximum = v; allChange = true;
             }
+            m_haveExtents = true;
+        }
+        
+        if (e.hasValue() && e.getValue() != 0.f) {
+            m_haveDistinctValues = true;
         }
         
         m_notifier.update(e.getFrame(), e.getDuration() + m_resolution);
@@ -204,10 +198,7 @@ public:
     }
     
     void remove(Event e) override {
-        {
-            QMutexLocker locker(&m_mutex);
-            m_events.remove(e);
-        }
+        m_events.remove(e);
         emit modelChangedWithin(getId(),
                                 e.getFrame(),
                                 e.getFrame() + e.getDuration() + m_resolution);
@@ -347,18 +338,16 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_resolution;
 
-    float m_valueMinimum;
-    float m_valueMaximum;
-    bool m_haveExtents;
+    std::atomic<float> m_valueMinimum;
+    std::atomic<float> m_valueMaximum;
+    std::atomic<bool> m_haveExtents;
     float m_valueQuantization;
     bool m_haveDistinctValues;
     QString m_units;
     DeferredNotifier m_notifier;
-    int m_completion;
+    std::atomic<int> m_completion;
 
     EventSeries m_events;
-
-    mutable QMutex m_mutex;
 };
 
 #endif

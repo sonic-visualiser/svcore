@@ -76,10 +76,8 @@ public:
 
     void setCompletion(int completion, bool update = true) {
         
-        {   QMutexLocker locker(&m_mutex);
-            if (m_completion == completion) return;
-            m_completion = completion;
-        }
+        if (m_completion == completion) return;
+        m_completion = completion;
 
         if (update) {
             m_notifier.makeDeferredNotifications();
@@ -141,18 +139,12 @@ public:
      * Editing methods.
      */
     void add(Event e) override {
-
-        {   QMutexLocker locker(&m_mutex);
-            m_events.add(e.withoutDuration().withoutValue().withoutLevel());
-        }
-        
+        m_events.add(e.withoutDuration().withoutValue().withoutLevel());
         m_notifier.update(e.getFrame(), m_resolution);
     }
     
     void remove(Event e) override {
-        {   QMutexLocker locker(&m_mutex);
-            m_events.remove(e);
-        }
+        m_events.remove(e);
         emit modelChangedWithin(getId(),
                                 e.getFrame(), e.getFrame() + m_resolution);
     }
@@ -281,11 +273,9 @@ protected:
     int m_resolution;
 
     DeferredNotifier m_notifier;
-    int m_completion;
+    std::atomic<int> m_completion;
 
     EventSeries m_events;
-
-    mutable QMutex m_mutex;  
 };
 
 

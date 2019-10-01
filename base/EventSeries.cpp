@@ -544,8 +544,7 @@ Event
 EventSeries::getEventByIndex(int index) const
 {
     QMutexLocker locker(&m_mutex);
-
-    if (index < 0 || index >= count()) {
+    if (!in_range_for(m_events, index)) {
         throw std::logic_error("index out of range");
     }
     return m_events[index];
@@ -555,7 +554,6 @@ int
 EventSeries::getIndexForEvent(const Event &e) const
 {
     QMutexLocker locker(&m_mutex);
-
     auto pitr = lower_bound(m_events.begin(), m_events.end(), e);
     auto d = distance(m_events.begin(), pitr);
     if (d < 0 || d > INT_MAX) return 0;

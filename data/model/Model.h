@@ -17,7 +17,10 @@
 #define SV_MODEL_H
 
 #include <vector>
+#include <atomic>
+
 #include <QObject>
+#include <QMutex>
 
 #include "base/ById.h"
 #include "base/XmlExportable.h"
@@ -31,6 +34,19 @@ class AlignmentModel;
 /** 
  * Model is the base class for all data models that represent any sort
  * of data on a time scale based on an audio frame rate.
+ *
+ * Model classes are expected to be thread-safe, particularly with
+ * regard to content rather than metadata (e.g. populating a model
+ * from a transform running in a background thread while displaying it
+ * in a UI layer).
+ *
+ * Never store a pointer to a model unless it is completely private to
+ * the code owning it. Models should be referred to using their
+ * ModelId id and looked up from the ById pool when needed. This
+ * returns a shared pointer, which ensures a sufficient lifespan for a
+ * transient operation locally. See notes in ById.h. The document
+ * unregisters models when it is closed, and then they are deleted
+ * when the last shared pointer instance expires.
  */
 class Model : public QObject,
               public WithTypedId<Model>,
@@ -301,17 +317,17 @@ private slots:
     void alignmentModelCompletionChanged(ModelId);
     
 protected:
-    Model() :
-        m_extendTo(0) { }
+    Model() : m_extendTo(0) { }
 
     // Not provided.
     Model(const Model &) =delete;
     Model &operator=(const Model &) =delete;
 
+    mutable QMutex m_mutex;
     ModelId m_sourceModel;
     ModelId m_alignmentModel;
     QString m_typeUri;
-    sv_frame_t m_extendTo;
+    std::atomic<sv_frame_t> m_extendTo;
 };
 
 typedef Model::Id ModelId;
