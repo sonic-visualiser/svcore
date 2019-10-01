@@ -235,7 +235,7 @@ public:
 private:
     mutable QMutex m_mutex;
 
-    EventSeries::EventSeries(const EventSeries &other, const QMutexLocker &);
+    EventSeries(const EventSeries &other, const QMutexLocker &);
     
     /**
      * This vector contains all events in the series, in the normal
