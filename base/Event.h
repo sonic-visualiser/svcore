@@ -27,7 +27,10 @@
 #include <QString>
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
-uint qHash(float key, uint seed = 0) {
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+static uint qHash(float key, uint seed = 0) {
     uint h = seed;
     const uchar *p = reinterpret_cast<const uchar *>(&key);
     for (size_t i = 0; i < sizeof(key); ++i) {
