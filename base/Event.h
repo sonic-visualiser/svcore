@@ -28,9 +28,12 @@
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
 uint qHash(float key, uint seed) {
-    return key != 0.0f ?
-        qHash(reinterpret_cast<const uchar *>(&key), sizeof(key), seed) :
-        seed;
+    uint h = seed;
+    const uchar *p = reinterpret_cast<const uchar *>(&key);
+    for (size_t i = 0; i < sizeof(key); ++i) {
+        h = 31 * h + p[i];
+    }
+    return h;
 }
 #endif
 
