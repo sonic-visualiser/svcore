@@ -385,6 +385,16 @@ public:
         return list.join(delimiter);
     }
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
+private:
+    uint qHash(float key, uint seed) const {
+        return key != 0.0f ?
+            qHash(reinterpret_cast<const uchar *>(&key), sizeof(key), seed) :
+            seed;
+    }
+public:
+#endif
+    
     uint hash(uint seed = 0) const {
         uint h = qHash(m_label, seed);
         if (m_haveValue) h ^= qHash(m_value);
