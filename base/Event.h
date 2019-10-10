@@ -27,7 +27,7 @@
 #include <QString>
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
-uint qHash(float key, uint seed) {
+uint qHash(float key, uint seed = 0) {
     uint h = seed;
     const uchar *p = reinterpret_cast<const uchar *>(&key);
     for (size_t i = 0; i < sizeof(key); ++i) {
