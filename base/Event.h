@@ -26,6 +26,14 @@
 
 #include <QString>
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
+uint qHash(float key, uint seed) {
+    return key != 0.0f ?
+        qHash(reinterpret_cast<const uchar *>(&key), sizeof(key), seed) :
+        seed;
+}
+#endif
+
 /**
  * An immutable(-ish) type used for point and event representation in
  * sparse models, as well as for interchange within the clipboard. An
@@ -384,16 +392,6 @@ public:
         
         return list.join(delimiter);
     }
-
-#if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
-private:
-    uint qHash(float key, uint seed) const {
-        return key != 0.0f ?
-            qHash(reinterpret_cast<const uchar *>(&key), sizeof(key), seed) :
-            seed;
-    }
-public:
-#endif
     
     uint hash(uint seed = 0) const {
         uint h = qHash(m_label, seed);
