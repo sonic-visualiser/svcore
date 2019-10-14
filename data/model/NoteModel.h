@@ -322,6 +322,26 @@ public:
         return SortNumeric;
     }
 
+    bool isEditable() const override { return true; }
+
+    Command *getInsertRowCommand(int row) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        auto command = new ChangeEventsCommand(getId().untyped,
+                                               tr("Add Note"));
+        Event e = m_events.getEventByIndex(row);
+        command->add(e);
+        return command->finish();
+    }
+
+    Command *getRemoveRowCommand(int row) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        auto command = new ChangeEventsCommand(getId().untyped,
+                                               tr("Delete Note"));
+        Event e = m_events.getEventByIndex(row);
+        command->remove(e);
+        return command->finish();
+    }
+
     /**
      * NoteExportable methods.
      */

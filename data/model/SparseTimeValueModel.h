@@ -279,7 +279,10 @@ public:
         }
     }
 
-    Command *getSetDataCommand(int row, int column, const QVariant &value, int role) override {
+    bool isEditable() const override { return true; }
+
+    Command *getSetDataCommand(int row, int column, const QVariant &value,
+                               int role) override {
         if (row < 0 || row >= m_events.count()) return nullptr;
         if (role != Qt::EditRole) return nullptr;
 
@@ -297,6 +300,24 @@ public:
         auto command = new ChangeEventsCommand(getId().untyped, tr("Edit Data"));
         command->remove(e0);
         command->add(e1);
+        return command->finish();
+    }
+
+    Command *getInsertRowCommand(int row) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        auto command = new ChangeEventsCommand(getId().untyped,
+                                               tr("Add Point"));
+        Event e = m_events.getEventByIndex(row);
+        command->add(e);
+        return command->finish();
+    }
+
+    Command *getRemoveRowCommand(int row) override {
+        if (row < 0 || row >= m_events.count()) return nullptr;
+        auto command = new ChangeEventsCommand(getId().untyped,
+                                               tr("Delete Point"));
+        Event e = m_events.getEventByIndex(row);
+        command->remove(e);
         return command->finish();
     }
     

@@ -132,6 +132,11 @@ public:
     int getRowCount() const override { return getWidth(); }
     int getColumnCount() const override { return getHeight() + 2; }
 
+    bool isEditable() const override { return false; }
+    Command *getSetDataCommand(int, int, const QVariant &, int) { return nullptr; }
+    Command *getInsertRowCommand(int) { return nullptr; }
+    Command *getRemoveRowCommand(int) { return nullptr; }
+    
     QString getHeading(int column) const override
     {
         switch (column) {
