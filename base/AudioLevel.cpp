@@ -46,10 +46,6 @@ static const FaderDescription faderTypes[] = {
     FaderDescription(-40.,   0., 1.00), // preview
 };
 
-//typedef std::vector<double> LevelList;
-//static std::map<int, LevelList> previewLevelCache;
-//static const LevelList &getPreviewLevelCache(int levels);
-
 double
 AudioLevel::multiplier_to_dB(double multiplier)
 {
@@ -220,61 +216,11 @@ AudioLevel::multiplier_to_fader(double multiplier, int maxLevel, FaderType type)
     return fader;
 }
 
-/*
-const LevelList &
-getPreviewLevelCache(int levels)
-{
-    LevelList &ll = previewLevelCache[levels];
-    if (ll.empty()) {
-        for (int i = 0; i <= levels; ++i) {
-            double m = AudioLevel::fader_to_multiplier
-                (i + levels/4, levels + levels/4, AudioLevel::PreviewLevel);
-            if (levels == 1) m /= 100; // noise
-            ll.push_back(m);
-        }
-    }
-    return ll;
-}
-*/
-
 int
 AudioLevel::multiplier_to_preview(double m, int levels)
 {
     assert(levels > 0);
     return multiplier_to_fader(m, levels, PreviewLevel);
-
-    /* The original multiplier_to_preview which follows is not thread-safe.
-
-    if (m < 0.) return -multiplier_to_preview(-m, levels);
-
-    const LevelList &ll = getPreviewLevelCache(levels);
-    int result = -1;
-
-    int lo = 0, hi = levels;
-
-    // binary search
-    int level = -1;
-    while (result < 0) {
-        int newlevel = (lo + hi) / 2;
-        if (newlevel == level ||
-            newlevel == 0 ||
-            newlevel == levels) {
-            result = newlevel;
-            break;
-        }
-        level = newlevel;
-        if (ll[level] >= m) {
-            hi = level;
-        } else if (ll[level+1] >= m) {
-            result = level;
-        } else {
-            lo = level;
-        }
-    }
-                   
-    return result;
-
-    */
 }
 
 double
@@ -282,11 +228,6 @@ AudioLevel::preview_to_multiplier(int level, int levels)
 {
     assert(levels > 0);
     return fader_to_multiplier(level, levels, PreviewLevel);
-/*
-    if (level < 0) return -preview_to_multiplier(-level, levels);
-    const LevelList &ll = getPreviewLevelCache(levels);
-    return ll[level];
-*/
 }
         
 
