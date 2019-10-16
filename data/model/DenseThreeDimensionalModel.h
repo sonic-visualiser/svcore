@@ -133,9 +133,9 @@ public:
     int getColumnCount() const override { return getHeight() + 2; }
 
     bool isEditable() const override { return false; }
-    Command *getSetDataCommand(int, int, const QVariant &, int) { return nullptr; }
-    Command *getInsertRowCommand(int) { return nullptr; }
-    Command *getRemoveRowCommand(int) { return nullptr; }
+    Command *getSetDataCommand(int, int, const QVariant &, int) override { return nullptr; }
+    Command *getInsertRowCommand(int) override { return nullptr; }
+    Command *getRemoveRowCommand(int) override { return nullptr; }
     
     QString getHeading(int column) const override
     {
