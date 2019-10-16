@@ -38,7 +38,7 @@ int IdAlloc::getNextId()
 
 // "warning: expression with side effects will be evaluated despite
 // being used as an operand to 'typeid'"
-#pragma GCC diagnostic ignored "-Wpotentially-evaluated-expression"
+#pragma clang diagnostic ignored "-Wpotentially-evaluated-expression"
 
 class AnyById::Impl
 {
