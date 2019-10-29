@@ -70,9 +70,30 @@ public:
 
     /**
      * Return the location of the audio data in the reader (as passed
-     * in to the FileSource constructor, for example).
+     * in to the FileSource constructor, for example). This might be a
+     * remote URL.
+     *
+     * See also getLocalFilename().
      */
-    virtual QString getLocation() const { return ""; }
+    virtual QString getLocation() const = 0;
+
+    /**
+     * Return the local file path of the audio data. This is the
+     * filesystem location most likely to contain readable audio data,
+     * but it may be in a different place or format from the
+     * originally specified location - for example, if the file has
+     * been retrieved and decoded, then it will be the (possibly
+     * temporary) decode target file.
+     *
+     * This returns a non-empty value only if there is some local
+     * filename that contains exactly the audio data being provided by
+     * this reader. In some cases this may not exist, for example when
+     * a file has been resampled or normalised directly into a memory
+     * buffer. In this case, return an empty string.
+     *
+     * See also getLocation().
+     */
+    virtual QString getLocalFilename() const = 0;
     
     /**
      * Return the title of the work in the audio file, if known.  This
@@ -89,15 +110,10 @@ public:
     virtual QString getMaker() const = 0;
 
     /**
-     * Return the local file path of the audio data. This is the
-     * location most likely to contain readable audio data: it may be
-     * in a different place or format from the originally specified
-     * location, for example if the file has been retrieved and
-     * decoded. In some cases there may be no local file path, and
-     * this will return "" if there is none.
+     * Return any tag pairs picked up from the audio file. See also
+     * getTitle and getMaker, and note that a reader which does not
+     * implement getTags may still return values from those.
      */
-    virtual QString getLocalFilename() const { return ""; }
-    
     typedef std::map<QString, QString> TagMap;
     virtual TagMap getTags() const { return TagMap(); }
 
@@ -107,6 +123,22 @@ public:
      * and false for compressed ones.
      */
     virtual bool isQuicklySeekable() const = 0;
+
+    /**
+     * Return a percentage value indicating how far through decoding
+     * the audio file we are. This should be implemented by subclasses
+     * that will not know exactly how long the audio file is (in
+     * sample frames) until it has been completely decoded. A reader
+     * that initialises the frame count directly within its
+     * constructor should always return 100 from this.
+    */
+    virtual int getDecodeCompletion() const { return 100; }
+
+    /**
+     * Return true if decoding is still in progress and the frame
+     * count may change.
+     */
+    virtual bool isUpdating() const { return false; }
 
     /** 
      * Return interleaved samples for count frames from index start.
@@ -129,12 +161,6 @@ public:
      */
     virtual std::vector<floatvec_t> getDeInterleavedFrames(sv_frame_t start,
                                                            sv_frame_t count) const;
-
-    // only subclasses that do not know exactly how long the audio
-    // file is until it's been completely decoded should implement this
-    virtual int getDecodeCompletion() const { return 100; } // %
-
-    virtual bool isUpdating() const { return false; }
 
 signals:
     void frameCountChanged();
