@@ -197,6 +197,9 @@ public:
         return m_events.getNearestEventMatching
             (startSearchAt, predicate, direction, found);
     }
+    int getIndexForEvent(const Event &e) {
+        return m_events.getIndexForEvent(e);
+    }
 
     /**
      * Editing methods.
