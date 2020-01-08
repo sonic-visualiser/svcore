@@ -34,8 +34,8 @@
 void
 OSCQueue::oscError(int num, const char *msg, const char *path)
 {
-    cerr << "ERROR: OSCQueue::oscError: liblo server error " << num
-              << " in path " << path << ": " << msg << endl;
+    SVCERR << "ERROR: OSCQueue::oscError: liblo server error " << num
+           << " in path " << path << ": " << msg << endl;
 }
 
 int
@@ -175,8 +175,7 @@ OSCQueue::readMessage()
     OSCMessage *message = m_buffer.readOne();
     OSCMessage rmessage = *message;
     delete message;
-    SVDEBUG << "OSCQueue::readMessage: In thread "
-            << QThread::currentThreadId() << ": message follows:\n"
+    SVDEBUG << "OSCQueue::readMessage[" << QThread::currentThreadId() << "]: "
             << rmessage.toString() << endl;
     return rmessage;
 }
