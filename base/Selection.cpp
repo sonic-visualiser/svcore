@@ -227,3 +227,15 @@ MultiSelection::toXml(QTextStream &stream, QString indent,
     stream << indent << "</selections>\n";
 }
 
+QString
+MultiSelection::toString() const
+{
+    QStringList list;
+    for (SelectionList::iterator i = m_selections.begin();
+         i != m_selections.end(); ++i) {
+        list << QString("(%1,%2)")
+            .arg(i->getStartFrame())
+            .arg(i->getEndFrame());
+    }
+    return "(" + list.join(",") + ")";
+}
