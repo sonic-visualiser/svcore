@@ -934,7 +934,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
     }
 
     if (!model) {
-        model = new NoteModel(m_mainModelSampleRate, 1, 0.0, 0.0, false);
+        model = new NoteModel(m_mainModelSampleRate, 1, false);
         model->setValueQuantization(1.0);
         model->setObjectName(QFileInfo(m_path).fileName());
     }
