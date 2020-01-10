@@ -20,6 +20,7 @@ enum DataExportOption
     DataExportDefaults = 0x0,
     DataExportFillGaps = 0x1,
     DataExportOmitLevels = 0x2,
+    DataExportWriteTimeInFrames = 0x4 // otherwise in seconds
 };
 
 typedef int DataExportOptions;

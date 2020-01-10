@@ -221,6 +221,14 @@ public:
                Event::ExportNameOptions) const;
 
     /**
+     * Emit a label for each column that would be written by
+     * toDelimitedDataString, separated by the given delimiter.
+     */
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions options,
+                                       Event::ExportNameOptions) const;
+    
+    /**
      * Emit events starting within the given range to a delimited
      * (e.g. comma-separated) data format.
      */

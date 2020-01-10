@@ -274,6 +274,17 @@ public:
                QString indent = "",
                QString extraAttributes = "") const override;
 
+    /**
+     * Emit a label for each column that would be written by
+     * toDelimitedDataString, separated by the given delimiter.
+     */
+    virtual QString getDelimitedDataHeaderLine(QString delimiter,
+                                               DataExportOptions options) const = 0;
+    
+    /**
+     * Emit the contents of the model within the given range to a
+     * delimited (e.g. comma-separated) data format.
+     */
     virtual QString toDelimitedDataString(QString delimiter,
                                           DataExportOptions options,
                                           sv_frame_t startFrame,

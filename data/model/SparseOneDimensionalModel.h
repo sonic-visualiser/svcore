@@ -308,6 +308,13 @@ public:
         m_events.toXml(out, indent, QString("dimensions=\"1\""));
     }
 
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions options) const override {
+        return m_events.getDelimitedDataHeaderLine(delimiter,
+                                                   options,
+                                                   Event::ExportNameOptions());
+    }
+    
     QString toDelimitedDataString(QString delimiter,
                                   DataExportOptions options,
                                   sv_frame_t startFrame,

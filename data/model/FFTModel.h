@@ -99,6 +99,9 @@ public:
     float getBinValue(int n) const override;
     QString getBinName(int n) const override;
 
+    QString getDelimitedDataHeaderLine(QString, DataExportOptions) const override {
+        return "";
+    }
     QString toDelimitedDataString(QString, DataExportOptions,
                                   sv_frame_t, sv_frame_t) const override {
         return "";

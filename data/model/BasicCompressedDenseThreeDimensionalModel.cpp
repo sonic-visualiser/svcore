@@ -499,6 +499,17 @@ BasicCompressedDenseThreeDimensionalModel::getCompletion() const
 }
 
 QString
+BasicCompressedDenseThreeDimensionalModel::getDelimitedDataHeaderLine(QString delimiter,
+                                                                      DataExportOptions) const
+{
+    QStringList list;
+    for (int i = 0; i < m_yBinCount; ++i) {
+        list << QString("Bin%1").arg(i+1);
+    }
+    return list.join(delimiter);
+}    
+
+QString
 BasicCompressedDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter,
                                                           DataExportOptions,
                                                           sv_frame_t startFrame,

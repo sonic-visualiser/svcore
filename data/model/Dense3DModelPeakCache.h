@@ -119,6 +119,10 @@ public:
         return source ? source->getCompletion() : 100;
     }
 
+    QString getDelimitedDataHeaderLine(QString, DataExportOptions) const override {
+        return "";
+    }
+    
     QString toDelimitedDataString(QString, DataExportOptions,
                                   sv_frame_t, sv_frame_t) const override {
         return "";
