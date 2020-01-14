@@ -390,7 +390,7 @@ public:
         }
         
         if (m_haveLevel) {
-            if (!(opts & DataExportOmitLevels)) {
+            if (!(opts & DataExportOmitLevel)) {
                 list << nameOpts.levelAttributeName;
             }
         }
@@ -430,7 +430,7 @@ public:
         }
         
         if (m_haveLevel) {
-            if (!(opts & DataExportOmitLevels)) {
+            if (!(opts & DataExportOmitLevel)) {
                 list << QString("%1").arg(m_level);
             }
         }

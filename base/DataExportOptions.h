@@ -18,9 +18,36 @@
 enum DataExportOption
 {
     DataExportDefaults = 0x0,
+
+    /**
+     * Export sparse event-based models as if they were dense models,
+     * writing an event at every interval of the model's
+     * resolution. Where no event is present in the actual model, a
+     * constant "fill event" is interpolated instead.
+     */
     DataExportFillGaps = 0x1,
-    DataExportOmitLevels = 0x2,
-    DataExportWriteTimeInFrames = 0x4 // otherwise in seconds
+
+    /**
+     * Omit the level attribute from exported events.
+     */
+    DataExportOmitLevel = 0x2,
+
+    /**
+     * Always include a timestamp in the first column. Otherwise
+     * timestamps will only be included in sparse models.
+     */
+    DataExportAlwaysIncludeTimestamp = 0x4,
+
+    /**
+     * Use sample frames rather than seconds for time and duration
+     * values.
+     */
+    DataExportWriteTimeInFrames = 0x8,
+    
+    /**
+     * Write a header row before any data rows.
+     */
+    DataExportIncludeHeader = 0x10
 };
 
 typedef int DataExportOptions;
