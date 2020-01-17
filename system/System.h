@@ -163,6 +163,11 @@ extern void GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total);
 // if unknown. (Hence signed return type)
 extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 
+// Return true if the OS desktop is set to use a dark mode
+// theme. Return false if it is set to a light theme or if the theme
+// is unknown.
+extern bool OSThemeIsDark();
+
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
 
