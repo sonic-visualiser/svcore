@@ -339,9 +339,9 @@ RestoreStartupLocale()
 }
 
 bool
-OSThemeIsDark()
+OSReportsDarkThemeActive()
 {
-    SVCERR << "OSThemeIsDark() called" << endl;
+    SVCERR << "OSReportsDarkThemeActive() called" << endl;
 #ifdef _MSC_VER
     using namespace winrt::Windows::UI::ViewManagement;
     UISettings settings;
