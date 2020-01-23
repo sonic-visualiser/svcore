@@ -168,6 +168,12 @@ extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 // is unknown.
 extern bool OSReportsDarkThemeActive();
 
+// Return true if the OS desktop reports an accent colour to go with
+// the current theme; if so, also return by reference the r, g, and b
+// components of the colour (range 0-255). Return false if we can't
+// query such a thing.
+extern bool OSQueryAccentColour(int &r, int &g, int &b);
+
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
 

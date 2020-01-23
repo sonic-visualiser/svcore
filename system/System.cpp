@@ -353,6 +353,22 @@ OSReportsDarkThemeActive()
     return false;
 }
 
+bool
+OSQueryAccentColour(int &r, int &g, int &b)
+{
+    SVCERR << "OSQueryAccentColour() called" << endl;
+#ifdef _MSC_VER
+    using namespace winrt::Windows::UI::ViewManagement;
+    UISettings settings;
+    auto background = settings.GetColorValue(UIColorType::Accent);
+    r = background.R;
+    g = background.G;
+    b = background.B;
+    return true;
+#endif
+    return false;
+}
+
 double mod(double x, double y) { return x - (y * floor(x / y)); }
 float modf(float x, float y) { return x - (y * floorf(x / y)); }
 
