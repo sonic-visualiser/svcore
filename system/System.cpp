@@ -359,11 +359,13 @@ OSQueryAccentColour(int &r, int &g, int &b)
     SVCERR << "OSQueryAccentColour() called" << endl;
 #ifdef _MSC_VER
     using namespace winrt::Windows::UI::ViewManagement;
+    bool dark = OSReportsDarkThemeActive();
     UISettings settings;
-    auto background = settings.GetColorValue(UIColorType::Accent);
-    r = background.R;
-    g = background.G;
-    b = background.B;
+    auto accent = settings.GetColorValue
+        (dark ? UIColorType::AccentLight1 : UIColorType::Accent);
+    r = accent.R;
+    g = accent.G;
+    b = accent.B;
     return true;
 #endif
     return false;
