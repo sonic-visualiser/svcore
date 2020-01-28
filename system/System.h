@@ -163,6 +163,17 @@ extern void GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total);
 // if unknown. (Hence signed return type)
 extern ssize_t GetDiscSpaceMBAvailable(const char *path);
 
+// Return true if the OS desktop is set to use a dark mode
+// theme. Return false if it is set to a light theme or if the theme
+// is unknown.
+extern bool OSReportsDarkThemeActive();
+
+// Return true if the OS desktop reports an accent colour to go with
+// the current theme; if so, also return by reference the r, g, and b
+// components of the colour (range 0-255). Return false if we can't
+// query such a thing.
+extern bool OSQueryAccentColour(int &r, int &g, int &b);
+
 extern void StoreStartupLocale();
 extern void RestoreStartupLocale();
 

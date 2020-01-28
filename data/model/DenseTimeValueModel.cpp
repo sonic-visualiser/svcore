@@ -16,7 +16,19 @@
 #include "DenseTimeValueModel.h"
 
 #include <QStringList>
-        
+
+QString
+DenseTimeValueModel::getDelimitedDataHeaderLine(QString delimiter,
+                                                DataExportOptions) const
+{
+    int ch = getChannelCount();
+    QStringList list;
+    for (int i = 0; i < ch; ++i) {
+        list << QString("Channel%1").arg(i+1);
+    }
+    return list.join(delimiter);
+}
+
 QString
 DenseTimeValueModel::toDelimitedDataString(QString delimiter,
                                            DataExportOptions,

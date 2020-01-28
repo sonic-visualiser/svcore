@@ -181,6 +181,9 @@ public:
 
     QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions opts) const override;
+
     QString toDelimitedDataString(QString delimiter,
                                   DataExportOptions options,
                                   sv_frame_t startFrame,

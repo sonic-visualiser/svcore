@@ -75,18 +75,22 @@ public:
     void clearSelections();
 
     void getExtents(sv_frame_t &startFrame, sv_frame_t &endFrame) const;
-
+    
     /**
      * Return the selection that contains a given frame.
      * If defaultToFollowing is true, and if the frame is not in a
      * selected area, return the next selection after the given frame.
      * Return the empty selection if no appropriate selection is found.
      */
-    Selection getContainingSelection(sv_frame_t frame, bool defaultToFollowing) const;
+    Selection getContainingSelection(sv_frame_t frame,
+                                     bool defaultToFollowing) const;
 
     void toXml(QTextStream &stream, QString indent = "",
-                       QString extraAttributes = "") const override;
+               QString extraAttributes = "") const override;
 
+    // Debug only, not interop
+    QString toString() const;
+    
 protected:
     SelectionList m_selections;
 };

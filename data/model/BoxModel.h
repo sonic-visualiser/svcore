@@ -348,8 +348,26 @@ public:
         m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }
 
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions opts) const override {
+        QStringList list;
+
+        // These are considered API rather than human-readable text -
+        // they shouldn't be translated
+
+        if (opts & DataExportWriteTimeInFrames) {
+            list << "startframe" << "endframe";
+        } else {
+            list << "start" << "end";
+        }
+
+        list << "extent start" << "extent end" << "label";
+
+        return list.join(delimiter).toUpper();
+    }
+    
     QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions,
+                                  DataExportOptions opts,
                                   sv_frame_t startFrame,
                                   sv_frame_t duration) const override {
 
@@ -363,14 +381,25 @@ public:
 
             QStringList list;
 
-            list << RealTime::frame2RealTime
-                (e.getFrame(), getSampleRate())
-                .toString().c_str()
-                 << RealTime::frame2RealTime
-                (e.getFrame() + e.getDuration(), getSampleRate())
-                .toString().c_str()
-                 << QString("%1").arg(e.getValue())
-                 << QString("%1").arg(e.getValue() + fabsf(e.getLevel()));
+            if (opts & DataExportWriteTimeInFrames) {
+                
+                list << QString("%1").arg(e.getFrame());
+                list << QString("%1").arg(e.getFrame() + e.getDuration());
+
+            } else {
+            
+                list << RealTime::frame2RealTime
+                    (e.getFrame(), getSampleRate())
+                    .toString().c_str();
+
+                list << RealTime::frame2RealTime
+                    (e.getFrame() + e.getDuration(), getSampleRate())
+                    .toString().c_str();
+            }
+
+            list << QString("%1").arg(e.getValue());
+
+            list << QString("%1").arg(e.getValue() + fabsf(e.getLevel()));
             
             if (e.getLabel() != "") {
                 list << e.getLabel();

@@ -85,6 +85,11 @@ CSVFileWriter::writeSelection(MultiSelection selection)
     
         QTextStream out(&file);
 
+        if (m_options & DataExportIncludeHeader) {
+            out << m_model->getDelimitedDataHeaderLine(m_delimiter, m_options)
+                << endl;
+        }
+        
         sv_frame_t blockSize = 65536;
 
         if (m_model->isSparse()) {

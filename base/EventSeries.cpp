@@ -598,6 +598,20 @@ EventSeries::toXml(QTextStream &out,
 }
 
 QString
+EventSeries::getDelimitedDataHeaderLine(QString delimiter,
+                                        DataExportOptions opts,
+                                        Event::ExportNameOptions nopts) const
+{
+    if (m_events.empty()) {
+        return QString();
+    } else {
+        return m_events.begin()->getDelimitedDataHeaderLine(delimiter,
+                                                            opts,
+                                                            nopts);
+    }
+}
+
+QString
 EventSeries::toDelimitedDataString(QString delimiter,
                                    DataExportOptions options,
                                    sv_frame_t startFrame,

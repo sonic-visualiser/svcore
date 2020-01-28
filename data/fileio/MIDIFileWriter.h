@@ -48,12 +48,12 @@ public:
                    const NoteExportable *exportable, 
                    sv_samplerate_t sampleRate, // used to convert exportable sample timings
                    float tempo = 120.f);
-    virtual ~MIDIFileWriter();
+    ~MIDIFileWriter();
 
-    virtual bool isOK() const;
-    virtual QString getError() const;
+    bool isOK() const;
+    QString getError() const;
 
-    virtual void write();
+    void write();
 
 protected:
     typedef std::vector<MIDIEvent *> MIDITrack;

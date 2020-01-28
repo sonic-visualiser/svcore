@@ -366,25 +366,71 @@ public:
         return n;
     }
 
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions opts,
+                                       ExportNameOptions nameOpts) const {
+
+        QStringList list;
+
+        // These are considered API rather than human-readable text -
+        // they shouldn't be translated
+
+        if (opts & DataExportWriteTimeInFrames) {
+            list << "frame";
+        } else {
+            list << "time";
+        }
+
+        if (m_haveValue) {
+            list << nameOpts.valueAttributeName;
+        }
+        
+        if (m_haveDuration) {
+            list << "duration";
+        }
+        
+        if (m_haveLevel) {
+            if (!(opts & DataExportOmitLevel)) {
+                list << nameOpts.levelAttributeName;
+            }
+        }
+        
+        if (m_uri != "") {
+            list << nameOpts.uriAttributeName;
+        }
+        
+        list << "label";
+        
+        return list.join(delimiter).toUpper();
+    }
+    
     QString toDelimitedDataString(QString delimiter,
                                   DataExportOptions opts,
                                   sv_samplerate_t sampleRate) const {
         QStringList list;
 
-        list << RealTime::frame2RealTime(m_frame, sampleRate)
-            .toString().c_str();
+        if (opts & DataExportWriteTimeInFrames) {
+            list << QString("%1").arg(m_frame);
+        } else {
+            list << RealTime::frame2RealTime(m_frame, sampleRate)
+                .toString().c_str();
+        }
         
         if (m_haveValue) {
             list << QString("%1").arg(m_value);
         }
         
         if (m_haveDuration) {
-            list << RealTime::frame2RealTime(m_duration, sampleRate)
-                .toString().c_str();
+            if (opts & DataExportWriteTimeInFrames) {
+                list << QString("%1").arg(m_duration);
+            } else {
+                list << RealTime::frame2RealTime(m_duration, sampleRate)
+                    .toString().c_str();
+            }
         }
         
         if (m_haveLevel) {
-            if (!(opts & DataExportOmitLevels)) {
+            if (!(opts & DataExportOmitLevel)) {
                 list << QString("%1").arg(m_level);
             }
         }

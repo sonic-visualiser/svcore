@@ -82,6 +82,9 @@ public:
     bool canPlay() const override { return true; }
     QString getDefaultPlayClipId() const override { return ""; }
 
+    QString getDelimitedDataHeaderLine(QString delimiter,
+                                       DataExportOptions options) const override;
+    
     QString toDelimitedDataString(QString delimiter,
                                   DataExportOptions options,
                                   sv_frame_t startFrame,
