@@ -374,6 +374,9 @@ OSQueryAccentColour(int &r, int &g, int &b)
     return true;
 #endif
 #endif
+    (void)r;
+    (void)g;
+    (void)b;
     return false;
 }
 
