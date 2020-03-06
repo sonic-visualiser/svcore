@@ -27,8 +27,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef AVOID_WINRT_DEPENDENCY
 #ifdef _MSC_VER
 #include <winrt/Windows.UI.ViewManagement.h>
+#endif
 #endif
 
 #ifdef __APPLE__
@@ -342,6 +344,7 @@ bool
 OSReportsDarkThemeActive()
 {
     SVCERR << "OSReportsDarkThemeActive() called" << endl;
+#ifndef AVOID_WINRT_DEPENDENCY
 #ifdef _MSC_VER
     using namespace winrt::Windows::UI::ViewManagement;
     UISettings settings;
@@ -350,6 +353,7 @@ OSReportsDarkThemeActive()
         return true;
     }
 #endif
+#endif
     return false;
 }
 
@@ -357,6 +361,7 @@ bool
 OSQueryAccentColour(int &r, int &g, int &b)
 {
     SVCERR << "OSQueryAccentColour() called" << endl;
+#ifndef AVOID_WINRT_DEPENDENCY
 #ifdef _MSC_VER
     using namespace winrt::Windows::UI::ViewManagement;
     bool dark = OSReportsDarkThemeActive();
@@ -367,6 +372,7 @@ OSQueryAccentColour(int &r, int &g, int &b)
     g = accent.G;
     b = accent.B;
     return true;
+#endif
 #endif
     return false;
 }
