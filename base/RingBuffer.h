@@ -26,8 +26,9 @@
 #include "system/System.h"
 
 #include <bqvec/Barrier.h>
+#include <bqvec/VectorOps.h>
 
-#include <cstring> // memcpy, memset &c
+#include <vector>
 
 //#define DEBUG_RINGBUFFER 1
 
@@ -38,10 +39,6 @@
 /**
  * RingBuffer implements a lock-free ring buffer for one writer and N
  * readers, that is to be used to store a sample type T.
- *
- * For efficiency, RingBuffer frequently initialises samples by
- * writing zeroes into their memory space, so T should normally be a
- * simple type that can safely be set to zero using memset.
  */
 
 template <typename T, int N = 1>
@@ -68,21 +65,14 @@ public:
     int getSize() const;
 
     /**
-     * Return a new ring buffer (allocated with "new" -- caller must
-     * delete when no longer needed) of the given size, containing the
-     * same data as this one as perceived by reader 0 of this buffer.
-     * If another thread reads from or writes to this buffer during
-     * the call, the contents of the new buffer may be incomplete or
+     * Return a new ring buffer of the given size, containing the same
+     * data as this one as perceived by reader 0 of this buffer.  If
+     * another thread reads from or writes to this buffer during the
+     * call, the contents of the new buffer may be incomplete or
      * inconsistent.  If this buffer's data will not fit in the new
-     * size, the contents are undefined.
+     * size, the contents are undetermined.
      */
-    RingBuffer<T, N> *resized(int newSize) const;
-
-    /**
-     * Lock the ring buffer into physical memory.  Returns true
-     * for success.
-     */
-    bool mlock();
+    RingBuffer<T, N> resized(int newSize) const;
 
     /**
      * Reset read and write pointers, thus emptying the buffer.
@@ -164,42 +154,26 @@ public:
      */
     int zero(int n);
 
+    RingBuffer(const RingBuffer &) =default;
+    RingBuffer &operator=(const RingBuffer &) =default;
+    
 protected:
-    T   *m_buffer;
-    bool m_mlocked;
-    int  m_writer;
-    int *m_readers;
-    int  m_size;
-    int  m_spare;
-
-private:
-    RingBuffer(const RingBuffer &); // not provided
-    RingBuffer &operator=(const RingBuffer &); // not provided
+    std::vector<T> m_buffer;
+    int m_writer;
+    std::vector<int> m_readers;
+    int m_size;
 };
 
 template <typename T, int N>
 RingBuffer<T, N>::RingBuffer(int n) :
-    m_buffer(new T[n + 1]),
-    m_mlocked(false),
+    m_buffer(n + 1, T()),
     m_writer(0),
-    m_readers(new int[N]),
+    m_readers(N, 0),
     m_size(n + 1)
 {
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::RingBuffer(" << n << ")" << std::endl;
 #endif
-/*
-    std::cerr << "note: sizeof(RingBuffer<T,N> = " << sizeof(RingBuffer<T,N>) << ")" << std::endl;
-
-    std::cerr << "this = " << this << std::endl;
-    std::cerr << "&m_buffer = " << &m_buffer << std::endl;
-    std::cerr << "&m_mlocked = " << &m_mlocked << std::endl;
-    std::cerr << "&m_writer = " << &m_writer << std::endl;
-    std::cerr << "&m_readers = " << &m_readers << std::endl;
-    std::cerr << "&m_size = " << &m_size << std::endl;
-*/
-    
-    for (int i = 0; i < N; ++i) m_readers[i] = 0;
 }
 
 template <typename T, int N>
@@ -208,13 +182,6 @@ RingBuffer<T, N>::~RingBuffer()
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::~RingBuffer" << std::endl;
 #endif
-
-    delete[] m_readers;
-
-    if (m_mlocked) {
-        MUNLOCK((void *)m_buffer, m_size * sizeof(T));
-    }
-    delete[] m_buffer;
 }
 
 template <typename T, int N>
@@ -229,14 +196,14 @@ RingBuffer<T, N>::getSize() const
 }
 
 template <typename T, int N>
-RingBuffer<T, N> *
+RingBuffer<T, N>
 RingBuffer<T, N>::resized(int newSize) const
 {
 #ifdef DEBUG_RINGBUFFER
     std::cerr << "RingBuffer<T," << N << ">[" << this << "]::resized(" << newSize << ")" << std::endl;
 #endif
 
-    RingBuffer<T, N> *newBuffer = new RingBuffer<T, N>(newSize);
+    RingBuffer<T, N> newBuffer(newSize);
 
     int w = m_writer;
     int r = m_readers[0];
@@ -251,15 +218,6 @@ RingBuffer<T, N>::resized(int newSize) const
 }
 
 template <typename T, int N>
-bool
-RingBuffer<T, N>::mlock()
-{
-    if (MLOCK((void *)m_buffer, m_size * sizeof(T))) return false;
-    m_mlocked = true;
-    return true;
-}
-
-template <typename T, int N>
 void
 RingBuffer<T, N>::reset()
 {
@@ -268,7 +226,9 @@ RingBuffer<T, N>::reset()
 #endif
 
     m_writer = 0;
-    for (int i = 0; i < N; ++i) m_readers[i] = 0;
+    for (int i = 0; i < N; ++i) {
+        m_readers[i] = 0;
+    }
 }
 
 template <typename T, int N>
@@ -328,17 +288,17 @@ RingBuffer<T, N>::read(T *destination, int n, int R)
         std::cerr << "WARNING: Only " << available << " samples available"
                   << std::endl;
 #endif
-        memset(destination + available, 0, (n - available) * sizeof(T));
+        breakfastquay::v_zero(destination + available, n - available);
         n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_readers[R];
     if (here >= n) {
-        memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
+        breakfastquay::v_copy(destination, m_buffer.data() + m_readers[R], n);
     } else {
-        memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
-        memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
+        breakfastquay::v_copy(destination, m_buffer.data() + m_readers[R], here);
+        breakfastquay::v_copy(destination + here, m_buffer.data(), n - here);
     }
 
     BQ_MBARRIER();
@@ -373,11 +333,11 @@ RingBuffer<T, N>::readAdding(T *destination, int n, int R)
 
     if (here >= n) {
         for (int i = 0; i < n; ++i) {
-            destination[i] += (m_buffer + m_readers[R])[i];
+            destination[i] += (m_buffer.data() + m_readers[R])[i];
         }
     } else {
         for (int i = 0; i < here; ++i) {
-            destination[i] += (m_buffer + m_readers[R])[i];
+            destination[i] += (m_buffer.data() + m_readers[R])[i];
         }
         for (int i = 0; i < (n - here); ++i) {
             destination[i + here] += m_buffer[i];
@@ -402,9 +362,7 @@ RingBuffer<T, N>::readOne(int R)
         std::cerr << "WARNING: No sample available"
                   << std::endl;
 #endif
-        T t;
-        memset(&t, 0, sizeof(T));
-        return t;
+        return T();
     }
     T value = m_buffer[m_readers[R]];
     BQ_MBARRIER();
@@ -426,17 +384,17 @@ RingBuffer<T, N>::peek(T *destination, int n, int R) const
         std::cerr << "WARNING: Only " << available << " samples available"
                   << std::endl;
 #endif
-        memset(destination + available, 0, (n - available) * sizeof(T));
+        breakfastquay::v_zero(destination + available, n - available);
         n = available;
     }
     if (n == 0) return n;
 
     int here = m_size - m_readers[R];
     if (here >= n) {
-        memcpy(destination, m_buffer + m_readers[R], n * sizeof(T));
+        breakfastquay::v_copy(destination, m_buffer.data() + m_readers[R], n);
     } else {
-        memcpy(destination, m_buffer + m_readers[R], here * sizeof(T));
-        memcpy(destination + here, m_buffer, (n - here) * sizeof(T));
+        breakfastquay::v_copy(destination, m_buffer.data() + m_readers[R], here);
+        breakfastquay::v_copy(destination + here, m_buffer.data(), n - here);
     }
 
 #ifdef DEBUG_RINGBUFFER
@@ -459,9 +417,7 @@ RingBuffer<T, N>::peekOne(int R) const
         std::cerr << "WARNING: No sample available"
                   << std::endl;
 #endif
-        T t;
-        memset(&t, 0, sizeof(T));
-        return t;
+        return T();
     }
     T value = m_buffer[m_readers[R]];
     return value;
@@ -508,10 +464,10 @@ RingBuffer<T, N>::write(const T *source, int n)
 
     int here = m_size - m_writer;
     if (here >= n) {
-        memcpy(m_buffer + m_writer, source, n * sizeof(T));
+        breakfastquay::v_copy(m_buffer.data() + m_writer, source, n);
     } else {
-        memcpy(m_buffer + m_writer, source, here * sizeof(T));
-        memcpy(m_buffer, source + here, (n - here) * sizeof(T));
+        breakfastquay::v_copy(m_buffer.data() + m_writer, source, here);
+        breakfastquay::v_copy(m_buffer.data(), source + here, n - here);
     }
 
     BQ_MBARRIER();
@@ -544,10 +500,10 @@ RingBuffer<T, N>::zero(int n)
 
     int here = m_size - m_writer;
     if (here >= n) {
-        memset(m_buffer + m_writer, 0, n * sizeof(T));
+        breakfastquay::v_zero(m_buffer.data() + m_writer, n);
     } else {
-        memset(m_buffer + m_writer, 0, here * sizeof(T));
-        memset(m_buffer, 0, (n - here) * sizeof(T));
+        breakfastquay::v_zero(m_buffer.data() + m_writer, here);
+        breakfastquay::v_zero(m_buffer.data(), n - here);
     }
     
     BQ_MBARRIER();
