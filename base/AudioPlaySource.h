@@ -18,6 +18,8 @@
 
 #include "BaseTypes.h"
 
+#include <memory>
+
 struct Auditionable {
     virtual ~Auditionable() { }
 };
@@ -101,9 +103,11 @@ public:
 
     /**
      * Set a plugin or other subclass of Auditionable as an
-     * auditioning effect.
+     * auditioning effect. The Auditionable is shared with the caller:
+     * the expectation is that the caller may continue to modify its
+     * parameters etc during auditioning.
      */
-    virtual void setAuditioningEffect(Auditionable *) = 0;
+    virtual void setAuditioningEffect(std::shared_ptr<Auditionable>) = 0;
 
 };
 
