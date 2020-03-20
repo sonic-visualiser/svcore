@@ -158,7 +158,7 @@ public:
     RingBuffer &operator=(const RingBuffer &) =default;
     
 protected:
-    std::vector<T> m_buffer;
+    std::vector<T, breakfastquay::StlAllocator<T>> m_buffer;
     int m_writer;
     std::vector<int> m_readers;
     int m_size;
