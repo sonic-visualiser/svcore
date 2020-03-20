@@ -166,7 +166,7 @@ PiperVampPluginFactory::getPluginIdentifiers(QString &errorMessage)
     return rv;
 }
 
-Vamp::Plugin *
+std::shared_ptr<Vamp::Plugin> 
 PiperVampPluginFactory::instantiatePlugin(QString identifier,
                                           sv_samplerate_t inputSampleRate)
 {
@@ -197,7 +197,7 @@ PiperVampPluginFactory::instantiatePlugin(QString identifier,
         return nullptr;
     }
 
-    return ap;
+    return std::shared_ptr<Vamp::Plugin>(ap);
 }
 
 piper_vamp::PluginStaticData

@@ -30,7 +30,10 @@
 
 #include <iostream>
 
-PluginXml::PluginXml(Vamp::PluginBase *plugin) :
+using std::shared_ptr;
+using std::dynamic_pointer_cast;
+
+PluginXml::PluginXml(shared_ptr<Vamp::PluginBase> plugin) :
     m_plugin(plugin)
 {
 }
@@ -90,8 +93,7 @@ PluginXml::toXml(QTextStream &stream,
             .arg(m_plugin->getParameter(i->identifier));
     }
 
-    RealTimePluginInstance *rtpi =
-        dynamic_cast<RealTimePluginInstance *>(m_plugin);
+    auto rtpi = dynamic_pointer_cast<RealTimePluginInstance>(m_plugin);
     if (rtpi) {
         std::map<std::string, std::string> configurePairs =
             rtpi->getConfigurePairs();
@@ -138,8 +140,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
         cerr << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << endl;
     }
 
-    RealTimePluginInstance *rtpi =
-        dynamic_cast<RealTimePluginInstance *>(m_plugin);
+    auto rtpi = dynamic_pointer_cast<RealTimePluginInstance>(m_plugin);
     if (rtpi) {
         QString config = attrs.value("configuration");
         if (config != "") {

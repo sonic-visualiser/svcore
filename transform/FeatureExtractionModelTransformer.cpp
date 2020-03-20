@@ -266,7 +266,8 @@ FeatureExtractionModelTransformer::deinitialise()
             << QThread::currentThreadId() << endl;
 
     try {
-        delete m_plugin;
+        m_plugin = {}; // does not necessarily delete, as it's a
+                       // shared_ptr, but in the design case it will
     } catch (const std::exception &e) {
         // A destructor shouldn't throw an exception. But at one point
         // (now fixed) our plugin stub destructor could have
@@ -274,7 +275,6 @@ FeatureExtractionModelTransformer::deinitialise()
         SVCERR << "FeatureExtractionModelTransformer: caught exception while deleting plugin: " << e.what() << endl;
         m_message = e.what();
     }
-    m_plugin = nullptr;
 
     m_descriptors.clear();
 }

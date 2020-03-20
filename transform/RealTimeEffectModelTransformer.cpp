@@ -108,7 +108,6 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
 RealTimeEffectModelTransformer::~RealTimeEffectModelTransformer()
 {
-    delete m_plugin;
 }
 
 void

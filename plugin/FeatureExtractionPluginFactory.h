@@ -24,6 +24,8 @@
 
 #include <QString>
 
+#include <memory>
+
 class FeatureExtractionPluginFactory
 {
 public:
@@ -47,8 +49,8 @@ public:
      * blockSize or channels on this -- they're negotiated and handled
      * via initialize() on the plugin itself after loading.
      */
-    virtual Vamp::Plugin *instantiatePlugin(QString identifier,
-                                            sv_samplerate_t inputSampleRate) = 0;
+    virtual std::shared_ptr<Vamp::Plugin> instantiatePlugin(QString identifier,
+                                                            sv_samplerate_t inputSampleRate) = 0;
     
     /**
      * Get category metadata about a plugin (without instantiating it).

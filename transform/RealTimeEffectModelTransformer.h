@@ -34,7 +34,7 @@ protected:
     void awaitOutputModels() override { } // they're created synchronously
     
     QString m_units;
-    RealTimePluginInstance *m_plugin;
+    std::shared_ptr<RealTimePluginInstance> m_plugin;
     int m_outputNo;
 };
 

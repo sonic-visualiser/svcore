@@ -88,7 +88,8 @@ public:
      * with different parameters and execution context settings.
      * Return the default one for the given transform.
      */
-    Transform getDefaultTransformFor(TransformId identifier, sv_samplerate_t rate = 0);
+    Transform getDefaultTransformFor(TransformId identifier,
+                                     sv_samplerate_t rate = 0);
 
     /**
      * Full name of a transform, suitable for putting on a menu.
@@ -138,19 +139,9 @@ public:
      * Vamp::PluginBase, but not necessarily a Vamp::Plugin (only if
      * the transform was a feature-extraction type -- call
      * downcastVampPlugin if you only want Vamp::Plugins).  Returns
-     * NULL if no suitable plugin was available.
-     *
-     * The returned plugin is owned by the caller, and should be
-     * deleted (using "delete") when no longer needed.
+     * nullptr if no suitable plugin was available.
      */
-    Vamp::PluginBase *instantiatePluginFor(const Transform &transform);
-
-    /**
-     * Convert a Vamp::PluginBase to a Vamp::Plugin, if it is one.
-     * Return NULL otherwise.  This ill-fitting convenience function
-     * is really just a dynamic_cast wrapper.
-     */
-    Vamp::Plugin *downcastVampPlugin(Vamp::PluginBase *);
+    std::shared_ptr<Vamp::PluginBase> instantiatePluginFor(const Transform &transform);
 
     /**
      * Set the plugin parameters, program and configuration strings on
@@ -158,20 +149,20 @@ public:
      * Note that no check is made whether the plugin is actually the
      * "correct" one for the transform.
      */
-    void setParametersFromPlugin(Transform &transform, Vamp::PluginBase *plugin);
+    void setParametersFromPlugin(Transform &transform, std::shared_ptr<Vamp::PluginBase> plugin);
 
     /**
      * Set the parameters, program and configuration strings on the
      * given plugin from the given Transform object.
      */
-    void setPluginParameters(const Transform &transform, Vamp::PluginBase *plugin);
+    void setPluginParameters(const Transform &transform, std::shared_ptr<Vamp::PluginBase> plugin);
     
     /**
      * If the given Transform object has no processing step and block
      * sizes set, set them to appropriate defaults for the given
      * plugin.
      */
-    void makeContextConsistentWithPlugin(Transform &transform, Vamp::PluginBase *plugin); 
+    void makeContextConsistentWithPlugin(Transform &transform, std::shared_ptr<Vamp::PluginBase> plugin); 
 
     /**
      * Retrieve a <plugin ... /> XML fragment that describes the
@@ -216,7 +207,7 @@ protected:
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
 
-    Vamp::PluginBase *instantiateDefaultPluginFor(TransformId id, sv_samplerate_t rate);
+    std::shared_ptr<Vamp::PluginBase> instantiateDefaultPluginFor(TransformId id, sv_samplerate_t rate);
     QMutex m_transformsMutex;
     QMutex m_uninstalledTransformsMutex;
 

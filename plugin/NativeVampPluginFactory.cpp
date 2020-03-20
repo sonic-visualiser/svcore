@@ -297,13 +297,13 @@ NativeVampPluginFactory::findPluginFile(QString soname, QString inDir)
     }
 }
 
-Vamp::Plugin *
+std::shared_ptr<Vamp::Plugin>
 NativeVampPluginFactory::instantiatePlugin(QString identifier,
                                            sv_samplerate_t inputSampleRate)
 {
     Profiler profiler("NativeVampPluginFactory::instantiatePlugin");
 
-    Vamp::Plugin *rv = nullptr;
+    std::shared_ptr<Vamp::Plugin> rv = nullptr;
     Vamp::PluginHostAdapter *plugin = nullptr;
 
     const VampPluginDescriptor *descriptor = nullptr;
@@ -363,7 +363,8 @@ NativeVampPluginFactory::instantiatePlugin(QString identifier,
 
     if (plugin) {
         m_handleMap[plugin] = libraryHandle;
-        rv = new PluginDeletionNotifyAdapter(plugin, this);
+        rv = std::shared_ptr<Vamp::Plugin>
+            (new PluginDeletionNotifyAdapter(plugin, this));
     }
 
 #ifdef DEBUG_PLUGIN_SCAN_AND_INSTANTIATE
@@ -384,7 +385,7 @@ done:
 }
 
 void
-NativeVampPluginFactory::pluginDeleted(Vamp::Plugin *plugin)
+NativeVampPluginFactory::pluginDeleted(Vamp::Plugin* plugin)
 {
     void *handle = m_handleMap[plugin];
     if (!handle) return;
@@ -480,15 +481,13 @@ NativeVampPluginFactory::getPluginStaticData(QString identifier)
         catlist.push_back(s.toStdString());
     }
     
-    Vamp::Plugin *p = instantiatePlugin(identifier, 44100);
+    std::shared_ptr<Vamp::Plugin> p = instantiatePlugin(identifier, 44100);
     if (!p) return {};
 
     auto psd = piper_vamp::PluginStaticData::fromPlugin(pluginKey,
                                                         catlist,
-                                                        p);
+                                                        p.get());
 
-    delete p;
-    
     m_pluginData[identifier] = psd;
     return psd;
 }

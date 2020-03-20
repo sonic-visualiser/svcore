@@ -44,14 +44,16 @@ public:
 
     void enumeratePlugins(std::vector<QString> &list) override;
 
-    const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const override;
+    RealTimePluginDescriptor getPluginDescriptor(QString identifier)
+        const override;
 
-    RealTimePluginInstance *instantiatePlugin(QString identifier,
-                                                      int clientId,
-                                                      int position,
-                                                      sv_samplerate_t sampleRate,
-                                                      int blockSize,
-                                                      int channels) override;
+    std::shared_ptr<RealTimePluginInstance>
+    instantiatePlugin(QString identifier,
+                      int clientId,
+                      int position,
+                      sv_samplerate_t sampleRate,
+                      int blockSize,
+                      int channels) override;
 
     QString getPluginCategory(QString identifier) override;
 
@@ -79,8 +81,6 @@ protected:
     virtual void generateTaxonomy(QString uri, QString base);
     virtual void generateFallbackCategories();
 
-    void releasePlugin(RealTimePluginInstance *, QString) override;
-
     virtual const LADSPA_Descriptor *getLADSPADescriptor(QString identifier);
 
     void loadLibrary(QString soName);
@@ -89,13 +89,14 @@ protected:
 
     std::vector<QString> m_identifiers;
     std::map<QString, QString> m_libraries; // identifier -> full file path
-    std::map<QString, RealTimePluginDescriptor *> m_rtDescriptors;
+    std::map<QString, RealTimePluginDescriptor> m_rtDescriptors;
 
     std::map<QString, QString> m_taxonomy;
     std::map<unsigned long, QString> m_lrdfTaxonomy;
     std::map<unsigned long, std::map<int, float> > m_portDefaults;
 
-    std::set<RealTimePluginInstance *> m_instances;
+    std::set<std::weak_ptr<RealTimePluginInstance>,
+             std::owner_less<std::weak_ptr<RealTimePluginInstance>>> m_instances;
 
     typedef std::map<QString, void *> LibraryHandleMap;
     LibraryHandleMap m_libraryHandles;

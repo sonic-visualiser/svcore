@@ -37,12 +37,13 @@ public:
 
     void enumeratePlugins(std::vector<QString> &list) override;
 
-    RealTimePluginInstance *instantiatePlugin(QString identifier,
-                                                      int clientId,
-                                                      int position,
-                                                      sv_samplerate_t sampleRate,
-                                                      int blockSize,
-                                                      int channels) override;
+    std::shared_ptr<RealTimePluginInstance>
+    instantiatePlugin(QString identifier,
+                      int clientId,
+                      int position,
+                      sv_samplerate_t sampleRate,
+                      int blockSize,
+                      int channels) override;
 
     static std::vector<QString> getPluginPath();
 

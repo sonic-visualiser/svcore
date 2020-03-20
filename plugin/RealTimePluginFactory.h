@@ -24,6 +24,7 @@
 
 #include <QString>
 #include <vector>
+#include <memory>
 
 #include "base/Debug.h"
 #include "base/BaseTypes.h"
@@ -80,12 +81,12 @@ public:
     /**
      * Get some basic information about a plugin (rapidly).
      */
-    virtual const RealTimePluginDescriptor *getPluginDescriptor(QString identifier) const = 0;
+    virtual RealTimePluginDescriptor getPluginDescriptor(QString identifier) const = 0;
 
     /**
      * Instantiate a plugin.
      */
-    virtual RealTimePluginInstance *instantiatePlugin(QString identifier,
+    virtual std::shared_ptr<RealTimePluginInstance> instantiatePlugin(QString identifier,
                                                       int clientId,
                                                       int position,
                                                       sv_samplerate_t sampleRate,
@@ -107,10 +108,6 @@ public:
     
 protected:
     RealTimePluginFactory() { }
-
-    // for call by RealTimePluginInstance dtor
-    virtual void releasePlugin(RealTimePluginInstance *, QString identifier) = 0;
-    friend class RealTimePluginInstance;
 
     static sv_samplerate_t m_sampleRate;
 };

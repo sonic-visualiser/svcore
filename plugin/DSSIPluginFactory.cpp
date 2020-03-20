@@ -110,7 +110,7 @@ DSSIPluginFactory::enumeratePlugins(std::vector<QString> &list)
     unloadUnusedLibraries();
 }
         
-RealTimePluginInstance *
+std::shared_ptr<RealTimePluginInstance> 
 DSSIPluginFactory::instantiatePlugin(QString identifier,
                                      int instrument,
                                      int position,
@@ -124,10 +124,11 @@ DSSIPluginFactory::instantiatePlugin(QString identifier,
 
     if (descriptor) {
 
-        DSSIPluginInstance *instance =
-            new DSSIPluginInstance
-            (this, instrument, identifier, position, sampleRate, blockSize, channels,
-             descriptor);
+        auto instance =
+            std::shared_ptr<RealTimePluginInstance>
+            (new DSSIPluginInstance
+             (this, instrument, identifier, position,
+              sampleRate, blockSize, channels, descriptor));
 
         m_instances.insert(instance);
 
@@ -320,18 +321,18 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
             continue;
         }
 
-        RealTimePluginDescriptor *rtd = new RealTimePluginDescriptor;
-        rtd->name = ladspaDescriptor->Name;
-        rtd->label = ladspaDescriptor->Label;
-        rtd->maker = ladspaDescriptor->Maker;
-        rtd->copyright = ladspaDescriptor->Copyright;
-        rtd->category = "";
-        rtd->isSynth = (descriptor->run_synth ||
+        RealTimePluginDescriptor rtd;
+        rtd.name = ladspaDescriptor->Name;
+        rtd.label = ladspaDescriptor->Label;
+        rtd.maker = ladspaDescriptor->Maker;
+        rtd.copyright = ladspaDescriptor->Copyright;
+        rtd.category = "";
+        rtd.isSynth = (descriptor->run_synth ||
                         descriptor->run_multiple_synths);
-        rtd->parameterCount = 0;
-        rtd->audioInputPortCount = 0;
-        rtd->audioOutputPortCount = 0;
-        rtd->controlOutputPortCount = 0;
+        rtd.parameterCount = 0;
+        rtd.audioInputPortCount = 0;
+        rtd.audioOutputPortCount = 0;
+        rtd.controlOutputPortCount = 0;
 
         QString identifier = PluginIdentifier::createIdentifier
             ("dssi", soname, ladspaDescriptor->Label);
@@ -348,7 +349,7 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         }
 
         if (category == "") {
-            string name = rtd->name;
+            string name = rtd.name;
             if (name.length() > 4 &&
                 name.substr(name.length() - 4) == " VST") {
                 if (descriptor->run_synth || descriptor->run_multiple_synths) {
@@ -360,7 +361,7 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
             }
         }
 
-        rtd->category = category.toStdString();
+        rtd.category = category.toStdString();
         
 //        cerr << "Plugin id is " << ladspaDescriptor->UniqueID
 //                  << ", identifier is \"" << identifier
@@ -399,20 +400,20 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         for (unsigned long i = 0; i < ladspaDescriptor->PortCount; i++) {
             if (LADSPA_IS_PORT_CONTROL(ladspaDescriptor->PortDescriptors[i])) {
                 if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
-                    ++rtd->parameterCount;
+                    ++rtd.parameterCount;
                 } else {
                     if (strcmp(ladspaDescriptor->PortNames[i], "latency") &&
                         strcmp(ladspaDescriptor->PortNames[i], "_latency")) {
-                        ++rtd->controlOutputPortCount;
-                        rtd->controlOutputPortNames.push_back
+                        ++rtd.controlOutputPortCount;
+                        rtd.controlOutputPortNames.push_back
                             (ladspaDescriptor->PortNames[i]);
                     }
                 }
             } else {
                 if (LADSPA_IS_PORT_INPUT(ladspaDescriptor->PortDescriptors[i])) {
-                    ++rtd->audioInputPortCount;
+                    ++rtd.audioInputPortCount;
                 } else if (LADSPA_IS_PORT_OUTPUT(ladspaDescriptor->PortDescriptors[i])) {
-                    ++rtd->audioOutputPortCount;
+                    ++rtd.audioOutputPortCount;
                 }
             }
         }

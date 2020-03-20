@@ -40,7 +40,7 @@ public:
     virtual piper_vamp::PluginStaticData getPluginStaticData(QString identifier)
         override;
 
-    virtual Vamp::Plugin *instantiatePlugin(QString identifier,
+    virtual std::shared_ptr<Vamp::Plugin> instantiatePlugin(QString identifier,
                                             sv_samplerate_t inputSampleRate)
         override;
 

@@ -58,7 +58,7 @@ protected:
 
     void run() override;
 
-    Vamp::Plugin *m_plugin;
+    std::shared_ptr<Vamp::Plugin> m_plugin;
 
     // descriptors per transform
     std::vector<Vamp::Plugin::OutputDescriptor> m_descriptors;
