@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QString>
 #include <vector>
+#include <functional>
 
 #include "Debug.h"
 
@@ -31,6 +32,56 @@ public:
     virtual void unexecute() = 0;
     virtual QString getName() const = 0;
 };
+
+/** 
+ * GenericCommand is a Command that can be constructed directly using
+ * lambdas, without having to create a subclass. Best for commands
+ * invoked only in a single place, and where little state is involved.
+ */
+class GenericCommand : public Command
+{
+public:
+    GenericCommand(QString name,
+                   std::function<void()> execute,
+                   std::function<void()> unexecute) :
+        m_name(name),
+        m_execute(execute),
+        m_unexecute(unexecute),
+        m_onDelete([] {}) {
+    }
+
+    GenericCommand(QString name,
+                   std::function<void()> execute,
+                   std::function<void()> unexecute,
+                   std::function<void()> onDelete) :
+        m_name(name),
+        m_execute(execute),
+        m_unexecute(unexecute),
+        m_onDelete(onDelete) {
+    }
+    
+    virtual ~GenericCommand() {
+        m_onDelete();
+    }
+
+    QString getName() const override {
+        return m_name;
+    }
+    
+    void execute() override {
+        m_execute();
+    }
+
+    void unexecute() override {
+        m_unexecute();
+    }
+
+private:
+    QString m_name;
+    std::function<void()> m_execute;
+    std::function<void()> m_unexecute;
+    std::function<void()> m_onDelete;
+};    
 
 class MacroCommand : public Command
 {
