@@ -19,20 +19,22 @@
 #include "base/XmlExportable.h"
 #include <vamp-hostsdk/PluginBase.h>
 
+#include <memory>
+
 class QXmlAttributes;
 
 class PluginXml : public XmlExportable
 {
 public:
-    PluginXml(Vamp::PluginBase *plugin);
+    PluginXml(std::shared_ptr<Vamp::PluginBase> plugin);
     virtual ~PluginXml();
 
     /**
      * Export plugin settings to XML.
      */
     void toXml(QTextStream &stream,
-                       QString indent = "",
-                       QString extraAttributes = "") const override;
+               QString indent = "",
+               QString extraAttributes = "") const override;
 
     /**
      * Set the parameters and program of a plugin from a set of XML
@@ -53,7 +55,7 @@ public:
 protected:
     QString stripInvalidParameterNameCharacters(QString) const;
 
-    Vamp::PluginBase *m_plugin;
+    std::shared_ptr<Vamp::PluginBase> m_plugin;
 };
 
 #endif

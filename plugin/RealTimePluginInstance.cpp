@@ -28,12 +28,5 @@
 
 RealTimePluginInstance::~RealTimePluginInstance()
 {
-//    SVDEBUG << "RealTimePluginInstance::~RealTimePluginInstance" << endl;
-
-    if (m_factory) {
-//        SVDEBUG << "Asking factory to release " << m_identifier << endl;
-
-        m_factory->releasePlugin(this, m_identifier);
-    }
 }
 

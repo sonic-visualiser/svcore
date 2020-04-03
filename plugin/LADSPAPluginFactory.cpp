@@ -51,12 +51,6 @@ LADSPAPluginFactory::LADSPAPluginFactory()
  
 LADSPAPluginFactory::~LADSPAPluginFactory()
 {
-    for (std::set<RealTimePluginInstance *>::iterator i = m_instances.begin();
-         i != m_instances.end(); ++i) {
-        (*i)->setFactory(nullptr);
-        delete *i;
-    }
-    m_instances.clear();
     unloadUnusedLibraries();
 
 #ifdef HAVE_LRDF
@@ -138,17 +132,17 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
     unloadUnusedLibraries();
 }
         
-const RealTimePluginDescriptor *
+RealTimePluginDescriptor
 LADSPAPluginFactory::getPluginDescriptor(QString identifier) const
 {
-    std::map<QString, RealTimePluginDescriptor *>::const_iterator i =
+    std::map<QString, RealTimePluginDescriptor>::const_iterator i =
         m_rtDescriptors.find(identifier);
 
     if (i != m_rtDescriptors.end()) {
         return i->second;
     } 
 
-    return nullptr;
+    return {};
 }
 
 float
@@ -334,7 +328,7 @@ LADSPAPluginFactory::getPortDisplayHint(const LADSPA_Descriptor *descriptor, int
 }
 
 
-RealTimePluginInstance *
+std::shared_ptr<RealTimePluginInstance>
 LADSPAPluginFactory::instantiatePlugin(QString identifier,
                                        int instrument,
                                        int position,
@@ -348,10 +342,11 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
 
     if (descriptor) {
 
-        LADSPAPluginInstance *instance =
-            new LADSPAPluginInstance
-            (this, instrument, identifier, position, sampleRate, blockSize, channels,
-             descriptor);
+        auto instance =
+            std::shared_ptr<RealTimePluginInstance>
+            (new LADSPAPluginInstance
+             (this, instrument, identifier, position,
+              sampleRate, blockSize, channels, descriptor));
 
         m_instances.insert(instance);
 
@@ -364,53 +359,6 @@ LADSPAPluginFactory::instantiatePlugin(QString identifier,
     }
 
     return nullptr;
-}
-
-void
-LADSPAPluginFactory::releasePlugin(RealTimePluginInstance *instance,
-                                   QString identifier)
-{
-    Profiler profiler("LADSPAPluginFactory::releasePlugin");
-
-    if (m_instances.find(instance) == m_instances.end()) {
-        cerr << "WARNING: LADSPAPluginFactory::releasePlugin: Not one of mine!"
-                  << endl;
-        return;
-    }
-
-    QString type, soname, label;
-    PluginIdentifier::parseIdentifier(identifier, type, soname, label);
-
-    m_instances.erase(instance);
-
-    bool stillInUse = false;
-
-    for (std::set<RealTimePluginInstance *>::iterator ii = m_instances.begin();
-         ii != m_instances.end(); ++ii) {
-        QString itype, isoname, ilabel;
-        PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
-        if (isoname == soname) {
-#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            SVDEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " is still in use for plugin " << ilabel << endl;
-#endif
-            stillInUse = true;
-            break;
-        }
-    }
-    
-    if (!stillInUse) {
-        if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
-#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-            SVDEBUG << "LADSPAPluginFactory::releasePlugin: dll " << soname << " no longer in use, unloading" << endl;
-#endif
-            unloadLibrary(soname);
-        }
-    }
-
-#ifdef DEBUG_LADSPA_PLUGIN_FACTORY
-    SVDEBUG << "LADSPAPluginFactory::releasePlugin("
-                  << identifier << ": now have " << m_instances.size() << " instances" << endl;
-#endif
 }
 
 const LADSPA_Descriptor *
@@ -525,31 +473,39 @@ LADSPAPluginFactory::unloadLibrary(QString soName)
 void
 LADSPAPluginFactory::unloadUnusedLibraries()
 {
-    std::vector<QString> toUnload;
+    std::set<std::weak_ptr<RealTimePluginInstance>,
+             std::owner_less<std::weak_ptr<RealTimePluginInstance>>> toRemove;
 
-    for (LibraryHandleMap::iterator i = m_libraryHandles.begin();
-         i != m_libraryHandles.end(); ++i) {
-
-        bool stillInUse = false;
-
-        for (std::set<RealTimePluginInstance *>::iterator ii = m_instances.begin();
-             ii != m_instances.end(); ++ii) {
-
+    std::set<QString> soNamesInUse;
+    
+    for (auto wp: m_instances) {
+        if (auto p = wp.lock()) {
             QString itype, isoname, ilabel;
-            PluginIdentifier::parseIdentifier((*ii)->getPluginIdentifier(), itype, isoname, ilabel);
-            if (isoname == i->first) {
-                stillInUse = true;
-                break;
-            }
+            PluginIdentifier::parseIdentifier(p->getPluginIdentifier(),
+                                              itype, isoname, ilabel);
+            soNamesInUse.insert(isoname);
+        } else {
+            toRemove.insert(wp);
         }
-
-        if (!stillInUse) toUnload.push_back(i->first);
     }
 
-    for (std::vector<QString>::iterator i = toUnload.begin();
-         i != toUnload.end(); ++i) {
-        if (*i != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
-            unloadLibrary(*i);
+    for (auto wp: toRemove) {
+        m_instances.erase(wp);
+    }
+
+    std::vector<QString> toUnload;
+    
+    for (auto i = m_libraryHandles.begin();
+         i != m_libraryHandles.end(); ++i) {
+
+        if (soNamesInUse.find(i->first) == soNamesInUse.end()) {
+            toUnload.push_back(i->first);
+        }
+    }
+
+    for (auto soname: toUnload) {
+        if (soname != PluginIdentifier::BUILTIN_PLUGIN_SONAME) {
+            unloadLibrary(soname);
         }
     }
 }
@@ -707,17 +663,17 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
     int index = 0;
     while ((descriptor = fn(index))) {
 
-        RealTimePluginDescriptor *rtd = new RealTimePluginDescriptor;
-        rtd->name = descriptor->Name;
-        rtd->label = descriptor->Label;
-        rtd->maker = descriptor->Maker;
-        rtd->copyright = descriptor->Copyright;
-        rtd->category = "";
-        rtd->isSynth = false;
-        rtd->parameterCount = 0;
-        rtd->audioInputPortCount = 0;
-        rtd->audioOutputPortCount = 0;
-        rtd->controlOutputPortCount = 0;
+        RealTimePluginDescriptor rtd;
+        rtd.name = descriptor->Name;
+        rtd.label = descriptor->Label;
+        rtd.maker = descriptor->Maker;
+        rtd.copyright = descriptor->Copyright;
+        rtd.category = "";
+        rtd.isSynth = false;
+        rtd.parameterCount = 0;
+        rtd.audioInputPortCount = 0;
+        rtd.audioOutputPortCount = 0;
+        rtd.controlOutputPortCount = 0;
 
         QString identifier = PluginIdentifier::createIdentifier
             ("ladspa", soname, descriptor->Label);
@@ -735,7 +691,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         QString category = m_taxonomy[identifier];
         
         if (category == "") {
-            string name = rtd->name;
+            string name = rtd.name;
             if (name.length() > 4 &&
                 name.substr(name.length() - 4) == " VST") {
                 category = "VST effects";
@@ -743,7 +699,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
             }
         }
         
-        rtd->category = category.toStdString();
+        rtd.category = category.toStdString();
 
 //        cerr << "Plugin id is " << descriptor->UniqueID
 //                  << ", category is \"" << (category ? category : QString("(none)"))
@@ -781,20 +737,20 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         for (int i = 0; i < (int)descriptor->PortCount; i++) {
             if (LADSPA_IS_PORT_CONTROL(descriptor->PortDescriptors[i])) {
                 if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
-                    ++rtd->parameterCount;
+                    ++rtd.parameterCount;
                 } else {
                     if (strcmp(descriptor->PortNames[i], "latency") &&
                         strcmp(descriptor->PortNames[i], "_latency")) {
-                        ++rtd->controlOutputPortCount;
-                        rtd->controlOutputPortNames.push_back
+                        ++rtd.controlOutputPortCount;
+                        rtd.controlOutputPortNames.push_back
                             (descriptor->PortNames[i]);
                     }
                 }
             } else {
                 if (LADSPA_IS_PORT_INPUT(descriptor->PortDescriptors[i])) {
-                    ++rtd->audioInputPortCount;
+                    ++rtd.audioInputPortCount;
                 } else if (LADSPA_IS_PORT_OUTPUT(descriptor->PortDescriptors[i])) {
-                    ++rtd->audioOutputPortCount;
+                    ++rtd.audioOutputPortCount;
                 }
             }
         }

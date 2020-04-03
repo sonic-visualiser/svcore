@@ -513,38 +513,38 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             continue;
         }
 
-        const RealTimePluginDescriptor *descriptor =
+        RealTimePluginDescriptor descriptor =
             factory->getPluginDescriptor(pluginId);
 
-        if (!descriptor) {
+        if (descriptor.name == "") {
             cerr << "WARNING: TransformFactory::populateTransforms: Failed to query plugin " << pluginId << endl;
             continue;
         }
         
-//!!!        if (descriptor->controlOutputPortCount == 0 ||
-//            descriptor->audioInputPortCount == 0) continue;
+//!!!        if (descriptor.controlOutputPortCount == 0 ||
+//            descriptor.audioInputPortCount == 0) continue;
 
-//        cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor->controlOutputPortCount << " control output ports, " << descriptor->audioOutputPortCount << " audio outputs, " << descriptor->audioInputPortCount << " audio inputs" << endl;
+//        cout << "TransformFactory::populateRealTimePlugins: plugin " << pluginId << " has " << descriptor.controlOutputPortCount << " control output ports, " << descriptor.audioOutputPortCount << " audio outputs, " << descriptor.audioInputPortCount << " audio inputs" << endl;
         
-        QString pluginName = descriptor->name.c_str();
+        QString pluginName = descriptor.name.c_str();
         QString category = factory->getPluginCategory(pluginId);
-        bool configurable = (descriptor->parameterCount > 0);
-        QString maker = descriptor->maker.c_str();
+        bool configurable = (descriptor.parameterCount > 0);
+        QString maker = descriptor.maker.c_str();
         if (maker == "") maker = tr("<unknown maker>");
 
-        if (descriptor->audioInputPortCount > 0) {
+        if (descriptor.audioInputPortCount > 0) {
 
-            for (int j = 0; j < (int)descriptor->controlOutputPortCount; ++j) {
+            for (int j = 0; j < (int)descriptor.controlOutputPortCount; ++j) {
 
                 QString transformId = QString("%1:%2").arg(pluginId).arg(j);
                 QString userName;
                 QString units;
                 QString portName;
 
-                if (j < (int)descriptor->controlOutputPortNames.size() &&
-                    descriptor->controlOutputPortNames[j] != "") {
+                if (j < (int)descriptor.controlOutputPortNames.size() &&
+                    descriptor.controlOutputPortNames[j] != "") {
 
-                    portName = descriptor->controlOutputPortNames[j].c_str();
+                    portName = descriptor.controlOutputPortNames[j].c_str();
 
                     userName = tr("%1: %2")
                         .arg(pluginName)
@@ -554,7 +554,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                         units = unitRE.cap(1);
                     }
 
-                } else if (descriptor->controlOutputPortCount > 1) {
+                } else if (descriptor.controlOutputPortCount > 1) {
 
                     userName = tr("%1: Output %2")
                         .arg(pluginName)
@@ -593,9 +593,9 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             }
         }
 
-        if (!descriptor->isSynth || descriptor->audioInputPortCount > 0) {
+        if (!descriptor.isSynth || descriptor.audioInputPortCount > 0) {
 
-            if (descriptor->audioOutputPortCount > 0) {
+            if (descriptor.audioOutputPortCount > 0) {
 
                 QString transformId = QString("%1:A").arg(pluginId);
                 TransformDescription::Type type = TransformDescription::Effects;
@@ -604,7 +604,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                     .arg(pluginName)
                     .arg(maker);
 
-                if (descriptor->audioInputPortCount == 0) {
+                if (descriptor.audioInputPortCount == 0) {
                     type = TransformDescription::Generator;
                     QString description = tr("Generate audio signal using \"%1\" plugin (from %2)")
                         .arg(pluginName)
@@ -753,25 +753,24 @@ TransformFactory::getDefaultTransformFor(TransformId id, sv_samplerate_t rate)
     SVDEBUG << "TransformFactory::getDefaultTransformFor: identifier \""
             << id << "\"" << endl;
     
-    Vamp::PluginBase *plugin = instantiateDefaultPluginFor(id, rate);
+    std::shared_ptr<Vamp::PluginBase> plugin = instantiateDefaultPluginFor(id, rate);
 
     if (plugin) {
         t.setPluginVersion(QString("%1").arg(plugin->getPluginVersion()));
         setParametersFromPlugin(t, plugin);
         makeContextConsistentWithPlugin(t, plugin);
-        delete plugin;
     }
 
     return t;
 }
 
-Vamp::PluginBase *
+std::shared_ptr<Vamp::PluginBase> 
 TransformFactory::instantiatePluginFor(const Transform &transform)
 {
     SVDEBUG << "TransformFactory::instantiatePluginFor: identifier \""
             << transform.getIdentifier() << "\"" << endl;
     
-    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
+    std::shared_ptr<Vamp::PluginBase> plugin = instantiateDefaultPluginFor
         (transform.getIdentifier(), transform.getSampleRate());
 
     if (plugin) {
@@ -781,7 +780,7 @@ TransformFactory::instantiatePluginFor(const Transform &transform)
     return plugin;
 }
 
-Vamp::PluginBase *
+std::shared_ptr<Vamp::PluginBase> 
 TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
                                               sv_samplerate_t rate)
 {
@@ -790,7 +789,7 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
     if (rate == 0) rate = 44100.0;
     QString pluginId = t.getPluginIdentifier();
 
-    Vamp::PluginBase *plugin = nullptr;
+    std::shared_ptr<Vamp::PluginBase> plugin = nullptr;
 
     if (t.getType() == Transform::FeatureExtraction) {
 
@@ -822,24 +821,6 @@ TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
     }
 
     return plugin;
-}
-
-Vamp::Plugin *
-TransformFactory::downcastVampPlugin(Vamp::PluginBase *plugin)
-{
-    Vamp::Plugin *vp = dynamic_cast<Vamp::Plugin *>(plugin);
-    if (!vp) {
-//        cerr << "makeConsistentWithPlugin: not a Vamp::Plugin" << endl;
-        vp = dynamic_cast<Vamp::PluginHostAdapter *>(plugin); //!!! why?
-}
-    if (!vp) {
-//        cerr << "makeConsistentWithPlugin: not a Vamp::PluginHostAdapter" << endl;
-        vp = dynamic_cast<Vamp::HostExt::PluginWrapper *>(plugin); //!!! no, I mean really why?
-    }
-    if (!vp) {
-//        cerr << "makeConsistentWithPlugin: not a Vamp::HostExt::PluginWrapper" << endl;
-    }
-    return vp;
 }
 
 bool
@@ -894,12 +875,12 @@ TransformFactory::getTransformInputDomain(TransformId identifier)
         return Vamp::Plugin::TimeDomain;
     }
 
-    Vamp::Plugin *plugin =
-        downcastVampPlugin(instantiateDefaultPluginFor(identifier, 0));
+    std::shared_ptr<Vamp::Plugin> plugin =
+        std::dynamic_pointer_cast<Vamp::Plugin>
+        (instantiateDefaultPluginFor(identifier, 0));
 
     if (plugin) {
         Vamp::Plugin::InputDomain d = plugin->getInputDomain();
-        delete plugin;
         return d;
     }
 
@@ -922,13 +903,15 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
     if (RealTimePluginFactory::instanceFor(id)) {
 
-        const RealTimePluginDescriptor *descriptor = 
+        RealTimePluginDescriptor descriptor = 
             RealTimePluginFactory::instanceFor(id)->
             getPluginDescriptor(id);
-        if (!descriptor) return false;
+        if (descriptor.name == "") {
+            return false;
+        }
 
-        min = descriptor->audioInputPortCount;
-        max = descriptor->audioInputPortCount;
+        min = descriptor.audioInputPortCount;
+        max = descriptor.audioInputPortCount;
 
         return true;
 
@@ -949,7 +932,7 @@ TransformFactory::getTransformChannelRange(TransformId identifier,
 
 void
 TransformFactory::setParametersFromPlugin(Transform &transform,
-                                          Vamp::PluginBase *plugin)
+                                          std::shared_ptr<Vamp::PluginBase> plugin)
 {
     Transform::ParameterMap pmap;
 
@@ -976,8 +959,8 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
         transform.setProgram(plugin->getCurrentProgram().c_str());
     }
 
-    RealTimePluginInstance *rtpi =
-        dynamic_cast<RealTimePluginInstance *>(plugin);
+    std::shared_ptr<RealTimePluginInstance> rtpi =
+        std::dynamic_pointer_cast<RealTimePluginInstance>(plugin);
 
     Transform::ConfigurationMap cmap;
 
@@ -997,14 +980,14 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
 
 void
 TransformFactory::setPluginParameters(const Transform &transform,
-                                      Vamp::PluginBase *plugin)
+                                      std::shared_ptr<Vamp::PluginBase> plugin)
 {
     //!!! check plugin & API version (see e.g. PluginXml::setParameters)
 
     //!!! check that this is the right plugin!
 
-    RealTimePluginInstance *rtpi =
-        dynamic_cast<RealTimePluginInstance *>(plugin);
+    std::shared_ptr<RealTimePluginInstance> rtpi =
+        std::dynamic_pointer_cast<RealTimePluginInstance>(plugin);
 
     if (rtpi) {
         const Transform::ConfigurationMap &cmap = transform.getConfiguration();
@@ -1035,9 +1018,10 @@ TransformFactory::setPluginParameters(const Transform &transform,
 
 void
 TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
-                                                  Vamp::PluginBase *plugin)
+                                                  std::shared_ptr<Vamp::PluginBase> plugin)
 {
-    const Vamp::Plugin *vp = downcastVampPlugin(plugin);
+    std::shared_ptr<Vamp::Plugin> vp =
+        std::dynamic_pointer_cast<Vamp::Plugin>(plugin);
 
     if (!vp) {
         // time domain input for real-time effects plugin
@@ -1078,8 +1062,7 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
     SVDEBUG << "TransformFactory::getPluginConfigurationXml: identifier \""
             << t.getIdentifier() << "\"" << endl;
 
-    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
-        (t.getIdentifier(), 0);
+    auto plugin = instantiateDefaultPluginFor(t.getIdentifier(), 0);
     if (!plugin) {
         SVDEBUG << "TransformFactory::getPluginConfigurationXml: "
                 << "Unable to instantiate plugin for transform \""
@@ -1091,7 +1074,6 @@ TransformFactory::getPluginConfigurationXml(const Transform &t)
 
     QTextStream out(&xml);
     PluginXml(plugin).toXml(out);
-    delete plugin;
 
     return xml;
 }
@@ -1103,8 +1085,7 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
     SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: identifier \""
             << t.getIdentifier() << "\"" << endl;
 
-    Vamp::PluginBase *plugin = instantiateDefaultPluginFor
-        (t.getIdentifier(), 0);
+    auto plugin = instantiateDefaultPluginFor(t.getIdentifier(), 0);
     if (!plugin) {
         SVDEBUG << "TransformFactory::setParametersFromPluginConfigurationXml: "
                 << "Unable to instantiate plugin for transform \""
@@ -1114,7 +1095,6 @@ TransformFactory::setParametersFromPluginConfigurationXml(Transform &t,
 
     PluginXml(plugin).setParametersFromXml(xml);
     setParametersFromPlugin(t, plugin);
-    delete plugin;
 }
 
 TransformFactory::SearchResults

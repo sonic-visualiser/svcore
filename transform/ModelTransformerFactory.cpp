@@ -40,6 +40,8 @@
 using std::vector;
 using std::set;
 using std::map;
+using std::shared_ptr;
+using std::make_shared;
 
 ModelTransformerFactory *
 ModelTransformerFactory::m_instance = new ModelTransformerFactory;
@@ -110,7 +112,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
     SVDEBUG << "ModelTransformer: last configuration for identifier " << transform.getIdentifier() << ": " << configurationXml << endl;
 
-    Vamp::PluginBase *plugin = nullptr;
+    shared_ptr<Vamp::PluginBase> plugin;
 
     if (RealTimePluginFactory::instanceFor(id)) {
 
@@ -127,20 +129,16 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             channels = source->getTargetChannelCount();
         }
 
-        RealTimePluginInstance *rtp = factory->instantiatePlugin
+        plugin = factory->instantiatePlugin
             (id, 0, 0, sampleRate, blockSize, channels);
-
-        plugin = rtp;
 
     } else {
 
         SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: instantiating Vamp plugin" << endl;
 
-        Vamp::Plugin *vp =
+        plugin =
             FeatureExtractionPluginFactory::instance()->instantiatePlugin
             (id, float(defaultSampleRate));
-
-        plugin = vp;
     }
 
     if (plugin) {
@@ -172,10 +170,6 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
             makeContextConsistentWithPlugin(transform, plugin);
 
         configurationXml = PluginXml(plugin).toXmlString();
-
-        SVDEBUG << "ModelTransformerFactory::getConfigurationForTransform: got configuration, deleting plugin" << endl;
-        
-        delete plugin;
     }
 
     if (ok) {

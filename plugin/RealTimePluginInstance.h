@@ -134,8 +134,6 @@ public:
     virtual void discardEvents() { }
     virtual void setIdealChannelCount(int channels) = 0; // must also silence(); may also re-instantiate
 
-    void setFactory(RealTimePluginFactory *f) { m_factory = f; } // ew
-
     std::string getType() const override { return "Real-Time Plugin"; }
 
     typedef std::map<std::string, std::string> ConfigurationPairMap;
@@ -151,8 +149,6 @@ protected:
     QString m_identifier;
 
     ConfigurationPairMap m_configurationData;
-
-    friend class PluginFactory;
 };
 
 

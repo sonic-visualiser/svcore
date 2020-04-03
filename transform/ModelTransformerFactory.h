@@ -29,6 +29,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <memory>
 
 class AudioPlaySource;
 
@@ -45,7 +46,7 @@ public:
     public:
         virtual bool configure(ModelTransformer::Input &input,
                                Transform &transform,
-                               Vamp::PluginBase *plugin,
+                               std::shared_ptr<Vamp::PluginBase> plugin,
                                ModelId &inputModel,
                                AudioPlaySource *source,
                                sv_frame_t startFrame,
