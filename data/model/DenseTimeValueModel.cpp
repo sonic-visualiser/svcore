@@ -17,41 +17,42 @@
 
 #include <QStringList>
 
-QString
-DenseTimeValueModel::getDelimitedDataHeaderLine(QString delimiter,
-                                                DataExportOptions) const
+using namespace std;
+
+QVector<QString>
+DenseTimeValueModel::getStringExportHeaders(DataExportOptions) const
 {
     int ch = getChannelCount();
-    QStringList list;
+    QVector<QString> sv;
     for (int i = 0; i < ch; ++i) {
-        list << QString("Channel%1").arg(i+1);
+        sv.push_back(QString("Channel%1").arg(i+1));
     }
-    return list.join(delimiter);
+    return sv;
 }
 
-QString
-DenseTimeValueModel::toDelimitedDataString(QString delimiter,
-                                           DataExportOptions,
-                                           sv_frame_t startFrame,
-                                           sv_frame_t duration) const
+QVector<QVector<QString>>
+DenseTimeValueModel::toStringExportRows(DataExportOptions,
+                                        sv_frame_t startFrame,
+                                        sv_frame_t duration) const
 {
     int ch = getChannelCount();
 
-    if (duration <= 0) return "";
+    if (duration <= 0) return {};
 
     auto data = getMultiChannelData(0, ch - 1, startFrame, duration);
 
-    if (data.empty() || data[0].empty()) return "";
+    if (data.empty() || data[0].empty()) return {};
     
-    QStringList list;
+    QVector<QVector<QString>> rows;
+
     for (sv_frame_t i = 0; in_range_for(data[0], i); ++i) {
-        QStringList parts;
-        parts << QString("%1").arg(startFrame + i);
+        QVector<QString> row;
+        row.push_back(QString("%1").arg(startFrame + i));
         for (int c = 0; in_range_for(data, c); ++c) {
-            parts << QString("%1").arg(data[c][i]);
+            row.push_back(QString("%1").arg(data[c][i]));
         }
-        list << parts.join(delimiter);
+        rows.push_back(row);
     }
 
-    return list.join("\n");
+    return rows;
 }

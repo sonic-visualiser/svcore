@@ -172,13 +172,13 @@ public:
 
     QString getTypeName() const override { return tr("Editable Dense 3-D"); }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions opts) const override;
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions options) const override;
 
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
-                                  sv_frame_t startFrame,
-                                  sv_frame_t duration) const override;
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions options,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const override;
 
     void toXml(QTextStream &out,
                        QString indent = "",

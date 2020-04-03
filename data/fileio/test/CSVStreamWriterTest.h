@@ -94,6 +94,7 @@ private slots:
 
         std::ostringstream oss;
         const auto result = CSVStreamWriter::writeInChunks(oss, mwm);
+        
         QVERIFY( oss.str() == getExpectedString() );
         QVERIFY( result );
     }
@@ -303,9 +304,12 @@ private slots:
 //        qDebug("Create Expected Output\n");
 
         // NB. removed end line break
-        const auto expectedOutput =
-            notes.toDelimitedDataString(",", {}, 0, notes.getEndFrame())
-            .trimmed();
+        QString expectedOutput;
+        auto rows = notes.toStringExportRows({}, 0, notes.getEndFrame());
+        for (auto row: rows) {
+            expectedOutput += StringBits::joinDelimited(row, ",") + "\n";
+        }
+        expectedOutput = expectedOutput.trimmed();
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;

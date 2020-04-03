@@ -340,20 +340,17 @@ public:
         m_events.toXml(out, indent, QString("dimensions=\"3\""));
     }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions options) const override {
-        return m_events.getDelimitedDataHeaderLine(delimiter,
-                                                   options,
-                                                   Event::ExportNameOptions());
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions options) const override {
+        return m_events.getStringExportHeaders(options, {});
     }
     
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
-                                  sv_frame_t startFrame,
-                                  sv_frame_t duration) const override {
-        return m_events.toDelimitedDataString
-            (delimiter,
-             options,
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions options,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const override {
+        return m_events.toStringExportRows
+            (options,
              startFrame,
              duration,
              m_sampleRate,

@@ -275,20 +275,20 @@ public:
                QString extraAttributes = "") const override;
 
     /**
-     * Emit a label for each column that would be written by
-     * toDelimitedDataString, separated by the given delimiter.
+     * Return a label for each column that would be written by
+     * toStringExportRows.
      */
-    virtual QString getDelimitedDataHeaderLine(QString delimiter,
-                                               DataExportOptions options) const = 0;
+    virtual QVector<QString>
+    getStringExportHeaders(DataExportOptions options) const = 0;
     
     /**
-     * Emit the contents of the model within the given range to a
-     * delimited (e.g. comma-separated) data format.
+     * Emit events starting within the given range as string rows
+     * ready for conversion to an e.g. comma-separated data format.
      */
-    virtual QString toDelimitedDataString(QString delimiter,
-                                          DataExportOptions options,
-                                          sv_frame_t startFrame,
-                                          sv_frame_t duration) const = 0;
+    virtual QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions options,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const = 0;
 
 signals:
     /**

@@ -498,37 +498,40 @@ BasicCompressedDenseThreeDimensionalModel::getCompletion() const
     return m_completion;
 }
 
-QString
-BasicCompressedDenseThreeDimensionalModel::getDelimitedDataHeaderLine(QString delimiter,
-                                                                      DataExportOptions) const
+QVector<QString>
+BasicCompressedDenseThreeDimensionalModel::getStringExportHeaders(DataExportOptions)
+    const
 {
-    QStringList list;
+    QVector<QString> sv;
     for (int i = 0; i < m_yBinCount; ++i) {
-        list << QString("Bin%1").arg(i+1);
+        sv.push_back(QString("Bin%1").arg(i+1));
     }
-    return list.join(delimiter);
+    return sv;
 }    
-
-QString
-BasicCompressedDenseThreeDimensionalModel::toDelimitedDataString(QString delimiter,
-                                                          DataExportOptions,
-                                                          sv_frame_t startFrame,
-                                                          sv_frame_t duration) const
+    
+QVector<QVector<QString>>
+BasicCompressedDenseThreeDimensionalModel::toStringExportRows(DataExportOptions,
+                                                              sv_frame_t startFrame,
+                                                              sv_frame_t duration)
+    const
 {
     QReadLocker locker(&m_lock);
-    QString s;
+
+    QVector<QVector<QString>> rows;
+
     for (int i = 0; in_range_for(m_data, i); ++i) {
         Column c = getColumn(i);
         sv_frame_t fr = m_startFrame + i * m_resolution;
         if (fr >= startFrame && fr < startFrame + duration) {
-            QStringList list;
+            QVector<QString> row;
             for (int j = 0; in_range_for(c, j); ++j) {
-                list << QString("%1").arg(c.at(j));
+                row << QString("%1").arg(c.at(j));
             }
-            s += list.join(delimiter) + "\n";
+            rows.push_back(row);
         }
     }
-    return s;
+    
+    return rows;
 }
 
 void

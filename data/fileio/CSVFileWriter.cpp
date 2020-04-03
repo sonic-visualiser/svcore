@@ -86,7 +86,9 @@ CSVFileWriter::writeSelection(MultiSelection selection)
         QTextStream out(&file);
 
         if (m_options & DataExportIncludeHeader) {
-            out << m_model->getDelimitedDataHeaderLine(m_delimiter, m_options)
+            out << StringBits::joinDelimited
+                (m_model->getStringExportHeaders(m_options),
+                 m_delimiter)
                 << endl;
         }
         

@@ -20,7 +20,9 @@
 #include "base/Selection.h"
 #include "base/ProgressReporter.h"
 #include "base/DataExportOptions.h"
+#include "base/StringBits.h"
 #include "data/model/Model.h"
+
 #include <QString>
 #include <algorithm>
 #include <numeric>
@@ -68,20 +70,21 @@ writeInChunks(OutStream& oss,
 
             const auto start = readPtr;
             const auto end = std::min(start + blockSize, endFrame);
-            const auto data = model.toDelimitedDataString(
-                delimiter,
+            const auto data = model.toStringExportRows(
                 options,
                 start,
                 end - start
-            ).trimmed();
+            );
 
-            if ( data != "" ) {
-                if (started) {
-                    oss << "\n";
-                } else {
-                    started = true;
+            if (!data.empty()) {
+                for (const auto &row: data) {
+                    if (started) {
+                        oss << "\n";
+                    } else {
+                        started = true;
+                    }
+                    oss << StringBits::joinDelimited(row, delimiter);
                 }
-                oss << data;
             }
 
             nFramesWritten += end - start;
@@ -120,7 +123,7 @@ writeInChunks(OutStream& oss,
     };
     MultiSelection regions;
     regions.addSelection(all);
-    return CSVStreamWriter::writeInChunks(
+    return writeInChunks(
         oss,
         model,
         regions,
@@ -141,7 +144,7 @@ writeInChunks(OutStream& oss,
               const sv_frame_t blockSize = 16384)
 {
     const Selection empty;
-    return CSVStreamWriter::writeInChunks(
+    return writeInChunks(
         oss,
         model,
         empty,

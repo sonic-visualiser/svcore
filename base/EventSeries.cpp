@@ -16,6 +16,9 @@
 
 #include <QMutexLocker>
 
+using std::vector;
+using std::string;
+
 EventSeries::EventSeries(const EventSeries &other) :
     EventSeries(other, QMutexLocker(&other.m_mutex))
 {
@@ -597,32 +600,28 @@ EventSeries::toXml(QTextStream &out,
     out << indent << "</dataset>\n";
 }
 
-QString
-EventSeries::getDelimitedDataHeaderLine(QString delimiter,
-                                        DataExportOptions opts,
-                                        Event::ExportNameOptions nopts) const
+QVector<QString>
+EventSeries::getStringExportHeaders(DataExportOptions opts,
+                                    Event::ExportNameOptions nopts) const
 {
     if (m_events.empty()) {
-        return QString();
+        return {};
     } else {
-        return m_events.begin()->getDelimitedDataHeaderLine(delimiter,
-                                                            opts,
-                                                            nopts);
+        return m_events.begin()->getStringExportHeaders(opts, nopts);
     }
 }
 
-QString
-EventSeries::toDelimitedDataString(QString delimiter,
-                                   DataExportOptions options,
-                                   sv_frame_t startFrame,
-                                   sv_frame_t duration,
-                                   sv_samplerate_t sampleRate,
-                                   sv_frame_t resolution,
-                                   Event fillEvent) const
+QVector<QVector<QString>>
+EventSeries::toStringExportRows(DataExportOptions options,
+                                sv_frame_t startFrame,
+                                sv_frame_t duration,
+                                sv_samplerate_t sampleRate,
+                                sv_frame_t resolution,
+                                Event fillEvent) const
 {
     QMutexLocker locker(&m_mutex);
 
-    QString s;
+    QVector<QVector<QString>> rows;
 
     const sv_frame_t end = startFrame + duration;
 
@@ -632,10 +631,7 @@ EventSeries::toDelimitedDataString(QString delimiter,
     if (!(options & DataExportFillGaps)) {
         
         while (pitr != m_events.end() && pitr->getFrame() < end) {
-            s += pitr->toDelimitedDataString(delimiter,
-                                             options,
-                                             sampleRate);
-            s += "\n";
+            rows.push_back(pitr->toStringExportRow(options, sampleRate));
             ++pitr;
         }
 
@@ -659,22 +655,19 @@ EventSeries::toDelimitedDataString(QString delimiter,
         // distance) or a default fill point
         while (f < end) {
             if (pitr != m_events.end() && pitr->getFrame() <= f) {
-                s += pitr->toDelimitedDataString
-                    (delimiter,
-                     options & ~DataExportFillGaps,
-                     sampleRate);
+                rows.push_back(pitr->toStringExportRow
+                               (options & ~DataExportFillGaps,
+                                sampleRate));
                 ++pitr;
             } else {
-                s += fillEvent.withFrame(f).toDelimitedDataString
-                    (delimiter,
-                     options & ~DataExportFillGaps,
-                     sampleRate);
+                rows.push_back(fillEvent.withFrame(f).toStringExportRow
+                               (options & ~DataExportFillGaps,
+                                sampleRate));
             }
-            s += "\n";
             f += resolution;
         }
     }
     
-    return s;
+    return rows;
 }
 

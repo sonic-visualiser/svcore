@@ -82,13 +82,13 @@ public:
     bool canPlay() const override { return true; }
     QString getDefaultPlayClipId() const override { return ""; }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions options) const override;
-    
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
-                                  sv_frame_t startFrame,
-                                  sv_frame_t duration) const override;
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions options) const override;
+
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions options,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const override;
 
     QString getTypeName() const override { return tr("Dense Time-Value"); }
 };

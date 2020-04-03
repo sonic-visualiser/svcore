@@ -119,13 +119,14 @@ public:
         return source ? source->getCompletion() : 100;
     }
 
-    QString getDelimitedDataHeaderLine(QString, DataExportOptions) const override {
-        return "";
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions) const override {
+        return {};
     }
-    
-    QString toDelimitedDataString(QString, DataExportOptions,
-                                  sv_frame_t, sv_frame_t) const override {
-        return "";
+
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions, sv_frame_t, sv_frame_t) const override {
+        return {};
     }
 
 protected slots:
