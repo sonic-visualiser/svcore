@@ -55,6 +55,16 @@ public:
      * analogous to the behaviour of splitQuoted).
      */
     static QStringList split(QString s, QChar separator, bool quoted);
+
+    /**
+     * Join a vector of strings into a single string, with the
+     * delimiter as the joining string. If a string contains the
+     * delimiter already, quote it with double-quotes, replacing any
+     * existing double-quotes within it by a pair of double-quotes, as
+     * specified in RFC 4180 Common Format and MIME Type for
+     * Comma-Separated Values (CSV) Files.
+     */
+    static QString joinDelimited(QVector<QString> row, QString delimiter);
 };
 
 #endif

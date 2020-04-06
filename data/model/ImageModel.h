@@ -275,27 +275,23 @@ public:
         m_events.toXml(out, indent, QString("dimensions=\"1\""), options);
     }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions options) const override {
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions options) const override {
         Event::ExportNameOptions nameOpts;
         nameOpts.uriAttributeName = "image";
-
-        return m_events.getDelimitedDataHeaderLine(delimiter,
-                                                   options,
-                                                   nameOpts);
+        return m_events.getStringExportHeaders(options, nameOpts);
     }
     
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions options,
-                                  sv_frame_t startFrame,
-                                  sv_frame_t duration) const override {
-        return m_events.toDelimitedDataString(delimiter,
-                                              options,
-                                              startFrame,
-                                              duration,
-                                              m_sampleRate,
-                                              m_resolution,
-                                              Event().withValue(0.f));
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions options,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const override {
+        return m_events.toStringExportRows(options,
+                                           startFrame,
+                                           duration,
+                                           m_sampleRate,
+                                           m_resolution,
+                                           Event().withValue(0.f));
     }
     
 protected:

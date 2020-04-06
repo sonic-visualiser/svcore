@@ -348,8 +348,9 @@ public:
         m_events.toXml(out, indent, QString("dimensions=\"2\""), options);
     }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions opts) const override {
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions opts) const override {
+
         QStringList list;
 
         // These are considered API rather than human-readable text -
@@ -363,23 +364,27 @@ public:
 
         list << "extent start" << "extent end" << "label";
 
-        return list.join(delimiter).toUpper();
+        QVector<QString> sv;
+        for (QString s: list) {
+            sv.push_back(s.toUpper());
+        }
+        return sv;
     }
     
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions opts,
-                                  sv_frame_t startFrame,
-                                  sv_frame_t duration) const override {
+    QVector<QVector<QString>>
+    toStringExportRows(DataExportOptions opts,
+                       sv_frame_t startFrame,
+                       sv_frame_t duration) const override {
 
         // We need a custom format here
 
         EventVector ee = m_events.getEventsSpanning(startFrame, duration);
 
-        QString s;
+        QVector<QVector<QString>> rows;
         
         for (auto e: ee) {
 
-            QStringList list;
+            QVector<QString> list;
 
             if (opts & DataExportWriteTimeInFrames) {
                 
@@ -405,10 +410,10 @@ public:
                 list << e.getLabel();
             }
 
-            s += list.join(delimiter) + "\n";
+            rows.push_back(list);
         }
 
-        return s;
+        return rows;
     }
 
 protected:

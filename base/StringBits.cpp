@@ -151,3 +151,20 @@ StringBits::split(QString line, QChar separator, bool quoted)
     }
 }
 
+QString
+StringBits::joinDelimited(QVector<QString> row, QString delimiter)
+{
+    QString s;
+    for (auto col: row) {
+        if (s != "") {
+            s += delimiter;
+        }
+        if (col.contains(delimiter)) {
+            col.replace("\"", "\"\"");
+            col = "\"" + col + "\"";
+        }
+        s += col;
+    }
+    return s;    
+}
+

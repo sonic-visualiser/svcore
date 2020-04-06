@@ -94,6 +94,7 @@ private slots:
 
         std::ostringstream oss;
         const auto result = CSVStreamWriter::writeInChunks(oss, mwm);
+        
         QVERIFY( oss.str() == getExpectedString() );
         QVERIFY( result );
     }
@@ -303,9 +304,12 @@ private slots:
 //        qDebug("Create Expected Output\n");
 
         // NB. removed end line break
-        const auto expectedOutput =
-            notes.toDelimitedDataString(",", {}, 0, notes.getEndFrame())
-            .trimmed();
+        QString expectedOutput;
+        auto rows = notes.toStringExportRows({}, 0, notes.getEndFrame());
+        for (auto row: rows) {
+            expectedOutput += StringBits::joinDelimited(row, ",") + "\n";
+        }
+        expectedOutput = expectedOutput.trimmed();
 
         StubReporter reporter { []() -> bool { return false; } };
         std::ostringstream oss;
@@ -325,6 +329,70 @@ private slots:
         QVERIFY( wroteSparseModel == true );
         QVERIFY( oss.str() != std::string() );
         QVERIFY( oss.str() == expectedOutput.toStdString() );
+    }
+
+    void writeWithQuotingRequired()
+    {
+        QString commaLabel =
+            "This label contains punctuation, specifically, commas";
+        QString quoteSpaceLabel =
+            "This label contains spaces and \"double quotes\"";
+        
+        NoteModel notes(8, 4);
+        notes.add({ 0, 64, 4, 1.f, commaLabel });
+        notes.add({ 16, 64, 6, 1.f, quoteSpaceLabel });
+
+        QString expectedWithCommaSeparator =
+            QString("0.000000000,64,0.500000000,1,\"") +
+            commaLabel +
+            QString("\"\n") +
+            QString("2.000000000,64,0.750000000,1,") +
+            quoteSpaceLabel;
+
+        QString expectedWithSpaceSeparator =
+            QString("0.000000000 64 0.500000000 1 \"") +
+            commaLabel +
+            QString("\"\n") +
+            QString("2.000000000 64 0.750000000 1 \"") +
+            QString("This label contains spaces and \"\"double quotes\"\"") +
+            QString("\"");
+
+        StubReporter reporter { []() -> bool { return false; } };
+        std::ostringstream oss;
+        auto wroteSparseModel = CSVStreamWriter::writeInChunks(
+            oss,
+            notes,
+            &reporter,
+            ",",
+            DataExportDefaults,
+            2
+        );
+
+        QVERIFY( wroteSparseModel == true );
+        QVERIFY( oss.str() != std::string() );
+
+        cerr << oss.str() << endl;
+        cerr << expectedWithCommaSeparator << endl;
+        
+        QVERIFY( oss.str() == expectedWithCommaSeparator.toStdString() );
+
+        std::ostringstream oss2;
+        wroteSparseModel = CSVStreamWriter::writeInChunks(
+            oss2,
+            notes,
+            &reporter,
+            " ",
+            DataExportDefaults,
+            2
+        );
+
+        QVERIFY( wroteSparseModel == true );
+        QVERIFY( oss2.str() != std::string() );
+
+        cerr << oss2.str() << endl;
+        cerr << expectedWithSpaceSeparator << endl;
+        
+        QVERIFY( oss2.str() == expectedWithSpaceSeparator.toStdString() );
     }
 };
 

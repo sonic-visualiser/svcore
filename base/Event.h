@@ -366,9 +366,9 @@ public:
         return n;
     }
 
-    QString getDelimitedDataHeaderLine(QString delimiter,
-                                       DataExportOptions opts,
-                                       ExportNameOptions nameOpts) const {
+    QVector<QString>
+    getStringExportHeaders(DataExportOptions opts,
+                           ExportNameOptions nameOpts) const {
 
         QStringList list;
 
@@ -400,13 +400,18 @@ public:
         }
         
         list << "label";
-        
-        return list.join(delimiter).toUpper();
+
+        QVector<QString> sv;
+        for (QString s: list) {
+            sv.push_back(s.toUpper());
+        }
+        return sv;
     }
-    
-    QString toDelimitedDataString(QString delimiter,
-                                  DataExportOptions opts,
-                                  sv_samplerate_t sampleRate) const {
+
+    QVector<QString>
+    toStringExportRow(DataExportOptions opts,
+                      sv_samplerate_t sampleRate) const {
+        
         QStringList list;
 
         if (opts & DataExportWriteTimeInFrames) {
@@ -441,8 +446,8 @@ public:
         // facility for the user to customise it
         if (m_uri != "") list << m_uri;
         if (m_label != "") list << m_label;
-        
-        return list.join(delimiter);
+
+        return list.toVector();
     }
     
     uint hash(uint seed = 0) const {
