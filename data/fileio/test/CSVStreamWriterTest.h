@@ -370,10 +370,6 @@ private slots:
 
         QVERIFY( wroteSparseModel == true );
         QVERIFY( oss.str() != std::string() );
-
-        cerr << oss.str() << endl;
-        cerr << expectedWithCommaSeparator << endl;
-        
         QVERIFY( oss.str() == expectedWithCommaSeparator.toStdString() );
 
         std::ostringstream oss2;
@@ -388,10 +384,6 @@ private slots:
 
         QVERIFY( wroteSparseModel == true );
         QVERIFY( oss2.str() != std::string() );
-
-        cerr << oss2.str() << endl;
-        cerr << expectedWithSpaceSeparator << endl;
-        
         QVERIFY( oss2.str() == expectedWithSpaceSeparator.toStdString() );
     }
 };
