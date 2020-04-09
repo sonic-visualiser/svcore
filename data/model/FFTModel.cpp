@@ -223,7 +223,9 @@ FFTModel::getValuesAt(int x, int y, float &re, float &im) const
 bool
 FFTModel::getMagnitudesAt(int x, float *values, int minbin, int count) const
 {
-    if (count == 0) count = getHeight();
+    if (count == 0) {
+        count = getHeight() - minbin;
+    }
     auto col = getFFTColumn(x);
     for (int i = 0; i < count; ++i) {
         values[i] = abs(col[minbin + i]);
