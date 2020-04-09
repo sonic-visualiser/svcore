@@ -59,7 +59,8 @@ public:
         }
         return changed;
     }
-    bool sample(const std::vector<T> &ff) {
+    template <typename Alloc>
+    bool sample(const std::vector<T, Alloc> &ff) {
         bool changed = false;
         for (auto f: ff) {
             if (sample(f)) {

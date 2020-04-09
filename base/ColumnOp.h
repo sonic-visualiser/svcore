@@ -53,7 +53,7 @@ public:
     /** 
      * Column type. 
      */
-    typedef std::vector<float> Column;
+    typedef floatvec_t Column;
 
     /**
      * Scale the given column using the given gain multiplier.

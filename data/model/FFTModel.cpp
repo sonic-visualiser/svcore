@@ -51,9 +51,7 @@ FFTModel::FFTModel(ModelId modelId,
     m_cacheWriteIndex(0),
     m_cacheSize(3)
 {
-    while (m_cached.size() < m_cacheSize) {
-        m_cached.push_back({ -1, cvec(m_fftSize / 2 + 1) });
-    }
+    clearCaches();
     
     if (m_windowSize > m_fftSize) {
         SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
@@ -78,6 +76,17 @@ FFTModel::FFTModel(ModelId modelId,
 
 FFTModel::~FFTModel()
 {
+}
+
+void
+FFTModel::clearCaches()
+{
+    m_cached.clear();
+    while (m_cached.size() < m_cacheSize) {
+        m_cached.push_back({ -1, complexvec_t(m_fftSize / 2 + 1) });
+    }
+    m_cacheWriteIndex = 0;
+    m_savedData.range = { 0, 0 };
 }
 
 bool
@@ -110,6 +119,7 @@ void
 FFTModel::setMaximumFrequency(double freq)
 {
     m_maximumFrequency = freq;
+    clearCaches();
 }
 
 int
@@ -246,7 +256,7 @@ FFTModel::getValuesAt(int x, float *reals, float *imags, int minbin, int count) 
     return true;
 }
 
-FFTModel::fvec
+floatvec_t
 FFTModel::getSourceSamples(int column) const
 {
     // m_fftSize may be greater than m_windowSize, but not the reverse
@@ -262,7 +272,7 @@ FFTModel::getSourceSamples(int column) const
         return data;
     } else {
         vector<float> pad(off, 0.f);
-        fvec padded;
+        floatvec_t padded;
         padded.reserve(m_fftSize);
         padded.insert(padded.end(), pad.begin(), pad.end());
         padded.insert(padded.end(), data.begin(), data.end());
@@ -271,7 +281,7 @@ FFTModel::getSourceSamples(int column) const
     }
 }
 
-FFTModel::fvec
+floatvec_t
 FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 {
 //    cerr << "getSourceData(" << range.first << "," << range.second
@@ -293,14 +303,14 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         
         sv_frame_t discard = range.first - m_savedData.range.first;
 
-        fvec data;
+        floatvec_t data;
         data.reserve(range.second - range.first);
 
         data.insert(data.end(),
                     m_savedData.data.begin() + discard,
                     m_savedData.data.end());
 
-        fvec rest = getSourceDataUncached
+        floatvec_t rest = getSourceDataUncached
             ({ m_savedData.range.second, range.second });
 
         data.insert(data.end(), rest.begin(), rest.end());
@@ -318,7 +328,7 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
     }
 }
 
-FFTModel::fvec
+floatvec_t
 FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 {
     Profiler profiler("FFTModel::getSourceDataUncached");
@@ -366,12 +376,9 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-FFTModel::cvec
+const complexvec_t &
 FFTModel::getFFTColumn(int n) const
 {
-    int h = getHeight();
-    bool truncate = (h < m_fftSize / 2 + 1);
-    
     // The small cache (i.e. the m_cached deque) is for cases where
     // values are looked up individually, and for e.g. peak-frequency
     // spectrograms where values from two consecutive columns are
@@ -381,11 +388,7 @@ FFTModel::getFFTColumn(int n) const
     for (const auto &incache : m_cached) {
         if (incache.n == n) {
             inSmallCache.hit();
-            if (!truncate) {
-                return incache.col;
-            } else {
-                return cvec(incache.col.begin(), incache.col.begin() + h);
-            }
+            return incache.col;
         }
     }
     inSmallCache.miss();
@@ -396,20 +399,23 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data() + (m_fftSize - m_windowSize) / 2);
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    cvec &col = m_cached[m_cacheWriteIndex].col;
+    complexvec_t &col = m_cached[m_cacheWriteIndex].col;
+
+    // expand to large enough for fft destination, if truncated previously
+    col.resize(m_fftSize / 2 + 1);
     
     m_fft.forwardInterleaved(samples.data(),
                              reinterpret_cast<float *>(col.data()));
+
+    // keep only the number of elements we need - so that we can
+    // return a const ref without having to resize on a cache hit
+    col.resize(getHeight());
 
     m_cached[m_cacheWriteIndex].n = n;
 
     m_cacheWriteIndex = (m_cacheWriteIndex + 1) % m_cacheSize;
 
-    if (!truncate) {
-        return col;
-    } else {
-        return cvec(col.begin(), col.begin() + h);
-    }
+    return col;
 }
 
 bool

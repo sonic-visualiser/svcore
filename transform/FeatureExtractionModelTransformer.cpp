@@ -1156,7 +1156,9 @@ FeatureExtractionModelTransformer::addFeature(int n,
             <BasicCompressedDenseThreeDimensionalModel>(outputId);
         if (!model) return;
         
-        DenseThreeDimensionalModel::Column values = feature.values;
+        DenseThreeDimensionalModel::Column values;
+        values.insert(values.begin(),
+                      feature.values.begin(), feature.values.end());
         
         if (!feature.hasTimestamp && m_fixedRateFeatureNos[n] >= 0) {
             model->setColumn(m_fixedRateFeatureNos[n], values);

@@ -36,8 +36,8 @@ class TestColumnOp : public QObject
     typedef vector<double> BinMapping;
 
 #ifdef REPORT
-    template <typename T>
-    void report(vector<T> v) {
+    template <typename T, typename Alloc>
+    void report(vector<T, Alloc> v) {
         cerr << "Vector is: [ ";
         for (int i = 0; i < int(v.size()); ++i) {
             if (i > 0) cerr << ", ";
@@ -46,8 +46,8 @@ class TestColumnOp : public QObject
         cerr << " ]\n";
     }
 #else
-    template <typename T>
-    void report(vector<T> ) { }
+    template <typename T, typename Alloc>
+    void report(vector<T, Alloc> ) { }
 #endif
                                      
 private slots:

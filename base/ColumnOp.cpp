@@ -32,7 +32,7 @@ ColumnOp::fftScale(const Column &in, int fftSize)
 ColumnOp::Column
 ColumnOp::peakPick(const Column &in)
 {
-    vector<float> out(in.size(), 0.f);
+    Column out(in.size(), 0.f);
 
     for (int i = 0; in_range_for(in, i); ++i) {
         if (isPeak(in, i)) {
@@ -119,7 +119,7 @@ ColumnOp::distribute(const Column &in,
                      int minbin,
                      bool interpolate)
 {
-    vector<float> out(h, 0.f);
+    Column out(h, 0.f);
     int bins = int(in.size());
 
     if (interpolate) {

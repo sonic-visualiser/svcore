@@ -136,7 +136,7 @@ private:
     ModelId m_source;
     int m_columnsPerPeak;
 
-    mutable std::vector<std::vector<float>> m_cache;
+    mutable std::vector<Column> m_cache;
     mutable std::vector<bool> m_coverage; // bool for space efficiency
                                           // (vector of bool is a bitmap)
     mutable bool m_finalColumnIncomplete;

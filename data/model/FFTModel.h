@@ -193,28 +193,26 @@ private:
         return { startFrame, endFrame };
     }
 
-    typedef std::vector<float, breakfastquay::StlAllocator<float>> fvec;
-    typedef std::vector<std::complex<float>,
-                        breakfastquay::StlAllocator<std::complex<float>>> cvec;
-
-    cvec getFFTColumn(int column) const;
-    fvec getSourceSamples(int column) const;
-    fvec getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
-    fvec getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
+    const complexvec_t &getFFTColumn(int column) const;
+    floatvec_t getSourceSamples(int column) const;
+    floatvec_t getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
+    floatvec_t getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
 
     struct SavedSourceData {
         std::pair<sv_frame_t, sv_frame_t> range;
-        fvec data;
+        floatvec_t data;
     };
     mutable SavedSourceData m_savedData;
 
     struct SavedColumn {
         int n;
-        cvec col;
+        complexvec_t col;
     };
     mutable std::vector<SavedColumn> m_cached;
     mutable size_t m_cacheWriteIndex;
     size_t m_cacheSize;
+
+    void clearCaches();
 };
 
 #endif
