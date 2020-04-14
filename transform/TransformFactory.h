@@ -29,6 +29,7 @@
 
 #include <map>
 #include <set>
+#include <memory>
 
 class TransformFactory : public QObject
 {
