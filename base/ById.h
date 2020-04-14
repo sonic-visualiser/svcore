@@ -67,6 +67,11 @@
  * shared_ptr, then the object being pointed to can't be deleted while
  * that shared_ptr is in scope.
  *
+ * The result is like using weak_ptr references to a shared_ptr whose
+ * ownership is within a "layer" (at "application level") rather than
+ * managed by a specific object. A human-readable id representation is
+ * also quite useful for debugging.
+ *
  * Example:
  *
  * class Thing : public WithTypedId<Thing> { Thing(int x) { } };
@@ -182,7 +187,7 @@ protected:
     
     /**
      * Return an id for this object. The id is a unique value for this
-     * object among all objects that implement WithTypedId within this
+     * object among all objects that implement WithId within this
      * single run of the application.
      */
     Id getId() const {
