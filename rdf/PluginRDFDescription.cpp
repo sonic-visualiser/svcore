@@ -84,6 +84,24 @@ PluginRDFDescription::getPluginInfoURL() const
     return m_pluginInfoURL;
 }
 
+QString
+PluginRDFDescription::getPluginDownloadURL() const
+{
+    return m_pluginDownloadURL;
+}
+
+std::set<PluginRDFDescription::DownloadType>
+PluginRDFDescription::getPluginDownloadTypes() const
+{
+    return m_pluginDownloadTypes;
+}
+
+std::map<QString, PluginRDFDescription::Pack>
+PluginRDFDescription::getPluginFoundInPacks() const
+{
+    return m_pluginFoundInPacks;
+}
+
 QStringList
 PluginRDFDescription::getOutputIds() const
 {
@@ -217,16 +235,74 @@ PluginRDFDescription::indexMetadata()
         m_pluginInfoURL = n.value;
     }
 
-    n = index->complete
+    Node libn = index->complete
         (Triple(Node(), index->expand("vamp:available_plugin"), plugin));
 
-    if (n.value != "") {
-        n = index->complete(Triple(n, index->expand("foaf:page"), Node()));
-        if (n.type == Node::URI && n.value != "") {
+    if (libn.value != "") {
+        
+        n = index->complete
+            (Triple(libn, index->expand("foaf:page"), Node()));
+        if (n.type == Node::URI && n.value != "" && m_pluginInfoURL == "") {
             m_pluginInfoURL = n.value;
+        }
+
+        // And the download page for the library
+        n = index->complete
+            (Triple(libn, index->expand("doap:download-page"), Node()));
+
+        if (n.type == Node::URI && n.value != "") {
+
+            m_pluginDownloadURL = n.value;
+
+            n = index->complete
+                (Triple(libn, index->expand("vamp:has_source"), Node()));
+            if (n.type == Node::Literal && n.value == "true") {
+                m_pluginDownloadTypes.insert(DownloadSourceCode);
+            }
+
+            Nodes binaries = index->match
+                (Triple(libn, index->expand("vamp:has_binary"), Node()))
+                .objects();
+
+            for (Node bin: binaries) {
+                if (bin.type != Node::Literal) continue;
+                if (bin.value == "linux32") {
+                    m_pluginDownloadTypes.insert(DownloadLinux32);
+                } else if (bin.value == "linux64") {
+                    m_pluginDownloadTypes.insert(DownloadLinux64);
+                } else if (bin.value == "win32") {
+                    m_pluginDownloadTypes.insert(DownloadWindows);
+                } else if (bin.value == "osx") {
+                    m_pluginDownloadTypes.insert(DownloadMac);
+                }
+            }
         }
     }
 
+    Nodes packs = index->match
+        (Triple(Node(), index->expand("vamp:available_library"), libn))
+        .objects();
+
+    for (Node packn: packs) {
+        if (packn.type != Node::URI) continue;
+
+        Pack pack;
+        n = index->complete
+            (Triple(packn, index->expand("dc:title"), Node()));
+        if (n.type == Node::Literal) {
+            pack.name = n.value;
+        }
+        n = index->complete
+            (Triple(packn, index->expand("foaf:page"), Node()));
+        if (n.type == Node::URI) {
+            pack.downloadURL = n.value;
+        }
+
+        if (pack.name != "" && pack.downloadURL != "") {
+            m_pluginFoundInPacks[packn.value] = pack;
+        }
+    }
+            
     return true;
 }
 

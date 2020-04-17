@@ -19,6 +19,7 @@
 #include <QString>
 #include <QStringList>
 #include <map>
+#include <set>
 
 #include "base/Debug.h"
 
@@ -43,7 +44,26 @@ public:
     QString getPluginDescription() const;
     QString getPluginMaker() const;
     QString getPluginInfoURL() const;
+    QString getPluginDownloadURL() const;
 
+    enum DownloadType
+    {
+        DownloadSourceCode,
+        DownloadWindows,
+        DownloadMac,
+        DownloadLinux32,
+        DownloadLinux64,
+        DownloadOther
+    };
+    std::set<DownloadType> getPluginDownloadTypes() const;
+
+    struct Pack
+    {
+        QString name;
+        QString downloadURL;
+    };
+    std::map<QString, Pack> getPluginFoundInPacks() const; // uri -> pack
+    
     QStringList getOutputIds() const;
     QString getOutputName(QString outputId) const;
     OutputDisposition getOutputDisposition(QString outputId) const;
@@ -64,6 +84,9 @@ protected:
     QString m_pluginDescription;
     QString m_pluginMaker;
     QString m_pluginInfoURL;
+    QString m_pluginDownloadURL;
+    std::set<DownloadType> m_pluginDownloadTypes;
+    std::map<QString, Pack> m_pluginFoundInPacks;
     OutputStringMap m_outputNames;
     OutputDispositionMap m_outputDispositions;
     OutputStringMap m_outputEventTypeURIMap;
