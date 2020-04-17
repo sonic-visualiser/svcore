@@ -226,6 +226,8 @@ protected:
     bool m_exiting;
     bool m_populatingSlowly;
 
+    SearchResults searchUnadjusted(QStringList keywords);
+
     static TransformFactory *m_instance;
 };
 

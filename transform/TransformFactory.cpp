@@ -1110,11 +1110,36 @@ TransformFactory::search(QStringList keywords)
 {
     populateTransforms();
 
+    SearchResults results = searchUnadjusted(keywords);
+    
     if (keywords.size() > 1) {
-        // Additional score for all keywords in a row
-        keywords.push_back(keywords.join(" "));
+
+        // If there are any hits for all keywords in a row, put them
+        // in (replacing previous hits for the same transforms) but
+        // ensure they score more than any of the others
+
+        int maxScore = 0;
+        for (auto r: results) {
+            if (r.second.score > maxScore) {
+                maxScore = r.second.score;
+            }
+        }
+
+        QStringList oneBigKeyword;
+        oneBigKeyword << keywords.join(" ");
+        SearchResults oneBigKeywordResults = searchUnadjusted(oneBigKeyword);
+        for (auto r: oneBigKeywordResults) {
+            results[r.first] = r.second;
+            results[r.first].score += maxScore;
+        }
     }
 
+    return results;
+}
+
+TransformFactory::SearchResults
+TransformFactory::searchUnadjusted(QStringList keywords)
+{
     SearchResults results;
     TextMatcher matcher;
 
@@ -1177,6 +1202,26 @@ TransformFactory::search(QStringList keywords)
         if (match.score > 0) results[i->first] = match;
     }
 
+#ifdef DEBUG_TRANSFORM_FACTORY
+    SVCERR << "TransformFactory::search: keywords are: " << keywords.join(", ")
+           << endl;
+    int n = int(results.size()), i = 1;
+    SVCERR << "TransformFactory::search: results (" << n << "):" << endl;
+    
+    for (const auto &r: results) {
+        QStringList frags;
+        for (const auto &f: r.second.fragments) {
+            frags << QString("{\"%1\": \"%2\"}").arg(f.first).arg(f.second);
+        }
+        SVCERR << "[" << i << "/" << n << "] id " << r.first
+               << ": score " << r.second.score
+               << ", key " << r.second.key << ", fragments "
+               << frags.join(";") << endl;
+        ++i;
+    }
+    SVCERR << endl;
+#endif
+    
     return results;
 }
 
