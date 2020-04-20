@@ -18,6 +18,8 @@
 
 #include "Transform.h"
 
+#include "plugin/Provider.h"
+
 #include <QString>
 
 #include <vector>
@@ -74,7 +76,7 @@ struct TransformDescription
     QString description; // sentence describing transform
     QString longDescription; // description "using" plugin name "by" maker
     QString maker;
-    QString infoUrl;
+    Provider provider;
     QString units;
     bool configurable;
 

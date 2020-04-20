@@ -23,6 +23,8 @@
 
 #include "base/Debug.h"
 
+#include "plugin/Provider.h"
+
 class PluginRDFDescription
 {
 public:
@@ -30,8 +32,7 @@ public:
     PluginRDFDescription(QString pluginId);
     ~PluginRDFDescription();
 
-    enum OutputDisposition
-    {
+    enum OutputDisposition {
         OutputDispositionUnknown,
         OutputSparse,
         OutputDense,
@@ -43,26 +44,7 @@ public:
     QString getPluginName() const;
     QString getPluginDescription() const;
     QString getPluginMaker() const;
-    QString getPluginInfoURL() const;
-    QString getPluginDownloadURL() const;
-
-    enum DownloadType
-    {
-        DownloadSourceCode,
-        DownloadWindows,
-        DownloadMac,
-        DownloadLinux32,
-        DownloadLinux64,
-        DownloadOther
-    };
-    std::set<DownloadType> getPluginDownloadTypes() const;
-
-    struct Pack
-    {
-        QString name;
-        QString downloadURL;
-    };
-    std::map<QString, Pack> getPluginFoundInPacks() const; // uri -> pack
+    Provider getPluginProvider() const;
     
     QStringList getOutputIds() const;
     QString getOutputName(QString outputId) const;
@@ -83,10 +65,7 @@ protected:
     QString m_pluginName;
     QString m_pluginDescription;
     QString m_pluginMaker;
-    QString m_pluginInfoURL;
-    QString m_pluginDownloadURL;
-    std::set<DownloadType> m_pluginDownloadTypes;
-    std::map<QString, Pack> m_pluginFoundInPacks;
+    Provider m_provider;
     OutputStringMap m_outputNames;
     OutputDispositionMap m_outputDispositions;
     OutputStringMap m_outputEventTypeURIMap;

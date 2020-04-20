@@ -80,28 +80,10 @@ PluginRDFDescription::getPluginMaker() const
     return m_pluginMaker;
 }
 
-QString
-PluginRDFDescription::getPluginInfoURL() const
+Provider
+PluginRDFDescription::getPluginProvider() const
 {
-    return m_pluginInfoURL;
-}
-
-QString
-PluginRDFDescription::getPluginDownloadURL() const
-{
-    return m_pluginDownloadURL;
-}
-
-std::set<PluginRDFDescription::DownloadType>
-PluginRDFDescription::getPluginDownloadTypes() const
-{
-    return m_pluginDownloadTypes;
-}
-
-std::map<QString, PluginRDFDescription::Pack>
-PluginRDFDescription::getPluginFoundInPacks() const
-{
-    return m_pluginFoundInPacks;
+    return m_provider;
 }
 
 QStringList
@@ -234,7 +216,7 @@ PluginRDFDescription::indexMetadata()
         (Triple(plugin, index->expand("foaf:page"), Node()));
 
     if (n.type == Node::URI && n.value != "") {
-        m_pluginInfoURL = n.value;
+        m_provider.infoUrl = n.value;
     }
 
     // There may be more than one library node claiming this
@@ -261,19 +243,19 @@ PluginRDFDescription::indexMetadata()
             (Triple(libn, index->expand("foaf:page"), Node()));
 
         if (n.type == Node::URI && n.value != "") {
-            m_pluginInfoURL = n.value;
+            m_provider.infoUrl = n.value;
         }
 
         n = index->complete
             (Triple(libn, index->expand("doap:download-page"), Node()));
 
         if (n.type == Node::URI && n.value != "") {
-            m_pluginDownloadURL = n.value;
+            m_provider.downloadUrl = n.value;
 
             n = index->complete
                 (Triple(libn, index->expand("vamp:has_source"), Node()));
             if (n.type == Node::Literal && n.value == "true") {
-                m_pluginDownloadTypes.insert(DownloadSourceCode);
+                m_provider.downloadTypes.insert(Provider::DownloadSourceCode);
             }
 
             Nodes binaries = index->match
@@ -283,13 +265,13 @@ PluginRDFDescription::indexMetadata()
             for (Node bin: binaries) {
                 if (bin.type != Node::Literal) continue;
                 if (bin.value == "linux32") {
-                    m_pluginDownloadTypes.insert(DownloadLinux32);
+                    m_provider.downloadTypes.insert(Provider::DownloadLinux32);
                 } else if (bin.value == "linux64") {
-                    m_pluginDownloadTypes.insert(DownloadLinux64);
+                    m_provider.downloadTypes.insert(Provider::DownloadLinux64);
                 } else if (bin.value == "win32") {
-                    m_pluginDownloadTypes.insert(DownloadWindows);
+                    m_provider.downloadTypes.insert(Provider::DownloadWindows);
                 } else if (bin.value == "osx") {
-                    m_pluginDownloadTypes.insert(DownloadMac);
+                    m_provider.downloadTypes.insert(Provider::DownloadMac);
                 }
             }
         }
@@ -304,20 +286,21 @@ PluginRDFDescription::indexMetadata()
         for (Node packn: packs) {
             if (packn.type != Node::URI) continue;
 
-            Pack pack;
+            QString packName;
+            QString packUrl;
             n = index->complete
                 (Triple(packn, index->expand("dc:title"), Node()));
             if (n.type == Node::Literal) {
-                pack.name = n.value;
+                packName = n.value;
             }
             n = index->complete
                 (Triple(packn, index->expand("foaf:page"), Node()));
             if (n.type == Node::URI) {
-                pack.downloadURL = n.value;
+                packUrl = n.value;
             }
 
-            if (pack.name != "" && pack.downloadURL != "") {
-                m_pluginFoundInPacks[packn.value] = pack;
+            if (packName != "" && packUrl != "") {
+                m_provider.foundInPacks[packName] = packUrl;
             }
         }
     }
@@ -329,16 +312,16 @@ PluginRDFDescription::indexMetadata()
     SVCERR << " * name: " << m_pluginName << endl;
     SVCERR << " * description: " << m_pluginDescription << endl;
     SVCERR << " * maker: " << m_pluginMaker << endl;
-    SVCERR << " * info url: <" << m_pluginInfoURL << ">" << endl;
-    SVCERR << " * download url: <" << m_pluginDownloadURL << ">" << endl;
+    SVCERR << " * info url: <" << m_provider.infoUrl << ">" << endl;
+    SVCERR << " * download url: <" << m_provider.downloadUrl << ">" << endl;
     SVCERR << " * download types:" << endl;
-    for (auto t: m_pluginDownloadTypes) {
+    for (auto t: m_provider.downloadTypes) {
         SVCERR << "   * " << int(t) << endl;
     }
     SVCERR << " * packs:" << endl;
-    for (auto t: m_pluginFoundInPacks) {
-        SVCERR << "   * " << t.first << " { name: " << t.second.name
-               << ", download url: " << t.second.downloadURL << " }" << endl;
+    for (auto t: m_provider.foundInPacks) {
+        SVCERR << "   * " << t.first
+               << ", download url: <" << t.second << ">" << endl;
     }
     SVCERR << endl;
 #endif    

@@ -664,7 +664,7 @@ TransformFactory::populateUninstalledTransforms()
 
         QString description = desc.getPluginDescription();
         QString maker = desc.getPluginMaker();
-        QString infoUrl = desc.getPluginInfoURL();
+        Provider provider = desc.getPluginProvider();
 
         QStringList oids = desc.getOutputIds();
 
@@ -675,11 +675,11 @@ TransformFactory::populateUninstalledTransforms()
             if (m_transforms.find(tid) != m_transforms.end()) {
 #ifdef DEBUG_TRANSFORM_FACTORY
                 SVCERR << "TransformFactory::populateUninstalledTransforms: "
-                       << tid << " is installed; adding info url if appropriate, skipping rest" << endl;
+                       << tid << " is installed; adding provider if present, skipping rest" << endl;
 #endif
-                if (infoUrl != "") {
-                    if (m_transforms[tid].infoUrl == "") {
-                        m_transforms[tid].infoUrl = infoUrl;
+                if (provider != Provider()) {
+                    if (m_transforms[tid].provider == Provider()) {
+                        m_transforms[tid].provider = provider;
                     }
                 }
                 continue;
@@ -728,7 +728,7 @@ TransformFactory::populateUninstalledTransforms()
             td.description = description;
             td.longDescription = longDescription;
             td.maker = maker;
-            td.infoUrl = infoUrl;
+            td.provider = provider;
             td.units = "";
             td.configurable = false;
 
@@ -856,12 +856,12 @@ TransformFactory::getTransformUnits(TransformId identifier)
     } else return "";
 }
 
-QString
-TransformFactory::getTransformInfoUrl(TransformId identifier)
+Provider
+TransformFactory::getTransformProvider(TransformId identifier)
 {
     if (m_transforms.find(identifier) != m_transforms.end()) {
-        return m_transforms[identifier].infoUrl;
-    } else return "";
+        return m_transforms[identifier].provider;
+    } else return {};
 }
 
 Vamp::Plugin::InputDomain

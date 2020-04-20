@@ -109,7 +109,6 @@ SVCORE_HEADERS = \
            data/osc/OSCMessage.h \
            data/osc/OSCMessageCallback.h \
            data/osc/OSCQueue.h \
-	   plugin/PluginScan.h \
            plugin/DSSIPluginFactory.h \
            plugin/DSSIPluginInstance.h \
            plugin/FeatureExtractionPluginFactory.h \
@@ -119,7 +118,9 @@ SVCORE_HEADERS = \
            plugin/PiperVampPluginFactory.h \
            plugin/PluginIdentifier.h \
            plugin/PluginPathSetter.h \
+	   plugin/PluginScan.h \
            plugin/PluginXml.h \
+	   plugin/Provider.h \
            plugin/RealTimePluginFactory.h \
            plugin/RealTimePluginInstance.h \
            plugin/api/dssi.h \
