@@ -642,6 +642,8 @@ TransformFactory::populateUninstalledTransforms()
     PluginRDFIndexer::getInstance()->indexConfiguredURLs();
     if (m_exiting) return;
 
+    PluginRDFIndexer::getInstance()->performConsistencyChecks();
+    
     //!!! This will be amazingly slow
 
     QStringList ids = PluginRDFIndexer::getInstance()->getIndexedPluginIds();
@@ -653,7 +655,7 @@ TransformFactory::populateUninstalledTransforms()
         QString name = desc.getPluginName();
 #ifdef DEBUG_TRANSFORM_FACTORY
         if (name == "") {
-            cerr << "TransformFactory::populateUninstalledTransforms: "
+            SVCERR << "TransformFactory::populateUninstalledTransforms: "
                  << "No name available for plugin " << *i
                  << ", skipping" << endl;
             continue;
@@ -672,8 +674,8 @@ TransformFactory::populateUninstalledTransforms()
             
             if (m_transforms.find(tid) != m_transforms.end()) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-                cerr << "TransformFactory::populateUninstalledTransforms: "
-                          << tid << " is installed; adding info url if appropriate, skipping rest" << endl;
+                SVCERR << "TransformFactory::populateUninstalledTransforms: "
+                       << tid << " is installed; adding info url if appropriate, skipping rest" << endl;
 #endif
                 if (infoUrl != "") {
                     if (m_transforms[tid].infoUrl == "") {
@@ -684,8 +686,8 @@ TransformFactory::populateUninstalledTransforms()
             }
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-            cerr << "TransformFactory::populateUninstalledTransforms: "
-                      << "adding " << tid << endl;
+            SVCERR << "TransformFactory::populateUninstalledTransforms: "
+                   << "adding " << tid << endl;
 #endif
 
             QString oname = desc.getOutputName(*j);
@@ -739,7 +741,7 @@ TransformFactory::populateUninstalledTransforms()
     m_uninstalledTransformsPopulated = true;
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-    cerr << "populateUninstalledTransforms exiting" << endl;
+    SVCERR << "populateUninstalledTransforms exiting" << endl;
 #endif
 }
 

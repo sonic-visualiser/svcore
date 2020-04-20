@@ -32,6 +32,8 @@ using Dataquay::Triple;
 using Dataquay::Triples;
 using Dataquay::BasicStore;
 
+#define DEBUG_PLUGIN_RDF_DESCRIPTION 1
+
 PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     m_pluginId(pluginId),
     m_haveDescription(false)
@@ -235,23 +237,37 @@ PluginRDFDescription::indexMetadata()
         m_pluginInfoURL = n.value;
     }
 
-    Node libn = index->complete
-        (Triple(Node(), index->expand("vamp:available_plugin"), plugin));
+    // There may be more than one library node claiming this
+    // plugin. That's because older RDF descriptions tend to use a
+    // library node URI derived from the description's own URI, so it
+    // varies depending on where you read the description from. It's
+    // common therefore to end up with both a file: URI (from an
+    // installed older version) and an http: one (from an online
+    // updated version). We have no way to pick an authoritative one,
+    // but it's also common that only one of them will have the
+    // resources we need anyway, so let's iterate through them all.
+    
+    Nodes libnodes = index->match
+        (Triple(Node(), index->expand("vamp:available_plugin"), plugin))
+        .subjects();
 
-    if (libn.value != "") {
+    for (Node libn: libnodes) {
+
+        if (libn.type != Node::URI || libn.value == "") {
+            continue;
+        }
         
         n = index->complete
             (Triple(libn, index->expand("foaf:page"), Node()));
-        if (n.type == Node::URI && n.value != "" && m_pluginInfoURL == "") {
+
+        if (n.type == Node::URI && n.value != "") {
             m_pluginInfoURL = n.value;
         }
 
-        // And the download page for the library
         n = index->complete
             (Triple(libn, index->expand("doap:download-page"), Node()));
 
         if (n.type == Node::URI && n.value != "") {
-
             m_pluginDownloadURL = n.value;
 
             n = index->complete
@@ -277,32 +293,56 @@ PluginRDFDescription::indexMetadata()
                 }
             }
         }
+
+        Nodes packs = index->match
+            (Triple(Node(), index->expand("vamp:available_library"), libn))
+            .subjects();
+
+        SVCERR << packs.size() << " matching pack(s) for library node "
+               << libn << endl;
+
+        for (Node packn: packs) {
+            if (packn.type != Node::URI) continue;
+
+            Pack pack;
+            n = index->complete
+                (Triple(packn, index->expand("dc:title"), Node()));
+            if (n.type == Node::Literal) {
+                pack.name = n.value;
+            }
+            n = index->complete
+                (Triple(packn, index->expand("foaf:page"), Node()));
+            if (n.type == Node::URI) {
+                pack.downloadURL = n.value;
+            }
+
+            if (pack.name != "" && pack.downloadURL != "") {
+                m_pluginFoundInPacks[packn.value] = pack;
+            }
+        }
     }
 
-    Nodes packs = index->match
-        (Triple(Node(), index->expand("vamp:available_library"), libn))
-        .objects();
-
-    for (Node packn: packs) {
-        if (packn.type != Node::URI) continue;
-
-        Pack pack;
-        n = index->complete
-            (Triple(packn, index->expand("dc:title"), Node()));
-        if (n.type == Node::Literal) {
-            pack.name = n.value;
-        }
-        n = index->complete
-            (Triple(packn, index->expand("foaf:page"), Node()));
-        if (n.type == Node::URI) {
-            pack.downloadURL = n.value;
-        }
-
-        if (pack.name != "" && pack.downloadURL != "") {
-            m_pluginFoundInPacks[packn.value] = pack;
-        }
+#ifdef DEBUG_PLUGIN_RDF_DESCRIPTION
+    SVCERR << "PluginRDFDescription::indexMetadata:" << endl;
+    SVCERR << " * id: " << m_pluginId << endl;
+    SVCERR << " * uri: <" << m_pluginUri << ">" << endl;
+    SVCERR << " * name: " << m_pluginName << endl;
+    SVCERR << " * description: " << m_pluginDescription << endl;
+    SVCERR << " * maker: " << m_pluginMaker << endl;
+    SVCERR << " * info url: <" << m_pluginInfoURL << ">" << endl;
+    SVCERR << " * download url: <" << m_pluginDownloadURL << ">" << endl;
+    SVCERR << " * download types:" << endl;
+    for (auto t: m_pluginDownloadTypes) {
+        SVCERR << "   * " << int(t) << endl;
     }
-            
+    SVCERR << " * packs:" << endl;
+    for (auto t: m_pluginFoundInPacks) {
+        SVCERR << "   * " << t.first << " { name: " << t.second.name
+               << ", download url: " << t.second.downloadURL << " }" << endl;
+    }
+    SVCERR << endl;
+#endif    
+
     return true;
 }
 

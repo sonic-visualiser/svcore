@@ -181,7 +181,29 @@ PluginRDFIndexer::indexConfiguredURLs()
     
     settings.endGroup();
     reindex();
+
     return true;
+}
+
+void
+PluginRDFIndexer::performConsistencyChecks()
+{
+    // Add more here!
+    
+    Triples packs = m_index->match
+        (Triple(Node(), m_index->expand("vamp:available_library"), Node()));
+
+    for (Triple packt: packs) {
+        Triples libraries = m_index->match
+            (Triple(packt.object(), m_index->expand("a"),
+                    m_index->expand("vamp:PluginLibrary")));
+        if (libraries.empty()) {
+            SVCERR << "WARNING: Plugin pack " << packt.subject()
+                   << " claims to contain library " << packt.object()
+                   << " which is not known to us as a vamp:PluginLibrary"
+                   << endl;
+        }
+    }
 }
 
 QString
@@ -288,12 +310,7 @@ PluginRDFIndexer::pullURL(QString urlString)
     }
 
     try {
-        m_index->import(local, BasicStore::ImportFailOnDuplicates);
-    } catch (RDFDuplicateImportException &e) {
-        SVDEBUG << e.what() << endl;
-        SVDEBUG << "PluginRDFIndexer::pullURL: Document at " << urlString
-                 << " duplicates triples found in earlier loaded document -- skipping it" << endl;
-        return false;
+        m_index->import(local, BasicStore::ImportIgnoreDuplicates);
     } catch (RDFException &e) {
         SVDEBUG << e.what() << endl;
         SVDEBUG << "PluginRDFIndexer::pullURL: Failed to import document from "

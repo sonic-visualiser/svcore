@@ -52,6 +52,12 @@ public:
 
     QStringList getIndexedPluginIds();
 
+    /**
+     * Perform various checks for consistency of RDF definitions,
+     * printing warnings to stderr/logfile as appropriate.
+     */
+    void performConsistencyChecks();
+
     const Dataquay::BasicStore *getIndex();
 
     ~PluginRDFIndexer();
@@ -69,7 +75,7 @@ protected:
     bool pullFile(QString path);
     bool pullURL(QString urlString);
     bool reindex();
-
+    
     Dataquay::BasicStore *m_index;
 
     static PluginRDFIndexer *m_instance;
