@@ -32,7 +32,7 @@ using Dataquay::Triple;
 using Dataquay::Triples;
 using Dataquay::BasicStore;
 
-#define DEBUG_PLUGIN_RDF_DESCRIPTION 1
+//#define DEBUG_PLUGIN_RDF_DESCRIPTION 1
 
 PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     m_pluginId(pluginId),
@@ -280,8 +280,10 @@ PluginRDFDescription::indexMetadata()
             (Triple(Node(), index->expand("vamp:available_library"), libn))
             .subjects();
 
+#ifdef DEBUG_PLUGIN_RDF_DESCRIPTION
         SVCERR << packs.size() << " matching pack(s) for library node "
                << libn << endl;
+#endif
 
         for (Node packn: packs) {
             if (packn.type != Node::URI) continue;
