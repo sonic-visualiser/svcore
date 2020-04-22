@@ -57,6 +57,23 @@ struct Provider
         return false;
     }
 
+    static QString thisPlatformName() {
+#ifdef Q_OS_WIN32
+        return QObject::tr("Windows");
+#endif
+#ifdef Q_OS_MAC
+        return QObject::tr("Mac");
+#endif
+#ifdef Q_OS_LINUX
+        if (sizeof(void *) == 8) {
+            return QObject::tr("64-bit Linux");
+        } else {
+            return QObject::tr("32-bit Linux");
+        }
+#endif
+        return "(unknown)";
+    }
+
     bool operator==(const Provider &other) {
         return
             other.infoUrl == infoUrl &&
