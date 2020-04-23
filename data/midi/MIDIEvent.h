@@ -228,7 +228,9 @@ public:
     virtual ~MIDIException() throw() { }
 
     const char *what() const throw() override {
-        return m_message.toLocal8Bit().data();
+        static QByteArray msg;
+        msg = m_message.toLocal8Bit();
+        return msg.data();
     }
 
 protected:
