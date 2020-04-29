@@ -22,15 +22,15 @@
 FileNotFound::FileNotFound(QString file) throw() :
     m_file(file)
 {
-    cerr << "ERROR: File not found: "
-              << file << endl;
+    cerr << "ERROR: File not found: " << file << endl;
 }
 
 const char *
 FileNotFound::what() const throw()
 {
-    return QString("File \"%1\" not found")
-        .arg(m_file).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("File \"%1\" not found").arg(m_file).toLocal8Bit();
+    return msg.data();
 }
 
 FailedToOpenFile::FailedToOpenFile(QString file) throw() :
@@ -43,51 +43,55 @@ FailedToOpenFile::FailedToOpenFile(QString file) throw() :
 const char *
 FailedToOpenFile::what() const throw()
 {
-    return QString("Failed to open file \"%1\"")
-        .arg(m_file).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("Failed to open file \"%1\"").arg(m_file).toLocal8Bit();
+    return msg.data();
 }
 
 DirectoryCreationFailed::DirectoryCreationFailed(QString directory) throw() :
     m_directory(directory)
 {
     cerr << "ERROR: Directory creation failed for directory: "
-              << directory << endl;
+         << directory << endl;
 }
 
 const char *
 DirectoryCreationFailed::what() const throw()
 {
-    return QString("Directory creation failed for \"%1\"")
-        .arg(m_directory).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("Directory creation failed for \"%1\"").arg(m_directory)
+        .toLocal8Bit();
+    return msg.data();
 }
 
 FileReadFailed::FileReadFailed(QString file) throw() :
     m_file(file)
 {
-    cerr << "ERROR: File read failed for file: "
-              << file << endl;
+    cerr << "ERROR: File read failed for file: " << file << endl;
 }
 
 const char *
 FileReadFailed::what() const throw()
 {
-    return QString("File read failed for \"%1\"")
-        .arg(m_file).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("File read failed for \"%1\"").arg(m_file).toLocal8Bit();
+    return msg.data();
 }
 
 FileOperationFailed::FileOperationFailed(QString file, QString op) throw() :
     m_file(file),
     m_operation(op)
 {
-    cerr << "ERROR: File " << op << " failed for file: "
-              << file << endl;
+    cerr << "ERROR: File " << op << " failed for file: " << file << endl;
 }
 
 const char *
 FileOperationFailed::what() const throw()
 {
-    return QString("File %1 failed for \"%2\"")
-        .arg(m_operation).arg(m_file).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("File %1 failed for \"%2\"").arg(m_operation).arg(m_file)
+        .toLocal8Bit();
+    return msg.data();
 }
 
 InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
@@ -98,8 +102,8 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory,
     m_available(available)
 {
     cerr << "ERROR: Not enough disc space available in "
-              << directory << ": need " << required
-              << ", only have " << available << endl;
+         << directory << ": need " << required
+         << ", only have " << available << endl;
 }
 
 InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
@@ -107,34 +111,35 @@ InsufficientDiscSpace::InsufficientDiscSpace(QString directory) throw() :
     m_required(0),
     m_available(0)
 {
-    cerr << "ERROR: Not enough disc space available in "
-              << directory << endl;
+    cerr << "ERROR: Not enough disc space available in " << directory << endl;
 }
 
 const char *
 InsufficientDiscSpace::what() const throw()
 {
+    static QByteArray msg;
     if (m_required > 0) {
-        return QString("Not enough space available in \"%1\": need %2, have %3")
-            .arg(m_directory).arg(m_required).arg(m_available).toLocal8Bit().data();
+        msg = QString("Not enough space available in \"%1\": need %2, have %3")
+            .arg(m_directory).arg(m_required).arg(m_available).toLocal8Bit();
     } else {
-        return QString("Not enough space available in \"%1\"")
-            .arg(m_directory).toLocal8Bit().data();
+        msg = QString("Not enough space available in \"%1\"")
+            .arg(m_directory).toLocal8Bit();
     }
+    return msg.data();
 }
 
 AllocationFailed::AllocationFailed(QString purpose) throw() :
     m_purpose(purpose)
 {
-    cerr << "ERROR: Allocation failed: " << purpose
-              << endl;
+    cerr << "ERROR: Allocation failed: " << purpose << endl;
 }
 
 const char *
 AllocationFailed::what() const throw()
 {
-    return QString("Allocation failed: %1")
-        .arg(m_purpose).toLocal8Bit().data();
+    static QByteArray msg;
+    msg = QString("Allocation failed: %1").arg(m_purpose).toLocal8Bit();
+    return msg.data();
 }
 
 

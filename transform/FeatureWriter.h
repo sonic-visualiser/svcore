@@ -73,8 +73,10 @@ public:
         { }
         virtual ~FailedToOpenOutputStream() throw() { }
         const char *what() const throw() override {
-            return QString("Failed to open output stream for track id \"%1\", transform id \"%2\"")
-                .arg(m_trackId).arg(m_transformId).toLocal8Bit().data();
+            static QByteArray msg;
+            msg = QString("Failed to open output stream for track id \"%1\", transform id \"%2\"")
+                .arg(m_trackId).arg(m_transformId).toLocal8Bit();
+            return msg.data();
         }            
         
     protected:
