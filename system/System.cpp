@@ -343,7 +343,6 @@ RestoreStartupLocale()
 bool
 OSReportsDarkThemeActive()
 {
-    SVCERR << "OSReportsDarkThemeActive() called" << endl;
 #ifndef AVOID_WINRT_DEPENDENCY
 #ifdef _MSC_VER
     using namespace winrt::Windows::UI::ViewManagement;
