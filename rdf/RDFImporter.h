@@ -62,8 +62,10 @@ public:
         NotRDF
     };
 
-    static RDFDocumentType identifyDocumentType(QString url);
+    static RDFDocumentType identifyDocumentType(QUrl url);
 
+    static bool isPlausibleDocumentOfAnyKind(QUrl url);
+    
 protected:
     RDFImporterImpl *m_d;
 };
