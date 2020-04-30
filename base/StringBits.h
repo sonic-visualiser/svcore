@@ -65,6 +65,15 @@ public:
      * Comma-Separated Values (CSV) Files.
      */
     static QString joinDelimited(QVector<QString> row, QString delimiter);
+
+    /**
+     * Return true if the given byte array contains a valid UTF-8
+     * sequence, false if not. If isTruncated is true, the byte array
+     * will be treated as the prefix of a longer byte sequence, and
+     * any errors resulting from a multibyte code ending prematurely
+     * at the end of the array will be ignored.
+     */
+    static bool isValidUtf8(const std::string &bytes, bool isTruncated);
 };
 
 #endif

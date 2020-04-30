@@ -168,3 +168,75 @@ StringBits::joinDelimited(QVector<QString> row, QString delimiter)
     return s;    
 }
 
+bool
+StringBits::isValidUtf8(const std::string &bytes, bool isTruncated)
+{
+    size_t len = bytes.length();
+    size_t mblen = 0;
+    unsigned char first = '\0';
+    
+    for (size_t i = 0; i < len; ++i) {
+
+	unsigned char c = bytes[i];
+
+	if (((c & 0xc0) == 0xc0) || !(c & 0x80)) {
+
+	    // 11xxxxxx or 0xxxxxxx: first byte of a character sequence
+
+	    if (mblen > 0) {
+                
+		// have we seen a valid sequence?
+		size_t length = 
+		    (!(first & 0x20)) ? 2 :
+		    (!(first & 0x10)) ? 3 :
+		    (!(first & 0x08)) ? 4 :
+		    (!(first & 0x04)) ? 5 : 0;
+
+                if (length != 0 && mblen != length) {
+                    // previous multibyte sequence had invalid length
+                    return false;
+                }
+            }
+
+            mblen = 0;
+            first = c;
+
+        } else {
+            
+	    // second or subsequent byte
+
+	    if (mblen == 0) {
+                // ... without a first byte!                
+                return false;
+            }
+        }
+    }
+
+    // at the end
+
+    if (isTruncated) {
+        // can't trust any errors arising now
+        return true;
+    }
+
+    if (mblen > 0) {
+                
+        // have we seen a valid sequence?
+        size_t length = 
+            (!(first & 0x20)) ? 2 :
+            (!(first & 0x10)) ? 3 :
+            (!(first & 0x08)) ? 4 :
+            (!(first & 0x04)) ? 5 : 0;
+        
+        if (length != 0 && mblen != length) {
+            // final multibyte sequence had invalid length
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+        
+
