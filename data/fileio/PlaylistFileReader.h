@@ -38,7 +38,14 @@ public:
     virtual QString getError() const;
     virtual Playlist load() const;
 
+    // Return the set of file extensions that are expected to
+    // represent parseable playlists.
     static void getSupportedExtensions(std::set<QString> &extensions);
+
+    // Return true if the given source has a file extension that is
+    // one of the supported extensions. Does not look at the content
+    // of the file.
+    static bool isSupported(FileSource source);
 
 protected:
     void init();

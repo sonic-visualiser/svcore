@@ -154,3 +154,12 @@ PlaylistFileReader::getSupportedExtensions(std::set<QString> &extensions)
 {
     extensions.insert("m3u");
 }
+
+bool
+PlaylistFileReader::isSupported(FileSource source)
+{
+    std::set<QString> supported;
+    getSupportedExtensions(supported);
+    QString ext = source.getExtension();
+    return (supported.find(ext) != supported.end());
+}
