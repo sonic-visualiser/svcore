@@ -1,4 +1,6 @@
 This thing,That thing,The other thing
 1,12.4,16.3
 2,14.2
+3,"This, that", "and the other"
 3,16.1,"This, that\", and the other"
+3,16.1,"This, that"", and the other"

@@ -44,6 +44,35 @@ private:
     }
 
 private slots:
+    void empty() {
+        QString in = "";
+        QStringList out;     
+        testSplitQuoted(in, out);
+    }
+
+    void empties() {
+
+        // Behaviour here differs based on what the separator is
+        // (spaces are coalesced)
+
+        QString in;
+        QStringList out;
+        out << "" << "";
+
+        in = " ";
+        QCOMPARE(StringBits::splitQuoted(in, ' '), out);
+
+        in = ",";
+        QCOMPARE(StringBits::splitQuoted(in, ','), out);
+
+        in = "  ";
+        QCOMPARE(StringBits::splitQuoted(in, ' '), out);
+
+        in = ",,";
+        out << "";
+        QCOMPARE(StringBits::splitQuoted(in, ','), out);
+    }
+
     void simple() {
         QString in = "a b c d";
         QStringList out;     
@@ -102,6 +131,20 @@ private slots:
 
     void sescaped() {
         QString in = "a 'b c\\' d'";
+        QStringList out;         
+        out << "a" << "b c' d"; 
+        testSplitQuoted(in, out);
+    }
+
+    void ddescaped() {
+        QString in = "a \"b c\"\" d\"";
+        QStringList out;         
+        out << "a" << "b c\" d"; 
+        testSplitQuoted(in, out);
+    }
+
+    void sdescaped() {
+        QString in = "a 'b c'' d'";
         QStringList out;         
         out << "a" << "b c' d"; 
         testSplitQuoted(in, out);
@@ -179,7 +222,7 @@ private slots:
     void multispace() {
         QString in = "  a'a \\'         'bb'    '      \\\"cc\" ' dd\\\" '";
         QStringList out;                                            
-        out << "a'a" << "'" << "bb" << "      \"cc\" " << "dd\"" << "'";
+        out << "" << "a'a" << "'" << "bb" << "      \"cc\" " << "dd\"" << "'";
         QCOMPARE(StringBits::splitQuoted(in, ' '), out);
 
         QString in2 = ",,a'a,\\',,,,,,,,,'bb',,,,',,,,,,\\\"cc\",',dd\\\",'";

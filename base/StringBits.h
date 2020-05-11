@@ -38,6 +38,13 @@ public:
      */
     static double stringToDoubleLocaleFree(QString s, bool *ok = 0);
 
+    enum EscapeMode {
+        EscapeAny,             // support both backslash and doubling escapes
+        EscapeBackslash,       // support backslash escapes only
+        EscapeDoubling,        // support doubling escapes ("" for " etc) only
+        EscapeNone             // support no escapes
+    };
+    
     /**
      * Split a string at the given separator character, allowing
      * quoted sections that contain the separator.  If the separator
@@ -45,16 +52,20 @@ public:
      * single separator.  If the separator is another whitespace
      * character such as '\t', it will be used literally.
      */
-    static QStringList splitQuoted(QString s, QChar separator);
+    static QStringList splitQuoted(QString s,
+                                   QChar separator,
+                                   EscapeMode escapeMode = EscapeAny);
 
     /**
      * Split a string at the given separator character.  If quoted is
-     * true, do so by calling splitQuoted (above).  If quoted is
-     * false, use QString::split; if separator is ' ', use
-     * SkipEmptyParts behaviour, otherwise use KeepEmptyParts (this is
-     * analogous to the behaviour of splitQuoted).
+     * true, do so by calling splitQuoted (above) in EscapeAny escape
+     * mode.  If quoted is false, use QString::split; if separator is
+     * ' ', use SkipEmptyParts behaviour, otherwise use KeepEmptyParts
+     * (this is analogous to the behaviour of splitQuoted).
      */
-    static QStringList split(QString s, QChar separator, bool quoted);
+    static QStringList split(QString s,
+                             QChar separator,
+                             bool quoted);
 
     /**
      * Join a vector of strings into a single string, with the

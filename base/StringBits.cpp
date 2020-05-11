@@ -72,17 +72,23 @@ StringBits::stringToDoubleLocaleFree(QString s, bool *ok)
 }
     
 QStringList
-StringBits::splitQuoted(QString s, QChar separator)
+StringBits::splitQuoted(QString s, QChar separator, EscapeMode escapeMode)
 {
     QStringList tokens;
     QString tok;
 
-    // sep -> just seen a field separator (or start of line)
+    // beg -> at beginning of line
+    // sep -> just seen a field separator
     // unq -> in an unquoted field
     // q1  -> in a single-quoted field
     // q2  -> in a double-quoted field
 
-    enum { sep, unq, q1, q2 } mode = sep;
+    enum { beg, sep, unq, q1, q2 } mode = beg;
+
+    bool use_doubling = (escapeMode == EscapeDoubling ||
+                         escapeMode == EscapeAny);
+    bool use_backslash = (escapeMode == EscapeBackslash ||
+                          escapeMode == EscapeAny);
 
     for (int i = 0; i < s.length(); ++i) {
         
@@ -90,43 +96,54 @@ StringBits::splitQuoted(QString s, QChar separator)
 
         if (c == '\'') {
             switch (mode) {
-            case sep: mode = q1; break;
+            case beg: case sep: mode = q1; break;
             case unq: case q2: tok += c; break;
-            case q1: mode = unq; break;
+            case q1:
+                if (use_doubling && i+1 < s.length() && s[i+1] == c) {
+                    tok += c; ++i; break;
+                } else {
+                    mode = unq; break;
+                }
             }
 
         } else if (c == '"') {
             switch (mode) {
-            case sep: mode = q2; break;
+            case beg: case sep: mode = q2; break;
             case unq: case q1: tok += c; break;
-            case q2: mode = unq; break;
+            case q2: 
+                if (use_doubling && i+1 < s.length() && s[i+1] == c) {
+                    tok += c; ++i; break;
+                } else {
+                    mode = unq; break;
+                }
             }
 
         } else if (c == separator || (separator == ' ' && c.isSpace())) {
             switch (mode) {
+            case beg: mode = sep; tokens << ""; break;
             case sep: if (separator != ' ') tokens << ""; break;
             case unq: mode = sep; tokens << tok; tok = ""; break;
             case q1: case q2: tok += c; break;
             }
 
-        } else if (c == '\\') {
+        } else if (c == '\\' && use_backslash) {
             if (++i < s.length()) {
                 c = s[i];
                 switch (mode) {
-                case sep: mode = unq; tok += c; break;
+                case beg: case sep: mode = unq; tok += c; break;
                 case unq: case q1: case q2: tok += c; break;
                 }
             }
 
         } else {
             switch (mode) {
-            case sep: mode = unq; tok += c; break;
+            case beg: case sep: mode = unq; tok += c; break;
             case unq: case q1: case q2: tok += c; break;
             }
         }
     }
 
-    if (tok != "" || mode != sep) {
+    if (tok != "" || mode != beg) {
         if (mode == q1) {
             tokens << ("'" + tok);  // turns out it wasn't quoted after all
         } else if (mode == q2) {

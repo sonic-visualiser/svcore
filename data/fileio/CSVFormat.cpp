@@ -135,7 +135,9 @@ CSVFormat::guessQualities(QString line, int lineno)
         ColumnIncreasing | ColumnNearEmpty;
     
     for (int i = 0; i < cols; ++i) {
-            
+
+        SVDEBUG << "line no " << lineno << ": column " << i << " contains: \"" << list[i] << "\"" << endl;
+        
         while (m_columnQualities.size() <= i) {
             m_columnQualities.push_back(defaultQualities);
             m_prevValues.push_back(0.f);
@@ -157,57 +159,60 @@ CSVFormat::guessQualities(QString line, int lineno)
         bool signd      = (qualities & ColumnSigned); // also defaults to off
         bool emptyish   = (qualities & ColumnNearEmpty);
 
-        if (lineno > 1 && s.trimmed() != "") {
-            emptyish = false;
-        }
+        if (s.trimmed() != "") {
         
-        float value = 0.f;
-
-        //!!! how to take into account headers?
-
-        if (numeric) {
-            value = s.toFloat(&ok);
-            if (!ok) {
-                value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
+            if (lineno > 1) {
+                emptyish = false;
             }
-            if (ok) {
-                if (lineno < 2 && value > 1000.f) {
-                    large = true;
-                }
-                if (value < 0.f) {
-                    signd = true;
-                }
-                if (value < -1.f || value > 1.f) {
-                    small = false;
-                }
-            } else {
-                numeric = false;
+        
+            float value = 0.f;
 
-                // If the column is not numeric, it can't be any of
-                // these things either
-                integral = false;
-                increasing = false;
-                small = false;
-                large = false;
-                signd = false;
-            }
-        }
+            //!!! how to take into account headers?
 
-        if (numeric) {
+            if (numeric) {
+                value = s.toFloat(&ok);
+                if (!ok) {
+                    value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
+                }
+                if (ok) {
+                    if (lineno < 2 && value > 1000.f) {
+                        large = true;
+                    }
+                    if (value < 0.f) {
+                        signd = true;
+                    }
+                    if (value < -1.f || value > 1.f) {
+                        small = false;
+                    }
+                } else {
+                    numeric = false;
 
-            if (integral) {
-                if (s.contains('.') || s.contains(',')) {
+                    // If the column is not numeric, it can't be any of
+                    // these things either
                     integral = false;
-                }
-            }
-
-            if (increasing) {
-                if (lineno > 0 && value <= m_prevValues[i]) {
                     increasing = false;
+                    small = false;
+                    large = false;
+                    signd = false;
                 }
             }
 
-            m_prevValues[i] = value;
+            if (numeric) {
+
+                if (integral) {
+                    if (s.contains('.') || s.contains(',')) {
+                        integral = false;
+                    }
+                }
+
+                if (increasing) {
+                    if (lineno > 0 && value <= m_prevValues[i]) {
+                        increasing = false;
+                    }
+                }
+
+                m_prevValues[i] = value;
+            }
         }
         
         m_columnQualities[i] =
