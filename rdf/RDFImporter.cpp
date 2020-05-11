@@ -36,12 +36,10 @@
 #include "data/fileio/FileSource.h"
 #include "data/fileio/CachedFile.h"
 #include "data/fileio/FileFinder.h"
+#include "data/fileio/TextTest.h"
 
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
-
-#include <QFile>
-#include <QXmlInputSource>
 
 using Dataquay::Uri;
 using Dataquay::Node;
@@ -890,39 +888,6 @@ RDFImporter::identifyDocumentType(QUrl url)
 bool
 RDFImporter::isPlausibleDocumentOfAnyKind(QUrl url)
 {
-    // Return true if the document can be opened and contains some
-    // sort of text, either UTF-8 (so it could be Turtle) or another
-    // encoding that is recognised as XML
-    
-    FileSource source(url);
-
-    if (!source.isAvailable()) {
-        SVDEBUG << "NOTE: RDFImporter::isPlausibleDocumentOfAnyKind: Failed to retrieve document from " << url << endl;
-        return false;
-    }
-
-    QFile file(source.getLocalFilename());
-    if (!file.open(QFile::ReadOnly)) {
-        SVDEBUG << "NOTE: RDFImporter::isPlausibleDocumentOfAnyKind: Failed to open local file from " << source.getLocalFilename() << endl;
-        return false;
-    }
-
-    QByteArray bytes = file.read(200);
-
-    if (StringBits::isValidUtf8(bytes.toStdString(), true)) {
-        SVDEBUG << "NOTE: RDFImporter::isPlausibleDocumentOfAnyKind: Document appears to be UTF-8" << endl;
-        return true; // good enough to be worth trying to parse
-    }
-
-    QXmlInputSource xmlSource;
-    xmlSource.setData(bytes); // guesses text encoding
-
-    if (xmlSource.data().startsWith("<?xml")) {
-        SVDEBUG << "NOTE: RDFImporter::isPlausibleDocumentOfAnyKind: Document appears to be XML" << endl;
-        return true;
-    }
-
-    SVDEBUG << "NOTE: RDFImporter::isPlausibleDocumentOfAnyKind: Document is not UTF-8 and is not XML, rejecting" << endl;
-    return false;
+    return TextTest::isApparentTextDocument(FileSource(url));
 }
 

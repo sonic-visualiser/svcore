@@ -63,6 +63,7 @@ SVCORE_HEADERS = \
            data/fileio/CSVStreamWriter.h \
            data/fileio/DataFileReader.h \
            data/fileio/DataFileReaderFactory.h \
+           data/fileio/DecodingWavFileReader.h \
            data/fileio/FileFinder.h \
            data/fileio/FileReadThread.h \
            data/fileio/FileSource.h \
@@ -70,7 +71,7 @@ SVCORE_HEADERS = \
            data/fileio/MIDIFileWriter.h \
            data/fileio/MP3FileReader.h \
            data/fileio/PlaylistFileReader.h \
-           data/fileio/DecodingWavFileReader.h \
+           data/fileio/TextTest.h \
            data/fileio/WavFileReader.h \
            data/fileio/WavFileWriter.h \
            data/midi/MIDIEvent.h \
@@ -199,13 +200,14 @@ SVCORE_SOURCES = \
            data/fileio/CSVFileWriter.cpp \
            data/fileio/CSVFormat.cpp \
            data/fileio/DataFileReaderFactory.cpp \
+           data/fileio/DecodingWavFileReader.cpp \
            data/fileio/FileReadThread.cpp \
            data/fileio/FileSource.cpp \
            data/fileio/MIDIFileReader.cpp \
            data/fileio/MIDIFileWriter.cpp \
            data/fileio/MP3FileReader.cpp \
            data/fileio/PlaylistFileReader.cpp \
-           data/fileio/DecodingWavFileReader.cpp \
+           data/fileio/TextTest.cpp \
            data/fileio/WavFileReader.cpp \
            data/fileio/WavFileWriter.cpp \
            data/midi/MIDIInput.cpp \
