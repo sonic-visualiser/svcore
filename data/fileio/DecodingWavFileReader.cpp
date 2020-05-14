@@ -125,7 +125,11 @@ void
 DecodingWavFileReader::DecodeThread::run()
 {
     if (m_reader->m_cacheMode == CacheInTemporaryFile) {
-        m_reader->startSerialised("DecodingWavFileReader::Decode");
+        m_reader->startSerialised("DecodingWavFileReader::Decode",
+                                  &m_reader->m_cancelled);
+        if (m_reader->m_cancelled) {
+            return;
+        }
     }
 
     sv_frame_t blockSize = 16384;

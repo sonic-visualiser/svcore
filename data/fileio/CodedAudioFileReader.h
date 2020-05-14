@@ -28,6 +28,8 @@
 
 #include <sndfile.h>
 
+#include <atomic>
+
 class WavFileReader;
 class Serialiser;
 
@@ -84,7 +86,7 @@ protected:
 
     bool isDecodeCacheInitialised() const { return m_initialised; }
 
-    void startSerialised(QString id);
+    void startSerialised(QString id, const std::atomic<bool> *cancelled);
     void endSerialised();
 
 private:

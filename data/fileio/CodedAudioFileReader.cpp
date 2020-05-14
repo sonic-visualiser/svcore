@@ -105,18 +105,19 @@ CodedAudioFileReader::setFramesToTrim(sv_frame_t fromStart, sv_frame_t fromEnd)
 }
 
 void
-CodedAudioFileReader::startSerialised(QString id)
+CodedAudioFileReader::startSerialised(QString id,
+                                      const std::atomic<bool> *cancelled)
 {
-    SVDEBUG << "CodedAudioFileReader(" << this << ")::startSerialised: id = " << id << endl;
-
+//    SVCERR << "CodedAudioFileReader(" << this << ")::startSerialised: id = " << id << endl;
+    
     delete m_serialiser;
-    m_serialiser = new Serialiser(id);
+    m_serialiser = new Serialiser(id, cancelled);
 }
 
 void
 CodedAudioFileReader::endSerialised()
 {
-    SVDEBUG << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId() : "(none)") << endl;
+//    SVCERR << "CodedAudioFileReader(" << this << ")::endSerialised: id = " << (m_serialiser ? m_serialiser->getId() : "(none)") << endl;
 
     delete m_serialiser;
     m_serialiser = nullptr;
@@ -548,6 +549,8 @@ CodedAudioFileReader::pushBufferResampling(float *buffer, sv_frame_t sz,
 floatvec_t
 CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) const
 {
+    Profiler profiler("CodedAudioFileReader::getInterleavedFrames");
+    
     // Lock is only required in CacheInMemory mode (the cache file
     // reader is expected to be thread safe and manage its own
     // locking)

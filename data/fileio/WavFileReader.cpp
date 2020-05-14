@@ -111,6 +111,8 @@ WavFileReader::WavFileReader(FileSource source,
 
 WavFileReader::~WavFileReader()
 {
+    Profiler profiler("WavFileReader::~WavFileReader");
+    
     if (m_file) sf_close(m_file);
 }
 

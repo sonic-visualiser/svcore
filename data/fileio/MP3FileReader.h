@@ -24,6 +24,7 @@
 #include <mad.h>
 
 #include <set>
+#include <atomic>
 
 class ProgressReporter;
 
@@ -117,7 +118,7 @@ protected:
     size_t m_sampleBufferSize;
 
     ProgressReporter *m_reporter;
-    bool m_cancelled;
+    std::atomic<bool> m_cancelled;
 
     bool m_decodeErrorShown;
 

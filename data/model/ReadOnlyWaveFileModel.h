@@ -29,6 +29,8 @@
 
 #include <stdlib.h>
 
+#include <atomic>
+
 class AudioFileReader;
 
 class ReadOnlyWaveFileModel : public WaveFileModel
@@ -137,7 +139,7 @@ protected:
     QTimer *m_updateTimer;
     sv_frame_t m_lastFillExtent;
     mutable int m_prevCompletion;
-    bool m_exiting;
+    std::atomic<bool> m_exiting;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 
     mutable floatvec_t m_directRead;

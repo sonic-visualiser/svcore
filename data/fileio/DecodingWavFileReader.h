@@ -21,6 +21,7 @@
 #include "base/Thread.h"
 
 #include <set>
+#include <atomic>
 
 class WavFileReader;
 class ProgressReporter;
@@ -63,7 +64,7 @@ protected:
     QString m_maker;
     QString m_path;
     QString m_error;
-    bool m_cancelled;
+    std::atomic<bool> m_cancelled;
     sv_frame_t m_processed;
     int m_completion;
 

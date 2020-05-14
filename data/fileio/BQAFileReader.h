@@ -21,6 +21,7 @@
 #include "base/Thread.h"
 
 #include <set>
+#include <atomic>
 
 class ProgressReporter;
 
@@ -69,7 +70,7 @@ protected:
 
     breakfastquay::AudioReadStream *m_stream;
 
-    bool m_cancelled;
+    std::atomic<bool> m_cancelled;
     int m_completion;
     ProgressReporter *m_reporter;
     

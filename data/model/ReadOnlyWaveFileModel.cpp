@@ -54,6 +54,8 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     m_lastDirectReadStart(0),
     m_lastDirectReadCount(0)
 {
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel");
+
     SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
             << m_path << ", target rate " << targetRate << endl;
     
@@ -103,6 +105,8 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     m_prevCompletion(0),
     m_exiting(false)
 {
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with reader)");
+
     SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
             << m_path << ", with reader" << endl;
     
@@ -117,6 +121,8 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
 
 ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
 {
+    Profiler profiler("ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel");
+    
     PlayParameterRepository::getInstance()->removePlayable
         (getId().untyped);
     
@@ -653,6 +659,9 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
             sleep(1);
             channels = m_model.getChannelCount();
         }
+        if (m_model.m_exiting) {
+            return;
+        }
     }
 
     Range *range = new Range[2 * channels];
@@ -734,7 +743,8 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         first = false;
         if (m_model.m_exiting) break;
         if (updating) {
-            sleep(1);
+            usleep(100000);
+            if (m_model.m_exiting) break;
         }
     }
 

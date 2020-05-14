@@ -115,12 +115,14 @@ BQAFileReader::BQAFileReader(FileSource source,
 
 BQAFileReader::~BQAFileReader()
 {
+    Profiler profiler("BQAFileReader::~BQAFileReader");
+    
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
         delete m_decodeThread;
     }
-    
+
     delete m_stream;
 }
 
@@ -134,7 +136,11 @@ void
 BQAFileReader::DecodeThread::run()
 {
     if (m_reader->m_cacheMode == CacheInTemporaryFile) {
-        m_reader->startSerialised("BQAFileReader::Decode");
+        m_reader->startSerialised("BQAFileReader::Decode",
+                                  &m_reader->m_cancelled);
+        if (m_reader->m_cancelled) {
+            return;
+        }
     }
 
     sv_frame_t blockSize = 65536;

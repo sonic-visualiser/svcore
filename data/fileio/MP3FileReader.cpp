@@ -17,6 +17,7 @@
 
 #include "MP3FileReader.h"
 #include "base/ProgressReporter.h"
+#include "base/Profiler.h"
 
 #include "system/System.h"
 
@@ -173,6 +174,8 @@ MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode,
 
 MP3FileReader::~MP3FileReader()
 {
+    Profiler profiler("MP3FileReader::~MP3FileReader");
+    
     if (m_decodeThread) {
         m_cancelled = true;
         m_decodeThread->wait();
@@ -302,7 +305,9 @@ MP3FileReader::DecodeThread::run()
         m_reader->m_sampleBuffer = nullptr;
     }
 
-    if (m_reader->isDecodeCacheInitialised()) m_reader->finishDecodeCache();
+    if (m_reader->isDecodeCacheInitialised()) {
+        m_reader->finishDecodeCache();
+    }
 
     m_reader->m_done = true;
     m_reader->m_completion = 100;
@@ -505,7 +510,10 @@ MP3FileReader::accept(struct mad_header const *header,
 
         if (m_cacheMode == CacheInTemporaryFile) {
 //            SVDEBUG << "MP3FileReader::accept: channel count " << m_channelCount << ", file rate " << m_fileRate << ", about to start serialised section" << endl;
-            startSerialised("MP3FileReader::Decode");
+            startSerialised("MP3FileReader::Decode", &m_cancelled);
+            if (m_cancelled) {
+                return MAD_FLOW_STOP;
+            }
         }
     }
     
