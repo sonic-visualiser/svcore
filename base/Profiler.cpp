@@ -138,11 +138,10 @@ void Profiles::dump() const
     }
 
 
-    fprintf(stderr, "\nBy total:\n");
-    for (TimeRMap::const_iterator i = totmap.end(); i != totmap.begin(); ) {
+    fprintf(stderr, "\nBy number of calls:\n");
+    for (IntRMap::const_iterator i = ncallmap.end(); i != ncallmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %s ms\n", i->second,
-                (i->first * 1000).toString().c_str());
+        fprintf(stderr, "%-40s  %d\n", i->second, i->first);
     }
 
     fprintf(stderr, "\nBy average:\n");
@@ -159,10 +158,11 @@ void Profiles::dump() const
                 (i->first * 1000).toString().c_str());
     }
 
-    fprintf(stderr, "\nBy number of calls:\n");
-    for (IntRMap::const_iterator i = ncallmap.end(); i != ncallmap.begin(); ) {
+    fprintf(stderr, "\nBy total:\n");
+    for (TimeRMap::const_iterator i = totmap.end(); i != totmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %d\n", i->second, i->first);
+        fprintf(stderr, "%-40s  %s ms\n", i->second,
+                (i->first * 1000).toString().c_str());
     }
 
 #endif
