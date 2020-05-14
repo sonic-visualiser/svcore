@@ -14,6 +14,7 @@
 */
 
 #include "Serialiser.h"
+#include "Debug.h"
 
 #include <iostream>
 
@@ -24,7 +25,12 @@ std::map<QString, QMutex *>
 Serialiser::m_mutexMap;
 
 Serialiser::Serialiser(QString id) :
-    m_id(id)
+    Serialiser(id, nullptr) { }
+
+Serialiser::Serialiser(QString id, const std::atomic<bool> *cancelled) :
+    m_id(id),
+    m_cancelled(cancelled),
+    m_locked(false)
 {
     m_mapMutex.lock();
     
@@ -43,14 +49,27 @@ Serialiser::Serialiser(QString id) :
 
     m_mapMutex.unlock();
 
-    idMutex->lock();
+    if (!m_cancelled) {
+        idMutex->lock();
+        m_locked = true;
+    } else {
+        // try to lock, polling the cancelled status occasionally
+        while (!m_locked && ! *m_cancelled) {
+            m_locked = idMutex->tryLock(500);
+            if (*m_cancelled) {
+                SVCERR << "Serialiser: cancelled!" << endl;
+            }
+        }
+    }
 }
 
 Serialiser::~Serialiser()
 {
     m_mapMutex.lock();
-    
-    m_mutexMap[m_id]->unlock();
+
+    if (m_locked) {
+        m_mutexMap[m_id]->unlock();
+    }
 
     m_mapMutex.unlock();
 }

@@ -20,17 +20,39 @@
 #include <QMutex>
 
 #include <map>
+#include <atomic>
 
 class Serialiser
 {
 public:
+    /**
+     * Construct a serialiser that takes the lock associated with the
+     * given id. That is, the constructor will only complete after all
+     * existing serialisers with the given id have been deleted.
+     */
     Serialiser(QString id);
+
+    /**
+     * Construct a cancellable serialiser that takes the lock
+     * associated with the given id. That is, the constructor will
+     * only complete when all existing serialisers with the given id
+     * have been deleted, or when the (occasionally polled) bool flag
+     * pointed to by cancelled has been found to be true.
+     */
+    Serialiser(QString id, const std::atomic<bool> *cancelled);
+
+    /**
+     * Release the lock associated with the given id (if taken, rather
+     * than cancelled).
+     */
     ~Serialiser();
 
     QString getId() const { return m_id; }
 
 protected:
     QString m_id;
+    const std::atomic<bool> *m_cancelled;
+    bool m_locked;
     static QMutex m_mapMutex;
     static std::map<QString, QMutex *> m_mutexMap;
 };
