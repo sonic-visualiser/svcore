@@ -40,7 +40,7 @@ TextTest::isApparentTextDocument(FileSource source)
 
     QByteArray bytes = file.read(200);
 
-    if (StringBits::isValidUtf8(bytes.toStdString(), true)) {
+    if (StringBits::isValidUtf8(std::string(bytes.data()), true)) {
         SVDEBUG << "NOTE: TextTest::isApparentTextDocument: Document appears to be UTF-8" << endl;
         return true; // good enough to be worth trying to parse
     }
