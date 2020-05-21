@@ -310,9 +310,9 @@ sv_frame_t
 AlignmentModel::performAlignment(const Path &path, sv_frame_t frame) const
 {
     // The path consists of a series of points, each with frame equal
-    // to the frame on the source model and mapframe equal to the
-    // frame on the target model.  Both should be monotonically
-    // increasing.
+    // to the frame on the source model (aligned model) and mapframe
+    // equal to the frame on the target model (reference model).  Both
+    // should be monotonically increasing.
 
     const Path::Points &points = path.getPoints();
 
