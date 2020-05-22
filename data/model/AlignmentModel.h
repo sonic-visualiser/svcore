@@ -56,6 +56,8 @@ public:
     ModelId getReferenceModel() const;
     ModelId getAlignedModel() const;
 
+    void setCompletion(int completion);
+
     sv_frame_t toReference(sv_frame_t frame) const;
     sv_frame_t fromReference(sv_frame_t frame) const;
 
@@ -107,6 +109,7 @@ protected:
     bool m_pathComplete;
     QString m_error;
     int m_relativePitch;
+    int m_explicitlySetCompletion;
 
     void constructPath() const;
     void constructReversePath() const;
