@@ -102,7 +102,9 @@ void
 TransformFactory::UninstalledTransformsPopulateThread::run()
 {
     m_factory->m_populatingSlowly = true;
-    sleep(1);
+    while (!m_factory->havePopulated()) {
+        sleep(1);
+    }
     m_factory->populateUninstalledTransforms();
 }
 
@@ -324,6 +326,13 @@ TransformFactory::getTransformTypeName(TransformDescription::Type type) const
     return tr("Other");
 }
 
+bool
+TransformFactory::havePopulated()
+{
+    MutexLocker locker(&m_transformsMutex, "TransformFactory::havePopulated");
+    return m_transformsPopulated;
+}
+
 void
 TransformFactory::populateTransforms()
 {
@@ -395,6 +404,12 @@ TransformFactory::populateTransforms()
     }            
 
     m_transformsPopulated = true;
+
+#ifdef DEBUG_TRANSFORM_FACTORY
+    SVCERR << "populateTransforms exiting" << endl;
+#endif
+
+    emit transformsPopulated();
 }
 
 void
@@ -743,6 +758,8 @@ TransformFactory::populateUninstalledTransforms()
 #ifdef DEBUG_TRANSFORM_FACTORY
     SVCERR << "populateUninstalledTransforms exiting" << endl;
 #endif
+
+    emit uninstalledTransformsPopulated();
 }
 
 Transform

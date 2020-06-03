@@ -78,6 +78,13 @@ public:
     typedef std::map<TransformId, TextMatcher::Match> SearchResults;
     SearchResults search(QString keyword);
     SearchResults search(QStringList keywords);
+
+    /**
+     * Return true if the transforms have been populated, i.e. a call
+     * to something like haveTransform() will return without having to
+     * do the work of scanning plugins
+     */
+    bool havePopulated();
     
     /**
      * Return true if the given transform is known.
@@ -191,6 +198,10 @@ public:
     QString getStartupFailureReport() const {
         return m_errorString;
     }
+
+signals:
+    void transformsPopulated();
+    void uninstalledTransformsPopulated();
     
 protected:
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
