@@ -23,15 +23,16 @@
 #include <QDateTime>
 
 #include <stdexcept>
+#include <memory>
 
-static SVDebug *svdebug = nullptr;
-static SVCerr *svcerr = nullptr;
+static std::unique_ptr<SVDebug> svdebug = nullptr;
+static std::unique_ptr<SVCerr> svcerr = nullptr;
 static QMutex mutex;
 
 SVDebug &getSVDebug() {
     mutex.lock();
     if (!svdebug) {
-        svdebug = new SVDebug();
+        svdebug = std::make_unique<SVDebug>();
     }
     mutex.unlock();
     return *svdebug;
@@ -41,9 +42,9 @@ SVCerr &getSVCerr() {
     mutex.lock();
     if (!svcerr) {
         if (!svdebug) {
-            svdebug = new SVDebug();
+            svdebug = std::make_unique<SVDebug>();
         }
-        svcerr = new SVCerr(*svdebug);
+        svcerr = std::make_unique<SVCerr>(*svdebug);
     }
     mutex.unlock();
     return *svcerr;
@@ -58,6 +59,8 @@ SVDebug::SVDebug() :
     m_eol(true)
 {
     if (m_silenced) return;
+
+    m_timer.start();
     
     if (qApp->applicationName() == "") {
         cerr << "ERROR: Can't use SVDEBUG before setting application name" << endl;
@@ -92,7 +95,10 @@ SVDebug::SVDebug() :
 
 SVDebug::~SVDebug()
 {
-    if (m_stream) m_stream.close();
+    if (m_stream) {
+        (*this) << "Debug log ends" << endl;
+        m_stream.close();
+    }
 }
 
 QDebug &
@@ -105,12 +111,12 @@ operator<<(QDebug &dbg, const std::string &s)
 std::ostream &
 operator<<(std::ostream &target, const QString &str)
 {
-    return target << str.toStdString();
+    return target << str.toUtf8().data();
 }
 
 std::ostream &
 operator<<(std::ostream &target, const QUrl &u)
 {
-    return target << "<" << u.toString().toStdString() << ">";
+    return target << "<" << u.toString() << ">";
 }
 
