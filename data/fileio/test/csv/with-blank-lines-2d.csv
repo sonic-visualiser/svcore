@@ -1,0 +1,12 @@
+
+45678,4
+
+123239,4.2
+320130,0.4
+
+# Also include some CR/LF variations:
+452103,3.8
+
+
+# And let's not have a newline after this last line:
+620301,-2.3

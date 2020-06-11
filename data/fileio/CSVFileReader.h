@@ -70,8 +70,8 @@ protected:
     mutable int m_progress;
     ProgressReporter *m_reporter;
 
-    sv_frame_t convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
-                                int windowSize) const;
+    bool convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
+                          int windowSize, sv_frame_t &calculatedFrame) const;
 
     QString getConvertedAudioFilePath() const;
 };

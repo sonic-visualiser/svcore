@@ -18,6 +18,7 @@
 #include "EncodingTest.h"
 #include "MIDIFileReaderTest.h"
 #include "CSVFormatTest.h"
+#include "CSVReaderTest.h"
 #include "CSVStreamWriterTest.h"
 
 #include "system/Init.h"
@@ -85,6 +86,12 @@ int main(int argc, char *argv[])
 
     {
         CSVFormatTest t(testDir);
+        if (QTest::qExec(&t, argc, argv) == 0) ++good;
+        else ++bad;
+    }
+
+    {
+        CSVReaderTest t(testDir);
         if (QTest::qExec(&t, argc, argv) == 0) ++good;
         else ++bad;
     }

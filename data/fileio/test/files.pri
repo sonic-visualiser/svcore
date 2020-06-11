@@ -9,6 +9,7 @@ TEST_HEADERS += \
 	EncodingTest.h \
 	MIDIFileReaderTest.h \
 	CSVFormatTest.h \
+	CSVReaderTest.h \
 	CSVStreamWriterTest.h
      
 TEST_SOURCES += \

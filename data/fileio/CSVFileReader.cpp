@@ -117,17 +117,18 @@ CSVFileReader::getError() const
     return m_error;
 }
 
-sv_frame_t
+bool
 CSVFileReader::convertTimeValue(QString s, int lineno,
                                 sv_samplerate_t sampleRate,
-                                int windowSize) const
+                                int windowSize,
+                                sv_frame_t &calculatedFrame) const
 {
     QRegExp nonNumericRx("[^0-9eE.,+-]");
     int warnLimit = 10;
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
 
-    sv_frame_t calculatedFrame = 0;
+    calculatedFrame = 0;
 
     bool ok = false;
     QString numeric = s;
@@ -316,31 +317,37 @@ CSVFileReader::load() const
                 switch (modelType) {
 
                 case CSVFormat::OneDimensionalModel:
+                    SVDEBUG << "CSVFileReader: Creating sparse one-dimensional model" << endl;
                     model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
                     model = model1;
                     break;
                 
                 case CSVFormat::TwoDimensionalModel:
+                    SVDEBUG << "CSVFileReader: Creating sparse time-value model" << endl;
                     model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
                     model = model2;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDuration:
+                    SVDEBUG << "CSVFileReader: Creating region model" << endl;
                     model2a = new RegionModel(sampleRate, windowSize, false);
                     model = model2a;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
+                    SVDEBUG << "CSVFileReader: Creating note model" << endl;
                     model2b = new NoteModel(sampleRate, windowSize, false);
                     model = model2b;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndExtent:
+                    SVDEBUG << "CSVFileReader: Creating box model" << endl;
                     model2c = new BoxModel(sampleRate, windowSize, false);
                     model = model2c;
                     break;
                 
                 case CSVFormat::ThreeDimensionalModel:
+                    SVDEBUG << "CSVFileReader: Creating editable dense three-dimensional model" << endl;
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate, windowSize, valueColumns);
                     model = model3;
@@ -348,6 +355,7 @@ CSVFileReader::load() const
 
                 case CSVFormat::WaveFileModel:
                 {
+                    SVDEBUG << "CSVFileReader: Creating writable wave-file model" << endl;
                     bool normalise = (m_format.getAudioSampleRange()
                                       == CSVFormat::SampleRangeOther);
                     QString path = getConvertedAudioFilePath();
@@ -387,6 +395,7 @@ CSVFileReader::load() const
             float otherValue = 0.f;
             float pitch = 0.f;
             QString label = "";
+            bool ok = true;
 
             duration = 0.f;
             haveEndTime = false;
@@ -403,16 +412,21 @@ CSVFileReader::load() const
                     break;
 
                 case CSVFormat::ColumnStartTime:
-                    frameNo = convertTimeValue(s, lineno, sampleRate, windowSize);
+                    if (!convertTimeValue(s, lineno, sampleRate, windowSize, frameNo)) {
+                        ok = false;
+                    }
                     break;
                 
                 case CSVFormat::ColumnEndTime:
-                    endFrame = convertTimeValue(s, lineno, sampleRate, windowSize);
-                    haveEndTime = true;
+                    if (convertTimeValue(s, lineno, sampleRate, windowSize, endFrame)) {
+                        haveEndTime = true;
+                    }
                     break;
 
                 case CSVFormat::ColumnDuration:
-                    duration = convertTimeValue(s, lineno, sampleRate, windowSize);
+                    if (!convertTimeValue(s, lineno, sampleRate, windowSize, duration)) {
+                        ok = false;
+                    }
                     break;
 
                 case CSVFormat::ColumnValue:
@@ -436,6 +450,10 @@ CSVFileReader::load() const
                 }
             }
 
+            if (!ok) {
+                continue;
+            }
+            
             ++labelCountMap[label];
             
             if (haveEndTime) { // ... calculate duration now all cols read
