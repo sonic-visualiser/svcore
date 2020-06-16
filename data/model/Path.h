@@ -29,6 +29,11 @@ struct PathPoint
     PathPoint(sv_frame_t _frame, sv_frame_t _mapframe) :
         frame(_frame), mapframe(_mapframe) { }
 
+    // "The path consists of a series of points, each with frame equal
+    // to the frame on the source model (aligned model) and mapframe
+    // equal to the frame on the target model (reference model).  Both
+    // should be monotonically increasing."
+
     sv_frame_t frame;
     sv_frame_t mapframe;
 

@@ -29,7 +29,8 @@ AlignmentModel::AlignmentModel(ModelId reference,
     m_reversePath(nullptr),
     m_pathBegun(false),
     m_pathComplete(false),
-    m_relativePitch(0)
+    m_relativePitch(0),
+    m_explicitlySetCompletion(-1)
 {
     setPathFrom(pathSource);
 
@@ -105,6 +106,10 @@ AlignmentModel::getSampleRate() const
 bool
 AlignmentModel::isReady(int *completion) const
 {
+    if (m_explicitlySetCompletion != -1) {
+        if (completion) *completion = m_explicitlySetCompletion;
+        return (m_explicitlySetCompletion == 100);
+    }
     if (!m_pathBegun && !m_pathSource.isNone()) {
         if (completion) *completion = 0;
 #ifdef DEBUG_ALIGNMENT_MODEL
@@ -154,6 +159,13 @@ ModelId
 AlignmentModel::getAlignedModel() const
 {
     return m_aligned;
+}
+
+void
+AlignmentModel::setCompletion(int completion)
+{
+    m_explicitlySetCompletion = completion;
+    emit completionChanged(getId());
 }
 
 sv_frame_t
@@ -310,9 +322,9 @@ sv_frame_t
 AlignmentModel::performAlignment(const Path &path, sv_frame_t frame) const
 {
     // The path consists of a series of points, each with frame equal
-    // to the frame on the source model and mapframe equal to the
-    // frame on the target model.  Both should be monotonically
-    // increasing.
+    // to the frame on the source model (aligned model) and mapframe
+    // equal to the frame on the target model (reference model).  Both
+    // should be monotonically increasing.
 
     const Path::Points &points = path.getPoints();
 

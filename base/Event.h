@@ -84,7 +84,10 @@ public:
         m_haveDuration(true), m_haveReferenceFrame(false),
         m_value(value), m_level(0.f), m_frame(frame),
         m_duration(duration), m_referenceFrame(0), m_label(label) {
-        if (m_duration < 0) throw std::logic_error("duration must be >= 0");
+        if (m_duration < 0) {
+            m_frame += m_duration;
+            m_duration = -m_duration;
+        }
     }
         
     Event(sv_frame_t frame, float value, sv_frame_t duration,
@@ -93,7 +96,10 @@ public:
         m_haveDuration(true), m_haveReferenceFrame(false),
         m_value(value), m_level(level), m_frame(frame),
         m_duration(duration), m_referenceFrame(0), m_label(label) {
-        if (m_duration < 0) throw std::logic_error("duration must be >= 0");
+        if (m_duration < 0) {
+            m_frame += m_duration;
+            m_duration = -m_duration;
+        }
     }
 
     Event(const Event &event) =default;
@@ -135,7 +141,10 @@ public:
         Event p(*this);
         p.m_duration = duration;
         p.m_haveDuration = true;
-        if (duration < 0) throw std::logic_error("duration must be >= 0");
+        if (p.m_duration < 0) {
+            p.m_frame += p.m_duration;
+            p.m_duration = -p.m_duration;
+        }
         return p;
     }
     Event withoutDuration() const {
