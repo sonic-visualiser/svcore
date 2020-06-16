@@ -44,6 +44,7 @@ Preferences::Preferences() :
     m_omitRecentTemps(true),
     m_tempDirRoot(""),
     m_fixedSampleRate(0),
+    m_recordMono(false),
     m_resampleOnLoad(false),
     m_gapless(true),
     m_normaliseAudio(false),
@@ -67,6 +68,7 @@ Preferences::Preferences() :
         (settings.value("window-type", int(HanningWindow)).toInt());
     m_runPluginsInProcess = settings.value("run-vamp-plugins-in-process", true).toBool();
     m_fixedSampleRate = settings.value("fixed-sample-rate", 0).toDouble();
+    m_recordMono = settings.value("record-mono", false).toBool();
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_gapless = settings.value("gapless", true).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
@@ -100,6 +102,7 @@ Preferences::getProperties() const
     props.push_back("Window Type");
     props.push_back("Resample Quality");
     props.push_back("Omit Temporaries from Recent Files");
+    props.push_back("Record Mono");
     props.push_back("Resample On Load");
     props.push_back("Use Gapless Mode");
     props.push_back("Normalise Audio");
@@ -140,6 +143,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Omit Temporaries from Recent Files") {
         return tr("Omit temporaries from Recent Files menu");
+    }
+    if (name == "Record Mono") {
+        return tr("Mix recorded channels to mono");
     }
     if (name == "Resample On Load") {
         return tr("Resample mismatching files on import");
@@ -199,6 +205,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ToggleProperty;
     }
     if (name == "Omit Temporaries from Recent Files") {
+        return ToggleProperty;
+    }
+    if (name == "Record Mono") {
         return ToggleProperty;
     }
     if (name == "Resample On Load") {
@@ -548,6 +557,19 @@ Preferences::setTemporaryDirectoryRoot(QString root)
         settings.setValue("create-in", root);
         settings.endGroup();
         emit propertyChanged("Temporary Directory Root");
+    }
+}
+
+void
+Preferences::setRecordMono(bool mono)
+{
+    if (m_recordMono != mono) {
+        m_recordMono = mono;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("record-mono", mono);
+        settings.endGroup();
+        emit propertyChanged("Record Mono");
     }
 }
 

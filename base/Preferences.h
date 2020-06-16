@@ -65,6 +65,10 @@ public:
 
     QString getTemporaryDirectoryRoot() const { return m_tempDirRoot; }
 
+    /// True if we should always mix down recorded audio to a single
+    /// channel regardless of how many channels the device opens
+    bool getRecordMono() const { return m_recordMono; }
+    
     /// If we should always resample audio to the same rate, return it; otherwise (the normal case) return 0
     sv_samplerate_t getFixedSampleRate() const { return m_fixedSampleRate; }
 
@@ -119,6 +123,7 @@ public slots:
     void setOmitTempsFromRecentFiles(bool omit);
     void setTemporaryDirectoryRoot(QString tempDirRoot);
     void setFixedSampleRate(sv_samplerate_t);
+    void setRecordMono(bool);
     void setResampleOnLoad(bool);
     void setUseGaplessMode(bool);
     void setNormaliseAudio(bool);
@@ -157,6 +162,7 @@ private:
     bool m_omitRecentTemps;
     QString m_tempDirRoot;
     sv_samplerate_t m_fixedSampleRate;
+    bool m_recordMono;
     bool m_resampleOnLoad;
     bool m_gapless;
     bool m_normaliseAudio;
