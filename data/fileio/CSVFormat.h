@@ -20,6 +20,7 @@
 #include <QStringList>
 
 #include <set>
+#include <map>
 
 #include "base/BaseTypes.h"
 
@@ -58,6 +59,12 @@ public:
         ColumnLabel
     };
 
+    enum HeaderStatus {
+        HeaderUnknown = 0,
+        HeaderAbsent  = 1,
+        HeaderPresent = 2
+    };
+    
     enum ColumnQuality {
         ColumnNumeric    = 1,   // No non-numeric values were seen in sample
         ColumnIntegral   = 2,   // All sampled values were integers
@@ -83,6 +90,7 @@ public:
         m_separator(""),
         m_sampleRate(44100),
         m_windowSize(1024),
+        m_headerStatus(HeaderUnknown),
         m_columnCount(0),
         m_variableColumnCount(false),
         m_audioSampleRange(SampleRangeOther),
@@ -122,6 +130,7 @@ public:
     int          getColumnCount()   const { return m_columnCount;   }
     AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
+    HeaderStatus getHeaderStatus()  const { return m_headerStatus; }
     QChar        getSeparator()     const { 
         if (m_separator == "") return ',';
         else return m_separator[0];
@@ -140,24 +149,19 @@ public:
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAudioSampleRange(AudioSampleRange r) { m_audioSampleRange = r; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
+    void setHeaderStatus(HeaderStatus s)  { m_headerStatus = s; }
 
-    QList<ColumnPurpose> getColumnPurposes() const { return m_columnPurposes; }
-    void setColumnPurposes(QList<ColumnPurpose> cl) { m_columnPurposes = cl; }
+    QList<ColumnPurpose> getColumnPurposes() const;
+    void setColumnPurposes(QList<ColumnPurpose> cl);
 
-    ColumnPurpose getColumnPurpose(int i);
     ColumnPurpose getColumnPurpose(int i) const;
     void setColumnPurpose(int i, ColumnPurpose p);
     
-    // read-only; only valid if format has been guessed:
-    const QList<ColumnQualities> &getColumnQualities() const {
-        return m_columnQualities;
-    }
+    // only valid if format has been guessed:
+    QList<ColumnQualities> getColumnQualities() const;
 
-    // read-only; only valid if format has been guessed:
-    const QList<QStringList> &getExample() const {
-        return m_example;
-    }
-    
+    // only valid if format has been guessed:
+    QList<QStringList> getExample() const { return m_example; }
     int getMaxExampleCols() const { return m_maxExampleCols; }
         
 protected:
@@ -168,16 +172,18 @@ protected:
     std::set<QChar> m_plausibleSeparators;
     sv_samplerate_t m_sampleRate;
     int          m_windowSize;
+    HeaderStatus m_headerStatus;
 
     int          m_columnCount;
     bool         m_variableColumnCount;
 
-    QList<ColumnQualities> m_columnQualities;
-    QList<ColumnPurpose> m_columnPurposes;
+    std::map<int, ColumnQualities> m_columnQualities;
+    std::map<int, ColumnPurpose> m_columnPurposes;
+    std::map<int, QString> m_columnHeadings;
 
+    std::map<int, float> m_prevValues;
+    
     AudioSampleRange m_audioSampleRange;
-
-    QList<float> m_prevValues;
 
     bool m_allowQuoting;
 
