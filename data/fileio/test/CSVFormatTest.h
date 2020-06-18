@@ -236,9 +236,10 @@ private slots:
     void modelType2DImplicit() {
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-implicit.csv")));
-        QCOMPARE(f.getColumnCount(), 1);
+        QCOMPARE(f.getColumnCount(), 2);
         QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
         QCOMPARE(f.getTimingType(), CSVFormat::ImplicitTiming);
     }
     
@@ -248,6 +249,7 @@ private slots:
         QCOMPARE(f.getColumnCount(), 2);
         QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
         QCOMPARE(f.getTimingType(), CSVFormat::ImplicitTiming);
     }
     

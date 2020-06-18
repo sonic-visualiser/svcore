@@ -77,7 +77,10 @@ private slots:
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
-        //!!! + the actual contents
+        vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
+        for (int i = 0; in_range_for(expected, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
+        }
         delete model;
     }
 
@@ -87,7 +90,10 @@ private slots:
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
-        //!!! + the actual contents
+        vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
+        for (int i = 0; in_range_for(expected, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
+        }
         delete model;
     }
 
@@ -197,6 +203,15 @@ private slots:
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
+        vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
+        vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
+        vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
+        for (int i = 0; in_range_for(expectedFrames, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i],
+                     Event(expectedFrames[i],
+                           expectedValues[i],
+                           expectedLabels[i]));
+        }
         delete model;
     }
     
@@ -206,6 +221,15 @@ private slots:
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
+        vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
+        vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
+        vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
+        for (int i = 0; in_range_for(expectedFrames, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i],
+                     Event(expectedFrames[i],
+                           expectedValues[i],
+                           expectedLabels[i]));
+        }
         delete model;
     }
     
