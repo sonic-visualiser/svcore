@@ -260,10 +260,11 @@ CSVFormat::guessQualities(QString line, int lineno)
         // Start again with the qualities:
         m_columnQualities.clear();
         m_prevValues.clear();
-    } else if (lineno < firstLine + 10) {
-        // Not a header row, so add it to the example column output
+    }
+
+    if (lineno < firstLine + 10) {
         m_example.push_back(list);
-        if (lineno == firstLine || cols > m_maxExampleCols) {
+        if (lineno == 0 || cols > m_maxExampleCols) {
             m_maxExampleCols = cols;
         }
     }
