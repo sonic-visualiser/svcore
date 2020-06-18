@@ -120,7 +120,7 @@ private slots:
         loadFrom("model-type-2d-duration-samples.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE((actual->getAllEvents().size()), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
 
