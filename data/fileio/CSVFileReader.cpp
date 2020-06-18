@@ -265,6 +265,7 @@ CSVFileReader::load() const
 
     map<QString, int> labelCountMap;
 
+    bool atStart = true;
     bool abandoned = false;
     
     while (!in.atEnd() && !abandoned) {
@@ -304,10 +305,16 @@ CSVFileReader::load() const
         }
         
         for (int li = 0; li < lines.size(); ++li) {
-
-            QString line = lines[li];
             
+            QString line = lines[li];
             if (line.startsWith("#")) continue;
+
+            if (atStart) {
+                atStart = false;
+                if (m_format.getHeaderStatus() == CSVFormat::HeaderPresent) {
+                    continue;
+                }
+            }
 
             QStringList list = StringBits::split(line, separator, allowQuoting);
             if (!model) {
