@@ -105,6 +105,7 @@ private slots:
     
     void comment() {
         CSVFormat f;
+        f.setHeaderStatus(CSVFormat::HeaderAbsent);
         QVERIFY(f.guessFormatFor(csvDir.filePath("comment.csv")));
         QCOMPARE(f.getSeparator(), QChar(','));
         QCOMPARE(f.getColumnCount(), 4);
@@ -142,6 +143,18 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-1d-samples.csv")));
         QCOMPARE(f.getColumnCount(), 1);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
+        QCOMPARE(f.getModelType(), CSVFormat::OneDimensionalModel);
+    }
+
+    void modelType1DSamplesWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-1d-samples-header.csv")));
+        QCOMPARE(f.getColumnCount(), 1);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
         QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
@@ -152,6 +165,19 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-1d-seconds.csv")));
         QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
+        QCOMPARE(f.getModelType(), CSVFormat::OneDimensionalModel);
+    }
+
+    void modelType1DSecondsWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-1d-seconds-header.csv")));
+        QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
@@ -163,6 +189,19 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-samples.csv")));
         QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModel);
+    }
+
+    void modelType2DSamplesWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-samples-header.csv")));
+        QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
@@ -174,6 +213,19 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-seconds.csv")));
         QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModel);
+    }
+ 
+    void modelType2DSecondsWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-seconds-header.csv")));
+        QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
@@ -184,8 +236,20 @@ private slots:
     void modelType2DImplicit() {
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-implicit.csv")));
-        QCOMPARE(f.getColumnCount(), 1);
+        QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
+        QCOMPARE(f.getTimingType(), CSVFormat::ImplicitTiming);
+    }
+    
+    void modelType2DImplicitWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-implicit-header.csv")));
+        QCOMPARE(f.getColumnCount(), 2);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnLabel);
         QCOMPARE(f.getTimingType(), CSVFormat::ImplicitTiming);
     }
     
@@ -193,9 +257,23 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-endtime-samples.csv")));
         QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnEndTime);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
+    }
+    
+    void modelType2DEndTimeSamplesWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-endtime-samples-header.csv")));
+        QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnEndTime);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
         QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
         QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
@@ -205,9 +283,23 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-endtime-seconds.csv")));
         QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnEndTime);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
+    }
+    
+    void modelType2DEndTimeSecondsWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-endtime-seconds-header.csv")));
+        QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnEndTime);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
         QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
         QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
@@ -217,9 +309,23 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-duration-samples.csv")));
         QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnDuration);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
+    }
+    
+    void modelType2DDurationSamplesWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-duration-samples-header.csv")));
+        QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnDuration);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
         QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
         QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
@@ -229,9 +335,23 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-duration-seconds.csv")));
         QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnDuration);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
+        QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
+    }
+        
+    void modelType2DDurationSecondsWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-2d-duration-seconds-header.csv")));
+        QCOMPARE(f.getColumnCount(), 3);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnDuration);
         QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
         QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
         QCOMPARE(f.getModelType(), CSVFormat::TwoDimensionalModelWithDuration);
@@ -241,6 +361,24 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-samples.csv")));
         QCOMPARE(f.getColumnCount(), 7);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(3), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(4), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(5), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(6), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeAudioFrames);
+        QCOMPARE(f.getModelType(), CSVFormat::ThreeDimensionalModel);
+    }
+        
+    void modelType3DSamplesWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-samples-header.csv")));
+        QCOMPARE(f.getColumnCount(), 7);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
@@ -257,6 +395,24 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-seconds.csv")));
         QCOMPARE(f.getColumnCount(), 7);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(3), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(4), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(5), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(6), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ExplicitTiming);
+        QCOMPARE(f.getTimeUnits(), CSVFormat::TimeSeconds);
+        QCOMPARE(f.getModelType(), CSVFormat::ThreeDimensionalModel);
+    }
+         
+    void modelType3DSecondsWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-seconds-header.csv")));
+        QCOMPARE(f.getColumnCount(), 7);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnStartTime);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
@@ -273,6 +429,22 @@ private slots:
         CSVFormat f;
         QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-implicit.csv")));
         QCOMPARE(f.getColumnCount(), 6);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderAbsent);
+        QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(3), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(4), CSVFormat::ColumnValue);
+        QCOMPARE(f.getColumnPurpose(5), CSVFormat::ColumnValue);
+        QCOMPARE(f.getTimingType(), CSVFormat::ImplicitTiming);
+        QCOMPARE(f.getModelType(), CSVFormat::ThreeDimensionalModel);
+    }
+         
+    void modelType3DImplicitWithHeader() {
+        CSVFormat f;
+        QVERIFY(f.guessFormatFor(csvDir.filePath("model-type-3d-implicit-header.csv")));
+        QCOMPARE(f.getColumnCount(), 6);
+        QCOMPARE(f.getHeaderStatus(), CSVFormat::HeaderPresent);
         QCOMPARE(f.getColumnPurpose(0), CSVFormat::ColumnValue);
         QCOMPARE(f.getColumnPurpose(1), CSVFormat::ColumnValue);
         QCOMPARE(f.getColumnPurpose(2), CSVFormat::ColumnValue);

@@ -77,13 +77,38 @@ private slots:
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
-        //!!! + the actual contents
+        vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
+        for (int i = 0; in_range_for(expected, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
+        }
+        delete model;
+    }
+
+    void modelType1DSamplesWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-1d-samples-header.csv", model);
+        auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
+        for (int i = 0; in_range_for(expected, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
+        }
         delete model;
     }
 
     void modelType1DSeconds() {
         Model *model = nullptr;
         loadFrom("model-type-1d-seconds.csv", model);
+        auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+
+    void modelType1DSecondsWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-1d-seconds-header.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
@@ -98,10 +123,28 @@ private slots:
         QCOMPARE(actual->getAllEvents().size(), 5);
         delete model;
     }
+
+    void modelType2DDurationSamplesWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-duration-samples-header.csv", model);
+        auto actual = qobject_cast<RegionModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
     
     void modelType2DDurationSeconds() {
         Model *model = nullptr;
         loadFrom("model-type-2d-duration-seconds.csv", model);
+        auto actual = qobject_cast<RegionModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+    
+    void modelType2DDurationSecondsWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-duration-seconds-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
@@ -127,9 +170,27 @@ private slots:
         delete model;
     }
     
+    void modelType2DEndTimeSamplesWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-endtime-samples-header.csv", model);
+        auto actual = qobject_cast<RegionModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+    
     void modelType2DEndTimeSeconds() {
         Model *model = nullptr;
         loadFrom("model-type-2d-endtime-seconds.csv", model);
+        auto actual = qobject_cast<RegionModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+    
+    void modelType2DEndTimeSecondsWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-endtime-seconds-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
@@ -142,12 +203,48 @@ private slots:
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
+        vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
+        vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
+        vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
+        for (int i = 0; in_range_for(expectedFrames, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i],
+                     Event(expectedFrames[i],
+                           expectedValues[i],
+                           expectedLabels[i]));
+        }
+        delete model;
+    }
+    
+    void modelType2DImplicitWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-implicit-header.csv", model);
+        auto actual = qobject_cast<SparseTimeValueModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
+        vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
+        vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
+        for (int i = 0; in_range_for(expectedFrames, i); ++i) {
+            QCOMPARE(actual->getAllEvents()[i],
+                     Event(expectedFrames[i],
+                           expectedValues[i],
+                           expectedLabels[i]));
+        }
         delete model;
     }
     
     void modelType2DSamples() {
         Model *model = nullptr;
         loadFrom("model-type-2d-samples.csv", model);
+        auto actual = qobject_cast<SparseTimeValueModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+    
+    void modelType2DSamplesWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-samples-header.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getAllEvents().size(), 5);
@@ -163,9 +260,28 @@ private slots:
         delete model;
     }
     
+    void modelType2DSecondsWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-2d-seconds-header.csv", model);
+        auto actual = qobject_cast<SparseTimeValueModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getAllEvents().size(), 5);
+        delete model;
+    }
+    
     void modelType3DImplicit() {
         Model *model = nullptr;
         loadFrom("model-type-3d-implicit.csv", model);
+        auto actual = qobject_cast<EditableDenseThreeDimensionalModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getWidth(), 6);
+        QCOMPARE(actual->getHeight(), 6);
+        delete model;
+    }
+    
+    void modelType3DImplicitWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-3d-implicit-header.csv", model);
         auto actual = qobject_cast<EditableDenseThreeDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getWidth(), 6);
@@ -183,9 +299,29 @@ private slots:
         delete model;
     }
     
+    void modelType3DSamplesWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-3d-samples-header.csv", model);
+        auto actual = qobject_cast<EditableDenseThreeDimensionalModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getWidth(), 6);
+        QCOMPARE(actual->getHeight(), 6);
+        delete model;
+    }
+    
     void modelType3DSeconds() {
         Model *model = nullptr;
         loadFrom("model-type-3d-seconds.csv", model);
+        auto actual = qobject_cast<EditableDenseThreeDimensionalModel *>(model);
+        QVERIFY(actual);
+        QCOMPARE(actual->getWidth(), 6);
+        QCOMPARE(actual->getHeight(), 6);
+        delete model;
+    }
+    
+    void modelType3DSecondsWithHeader() {
+        Model *model = nullptr;
+        loadFrom("model-type-3d-seconds-header.csv", model);
         auto actual = qobject_cast<EditableDenseThreeDimensionalModel *>(model);
         QVERIFY(actual);
         QCOMPARE(actual->getWidth(), 6);

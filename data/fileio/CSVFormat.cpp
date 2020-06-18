@@ -31,7 +31,9 @@ CSVFormat::CSVFormat(QString path) :
     m_separator(""),
     m_sampleRate(44100),
     m_windowSize(1024),
-    m_allowQuoting(true)
+    m_headerStatus(HeaderUnknown),
+    m_allowQuoting(true),
+    m_maxExampleCols(0)
 {
     (void)guessFormatFor(path);
 }
@@ -124,8 +126,18 @@ CSVFormat::guessQualities(QString line, int lineno)
     QStringList list = StringBits::split(line, getSeparator(), m_allowQuoting);
 
     int cols = list.size();
-    if (lineno == 0 || (cols > m_columnCount)) m_columnCount = cols;
-    if (cols != m_columnCount) m_variableColumnCount = true;
+
+    int firstLine = 0;
+    if (m_headerStatus == HeaderPresent) {
+        firstLine = 1;
+    }
+    
+    if (lineno == firstLine || (cols > m_columnCount)) {
+        m_columnCount = cols;
+    }
+    if (cols != m_columnCount) {
+        m_variableColumnCount = true;
+    }
 
     // All columns are regarded as having these qualities until we see
     // something that indicates otherwise:
@@ -137,10 +149,10 @@ CSVFormat::guessQualities(QString line, int lineno)
     for (int i = 0; i < cols; ++i) {
 
         SVDEBUG << "line no " << lineno << ": column " << i << " contains: \"" << list[i] << "\"" << endl;
-        
-        while (m_columnQualities.size() <= i) {
-            m_columnQualities.push_back(defaultQualities);
-            m_prevValues.push_back(0.f);
+
+        if (m_columnQualities.find(i) == m_columnQualities.end()) {
+            m_columnQualities[i] = defaultQualities;
+            m_prevValues[i] = 0.f;
         }
 
         QString s(list[i]);
@@ -161,13 +173,11 @@ CSVFormat::guessQualities(QString line, int lineno)
 
         if (s.trimmed() != "") {
         
-            if (lineno > 1) {
+            if (lineno > firstLine) {
                 emptyish = false;
             }
         
             float value = 0.f;
-
-            //!!! how to take into account headers?
 
             if (numeric) {
                 value = s.toFloat(&ok);
@@ -175,7 +185,7 @@ CSVFormat::guessQualities(QString line, int lineno)
                     value = (float)StringBits::stringToDoubleLocaleFree(s, &ok);
                 }
                 if (ok) {
-                    if (lineno < 2 && value > 1000.f) {
+                    if (lineno < firstLine + 2 && value > 1000.f) {
                         large = true;
                     }
                     if (value < 0.f) {
@@ -206,7 +216,7 @@ CSVFormat::guessQualities(QString line, int lineno)
                 }
 
                 if (increasing) {
-                    if (lineno > 0 && value <= m_prevValues[i]) {
+                    if (lineno > firstLine && value <= m_prevValues[i]) {
                         increasing = false;
                     }
                 }
@@ -225,19 +235,56 @@ CSVFormat::guessQualities(QString line, int lineno)
             (emptyish   ? ColumnNearEmpty : 0);
     }
 
-    if (lineno < 10) {
+    if (lineno == 0 && m_headerStatus == HeaderUnknown) {
+        // If we have at least one column, and every column has
+        // quality == ColumnNearEmpty, i.e. not empty and not numeric,
+        // then we probably have a header row
+        bool couldBeHeader = (cols > 0);
+        std::map<int, QString> headings;
+        for (int i = 0; i < cols; ++i) {
+            if (m_columnQualities[i] != ColumnNearEmpty) {
+                couldBeHeader = false;
+            } else {
+                headings[i] = list[i].trimmed().toLower();
+            }
+        }
+        if (couldBeHeader) {
+            m_headerStatus = HeaderPresent;
+            m_columnHeadings = headings;
+        } else {
+            m_headerStatus = HeaderAbsent;
+        }
+    }
+
+    if (lineno == 0 && m_headerStatus == HeaderPresent) {
+        // Start again with the qualities:
+        m_columnQualities.clear();
+        m_prevValues.clear();
+    }
+
+    if (lineno < firstLine + 10) {
         m_example.push_back(list);
         if (lineno == 0 || cols > m_maxExampleCols) {
             m_maxExampleCols = cols;
         }
     }
 
-    if (lineno < 10) {
+    if (lineno < firstLine + 10) {
         SVDEBUG << "Estimated column qualities for line " << lineno << " (reporting up to first 10): ";
-        for (int i = 0; i < m_columnCount; ++i) {
-            SVDEBUG << int(m_columnQualities[i]) << " ";
+        if (lineno == 0 && m_headerStatus == HeaderPresent &&
+            m_columnCount > 0 && m_columnQualities.empty()) {
+            SVDEBUG << "[whole line classified as a header row]";
+        } else {
+            for (int i = 0; i < cols; ++i) {
+                if (m_columnQualities.find(i) == m_columnQualities.end()) {
+                    SVDEBUG << "(not set) ";
+                } else {
+                    SVDEBUG << int(m_columnQualities[i]) << " ";
+                }
+            }
         }
         SVDEBUG << endl;
+        SVDEBUG << "Estimated header status: " << m_headerStatus << endl;
     }
 }
 
@@ -252,7 +299,11 @@ CSVFormat::guessPurposes()
 
     SVDEBUG << "Estimated column qualities overall: ";
     for (int i = 0; i < m_columnCount; ++i) {
-        SVDEBUG << int(m_columnQualities[i]) << " ";
+        if (m_columnQualities.find(i) == m_columnQualities.end()) {
+            SVDEBUG << "(not set) ";
+        } else {
+            SVDEBUG << int(m_columnQualities[i]) << " ";
+        }
     }
     SVDEBUG << endl;
 
@@ -290,33 +341,56 @@ CSVFormat::guessPurposes()
 
         bool timingColumn = (numeric && increasing);
 
+        QString heading;
+        if (m_columnHeadings.find(i) != m_columnHeadings.end()) {
+            heading = m_columnHeadings[i];
+        }
+        
+        if (heading == "time" || heading == "frame" ||
+            heading == "duration" || heading == "endtime") {
+            timingColumn = true;
+        }
+
+        if (heading == "value" || heading == "height" || heading == "label") {
+            timingColumn = false;
+        }
+        
         if (timingColumn) {
 
             ++timingColumnCount;
+
+            if (heading == "endtime") {
+
+                purpose = ColumnEndTime;
+                haveDurationOrEndTime = true;
+
+            } else if (heading == "duration") {
+
+                purpose = ColumnDuration;
+                haveDurationOrEndTime = true;
                               
-            if (primary) {
+            } else if (primary || heading == "time" || heading == "frame") {
 
                 purpose = ColumnStartTime;
-
                 m_timingType = ExplicitTiming;
 
-                if (integral && large) {
+                if ((integral && large) || heading == "frame") {
                     m_timeUnits = TimeAudioFrames;
                 } else {
                     m_timeUnits = TimeSeconds;
                 }
 
-            } else {
-
-                if (timingColumnCount == 2 && m_timingType == ExplicitTiming) {
-                    purpose = ColumnEndTime;
-                    haveDurationOrEndTime = true;
-                }
+            } else if (timingColumnCount == 2 &&
+                       m_timingType == ExplicitTiming) {
+                purpose = ColumnEndTime;
+                haveDurationOrEndTime = true;
             }
         }
 
         if (purpose == ColumnUnknown) {
-            if (numeric) {
+            if (heading == "label") {
+                purpose = ColumnLabel;
+            } else if (numeric || heading == "value" || heading == "height") {
                 purpose = ColumnValue;
             } else {
                 purpose = ColumnLabel;
@@ -328,7 +402,9 @@ CSVFormat::guessPurposes()
 
     int valueCount = 0;
     for (int i = 0; i < m_columnCount; ++i) {
-        if (m_columnPurposes[i] == ColumnValue) ++valueCount;
+        if (m_columnPurposes[i] == ColumnValue) {
+            ++valueCount;
+        }
     }
 
     if (valueCount == 2 && timingColumnCount == 1) {
@@ -455,33 +531,51 @@ CSVFormat::guessAudioSampleRange()
     m_audioSampleRange = range;
 }
 
-CSVFormat::ColumnPurpose
-CSVFormat::getColumnPurpose(int i)
+QList<CSVFormat::ColumnPurpose>
+CSVFormat::getColumnPurposes() const
 {
-    while (m_columnPurposes.size() <= i) {
-        m_columnPurposes.push_back(ColumnUnknown);
+    QList<ColumnPurpose> purposes;
+    for (int i = 0; i < m_columnCount; ++i) {
+        purposes.push_back(getColumnPurpose(i));
     }
-    return m_columnPurposes[i];
+    return purposes;
+}
+
+void
+CSVFormat::setColumnPurposes(QList<ColumnPurpose> cl)
+{
+    m_columnPurposes.clear();
+    for (int i = 0; in_range_for(cl, i); ++i) {
+        m_columnPurposes[i] = cl[i];
+    }
 }
 
 CSVFormat::ColumnPurpose
 CSVFormat::getColumnPurpose(int i) const
 {
-    if (m_columnPurposes.size() <= i) {
+    if (m_columnPurposes.find(i) == m_columnPurposes.end()) {
         return ColumnUnknown;
+    } else {
+        return m_columnPurposes.at(i);
     }
-    return m_columnPurposes[i];
 }
 
 void
 CSVFormat::setColumnPurpose(int i, ColumnPurpose p)
 {
-    while (m_columnPurposes.size() <= i) {
-        m_columnPurposes.push_back(ColumnUnknown);
-    }
     m_columnPurposes[i] = p;
 }
 
-
-
-
+QList<CSVFormat::ColumnQualities>
+CSVFormat::getColumnQualities() const
+{
+    QList<ColumnQualities> qualities;
+    for (int i = 0; i < m_columnCount; ++i) {
+        if (m_columnQualities.find(i) == m_columnQualities.end()) {
+            qualities.push_back(0);
+        } else {
+            qualities.push_back(m_columnQualities.at(i));
+        }
+    }
+    return qualities;
+}
