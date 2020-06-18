@@ -76,7 +76,7 @@ private slots:
         loadFrom("model-type-1d-samples.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
         for (int i = 0; in_range_for(expected, i); ++i) {
             QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
@@ -89,7 +89,7 @@ private slots:
         loadFrom("model-type-1d-samples-header.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         vector<sv_frame_t> expected { 45678, 123239, 320130, 452103, 620301 };
         for (int i = 0; in_range_for(expected, i); ++i) {
             QCOMPARE(actual->getAllEvents()[i], Event(expected[i]));
@@ -102,7 +102,7 @@ private slots:
         loadFrom("model-type-1d-seconds.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
 
@@ -111,7 +111,7 @@ private slots:
         loadFrom("model-type-1d-seconds-header.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
 
@@ -120,7 +120,7 @@ private slots:
         loadFrom("model-type-2d-duration-samples.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE((actual->getAllEvents().size()), 5);
         delete model;
     }
 
@@ -129,7 +129,7 @@ private slots:
         loadFrom("model-type-2d-duration-samples-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -138,7 +138,7 @@ private slots:
         loadFrom("model-type-2d-duration-seconds.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -147,7 +147,7 @@ private slots:
         loadFrom("model-type-2d-duration-seconds-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -157,7 +157,7 @@ private slots:
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
         //!!! + check duration has been corrected
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -166,7 +166,7 @@ private slots:
         loadFrom("model-type-2d-endtime-samples.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -175,7 +175,7 @@ private slots:
         loadFrom("model-type-2d-endtime-samples-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -184,7 +184,7 @@ private slots:
         loadFrom("model-type-2d-endtime-seconds.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -193,7 +193,7 @@ private slots:
         loadFrom("model-type-2d-endtime-seconds-header.csv", model);
         auto actual = qobject_cast<RegionModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -202,7 +202,7 @@ private slots:
         loadFrom("model-type-2d-implicit.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
         vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
         vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
@@ -220,7 +220,7 @@ private slots:
         loadFrom("model-type-2d-implicit-header.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         vector<sv_frame_t> expectedFrames { 0, 1024, 2048, 3072, 4096 };
         vector<float> expectedValues { 4.f, 4.2f, 0.4f, 3.8f, -2.3f };
         vector<QString> expectedLabels { {}, {}, "A label", {}, {} };
@@ -238,7 +238,7 @@ private slots:
         loadFrom("model-type-2d-samples.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -247,7 +247,7 @@ private slots:
         loadFrom("model-type-2d-samples-header.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -256,7 +256,7 @@ private slots:
         loadFrom("model-type-2d-seconds.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -265,7 +265,7 @@ private slots:
         loadFrom("model-type-2d-seconds-header.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -334,7 +334,7 @@ private slots:
         loadFrom("with-blank-lines-1d.csv", model);
         auto actual = qobject_cast<SparseOneDimensionalModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -343,7 +343,7 @@ private slots:
         loadFrom("with-blank-lines-2d.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
     
@@ -362,7 +362,7 @@ private slots:
         loadFrom("quoting.csv", model);
         auto actual = qobject_cast<SparseTimeValueModel *>(model);
         QVERIFY(actual);
-        QCOMPARE(actual->getAllEvents().size(), 5);
+        QCOMPARE(int(actual->getAllEvents().size()), 5);
         delete model;
     }
 };
