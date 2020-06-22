@@ -18,6 +18,7 @@
 
 #include <QDebug>
 #include <QTextStream>
+#include <QElapsedTimer>
 
 #include "RealTime.h"
 
@@ -46,7 +47,7 @@ public:
         if (m_silenced) return *this;
         if (m_ok) {
             if (m_eol) {
-                m_stream << m_prefix << " ";
+                m_stream << m_prefix << "/" << m_timer.elapsed() << ": ";
             }
             m_stream << t;
             m_eol = false;
@@ -68,6 +69,7 @@ private:
     char *m_prefix;
     bool m_ok;
     bool m_eol;
+    QElapsedTimer m_timer;
     static bool m_silenced;
 };
 
