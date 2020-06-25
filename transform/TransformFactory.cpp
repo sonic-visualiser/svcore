@@ -803,6 +803,8 @@ std::shared_ptr<Vamp::PluginBase>
 TransformFactory::instantiateDefaultPluginFor(TransformId identifier,
                                               sv_samplerate_t rate)
 {
+    populateTransforms();
+
     Transform t;
     t.setIdentifier(identifier);
     if (rate == 0) rate = 44100.0;
