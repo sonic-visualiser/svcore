@@ -46,8 +46,8 @@ public:
 
     /**
      * Construct a Transform by parsing the given XML data string.
-     * This is the inverse of toXml. If this fails, getErrorString()
-     * will return a non-empty string.
+     * This is the inverse of toXmlString. If this fails,
+     * getErrorString() will return a non-empty string.
      */
     Transform(QString xml);
 
