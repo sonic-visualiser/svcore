@@ -32,7 +32,7 @@ static QMutex mutex;
 SVDebug &getSVDebug() {
     mutex.lock();
     if (!svdebug) {
-        svdebug = std::make_unique<SVDebug>();
+        svdebug = std::unique_ptr<SVDebug>(new SVDebug());
     }
     mutex.unlock();
     return *svdebug;
@@ -42,9 +42,9 @@ SVCerr &getSVCerr() {
     mutex.lock();
     if (!svcerr) {
         if (!svdebug) {
-            svdebug = std::make_unique<SVDebug>();
+            svdebug = std::unique_ptr<SVDebug>(new SVDebug());
         }
-        svcerr = std::make_unique<SVCerr>(*svdebug);
+        svcerr = std::unique_ptr<SVCerr>(new SVCerr(*svdebug));
     }
     mutex.unlock();
     return *svcerr;
