@@ -253,6 +253,7 @@ SVCORE_SOURCES = \
            rdf/RDFTransformFactory.cpp \
 	   system/Init.cpp \
            system/System.cpp \
+           system/os-other.cpp \
 	   transform/CSVFeatureWriter.cpp \
            transform/FeatureExtractionModelTransformer.cpp \
            transform/FileFeatureWriter.cpp \

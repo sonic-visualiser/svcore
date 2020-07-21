@@ -27,12 +27,6 @@
 #include <unistd.h>
 #endif
 
-#ifndef AVOID_WINRT_DEPENDENCY
-#ifdef _MSC_VER
-#include <winrt/Windows.UI.ViewManagement.h>
-#endif
-#endif
-
 #ifdef __APPLE__
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -338,45 +332,6 @@ RestoreStartupLocale()
     } else {
         setlocale(LC_ALL, startupLocale);
     }
-}
-
-bool
-OSReportsDarkThemeActive()
-{
-#ifndef AVOID_WINRT_DEPENDENCY
-#ifdef _MSC_VER
-    using namespace winrt::Windows::UI::ViewManagement;
-    UISettings settings;
-    auto background = settings.GetColorValue(UIColorType::Background);
-    if (int(background.R) + int(background.G) + int(background.B) < 384) {
-        return true;
-    }
-#endif
-#endif
-    return false;
-}
-
-bool
-OSQueryAccentColour(int &r, int &g, int &b)
-{
-    SVCERR << "OSQueryAccentColour() called" << endl;
-#ifndef AVOID_WINRT_DEPENDENCY
-#ifdef _MSC_VER
-    using namespace winrt::Windows::UI::ViewManagement;
-    bool dark = OSReportsDarkThemeActive();
-    UISettings settings;
-    auto accent = settings.GetColorValue
-        (dark ? UIColorType::AccentLight1 : UIColorType::Accent);
-    r = accent.R;
-    g = accent.G;
-    b = accent.B;
-    return true;
-#endif
-#endif
-    (void)r;
-    (void)g;
-    (void)b;
-    return false;
 }
 
 double mod(double x, double y) { return x - (y * floor(x / y)); }
