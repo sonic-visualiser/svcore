@@ -249,6 +249,7 @@ FeatureExtractionModelTransformer::initialise()
 
     for (int j = 0; in_range_for(m_transforms, j); ++j) {
         createOutputModels(j);
+        setCompletion(j, 0);
     }
 
     m_outputMutex.lock();
@@ -360,6 +361,9 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
 
         // Anything with no value and no duration is an instant
 
+        SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                << "creating a SparseOneDimensionalModel" << endl;
+        
         out = std::make_shared<SparseOneDimensionalModel>
             (modelRate, modelResolution, false);
 
@@ -419,7 +423,8 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
             bool flexi = settings.value("use-flexi-note-model", false).toBool();
             settings.endGroup();
 
-            SVCERR << "flexi = " << flexi << endl;
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "creating a NoteModel (flexi = " << flexi << ")" << endl;
             
             NoteModel *model;
             if (haveExtents) {
@@ -435,6 +440,9 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
             out.reset(model);
 
         } else {
+
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "creating a RegionModel" << endl;
 
             RegionModel *model;
             if (haveExtents) {
@@ -481,6 +489,11 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
             m_needAdditionalModels[n] = true;
         }
 
+        SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                << "creating a SparseTimeValueModel "
+                << "(additional models to come? -> "
+                << m_needAdditionalModels[n] << ")" << endl;
+
         SparseTimeValueModel *model;
         if (haveExtents) {
             model = new SparseTimeValueModel
@@ -504,6 +517,10 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // has a fixed sample rate and more than one value per result
         // must be a dense 3D model.
 
+        SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                << "creating a BasicCompressedDenseThreeDimensionalModel"
+                << endl;
+        
         auto model =
             new BasicCompressedDenseThreeDimensionalModel
             (modelRate, modelResolution, binCount, false);
