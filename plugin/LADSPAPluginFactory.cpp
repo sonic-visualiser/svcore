@@ -81,7 +81,7 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
         const LADSPA_Descriptor *descriptor = getLADSPADescriptor(*i);
 
         if (!descriptor) {
-            cerr << "WARNING: LADSPAPluginFactory::enumeratePlugins: couldn't get descriptor for identifier " << *i << endl;
+            SVCERR << "WARNING: LADSPAPluginFactory::enumeratePlugins: couldn't get descriptor for identifier " << *i << endl;
             continue;
         }
         
@@ -95,11 +95,11 @@ LADSPAPluginFactory::enumeratePlugins(std::vector<QString> &list)
         list.push_back("false"); // is grouped
 
         if (m_taxonomy.find(*i) != m_taxonomy.end() && m_taxonomy[*i] != "") {
-//                cerr << "LADSPAPluginFactory: cat for " << *i << " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << endl;
+//                SVCERR << "LADSPAPluginFactory: cat for " << *i << " found in taxonomy as " << m_taxonomy[descriptor->UniqueID] << endl;
             list.push_back(m_taxonomy[*i]);
         } else {
             list.push_back("");
-//                cerr << "LADSPAPluginFactory: cat for " << *i << " not found (despite having " << m_fallbackCategories.size() << " fallbacks)" << endl;
+//                SVCERR << "LADSPAPluginFactory: cat for " << *i << " not found (despite having " << m_fallbackCategories.size() << " fallbacks)" << endl;
             
         }
 
@@ -618,7 +618,7 @@ LADSPAPluginFactory::discoverPlugins()
         QDir dir(lrdfPaths[i], "*.rdf;*.rdfs");
         for (unsigned int j = 0; j < dir.count(); ++j) {
             if (!lrdf_read_file(QString("file:" + lrdfPaths[i] + "/" + dir[j]).toStdString().c_str())) {
-//                cerr << "LADSPAPluginFactory: read RDF file " << (lrdfPaths[i] + "/" + dir[j]) << endl;
+//                SVCERR << "LADSPAPluginFactory: read RDF file " << (lrdfPaths[i] + "/" + dir[j]) << endl;
                 haveSomething = true;
             }
         }
@@ -645,7 +645,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
     void *libraryHandle = DLOPEN(soname, RTLD_LAZY);
 
     if (!libraryHandle) {
-        cerr << "WARNING: LADSPAPluginFactory::discoverPlugins: couldn't load plugin library "
+        SVCERR << "WARNING: LADSPAPluginFactory::discoverPlugins: couldn't load plugin library "
                   << soname << " - " << DLERROR() << endl;
         return;
     }
@@ -654,7 +654,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         DLSYM(libraryHandle, "ladspa_descriptor");
 
     if (!fn) {
-        cerr << "WARNING: LADSPAPluginFactory::discoverPlugins: No descriptor function in " << soname << endl;
+        SVCERR << "WARNING: LADSPAPluginFactory::discoverPlugins: No descriptor function in " << soname << endl;
         return;
     }
 
@@ -684,7 +684,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
                 
         if (m_lrdfTaxonomy[descriptor->UniqueID] != "") {
             m_taxonomy[identifier] = m_lrdfTaxonomy[descriptor->UniqueID];
-//            cerr << "set id \"" << identifier << "\" to cat \"" << m_taxonomy[identifier] << "\" from LRDF" << endl;
+//            SVCERR << "set id \"" << identifier << "\" to cat \"" << m_taxonomy[identifier] << "\" from LRDF" << endl;
 //            cout << identifier << "::" << m_taxonomy[identifier] << endl;
         }
 
@@ -701,7 +701,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
         
         rtd.category = category.toStdString();
 
-//        cerr << "Plugin id is " << descriptor->UniqueID
+//        SVCERR << "Plugin id is " << descriptor->UniqueID
 //                  << ", category is \"" << (category ? category : QString("(none)"))
 //                  << "\", name is " << descriptor->Name
 //                  << ", label is " << descriptor->Label
@@ -722,7 +722,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
                     
                     for (unsigned int j = 0; j < defs->count; j++) {
                         if (defs->items[j].pid == controlPortNumber) {
-//                            cerr << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << descriptor->PortNames[i] << endl;
+//                            SVCERR << "Default for this port (" << defs->items[j].pid << ", " << defs->items[j].label << ") is " << defs->items[j].value << "; applying this to port number " << i << " with name " << descriptor->PortNames[i] << endl;
                             m_portDefaults[descriptor->UniqueID][i] =
                                 defs->items[j].value;
                         }
@@ -765,7 +765,7 @@ LADSPAPluginFactory::discoverPluginsFrom(QString soname)
     }
 
     if (DLCLOSE(libraryHandle) != 0) {
-        cerr << "WARNING: LADSPAPluginFactory::discoverPlugins - can't unload " << libraryHandle << endl;
+        SVCERR << "WARNING: LADSPAPluginFactory::discoverPlugins - can't unload " << libraryHandle << endl;
         return;
     }
 }

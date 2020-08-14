@@ -18,6 +18,7 @@
 #include "PluginRDFIndexer.h"
 
 #include "base/Profiler.h"
+#include "base/Debug.h"
 
 #include "plugin/PluginIdentifier.h"
 
@@ -41,7 +42,7 @@ PluginRDFDescription::PluginRDFDescription(QString pluginId) :
     PluginRDFIndexer *indexer = PluginRDFIndexer::getInstance();
     m_pluginUri = indexer->getURIForPluginId(pluginId);
     if (m_pluginUri == "") {
-        cerr << "PluginRDFDescription: WARNING: No RDF description available for plugin ID \""
+        SVDEBUG << "PluginRDFDescription: WARNING: No RDF description available for plugin ID \""
              << pluginId << "\"" << endl;
     } else {
         // All the data we need should be in our RDF model already:
@@ -344,7 +345,7 @@ PluginRDFDescription::indexOutputs()
         (Triple(plugin, index->expand("vamp:output"), Node())).objects();
 
     if (outputs.empty()) {
-        cerr << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
+        SVDEBUG << "ERROR: PluginRDFDescription::indexURL: NOTE: No outputs defined for <"
              << m_pluginUri << ">" << endl;
         return false;
     }
@@ -353,13 +354,13 @@ PluginRDFDescription::indexOutputs()
 
         if ((output.type != Node::URI && output.type != Node::Blank) ||
             output.value == "") {
-            cerr << "ERROR: PluginRDFDescription::indexURL: No valid URI for output " << output << " of plugin <" << m_pluginUri << ">" << endl;
+            SVDEBUG << "ERROR: PluginRDFDescription::indexURL: No valid URI for output " << output << " of plugin <" << m_pluginUri << ">" << endl;
             return false;
         }
         
         Node n = index->complete(Triple(output, index->expand("vamp:identifier"), Node()));
         if (n.type != Node::Literal || n.value == "") {
-            cerr << "ERROR: PluginRDFDescription::indexURL: No vamp:identifier for output <" << output << ">" << endl;
+            SVDEBUG << "ERROR: PluginRDFDescription::indexURL: No vamp:identifier for output <" << output << ">" << endl;
             return false;
         }
         QString outputId = n.value;
@@ -383,7 +384,7 @@ PluginRDFDescription::indexOutputs()
         } else {
             m_outputDispositions[outputId] = OutputDispositionUnknown;
         }
-//        cerr << "output " << output << " -> id " << outputId << ", type " << outputType << ", unit " 
+//        SVDEBUG << "output " << output << " -> id " << outputId << ", type " << outputType << ", unit " 
 //             << outputUnit << ", disposition " << m_outputDispositions[outputId] << endl;
             
         if (outputUnit != "") {
@@ -396,7 +397,7 @@ PluginRDFDescription::indexOutputs()
         }
 
         n = index->complete(Triple(output, index->expand("vamp:computes_event_type"), Node()));
-//        cerr << output << " -> computes_event_type " << n << endl;
+//        SVDEBUG << output << " -> computes_event_type " << n << endl;
         if (n.type == Node::URI && n.value != "") {
             m_outputEventTypeURIMap[outputId] = n.value;
         }
