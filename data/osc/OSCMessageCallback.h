@@ -19,6 +19,7 @@ class OSCMessage;
 
 class OSCMessageCallback {
 public:
+    virtual ~OSCMessageCallback() { }
     virtual void handleOSCMessage(const OSCMessage &) = 0;
 };
 

@@ -21,6 +21,8 @@
 class FileFinder 
 {
 public:
+    virtual ~FileFinder() { }
+    
     enum FileType {
         SessionFile,
         AudioFile,

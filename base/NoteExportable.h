@@ -20,6 +20,8 @@
 class NoteExportable
 {
 public:
+    virtual ~NoteExportable() { }
+    
     /**
      * Get all notes in the exportable object.
      */

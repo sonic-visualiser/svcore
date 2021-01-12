@@ -26,6 +26,7 @@
 class EventEditable
 {
 public:
+    virtual ~EventEditable() { }
     virtual void add(Event e) = 0;
     virtual void remove(Event e) = 0;
 };
@@ -34,6 +35,7 @@ class WithEditable
 {
 protected:
     WithEditable(int editableId) : m_editableId(editableId) { }
+    virtual ~WithEditable() { }
 
     std::shared_ptr<EventEditable> getEditable() {
         auto editable = AnyById::getAs<EventEditable>(m_editableId);

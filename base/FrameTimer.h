@@ -27,6 +27,7 @@
 class FrameTimer
 {
 public:
+    virtual ~FrameTimer() { }
     virtual sv_frame_t getFrame() const = 0;
 };
 
