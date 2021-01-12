@@ -47,7 +47,7 @@ struct ZoomLevel {
             if (other.zone == zone) {
                 return level > other.level;
             } else {
-                return false;
+                return true;
             }
         }
     }
