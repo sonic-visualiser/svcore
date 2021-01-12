@@ -44,6 +44,7 @@ public:
 
     class UserConfigurator {
     public:
+        virtual ~UserConfigurator() { }
         virtual bool configure(ModelTransformer::Input &input,
                                Transform &transform,
                                std::shared_ptr<Vamp::PluginBase> plugin,
