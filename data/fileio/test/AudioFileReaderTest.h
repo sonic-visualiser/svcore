@@ -425,10 +425,8 @@ private slots:
             // "something else" otherwise.
             
             if (gapless) {
-                if (format == "aac"
-#ifdef Q_OS_WIN
-                    || (format == "mp3" && (readRate != fileRate))
-#endif
+                if (format == "aac" ||
+                    (format == "mp3" && (readRate != fileRate))
                     ) {
                     // ouch!
                     if (offset == -1) offset = 0;
