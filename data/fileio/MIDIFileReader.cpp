@@ -284,8 +284,13 @@ MIDIFileReader::parseFile()
 #endif
 
     // Open the file
-    m_midiFile = new ifstream(m_path.toLocal8Bit().data(),
+#ifdef _MSC_VER
+    m_midiFile = new ifstream(m_path.utf16(),
                               ios::in | ios::binary);
+#else
+    m_midiFile = new ifstream(m_path.toUtf8().data(),
+                              ios::in | ios::binary);
+#endif
 
     if (!*m_midiFile) {
         m_error = "File not found or not readable.";

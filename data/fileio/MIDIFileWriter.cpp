@@ -283,9 +283,14 @@ MIDIFileWriter::writeComposition()
 {
     bool retOK = true;
 
-    m_midiFile =
-        new ofstream(m_path.toLocal8Bit().data(), ios::out | ios::binary);
-
+#ifdef _MSC_VER
+    m_midiFile = new ofstream(m_path.utf16(),
+                              ios::out | ios::binary);
+#else
+    m_midiFile = new ofstream(m_path.toUtf8().data(),
+                              ios::out | ios::binary);
+#endif
+    
     if (!(*m_midiFile)) {
         m_error = "Can't open file for writing.";
         delete m_midiFile;

@@ -179,7 +179,6 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
             continue;
         }
 
-        bool ok;
         float value = attrs.value(pname).trimmed().toFloat(&ok);
         if (ok) {
 //            SVDEBUG << "PluginXml::setParameters: setting parameter \""
