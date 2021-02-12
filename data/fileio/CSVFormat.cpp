@@ -27,6 +27,8 @@
 
 #include "base/Debug.h"
 
+//#define DEBUG_COLUMN_QUALITIES 1
+
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
     m_sampleRate(44100),
@@ -148,7 +150,9 @@ CSVFormat::guessQualities(QString line, int lineno)
     
     for (int i = 0; i < cols; ++i) {
 
-        SVDEBUG << "line no " << lineno << ": column " << i << " contains: \"" << list[i] << "\"" << endl;
+#ifdef DEBUG_COLUMN_QUALITIES
+        SVCERR << "line no " << lineno << ": column " << i << " contains: \"" << list[i] << "\"" << endl;
+#endif
 
         if (m_columnQualities.find(i) == m_columnQualities.end()) {
             m_columnQualities[i] = defaultQualities;
