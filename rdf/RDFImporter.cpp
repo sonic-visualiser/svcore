@@ -180,7 +180,7 @@ RDFImporterImpl::getDataModels(ProgressReporter *reporter)
 
     if (m_sampleRate == 0) {
         m_errorString = QString("Invalid audio data model (is audio file format supported?)");
-        cerr << m_errorString << endl;
+        SVCERR << m_errorString << endl;
         return models;
     }
 
@@ -221,7 +221,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<ModelId> &models,
             file = m_store->complete(Triple(sig, expand("mo:available_as"), Node()));
         }
         if (file == Node()) {
-            cerr << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << endl;
+            SVCERR << "RDFImporterImpl::getDataModelsAudio: ERROR: No source for signal " << sig << endl;
             continue;
         }
 
@@ -254,7 +254,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<ModelId> &models,
                                         fs->getLocation(),
                                         m_uristring);
                 if (path != "") {
-                    cerr << "File finder returns: \"" << path
+                    SVCERR << "File finder returns: \"" << path
                               << "\"" << endl;
                     delete fs;
                     fs = new FileSource(path, reporter);
@@ -275,7 +275,7 @@ RDFImporterImpl::getDataModelsAudio(std::vector<ModelId> &models,
         auto newModel = std::make_shared<ReadOnlyWaveFileModel>
             (*fs, m_sampleRate);
         if (newModel->isOK()) {
-            cerr << "Successfully created wave file model from source at \"" << source << "\"" << endl;
+            SVCERR << "Successfully created wave file model from source at \"" << source << "\"" << endl;
             auto modelId = ModelById::add(newModel);
             models.push_back(modelId);
             m_audioModelMap[signal] = modelId;
@@ -322,24 +322,24 @@ RDFImporterImpl::getDataModelsDense(std::vector<ModelId> &models,
             (feature, sampleRate, windowLength, hopSize, width, height);
 
         if (sampleRate != 0 && sampleRate != m_sampleRate) {
-            cerr << "WARNING: Sample rate in dense feature description does not match our underlying rate -- using rate from feature description" << endl;
+            SVCERR << "WARNING: Sample rate in dense feature description does not match our underlying rate -- using rate from feature description" << endl;
         }
         if (sampleRate == 0) sampleRate = m_sampleRate;
 
         if (hopSize == 0) {
-            cerr << "WARNING: Dense feature description does not specify a hop size -- assuming 1" << endl;
+            SVCERR << "WARNING: Dense feature description does not specify a hop size -- assuming 1" << endl;
             hopSize = 1;
         }
 
         if (height == 0) {
-            cerr << "WARNING: Dense feature description does not specify feature signal dimensions -- assuming one-dimensional (height = 1)" << endl;
+            SVCERR << "WARNING: Dense feature description does not specify feature signal dimensions -- assuming one-dimensional (height = 1)" << endl;
             height = 1;
         }
 
         QStringList values = value.split(' ', QString::SkipEmptyParts);
 
         if (values.empty()) {
-            cerr << "WARNING: Dense feature description does not specify any values!" << endl;
+            SVCERR << "WARNING: Dense feature description does not specify any values!" << endl;
             continue;
         }
 
@@ -418,7 +418,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     Node dim = m_store->complete
         (Triple(Uri(featureUri), expand("af:dimensions"), Node()));
 
-    cerr << "Dimensions = \"" << dim.value << "\"" << endl;
+    SVCERR << "Dimensions = \"" << dim.value << "\"" << endl;
 
     if (dim.type == Node::Literal && dim.value != "") {
         QStringList dl = dim.value.split(" ");
@@ -440,7 +440,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     Node interval = m_store->complete(Triple(Uri(featureUri), expand("mo:time"), Node()));
 
     if (!m_store->contains(Triple(interval, expand("a"), expand("tl:Interval")))) {
-        cerr << "RDFImporterImpl::getDenseFeatureProperties: Feature time node "
+        SVCERR << "RDFImporterImpl::getDenseFeatureProperties: Feature time node "
              << interval << " is not a tl:Interval" << endl;
         return;
     }
@@ -448,7 +448,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     Node tl = m_store->complete(Triple(interval, expand("tl:onTimeLine"), Node()));
     
     if (tl == Node()) {
-        cerr << "RDFImporterImpl::getDenseFeatureProperties: Interval node "
+        SVCERR << "RDFImporterImpl::getDenseFeatureProperties: Interval node "
              << interval << " lacks tl:onTimeLine property" << endl;
         return;
     }
@@ -456,7 +456,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
     Node map = m_store->complete(Triple(Node(), expand("tl:rangeTimeLine"), tl));
     
     if (map == Node()) {
-        cerr << "RDFImporterImpl::getDenseFeatureProperties: No map for "
+        SVCERR << "RDFImporterImpl::getDenseFeatureProperties: No map for "
              << "timeline node " << tl << endl;
     }
 
@@ -472,7 +472,7 @@ RDFImporterImpl::getDenseFeatureProperties(QString featureUri,
         windowLength = po.getProperty("windowLength").toInt();
     }
 
-    cerr << "sr = " << sampleRate << ", hop = " << hopSize << ", win = " << windowLength << endl;
+    SVCERR << "sr = " << sampleRate << ", hop = " << hopSize << ", win = " << windowLength << endl;
 }
 
 void
@@ -664,7 +664,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<ModelId> &models,
                     model->setRDFTypeURI(type);
 
                     if (m_audioModelMap.find(source) != m_audioModelMap.end()) {
-                        cerr << "source model for " << model << " is " << m_audioModelMap[source] << endl;
+                        SVCERR << "source model for " << model << " is " << m_audioModelMap[source] << endl;
                         model->setSourceModel(m_audioModelMap[source]);
                     }
 
@@ -787,7 +787,7 @@ RDFImporterImpl::fillModel(ModelId modelId,
         return;
     }
             
-    cerr << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << endl;
+    SVCERR << "WARNING: RDFImporterImpl::fillModel: Unknown or unexpected model type" << endl;
     return;
 }
 

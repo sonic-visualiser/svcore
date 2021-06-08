@@ -19,7 +19,7 @@
 
 #include <QFileInfo>
 #include <QSettings>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QMutexLocker>
 
 RecentFiles::RecentFiles(QString settingsGroup, int maxCount) :
@@ -162,13 +162,14 @@ RecentFiles::add(QString identifier, QString label)
 void
 RecentFiles::addFile(QString filepath, QString label)
 {
-    static QRegExp schemeRE("^[a-zA-Z]{2,5}://");
-    static QRegExp tempRE("[\\/][Tt]e?mp[\\/]");
-    if (schemeRE.indexIn(filepath) == 0) {
+    static QRegularExpression schemeRE("^[a-zA-Z]{2,5}://");
+    static QRegularExpression tempRE("[\\/][Tt]e?mp[\\/]");
+    if (schemeRE.match(filepath).hasMatch()) {
+        // with scheme => absolute & don't need to check for tmpdir
         add(filepath, label);
     } else {
         QString absPath = QFileInfo(filepath).absoluteFilePath();
-        if (tempRE.indexIn(absPath) != -1) {
+        if (tempRE.match(absPath).hasMatch()) {
             Preferences *prefs = Preferences::getInstance();
             if (prefs && !prefs->getOmitTempsFromRecentFiles()) {
                 add(absPath, label);

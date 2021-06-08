@@ -43,8 +43,6 @@
 
 #include <QFileInfo>
 
-#include <QTextCodec>
-
 using std::string;
 
 static sv_frame_t DEFAULT_DECODER_DELAY = 529;
@@ -252,7 +250,7 @@ MP3FileReader::loadTag(void *vtag, const char *name)
     }
         
     if (frame->nfields < 2) {
-        cerr << "MP3FileReader::loadTag: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
+        SVCERR << "MP3FileReader::loadTag: WARNING: Not enough fields (" << frame->nfields << ") for \"" << name << "\" in ID3 tag" << endl;
         return "";
     }
 

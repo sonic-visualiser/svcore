@@ -265,7 +265,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
                 if (!strcmp(m_descriptor->PortNames[i], "latency") ||
                     !strcmp(m_descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_LADSPA
-                    cerr << "Wooo! We have a latency port!" << endl;
+                    SVCERR << "Wooo! We have a latency port!" << endl;
 #endif
                     m_latencyPort = data;
                 }
@@ -388,7 +388,7 @@ LADSPAPluginInstance::instantiate(sv_samplerate_t sampleRate)
 #endif
 
     if (!m_descriptor->instantiate) {
-        cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+        SVCERR << "Bad plugin: plugin id " << m_descriptor->UniqueID
                   << ":" << m_descriptor->Label
                   << " has no instantiate method!" << endl;
         return;
@@ -396,7 +396,7 @@ LADSPAPluginInstance::instantiate(sv_samplerate_t sampleRate)
 
     unsigned long pluginRate = (unsigned long)(sampleRate);
     if (sampleRate != sv_samplerate_t(pluginRate)) {
-        cerr << "LADSPAPluginInstance: WARNING: Non-integer sample rate "
+        SVCERR << "LADSPAPluginInstance: WARNING: Non-integer sample rate "
              << sampleRate << " presented, rounding to " << pluginRate
              << endl;
     }
@@ -570,7 +570,7 @@ LADSPAPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->cleanup) {
-        cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+        SVCERR << "Bad plugin: plugin id " << m_descriptor->UniqueID
                   << ":" << m_descriptor->Label
                   << " has no cleanup method!" << endl;
         return;

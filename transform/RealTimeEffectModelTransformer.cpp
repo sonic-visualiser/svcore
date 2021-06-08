@@ -79,7 +79,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
-        cerr << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << endl;
+        SVCERR << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << endl;
         return;
     }
 

@@ -33,7 +33,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QString>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QTextStream>
 #include <QDateTime>
@@ -123,7 +123,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
                                 int windowSize,
                                 sv_frame_t &calculatedFrame) const
 {
-    QRegExp nonNumericRx("[^0-9eE.,+-]");
+    QRegularExpression nonNumericRx("[^0-9eE.,+-]");
     int warnLimit = 10;
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
@@ -682,7 +682,7 @@ QString
 CSVFileReader::getConvertedAudioFilePath() const
 {
     QString base = m_filename;
-    base.replace(QRegExp("[/\\,.:;~<>\"'|?%*]+"), "_");
+    base.replace(QRegularExpression("[/\\,.:;~<>\"'|?%*]+"), "_");
 
     QString convertedFileDir = RecordDirectory::getConvertedAudioDirectory();
     if (convertedFileDir == "") {

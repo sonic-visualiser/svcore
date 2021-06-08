@@ -162,9 +162,17 @@ StringBits::split(QString line, QChar separator, bool quoted)
     if (quoted) {
         return splitQuoted(line, separator);
     } else {
-        return line.split(separator,
-                          separator == ' ' ? QString::SkipEmptyParts :
-                          QString::KeepEmptyParts);
+        return line.split(
+            separator,
+            separator == ' ' ?
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+            Qt::SkipEmptyParts :
+            Qt::KeepEmptyParts
+#else
+            QString::SkipEmptyParts :
+            QString::KeepEmptyParts
+#endif
+            );
     }
 }
 

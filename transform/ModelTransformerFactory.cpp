@@ -281,14 +281,14 @@ ModelTransformerFactory::transformerFinished()
 //    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
-        cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
+        SVCERR << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
         return;
     }
 
     m_mutex.lock();
     
     if (m_runningTransformers.find(transformer) == m_runningTransformers.end()) {
-        cerr << "WARNING: ModelTransformerFactory::transformerFinished(" 
+        SVCERR << "WARNING: ModelTransformerFactory::transformerFinished(" 
                   << transformer
                   << "): I have no record of this transformer running!"
                   << endl;

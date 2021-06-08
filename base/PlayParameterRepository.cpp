@@ -70,11 +70,11 @@ void
 PlayParameterRepository::copyParameters(int from, int to)
 {
     if (!getPlayParameters(from)) {
-        cerr << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << endl;
+        SVCERR << "ERROR: PlayParameterRepository::copyParameters: source playable unknown" << endl;
         return;
     }
     if (!getPlayParameters(to)) {
-        cerr << "ERROR: PlayParameterRepository::copyParameters: target playable unknown" << endl;
+        SVCERR << "ERROR: PlayParameterRepository::copyParameters: target playable unknown" << endl;
         return;
     }
     getPlayParameters(to)->copyFrom(getPlayParameters(from).get());

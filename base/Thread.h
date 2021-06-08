@@ -58,7 +58,11 @@ private:
 
     Profiler m_profiler;
     Printer m_printer;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QMutexLocker<QMutex> m_locker;
+#else
     QMutexLocker m_locker;
+#endif
 };
 
 #endif

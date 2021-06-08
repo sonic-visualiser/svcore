@@ -19,6 +19,9 @@
 
 #include <iostream>
 
+using std::cerr;
+using std::endl;
+
 PropertyContainer::PropertyList
 PropertyContainer::getProperties() const
 {

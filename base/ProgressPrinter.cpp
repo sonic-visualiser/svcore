@@ -19,6 +19,9 @@
 
 #include "Debug.h"
 
+using std::cerr;
+using std::endl;
+
 ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
     ProgressReporter(parent),
     m_prefix(message),

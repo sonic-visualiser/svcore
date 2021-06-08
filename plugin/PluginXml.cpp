@@ -119,7 +119,7 @@ PluginXml::toXml(QTextStream &stream,
 #define CHECK_ATTRIBUTE(ATTRIBUTE, ACCESSOR) \
     QString ATTRIBUTE = attrs.value(#ATTRIBUTE); \
     if (ATTRIBUTE != "" && ATTRIBUTE != ACCESSOR().c_str()) { \
-        cerr << "WARNING: PluginXml::setParameters: Plugin " \
+        SVCERR << "WARNING: PluginXml::setParameters: Plugin " \
                   << #ATTRIBUTE << " does not match (attributes have \"" \
                   << ATTRIBUTE << "\", my " \
                   << #ATTRIBUTE << " is \"" << ACCESSOR() << "\")" << endl; \
@@ -137,7 +137,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
     bool ok;
     int version = attrs.value("version").trimmed().toInt(&ok);
     if (ok && version != m_plugin->getPluginVersion()) {
-        cerr << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << endl;
+        SVCERR << "WARNING: PluginXml::setParameters: Plugin version does not match (attributes have " << version << ", my version is " << m_plugin->getPluginVersion() << ")" << endl;
     }
 
     auto rtpi = dynamic_pointer_cast<RealTimePluginInstance>(m_plugin);
@@ -149,7 +149,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
                  i != configList.end(); ++i) {
                 QStringList kv = i->split("=");
                 if (kv.count() < 2) {
-                    cerr << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << *i << "\"" << endl;
+                    SVCERR << "WARNING: PluginXml::setParameters: Malformed configure pair string: \"" << *i << "\"" << endl;
                     continue;
                 }
                 QString key(kv[0]), value(kv[1]);
@@ -185,7 +185,7 @@ PluginXml::setParameters(const QXmlAttributes &attrs)
 //                      << i->identifier << "\" to value " << value << endl;
             m_plugin->setParameter(i->identifier, value);
         } else {
-            cerr << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << endl;
+            SVCERR << "WARNING: PluginXml::setParameters: Invalid value \"" << attrs.value(pname) << "\" for parameter \"" << i->identifier << "\" (attribute \"" << pname << "\")" << endl;
         }
     }
 }
@@ -203,10 +203,10 @@ PluginXml::setParametersFromXml(QString xml)
 //              << xml << "\"" << endl;
 
     if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        cerr << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;
-        cerr << "Input follows:" << endl;
-        cerr << xml << endl;
-        cerr << "Input ends." << endl;
+        SVCERR << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;
+        SVCERR << "Input follows:" << endl;
+        SVCERR << xml << endl;
+        SVCERR << "Input ends." << endl;
         return;
     }
 

@@ -24,7 +24,11 @@ EventSeries::EventSeries(const EventSeries &other) :
 {
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+EventSeries::EventSeries(const EventSeries &other, const QMutexLocker<QMutex> &) :
+#else
 EventSeries::EventSeries(const EventSeries &other, const QMutexLocker &) :
+#endif
     m_events(other.m_events),
     m_seams(other.m_seams),
     m_finalDurationlessEventFrame(other.m_finalDurationlessEventFrame)

@@ -245,7 +245,11 @@ public:
 private:
     mutable QMutex m_mutex;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    EventSeries(const EventSeries &other, const QMutexLocker<QMutex> &);
+#else
     EventSeries(const EventSeries &other, const QMutexLocker &);
+#endif
     
     /**
      * This vector contains all events in the series, in the normal

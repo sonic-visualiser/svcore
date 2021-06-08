@@ -63,7 +63,7 @@ SVDebug::SVDebug() :
     m_timer.start();
     
     if (qApp->applicationName() == "") {
-        cerr << "ERROR: Can't use SVDEBUG before setting application name" << endl;
+        std::cerr << "ERROR: Can't use SVDEBUG before setting application name" << std::endl;
         throw std::logic_error("Can't use SVDEBUG before setting application name");
     }
     

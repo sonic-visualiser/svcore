@@ -299,7 +299,7 @@ BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve(int index) const
     Column p = expandAndRetrieve(index - tdist);
     int psize = int(p.size()), csize = int(c.size());
     if (psize != m_yBinCount) {
-        cerr << "WARNING: BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
+        SVCERR << "WARNING: BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
     if (top) {
         for (int i = csize; i < psize; ++i) {

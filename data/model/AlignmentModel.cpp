@@ -172,7 +172,7 @@ sv_frame_t
 AlignmentModel::toReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::toReference(" << frame << ")" << endl;
+    SVCERR << "AlignmentModel::toReference(" << frame << ")" << endl;
 #endif
     if (!m_path) {
         if (m_pathSource.isNone()) {
@@ -191,7 +191,7 @@ sv_frame_t
 AlignmentModel::fromReference(sv_frame_t frame) const
 {
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::fromReference(" << frame << ")" << endl;
+    SVCERR << "AlignmentModel::fromReference(" << frame << ")" << endl;
 #endif
     if (!m_reversePath) {
         if (m_pathSource.isNone()) {
@@ -259,7 +259,7 @@ AlignmentModel::constructPath() const
         ModelById::getAs<SparseTimeValueModel>(m_pathSource);
     if (!m_path) {
         if (!pathSourceModel) {
-            cerr << "ERROR: AlignmentModel::constructPath: "
+            SVCERR << "ERROR: AlignmentModel::constructPath: "
                  << "No raw path available (id is " << m_pathSource
                  << ")" << endl;
             return;
@@ -283,7 +283,7 @@ AlignmentModel::constructPath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
+    SVCERR << "AlignmentModel::constructPath: " << m_path->getPointCount() << " points, at least " << (2 * m_path->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -292,7 +292,7 @@ AlignmentModel::constructReversePath() const
 {
     if (!m_reversePath) {
         if (!m_path) {
-            cerr << "ERROR: AlignmentModel::constructReversePath: "
+            SVCERR << "ERROR: AlignmentModel::constructReversePath: "
                       << "No forward path available" << endl;
             return;
         }
@@ -314,7 +314,7 @@ AlignmentModel::constructReversePath() const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
+    SVCERR << "AlignmentModel::constructReversePath: " << m_reversePath->getPointCount() << " points, at least " << (2 * m_reversePath->getPointCount() * (3 * sizeof(void *) + sizeof(int) + sizeof(PathPoint))) << " bytes" << endl;
 #endif
 }
 
@@ -330,20 +330,20 @@ AlignmentModel::performAlignment(const Path &path, sv_frame_t frame) const
 
     if (points.empty()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "AlignmentModel::align: No points" << endl;
+        SVCERR << "AlignmentModel::align: No points" << endl;
 #endif
         return frame;
     }        
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::align: frame " << frame << " requested" << endl;
+    SVCERR << "AlignmentModel::align: frame " << frame << " requested" << endl;
 #endif
 
     PathPoint point(frame);
     Path::Points::const_iterator i = points.lower_bound(point);
     if (i == points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "Note: i == points.end()" << endl;
+        SVCERR << "Note: i == points.end()" << endl;
 #endif
         --i;
     }
@@ -359,18 +359,18 @@ AlignmentModel::performAlignment(const Path &path, sv_frame_t frame) const
 
     if (++i != points.end()) {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "another point available" << endl;
+        SVCERR << "another point available" << endl;
 #endif
         followingFrame = i->frame;
         followingMapFrame = i->mapframe;
     } else {
 #ifdef DEBUG_ALIGNMENT_MODEL
-        cerr << "no other point available" << endl;
+        SVCERR << "no other point available" << endl;
 #endif
     }        
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "foundFrame = " << foundFrame << ", foundMapFrame = " << foundMapFrame
+    SVCERR << "foundFrame = " << foundFrame << ", foundMapFrame = " << foundMapFrame
          << ", followingFrame = " << followingFrame << ", followingMapFrame = "
          << followingMapFrame << endl;
 #endif
@@ -389,7 +389,7 @@ AlignmentModel::performAlignment(const Path &path, sv_frame_t frame) const
     }
 
 #ifdef DEBUG_ALIGNMENT_MODEL
-    cerr << "AlignmentModel::align: resultFrame = " << resultFrame << endl;
+    SVCERR << "AlignmentModel::align: resultFrame = " << resultFrame << endl;
 #endif
 
     return resultFrame;

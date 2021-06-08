@@ -37,6 +37,11 @@
 
 #include "system/System.h"
 
+// We use cerr throughout instead of SVCERR, because the debug stream
+// depends on this class
+using std::cerr;
+using std::endl;
+
 /**
    Resource files may be found in three places:
 

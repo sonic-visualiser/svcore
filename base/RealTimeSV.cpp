@@ -65,7 +65,7 @@ RealTime::fromMilliseconds(int64_t msec)
 {
     int64_t sec = msec / 1000;
     if (sec > INT_MAX || sec < INT_MIN) {
-        cerr << "WARNING: millisecond value out of range for RealTime, "
+        SVCERR << "WARNING: millisecond value out of range for RealTime, "
              << "returning zero instead: " << msec << endl;
         return RealTime::zeroTime;
     }
@@ -78,7 +78,7 @@ RealTime::fromMicroseconds(int64_t usec)
 {
     int64_t sec = usec / 1000000;
     if (sec > INT_MAX || sec < INT_MIN) {
-        cerr << "WARNING: microsecond value out of range for RealTime, "
+        SVCERR << "WARNING: microsecond value out of range for RealTime, "
              << "returning zero instead: " << usec << endl;
         return RealTime::zeroTime;
     }
@@ -145,12 +145,12 @@ RealTime::fromXsdDuration(std::string xsdd)
     }
 
     if (year > 0) {
-        cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero year.\nWith no origin and a limited data size, I will treat a year as exactly 31556952\nseconds and you should expect overflow and/or poor results." << endl;
+        SVCERR << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero year.\nWith no origin and a limited data size, I will treat a year as exactly 31556952\nseconds and you should expect overflow and/or poor results." << endl;
         t = t + RealTime(year * 31556952, 0);
     }
 
     if (month > 0) {
-        cerr << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero month.\nWith no origin and a limited data size, I will treat a month as exactly 2629746\nseconds and you should expect overflow and/or poor results." << endl;
+        SVCERR << "WARNING: This xsd:duration (\"" << xsdd << "\") contains a non-zero month.\nWith no origin and a limited data size, I will treat a month as exactly 2629746\nseconds and you should expect overflow and/or poor results." << endl;
         t = t + RealTime(month * 2629746, 0);
     }
 
@@ -387,7 +387,7 @@ RealTime::toFrameText(int fps, bool hms, std::string frameDelimiter) const
 
     out << frameDelimiter;
 
-//    cerr << "div = " << div << ", f =  "<< f << endl;
+//    SVCERR << "div = " << div << ", f =  "<< f << endl;
 
     while (div) {
         int d = (f / div) % 10;
@@ -397,7 +397,7 @@ RealTime::toFrameText(int fps, bool hms, std::string frameDelimiter) const
         
     std::string s = out.str();
 
-//    cerr << "converted " << toString() << " to " << s << endl;
+//    SVCERR << "converted " << toString() << " to " << s << endl;
 
     return s;
 }

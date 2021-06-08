@@ -33,10 +33,6 @@ QDebug &operator<<(QDebug &, const std::string &);
 std::ostream &operator<<(std::ostream &, const QString &);
 std::ostream &operator<<(std::ostream &, const QUrl &);
 
-using std::cout;
-using std::cerr;
-using std::endl;
-
 class SVDebug {
 public:
     SVDebug();
@@ -81,14 +77,14 @@ public:
     inline SVCerr &operator<<(const T &t) {
         if (m_silenced) return *this;
         m_d << t;
-        cerr << t;
+        std::cerr << t;
         return *this;
     }
 
     inline SVCerr &operator<<(QTextStreamFunction f) {
         if (m_silenced) return *this;
         m_d << f;
-        cerr << std::endl;
+        std::cerr << std::endl;
         return *this;
     }
 
@@ -101,6 +97,12 @@ private:
 
 extern SVDebug &getSVDebug();
 extern SVCerr &getSVCerr();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+using Qt::endl;
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+using QTextStreamFunctions::endl;
+#endif
 
 // Writes to debug log only
 #define SVDEBUG getSVDebug()
