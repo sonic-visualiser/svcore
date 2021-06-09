@@ -131,7 +131,7 @@ private:
                     // phase compared to the test signal
 
                     maxLimit = 0.1;
-                    rmsLimit = 0.05;
+                    rmsLimit = 0.07;
 
                 } else {
 
@@ -178,7 +178,7 @@ private:
 
                 // all mp3 figures are worse when not normalising
                 maxLimit = 0.1;
-                rmsLimit = 0.05;
+                rmsLimit = 0.07;
 
             } else {
 
