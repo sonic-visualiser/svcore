@@ -28,6 +28,7 @@
 #endif
 
 #ifdef __APPLE__
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #endif
@@ -446,3 +447,24 @@ putEnvUtf8(std::string variable, std::string value)
 #endif
 }
 
+bool
+runningUnderTranslation()
+{
+#ifdef __APPLE__
+    int ret = 0;
+    size_t size = sizeof(ret);
+    if (sysctlbyname("sysctl.proc_translated", &ret, &size, NULL, 0) == -1) {
+        if (errno == ENOENT) {
+            SVCERR << "runningUnderTranslation: no, we're native" << endl;
+            return false;
+        }
+        SVCERR << "runningUnderTranslation: an unexpected error occurred (errno = "
+               << errno << ")" << endl;
+        return false;
+    }
+    SVCERR << "runningUnderTranslation: sysctl returns " << ret << endl;
+    return ret ? true : false;
+#else
+    return false;
+#endif
+}
