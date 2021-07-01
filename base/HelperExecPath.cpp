@@ -27,7 +27,7 @@ HelperExecPath::getTags()
         if (m_type == NativeArchitectureOnly) {
             return { "64", "" };
         } else {
-            return { "64", "", "32" };
+            return { "64", "", "32", "translated" };
         }
     } else {
         return { "", "32" };
