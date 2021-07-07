@@ -45,6 +45,19 @@ public:
 
     QString getUnitById(int id);
 
+    enum class Quantity {
+        Power,
+        RootPower,
+        Other
+    };
+
+    /**
+     * Return whether a unit is that of a power quantity, a root-power
+     * quantity (such as voltage), or is not known to be either. This
+     * affects dB value calculations.
+     */
+    static Quantity getUnitQuantity(QString unit);
+    
 signals:
     void unitDatabaseChanged();
 

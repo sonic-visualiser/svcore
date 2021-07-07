@@ -156,6 +156,18 @@ BasicCompressedDenseThreeDimensionalModel::getValueAt(int index, int n) const
     return m_minimum;
 }
 
+QString
+BasicCompressedDenseThreeDimensionalModel::getValueUnit() const
+{
+    return m_unit;
+}
+
+void
+BasicCompressedDenseThreeDimensionalModel::setValueUnit(QString unit)
+{
+    m_unit = unit;
+}
+
 //static int given = 0, stored = 0;
 
 void

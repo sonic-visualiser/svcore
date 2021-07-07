@@ -27,7 +27,13 @@ class WaveFileModel : public RangeSummarisableTimeValueModel
 public:
     virtual ~WaveFileModel();
 
+    QString getValueUnit() const override {
+        return "V";
+    }
+    
     virtual sv_frame_t getFrameCount() const = 0;
+    virtual void setStartFrame(sv_frame_t startFrame) = 0;
+    
     int getChannelCount() const override = 0;
     sv_samplerate_t getSampleRate() const override = 0;
     sv_samplerate_t getNativeRate() const override = 0;
@@ -38,8 +44,6 @@ public:
 
     sv_frame_t getStartFrame() const override = 0;
     sv_frame_t getTrueEndFrame() const override = 0;
-
-    virtual void setStartFrame(sv_frame_t startFrame) = 0;
 
 protected:
     WaveFileModel() { } // only accessible from subclasses

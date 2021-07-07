@@ -118,6 +118,18 @@ public:
     float getValueAt(int x, int n) const override;
 
     /**
+     * Obtain the name of the unit of the values returned from
+     * getValueAt(), if any.
+     */
+    QString getValueUnit() const override;
+    
+    /**
+     * Set the name of the unit of the values return from
+     * getValueAt() if any.
+     */
+    void setValueUnit(QString unit);
+
+    /**
      * Set the entire set of bin values at the given column.
      */
     virtual void setColumn(int x, const Column &values);
@@ -196,6 +208,7 @@ public:
 protected:
     typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
+    QString m_unit;
 
     // m_trunc is used for simple compression.  If at least the top N
     // elements of column x (for N = some proportion of the column
