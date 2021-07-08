@@ -15,6 +15,8 @@
 
 #include "HelperExecPath.h"
 
+#include "Debug.h"
+
 #include <QCoreApplication>
 #include <QFile>
 #include <QDir>
@@ -128,8 +130,12 @@ HelperExecPath::search(QString basename, QStringList &candidates)
 
     QList<HelperExec> executables;
     QStringList dirs = getHelperDirPaths();
+    QStringList tags = getTags();
+
+    SVDEBUG << "HelperExecPath::search(" << basename << "): dirs = "
+            << dirs.join(",") << ", tags = " << tags.join(",") << endl;
     
-    for (QString t: getTags()) {
+    for (QString t: tags) {
         for (QString d: dirs) {
             QString path = d + QDir::separator() + basename;
             if (t != QString()) path += "-" + t;
