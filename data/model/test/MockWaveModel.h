@@ -37,6 +37,7 @@ public:
      * to "pad" number of zero samples at the start and end */
     MockWaveModel(std::vector<Sort> sorts, int length, int pad);
 
+    QString getValueUnit() const override { return "V"; }
     float getValueMinimum() const override { return -1.f; }
     float getValueMaximum() const override { return  1.f; }
     int getChannelCount() const override { return int(m_data.size()); }

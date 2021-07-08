@@ -69,6 +69,12 @@ public:
     virtual float getValueAt(int column, int n) const = 0;
 
     /**
+     * Obtain the name of the unit of the values returned from
+     * getValueAt(), if any.
+     */
+    virtual QString getValueUnit() const = 0;
+    
+    /**
      * Get the name of a given bin (i.e. a label to associate with
      * that bin across all columns).
      */
@@ -92,10 +98,10 @@ public:
      * getBinValue(), if any.
      */
     virtual QString getBinValueUnit() const { return ""; }
-
+    
     /**
-     * Estimate whether a logarithmic scale might be appropriate for
-     * the value scale.
+     * Estimate whether a logarithmic scale might be an appropriate
+     * default for the value scale.
      */
     virtual bool shouldUseLogValueScale() const = 0;
 

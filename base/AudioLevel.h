@@ -3,19 +3,12 @@
 /*
     Sonic Visualiser
     An audio file viewer and annotation editor.
-    Centre for Digital Music, Queen Mary, University of London.
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
     License, or (at your option) any later version.  See the file
     COPYING included with this distribution for more information.
-*/
-
-/*
-   This is a modified version of a source file from the 
-   Rosegarden MIDI and audio sequencer and notation editor.
-   This file copyright 2000-2006 Chris Cannam.
 */
 
 #ifndef SV_AUDIO_LEVEL_H
@@ -25,39 +18,88 @@
  * AudioLevel converts audio sample levels between various scales:
  *
  *   - dB values (-inf -> 0dB)
- *   - floating-point values (-1.0 -> 1.0) such as used for a
- *     multiplier for gain or in floating-point WAV files
+ * 
+ *   - floating-point values (-1.0 -> 1.0) such as used for nominal
+ *     voltage in floating-point WAV files
+ *
  *   - integer values intended to correspond to pixels on a fader
- *     or vu level scale.
+ *     or level scale.
  */
-
 class AudioLevel
 {
 public:
-
     static const double DB_FLOOR;
 
-    enum FaderType {
-             ShortFader = 0, // -40 -> +6  dB
-              LongFader = 1, // -70 -> +10 dB
-            IEC268Meter = 2, // -70 ->  0  dB
-        IEC268LongMeter = 3, // -70 -> +10 dB (0dB aligns with LongFader)
-           PreviewLevel = 4
+    enum class Scale {
+        Sigmoid,                // -80 -> +12 dB (sqrt) - play gain controls
+        IEC268Meter,            // -70 ->   0 dB (piecewise)
+        IEC268MeterPlus,        // -70 -> +10 dB (piecewise)
+        Preview                 // -80 ->   0 dB (sqrt) - meter-scale waveforms
     };
 
-    static double multiplier_to_dB(double multiplier);
-    static double dB_to_multiplier(double dB);
+    enum class Quantity {
+        Power,
+        RootPower
+    };
 
-    static double fader_to_dB(int level, int maxLevel, FaderType type);
-    static int    dB_to_fader(double dB, int maxFaderLevel, FaderType type);
+    /** Convert a voltage or voltage-like value (a RootPower quantity)
+     *  to a dB value relative to reference +/-1.0.
+     * 
+     *  This is 20 * log10(abs(v)).
+     */
+    static double voltage_to_dB(double v);
 
-    static double fader_to_multiplier(int level, int maxLevel, FaderType type);
-    static int    multiplier_to_fader(double multiplier, int maxFaderLevel,
-                                     FaderType type);
+    /** Convert a dB value relative to reference +1.0V to a voltage.
+     *  This is pow(10, dB / 20).
+     */
+    static double dB_to_voltage(double dB);
 
-    // fast if "levels" doesn't change often -- for audio segment previews
-    static int    multiplier_to_preview(double multiplier, int levels);
-    static double preview_to_multiplier(int level, int levels);
+    /** Convert a power-like value (a Power quantity) relative to full
+     *  scale to a dB value.
+     *  This is 10 * log10(abs(v)).
+     */
+    static double power_to_dB(double power);
+
+    /** Convert a dB value relative to reference +1.0V to a power-like
+     *  value.
+     *  This is pow(10, dB / 10).
+     */
+    static double dB_to_power(double dB);
+
+    /** Convert a quantity to a dB value relative to reference 1.0.
+     *  If sort is Quantity::RootPower, use voltage_to_dB; if sort is
+     *  Quantity::Power, use power_to_dB.
+     */
+    static double quantity_to_dB(double value, Quantity sort);
+
+    /** Convert a dB value to a quantity relative to reference 1.0.
+     *  If sort is Quantity::RootPower, use dB_to_voltage; if sort is
+     *  Quantity::Power, use dB_to_power.
+     */
+    static double dB_to_quantity(double dB, Quantity sort);
+    
+    /** Convert a fader level on one of the preset scales, in the
+     *  range 0-maxLevel, to a dB value.
+     */
+    static double fader_to_dB(int level, int maxLevel, Scale type);
+
+    /** Convert a dB value to a fader level on one of the preset
+        scales, rounding to the nearest discrete fader level within
+        the range 0-maxFaderLevel.
+     */
+    static int dB_to_fader(double dB, int maxFaderLevel, Scale type);
+
+    /** Convert a fader level on one of the preset scales, in the
+     *  range 0-maxLevel, to a voltage with reference +1.0.
+     */
+    static double fader_to_voltage(int level, int maxLevel, Scale type);
+
+    /** Convert a voltage or voltage-like value to a fader level on
+        one of the preset scales, with reference +/-1.0V, rounding to
+        the nearest discrete fader level within the range
+        0-maxFaderLevel.
+     */
+    static int voltage_to_fader(double dB, int maxFaderLevel, Scale type);
 };
 
 

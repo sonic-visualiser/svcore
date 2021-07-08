@@ -109,6 +109,18 @@ public:
     float getValueAt(int x, int n) const override;
 
     /**
+     * Obtain the name of the unit of the values returned from
+     * getValueAt(), if any.
+     */
+    QString getValueUnit() const override;
+    
+    /**
+     * Set the name of the unit of the values return from
+     * getValueAt() if any.
+     */
+    void setValueUnit(QString unit);
+
+    /**
      * Set the entire set of bin values at the given column.
      */
     virtual void setColumn(int x, const Column &values);
@@ -162,7 +174,7 @@ public:
      * getBinValue() if any.
      */
     virtual void setBinValueUnit(QString unit);
-
+    
     /**
      * Return true if the distribution of values in the bins is such
      * as to suggest a log scale (mapping to colour etc) may be better
@@ -187,6 +199,7 @@ public:
 protected:
     typedef std::vector<Column> ValueMatrix;
     ValueMatrix m_data;
+    QString m_unit;
 
     std::vector<QString> m_binNames;
     std::vector<float> m_binValues;
