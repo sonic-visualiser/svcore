@@ -41,6 +41,7 @@ static ScaleDescription scaleDescription(AudioLevel::Scale type)
     case AudioLevel::Scale::IEC268MeterPlus:
         return ScaleDescription(-70., +10., 0.80);
     case AudioLevel::Scale::Preview:
+    default:
         return ScaleDescription(-80.,   0., 1.00);
     }
 };
