@@ -18,7 +18,7 @@
 
 #include "base/Debug.h"
 
-#ifdef _WIN32
+#if (defined(_WIN32) || defined(WIN32))
 
 #include <windows.h>
 #include <malloc.h>
