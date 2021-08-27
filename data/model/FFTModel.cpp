@@ -84,7 +84,7 @@ FFTModel::clearCaches()
 {
     m_cached.clear();
     while (m_cached.size() < m_cacheSize) {
-        m_cached.push_back({ -1, complexvec_t(m_fftSize / 2 + 1) });
+        m_cached.push_back({ -1, doublecomplexvec_t(m_fftSize / 2 + 1) });
     }
     m_cacheWriteIndex = 0;
     m_savedData.range = { 0, 0 };
@@ -379,7 +379,7 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-const complexvec_t &
+const doublecomplexvec_t &
 FFTModel::getFFTColumn(int n) const
 {
     // The small cache (i.e. the m_cached deque) is for cases where
@@ -398,17 +398,25 @@ FFTModel::getFFTColumn(int n) const
 
     Profiler profiler("FFTModel::getFFTColumn (cache miss)");
     
-    auto samples = getSourceSamples(n);
+    auto fsamples = getSourceSamples(n);
+
+    // Ensure that windowing and FFT happen in double precision
+    vector<double> samples;
+    samples.reserve(fsamples.size());
+    for (int i = 0; in_range_for(fsamples, i); ++i) {
+        samples.push_back(fsamples[i]);
+    }
+    
     m_windower.cut(samples.data() + (m_fftSize - m_windowSize) / 2);
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    complexvec_t &col = m_cached[m_cacheWriteIndex].col;
+    doublecomplexvec_t &col = m_cached[m_cacheWriteIndex].col;
 
     // expand to large enough for fft destination, if truncated previously
     col.resize(m_fftSize / 2 + 1);
-    
+
     m_fft.forwardInterleaved(samples.data(),
-                             reinterpret_cast<float *>(col.data()));
+                             reinterpret_cast<double *>(col.data()));
 
     // keep only the number of elements we need - so that we can
     // return a const ref without having to resize on a cache hit
