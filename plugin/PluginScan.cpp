@@ -51,7 +51,10 @@ PluginScan *PluginScan::getInstance()
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_succeeded(false), m_logger(new Logger) {
+PluginScan::PluginScan() :
+    m_scanned(false),
+    m_succeeded(false),
+    m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
@@ -68,6 +71,8 @@ PluginScan::scan()
 
     QMutexLocker locker(&m_mutex);
 
+    if (m_scanned) return;
+    
     bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
 
     HelperExecPath hep(inProcess ?

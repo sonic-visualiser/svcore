@@ -35,6 +35,8 @@ public:
      * Carry out startup scan of available plugins. Do not call
      * getCandidateLibrariesFor() unless this has been called and
      * scanSucceeded() is returning true.
+     * 
+     * If this has been called before, do nothing.
      */
     void scan();
 
@@ -86,6 +88,8 @@ private:
     mutable QMutex m_mutex; // while scanning; definitely can't multi-thread this
     
     std::map<QString, KnownPluginCandidates *> m_kp; // tag -> KnownPlugins client
+
+    bool m_scanned;
     bool m_succeeded;
 
     class Logger;
