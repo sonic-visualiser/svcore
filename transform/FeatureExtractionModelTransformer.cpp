@@ -347,12 +347,19 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
             modelResolution = 1;
         } else {
             modelResolution = int(round(modelRate / outputRate));
-//            cerr << "modelRate = " << modelRate << ", descriptor rate = " << outputRate << ", modelResolution = " << modelResolution << endl;
         }
         break;
     }
 
+    SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: modelRate = " << modelRate << ", descriptor rate = " << outputRate << " (for sample type " << m_descriptors[n].sampleType << "), resulting modelResolution = " << modelResolution << endl;
+    
     bool preDurationPlugin = (m_plugin->getVampApiVersion() < 2);
+
+    if (preDurationPlugin) {
+        SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                << "plugin API version predates addition of durations, will "
+                << "need to take this into account" << endl;
+    }
 
     std::shared_ptr<Model> out;
 
@@ -362,18 +369,35 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // Anything with no value and no duration is an instant
 
         SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
-                << "creating a SparseOneDimensionalModel" << endl;
+                << "no value, no duration: creating a SparseOneDimensionalModel"
+                << endl;
         
         out = std::make_shared<SparseOneDimensionalModel>
             (modelRate, modelResolution, false);
 
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        if (outputEventTypeURI != "") {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "event type uri is <" << outputEventTypeURI << ">"
+                    << endl;
+        }
         out->setRDFTypeURI(outputEventTypeURI);
 
     } else if ((preDurationPlugin && binCount > 1 &&
                 (m_descriptors[n].sampleType ==
                  Vamp::Plugin::OutputDescriptor::VariableSampleRate)) ||
                (!preDurationPlugin && m_descriptors[n].hasDuration)) {
+
+        if (preDurationPlugin) {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "pre-duration-API plugin with variable sample rate, "
+                    << ">1 value, and unit \"" << m_descriptors[n].unit << "\""
+                    << endl;
+        } else {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "have duration, unit \"" << m_descriptors[n].unit << "\""
+                    << endl;
+        }
 
         // For plugins using the old v1 API without explicit duration,
         // we treat anything that has multiple bins (i.e. that has the
@@ -401,7 +425,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // region model from an old-style plugin that doesn't support
         // duration)
         if (binCount > 1) isNoteModel = true;
-
+        
         // Regions do not have units of Hz or MIDI things (a sweeping
         // assumption!)
         if (m_descriptors[n].unit == "Hz" ||
@@ -457,11 +481,20 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         }
 
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        if (outputEventTypeURI != "") {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "event type uri is <" << outputEventTypeURI << ">"
+                    << endl;
+        }
         out->setRDFTypeURI(outputEventTypeURI);
 
     } else if (binCount == 1 ||
                (m_descriptors[n].sampleType == 
                 Vamp::Plugin::OutputDescriptor::VariableSampleRate)) {
+
+        SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                << "single value or variable sample rate"
+                << endl;
 
         // Anything that is not a 1D, note, or interval model and that
         // has only one value per result must be a sparse time value
@@ -509,6 +542,11 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         out.reset(model);
 
         QString outputEventTypeURI = description.getOutputEventTypeURI(outputId);
+        if (outputEventTypeURI != "") {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "event type uri is <" << outputEventTypeURI << ">"
+                    << endl;
+        }
         out->setRDFTypeURI(outputEventTypeURI);
 
     } else {
@@ -518,7 +556,8 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         // must be a dense 3D model.
 
         SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
-                << "creating a BasicCompressedDenseThreeDimensionalModel"
+                << "none of the sparse model cases matched, creating a "
+                << "BasicCompressedDenseThreeDimensionalModel"
                 << endl;
         
         auto model =
@@ -536,6 +575,11 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         out.reset(model);
 
         QString outputSignalTypeURI = description.getOutputSignalTypeURI(outputId);
+        if (outputSignalTypeURI != "") {
+            SVDEBUG << "FeatureExtractionModelTransformer::createOutputModels: "
+                    << "signal type uri is <" << outputSignalTypeURI << ">"
+                    << endl;
+        }
         out->setRDFTypeURI(outputSignalTypeURI);
     }
 
