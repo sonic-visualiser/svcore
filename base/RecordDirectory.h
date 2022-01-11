@@ -46,6 +46,16 @@ public:
     static QString getRecordContainerDirectory();
 
     /**
+     * Set a specific directory as the root "recorded files"
+     * directory, which will subsequently be returned by
+     * getRecordContainerDirectory() and used to construct paths for
+     * getRecordDirectory(). Note that the default is to use a
+     * standard app-data specific location; if that is acceptable to
+     * you, there is no need ever to call this.
+     */
+    static void setRecordContainerDirectory(QString);
+    
+    /**
      * Return the directory in which an audio file converted from a
      * data file should be saved. The directory will also be created if
      * it does not yet exist.
