@@ -89,6 +89,7 @@ public:
             // henceforth:
             m_notifier.switchMode(DeferredNotifier::NOTIFY_ALWAYS);
             emit modelChanged(getId());
+            emit ready(getId());
         }
     }
     

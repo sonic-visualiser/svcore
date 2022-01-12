@@ -338,6 +338,7 @@ EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 
             m_notifyOnAdd = true; // henceforth
             emit modelChanged(getId());
+            emit ready(getId());
 
         } else if (!m_notifyOnAdd) {
 

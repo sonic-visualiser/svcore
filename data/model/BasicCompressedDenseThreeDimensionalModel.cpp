@@ -485,6 +485,7 @@ BasicCompressedDenseThreeDimensionalModel::setCompletion(int completion, bool up
 
             m_notifyOnAdd = true; // henceforth
             emit modelChanged(getId());
+            emit ready(getId());
 
         } else if (!m_notifyOnAdd) {
 
