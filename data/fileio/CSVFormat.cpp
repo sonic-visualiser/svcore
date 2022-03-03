@@ -356,7 +356,7 @@ CSVFormat::guessPurposes()
             QString headingAsSeen = m_columnHeadings[i];
 
             if (headingAsSeen != "") {
-                heading = headingAsSeen.split(' ', Qt::SkipEmptyParts)[0]
+                heading = headingAsSeen.split(' ', QString::SkipEmptyParts)[0]
                     .toLower();
             }
             
