@@ -332,24 +332,28 @@ CSVFileReader::load() const
                 case CSVFormat::TwoDimensionalModel:
                     SVDEBUG << "CSVFileReader: Creating sparse time-value model" << endl;
                     model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
+                    model2->setScaleUnits(m_format.getScaleUnits());
                     model = model2;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDuration:
                     SVDEBUG << "CSVFileReader: Creating region model" << endl;
                     model2a = new RegionModel(sampleRate, windowSize, false);
+                    model2a->setScaleUnits(m_format.getScaleUnits());
                     model = model2a;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
                     SVDEBUG << "CSVFileReader: Creating note model" << endl;
                     model2b = new NoteModel(sampleRate, windowSize, false);
+                    model2b->setScaleUnits(m_format.getScaleUnits());
                     model = model2b;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndExtent:
                     SVDEBUG << "CSVFileReader: Creating box model" << endl;
                     model2c = new BoxModel(sampleRate, windowSize, false);
+                    model2c->setScaleUnits(m_format.getScaleUnits());
                     model = model2c;
                     break;
                 
@@ -357,6 +361,7 @@ CSVFileReader::load() const
                     SVDEBUG << "CSVFileReader: Creating editable dense three-dimensional model" << endl;
                     model3 = new EditableDenseThreeDimensionalModel
                         (sampleRate, windowSize, valueColumns);
+                    model3->setBinValueUnit(m_format.getScaleUnits());
                     model = model3;
                     break;
 
