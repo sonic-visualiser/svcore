@@ -138,7 +138,8 @@ void
 TransformFactory::UninstalledTransformsPopulateThread::run()
 {
     m_factory->m_populatingSlowly = true;
-    while (!m_factory->havePopulatedInstalledTransforms()) {
+    while (!m_factory->havePopulatedInstalledTransforms() &&
+           !m_factory->m_exiting) {
         sleep(1);
     }
     m_factory->populateUninstalledTransforms();

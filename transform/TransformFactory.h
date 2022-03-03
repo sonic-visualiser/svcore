@@ -309,8 +309,8 @@ protected:
     };
     UninstalledTransformsPopulateThread *m_uninstalledThread;
     
-    bool m_exiting;
-    bool m_populatingSlowly;
+    std::atomic<bool> m_exiting;
+    std::atomic<bool> m_populatingSlowly;
 
     SearchResults searchUnadjusted(QStringList keywords);
 
