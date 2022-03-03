@@ -89,7 +89,7 @@ public:
         m_timeUnits(TimeSeconds),
         m_separator(""),
         m_sampleRate(44100),
-        m_windowSize(1024),
+        m_increment(1024),
         m_headerStatus(HeaderUnknown),
         m_columnCount(0),
         m_variableColumnCount(false),
@@ -127,7 +127,7 @@ public:
     TimeUnits    getTimeUnits()     const { return m_timeUnits;     }
     QString      getScaleUnits()    const { return m_scaleUnits;    }
     sv_samplerate_t getSampleRate() const { return m_sampleRate;    }
-    int          getWindowSize()    const { return m_windowSize;    }
+    int          getIncrement()     const { return m_increment;     }
     int          getColumnCount()   const { return m_columnCount;   }
     AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
@@ -147,7 +147,7 @@ public:
     void setScaleUnits(QString u)         { m_scaleUnits   = u; }
     void setSeparator(QChar s)            { m_separator    = s; }
     void setSampleRate(sv_samplerate_t r) { m_sampleRate   = r; }
-    void setWindowSize(int s)             { m_windowSize   = s; }
+    void setIncrement(int s)              { m_increment    = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAudioSampleRange(AudioSampleRange r) { m_audioSampleRange = r; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
@@ -174,7 +174,7 @@ protected:
     QString      m_separator; // "" or a single char - basically QChar option
     std::set<QChar> m_plausibleSeparators;
     sv_samplerate_t m_sampleRate;
-    int          m_windowSize;
+    int          m_increment;
     HeaderStatus m_headerStatus;
 
     int          m_columnCount;

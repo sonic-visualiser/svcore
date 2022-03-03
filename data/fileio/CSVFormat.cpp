@@ -33,7 +33,7 @@
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
     m_sampleRate(44100),
-    m_windowSize(1024),
+    m_increment(1024),
     m_headerStatus(HeaderUnknown),
     m_allowQuoting(true),
     m_maxExampleCols(0)

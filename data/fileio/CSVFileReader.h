@@ -71,7 +71,7 @@ protected:
     ProgressReporter *m_reporter;
 
     bool convertTimeValue(QString, int lineno, sv_samplerate_t sampleRate,
-                          int windowSize, sv_frame_t &calculatedFrame) const;
+                          int increment, sv_frame_t &calculatedFrame) const;
 
     QString getConvertedAudioFilePath() const;
 };
