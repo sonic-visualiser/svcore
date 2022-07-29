@@ -42,7 +42,6 @@ UnitDatabase::getKnownUnits() const
 void
 UnitDatabase::registerUnit(QString unit)
 {
-    if (unit == "") return;
     if (m_units.find(unit) == m_units.end()) {
         m_units[unit] = m_nextId++;
         emit unitDatabaseChanged();
@@ -56,7 +55,7 @@ UnitDatabase::getUnitId(QString unit, bool registerNew)
         if (registerNew) registerUnit(unit);
         else return -1;
     }
-    return m_units[unit];
+    return m_units.at(unit);
 }
 
 QString
