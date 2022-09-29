@@ -48,6 +48,7 @@ Preferences::Preferences() :
     m_resampleOnLoad(false),
     m_gapless(true),
     m_normaliseAudio(false),
+    m_finerTimeStretch(true),
     m_viewFontSize(10),
     m_backgroundMode(BackgroundFromTheme),
     m_timeToTextMode(TimeToTextMs),
@@ -72,6 +73,7 @@ Preferences::Preferences() :
     m_resampleOnLoad = settings.value("resample-on-load", false).toBool();
     m_gapless = settings.value("gapless", true).toBool();
     m_normaliseAudio = settings.value("normalise-audio", false).toBool();
+    m_finerTimeStretch = settings.value("finer-timestretch", true).toBool();
     m_backgroundMode = BackgroundMode
         (settings.value("background-mode", int(BackgroundFromTheme)).toInt());
     m_timeToTextMode = TimeToTextMode
@@ -106,6 +108,7 @@ Preferences::getProperties() const
     props.push_back("Resample On Load");
     props.push_back("Use Gapless Mode");
     props.push_back("Normalise Audio");
+    props.push_back("Use Finer Time Stretch");
     props.push_back("Fixed Sample Rate");
     props.push_back("Temporary Directory Root");
     props.push_back("Background Mode");
@@ -140,6 +143,9 @@ Preferences::getPropertyLabel(const PropertyName &name) const
     }
     if (name == "Normalise Audio") {
         return tr("Normalise audio signal when reading from audio file");
+    }
+    if (name == "Use Finer Time Stretch") {
+        return tr("Use fine-quality time stretcher");
     }
     if (name == "Omit Temporaries from Recent Files") {
         return tr("Omit temporaries from Recent Files menu");
@@ -202,6 +208,9 @@ Preferences::getPropertyType(const PropertyName &name) const
         return ValueProperty;
     }
     if (name == "Normalise Audio") {
+        return ToggleProperty;
+    }
+    if (name == "Use Finer Time Stretch") {
         return ToggleProperty;
     }
     if (name == "Omit Temporaries from Recent Files") {
@@ -622,6 +631,19 @@ Preferences::setNormaliseAudio(bool norm)
         settings.setValue("normalise-audio", norm);
         settings.endGroup();
         emit propertyChanged("Normalise Audio");
+    }
+}
+
+void
+Preferences::setFinerTimeStretch(bool finer)
+{
+    if (m_finerTimeStretch != finer) {
+        m_finerTimeStretch = finer;
+        QSettings settings;
+        settings.beginGroup("Preferences");
+        settings.setValue("finer-timestretch", finer);
+        settings.endGroup();
+        emit propertyChanged("Use Finer Time Stretch");
     }
 }
 
