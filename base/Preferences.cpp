@@ -678,6 +678,18 @@ Preferences::setTimeToTextMode(TimeToTextMode mode)
 }
 
 void
+Preferences::setTimeToTextModeUnsaved(TimeToTextMode mode)
+{
+    // As setTimeToTextMode but without saving the setting or
+    // notifying anything. This is only here so that callers can
+    // temporarily adjust the value (and promise to adjust it back
+    // again later)
+    if (m_timeToTextMode != mode) {
+        m_timeToTextMode = mode;
+    }
+}
+
+void
 Preferences::setShowHMS(bool show)
 {
     if (m_showHMS != show) {

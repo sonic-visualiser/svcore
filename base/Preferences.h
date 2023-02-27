@@ -133,6 +133,7 @@ public slots:
     void setFinerTimeStretch(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
+    void setTimeToTextModeUnsaved(TimeToTextMode mode);
     void setShowHMS(bool show);
     void setOctaveOfMiddleC(int oct);
     void setViewFontSize(int size);
