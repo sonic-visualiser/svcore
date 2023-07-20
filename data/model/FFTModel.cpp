@@ -64,6 +64,7 @@ FFTModel::FFTModel(ModelId modelId,
     auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
     if (model) {
         m_sampleRate = model->getSampleRate();
+        m_unit = model->getValueUnit();
         
         connect(model.get(), SIGNAL(modelChanged(ModelId)),
                 this, SIGNAL(modelChanged(ModelId)));

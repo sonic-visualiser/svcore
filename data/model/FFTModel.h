@@ -69,6 +69,9 @@ public:
     float getValueAt(int x, int y) const override {
         return getMagnitudeAt(x, y);
     }
+    QString getValueUnit() const override {
+        return m_unit;
+    }
     sv_frame_t getStartFrame() const override {
         return 0;
     }
@@ -172,6 +175,7 @@ private:
     const ModelId m_model; // a DenseTimeValueModel
     sv_samplerate_t m_sampleRate;
     int m_channel;
+    QString m_unit;
     WindowType m_windowType;
     int m_windowSize;
     int m_windowIncrement;

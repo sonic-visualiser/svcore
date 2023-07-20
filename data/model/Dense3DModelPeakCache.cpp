@@ -54,6 +54,14 @@ Dense3DModelPeakCache::getValueAt(int column, int n) const
     return m_cache.at(column).at(n);
 }
 
+QString
+Dense3DModelPeakCache::getValueUnit() const
+{
+    auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
+    if (source) return source->getValueUnit();
+    else return "";
+}
+
 void
 Dense3DModelPeakCache::sourceModelChanged(ModelId)
 {

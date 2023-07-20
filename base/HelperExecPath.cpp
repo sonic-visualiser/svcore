@@ -23,15 +23,34 @@
 QStringList
 HelperExecPath::getTags()
 {
-    if (sizeof(void *) == 8) {
-        if (m_type == NativeArchitectureOnly) {
-            return { "64", "" };
-        } else {
-            return { "64", "", "32" };
-        }
-    } else {
-        return { "", "32" };
+    (void)m_type; // some compilation paths don't refer to this and
+                  // that can cause a warning
+    
+    if (sizeof(void *) == 4) {
+        // 32-bit, gets the most basic treatment
+        return { "32", "" };
     }
+
+#ifdef Q_OS_MAC
+#if (defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64))
+    if (m_type == NativeArchitectureOnly) {
+        return { "arm64", "" };
+    } else {
+        return { "arm64", "", "x86_64", "translated" };
+    }
+#elif (defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_X64))
+    return { "x86_64", "" };
+#else
+#warning "Unknown Mac architecture - can't determine whether we're arm64 or x86_64"
+    return { "" };
+#endif
+#else // not Q_OS_MAC
+    if (m_type == NativeArchitectureOnly) {
+        return { "64", "" };
+    } else {
+        return { "64", "", "32", "translated" };
+    }
+#endif
 }
 
 static bool

@@ -209,6 +209,11 @@ extern bool getEnvUtf8(std::string variable, std::string &value);
 */
 extern bool putEnvUtf8(std::string variable, std::string value);
 
+/** Return true if the current process is known to be running under a
+    translation layer (e.g. Rosetta on a Mac).
+ */
+extern bool runningUnderTranslation();
+
 #endif /* ! _SYSTEM_H_ */
 
 

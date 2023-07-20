@@ -170,6 +170,18 @@ EditableDenseThreeDimensionalModel::getValueAt(int index, int n) const
     return c.at(n);
 }
 
+QString
+EditableDenseThreeDimensionalModel::getValueUnit() const
+{
+    return m_unit;
+}
+
+void
+EditableDenseThreeDimensionalModel::setValueUnit(QString unit)
+{
+    m_unit = unit;
+}
+
 void
 EditableDenseThreeDimensionalModel::setColumn(int index,
                                               const Column &values)

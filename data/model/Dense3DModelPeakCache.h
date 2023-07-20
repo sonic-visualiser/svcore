@@ -102,6 +102,8 @@ public:
 
     float getValueAt(int col, int n) const override;
 
+    QString getValueUnit() const override;
+
     QString getBinName(int n) const override {
         auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
         return source ? source->getBinName(n) : "";

@@ -51,6 +51,12 @@ public:
     virtual float getValueMaximum() const = 0;
 
     /**
+     * Obtain the name of the unit of the values found in this model
+     * type, if any.
+     */
+    virtual QString getValueUnit() const = 0;
+    
+    /**
      * Return the number of distinct channels for this model.
      */
     virtual int getChannelCount() const = 0;

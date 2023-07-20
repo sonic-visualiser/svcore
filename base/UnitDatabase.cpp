@@ -67,3 +67,14 @@ UnitDatabase::getUnitById(int id)
     return "";
 }
 
+UnitDatabase::Quantity
+UnitDatabase::getUnitQuantity(QString unit)
+{
+    if (unit == "W" || unit == "V^2") {
+        return Quantity::Power;
+    } else if (unit == "V") {
+        return Quantity::RootPower;
+    } else {
+        return Quantity::Other;
+    }
+}
