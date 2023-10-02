@@ -138,6 +138,7 @@ FeatureExtractionModelTransformer::initialise()
             .arg(m_plugin->getMaxChannelCount())
             .arg(input->getChannelCount());
         SVCERR << m_message << endl;
+        m_plugin = {};
         return false;
     }
 
@@ -166,6 +167,7 @@ FeatureExtractionModelTransformer::initialise()
                 
                 m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
                 SVCERR << m_message << endl;
+                m_plugin = {};
                 return false;
 
             } else {
@@ -193,6 +195,7 @@ FeatureExtractionModelTransformer::initialise()
                 
             m_message = tr("Failed to initialise feature extraction plugin \"%1\"").arg(pluginId);
             SVCERR << m_message << endl;
+            m_plugin = {};
             return false;
         }
     } else {
@@ -220,6 +223,7 @@ FeatureExtractionModelTransformer::initialise()
     if (outputs.empty()) {
         m_message = tr("Plugin \"%1\" has no outputs").arg(pluginId);
         SVCERR << m_message << endl;
+        m_plugin = {};
         return false;
     }
 
@@ -243,6 +247,7 @@ FeatureExtractionModelTransformer::initialise()
                 .arg(pluginId)
                 .arg(m_transforms[j].getOutput());
             SVCERR << m_message << endl;
+            m_plugin = {};
             return false;
         }
     }
@@ -263,9 +268,13 @@ FeatureExtractionModelTransformer::initialise()
 void
 FeatureExtractionModelTransformer::deinitialise()
 {
-    SVDEBUG << "FeatureExtractionModelTransformer: deleting plugin for transform in thread "
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+    SVDEBUG << "FeatureExtractionModelTransformer::deinitialise: deleting plugin for transform in thread "
             << QThread::currentThreadId() << endl;
+#endif
 
+    abandon();
+    
     try {
         m_plugin = {}; // does not necessarily delete, as it's a
                        // shared_ptr, but in the design case it will
@@ -278,6 +287,11 @@ FeatureExtractionModelTransformer::deinitialise()
     }
 
     m_descriptors.clear();
+
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+    SVDEBUG << "FeatureExtractionModelTransformer::deinitialise returning"
+            << endl;
+#endif
 }
 
 void
@@ -686,13 +700,13 @@ FeatureExtractionModelTransformer::run()
             return;
         }
     } catch (const std::exception &e) {
-        abandon();
+        deinitialise();
         m_message = e.what();
         return;
     }
 
     if (m_outputs.empty()) {
-        abandon();
+        deinitialise();
         return;
     }
 
@@ -705,7 +719,7 @@ FeatureExtractionModelTransformer::run()
         { // scope so as to release input shared_ptr before sleeping
             auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
             if (!input || !input->isOK()) {
-                abandon();
+                deinitialise();
                 return;
             }
             ready = input->isReady();
@@ -732,7 +746,7 @@ FeatureExtractionModelTransformer::run()
       // the edges of the process loop
         auto input = ModelById::getAs<DenseTimeValueModel>(inputId);
         if (!input) {
-            abandon();
+            deinitialise();
             return;
         }
 
@@ -783,7 +797,7 @@ FeatureExtractionModelTransformer::run()
                 for (int cch = 0; cch < ch; ++cch) {
                     delete fftModels[cch];
                 }
-                abandon();
+                deinitialise();
                 return;
             }
             fftModels.push_back(model);
@@ -955,6 +969,10 @@ FeatureExtractionModelTransformer::run()
                     }
                 }
             }
+        } else {
+#ifdef DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN
+            SVDEBUG << "FeatureExtractionModelTransformer::run: Abandoned, exited loop" << endl;
+#endif
         }
     } catch (const std::exception &e) {
         SVCERR << "FeatureExtractionModelTransformer::run: Exception caught: "

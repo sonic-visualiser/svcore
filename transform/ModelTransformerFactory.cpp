@@ -328,7 +328,7 @@ ModelTransformerFactory::transformerFinished()
             emit transformFailed("", transformer->getMessage());
         }
     }
-    
+
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
 }
