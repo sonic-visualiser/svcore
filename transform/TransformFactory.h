@@ -75,6 +75,15 @@ public:
 
 public slots:
     /**
+     * Instruct the transform factory to query and load only certain
+     * types of transforms. Only transforms of the types specified
+     * will be made available. This must be called before
+     * startPopulatingUninstalledTransforms() to have any effect. The
+     * default is to load all transform types that are found.
+     */
+    void restrictTransformTypes(std::set<Transform::Type>);
+    
+    /**
      * Start populating the installed transforms in a background
      * thread. Any call that depends on installed transform
      * information will wait for this thread to complete before it
@@ -268,6 +277,8 @@ signals:
     void uninstalledTransformsPopulated();
     
 protected:
+    std::set<Transform::Type> m_transformTypeRestriction;
+
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
 
     TransformDescriptionMap m_transforms;

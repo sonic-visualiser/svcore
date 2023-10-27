@@ -97,6 +97,12 @@ TransformFactory::~TransformFactory()
 }
 
 void
+TransformFactory::restrictTransformTypes(std::set<Transform::Type> types)
+{
+    m_transformTypeRestriction = types;
+}
+
+void
 TransformFactory::startPopulatingInstalledTransforms()
 {
     m_installedTransformsMutex.lock();
@@ -389,10 +395,32 @@ TransformFactory::populateInstalledTransforms()
         
         TransformDescriptionMap transforms;
 
-        populateFeatureExtractionPlugins(transforms);
-        if (m_exiting) return;
-        populateRealTimePlugins(transforms);
-        if (m_exiting) return;
+        bool wantFeatureExtraction = false;
+        bool wantRealTime = false;
+
+        if (m_transformTypeRestriction.empty()) {
+            wantFeatureExtraction = true;
+            wantRealTime = true;
+        } else {
+            if (m_transformTypeRestriction.find(Transform::FeatureExtraction) !=
+                m_transformTypeRestriction.end()) {
+                wantFeatureExtraction = true;
+            }
+            if (m_transformTypeRestriction.find(Transform::RealTimeEffect) !=
+                m_transformTypeRestriction.end()) {
+                wantRealTime = true;
+            }
+        }
+
+        if (wantFeatureExtraction) {
+            populateFeatureExtractionPlugins(transforms);
+            if (m_exiting) return;
+        }
+
+        if (wantRealTime) {
+            populateRealTimePlugins(transforms);
+            if (m_exiting) return;
+        }
 
         // disambiguate plugins with similar names
 
