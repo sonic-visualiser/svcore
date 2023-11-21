@@ -128,6 +128,9 @@ protected:
     Models m_outputs;
     bool m_abandoned;
     QString m_message;
+
+private:
+    void checkTransformsExist();
 };
 
 #endif

@@ -75,6 +75,11 @@ public:
      */
     QStringList getHelperCandidatePaths(QString basename);
 
+    /**
+     * Return the list of directories searched for bundled plugins.
+     */
+    QStringList getBundledPluginPaths();
+
 private:
     SearchType m_type;
     QList<HelperExec> search(QString, QStringList &);

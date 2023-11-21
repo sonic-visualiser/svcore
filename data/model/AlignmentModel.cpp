@@ -166,6 +166,9 @@ AlignmentModel::setCompletion(int completion)
 {
     m_explicitlySetCompletion = completion;
     emit completionChanged(getId());
+    if (completion == 100) {
+        emit ready(getId());
+    }
 }
 
 sv_frame_t
@@ -243,6 +246,7 @@ AlignmentModel::pathSourceCompletionChanged(ModelId)
 #ifdef DEBUG_ALIGNMENT_MODEL
             SVCERR << "AlignmentModel: path complete" << endl;
 #endif
+            emit ready(getId());
         }
     }
 

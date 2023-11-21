@@ -15,11 +15,14 @@
 
 #include "ModelTransformer.h"
 
+#include "TransformFactory.h"
+
 ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
     m_input(input),
     m_abandoned(false)
 {
     m_transforms.push_back(transform);
+    checkTransformsExist();
 }
 
 ModelTransformer::ModelTransformer(Input input, const Transforms &transforms) :
@@ -27,6 +30,7 @@ ModelTransformer::ModelTransformer(Input input, const Transforms &transforms) :
     m_input(input),
     m_abandoned(false)
 {
+    checkTransformsExist();
 }
 
 ModelTransformer::~ModelTransformer()
@@ -35,3 +39,16 @@ ModelTransformer::~ModelTransformer()
     wait();
 }
 
+void
+ModelTransformer::checkTransformsExist()
+{
+    // This is partly for diagnostic purposes, but also to cause the
+    // TransformFactory to resolve any pending scan/load process
+    // before we continue into running a transform
+    TransformFactory *tf = TransformFactory::getInstance();
+    for (auto t: m_transforms) {
+        if (!tf->haveTransform(t.getIdentifier())) {
+            SVCERR << "WARNING: ModelTransformer::checkTransformsExist: Unknown transform \"" << t.getIdentifier() << "\"" << endl;
+        }
+    }
+}

@@ -15,6 +15,8 @@
 
 #include "HelperExecPath.h"
 
+#include "Debug.h"
+
 #include <QCoreApplication>
 #include <QFile>
 #include <QDir>
@@ -111,6 +113,39 @@ HelperExecPath::getHelperDirPaths()
 }
 
 QStringList
+HelperExecPath::getBundledPluginPaths()
+{
+    // Plugins are expected to exist in one of the following, in order
+    // from most strongly preferred to least:
+    //
+    // 1. (on Mac only) in <mydir>/../Resources
+    //
+    // 2. (on non-Windows non-Mac platforms only) in
+    // <mydir>/../lib/application-name/plugins/
+    //
+    // 3. (on non-Mac platforms only) in <mydir>/plugins/
+
+    QStringList dirs;
+    QString appName = QCoreApplication::applicationName();
+    QString myDir = QCoreApplication::applicationDirPath();
+    QString binaryName = QFileInfo(QCoreApplication::arguments().at(0))
+        .fileName();
+        
+#ifdef Q_OS_MAC
+    dirs.push_back(myDir + "/../Resources");
+#else
+#ifndef Q_OS_WIN32
+    if (binaryName != "") {
+        dirs.push_back(myDir + "/../lib/" + binaryName + "/plugins");
+    }
+    dirs.push_back(myDir + "/../lib/" + appName + "/plugins");
+#endif
+    dirs.push_back(myDir + "/plugins");
+#endif
+    return dirs;
+}
+
+QStringList
 HelperExecPath::getHelperCandidatePaths(QString basename)
 {
     QStringList candidates;
@@ -128,8 +163,12 @@ HelperExecPath::search(QString basename, QStringList &candidates)
 
     QList<HelperExec> executables;
     QStringList dirs = getHelperDirPaths();
+    QStringList tags = getTags();
+
+    SVDEBUG << "HelperExecPath::search(" << basename << "): dirs = "
+            << dirs.join(",") << ", tags = " << tags.join(",") << endl;
     
-    for (QString t: getTags()) {
+    for (QString t: tags) {
         for (QString d: dirs) {
             QString path = d + QDir::separator() + basename;
             if (t != QString()) path += "-" + t;

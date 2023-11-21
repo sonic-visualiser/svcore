@@ -89,7 +89,7 @@ public:
         m_timeUnits(TimeSeconds),
         m_separator(""),
         m_sampleRate(44100),
-        m_windowSize(1024),
+        m_increment(1024),
         m_headerStatus(HeaderUnknown),
         m_columnCount(0),
         m_variableColumnCount(false),
@@ -125,12 +125,13 @@ public:
     ModelType    getModelType()     const { return m_modelType;     }
     TimingType   getTimingType()    const { return m_timingType;    }
     TimeUnits    getTimeUnits()     const { return m_timeUnits;     }
+    QString      getScaleUnits()    const { return m_scaleUnits;    }
     sv_samplerate_t getSampleRate() const { return m_sampleRate;    }
-    int          getWindowSize()    const { return m_windowSize;    }
+    int          getIncrement()     const { return m_increment;     }
     int          getColumnCount()   const { return m_columnCount;   }
     AudioSampleRange getAudioSampleRange() const { return m_audioSampleRange; }
     bool         getAllowQuoting()  const { return m_allowQuoting;  }
-    HeaderStatus getHeaderStatus()  const { return m_headerStatus; }
+    HeaderStatus getHeaderStatus()  const { return m_headerStatus;  }
     QChar        getSeparator()     const { 
         if (m_separator == "") return ',';
         else return m_separator[0];
@@ -143,9 +144,10 @@ public:
     void setModelType(ModelType t)        { m_modelType    = t; }
     void setTimingType(TimingType t)      { m_timingType   = t; }
     void setTimeUnits(TimeUnits t)        { m_timeUnits    = t; }
+    void setScaleUnits(QString u)         { m_scaleUnits   = u; }
     void setSeparator(QChar s)            { m_separator    = s; }
     void setSampleRate(sv_samplerate_t r) { m_sampleRate   = r; }
-    void setWindowSize(int s)             { m_windowSize   = s; }
+    void setIncrement(int s)              { m_increment    = s; }
     void setColumnCount(int c)            { m_columnCount  = c; }
     void setAudioSampleRange(AudioSampleRange r) { m_audioSampleRange = r; }
     void setAllowQuoting(bool q)          { m_allowQuoting = q; }
@@ -156,7 +158,7 @@ public:
 
     ColumnPurpose getColumnPurpose(int i) const;
     void setColumnPurpose(int i, ColumnPurpose p);
-    
+
     // only valid if format has been guessed:
     QList<ColumnQualities> getColumnQualities() const;
 
@@ -168,10 +170,11 @@ protected:
     ModelType    m_modelType;
     TimingType   m_timingType;
     TimeUnits    m_timeUnits;
+    QString      m_scaleUnits;
     QString      m_separator; // "" or a single char - basically QChar option
     std::set<QChar> m_plausibleSeparators;
     sv_samplerate_t m_sampleRate;
-    int          m_windowSize;
+    int          m_increment;
     HeaderStatus m_headerStatus;
 
     int          m_columnCount;
@@ -180,6 +183,7 @@ protected:
     std::map<int, ColumnQualities> m_columnQualities;
     std::map<int, ColumnPurpose> m_columnPurposes;
     std::map<int, QString> m_columnHeadings;
+    std::map<int, QString> m_columnPossibleUnits;
 
     std::map<int, float> m_prevValues;
     
@@ -194,6 +198,7 @@ protected:
     void guessQualities(QString line, int lineno);
     void guessPurposes();
     void guessAudioSampleRange();
+    void updateScaleUnits();
 };
 
 #endif

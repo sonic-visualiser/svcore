@@ -120,7 +120,7 @@ CSVFileReader::getError() const
 bool
 CSVFileReader::convertTimeValue(QString s, int lineno,
                                 sv_samplerate_t sampleRate,
-                                int windowSize,
+                                int increment,
                                 sv_frame_t &calculatedFrame) const
 {
     QRegularExpression nonNumericRx("[^0-9eE.,+-]");
@@ -152,7 +152,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
         if (n >= 0) calculatedFrame = n;
         
         if (timeUnits == CSVFormat::TimeWindows) {
-            calculatedFrame *= windowSize;
+            calculatedFrame *= increment;
         }
     }
     
@@ -180,7 +180,7 @@ CSVFileReader::load() const
     CSVFormat::TimingType timingType = m_format.getTimingType();
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
     sv_samplerate_t sampleRate = m_format.getSampleRate();
-    int windowSize = m_format.getWindowSize();
+    int increment = m_format.getIncrement();
     QChar separator = m_format.getSeparator();
     bool allowQuoting = m_format.getAllowQuoting();
 
@@ -189,9 +189,9 @@ CSVFileReader::load() const
             // This will be overridden later if more than one line
             // appears in our file, but we want to choose a default
             // that's likely to be visible
-            windowSize = 1024;
+            increment = 1024;
         } else {
-            windowSize = 1;
+            increment = 1;
         }
         if (timeUnits == CSVFormat::TimeSeconds ||
             timeUnits == CSVFormat::TimeMilliseconds) {
@@ -325,38 +325,43 @@ CSVFileReader::load() const
 
                 case CSVFormat::OneDimensionalModel:
                     SVDEBUG << "CSVFileReader: Creating sparse one-dimensional model" << endl;
-                    model1 = new SparseOneDimensionalModel(sampleRate, windowSize);
+                    model1 = new SparseOneDimensionalModel(sampleRate, increment);
                     model = model1;
                     break;
                 
                 case CSVFormat::TwoDimensionalModel:
                     SVDEBUG << "CSVFileReader: Creating sparse time-value model" << endl;
-                    model2 = new SparseTimeValueModel(sampleRate, windowSize, false);
+                    model2 = new SparseTimeValueModel(sampleRate, increment, false);
+                    model2->setScaleUnits(m_format.getScaleUnits());
                     model = model2;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDuration:
                     SVDEBUG << "CSVFileReader: Creating region model" << endl;
-                    model2a = new RegionModel(sampleRate, windowSize, false);
+                    model2a = new RegionModel(sampleRate, increment, false);
+                    model2a->setScaleUnits(m_format.getScaleUnits());
                     model = model2a;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndPitch:
                     SVDEBUG << "CSVFileReader: Creating note model" << endl;
-                    model2b = new NoteModel(sampleRate, windowSize, false);
+                    model2b = new NoteModel(sampleRate, increment, false);
+                    model2b->setScaleUnits(m_format.getScaleUnits());
                     model = model2b;
                     break;
                 
                 case CSVFormat::TwoDimensionalModelWithDurationAndExtent:
                     SVDEBUG << "CSVFileReader: Creating box model" << endl;
-                    model2c = new BoxModel(sampleRate, windowSize, false);
+                    model2c = new BoxModel(sampleRate, increment, false);
+                    model2c->setScaleUnits(m_format.getScaleUnits());
                     model = model2c;
                     break;
                 
                 case CSVFormat::ThreeDimensionalModel:
                     SVDEBUG << "CSVFileReader: Creating editable dense three-dimensional model" << endl;
                     model3 = new EditableDenseThreeDimensionalModel
-                        (sampleRate, windowSize, valueColumns);
+                        (sampleRate, increment, valueColumns);
+                    model3->setBinValueUnit(m_format.getScaleUnits());
                     model = model3;
                     break;
 
@@ -419,19 +424,19 @@ CSVFileReader::load() const
                     break;
 
                 case CSVFormat::ColumnStartTime:
-                    if (!convertTimeValue(s, lineno, sampleRate, windowSize, frameNo)) {
+                    if (!convertTimeValue(s, lineno, sampleRate, increment, frameNo)) {
                         ok = false;
                     }
                     break;
                 
                 case CSVFormat::ColumnEndTime:
-                    if (convertTimeValue(s, lineno, sampleRate, windowSize, endFrame)) {
+                    if (convertTimeValue(s, lineno, sampleRate, increment, endFrame)) {
                         haveEndTime = true;
                     }
                     break;
 
                 case CSVFormat::ColumnDuration:
-                    if (!convertTimeValue(s, lineno, sampleRate, windowSize, duration)) {
+                    if (!convertTimeValue(s, lineno, sampleRate, increment, duration)) {
                         ok = false;
                     }
                     break;
@@ -598,7 +603,7 @@ CSVFileReader::load() const
             ++lineno;
             if (timingType == CSVFormat::ImplicitTiming ||
                 list.size() == 0) {
-                frameNo += windowSize;
+                frameNo += increment;
             }
         }
     }

@@ -81,6 +81,9 @@ public:
     /// True if audio files should be loaded with normalisation (max == 1)
     bool getNormaliseAudio() const { return m_normaliseAudio; }
 
+    /// True if we should use higher-quality time stretcher where available
+    bool getFinerTimeStretch() const { return m_finerTimeStretch; }
+    
     enum BackgroundMode {
         BackgroundFromTheme,
         DarkBackground,
@@ -127,8 +130,10 @@ public slots:
     void setResampleOnLoad(bool);
     void setUseGaplessMode(bool);
     void setNormaliseAudio(bool);
+    void setFinerTimeStretch(bool);
     void setBackgroundMode(BackgroundMode mode);
     void setTimeToTextMode(TimeToTextMode mode);
+    void setTimeToTextModeUnsaved(TimeToTextMode mode);
     void setShowHMS(bool show);
     void setOctaveOfMiddleC(int oct);
     void setViewFontSize(int size);
@@ -166,6 +171,7 @@ private:
     bool m_resampleOnLoad;
     bool m_gapless;
     bool m_normaliseAudio;
+    bool m_finerTimeStretch;
     int m_viewFontSize;
     BackgroundMode m_backgroundMode;
     TimeToTextMode m_timeToTextMode;

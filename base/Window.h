@@ -66,17 +66,19 @@ public:
     virtual ~Window() {
         breakfastquay::deallocate(m_cache);
     }
-    
-    inline void cut(T *const BQ_R__ block) const {
-        breakfastquay::v_multiply(block, m_cache, m_size);
+
+    template <typename T0>
+    inline void cut(T0 *const BQ_R__ srcdst) const {
+        breakfastquay::v_multiply(srcdst, m_cache, m_size);
     }
 
-    inline void cut(const T *const BQ_R__ src, T *const BQ_R__ dst) const {
+    template <typename T0, typename T1>
+    inline void cut(const T0 *const BQ_R__ src, T1 *dst) const {
         breakfastquay::v_multiply(dst, src, m_cache, m_size);
     }
 
-    T getArea() { return m_area; }
-    T getValue(int i) { return m_cache[i]; }
+    T getArea() const { return m_area; }
+    T getValue(int i) const { return m_cache[i]; }
 
     WindowType getType() const { return m_type; }
     int getSize() const { return m_size; }

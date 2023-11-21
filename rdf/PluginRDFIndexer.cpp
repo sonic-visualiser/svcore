@@ -286,8 +286,6 @@ PluginRDFIndexer::pullURL(QString urlString)
 
 //    SVDEBUG << "PluginRDFIndexer::indexURL(" << urlString << ")" << endl;
 
-    QMutexLocker locker(&m_mutex);
-
     QUrl local = urlString;
 
     if (FileSource::isRemote(urlString) &&
@@ -310,6 +308,7 @@ PluginRDFIndexer::pullURL(QString urlString)
     }
 
     try {
+        QMutexLocker locker(&m_mutex);
         m_index->import(local, BasicStore::ImportIgnoreDuplicates);
     } catch (RDFException &e) {
         SVDEBUG << e.what() << endl;
@@ -323,6 +322,7 @@ PluginRDFIndexer::pullURL(QString urlString)
 bool
 PluginRDFIndexer::reindex()
 {
+    QMutexLocker locker(&m_mutex);
     Triples tt = m_index->match
         (Triple(Node(), Uri("a"), m_index->expand("vamp:Plugin")));
     Nodes plugins = tt.subjects();

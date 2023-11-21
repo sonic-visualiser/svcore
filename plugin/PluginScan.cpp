@@ -19,6 +19,7 @@
 #include "base/HelperExecPath.h"
 
 #include <sstream>
+#include <set>
 
 #include <QMutex>
 #include <QCoreApplication>
@@ -50,7 +51,10 @@ PluginScan *PluginScan::getInstance()
     return m_instance;
 }
 
-PluginScan::PluginScan() : m_succeeded(false), m_logger(new Logger) {
+PluginScan::PluginScan() :
+    m_scanned(false),
+    m_succeeded(false),
+    m_logger(new Logger) {
 }
 
 PluginScan::~PluginScan() {
@@ -67,6 +71,8 @@ PluginScan::scan()
 
     QMutexLocker locker(&m_mutex);
 
+    if (m_scanned) return;
+    
     bool inProcess = Preferences::getInstance()->getRunPluginsInProcess();
 
     HelperExecPath hep(inProcess ?
@@ -296,11 +302,55 @@ PluginScan::getStartupFailureReport() const
                            "(internal error?)</p>");
     }
 
+    std::set<string> silenced;
+    
+#ifdef Q_OS_MAC
+    // On the Mac there are no separate locations for different plugin
+    // architectures, so all helpers scan the same set of
+    // plugins. It's therefore natural that a library should fail with
+    // one helper and succeed with another. We want to make a note of
+    // all libraries that succeeded with any helper, and avoid
+    // complaining about them just because they didn't succeed with
+    // all helpers.
+    //
+    // We only do this on the Mac, because on other platforms there is
+    // an expectation of separate plugin locations and so this
+    // situation would genuinely be an error.
+    //
+    // We also only omit libraries that fail with type
+    // FAIL_WRONG_ARCHITECTURE or generic FAIL_NOT_LOADABLE (actually
+    // FAIL_WRONG_ARCHITECTURE never appears on the Mac as we can't
+    // determine that from the return value of dlopen, so it's always
+    // FAIL_NOT_LOADABLE) - anything else is unexpected for this
+    // situation and so could be an actual problem.
+    //
+    // Note also this only applies to Vamp plugins - others are always
+    // handled in-process, so only the active architecture applies.
+    
+    for (auto kp: m_kp) {
+        auto successes =
+            kp.second->getCandidateLibrariesFor(KnownPlugins::VampPlugin);
+        for (auto s: successes) {
+            silenced.insert(s);
+        }
+    }
+#endif
+    
     QString report;
     for (auto kp: m_kp) {
         auto failures = kp.second->getFailures();
-        if (!failures.empty()) {
-            report += formatFailureReport(kp.first, failures);
+        std::vector<PluginCandidates::FailureRec> filtered;
+        for (auto f: failures) {
+            if (f.code == PluginCheckCode::FAIL_WRONG_ARCHITECTURE ||
+                f.code == PluginCheckCode::FAIL_NOT_LOADABLE) {
+                if (silenced.find(f.library) != silenced.end()) {
+                    continue;
+                }
+            }
+            filtered.push_back(f);
+        }
+        if (!filtered.empty()) {
+            report += formatFailureReport(kp.first, filtered);
         }
     }
     if (report == "") {

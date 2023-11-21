@@ -65,8 +65,6 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
                                                       sv_frame_t duration,
                                                       UserConfigurator *configurator)
 {
-    QMutexLocker locker(&m_mutex);
-    
     ModelTransformer::Input input({});
 
     if (candidateInputModels.empty()) return input;
@@ -106,13 +104,15 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     }
 
     QString id = transform.getPluginIdentifier();
-    
-    bool ok = true;
+
+    m_mutex.lock();
     QString configurationXml = m_lastConfigurations[transform.getIdentifier()];
+    m_mutex.unlock();
 
     SVDEBUG << "ModelTransformer: last configuration for identifier " << transform.getIdentifier() << ": " << configurationXml << endl;
 
     shared_ptr<Vamp::PluginBase> plugin;
+    bool ok = true;
 
     if (RealTimePluginFactory::instanceFor(id)) {
 
@@ -173,6 +173,7 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
     }
 
     if (ok) {
+        QMutexLocker locker(&m_mutex);
         m_lastConfigurations[transform.getIdentifier()] = configurationXml;
         input.setModel(inputModel);
     }
@@ -327,7 +328,7 @@ ModelTransformerFactory::transformerFinished()
             emit transformFailed("", transformer->getMessage());
         }
     }
-    
+
     transformer->wait(); // unnecessary but reassuring
     delete transformer;
 }

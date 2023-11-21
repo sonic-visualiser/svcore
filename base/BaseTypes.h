@@ -53,7 +53,10 @@ typedef double sv_samplerate_t;
 typedef std::vector<float, breakfastquay::StlAllocator<float>> floatvec_t;
 
 typedef std::vector<std::complex<float>,
-                    breakfastquay::StlAllocator<std::complex<float>>> complexvec_t;
+                    breakfastquay::StlAllocator<std::complex<float>>> floatcomplexvec_t;
+
+typedef std::vector<std::complex<double>,
+                    breakfastquay::StlAllocator<std::complex<double>>> doublecomplexvec_t;
 
 typedef uint64_t sv_id_t;
 

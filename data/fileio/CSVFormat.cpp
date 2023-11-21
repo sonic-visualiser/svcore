@@ -16,9 +16,11 @@
 #include "CSVFormat.h"
 
 #include "base/StringBits.h"
+#include "base/UnitDatabase.h"
 
 #include <QFile>
 #include <QString>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QTextStream>
 
@@ -31,7 +33,7 @@
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
     m_sampleRate(44100),
-    m_windowSize(1024),
+    m_increment(1024),
     m_headerStatus(HeaderUnknown),
     m_allowQuoting(true),
     m_maxExampleCols(0)
@@ -248,7 +250,7 @@ CSVFormat::guessQualities(QString line, int lineno)
             if (m_columnQualities[i] != ColumnNearEmpty) {
                 couldBeHeader = false;
             } else {
-                headings[i] = list[i].trimmed().toLower();
+                headings[i] = list[i].trimmed();
             }
         }
         if (couldBeHeader) {
@@ -323,6 +325,8 @@ CSVFormat::guessPurposes()
             primaryColumnNo = 1;
         }
     }
+
+    m_columnPossibleUnits.clear();
     
     for (int i = 0; i < m_columnCount; ++i) {
         
@@ -345,8 +349,39 @@ CSVFormat::guessPurposes()
         bool timingColumn = (numeric && increasing);
 
         QString heading;
+        UnitDatabase *udb = UnitDatabase::getInstance();
+
         if (m_columnHeadings.find(i) != m_columnHeadings.end()) {
-            heading = m_columnHeadings[i];
+
+            QString headingAsSeen = m_columnHeadings[i];
+
+            if (headingAsSeen != "") {
+                heading = headingAsSeen.split(' ', QString::SkipEmptyParts)[0]
+                    .toLower();
+            }
+            
+            QString possibleUnit;
+            if (udb->getUnitId(headingAsSeen, false) >= 0) {
+                possibleUnit = headingAsSeen;
+            } else if (headingAsSeen.contains('(')) {
+                QString test = headingAsSeen;
+                test.replace(QRegularExpression("^[^(]*\\(([^)]+)\\)$"), "\\1");
+                if (test != "") {
+                    SVDEBUG << "Extracted possible unit \"" << test
+                            << "\" from heading \"" << headingAsSeen << "\""
+                            << endl;
+                    if (udb->getUnitId(test, false) >= 0) {
+                        possibleUnit = test;
+                    } else {
+                        SVDEBUG << "(but it isn't recognised)" << endl;
+                    }
+                }
+            } else if (heading == "frequency") {
+                possibleUnit = "Hz";
+            }
+            if (possibleUnit != "") {
+                m_columnPossibleUnits[i] = possibleUnit;
+            }
         }
         
         if (heading == "time" || heading == "frame" ||
@@ -455,6 +490,8 @@ CSVFormat::guessPurposes()
         }
     }
 
+    updateScaleUnits();
+    
     SVDEBUG << "Estimated column purposes: ";
     for (int i = 0; i < m_columnCount; ++i) {
         SVDEBUG << int(m_columnPurposes[i]) << " ";
@@ -463,7 +500,8 @@ CSVFormat::guessPurposes()
 
     SVDEBUG << "Estimated model type: " << m_modelType << endl;
     SVDEBUG << "Estimated timing type: " << m_timingType << endl;
-    SVDEBUG << "Estimated units: " << m_timeUnits << endl;
+    SVDEBUG << "Estimated time units: " << m_timeUnits << endl;
+    SVDEBUG << "Estimated scale units: " << m_scaleUnits << endl;
 }
 
 void
@@ -549,7 +587,7 @@ CSVFormat::setColumnPurposes(QList<ColumnPurpose> cl)
 {
     m_columnPurposes.clear();
     for (int i = 0; in_range_for(cl, i); ++i) {
-        m_columnPurposes[i] = cl[i];
+        setColumnPurpose(i, cl[i]);
     }
 }
 
@@ -567,6 +605,7 @@ void
 CSVFormat::setColumnPurpose(int i, ColumnPurpose p)
 {
     m_columnPurposes[i] = p;
+    updateScaleUnits();
 }
 
 QList<CSVFormat::ColumnQualities>
@@ -582,3 +621,16 @@ CSVFormat::getColumnQualities() const
     }
     return qualities;
 }
+
+void
+CSVFormat::updateScaleUnits()
+{
+    m_scaleUnits = "";
+    for (int i = 0; i < m_columnCount; ++i) {
+        if (m_columnPurposes[i] == ColumnValue &&
+            m_columnPossibleUnits.find(i) != m_columnPossibleUnits.end()) {
+            m_scaleUnits = m_columnPossibleUnits[i];
+        }
+    }
+}
+

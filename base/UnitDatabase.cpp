@@ -55,7 +55,7 @@ UnitDatabase::getUnitId(QString unit, bool registerNew)
         if (registerNew) registerUnit(unit);
         else return -1;
     }
-    return m_units[unit];
+    return m_units.at(unit);
 }
 
 QString

@@ -39,7 +39,10 @@ Pitch::getPitchForFrequency(double frequency,
     if (concertA <= 0.0) {
         concertA = Preferences::getInstance()->getTuningFrequency();
     }
-    double p = 12.0 * (log(frequency / (concertA / 2.0)) / log(2.0)) + 57.0;
+    double p = 0.0;
+    if (frequency > 0.0) {
+        p = 12.0 * (log(frequency / (concertA / 2.0)) / log(2.0)) + 57.0;
+    }
 
     int midiPitch = int(round(p));
     double centsOffset = (p - midiPitch) * 100.0;

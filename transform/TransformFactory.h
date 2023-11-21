@@ -30,37 +30,108 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <atomic>
 
+/**
+ * TransformFactory catalogues both "installed" transforms (based on
+ * plugins available to load) and "uninstalled" ones (based on RDF or
+ * other metadata, possibly found online).
+ *
+ * You can retrieve a list of properties of either of these, and given
+ * a transform ID, the TransformFactory can tell you whether the
+ * transform is installed, not yet installed, or unknown. You can also
+ * search both transform catalogues by keyword.
+ *
+ * TransformFactory can also construct the plugin for a transform,
+ * transfer parameter bundles back and forth from plugin to transform,
+ * and return various information about a transform. (These
+ * capabilities are for installed transforms only. If a method name
+ * contains "Transform" without qualification, it refers only to
+ * installed ones.)
+ *
+ * The process of populating the transform catalogues can be handled
+ * synchronously or asynchronously. There are two optional population
+ * threads, for installed and uninstalled transforms, which can be
+ * started with startPopulatingInstalledTransforms() and
+ * startPopulatingUninstalledTransforms() respectively. Signals
+ * installedTransformsPopulated and uninstalledTransformsPopulated are
+ * emitted by each when they complete.
+ *
+ * If a function is called which depends on either installed or
+ * uninstalled transforms having been populated, at a time when
+ * population is not complete, it will first populate them, either by
+ * waiting for the population thread or by populating them
+ * synchronously. The exceptions are the search functions, which do
+ * not wait for uninstalled transforms to finish populating - they may
+ * just return incomplete data in that case.
+ */
 class TransformFactory : public QObject
 {
     Q_OBJECT
 
 public:
-    TransformFactory();
-    virtual ~TransformFactory();
-
     static TransformFactory *getInstance();
     static void deleteInstance(); // only when exiting
 
+public slots:
     /**
-     * TransformFactory has a background thread that can populate
-     * uninstalled transforms from network RDF resources.  It is not
-     * started by default, but it's a good idea to start it when the
-     * program starts up, if the uninstalled transforms may be of use
-     * later; otherwise there will be a bottleneck the first time
-     * they're requested.
-     *
-     * If this thread is not already running, start it now.
+     * Instruct the transform factory to query and load only certain
+     * types of transforms. Only transforms of the types specified
+     * will be made available. This must be called before
+     * startPopulatingUninstalledTransforms() to have any effect. The
+     * default is to load all transform types that are found.
      */
-    void startPopulationThread();
+    void restrictTransformTypes(std::set<Transform::Type>);
+    
+    /**
+     * Start populating the installed transforms in a background
+     * thread. Any call that depends on installed transform
+     * information will wait for this thread to complete before it
+     * acts. Calling this is optional; if you don't call it, installed
+     * transforms will be populated the first time information about
+     * them is requested.
+     */
+    void startPopulatingInstalledTransforms();
 
-    TransformList getAllTransformDescriptions();
-    TransformDescription getTransformDescription(TransformId id);
-    bool haveInstalledTransforms();
+    /**
+     * Start populating metadata about uninstalled transforms in a
+     * background thread. Any call that depends specifically on
+     * uninstalled transform information will wait for this thread to
+     * complete before it acts.
+     *
+     * Note that the first thing the thread does is sleep until the
+     * installed transforms have finished populating - if you don't
+     * populate those, this will do nothing!
+     */
+    void startPopulatingUninstalledTransforms();
+
+public:
+    /**
+     * Return true if the installed transforms have been populated,
+     * i.e. if a call to something like haveTransform() will return
+     * without having to do the work of scanning plugins. If this
+     * returns false, then population may be in progress or may have
+     * not been started at all.
+     */
+    bool havePopulatedInstalledTransforms();
+    
+    /**
+     * Return true if the uninstalled transforms have finished being
+     * populated, i.e. if a call to something like
+     * getUninstalledTransformDescriptions() will return without
+     * having to do the work of retrieving metadata. If this returns
+     * false, then population may be in progress or may have not been
+     * started at all.
+     */
+    bool havePopulatedUninstalledTransforms();
+    
+    TransformList getInstalledTransformDescriptions();
+    TransformDescription getInstalledTransformDescription(TransformId id);
+    bool haveAnyInstalledTransforms();
 
     TransformList getUninstalledTransformDescriptions();
     TransformDescription getUninstalledTransformDescription(TransformId id);
-    bool haveUninstalledTransforms(bool waitForCheckToComplete = false);
+    bool haveAnyUninstalledTransforms(bool waitForCheckToComplete = false);
     
     typedef enum {
         TransformUnknown,
@@ -70,24 +141,22 @@ public:
 
     TransformInstallStatus getTransformInstallStatus(TransformId id);
 
-    std::vector<TransformDescription::Type> getAllTransformTypes();
-    std::vector<QString> getTransformCategories(TransformDescription::Type);
-    std::vector<QString> getTransformMakers(TransformDescription::Type);
-    QString getTransformTypeName(TransformDescription::Type) const;
-
     typedef std::map<TransformId, TextMatcher::Match> SearchResults;
     SearchResults search(QString keyword);
     SearchResults search(QStringList keywords);
 
-    /**
-     * Return true if the transforms have been populated, i.e. a call
-     * to something like haveTransform() will return without having to
-     * do the work of scanning plugins
-     */
-    bool havePopulated();
+    // All of the remaining functions act upon installed transforms
+    // only.
     
+    std::vector<TransformDescription::Type> getTransformTypes();
+    std::vector<QString> getTransformCategories(TransformDescription::Type);
+    std::vector<QString> getTransformMakers(TransformDescription::Type);
+    QString getTransformTypeName(TransformDescription::Type) const;
+
     /**
-     * Return true if the given transform is known.
+     * Return true if the given transform is installed. If this
+     * returns false, none of the following methods will return
+     * anything useful.
      */
     bool haveTransform(TransformId identifier);
 
@@ -148,6 +217,10 @@ public:
      * the transform was a feature-extraction type -- call
      * downcastVampPlugin if you only want Vamp::Plugins).  Returns
      * nullptr if no suitable plugin was available.
+     *
+     * (NB at the time of writing this is only used in Sonic
+     * Annotator, which does not use model transform objects. In SV
+     * the model transformers load their own plugins.)
      */
     std::shared_ptr<Vamp::PluginBase> instantiatePluginFor(const Transform &transform);
 
@@ -200,28 +273,41 @@ public:
     }
 
 signals:
-    void transformsPopulated();
+    void installedTransformsPopulated();
     void uninstalledTransformsPopulated();
     
 protected:
+    std::set<Transform::Type> m_transformTypeRestriction;
+
     typedef std::map<TransformId, TransformDescription> TransformDescriptionMap;
 
     TransformDescriptionMap m_transforms;
-    bool m_transformsPopulated;
+    std::atomic<bool> m_installedTransformsPopulated;
 
     TransformDescriptionMap m_uninstalledTransforms;
-    bool m_uninstalledTransformsPopulated;
+    std::atomic<bool> m_uninstalledTransformsPopulated;
 
     QString m_errorString;
     
-    void populateTransforms();
+    void populateInstalledTransforms();
     void populateUninstalledTransforms();
     void populateFeatureExtractionPlugins(TransformDescriptionMap &);
     void populateRealTimePlugins(TransformDescriptionMap &);
 
     std::shared_ptr<Vamp::PluginBase> instantiateDefaultPluginFor(TransformId id, sv_samplerate_t rate);
-    QMutex m_transformsMutex;
+    QMutex m_installedTransformsMutex;
     QMutex m_uninstalledTransformsMutex;
+
+    class InstalledTransformsPopulateThread : public QThread
+    {
+    public:
+        InstalledTransformsPopulateThread(TransformFactory *factory) :
+            m_factory(factory) {
+        }
+        void run() override;
+        TransformFactory *m_factory;
+    };
+    InstalledTransformsPopulateThread *m_installedThread;
 
     class UninstalledTransformsPopulateThread : public QThread
     {
@@ -232,15 +318,17 @@ protected:
         void run() override;
         TransformFactory *m_factory;
     };
-
-    UninstalledTransformsPopulateThread *m_thread;
-    bool m_exiting;
-    bool m_populatingSlowly;
+    UninstalledTransformsPopulateThread *m_uninstalledThread;
+    
+    std::atomic<bool> m_exiting;
+    std::atomic<bool> m_populatingSlowly;
 
     SearchResults searchUnadjusted(QStringList keywords);
 
     static TransformFactory *m_instance;
-};
 
+    TransformFactory();
+    virtual ~TransformFactory();
+};
 
 #endif

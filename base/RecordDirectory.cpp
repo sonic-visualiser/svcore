@@ -20,9 +20,19 @@
 
 #include "Debug.h"
 
+static QMutex recordDirectoryMutex;
+static QString customRecordContainerDirectory = "";
+
 QString
 RecordDirectory::getRecordContainerDirectory()
 {
+    {
+        QMutexLocker locker(&recordDirectoryMutex);
+        if (customRecordContainerDirectory != "") {
+            return customRecordContainerDirectory;
+        }
+    }
+        
     QDir parent(TempDirectory::getInstance()->getContainingPath());
     QString subdirname("recorded");
 
@@ -31,6 +41,17 @@ RecordDirectory::getRecordContainerDirectory()
         return "";
     } else {
         return parent.filePath(subdirname);
+    }
+}
+
+void
+RecordDirectory::setRecordContainerDirectory(QString dir)
+{
+    QMutexLocker locker(&recordDirectoryMutex);
+    customRecordContainerDirectory = dir;
+
+    if (!QDir().mkpath(dir)) {
+        SVCERR << "WARNING: RecordDirectory::setRecordContainerDirectory: Path to \"" << dir << "\" could not be created" << endl;
     }
 }
 

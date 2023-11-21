@@ -60,8 +60,11 @@ PluginPathSetter::getSupportedKeys()
     HelperExecPath hep(inProcess ?
                        HelperExecPath::NativeArchitectureOnly :
                        HelperExecPath::AllInstalled);
-    auto execs = hep.getHelperExecutables("vamp-plugin-load-checker");
-    if (execs.size() > 1) {
+
+    QList<HelperExecPath::HelperExec> execs =
+        hep.getHelperExecutables("vamp-plugin-load-checker");
+
+    if (execs.size() > 1 && execs[1].tag == "32") {
         keys.push_back({
                 KnownPlugins::VampPlugin, KnownPlugins::FormatNonNative32Bit });
     }

@@ -180,7 +180,7 @@ private:
     int m_windowSize;
     int m_windowIncrement;
     int m_fftSize;
-    Window<float> m_windower;
+    Window<double> m_windower;
     mutable breakfastquay::FFT m_fft;
     double m_maximumFrequency;
     mutable QString m_error;
@@ -197,7 +197,7 @@ private:
         return { startFrame, endFrame };
     }
 
-    const complexvec_t &getFFTColumn(int column) const;
+    const doublecomplexvec_t &getFFTColumn(int column) const;
     floatvec_t getSourceSamples(int column) const;
     floatvec_t getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
     floatvec_t getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
@@ -210,7 +210,7 @@ private:
 
     struct SavedColumn {
         int n;
-        complexvec_t col;
+        doublecomplexvec_t col;
     };
     mutable std::vector<SavedColumn> m_cached;
     mutable size_t m_cacheWriteIndex;
