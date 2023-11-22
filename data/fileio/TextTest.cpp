@@ -18,7 +18,7 @@
 #include "base/StringBits.h"
 
 #include <QFile>
-#include <QXmlInputSource>
+#include <QXmlStreamReader>
 
 bool
 TextTest::isApparentTextDocument(FileSource source)
@@ -45,10 +45,17 @@ TextTest::isApparentTextDocument(FileSource source)
         return true; // good enough to be worth trying to parse
     }
 
-    QXmlInputSource xmlSource;
-    xmlSource.setData(bytes); // guesses text encoding
+    QXmlStreamReader xmlReader(bytes);
+    bool isApparentXml = true;
+    if (xmlReader.hasError()) {
+        isApparentXml = false;
+    } else if (!xmlReader.atEnd()) {
+        if (xmlReader.readNext() == QXmlStreamReader::Invalid) {
+            isApparentXml = false;
+        }
+    }
 
-    if (xmlSource.data().startsWith("<?xml")) {
+    if (isApparentXml) {
         SVDEBUG << "NOTE: TextTest::isApparentTextDocument: Document appears to be XML" << endl;
         return true;
     }

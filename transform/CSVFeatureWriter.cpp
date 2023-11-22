@@ -21,7 +21,7 @@
 
 #include <iostream>
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QTextCodec>
 
@@ -254,18 +254,18 @@ CSVFeatureWriter::writeFeature(DataId tt,
     } else {
 
         QString timestamp = f.timestamp.toString().c_str();
-        timestamp.replace(QRegExp("^ +"), "");
+        timestamp.replace(QRegularExpression("^ +"), "");
         stream << timestamp;
 
         if (haveDuration) {
             if (m_endTimes) {
                 QString endtime =
                     (::RealTime(f.timestamp) + duration).toString().c_str();
-                endtime.replace(QRegExp("^ +"), "");
+                endtime.replace(QRegularExpression("^ +"), "");
                 stream << m_separator << endtime;
             } else {
                 QString d = ::RealTime(duration).toString().c_str();
-                d.replace(QRegExp("^ +"), "");
+                d.replace(QRegularExpression("^ +"), "");
                 stream << m_separator << d;
             }
         }            

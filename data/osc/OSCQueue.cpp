@@ -74,7 +74,7 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
         case 'd': message.addArg(arg->d); break;
         case 'c': message.addArg(arg->c); break;
         case 't': message.addArg(arg->i); break;
-        case 's': message.addArg(&arg->s); break;
+        case 's': message.addArg(QString::fromUtf8(&arg->s)); break;
         default:  SVCERR << "WARNING: OSCQueue::oscMessageHandler: "
                             << "Unsupported OSC type '" << type << "'" 
                             << endl;

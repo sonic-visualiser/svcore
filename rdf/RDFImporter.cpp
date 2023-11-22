@@ -336,7 +336,7 @@ RDFImporterImpl::getDataModelsDense(std::vector<ModelId> &models,
             height = 1;
         }
 
-        QStringList values = value.split(' ', QString::SkipEmptyParts);
+        QStringList values = value.split(' ', Qt::SkipEmptyParts);
 
         if (values.empty()) {
             SVCERR << "WARNING: Dense feature description does not specify any values!" << endl;
@@ -600,7 +600,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<ModelId> &models,
                 std::vector<float> values;
 
                 if (valuestring != "") {
-                    QStringList vsl = valuestring.split(" ", QString::SkipEmptyParts);
+                    QStringList vsl = valuestring.split(" ", Qt::SkipEmptyParts);
                     for (int j = 0; j < vsl.size(); ++j) {
                         bool success = false;
                         float v = vsl[j].toFloat(&success);

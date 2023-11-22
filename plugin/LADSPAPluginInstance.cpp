@@ -24,6 +24,8 @@
 #include "LADSPAPluginInstance.h"
 #include "LADSPAPluginFactory.h"
 
+#include <QRegularExpression>
+
 #ifdef HAVE_LRDF
 #include "lrdf.h"
 #endif // HAVE_LRDF
@@ -173,10 +175,10 @@ LADSPAPluginInstance::getParameterDescriptors() const
 
         if (haveLabels) {
             pd.name = QString(pd.name.c_str())
-                .replace(QRegExp("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
+                .replace(QRegularExpression("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
                 .toStdString();
         } else {
-            static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
+            static QRegularExpression unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
             if (unitRE.indexIn(pd.name.c_str()) >= 0) {
                 pd.unit = unitRE.cap(1).toStdString();
                 pd.name = QString(pd.name.c_str())

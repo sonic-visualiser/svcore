@@ -35,7 +35,7 @@ private slots:
         QTest::addColumn<QString>("format");
         QTest::addColumn<bool>("empty");
         QStringList patterns = AudioFileReaderFactory::getKnownExtensions()
-            .split(" ", QString::SkipEmptyParts);
+            .split(" ", Qt::SkipEmptyParts);
 
         for (auto p: patterns) {
 

@@ -282,7 +282,7 @@ CSVFileReader::load() const
         // read a line at a time, and that's obviously OK.
 
         QString chunk = in.readLine();
-        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+        QStringList lines = chunk.split('\r', Qt::SkipEmptyParts);
 
         m_readCount += chunk.size() + 1;
 

@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <typeinfo>
 
+#include <QObject>
+
 //#define DEBUG_BY_ID 1
 
 int IdAlloc::getNextId()

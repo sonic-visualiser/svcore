@@ -16,6 +16,7 @@
 #define SV_PROVIDER_H
 
 #include <QString>
+#include <QObject>
 
 #include <set>
 

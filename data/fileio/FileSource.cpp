@@ -26,6 +26,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QThreadStorage>
+#include <QRegularExpression>
 
 #include <iostream>
 #include <cstdlib>
@@ -290,7 +291,7 @@ FileSource::init()
         SVCERR << "FileSource::init: Is a resource" << endl;
 #endif
         QString resourceFile = m_url.toString();
-        resourceFile.replace(QRegExp("^qrc:"), ":");
+        resourceFile.replace(QRegularExpression("^qrc:"), ":");
         
         if (!QFileInfo(resourceFile).exists()) {
 #ifdef DEBUG_FILE_SOURCE
@@ -373,7 +374,7 @@ FileSource::init()
         // is the successful case
 
         QString resourceFileName = m_url.toString();
-        resourceFileName.replace(QRegExp("^qrc:"), ":");
+        resourceFileName.replace(QRegularExpression("^qrc:"), ":");
         QFile resourceFile(resourceFileName);
         resourceFile.open(QFile::ReadOnly);
         QByteArray ba(resourceFile.readAll());

@@ -35,7 +35,7 @@
 #include <set>
 #include <functional>
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTextStream>
 
 #include "base/Thread.h"
@@ -463,7 +463,7 @@ TransformFactory::populateInstalledTransforms()
             QString to = td.section(": ", 1);
 
             if (names[tn] > 1) {
-                maker.replace(QRegExp(tr(" [\\(<].*$")), "");
+                maker.replace(QRegularExpression(tr(" [\\(<].*$")), "");
                 tn = QString("%1 [%2]").arg(tn).arg(maker);
             }
 
@@ -588,7 +588,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
         RealTimePluginFactory::getAllPluginIdentifiers();
     if (m_exiting) return;
 
-    static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
+    static QRegularExpression unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
     for (int i = 0; in_range_for(plugs, i); ++i) {
         
