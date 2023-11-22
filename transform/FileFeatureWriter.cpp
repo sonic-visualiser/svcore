@@ -316,7 +316,7 @@ FileFeatureWriter::getOutputFile(QString trackId,
 
 QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
                                                 TransformId transformId,
-                                                QTextCodec *codec)
+                                                QStringConverter::Encoding encoding)
 {
     QFile *file = getOutputFile(trackId, transformId);
     if (!file && !m_stdout) {
@@ -329,7 +329,7 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
         } else {
             m_streams[file] = new QTextStream(file);
         }
-        m_streams[file]->setCodec(codec);
+        m_streams[file]->setEncoding(encoding);
     }
 
     QTextStream *stream = m_streams[file];

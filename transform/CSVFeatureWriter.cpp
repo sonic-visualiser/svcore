@@ -23,7 +23,7 @@
 
 #include <QRegularExpression>
 #include <QTextStream>
-#include <QTextCodec>
+#include <QStringConverter>
 
 using namespace std;
 using namespace Vamp;
@@ -140,7 +140,7 @@ CSVFeatureWriter::write(QString trackId,
 
     QTextStream *sptr = getOutputStream(trackId,
                                         transformId,
-                                        QTextCodec::codecForName("UTF-8"));
+                                        QStringConverter::Utf8);
     if (!sptr) {
         throw FailedToOpenOutputStream(trackId, transformId);
     }
@@ -188,7 +188,7 @@ CSVFeatureWriter::finish()
         Plugin::Feature f = i->second;
         QTextStream *sptr = getOutputStream(tt.first,
                                             tt.second.getIdentifier(),
-                                            QTextCodec::codecForName("UTF-8"));
+                                            QStringConverter::Utf8);
         if (!sptr) {
             throw FailedToOpenOutputStream(tt.first, tt.second.getIdentifier());
         }

@@ -639,8 +639,9 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                         .arg(pluginName)
                         .arg(portName);
 
-                    if (unitRE.indexIn(portName) >= 0) {
-                        units = unitRE.cap(1);
+                    auto match = unitRE.match(portName);
+                    if (match.hasMatch()) {
+                        units = match.captured(1);
                     }
 
                 } else if (descriptor.controlOutputPortCount > 1) {

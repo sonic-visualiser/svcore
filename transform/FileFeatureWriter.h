@@ -26,13 +26,14 @@
 
 #include "FeatureWriter.h"
 
+#include <QStringConverter>
+
 using std::string;
 using std::map;
 using std::set;
 using std::pair;
 
 class QTextStream;
-class QTextCodec;
 class QFile;
 
 class FileFeatureWriter : public FeatureWriter
@@ -56,7 +57,7 @@ protected:
     };
 
     FileFeatureWriter(int support, QString extension);
-    QTextStream *getOutputStream(QString, TransformId, QTextCodec *);
+    QTextStream *getOutputStream(QString, TransformId, QStringConverter::Encoding);
 
     typedef pair<QString, TransformId> TrackTransformPair;
     typedef map<TrackTransformPair, QString> FileNameMap;

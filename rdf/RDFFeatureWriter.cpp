@@ -22,10 +22,10 @@
 #include "PluginRDFIndexer.h"
 
 #include <QTextStream>
-#include <QTextCodec>
+#include <QStringConverter>
 #include <QUrl>
 #include <QFileInfo>
-#include <QRegExp>
+#include <QRegularExpression>
 
 using namespace std;
 using Vamp::Plugin;
@@ -162,7 +162,7 @@ RDFFeatureWriter::write(QString trackId,
     // combination
 
     QTextStream *stream = getOutputStream(trackId, transform.getIdentifier(),
-                                          QTextCodec::codecForName("UTF-8"));
+                                          QStringConverter::Utf8);
     if (!stream) {
         throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
     }
@@ -278,15 +278,16 @@ RDFFeatureWriter::reviewFileForAppending(QString filename)
 
     QTextStream in(&file);
 
-    QRegExp localObjectUriWithDigits(":[^ ]+_([0-9]+) a ");
+    QRegularExpression localObjectUriWithDigits(":[^ ]+_([0-9]+) a ");
 
     while (!in.atEnd()) {
         QString line = in.readLine();
         if (line.length() > 120) { // probably data
             continue;
         }
-        if (localObjectUriWithDigits.indexIn(line) > -1) {
-            QString numeric = localObjectUriWithDigits.cap(1);
+        auto match = localObjectUriWithDigits.match(line);
+        if (match.hasMatch()) {
+            QString numeric = match.captured(1);
             int number = numeric.toInt();
             if (number >= m_count) m_count = number + 1;
         }
@@ -564,12 +565,12 @@ RDFFeatureWriter::writeSparseRDF(QTextStream *sptr,
         }
 
         QString timestamp = feature.timestamp.toString().c_str();
-        timestamp.replace(QRegExp("^ +"), "");
+        timestamp.replace(QRegularExpression("^ +"), "");
 
         if (feature.hasDuration && feature.duration > Vamp::RealTime::zeroTime) {
 
             QString duration = feature.duration.toString().c_str();
-            duration.replace(QRegExp("^ +"), "");
+            duration.replace(QRegularExpression("^ +"), "");
 
             stream << "    event:time [ \n"
                    << "        a tl:Interval ;\n"

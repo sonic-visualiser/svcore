@@ -179,8 +179,9 @@ LADSPAPluginInstance::getParameterDescriptors() const
                 .toStdString();
         } else {
             static QRegularExpression unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
-            if (unitRE.indexIn(pd.name.c_str()) >= 0) {
-                pd.unit = unitRE.cap(1).toStdString();
+            auto match = unitRE.match(pd.name.c_str());
+            if (match.hasMatch()) {
+                pd.unit = match.captured(1).toStdString();
                 pd.name = QString(pd.name.c_str())
                     .replace(unitRE, "").toStdString();
             }
