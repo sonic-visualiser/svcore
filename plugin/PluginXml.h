@@ -21,7 +21,7 @@
 
 #include <memory>
 
-class QXmlAttributes;
+#include <QMap>
 
 class PluginXml : public XmlExportable
 {
@@ -36,11 +36,13 @@ public:
                QString indent = "",
                QString extraAttributes = "") const override;
 
+    typedef QMap<QString, QString> Attributes;
+
     /**
      * Set the parameters and program of a plugin from a set of XML
      * attributes.  This is a partial inverse of toXml.
      */
-    virtual void setParameters(const QXmlAttributes &);
+    virtual void setParameters(const Attributes &);
 
     /**
      * Set the parameters and program of a plugin from an XML plugin

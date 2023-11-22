@@ -34,7 +34,6 @@
 #include <set>
 #include <map>
 
-#include <QRegExp>
 #include <QMutexLocker>
 
 using std::vector;

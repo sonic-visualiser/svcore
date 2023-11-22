@@ -38,6 +38,8 @@
 #include "data/fileio/FileFinder.h"
 #include "data/fileio/TextTest.h"
 
+#include <QRegularExpression>
+
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
 
@@ -673,7 +675,7 @@ RDFImporterImpl::getDataModelsSparse(std::vector<ModelId> &models,
                     if (title == "") {
                         // take it from the end of the event type
                         title = type;
-                        title.replace(QRegExp("^.*[/#]"), "");
+                        title.replace(QRegularExpression("^.*[/#]"), "");
                     }
                     model->setObjectName(title);
 

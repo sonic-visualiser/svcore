@@ -20,8 +20,6 @@
 #include "plugin/FeatureExtractionPluginFactory.h"
 #include "plugin/RealTimePluginFactory.h"
 
-#include <QXmlAttributes>
-
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDomNamedNodeMap>
@@ -61,14 +59,14 @@ Transform::Transform(QString xml) :
     
     QDomElement transformElt = doc.firstChildElement("transform");
     QDomNamedNodeMap attrNodes = transformElt.attributes();
-    QXmlAttributes attrs;
+    Attributes attrs;
 
     for (int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
-        if (!attr.isNull()) attrs.append(attr.name(), "", "", attr.value());
+        if (!attr.isNull()) attrs[attr.name()] = attr.value();
     }
 
-    setFromXmlAttributes(attrs);
+    setFromAttributes(attrs);
 
     for (QDomElement paramElt = transformElt.firstChildElement("parameter");
          !paramElt.isNull();
@@ -483,7 +481,7 @@ Transform::summaryTypeToString(SummaryType type)
 }
 
 void
-Transform::setFromXmlAttributes(const QXmlAttributes &attrs)
+Transform::setFromAttributes(const Attributes &attrs)
 {
     if (attrs.value("id") != "") {
         setIdentifier(attrs.value("id"));

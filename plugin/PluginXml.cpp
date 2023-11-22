@@ -15,8 +15,7 @@
 
 #include "PluginXml.h"
 
-#include <QRegExp>
-#include <QXmlAttributes>
+#include <QRegularExpression>
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -126,7 +125,7 @@ PluginXml::toXml(QTextStream &stream,
     }
 
 void
-PluginXml::setParameters(const QXmlAttributes &attrs)
+PluginXml::setParameters(const Attributes &attrs)
 {
     CHECK_ATTRIBUTE(identifier, m_plugin->getIdentifier);
     CHECK_ATTRIBUTE(name, m_plugin->getName);
@@ -212,13 +211,13 @@ PluginXml::setParametersFromXml(QString xml)
 
     QDomElement pluginElt = doc.firstChildElement("plugin");
     QDomNamedNodeMap attrNodes = pluginElt.attributes();
-    QXmlAttributes attrs;
+    Attributes attrs;
 
     for (int i = 0; i < attrNodes.length(); ++i) {
         QDomAttr attr = attrNodes.item(i).toAttr();
         if (attr.isNull()) continue;
 //        SVDEBUG << "PluginXml::setParametersFromXml: Adding attribute \"" << attr.name()//                  << "\" with value \"" << attr.value() << "\"" << endl;
-        attrs.append(attr.name(), "", "", attr.value());
+        attrs[attr.name()] = attr.value();
     }
 
     setParameters(attrs);
@@ -227,7 +226,7 @@ PluginXml::setParametersFromXml(QString xml)
 QString
 PluginXml::stripInvalidParameterNameCharacters(QString s) const
 {
-    s.replace(QRegExp("[^a-zA-Z0-9_]*"), "");
+    s.replace(QRegularExpression("[^a-zA-Z0-9_]*"), "");
     return s;
 }
 
