@@ -156,8 +156,8 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         lMEMORYSTATUSEX lms;
         lms.dwLength = sizeof(lms);
         if (!ex(&lms)) {
-            cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                 << GetLastError() << endl;
+            SVCERR << "WARNING: GlobalMemoryStatusEx failed: error code "
+                   << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -270,8 +270,8 @@ GetDiscSpaceMBAvailable(const char *path)
         if (a > INT_MAX) a = INT_MAX;
         return ssize_t(a);
     } else {
-        cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-             << GetLastError() << endl;
+        SVCERR << "WARNING: GetDiskFreeSpaceEx failed: error code "
+               << GetLastError() << endl;
         return -1;
     }
 #else
