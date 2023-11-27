@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <filesystem>
 
 //#define DEBUG_MIDI_FILE_WRITER 1
 
@@ -283,13 +284,8 @@ MIDIFileWriter::writeComposition()
 {
     bool retOK = true;
 
-#ifdef _MSC_VER
-    m_midiFile = new ofstream(m_path.utf16(),
+    m_midiFile = new ofstream(std::filesystem::u8path(m_path.toUtf8().data()),
                               ios::out | ios::binary);
-#else
-    m_midiFile = new ofstream(m_path.toUtf8().data(),
-                              ios::out | ios::binary);
-#endif
     
     if (!(*m_midiFile)) {
         m_error = "Can't open file for writing.";
