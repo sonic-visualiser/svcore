@@ -120,3 +120,30 @@ operator<<(std::ostream &target, const QUrl &u)
     return target << "<" << u.toString() << ">";
 }
 
+static void
+svDebugQtMessageHandler(QtMsgType type,
+                        const QMessageLogContext &context,
+                        const QString &msg)
+{
+    SVDEBUG << qPrintable(qFormatLogMessage(type, context, msg)) << endl;
+}
+
+void
+SVDebug::installQtMessageHandler()
+{
+    (void)qInstallMessageHandler(svDebugQtMessageHandler);
+}
+
+static void
+svCerrQtMessageHandler(QtMsgType type,
+                        const QMessageLogContext &context,
+                        const QString &msg)
+{
+    SVCERR << qPrintable(qFormatLogMessage(type, context, msg)) << endl;
+}
+
+void
+SVCerr::installQtMessageHandler()
+{
+    (void)qInstallMessageHandler(svCerrQtMessageHandler);
+}
