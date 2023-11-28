@@ -316,7 +316,12 @@ FileFeatureWriter::getOutputFile(QString trackId,
 
 QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
                                                 TransformId transformId,
-                                                QStringConverter::Encoding encoding)
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                                QStringConverter::Encoding encoding
+#else
+                                                QString encodingName
+#endif
+    )
 {
     QFile *file = getOutputFile(trackId, transformId);
     if (!file && !m_stdout) {
@@ -329,7 +334,11 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
         } else {
             m_streams[file] = new QTextStream(file);
         }
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
         m_streams[file]->setEncoding(encoding);
+#else
+        m_streams[file]->setCodec(encodingName.toLocal8Bit().data());
+#endif
     }
 
     QTextStream *stream = m_streams[file];

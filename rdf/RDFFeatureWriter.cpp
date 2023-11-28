@@ -22,10 +22,13 @@
 #include "PluginRDFIndexer.h"
 
 #include <QTextStream>
-#include <QStringConverter>
 #include <QUrl>
 #include <QFileInfo>
 #include <QRegularExpression>
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#include <QStringConverter>
+#endif
 
 using namespace std;
 using Vamp::Plugin;
@@ -162,7 +165,12 @@ RDFFeatureWriter::write(QString trackId,
     // combination
 
     QTextStream *stream = getOutputStream(trackId, transform.getIdentifier(),
-                                          QStringConverter::Utf8);
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                          QStringConverter::Utf8
+#else
+                                          "UTF-8"
+#endif
+        );
     if (!stream) {
         throw FailedToOpenOutputStream(trackId, transform.getIdentifier());
     }

@@ -26,7 +26,9 @@
 
 #include "FeatureWriter.h"
 
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
 #include <QStringConverter>
+#endif
 
 using std::string;
 using std::map;
@@ -57,7 +59,13 @@ protected:
     };
 
     FileFeatureWriter(int support, QString extension);
-    QTextStream *getOutputStream(QString, TransformId, QStringConverter::Encoding);
+    QTextStream *getOutputStream(QString, TransformId,
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                 QStringConverter::Encoding
+#else
+                                 QString encodingName
+#endif
+        );
 
     typedef pair<QString, TransformId> TrackTransformPair;
     typedef map<TrackTransformPair, QString> FileNameMap;
