@@ -488,7 +488,7 @@ FileSource::initRemote()
 
     connect(m_reply, SIGNAL(readyRead()),
             this, SLOT(readyRead()));
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)),
+    connect(m_reply, SIGNAL(errorOccurred(QNetworkReply::NetworkError)),
             this, SLOT(replyFailed(QNetworkReply::NetworkError)));
     connect(m_reply, SIGNAL(finished()),
             this, SLOT(replyFinished()));
@@ -847,8 +847,11 @@ FileSource::deleteCacheFile()
 
     if (!QFile(m_localFilename).remove()) {
 #ifdef DEBUG_FILE_SOURCE
-        SVCERR << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename << "\"" << endl;
+        SVCERR
+#else
+        SVDEBUG
 #endif
+            << "FileSource::deleteCacheFile: ERROR: Failed to delete file \"" << m_localFilename << "\"" << endl;
     } else {
 #ifdef DEBUG_FILE_SOURCE
         SVCERR << "FileSource::deleteCacheFile: Deleted cache file \"" << m_localFilename << "\"" << endl;
@@ -888,8 +891,11 @@ FileSource::createCacheFile()
                     getSubDirectoryPath("download"));
     } catch (const DirectoryCreationFailed &f) {
 #ifdef DEBUG_FILE_SOURCE
-        SVCERR << "FileSource::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << endl;
+        SVCERR 
+#else
+        SVDEBUG
 #endif
+            << "FileSource::createCacheFile: ERROR: Failed to create temporary directory: " << f.what() << endl;
         return false;
     }
 
@@ -943,10 +949,13 @@ FileSource::createCacheFile()
             !QFile(filepath).open(QFile::WriteOnly)) {
 
 #ifdef DEBUG_FILE_SOURCE
-            SVCERR << "FileSource::createCacheFile: ERROR: Failed to create local file \""
+            SVCERR
+#else
+            SVDEBUG
+#endif
+                << "FileSource::createCacheFile: ERROR: Failed to create local file \""
                       << filepath << "\" for URL \""
                       << m_url.toString() << "\" (or file already exists)" << endl;
-#endif
 
             return false;
         }
