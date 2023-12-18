@@ -45,7 +45,7 @@ public:
         if (m_ok) {
             if (m_eol) {
                 m_stream << m_prefix << "/"
-                         << (int)QThread::currentThreadId() << ":"
+                         << (uint64_t)QThread::currentThreadId() << ":"
                          << m_timer.elapsed() << ": ";
             }
             m_stream << t;
