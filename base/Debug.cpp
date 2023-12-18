@@ -149,25 +149,28 @@ SVCerr::installQtMessageHandler()
     (void)qInstallMessageHandler(svCerrQtMessageHandler);
 }
 
-int FunctionLogger::m_depth = 0;
+static int funcLoggerDepth = 0;
+static QMutex funcLoggerMutex;
 
 FunctionLogger::FunctionLogger(const char *name) :
     m_name(name)
 {
+    QMutexLocker locker(&funcLoggerMutex);
     std::ostringstream os;
-    for (int i = 0; i < m_depth; ++i) {
+    for (int i = 0; i < funcLoggerDepth; ++i) {
         os << "  ";
     }
     os << "-[>] " << m_name;
     SVDEBUG << os.str() << endl;
-    ++m_depth;
+    ++funcLoggerDepth;
 }
 
 FunctionLogger::~FunctionLogger()
 {
-    --m_depth;
+    QMutexLocker locker(&funcLoggerMutex);
+    --funcLoggerDepth;
     std::ostringstream os;
-    for (int i = 0; i < m_depth; ++i) {
+    for (int i = 0; i < funcLoggerDepth; ++i) {
         os << "  ";
     }
     os << "<[-] " << m_name;

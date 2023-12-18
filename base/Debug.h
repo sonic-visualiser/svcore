@@ -124,7 +124,6 @@ public:
     ~FunctionLogger();
 private:
     const char *m_name;
-    static int m_depth;
 };
 
 #ifdef NDEBUG
