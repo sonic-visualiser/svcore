@@ -19,6 +19,7 @@
 #include <QDebug>
 #include <QTextStream>
 #include <QElapsedTimer>
+#include <QThread>
 
 #include "RealTime.h"
 
@@ -39,11 +40,13 @@ public:
     ~SVDebug();
 
     template <typename T>
-    inline SVDebug &operator<<(const T &t) {
+    SVDebug &operator<<(const T &t) {
         if (m_silenced) return *this;
         if (m_ok) {
             if (m_eol) {
-                m_stream << m_prefix << "/" << m_timer.elapsed() << ": ";
+                m_stream << m_prefix << "/"
+                         << (int)QThread::currentThreadId() << ":"
+                         << m_timer.elapsed() << ": ";
             }
             m_stream << t;
             m_eol = false;
@@ -51,7 +54,7 @@ public:
         return *this;
     }
 
-    inline SVDebug &operator<<(QTextStreamFunction) {
+    SVDebug &operator<<(QTextStreamFunction) {
         if (m_silenced) return *this;
         m_stream << std::endl;
         m_eol = true;
@@ -113,6 +116,22 @@ using QTextStreamFunctions::endl;
 
 // Writes to both SVDEBUG and cerr
 #define SVCERR getSVCerr()
+
+class FunctionLogger
+{
+public:
+    FunctionLogger(const char *name);
+    ~FunctionLogger();
+private:
+    const char *m_name;
+    static int m_depth;
+};
+
+#ifdef NDEBUG
+#define FUNCLOG
+#else
+#define FUNCLOG FunctionLogger functionLogger(__FUNCTION__)
+#endif
 
 #endif /* !_DEBUG_H_ */
 

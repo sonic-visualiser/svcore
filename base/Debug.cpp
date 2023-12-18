@@ -23,6 +23,7 @@
 #include <QDateTime>
 
 #include <stdexcept>
+#include <sstream>
 #include <memory>
 
 static std::unique_ptr<SVDebug> svdebug = nullptr;
@@ -147,3 +148,29 @@ SVCerr::installQtMessageHandler()
 {
     (void)qInstallMessageHandler(svCerrQtMessageHandler);
 }
+
+int FunctionLogger::m_depth = 0;
+
+FunctionLogger::FunctionLogger(const char *name) :
+    m_name(name)
+{
+    std::ostringstream os;
+    for (int i = 0; i < m_depth; ++i) {
+        os << "  ";
+    }
+    os << "-[>] " << m_name;
+    SVDEBUG << os.str() << endl;
+    ++m_depth;
+}
+
+FunctionLogger::~FunctionLogger()
+{
+    --m_depth;
+    std::ostringstream os;
+    for (int i = 0; i < m_depth; ++i) {
+        os << "  ";
+    }
+    os << "<[-] " << m_name;
+    SVDEBUG << os.str() << endl;
+}
+
