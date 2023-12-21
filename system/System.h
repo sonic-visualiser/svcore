@@ -76,9 +76,6 @@ extern "C" {
 int gettimeofday(struct timeval *p, void *tz);
 }
 
-#define ISNAN std::isnan
-#define ISINF std::isinf
-
 #else
 
 #include <sys/mman.h>
@@ -99,10 +96,6 @@ int gettimeofday(struct timeval *p, void *tz);
 #define DLCLOSE(a)   dlclose((a))
 #define DLERROR()    dlerror()
 
-#include <cmath>
-#define ISNAN std::isnan
-#define ISINF std::isinf
-
 #ifdef __APPLE__
 
 #define PLUGIN_GLOB  "*.dylib *.so"
@@ -117,19 +110,6 @@ int gettimeofday(struct timeval *p, void *tz);
 #define MBARRIER() OSMemoryBarrier()
 
 #else 
-
-#ifdef sun
-#undef MLOCK
-#undef MUNLOCK
-#define MLOCK(a,b) ::mlock((char *)a,b)
-#define MUNLOCK(a,b) ::munlock((char *)a,b)
-#ifdef __SUNPRO_CC
-#undef ISNAN
-#undef ISINF
-#define ISNAN(x) ((x)!=(x))
-#define ISINF(x) 0
-#endif
-#endif
 
 #define PLUGIN_GLOB  "*.so"
 #define PATH_SEPARATOR ':'
