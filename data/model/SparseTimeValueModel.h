@@ -197,7 +197,7 @@ public:
         }
 
         float v = e.getValue();
-        if (!ISNAN(v) && !ISINF(v)) {
+        if (!std::isnan(v) && !std::isinf(v)) {
             if (!m_haveExtents || v < m_valueMinimum) {
                 m_valueMinimum = v; allChange = true;
             }
