@@ -164,6 +164,7 @@ FFTModel::getBinValue(int n) const
 FFTModel::Column
 FFTModel::getColumn(int x) const
 {
+    Profiler profiler("FFTModel::getColumn");
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
@@ -176,6 +177,7 @@ FFTModel::getColumn(int x) const
 FFTModel::Column
 FFTModel::getColumn(int x, int minbin, int nbins) const
 {
+    Profiler profiler("FFTModel::getColumn (subset)");
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(nbins);
@@ -188,6 +190,7 @@ FFTModel::getColumn(int x, int minbin, int nbins) const
 FFTModel::Column
 FFTModel::getPhases(int x) const
 {
+    Profiler profiler("FFTModel::getPhases");
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
