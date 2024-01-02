@@ -89,6 +89,7 @@ public:
     float getMaximumLevel() const override { return 1.f; } // Can't provide
 
     Column getColumn(int x) const override; // magnitudes
+    Column getColumn(int x, int minbin, int nbins) const override; // magnitudes
 
     bool hasBinValues() const override {
         return true;

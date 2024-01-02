@@ -64,6 +64,12 @@ public:
     virtual Column getColumn(int column) const = 0;
 
     /**
+     * Get data from the given column of bin values, within the given
+     * bin range.
+     */
+    virtual Column getColumn(int column, int minbin, int nbins) const = 0;
+
+    /**
      * Get the single data point from the n'th bin of the given column.
      */
     virtual float getValueAt(int column, int n) const = 0;

@@ -167,7 +167,21 @@ FFTModel::getColumn(int x) const
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
-    for (auto c: cplx) col.push_back(abs(c));
+    for (auto c: cplx) {
+        col.push_back(abs(c));
+    }
+    return col;
+}
+
+FFTModel::Column
+FFTModel::getColumn(int x, int minbin, int nbins) const
+{
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(nbins);
+    for (int i = 0; i < nbins; ++i) {
+        col.push_back(abs(cplx[minbin + i]));
+    }
     return col;
 }
 
