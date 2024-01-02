@@ -26,8 +26,9 @@
 #include "system/System.h"
 
 #include <map>
+#include <chrono>
 
-#include "RealTime.h"
+#include <QMutex>
 
 //#define NO_TIMING 1
 
@@ -37,11 +38,6 @@
 #ifndef WANT_TIMING
 #define NO_TIMING 1
 #endif
-#endif
-
-#ifndef NO_TIMING
-#include <ctime>
-#include <sys/time.h>
 #endif
 
 /**
@@ -59,23 +55,25 @@ public:
     static Profiles* getInstance();
     ~Profiles();
 
+    typedef std::chrono::steady_clock::duration Duration;
+
 #ifndef NO_TIMING
-    void accumulate(const char* id, clock_t time, RealTime rt);
+    void accumulate(const char* id, Duration duration);
 #endif
-    void dump() const;
+    void dump();
 
 protected:
     Profiles();
 
 #ifndef NO_TIMING
-    typedef std::pair<clock_t, RealTime> TimePair;
-    typedef std::pair<int, TimePair> ProfilePair;
+    typedef std::pair<int, Duration> ProfilePair;
     typedef std::map<const char *, ProfilePair> ProfileMap;
-    typedef std::map<const char *, TimePair> LastCallMap;
-    typedef std::map<const char *, TimePair> WorstCallMap;
+    typedef std::map<const char *, Duration> LastCallMap;
+    typedef std::map<const char *, Duration> WorstCallMap;
     ProfileMap m_profiles;
     LastCallMap m_lastCalls;
     WorstCallMap m_worstCalls;
+    QMutex m_mutex;
 #endif
 
     static Profiles* m_instance;
@@ -109,8 +107,7 @@ public:
 
 protected:
     const char* m_c;
-    clock_t m_startCPU;
-    RealTime m_startTime;
+    std::chrono::time_point<std::chrono::steady_clock> m_start;
     bool m_showOnDestruct;
     bool m_ended;
 };

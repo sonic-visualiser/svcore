@@ -16,12 +16,21 @@
 #define HIT_COUNT_H
 
 #include <string>
-#include <iostream>
 
 /**
  * Profile class for counting cache hits and the like.
  */
 #ifndef NO_HIT_COUNTS
+
+//#define NO_HIT_COUNTS 1
+
+//#define WANT_HIT_COUNTS 1
+
+#ifdef NDEBUG
+#ifndef WANT_HIT_COUNTS
+#define NO_HIT_COUNTS 1
+#endif
+#endif
 
 class HitCount
 {
@@ -33,28 +42,7 @@ public:
         m_miss(0)
     { }
     
-    ~HitCount() {
-        using namespace std;
-        int total = m_hit + m_partial + m_miss;
-        cerr << "Hit count: " << m_name << ": ";
-        if (m_partial > 0) {
-            cerr << m_hit << " hits, " << m_partial << " partial, "
-                 << m_miss << " misses";
-        } else {
-            cerr << m_hit << " hits, " << m_miss << " misses";
-        }
-        if (total > 0) {
-            if (m_partial > 0) {
-                cerr << " (" << ((m_hit * 100.0) / total) << "%, "
-                     << ((m_partial * 100.0) / total) << "%, "
-                     << ((m_miss * 100.0) / total) << "%)";
-            } else {
-                cerr << " (" << ((m_hit * 100.0) / total) << "%, "
-                     << ((m_miss * 100.0) / total) << "%)";
-            }
-        }
-        cerr << endl;
-    }
+    ~HitCount();
 
     void hit() { ++m_hit; }
     void partial() { ++m_partial; }
