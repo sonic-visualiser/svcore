@@ -17,11 +17,6 @@
 
 #include <string>
 
-/**
- * Profile class for counting cache hits and the like.
- */
-#ifndef NO_HIT_COUNTS
-
 //#define NO_HIT_COUNTS 1
 
 //#define WANT_HIT_COUNTS 1
@@ -32,6 +27,11 @@
 #endif
 #endif
 
+#ifndef NO_HIT_COUNTS
+
+/**
+ * Profile class for counting cache hits and the like.
+ */
 class HitCount
 {
 public:

@@ -14,6 +14,8 @@
 
 #include "HitCount.h"
 
+#ifndef NO_HIT_COUNTS
+
 #include "Debug.h"
 
 HitCount::~HitCount()
@@ -39,3 +41,4 @@ HitCount::~HitCount()
     SVDEBUG << endl;
 }
 
+#endif
