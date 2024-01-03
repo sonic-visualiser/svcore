@@ -41,7 +41,6 @@ PowerOfSqrtTwoZoomConstraint
 ReadOnlyWaveFileModel::m_zoomConstraint;
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate) :
-    m_source(source),
     m_path(source.getLocation()),
     m_reader(nullptr),
     m_myReader(true),
@@ -59,9 +58,9 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
     SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
             << m_path << ", target rate " << targetRate << endl;
     
-    m_source.waitForData();
+    source.waitForData();
 
-    if (m_source.isOK()) {
+    if (source.isOK()) {
 
         Preferences *prefs = Preferences::getInstance();
         
@@ -78,7 +77,7 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
         
         params.threadingMode = AudioFileReaderFactory::ThreadingMode::Threaded;
 
-        m_reader = AudioFileReaderFactory::createReader(m_source, params);
+        m_reader = AudioFileReaderFactory::createReader(source, params);
         if (m_reader) {
             SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << endl;
@@ -94,7 +93,6 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
 }
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader) :
-    m_source(source),
     m_path(source.getLocation()),
     m_reader(nullptr),
     m_myReader(false),
@@ -105,14 +103,39 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     m_prevCompletion(0),
     m_exiting(false)
 {
-    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with reader)");
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with source and reader)");
 
-    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: source path "
             << m_path << ", with reader" << endl;
     
     m_reader = reader;
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
+    fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
+}
+
+ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(QString path, AudioFileReader *reader) :
+    m_path(path),
+    m_reader(nullptr),
+    m_myReader(false),
+    m_startFrame(0),
+    m_fillThread(nullptr),
+    m_updateTimer(nullptr),
+    m_lastFillExtent(0),
+    m_prevCompletion(0),
+    m_exiting(false)
+{
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with path and reader)");
+
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: supplied path "
+            << m_path << ", with reader" << endl;
+    
+    m_reader = reader;
+    if (m_reader) setObjectName(m_reader->getTitle());
+    if (objectName() == "") setObjectName(m_path);
     fillCache();
     
     PlayParameterRepository::getInstance()->addPlayable
@@ -787,8 +810,8 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
 
 void
 ReadOnlyWaveFileModel::toXml(QTextStream &out,
-                     QString indent,
-                     QString extraAttributes) const
+                             QString indent,
+                             QString extraAttributes) const
 {
     Model::toXml(out, indent,
                  QString("type=\"wavefile\" file=\"%1\" %2")

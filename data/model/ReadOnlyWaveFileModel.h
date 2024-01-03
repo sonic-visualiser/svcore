@@ -39,18 +39,28 @@ class ReadOnlyWaveFileModel : public WaveFileModel
 
 public:
     /**
-     * Construct a WaveFileModel from a source path and optional
-     * resampling target rate
+     * Construct a WaveFileModel from a source and optional resampling
+     * target rate.
      */
     ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate = 0);
 
     /**
-     * Construct a WaveFileModel from a source path using an existing
+     * Construct a WaveFileModel from a source and an existing
      * AudioFileReader. The model does not take ownership of the
      * AudioFileReader, which remains managed by the caller and must
      * outlive the model.
      */
     ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader);
+
+    /**
+     * Construct a WaveFileModel from a nominal filename or path using
+     * an existing AudioFileReader. The path is not resolved, but used
+     * only to identify the source when serialised; it may be any
+     * string. The model does not take ownership of the
+     * AudioFileReader, which remains managed by the caller and must
+     * outlive the model.
+     */
+    ReadOnlyWaveFileModel(QString path, AudioFileReader *reader);
     
     ~ReadOnlyWaveFileModel();
 
@@ -126,7 +136,6 @@ protected:
          
     void fillCache();
 
-    FileSource m_source;
     QString m_path;
     AudioFileReader *m_reader;
     bool m_myReader;
