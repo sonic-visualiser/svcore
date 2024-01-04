@@ -19,7 +19,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include "base/Debug.h"
+#include "Debug.h"
+#include "Profiler.h"
 
 using namespace std;
 
@@ -119,6 +120,8 @@ ColumnOp::distribute(const Column &in,
                      int minbin,
                      bool interpolate)
 {
+    Profiler profiler("ColumnOp::distribute");
+    
     Column out(h, 0.f);
     int bins = int(in.size());
 
