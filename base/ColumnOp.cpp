@@ -120,9 +120,21 @@ ColumnOp::distribute(const Column &in,
                      int minbin,
                      bool interpolate)
 {
+    Column out(h, 0.f);
+    distribute(out, in, h, binfory, minbin, interpolate);
+    return out;
+}
+
+void
+ColumnOp::distribute(Column &out,
+                     const Column &in,
+                     int h,
+                     const std::vector<double> &binfory,
+                     int minbin,
+                     bool interpolate)
+{
     Profiler profiler("ColumnOp::distribute");
     
-    Column out(h, 0.f);
     int bins = int(in.size());
 
     if (interpolate) {
@@ -206,6 +218,4 @@ ColumnOp::distribute(const Column &in,
             }
         }
     }
-
-    return out;
 }

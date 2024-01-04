@@ -134,6 +134,23 @@ public:
                              const std::vector<double> &binfory,
                              int minbin,
                              bool interpolate);
+    
+    /**
+     * Distribute the given column into a target vector of a different
+     * size, optionally using linear interpolation. The binfory vector
+     * contains a mapping from y coordinate (i.e. index into the
+     * target vector) to bin (i.e. index into the source column). The
+     * source column ("in") may be a partial column; it's assumed to
+     * contain enough bins to span the destination range, starting
+     * with the bin of index minbin. The target column ("out") must be
+     * of length (at least) h.
+     */
+    static void distribute(Column &out,
+                           const Column &in,
+                           int h,
+                           const std::vector<double> &binfory,
+                           int minbin,
+                           bool interpolate);
 
 };
 
