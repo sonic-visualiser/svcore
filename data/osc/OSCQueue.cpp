@@ -25,11 +25,15 @@
 #include <iostream>
 #include <QThread>
 
+#ifdef HAVE_LIBLO
+#include <unistd.h>
+#endif
+
+namespace sv {
+
 #define OSC_MESSAGE_QUEUE_SIZE 1023
 
 #ifdef HAVE_LIBLO
-
-#include <unistd.h>
 
 void
 OSCQueue::oscError(int num, const char *msg, const char *path)
@@ -248,4 +252,6 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
 
     return true;
 }
+
+} // end namespace sv
 

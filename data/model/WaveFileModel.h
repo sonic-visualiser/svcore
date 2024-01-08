@@ -20,6 +20,8 @@
 
 #include <stdlib.h>
 
+namespace sv {
+
 class WaveFileModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
@@ -48,5 +50,7 @@ public:
 protected:
     WaveFileModel() { } // only accessible from subclasses
 };    
+
+} // end namespace sv
 
 #endif

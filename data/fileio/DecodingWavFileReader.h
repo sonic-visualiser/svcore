@@ -23,6 +23,8 @@
 #include <set>
 #include <atomic>
 
+namespace sv {
+
 class WavFileReader;
 class ProgressReporter;
 
@@ -85,6 +87,8 @@ protected:
 
     DecodeThread *m_decodeThread;
 };
+
+} // end namespace sv
 
 #endif
 

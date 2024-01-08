@@ -19,6 +19,8 @@
 #include "DenseThreeDimensionalModel.h"
 #include "EditableDenseThreeDimensionalModel.h"
 
+namespace sv {
+
 /**
  * A DenseThreeDimensionalModel that represents a reduction in the
  * time dimension of another DenseThreeDimensionalModel. Each column
@@ -155,5 +157,7 @@ private:
     void fillColumn(int column) const;
 };
 
+
+} // end namespace sv
 
 #endif

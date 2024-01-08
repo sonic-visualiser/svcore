@@ -19,6 +19,8 @@
 
 #include "base/HitCount.h"
 
+namespace sv {
+
 Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                                              int columnsPerPeak) :
     m_source(sourceId),
@@ -146,4 +148,6 @@ Dense3DModelPeakCache::fillColumn(int column) const
     m_coverage[column] = true;
 }
 
+
+} // end namespace sv
 

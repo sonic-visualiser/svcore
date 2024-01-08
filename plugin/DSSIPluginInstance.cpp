@@ -38,13 +38,7 @@
 
 #define EVENT_BUFFER_SIZE 1023
 
-#ifdef DEBUG_DSSI
-static std::ostream &operator<<(std::ostream& o, const QString &s)
-{
-    o << s;
-    return o;
-}
-#endif
+namespace sv {
 
 DSSIPluginInstance::GroupMap DSSIPluginInstance::m_groupMap;
 snd_seq_event_t **DSSIPluginInstance::m_groupLocalEventBuffers = nullptr;
@@ -1346,3 +1340,4 @@ DSSIPluginInstance::cleanup()
 #endif
 }
 
+} // end namespace sv

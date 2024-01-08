@@ -16,6 +16,8 @@
 #include "Selection.h"
 #include <QTextStream>
 
+namespace sv {
+
 Selection::Selection() :
     m_startFrame(0),
     m_endFrame(0)
@@ -239,3 +241,5 @@ MultiSelection::toString() const
     }
     return "(" + list.join(",") + ")";
 }
+} // end namespace sv
+

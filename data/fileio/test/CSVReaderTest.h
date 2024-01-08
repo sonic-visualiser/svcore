@@ -33,6 +33,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class CSVReaderTest : public QObject
 {

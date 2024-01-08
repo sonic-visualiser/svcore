@@ -36,6 +36,8 @@
 
 #include <QMutexLocker>
 
+namespace sv {
+
 using std::vector;
 using std::set;
 using std::map;
@@ -339,3 +341,5 @@ ModelTransformerFactory::haveRunningTransformers() const
     
     return (!m_runningTransformers.empty());
 }
+} // end namespace sv
+

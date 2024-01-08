@@ -20,6 +20,8 @@
 #include <ostream>
 #include <cmath>
 
+namespace sv {
+
 /** Display zoom level. Can be an integer number of samples per pixel,
  *  or an integer number of pixels per sample.
  */
@@ -120,5 +122,7 @@ struct ZoomLevel {
 };
 
 std::ostream &operator<<(std::ostream &s, const ZoomLevel &z);
+
+} // end namespace sv
 
 #endif

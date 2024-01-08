@@ -31,6 +31,8 @@
 #include <vector>
 #include <memory>
 
+namespace sv {
+
 class AudioPlaySource;
 
 class ModelTransformerFactory : public QObject
@@ -174,5 +176,7 @@ protected:
     static ModelTransformerFactory *m_instance;
 };
 
+
+} // end namespace sv
 
 #endif

@@ -23,6 +23,8 @@
 
 using namespace std;
 
+namespace sv {
+
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
                                              DecodeMode decodeMode,
                                              CacheMode mode,
@@ -201,4 +203,6 @@ DecodingWavFileReader::supports(FileSource &source)
     return WavFileReader::supports(source);
 }
 
+
+} // end namespace sv
 

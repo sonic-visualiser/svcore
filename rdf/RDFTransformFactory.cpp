@@ -34,6 +34,8 @@
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
 
+namespace sv {
+
 using Dataquay::Uri;
 using Dataquay::Node;
 using Dataquay::Nodes;
@@ -456,4 +458,6 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
 
     return str;
 }
+
+} // end namespace sv
 

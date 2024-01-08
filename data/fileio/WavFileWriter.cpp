@@ -32,6 +32,8 @@
 
 using namespace std;
 
+namespace sv {
+
 WavFileWriter::WavFileWriter(QString path,
                              sv_samplerate_t sampleRate,
                              int channels,
@@ -227,4 +229,6 @@ WavFileWriter::close()
     }
     return true;
 }
+
+} // end namespace sv
 

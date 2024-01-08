@@ -22,6 +22,8 @@
 #include <QDir>
 #include <QFileInfo>
 
+namespace sv {
+
 QStringList
 HelperExecPath::getTags()
 {
@@ -184,3 +186,4 @@ HelperExecPath::search(QString basename, QStringList &candidates)
     return executables;
 }
 
+}

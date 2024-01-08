@@ -24,6 +24,8 @@
 
 /// A rather eccentric interface for matching texts in differently-scored fields
 
+namespace sv {
+
 class TextMatcher
 {
 public:
@@ -53,5 +55,7 @@ public:
 
 };
 
+
+} // end namespace sv
 
 #endif

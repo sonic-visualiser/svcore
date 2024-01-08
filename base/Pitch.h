@@ -18,6 +18,8 @@
 
 #include <QString>
 
+namespace sv {
+
 class Pitch
 {
 public:
@@ -166,5 +168,7 @@ public:
                                        double concertA = 0.0);
 };
 
+
+} // end namespace sv
 
 #endif

@@ -31,6 +31,8 @@
 using namespace std;
 using namespace Vamp;
 
+namespace sv {
+
 CSVFeatureWriter::CSVFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
                       SupportOneFileTotal |
@@ -311,5 +313,7 @@ CSVFeatureWriter::writeFeature(DataId tt,
     
     stream << "\n";
 }
+
+} // end namespace sv
 
 

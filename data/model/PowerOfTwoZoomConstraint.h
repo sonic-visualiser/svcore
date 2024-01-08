@@ -18,6 +18,8 @@
 
 #include "base/ZoomConstraint.h"
 
+namespace sv {
+
 class PowerOfTwoZoomConstraint : virtual public ZoomConstraint
 {
 public:
@@ -30,6 +32,8 @@ protected:
                                     RoundingDirection dir = RoundNearest)
         const;
 };
+
+} // end namespace sv
 
 #endif
 

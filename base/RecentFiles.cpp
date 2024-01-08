@@ -22,6 +22,8 @@
 #include <QRegularExpression>
 #include <QMutexLocker>
 
+namespace sv {
+
 RecentFiles::RecentFiles(QString settingsGroup, int maxCount) :
     m_settingsGroup(settingsGroup),
     m_maxCount(maxCount)
@@ -180,4 +182,6 @@ RecentFiles::addFile(QString filepath, QString label)
     }
 }
 
+
+} // end namespace sv
 

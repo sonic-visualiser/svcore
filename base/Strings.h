@@ -17,6 +17,8 @@
 
 #include <QString>
 
+namespace sv {
+
 class Strings
 {
 public:
@@ -26,5 +28,7 @@ public:
     static QString infinity;
     static QString minus_infinity;
 };
+
+} // end namespace sv
 
 #endif

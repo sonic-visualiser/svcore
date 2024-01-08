@@ -21,6 +21,8 @@
 
 #include "base/RealTime.h"
 
+namespace sv {
+
 class Command;
 
 /**
@@ -137,5 +139,7 @@ protected:
         else return QString("%1 %2").arg(value).arg(unit);
     }
 };
+
+} // end namespace sv
 
 #endif

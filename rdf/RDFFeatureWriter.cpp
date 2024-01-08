@@ -31,8 +31,11 @@
 #endif
 
 using namespace std;
+
 using Vamp::Plugin;
 using Vamp::PluginBase;
+
+namespace sv {
 
 RDFFeatureWriter::RDFFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
@@ -819,4 +822,6 @@ void RDFFeatureWriter::finish()
     FileFeatureWriter::finish();
 }
 
+
+} // end namespace sv
 

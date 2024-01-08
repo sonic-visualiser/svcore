@@ -28,6 +28,8 @@
 #include <vector>
 #include <complex>
 
+namespace sv {
+
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
  * derived from a DenseTimeValueModel available as a generic data
@@ -219,5 +221,7 @@ private:
 
     void clearCaches();
 };
+
+} // end namespace sv
 
 #endif

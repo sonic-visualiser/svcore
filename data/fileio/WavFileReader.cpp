@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace sv {
+
 WavFileReader::WavFileReader(FileSource source,
                              bool fileUpdating,
                              Normalisation normalisation) :
@@ -328,4 +330,6 @@ WavFileReader::supports(FileSource &source)
             supportsContentType(source.getContentType()));
 }
 
+
+} // end namespace sv
 

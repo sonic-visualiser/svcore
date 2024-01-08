@@ -26,6 +26,8 @@
 
 using std::string;
 
+namespace sv {
+
 class PluginScan::Logger
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
     : public PluginCandidates::LogCallback
@@ -367,4 +369,6 @@ PluginScan::getStartupFailureReport() const
     return "";
 #endif
 }
+
+} // end namespace sv
 

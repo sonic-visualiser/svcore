@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+namespace sv {
+
 /**
  * Base class for models containing dense two-dimensional data (value
  * against time) that may be meaningfully represented in a zoomed view
@@ -101,6 +103,8 @@ public:
 
     QString getTypeName() const override { return tr("Range-Summarisable Time-Value"); }
 };
+
+} // end namespace sv
 
 #endif
 

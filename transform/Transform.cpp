@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 Transform::Transform() :
     m_summaryType(NoSummary),
     m_stepSize(0),
@@ -524,4 +526,6 @@ Transform::setFromAttributes(const Attributes &attrs)
         setSummaryType(stringToSummaryType(attrs.value("summaryType")));
     }
 }
+
+} // end namespace sv
 

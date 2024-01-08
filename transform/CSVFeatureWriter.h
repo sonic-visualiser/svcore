@@ -34,6 +34,8 @@ using std::map;
 class QTextStream;
 class QFile;
 
+namespace sv {
+
 class CSVFeatureWriter : public FileFeatureWriter
 {
 public:
@@ -77,5 +79,7 @@ private:
 
     int m_digits;
 };
+
+} // end namespace sv
 
 #endif

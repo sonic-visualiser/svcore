@@ -26,19 +26,7 @@
 
 #include <QString>
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 3, 0))
-#ifdef __GNUC__
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-static uint qHash(float key, uint seed = 0) {
-    uint h = seed;
-    const uchar *p = reinterpret_cast<const uchar *>(&key);
-    for (size_t i = 0; i < sizeof(key); ++i) {
-        h = 31 * h + p[i];
-    }
-    return h;
-}
-#endif
+namespace sv {
 
 /**
  * An immutable(-ish) type used for point and event representation in
@@ -492,5 +480,7 @@ inline uint qHash(const Event &e, uint seed = 0) {
 }
 
 typedef std::vector<Event> EventVector;
+
+} // end namespace sv
 
 #endif

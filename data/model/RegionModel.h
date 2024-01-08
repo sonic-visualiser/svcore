@@ -26,6 +26,8 @@
 
 #include "system/System.h"
 
+namespace sv {
+
 /**
  * RegionModel -- a model for intervals associated with a value, which
  * we call regions for no very compelling reason.
@@ -374,5 +376,7 @@ protected:
 
     EventSeries m_events;
 };
+
+} // end namespace sv
 
 #endif

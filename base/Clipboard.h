@@ -20,6 +20,8 @@
 
 #include "Event.h"
 
+namespace sv {
+
 class Clipboard
 {
 public:
@@ -38,5 +40,7 @@ public:
 protected:
     EventVector m_points;
 };
+
+} // end namespace sv
 
 #endif

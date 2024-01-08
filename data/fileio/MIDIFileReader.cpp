@@ -52,6 +52,8 @@ using std::vector;
 using std::map;
 using std::set;
 
+namespace sv {
+
 using namespace MIDIConstants;
 
 //#define MIDI_DEBUG 1
@@ -1061,5 +1063,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
     return model;
 }
+
+} // end namespace sv
 
 

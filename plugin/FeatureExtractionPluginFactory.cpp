@@ -22,6 +22,8 @@
 #include "base/Preferences.h"
 #include "base/Debug.h"
 
+namespace sv {
+
 FeatureExtractionPluginFactory *
 FeatureExtractionPluginFactory::instance()
 {
@@ -48,3 +50,6 @@ FeatureExtractionPluginFactory::instance()
 
     return instance;
 }
+
+} // end namespace sv
+

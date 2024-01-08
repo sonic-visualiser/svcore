@@ -19,6 +19,8 @@
 #include <cassert>
 #include "system/System.h"
 
+namespace sv {
+
 const double AudioLevel::DB_FLOOR = -1000.;
 
 struct ScaleDescription
@@ -255,4 +257,6 @@ AudioLevel::voltage_to_fader(double v, int maxLevel, Scale type)
     return fader;
 }
         
+
+} // end namespace sv
 

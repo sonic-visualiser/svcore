@@ -21,6 +21,8 @@
 
 //#define DEBUG_BY_ID 1
 
+namespace sv {
+
 int IdAlloc::getNextId()
 {
     static int nextId = 0;
@@ -154,3 +156,6 @@ AnyById::impl()
     static Impl impl;
     return impl;
 }
+
+} // end namespace sv
+

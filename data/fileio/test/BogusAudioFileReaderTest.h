@@ -23,6 +23,8 @@
 #include <QtTest>
 #include <QDir>
 
+using namespace sv;
+
 // Tests for malformed audio files - primarily to ensure we don't crash
 
 class BogusAudioFileReaderTest : public QObject

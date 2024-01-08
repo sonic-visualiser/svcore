@@ -19,6 +19,8 @@
 
 #include <cmath>
 
+namespace sv {
+
 double
 Pitch::getFrequencyForPitch(int midiPitch,
                             double centsOffset,
@@ -212,4 +214,6 @@ Pitch::isFrequencyInMidiRange(double frequency,
     int midiPitch = getPitchForFrequency(frequency, &centsOffset, concertA);
     return (midiPitch >= 0 && midiPitch < 128);
 }
+
+} // end namespace sv
 

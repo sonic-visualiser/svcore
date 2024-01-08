@@ -27,6 +27,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 // NB model & dataset IDs in the export tests are incremental,
 // depending on how many have been exported in previous tests - so

@@ -25,6 +25,8 @@
 #include <QStringList>
 #include <QChar>
 
+namespace sv {
+
 class StringBits
 {
 public:
@@ -86,5 +88,7 @@ public:
      */
     static bool isValidUtf8(const std::string &bytes, bool isTruncated);
 };
+
+} // end namespace sv
 
 #endif

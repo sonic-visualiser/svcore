@@ -17,6 +17,8 @@
 
 #include <vector>
 
+namespace sv {
+
 /**
  * Maintain a min and max value, and update them when supplied a new
  * data point.
@@ -89,5 +91,7 @@ private:
     T m_min;
     T m_max;
 };
+
+} // end namespace sv
 
 #endif

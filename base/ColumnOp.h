@@ -20,6 +20,8 @@
 
 #include <vector>
 
+namespace sv {
+
 /**
  * Display normalization types for columns in e.g. grid plots.
  *
@@ -153,6 +155,8 @@ public:
                            bool interpolate);
 
 };
+
+} // end namespace sv
 
 #endif
 

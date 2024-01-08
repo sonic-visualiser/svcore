@@ -20,6 +20,8 @@
 #include "ReadOnlyWaveFileModel.h"
 #include "PowerOfSqrtTwoZoomConstraint.h"
 
+namespace sv {
+
 class WavFileWriter;
 class WavFileReader;
 
@@ -235,6 +237,8 @@ private:
     void init(QString path = "");
     void normaliseToTarget();
 };
+
+} // end namespace sv
 
 #endif
 

@@ -23,6 +23,8 @@
 #include <vector>
 #include <memory>
 
+namespace sv {
+
 class PlayParameters;
 class RangeMapper;
 
@@ -183,5 +185,7 @@ protected:
     virtual bool convertPropertyStrings(QString nameString, QString valueString,
                                         PropertyName &name, int &value);
 };
+
+} // end namespace sv
 
 #endif

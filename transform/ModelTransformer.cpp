@@ -17,6 +17,8 @@
 
 #include "TransformFactory.h"
 
+namespace sv {
+
 ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
     m_input(input),
     m_abandoned(false)
@@ -52,3 +54,5 @@ ModelTransformer::checkTransformsExist()
         }
     }
 }
+} // end namespace sv
+

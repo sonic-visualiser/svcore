@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 using std::shared_ptr;
 using std::dynamic_pointer_cast;
 
@@ -229,4 +231,6 @@ PluginXml::stripInvalidParameterNameCharacters(QString s) const
     s.replace(QRegularExpression("[^a-zA-Z0-9_]*"), "");
     return s;
 }
+
+} // end namespace sv
 

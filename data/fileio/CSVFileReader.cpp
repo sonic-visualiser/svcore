@@ -44,6 +44,8 @@
 
 using namespace std;
 
+namespace sv {
+
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              sv_samplerate_t mainModelSampleRate,
                              ProgressReporter *reporter) :
@@ -702,4 +704,6 @@ CSVFileReader::getConvertedAudioFilePath() const
     return QDir(convertedFileDir).filePath
         (QString("%1-%2.wav").arg(base).arg(s));
 }
+
+} // end namespace sv
 

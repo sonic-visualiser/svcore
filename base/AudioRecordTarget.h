@@ -17,6 +17,8 @@
 
 #include "BaseTypes.h"
 
+namespace sv {
+
 /**
  * The record target API used by the view manager. See also AudioPlaySource.
  */
@@ -43,6 +45,8 @@ public:
      */
     virtual bool getInputLevels(float &left, float &right) = 0;
 };
+
+} // end namespace sv
 
 #endif
 

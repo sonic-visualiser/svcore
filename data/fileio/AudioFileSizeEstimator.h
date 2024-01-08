@@ -18,6 +18,8 @@
 #include "base/BaseTypes.h"
 #include "data/fileio/FileSource.h"
 
+namespace sv {
+
 /**
  * Estimate the number of samples in an audio file. For many
  * compressed files this returns only a very approximate estimate,
@@ -45,5 +47,7 @@ public:
     static sv_frame_t estimate(FileSource source,
                                sv_samplerate_t targetRate = 0);
 };
+
+} // end namespace sv
 
 #endif

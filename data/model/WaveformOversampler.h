@@ -17,6 +17,8 @@
 
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class DenseTimeValueModel;
 
 /** Oversample the sample data from a DenseTimeValueModel by an
@@ -53,5 +55,7 @@ private:
     static int m_filterRatio;
     static floatvec_t m_filter;
 };
+
+} // end namespace sv
 
 #endif

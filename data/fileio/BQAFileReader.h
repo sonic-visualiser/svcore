@@ -23,6 +23,8 @@
 #include <set>
 #include <atomic>
 
+namespace sv {
+
 class ProgressReporter;
 
 /**
@@ -68,7 +70,7 @@ protected:
     QString m_title;
     QString m_maker;
 
-    breakfastquay::AudioReadStream *m_stream;
+    ::breakfastquay::AudioReadStream *m_stream;
 
     std::atomic<bool> m_cancelled;
     int m_completion;
@@ -83,6 +85,8 @@ protected:
     };
     DecodeThread *m_decodeThread;
 };
+
+} // end namespace sv
 
 #endif
 

@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 PlayParameterRepository *
 PlayParameterRepository::m_instance = new PlayParameterRepository;
 
@@ -199,4 +201,6 @@ PlayParameterRepository::EditCommand::getName() const
     if (name == "") return multiname;
     return name;
 }
+
+} // end namespace sv
 

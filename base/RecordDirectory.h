@@ -17,6 +17,8 @@
 
 #include <QString>
 
+namespace sv {
+
 /**
  * Report the intended target location for recorded audio files.
  */
@@ -65,5 +67,7 @@ public:
      */
     static QString getConvertedAudioDirectory();
 };
+
+} // end namespace sv
 
 #endif

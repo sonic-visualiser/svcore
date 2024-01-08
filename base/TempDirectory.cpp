@@ -28,6 +28,8 @@
 
 #include <time.h>
 
+namespace sv {
+
 TempDirectory *
 TempDirectory::m_instance = new TempDirectory;
 
@@ -274,5 +276,5 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
     }
 }
 
+} // end namespace sv
 
-        

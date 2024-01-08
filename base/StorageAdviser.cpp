@@ -22,6 +22,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 QString
 StorageAdviser::criteriaToString(int criteria)
 {
@@ -272,4 +274,6 @@ StorageAdviser::setFixedRecommendation(Recommendation recommendation)
 {
     m_baseRecommendation = recommendation;
 }
+
+} // end namespace sv
 

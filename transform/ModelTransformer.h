@@ -22,6 +22,8 @@
 
 #include "Transform.h"
 
+namespace sv {
+
 /**
  * A ModelTransformer turns one data model into another.
  *
@@ -132,5 +134,7 @@ protected:
 private:
     void checkTransformsExist();
 };
+
+} // end namespace sv
 
 #endif

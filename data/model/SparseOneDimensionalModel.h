@@ -30,6 +30,8 @@
 
 #include <QStringList>
 
+namespace sv {
+
 /**
  * A model representing a series of time instants with optional labels
  * but without values.
@@ -336,6 +338,8 @@ protected:
 
     EventSeries m_events;
 };
+
+} // end namespace sv
 
 #endif
 

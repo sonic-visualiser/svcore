@@ -21,6 +21,8 @@
 
 #include <QString>
 
+namespace sv {
+
 QString
 DataFileReaderFactory::getKnownExtensions()
 {
@@ -143,4 +145,6 @@ DataFileReaderFactory::loadCSV(QString path, CSVFormat format,
         throw;
     }
 }
+
+} // end namespace sv
 

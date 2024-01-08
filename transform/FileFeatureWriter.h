@@ -38,6 +38,8 @@ using std::pair;
 class QTextStream;
 class QFile;
 
+namespace sv {
+
 class FileFeatureWriter : public FeatureWriter
 {
 public:
@@ -102,5 +104,7 @@ protected:
     bool m_append;
     bool m_force;
 };
+
+} // end namespace sv
 
 #endif

@@ -20,6 +20,8 @@
 
 #include "ZoomLevel.h"
 
+namespace sv {
+
 /**
  * ZoomConstraint is a simple interface that describes a limitation on
  * the available zoom sizes for a view, for example based on cache
@@ -82,6 +84,8 @@ public:
         return { ZoomLevel::FramesPerPixel, 4194304 }; // 2^22, arbitrarily
     }
 };
+
+} // end namespace sv
 
 #endif
 

@@ -41,6 +41,8 @@
 
 //#define DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN 1
 
+namespace sv {
+
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
                                                                      const Transform &transform) :
     ModelTransformer(in, transform),
@@ -1266,4 +1268,6 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
          setOutputCompletion<RegionModel>(n, completion) ||
          setOutputCompletion<BasicCompressedDenseThreeDimensionalModel>(n, completion));
 }
+
+} // end namespace sv
 

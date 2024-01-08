@@ -28,6 +28,8 @@
 
 #include <set>
 
+namespace sv {
+
 /**
  * Reader for audio files using libsndfile.
  *
@@ -102,5 +104,7 @@ protected:
                                                 sv_frame_t count) const;
     float getMax() const;
 };
+
+} // end namespace sv
 
 #endif

@@ -34,6 +34,8 @@ using std::string;
 using std::map;
 using std::vector;
 
+namespace sv {
+
 class FeatureWriter
 {
 public:
@@ -115,5 +117,7 @@ public:
 
     virtual QString getWriterTag() const = 0;
 };
+
+} // end namespace sv
 
 #endif

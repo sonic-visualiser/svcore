@@ -25,6 +25,8 @@
 
 #include "plugin/Provider.h"
 
+namespace sv {
+
 class PluginRDFDescription
 {
 public:
@@ -77,6 +79,8 @@ protected:
     bool indexMetadata();
     bool indexOutputs();
 };
+
+} // end namespace sv
 
 #endif
 

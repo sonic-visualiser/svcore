@@ -37,6 +37,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 using std::vector;
 using std::string;
 using Vamp::PluginHostAdapter;
@@ -400,3 +402,5 @@ PluginRDFIndexer::reindex()
     
     return addedSomething;
 }
+} // end namespace sv
+

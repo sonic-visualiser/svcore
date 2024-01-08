@@ -35,6 +35,8 @@
 #include <cmath>
 
 
+namespace sv {
+
 LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
                                            int clientId,
                                            QString identifier,
@@ -586,5 +588,7 @@ LADSPAPluginInstance::cleanup()
 
     m_instanceHandles.clear();
 }
+
+} // end namespace sv
 
 

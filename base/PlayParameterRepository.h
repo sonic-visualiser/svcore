@@ -19,6 +19,8 @@
 #include "PlayParameters.h"
 #include "Command.h"
 
+namespace sv {
+
 class Playable;
 
 #include <map>
@@ -93,5 +95,7 @@ protected:
 
     static PlayParameterRepository *m_instance;
 };
+
+} // end namespace sv
 
 #endif

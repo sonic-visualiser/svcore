@@ -29,6 +29,8 @@
 
 #include "base/Debug.h"
 
+namespace sv {
+
 class OSCMessage
 {
 public:
@@ -68,5 +70,7 @@ private:
     QString m_method;
     std::vector<QVariant> m_args;
 };
+
+} // end namespace sv
 
 #endif

@@ -26,6 +26,8 @@
 class KnownPluginCandidates {};
 #endif
 
+namespace sv {
+
 class PluginScan
 {
 public:
@@ -95,5 +97,8 @@ private:
     class Logger;
     Logger *m_logger;
 };
+
+} // end namespace sv
+
 
 #endif

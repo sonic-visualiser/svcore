@@ -19,6 +19,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 using std::cerr;
 using std::endl;
 
@@ -85,4 +87,6 @@ ProgressPrinter::setProgress(int progress)
     }
     m_lastProgress = progress;
 }
+
+} // end namespace sv
 

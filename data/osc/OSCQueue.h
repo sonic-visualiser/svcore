@@ -31,6 +31,8 @@
 #include <lo/lo.h>
 #endif
 
+namespace sv {
+
 class OSCQueue : public QObject
 {
     Q_OBJECT
@@ -67,6 +69,8 @@ protected:
     bool m_withPort;
     RingBuffer<OSCMessage *> m_buffer;
 };
+
+} // end namespace sv
 
 #endif
 

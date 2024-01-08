@@ -29,6 +29,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class MIDIFileReaderTest : public QObject
 {

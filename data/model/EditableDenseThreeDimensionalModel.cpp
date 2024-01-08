@@ -26,6 +26,8 @@
 #include <cmath>
 #include <cassert>
 
+namespace sv {
+
 using std::vector;
 
 #include "system/System.h"
@@ -471,4 +473,6 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     out << indent + "</dataset>\n";
 }
 
+
+} // end namespace sv
 

@@ -32,6 +32,8 @@
 #include <memory>
 #include <atomic>
 
+namespace sv {
+
 /**
  * TransformFactory catalogues both "installed" transforms (based on
  * plugins available to load) and "uninstalled" ones (based on RDF or
@@ -330,5 +332,7 @@ protected:
     TransformFactory();
     virtual ~TransformFactory();
 };
+
+} // end namespace sv
 
 #endif

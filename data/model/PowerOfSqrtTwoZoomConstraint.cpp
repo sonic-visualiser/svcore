@@ -21,6 +21,8 @@
 #include "base/Debug.h"
 
 
+namespace sv {
+
 ZoomLevel
 PowerOfSqrtTwoZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
                                                   RoundingDirection dir) const
@@ -143,3 +145,6 @@ PowerOfSqrtTwoZoomConstraint::getNearestBlockSize(int blockSize,
 
     return result;
 }   
+
+} // end namespace sv
+

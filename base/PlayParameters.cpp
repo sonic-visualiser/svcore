@@ -19,6 +19,8 @@
 
 #include <QTextStream>
 
+namespace sv {
+
 void
 PlayParameters::copyFrom(const PlayParameters *pp)
 {
@@ -126,3 +128,6 @@ PlayParameters::setPlayClipId(QString id)
         emit playParametersChanged();
     }
 }
+
+} // end namespace sv
+

@@ -23,6 +23,8 @@
 #include <QObject>
 #include <QtTest>
 
+using namespace sv;
+
 class TestWaveformOversampler : public QObject
 {
     Q_OBJECT

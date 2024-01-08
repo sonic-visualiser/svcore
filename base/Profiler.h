@@ -40,6 +40,8 @@
 #endif
 #endif
 
+namespace sv {
+
 /**
  * Profiling classes
  */
@@ -125,5 +127,7 @@ public:
 };
 
 #endif
+
+} // end namespace sv
 
 #endif

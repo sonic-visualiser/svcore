@@ -23,6 +23,8 @@
 
 #include <QMap>
 
+namespace sv {
+
 class PluginXml : public XmlExportable
 {
 public:
@@ -59,5 +61,7 @@ protected:
 
     std::shared_ptr<Vamp::PluginBase> m_plugin;
 };
+
+} // end namespace sv
 
 #endif

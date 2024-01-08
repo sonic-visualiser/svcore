@@ -19,6 +19,8 @@
 #include "ModelTransformer.h"
 #include "plugin/RealTimePluginInstance.h"
 
+namespace sv {
+
 class DenseTimeValueModel;
 
 class RealTimeEffectModelTransformer : public ModelTransformer
@@ -37,6 +39,8 @@ protected:
     std::shared_ptr<RealTimePluginInstance> m_plugin;
     int m_outputNo;
 };
+
+} // end namespace sv
 
 #endif
 

@@ -33,6 +33,8 @@
 
 //#define DEBUG_FILE_SOURCE 1
 
+namespace sv {
+
 int
 FileSource::m_count = 0;
 
@@ -971,4 +973,6 @@ FileSource::createCacheFile()
 
     return false;
 }
+
+} // end namespace sv
 

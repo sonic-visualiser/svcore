@@ -31,6 +31,8 @@
 
 #include <atomic>
 
+namespace sv {
+
 class AudioFileReader;
 
 class ReadOnlyWaveFileModel : public WaveFileModel
@@ -156,5 +158,7 @@ protected:
     mutable sv_frame_t m_lastDirectReadCount;
     mutable QMutex m_directReadMutex;
 };    
+
+} // end namespace sv
 
 #endif

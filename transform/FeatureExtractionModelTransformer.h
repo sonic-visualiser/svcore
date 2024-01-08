@@ -27,6 +27,8 @@
 #include <iostream>
 #include <map>
 
+namespace sv {
+
 class DenseTimeValueModel;
 class SparseTimeValueModel;
 
@@ -113,6 +115,8 @@ protected:
         }
     }
 };
+
+} // end namespace sv
 
 #endif
 

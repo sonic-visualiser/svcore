@@ -21,6 +21,8 @@
 #include "OSCMessage.h"
 
 
+namespace sv {
+
 OSCMessage::~OSCMessage()
 {
     clearArgs();
@@ -49,4 +51,6 @@ OSCMessage::getArg(int i) const
 {
     return m_args[i];
 }
+
+} // end namespace sv
 

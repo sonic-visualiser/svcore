@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace sv {
+
 ColumnOp::Column
 ColumnOp::fftScale(const Column &in, int fftSize)
 {
@@ -219,3 +221,5 @@ ColumnOp::distribute(Column &out,
         }
     }
 }
+} // end namespace sv
+

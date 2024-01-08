@@ -27,6 +27,8 @@
 
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class DenseTimeValueModel;
 class MultiSelection;
 class TempWriteFile;
@@ -83,5 +85,7 @@ protected:
     QString getWriteFilename() const;
 };
 
+
+} // end namespace sv
 
 #endif

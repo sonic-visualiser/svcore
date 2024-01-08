@@ -41,6 +41,8 @@
 
 using std::string;
 
+namespace sv {
+
 DSSIPluginFactory::DSSIPluginFactory() :
     LADSPAPluginFactory()
 {
@@ -432,6 +434,8 @@ DSSIPluginFactory::discoverPluginsFrom(QString soname)
         return;
     }
 }
+
+} // end namespace sv
 
     
 

@@ -23,6 +23,8 @@
 
 #include "transform/Transform.h"
 
+namespace sv {
+
 class RDFTransformFactoryImpl;
 class ProgressReporter;
 
@@ -67,5 +69,7 @@ public:
 protected:
     RDFTransformFactoryImpl *m_d;
 };
+
+} // end namespace sv
 
 #endif

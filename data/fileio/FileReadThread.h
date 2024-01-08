@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 
+namespace sv {
+
 class FileReadThread : public Thread
 {
     Q_OBJECT
@@ -70,5 +72,7 @@ protected:
     void process();
     void notifyCancelled();
 };
+
+} // end namespace sv
 
 #endif

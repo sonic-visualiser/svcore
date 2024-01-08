@@ -19,6 +19,8 @@
 #include <QObject>
 #include <QString>
 
+namespace sv {
+
 class ProgressReporter : public QObject
 {
     Q_OBJECT
@@ -39,5 +41,7 @@ public slots:
     virtual void setMessage(QString text) = 0;
     virtual void setProgress(int percentage) = 0;
 };
+
+} // end namespace sv
 
 #endif

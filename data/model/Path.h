@@ -20,7 +20,10 @@
 #include "base/BaseTypes.h"
 
 #include <QStringList>
+#include <QTextStream>
 #include <set>
+
+namespace sv {
 
 struct PathPoint
 {
@@ -165,5 +168,7 @@ protected:
     Points m_points;
 };
 
+
+} // end namespace sv
 
 #endif

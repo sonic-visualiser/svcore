@@ -17,6 +17,8 @@
 
 #include "base/ZoomConstraint.h"
 
+namespace sv {
+
 class RelativelyFineZoomConstraint : virtual public ZoomConstraint
 {
 public:
@@ -24,6 +26,8 @@ public:
                                           RoundingDirection dir = RoundNearest)
 	const override;
 };
+
+} // end namespace sv
 
 #endif
 

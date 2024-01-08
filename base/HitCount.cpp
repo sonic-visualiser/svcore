@@ -18,6 +18,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 HitCount::~HitCount()
 {
     int total = m_hit + m_partial + m_miss;
@@ -40,5 +42,7 @@ HitCount::~HitCount()
     }
     SVDEBUG << endl;
 }
+
+} // end namespace sv
 
 #endif

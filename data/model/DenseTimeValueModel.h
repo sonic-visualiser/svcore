@@ -20,6 +20,8 @@
 
 #include "Model.h"
 
+namespace sv {
+
 /**
  * Base class for models containing dense two-dimensional data (value
  * against time).  For example, audio waveform data.  Other time-value
@@ -98,5 +100,7 @@ public:
 
     QString getTypeName() const override { return tr("Dense Time-Value"); }
 };
+
+} // end namespace sv
 
 #endif

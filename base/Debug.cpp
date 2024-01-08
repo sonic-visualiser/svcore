@@ -68,7 +68,7 @@ SVDebug::SVDebug() :
         throw std::logic_error("Can't use SVDEBUG before setting application name");
     }
     
-    QString pfx = ResourceFinder().getUserResourcePrefix();
+    QString pfx = sv::ResourceFinder().getUserResourcePrefix();
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
     m_prefix = strdup(QString("[%1]")

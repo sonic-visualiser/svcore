@@ -22,6 +22,8 @@
 using std::cerr;
 using std::endl;
 
+namespace sv {
+
 PropertyContainer::PropertyList
 PropertyContainer::getProperties() const
 {
@@ -253,4 +255,6 @@ PropertyContainer::SetPropertyCommand::getName() const
 {
     return tr("Set %1 Property").arg(m_pn);
 }
+
+} // end namespace sv
 

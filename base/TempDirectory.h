@@ -21,6 +21,8 @@
 
 #include <exception>
 
+namespace sv {
+
 /**
  * A class that manages the creation and removal of a temporary
  * directory tree to store data during the program run.  There is one
@@ -89,5 +91,7 @@ protected:
     static TempDirectory *m_instance;
 };
 
+
+} // end namespace sv
 
 #endif

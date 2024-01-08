@@ -20,6 +20,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 static QMutex recordDirectoryMutex;
 static QString customRecordContainerDirectory = "";
 
@@ -85,4 +87,6 @@ RecordDirectory::getConvertedAudioDirectory()
     }
 }
 
+
+} // end namespace sv
 

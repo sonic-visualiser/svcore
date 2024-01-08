@@ -28,6 +28,8 @@
 #include "../CSVStreamWriter.h"
 #include "../../model/test/MockWaveModel.h"
 
+using namespace sv;
+
 class StubReporter : public ProgressReporter
 {
 public:

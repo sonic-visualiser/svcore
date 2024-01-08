@@ -26,6 +26,7 @@
 //#define REPORT 1
 
 using namespace std;
+using namespace sv;
 
 class TestColumnOp : public QObject
 {

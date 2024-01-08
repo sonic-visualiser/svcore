@@ -20,6 +20,8 @@
 
 #include "base/Debug.h"
 
+namespace sv {
+
 sv_frame_t
 AudioFileSizeEstimator::estimate(FileSource source,
                                  sv_samplerate_t targetRate)
@@ -110,4 +112,6 @@ AudioFileSizeEstimator::estimate(FileSource source,
     
     return estimate;
 }
+
+} // end namespace sv
 

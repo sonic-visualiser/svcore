@@ -16,6 +16,8 @@
 #include "Command.h"
 #include <QCoreApplication>
 
+namespace sv {
+
 MacroCommand::MacroCommand(QString name) :
     m_name(name)
 {
@@ -97,4 +99,6 @@ BundleCommand::getName() const
     if (m_commands.size() == 1) return m_name;
     return tr("%1 (%n change(s))", "", int(m_commands.size())).arg(m_name);
 }
+
+} // end namespace sv
 

@@ -20,6 +20,8 @@
 #include "base/Command.h"
 #include "base/ById.h"
 
+namespace sv {
+
 /**
  * Interface for classes that can be modified through these commands
  */
@@ -172,5 +174,7 @@ protected:
 
     int m_editableId;
 };
+
+} // end namespace sv
 
 #endif

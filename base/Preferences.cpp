@@ -24,6 +24,8 @@
 #include <QMutex>
 #include <QSettings>
 
+namespace sv {
+
 Preferences *
 Preferences::m_instance = nullptr;
 
@@ -773,3 +775,5 @@ Preferences::setShowSplash(bool show)
     }
 }
         
+} // end namespace sv
+

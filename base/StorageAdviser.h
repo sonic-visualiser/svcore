@@ -21,6 +21,8 @@
 
 #include <QString>
 
+namespace sv {
+
 /**
  * A utility class designed to help decide whether to store cache data
  * (for example FFT outputs) in memory or on disk in the TempDirectory.
@@ -105,6 +107,8 @@ private:
     static QString recommendationToString(int);
     static QString storageStatusToString(StorageStatus);
 };
+
+} // end namespace sv
 
 #endif
 

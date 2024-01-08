@@ -18,6 +18,10 @@
 
 #include "Extents.h"
 
+namespace sv {
+
 typedef Extents<float> MagnitudeRange;
+
+} // end namespace sv
 
 #endif

@@ -33,6 +33,8 @@
 
 using namespace std;
 
+namespace sv {
+
 const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
 
 //#define DEBUG_WRITABLE_WAVE_FILE_MODEL 1
@@ -99,7 +101,7 @@ WritableWaveFileModel::init(QString path)
             QDir dir(TempDirectory::getInstance()->getPath());
             path = dir.filePath(QString("written_%1.wav")
                                 .arg(getId().untyped));
-        } catch (const DirectoryCreationFailed &f) {
+        } catch (const DirectoryCreationFailed &) {
             SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }
@@ -372,4 +374,6 @@ WritableWaveFileModel::toXml(QTextStream &out,
          .arg(encodeEntities(m_targetPath))
          .arg(extraAttributes));
 }
+
+} // end namespace sv
 

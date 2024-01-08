@@ -21,6 +21,8 @@
 #include "FileSource.h"
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class AudioFileReader;
 class ProgressReporter;
 
@@ -151,6 +153,8 @@ public:
      */
     static bool isSupported(FileSource source);
 };
+
+} // end namespace sv
 
 #endif
 

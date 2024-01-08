@@ -22,6 +22,8 @@
 
 #include <vector>
 
+namespace sv {
+
 class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
@@ -225,5 +227,7 @@ protected:
 
     mutable QMutex m_mutex;
 };
+
+} // end namespace sv
 
 #endif

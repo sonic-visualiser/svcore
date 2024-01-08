@@ -22,6 +22,8 @@
 #include <QMutex>
 #include <QMutexLocker>
 
+namespace sv {
+
 class DeferredNotifier
 {
 public:
@@ -74,5 +76,7 @@ private:
     QMutex m_mutex;
     Extents<sv_frame_t> m_extents;
 };
+
+} // end namespace sv
 
 #endif

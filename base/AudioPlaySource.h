@@ -20,6 +20,8 @@
 
 #include <memory>
 
+namespace sv {
+
 struct Auditionable {
     virtual ~Auditionable() { }
 };
@@ -110,5 +112,7 @@ public:
     virtual void setAuditioningEffect(std::shared_ptr<Auditionable>) = 0;
 
 };
+
+} // end namespace sv
 
 #endif

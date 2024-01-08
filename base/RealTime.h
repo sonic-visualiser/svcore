@@ -34,6 +34,8 @@
 #include "sys/time.h"
 #endif
 
+namespace sv {
+
 /**
  * RealTime represents time values to nanosecond precision
  * with accurate arithmetic and frame-rate conversion functions.
@@ -206,4 +208,6 @@ struct RealTime
 
 std::ostream &operator<<(std::ostream &out, const RealTime &rt);
     
+} // end namespace sv
+
 #endif

@@ -25,6 +25,8 @@
 #include "TabularModel.h"
 #include "Model.h"
 
+namespace sv {
+
 class TabularModel;
 class Command;
 
@@ -95,5 +97,7 @@ protected:
     void resortAlphabetical() const;
     void clearSort();
 };
+
+} // end namespace sv
 
 #endif

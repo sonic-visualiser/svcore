@@ -45,6 +45,8 @@
 
 using std::string;
 
+namespace sv {
+
 static sv_frame_t DEFAULT_DECODER_DELAY = 529;
 
 MP3FileReader::MP3FileReader(FileSource source, DecodeMode decodeMode, 
@@ -634,6 +636,8 @@ MP3FileReader::supports(FileSource &source)
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));
 }
+
+} // end namespace sv
 
 
 #endif

@@ -29,6 +29,8 @@
 #include <QMutex>
 #include <iostream>
 
+namespace sv {
+
 /**
  * A very simple class that facilitates running things like plugins
  * without locking, by collecting unwanted objects and deleting them
@@ -198,5 +200,7 @@ Scavenger<T>::clearExcess(time_t sec)
     m_lastExcess = sec;
     m_excessMutex.unlock();
 }
+
+} // end namespace sv
 
 #endif

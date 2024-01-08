@@ -15,7 +15,11 @@
 
 #include "WaveFileModel.h"
 
+namespace sv {
+
 WaveFileModel::~WaveFileModel()
 {
 }
+
+} // end namespace sv
 

@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace sv {
+
 BQAFileReader::BQAFileReader(FileSource source,
 			     DecodeMode decodeMode,
 			     CacheMode mode,
@@ -207,4 +209,6 @@ BQAFileReader::supports(FileSource &source)
     return (supportsExtension(source.getExtension()) ||
             supportsContentType(source.getContentType()));
 }
+
+} // end namespace sv
 

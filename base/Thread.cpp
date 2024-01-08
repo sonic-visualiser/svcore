@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 Thread::Thread(Type type, QObject *parent) :
     QThread(parent),
     m_type(type)
@@ -53,7 +55,6 @@ Thread::start()
             ::perror("WARNING: pthread_setschedparam to SCHED_OTHER failed");
         }
     }        
-
 #endif
 }
 
@@ -90,4 +91,7 @@ MutexLocker::Printer::~Printer()
               << "\" in " << (void *)QThread::currentThreadId() << endl;
 #endif
 }
+
+
+} // end namespace sv
 

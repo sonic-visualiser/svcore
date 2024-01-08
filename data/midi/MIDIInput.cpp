@@ -19,6 +19,8 @@
 
 #include "system/System.h"
 
+namespace sv {
+
 MIDIInput::MIDIInput(QString name, FrameTimer *timer) :
     m_rtmidi(nullptr),
     m_frameTimer(timer),
@@ -133,4 +135,6 @@ MIDIInput::postEvent(MIDIEvent e)
     m_buffer.write(&me, 1);
     emit eventsAvailable();
 }
+
+} // end namespace sv
 

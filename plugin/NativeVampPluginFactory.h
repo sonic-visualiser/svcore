@@ -25,6 +25,8 @@
 
 #include <QMutex>
 
+namespace sv {
+
 /**
  * FeatureExtractionPluginFactory type for Vamp plugins hosted
  * in-process.
@@ -64,5 +66,7 @@ protected:
     std::vector<QString> getPluginPath();
     void generateTaxonomy();
 };
+
+} // end namespace sv
 
 #endif

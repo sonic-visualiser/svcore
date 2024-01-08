@@ -29,6 +29,8 @@
 #include <set>
 #include <map>
 
+namespace sv {
+
 Profiles* Profiles::m_instance = nullptr;
 
 Profiles* Profiles::getInstance()
@@ -199,4 +201,6 @@ Profiler::end()
 }
  
 #endif
+
+} // end namespace sv
 

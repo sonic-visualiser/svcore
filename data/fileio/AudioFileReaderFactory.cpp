@@ -29,6 +29,8 @@
 
 using namespace std;
 
+namespace sv {
+
 QString
 AudioFileReaderFactory::getKnownExtensions()
 {
@@ -219,5 +221,7 @@ AudioFileReaderFactory::createReader(FileSource source,
             << "\", content type \""
             << source.getContentType() << "\")" << endl;
     return nullptr;
+}
+
 }
 

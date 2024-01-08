@@ -21,6 +21,8 @@
 
 #include <bqvec/Allocators.h>
 
+namespace sv {
+
 /** Frame index, the unit of our time axis. This is signed because the
     axis conceptually extends below zero: zero represents the start of
     the main loaded audio model, not the start of time; a windowed
@@ -63,6 +65,8 @@ typedef uint64_t sv_id_t;
 enum {
     ID_NOTHING = 0
 };
+
+} // end namespace sv
 
 #endif
 

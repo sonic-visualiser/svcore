@@ -26,6 +26,8 @@
 
 #include "Debug.h"
         
+namespace sv {
+
 class ResourceFinder
 {
 public:
@@ -132,6 +134,8 @@ public:
      */
     QStringList getResourcePrefixList();
 };
+
+} // end namespace sv
 
 #endif
 

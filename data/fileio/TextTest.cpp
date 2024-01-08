@@ -20,6 +20,8 @@
 #include <QFile>
 #include <QXmlStreamReader>
 
+namespace sv {
+
 bool
 TextTest::isApparentTextDocument(FileSource source)
 {
@@ -63,3 +65,6 @@ TextTest::isApparentTextDocument(FileSource source)
     SVDEBUG << "NOTE: TextTest::isApparentTextDocument: Document is not UTF-8 and is not XML, rejecting" << endl;
     return false;
 }
+
+} // end namespace sv
+

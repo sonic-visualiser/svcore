@@ -20,6 +20,8 @@
 
 #include "Window.h"
 
+namespace sv {
+
 class Preferences : public PropertyContainer
 {
     Q_OBJECT
@@ -179,5 +181,7 @@ private:
     int m_octave;
     bool m_showSplash;
 };
+
+} // end namespace sv
 
 #endif

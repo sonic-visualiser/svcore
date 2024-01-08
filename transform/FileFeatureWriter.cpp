@@ -30,6 +30,8 @@
 using namespace std;
 using namespace Vamp;
 
+namespace sv {
+
 FileFeatureWriter::FileFeatureWriter(int support,
                                      QString extension) :
     m_prevstream(nullptr),
@@ -383,4 +385,6 @@ FileFeatureWriter::finish()
     }
     m_prevstream = nullptr;
 }
+
+} // end namespace sv
 

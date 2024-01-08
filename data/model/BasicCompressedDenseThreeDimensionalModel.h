@@ -22,6 +22,8 @@
 
 #include <vector>
 
+namespace sv {
+
 class BasicCompressedDenseThreeDimensionalModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
@@ -247,5 +249,7 @@ protected:
 
     mutable QReadWriteLock m_lock;
 };
+
+} // end namespace sv
 
 #endif

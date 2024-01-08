@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 
+namespace sv {
+
 class AudioFileReader : public QObject
 {
     Q_OBJECT
@@ -170,5 +172,7 @@ protected:
     int m_channelCount;
     sv_samplerate_t m_sampleRate;
 };
+
+} // end namespace sv
 
 #endif

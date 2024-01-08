@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
                                                                const Transform &t) :
     ModelTransformer(in, t),
@@ -317,4 +319,6 @@ RealTimeEffectModelTransformer::run()
     if (stvm) stvm->setCompletion(100);
     if (wwfm) wwfm->writeComplete();
 }
+
+} // end namespace sv
 

@@ -18,6 +18,8 @@
 
 #include <QString>
 
+namespace sv {
+
 class Playable
 {
 public:
@@ -27,5 +29,7 @@ public:
     virtual QString getDefaultPlayClipId() const { return ""; }
     virtual bool getDefaultPlayAudible() const { return true; }
 };
+
+} // end namespace sv
 
 #endif

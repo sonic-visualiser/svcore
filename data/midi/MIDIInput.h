@@ -25,6 +25,8 @@
 
 class RtMidiIn;
 
+namespace sv {
+
 class MIDIInput : public QObject
 {
     Q_OBJECT
@@ -52,6 +54,8 @@ protected:
     void postEvent(MIDIEvent);
     RingBuffer<MIDIEvent *> m_buffer;
 };
+
+} // end namespace sv
 
 #endif
 

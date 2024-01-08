@@ -31,6 +31,8 @@
 
 //#define DEBUG_FILE_READ_THREAD 1
 
+namespace sv {
+
 FileReadThread::FileReadThread() :
     m_nextToken(0),
     m_exiting(false)
@@ -325,5 +327,6 @@ FileReadThread::notifyCancelled()
         m_newlyCancelled.erase(token);
     }
 }
-        
     
+} // end namespace sv
+

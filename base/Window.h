@@ -27,6 +27,8 @@
 
 #include "system/System.h"
 
+namespace sv {
+
 enum WindowType {
     RectangularWindow,
     BartlettWindow,
@@ -227,5 +229,7 @@ Window<T>::getTypeForName(std::string name)
 
     return HanningWindow;
 }
+
+} // end namespace sv
 
 #endif

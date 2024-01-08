@@ -20,6 +20,8 @@
 
 #include <set>
 
+namespace sv {
+
 struct Provider
 {
     QString infoUrl;
@@ -86,5 +88,7 @@ struct Provider
         return !operator==(other);
     }
 };
+
+} // end namespace sv
 
 #endif

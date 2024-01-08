@@ -15,8 +15,11 @@
 
 #include "CSVFormat.h"
 
+//#define DEBUG_COLUMN_QUALITIES 1
+
 #include "base/StringBits.h"
 #include "base/UnitDatabase.h"
+#include "base/Debug.h"
 
 #include <QFile>
 #include <QString>
@@ -26,9 +29,7 @@
 
 #include <iostream>
 
-#include "base/Debug.h"
-
-//#define DEBUG_COLUMN_QUALITIES 1
+namespace sv {
 
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
@@ -633,4 +634,6 @@ CSVFormat::updateScaleUnits()
         }
     }
 }
+
+} // end namespace sv
 

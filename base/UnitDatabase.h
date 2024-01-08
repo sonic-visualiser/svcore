@@ -26,6 +26,8 @@
 // unit dropdown menus etc.  Of course, the user should be allowed to
 // enter their own as well.
 
+namespace sv {
+
 class UnitDatabase : public QObject
 {
     Q_OBJECT
@@ -70,6 +72,8 @@ protected:
 
     static UnitDatabase m_instance;
 };
+
+} // end namespace sv
 
 #endif
 

@@ -42,6 +42,8 @@
 
 //#define DEBUG_TRANSFORM_FACTORY 1
 
+namespace sv {
+
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
 
@@ -1330,4 +1332,6 @@ TransformFactory::searchUnadjusted(QStringList keywords)
     
     return results;
 }
+
+} // end namespace sv
 

@@ -33,6 +33,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 const char utf8_name_cdp_1[] = "Caf\303\251 de Paris";
 const char utf8_name_cdp_2[] = "Caf\303\251 de \351\207\215\345\272\206";

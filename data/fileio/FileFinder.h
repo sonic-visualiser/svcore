@@ -18,6 +18,8 @@
 
 #include <QString>
 
+namespace sv {
+
 class FileFinder 
 {
 public:
@@ -76,6 +78,8 @@ protected:
         container->setFileFinder(ff);
     }
 };
+
+} // end namespace sv
 
 #endif
 

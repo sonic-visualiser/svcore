@@ -26,6 +26,8 @@
 
 #include <memory>
 
+namespace sv {
+
 class FeatureExtractionPluginFactory
 {
 public:
@@ -65,5 +67,7 @@ public:
      */
     virtual QString getPluginLibraryPath(QString identifier) = 0;
 };
+
+} // end namespace sv
 
 #endif

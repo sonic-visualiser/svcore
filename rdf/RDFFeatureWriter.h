@@ -38,6 +38,8 @@ using std::pair;
 class QTextStream;
 class QFile;
 
+namespace sv {
+
 class RDFFeatureWriter : public FileFeatureWriter
 {
 public:
@@ -143,5 +145,7 @@ private:
 
     long m_count;
 };
+
+} // end namespace sv
 
 #endif

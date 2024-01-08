@@ -18,6 +18,8 @@
 
 #include "ProgressReporter.h"
 
+namespace sv {
+
 class ProgressPrinter : public ProgressReporter
 {
     Q_OBJECT
@@ -41,5 +43,7 @@ protected:
     int m_lastProgress;
     bool m_definite;
 };
+
+} // end namespace sv
 
 #endif

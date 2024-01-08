@@ -27,6 +27,8 @@
 #include "base/Debug.h"
 #include "base/HelperExecPath.h"
 
+namespace sv {
+
 /**
  * FeatureExtractionPluginFactory type for Vamp plugins hosted in a
  * separate process using Piper protocol.
@@ -67,6 +69,8 @@ protected:
     class Logger;
     Logger *m_logger;
 };
+
+} // end namespace sv
 
 #endif
 

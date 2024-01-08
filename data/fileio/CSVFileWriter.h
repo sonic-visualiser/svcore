@@ -21,6 +21,8 @@
 
 #include "base/DataExportOptions.h"
 
+namespace sv {
+
 class Model;
 class MultiSelection;
 class ProgressReporter;
@@ -60,6 +62,8 @@ protected:
     DataExportOptions m_options;
     ProgressReporter *m_reporter = nullptr;
 };
+
+} // end namespace sv
 
 #endif
 

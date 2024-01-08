@@ -21,6 +21,8 @@
 #include "CSVFormat.h"
 #include "MIDIFileReader.h"
 
+namespace sv {
+
 class DataFileReader;
 class Model;
 class ProgressReporter;
@@ -91,6 +93,8 @@ protected:
                                         sv_samplerate_t mainModelSampleRate,
                                         ProgressReporter *reporter = 0);
 };
+
+} // end namespace sv
 
 #endif
 

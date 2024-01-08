@@ -14,6 +14,8 @@
 
 #include "ZoomLevel.h"
 
+namespace sv {
+
 std::ostream &operator<<(std::ostream &s, const ZoomLevel &z) {
     if (z.zone == ZoomLevel::PixelsPerFrame) {
         s << "1/" << z.level;
@@ -22,4 +24,6 @@ std::ostream &operator<<(std::ostream &s, const ZoomLevel &z) {
     }
     return s;
 }
+
+} // end namespace sv
 

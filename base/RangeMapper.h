@@ -21,6 +21,8 @@
 #include "Debug.h"
 #include <map>
 
+namespace sv {
+
 class RangeMapper 
 {
 public:
@@ -264,5 +266,7 @@ protected:
 
     MappingType chooseMappingTypeFor(const CoordMap &);
 };
+
+} // end namespace sv
 
 #endif

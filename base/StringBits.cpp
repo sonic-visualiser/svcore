@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace sv {
+
 double
 StringBits::stringToDoubleLocaleFree(QString s, bool *ok)
 {
@@ -171,6 +173,8 @@ StringBits::split(QString line, QChar separator, bool quoted)
 #else
             QString::SkipEmptyParts :
             QString::KeepEmptyParts
+} // end namespace sv
+
 #endif
             );
     }
@@ -262,6 +266,4 @@ StringBits::isValidUtf8(const std::string &bytes, bool isTruncated)
     return true;
 }
 
-
-        
-
+}

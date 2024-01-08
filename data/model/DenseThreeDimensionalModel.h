@@ -25,6 +25,8 @@
 #include <QMutex>
 #include <QVector>
 
+namespace sv {
+
 class DenseThreeDimensionalModel : public Model,
                                    public TabularModel
 {
@@ -195,5 +197,7 @@ public:
 protected:
     DenseThreeDimensionalModel() { }
 };
+
+} // end namespace sv
 
 #endif

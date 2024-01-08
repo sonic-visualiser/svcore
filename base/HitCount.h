@@ -27,6 +27,8 @@
 #endif
 #endif
 
+namespace sv {
+
 #ifndef NO_HIT_COUNTS
 
 /**
@@ -68,5 +70,7 @@ public:
 };
 
 #endif
+
+} // end namespace sv
 
 #endif

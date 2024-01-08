@@ -33,6 +33,8 @@
 // for one reason and another it's more convenient to use a fixed
 // block size in this wrapper.
 //
+namespace sv {
+
 class LADSPAPluginInstance : public RealTimePluginInstance
 {
 public:
@@ -129,6 +131,8 @@ protected:
     
     bool                      m_bypassed;
 };
+
+} // end namespace sv
 
 #endif // _LADSPAPLUGININSTANCE_H_
 

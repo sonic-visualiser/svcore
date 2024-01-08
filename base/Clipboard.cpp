@@ -15,6 +15,8 @@
 
 #include "Clipboard.h"
 
+namespace sv {
+
 Clipboard::Clipboard() { }
 Clipboard::~Clipboard() { }
 
@@ -67,4 +69,6 @@ Clipboard::referenceFramesDiffer() const
     } 
     return false;
 }
+
+} // end namespace sv
 

@@ -22,6 +22,8 @@
 
 //#define DEBUG_COMPLETION 1
 
+namespace sv {
+
 Model::~Model()
 {
     SVDEBUG << "Model::~Model: " << this << " with id " << getId() << endl;
@@ -214,4 +216,6 @@ Model::toXml(QTextStream &stream, QString indent,
         .arg(extraAttributes);
 }
 
+
+} // end namespace sv
 

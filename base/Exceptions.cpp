@@ -19,6 +19,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 FileNotFound::FileNotFound(QString file) throw() :
     m_file(file)
 {
@@ -142,4 +144,6 @@ AllocationFailed::what() const throw()
     return msg.data();
 }
 
+
+} // end namespace sv
 

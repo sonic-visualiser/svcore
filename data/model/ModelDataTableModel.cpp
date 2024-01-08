@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace sv {
+
 ModelDataTableModel::ModelDataTableModel(ModelId m) :
     m_model(m),
     m_sortColumn(0),
@@ -420,3 +422,5 @@ ModelDataTableModel::clearSort()
 }
 
     
+} // end namespace sv
+

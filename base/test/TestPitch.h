@@ -25,6 +25,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class TestPitch : public QObject
 {

@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 PlaylistFileReader::PlaylistFileReader(QString path) :
     m_source(path),
     m_file(nullptr)
@@ -163,3 +165,5 @@ PlaylistFileReader::isSupported(FileSource source)
     QString ext = source.getExtension();
     return (supported.find(ext) != supported.end());
 }
+} // end namespace sv
+

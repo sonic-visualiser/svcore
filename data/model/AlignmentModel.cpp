@@ -19,6 +19,8 @@
 
 //#define DEBUG_ALIGNMENT_MODEL 1
 
+namespace sv {
+
 AlignmentModel::AlignmentModel(ModelId reference,
                                ModelId aligned,
                                ModelId pathSource) :
@@ -452,3 +454,6 @@ AlignmentModel::toXml(QTextStream &stream,
                  .arg(m_path->getExportId())
                  .arg(extraAttributes));
 }
+
+} // end namespace sv
+

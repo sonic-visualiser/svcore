@@ -33,6 +33,8 @@
 
 using namespace std;
 
+namespace sv {
+
 static HitCount inSmallCache("FFTModel: Small FFT cache");
 static HitCount inSourceCache("FFTModel: Source data cache");
 
@@ -724,4 +726,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
 
     return peaks;
 }
+
+} // end namespace sv
 

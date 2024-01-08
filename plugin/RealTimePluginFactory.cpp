@@ -30,6 +30,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 sv_samplerate_t RealTimePluginFactory::m_sampleRate = 48000;
 
 static LADSPAPluginFactory *_ladspaInstance = nullptr;
@@ -129,4 +131,6 @@ RealTimePluginFactory::enumerateAllPlugins(std::vector<QString> &list)
     // Plugins can change the locale, revert it to default.
     RestoreStartupLocale();
 }
+
+} // end namespace sv
 

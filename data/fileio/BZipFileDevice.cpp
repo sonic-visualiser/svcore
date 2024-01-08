@@ -28,6 +28,8 @@
 #include <unistd.h>
 #endif
 
+namespace sv {
+
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
     m_qfile(fileName),
@@ -262,4 +264,6 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
 
     return maxSize;
 }
+
+} // end namespace sv
 

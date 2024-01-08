@@ -37,6 +37,8 @@ using namespace std;
 //#define DEBUG_WAVE_FILE_MODEL 1
 //#define DEBUG_WAVE_FILE_MODEL_READ 1
 
+namespace sv {
+
 PowerOfSqrtTwoZoomConstraint
 ReadOnlyWaveFileModel::m_zoomConstraint;
 
@@ -817,5 +819,7 @@ ReadOnlyWaveFileModel::toXml(QTextStream &out,
                  QString("type=\"wavefile\" file=\"%1\" %2")
                  .arg(encodeEntities(m_path)).arg(extraAttributes));
 }
+
+} // end namespace sv
 
     

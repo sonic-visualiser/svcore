@@ -26,6 +26,8 @@
 #include "data/model/TextModel.h"
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 
+namespace sv {
+
 bool
 RDFExporter::canExportModel(Model *m)
 {
@@ -170,4 +172,6 @@ RDFExporter::getSupportedExtensions()
 {
     return "*.ttl *.n3";
 }
+
+} // end namespace sv
 

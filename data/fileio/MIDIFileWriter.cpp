@@ -40,6 +40,8 @@ using std::ofstream;
 using std::string;
 using std::ios;
 
+namespace sv {
+
 using namespace MIDIConstants;
 
 MIDIFileWriter::MIDIFileWriter(QString path, const NoteExportable *exportable,
@@ -428,4 +430,6 @@ MIDIFileWriter::convert()
 
     return true;
 }
+
+} // end namespace sv
 

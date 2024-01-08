@@ -31,6 +31,8 @@
 
 using namespace std;
 
+namespace sv {
+
 CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
                                            sv_samplerate_t targetRate,
                                            bool normalised) :
@@ -598,4 +600,6 @@ CodedAudioFileReader::getInterleavedFrames(sv_frame_t start, sv_frame_t count) c
 
     return frames;
 }
+
+} // end namespace sv
 

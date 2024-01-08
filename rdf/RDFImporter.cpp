@@ -43,6 +43,8 @@
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
 
+namespace sv {
+
 using Dataquay::Uri;
 using Dataquay::Node;
 using Dataquay::Nodes;
@@ -892,4 +894,6 @@ RDFImporter::isPlausibleDocumentOfAnyKind(QUrl url)
 {
     return TextTest::isApparentTextDocument(FileSource(url));
 }
+
+} // end namespace sv
 

@@ -28,6 +28,8 @@
 
 #include <QStringList>
 
+namespace sv {
+
 /**
  * A model representing casual textual annotations. A piece of text
  * has a given time and y-value in the [0,1) range (indicative of
@@ -311,6 +313,8 @@ protected:
 
 };
 
+
+} // end namespace sv
 
 #endif
 

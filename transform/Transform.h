@@ -28,6 +28,8 @@
 #include <map>
 #include <vector>
 
+namespace sv {
+
 typedef QString TransformId;
 
 class Transform : public XmlExportable
@@ -204,6 +206,8 @@ protected:
 };
 
 typedef std::vector<Transform> Transforms;
+
+} // end namespace sv
 
 #endif
 

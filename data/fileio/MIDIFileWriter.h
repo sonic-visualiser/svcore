@@ -32,6 +32,8 @@
 #include <map>
 #include <fstream>
 
+namespace sv {
+
 class MIDIEvent;
 class NoteExportable;
 
@@ -91,5 +93,7 @@ protected:
     std::ofstream        *m_midiFile;
     QString               m_error;
 };
+
+} // end namespace sv
 
 #endif

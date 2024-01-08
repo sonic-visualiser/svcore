@@ -24,6 +24,8 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace sv {
+
 /**
  * Obtain the median (or other percentile) of a moving window across a
  * time series. Construct the MovingMedian object, then push() each
@@ -230,6 +232,8 @@ private:
         }
     }
 };
+
+} // end namespace sv
 
 #endif
 

@@ -41,6 +41,8 @@
 
 #define ONE_BILLION 1000000000
 
+namespace sv {
+
 RealTime::RealTime(int s, int n) :
     sec(s), nsec(n)
 {
@@ -506,4 +508,6 @@ RealTime::frame2RealTime(sv_frame_t frame, sv_samplerate_t sampleRate)
 }
 
 const RealTime RealTime::zeroTime(0,0);
+
+} // end namespace sv
 
