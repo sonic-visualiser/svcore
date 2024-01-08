@@ -55,9 +55,22 @@ public:
 
     virtual ~CSVFileReader();
 
+    /**
+     * Return true if the reader has been constructed successfully.
+     */
     bool isOK() const override;
+
+    /**
+     * If the reader could not be constructed successfully, return an
+     * error string.
+     */
     QString getError() const override;
 
+    /**
+     * Load the file and return a new model representing its
+     * contents. On success, return a model allocated with new, with
+     * ownership passed to the caller. On failure, return null.
+     */
     Model *load() const override;
 
 protected:

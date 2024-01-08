@@ -95,6 +95,11 @@ private:
     {
         Display display = Auto;
 
+        if (std::isnan(r.min) || std::isinf(r.min) ||
+            std::isnan(r.max) || std::isinf(r.max)) {
+            SVDEBUG << "WARNING: ScaleTickIntervals::linearInstruction: NaN or Inf found in range (" << r.min << " -> " << r.max << ")" << endl;
+            return { 0.0, 1.0, 1.0, 0.0, display, 1, false };
+        }
         if (r.max < r.min) {
             return linearInstruction({ r.max, r.min, r.n });
         }
@@ -190,6 +195,11 @@ private:
                 << r.min << " to " << r.max << endl;
 #endif
         
+        if (std::isnan(r.min) || std::isinf(r.min) ||
+            std::isnan(r.max) || std::isinf(r.max)) {
+            SVDEBUG << "WARNING: ScaleTickIntervals::logInstruction: NaN or Inf found in range (" << r.min << " -> " << r.max << ")" << endl;
+            return { 0.0, 1.0, 1.0, 0.0, display, 1, false };
+        }
         if (r.n < 1) {
             return {};
         }
@@ -344,8 +354,12 @@ private:
         int n = 0;
 
         Ticks ticks;
+        int hardLimit = 500;
         
-        while (true) {
+        while (n < hardLimit) { // (Just to avoid an infinite loop if
+                                // the instruction is mathematically
+                                // ill-behaved - the break just below
+                                // is the normal exit condition)
 
             double value = instruction.initial + n * instruction.spacing;
 

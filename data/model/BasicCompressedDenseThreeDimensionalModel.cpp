@@ -362,7 +362,7 @@ BasicCompressedDenseThreeDimensionalModel::setColumn(int index,
 
     for (int i = 0; in_range_for(values, i); ++i) {
         float value = values[i];
-        if (ISNAN(value) || ISINF(value)) {
+        if (std::isnan(value) || std::isinf(value)) {
             continue;
         }
         if (!m_haveExtents || value < m_minimum) {

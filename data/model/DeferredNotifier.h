@@ -45,6 +45,7 @@ public:
     void update(sv_frame_t frame, sv_frame_t duration) {
         if (m_mode == NOTIFY_ALWAYS) {
             m_model->modelChangedWithin(m_modelId, frame, frame + duration);
+            m_model->modelChanged(m_modelId);
         } else {
             QMutexLocker locker(&m_mutex);
             m_extents.sample(frame);
@@ -64,6 +65,7 @@ public:
         }
         if (shouldEmit) {
             m_model->modelChangedWithin(m_modelId, from, to);
+            m_model->modelChanged(m_modelId);
             QMutexLocker locker(&m_mutex);
             m_extents.reset();
         }

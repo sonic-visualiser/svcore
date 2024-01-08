@@ -246,8 +246,9 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
             return nullptr;
 
         } else {
-            char *buffer = (char *)malloc(strlen(value) + 80);
-            sprintf(buffer, "Sample directory \"%s\" does not exist, leaving unchanged", value);
+            size_t len = strlen(value) + 80;
+            char *buffer = (char *)malloc(len);
+            snprintf(buffer, len, "Sample directory \"%s\" does not exist, leaving unchanged", value);
             return buffer;
         }
     }
@@ -560,6 +561,8 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 
 #ifdef DEBUG_SAMPLE_PLAYER
         SVCERR << "SamplePlayer: have " << notecount << " note(s) sounding currently" << endl;
+#else
+        (void)notecount;
 #endif
 
         pos += count;
