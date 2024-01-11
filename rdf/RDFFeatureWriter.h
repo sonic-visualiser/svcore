@@ -30,11 +30,6 @@
 
 #include "PluginRDFDescription.h"
 
-using std::string;
-using std::map;
-using std::set;
-using std::pair;
-
 class QTextStream;
 class QFile;
 
@@ -46,18 +41,18 @@ public:
     RDFFeatureWriter();
     virtual ~RDFFeatureWriter();
 
-    string getDescription() const override;
+    std::string getDescription() const override;
 
     ParameterList getSupportedParameters() const override;
-    void setParameters(map<string, string> &params) override;
+    void setParameters(std::map<std::string, std::string> &params) override;
 
     void setTrackMetadata(QString trackid, TrackMetadata metadata) override;
 
     void write(QString trackid,
-                       const Transform &transform,
-                       const Vamp::Plugin::OutputDescriptor &output,
-                       const Vamp::Plugin::FeatureList &features,
-                       std::string summaryType = "") override;
+               const Transform &transform,
+               const Vamp::Plugin::OutputDescriptor &output,
+               const Vamp::Plugin::FeatureList &features,
+               std::string summaryType = "") override;
 
     virtual void setFixedEventTypeURI(QString uri); // something of a hack
 
@@ -66,10 +61,10 @@ public:
     QString getWriterTag() const override { return "rdf"; }
 
 private:
-    typedef map<QString, PluginRDFDescription> RDFDescriptionMap; // by plugin id
+    typedef std::map<QString, PluginRDFDescription> RDFDescriptionMap; // by plugin id
     RDFDescriptionMap m_rdfDescriptions;
 
-    typedef map<QString, TrackMetadata> TrackMetadataMap;
+    typedef std::map<QString, TrackMetadata> TrackMetadataMap;
     TrackMetadataMap m_metadata;
 
     bool haveTitleArtistMetadata(QString trackId) const {
@@ -119,21 +114,21 @@ private:
                        QString signalURI,
                        QString timelineURI);
 
-    set<QString> m_startedTrackIds;
+    std::set<QString> m_startedTrackIds;
 
-    map<QTextStream *, set<Transform> > m_startedStreamTransforms;
+    std::map<QTextStream *, std::set<Transform> > m_startedStreamTransforms;
 
-    map<QString, QString> m_trackTrackURIs;
-    map<QString, QString> m_trackTimelineURIs;
-    map<QString, QString> m_trackSignalURIs;
+    std::map<QString, QString> m_trackTrackURIs;
+    std::map<QString, QString> m_trackTimelineURIs;
+    std::map<QString, QString> m_trackSignalURIs;
 
-    map<Transform, QString> m_transformURIs;
-    map<Transform, QString> m_syntheticEventTypeURIs;
-    map<Transform, QString> m_syntheticSignalTypeURIs;
+    std::map<Transform, QString> m_transformURIs;
+    std::map<Transform, QString> m_syntheticEventTypeURIs;
+    std::map<Transform, QString> m_syntheticSignalTypeURIs;
 
-    typedef pair<QString, Transform> StringTransformPair;
-    typedef pair<QTextStream *, QString> StreamBuffer;
-    map<StringTransformPair, StreamBuffer> m_openDenseFeatures; // signal URI + transform -> stream + text
+    typedef std::pair<QString, Transform> StringTransformPair;
+    typedef std::pair<QTextStream *, QString> StreamBuffer;
+    std::map<StringTransformPair, StreamBuffer> m_openDenseFeatures; // signal URI + transform -> stream + text
     QString m_userAudioFileUri;
     QString m_userTrackUri;
     QString m_userMakerUri;

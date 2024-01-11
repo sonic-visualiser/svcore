@@ -30,10 +30,6 @@
 
 #include <vamp-hostsdk/Plugin.h>
 
-using std::string;
-using std::map;
-using std::vector;
-
 namespace sv {
 
 class FeatureWriter
@@ -41,21 +37,21 @@ class FeatureWriter
 public:
     virtual ~FeatureWriter() { }
 
-    virtual string getDescription() const = 0;
+    virtual std::string getDescription() const = 0;
 
     struct Parameter { // parameter of the writer, not the plugin
         Parameter() : hasArg(false), mandatory(false) { }
-        string name;
-        string description;
+        std::string name;
+        std::string description;
         bool hasArg;
         bool mandatory;
     };
-    typedef vector<Parameter> ParameterList;
+    typedef std::vector<Parameter> ParameterList;
     virtual ParameterList getSupportedParameters() const {
         return ParameterList();
     }
 
-    virtual void setParameters(map<string, string> &) {
+    virtual void setParameters(std::map<std::string, std::string> &) {
         return;
     }
 

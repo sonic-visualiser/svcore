@@ -28,9 +28,6 @@
 
 #include "FileFeatureWriter.h"
 
-using std::string;
-using std::map;
-
 class QTextStream;
 class QFile;
 
@@ -42,10 +39,10 @@ public:
     CSVFeatureWriter();
     virtual ~CSVFeatureWriter();
 
-    string getDescription() const override;
+    std::string getDescription() const override;
 
     ParameterList getSupportedParameters() const override;
-    void setParameters(map<string, string> &params) override;
+    void setParameters(std::map<std::string, std::string> &params) override;
 
     void write(QString trackid,
                        const Transform &transform,
@@ -65,9 +62,9 @@ private:
     bool m_omitFilename;
     QString m_prevPrintedTrackId;
 
-    typedef pair<QString, Transform> DataId; // track id, transform
-    typedef map<DataId, Vamp::Plugin::Feature> PendingFeatures;
-    typedef map<DataId, std::string> PendingSummaryTypes;
+    typedef std::pair<QString, Transform> DataId; // track id, transform
+    typedef std::map<DataId, Vamp::Plugin::Feature> PendingFeatures;
+    typedef std::map<DataId, std::string> PendingSummaryTypes;
     PendingFeatures m_pending;
     PendingSummaryTypes m_pendingSummaryTypes;
 

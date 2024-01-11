@@ -26,6 +26,9 @@
 #include "data/model/TextModel.h"
 #include "data/model/EditableDenseThreeDimensionalModel.h"
 
+using std::map;
+using std::string;
+
 namespace sv {
 
 bool
