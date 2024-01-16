@@ -120,7 +120,7 @@ protected slots:
 protected:
     void initialize();
 
-    class RangeCacheFillThread : public Thread
+    class RangeCacheFillThread : public QThread
     {
     public:
         RangeCacheFillThread(ReadOnlyWaveFileModel &model) :

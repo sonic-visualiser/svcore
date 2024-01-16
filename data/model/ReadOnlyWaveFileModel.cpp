@@ -57,8 +57,8 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
 {
     Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel");
 
-    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
-            << m_path << ", target rate " << targetRate << endl;
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(" << getId()
+            << "): path " << m_path << ", target rate " << targetRate << endl;
     
     source.waitForData();
 
@@ -132,8 +132,8 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(QString path, AudioFileReader *read
 {
     Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with path and reader)");
 
-    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: supplied path "
-            << m_path << ", with reader" << endl;
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(" << getId()
+            << "): supplied path " << m_path << ", with reader" << endl;
     
     m_reader = reader;
     if (m_reader) setObjectName(m_reader->getTitle());
@@ -152,11 +152,17 @@ ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
         (getId().untyped);
     
     m_exiting = true;
-    if (m_fillThread) m_fillThread->wait();
-    if (m_myReader) delete m_reader;
+    if (m_fillThread) {
+        m_fillThread->wait();
+        delete m_fillThread;
+    }
+    if (m_myReader) {
+        delete m_reader;
+    }
     m_reader = nullptr;
 
-    SVDEBUG << "ReadOnlyWaveFileModel: Destructor exiting; we had caches of "
+    SVDEBUG << "ReadOnlyWaveFileModel(" << getId()
+            << "): Destructor exiting; we had caches of "
             << (m_cache[0].size() * sizeof(Range)) << " and "
             << (m_cache[1].size() * sizeof(Range)) << " bytes" << endl;
 }
@@ -603,6 +609,10 @@ ReadOnlyWaveFileModel::fillCache()
 {
     m_mutex.lock();
 
+#ifdef DEBUG_WAVE_FILE_MODEL
+    SVCERR << "ReadOnlyWaveFileModel(" << objectName() << ")::fillCache: about to start fill thread" << endl;
+#endif
+    
     m_updateTimer = new QTimer(this);
     connect(m_updateTimer, SIGNAL(timeout()), this, SLOT(fillTimerTimedOut()));
     m_updateTimer->start(100);
@@ -697,6 +707,8 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         means[i] = 0.f;
     }
 
+    SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: entering loop" << endl;
+    
     bool first = true;
 
     while (first || updating) {
@@ -759,17 +771,26 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
                 ++frame;
             }
 
-            if (m_model.m_exiting) break;
+            if (m_model.m_exiting) {
+                SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from inner loop" << endl;
+                break;
+            }
             m_fillExtent = frame;
         }
 
         m_model.m_mutex.unlock();
             
         first = false;
-        if (m_model.m_exiting) break;
+        if (m_model.m_exiting) {
+            SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from outer loop" << endl;
+            break;
+        }
         if (updating) {
             usleep(100000);
-            if (m_model.m_exiting) break;
+            if (m_model.m_exiting) {
+                SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from outer loop after wakeup" << endl;
+                break;
+            }
         }
     }
 
@@ -808,6 +829,8 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         SVCERR << "ReadOnlyWaveFileModel(" << m_model.objectName() << "): Cache type " << cacheType << " now contains " << m_model.m_cache[cacheType].size() << " ranges" << endl;
     }
 #endif
+
+    SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: done" << endl;
 }
 
 void
