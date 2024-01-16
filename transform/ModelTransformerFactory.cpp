@@ -341,5 +341,40 @@ ModelTransformerFactory::haveRunningTransformers() const
     
     return (!m_runningTransformers.empty());
 }
+
+bool
+ModelTransformerFactory::cancel(ModelId outputModel)
+{
+    QMutexLocker locker(&m_mutex);
+
+    SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel << ")" << endl;
+    
+    bool found = false;
+    
+    for (auto mt : m_runningTransformers) {
+        for (auto model : mt->getOutputModels()) {
+            if (model == outputModel) {
+                found = true;
+                SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                        << "): Found a transformer, abandoning and waiting"
+                        << endl;
+                mt->abandon();
+                mt->wait();
+                SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                        << "): Done" << endl;
+                break;
+            }
+        }
+        if (found) break;
+    }
+
+    if (!found) {
+        SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                << "): No transformer(s) found" << endl;;
+    }
+    
+    return found;
+}
+
 } // end namespace sv
 

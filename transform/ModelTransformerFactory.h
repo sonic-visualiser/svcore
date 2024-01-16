@@ -90,7 +90,8 @@ public:
      * transform to the given input model.  The transform may still be
      * working in the background when the model is returned; check the
      * output model's isReady completion status for more details. To
-     * cancel a background transform, call abandon() on its model.
+     * cancel a background transform, call cancel() supplying its
+     * output model.
      *
      * If the transform is unknown or the input model is not an
      * appropriate type for the given transform, or if some other
@@ -123,7 +124,7 @@ public:
      * the transforms were given. The plugin may still be working in
      * the background when the model is returned; check the output
      * models' isReady completion statuses for more details. To cancel
-     * a background transform, call abandon() on its model.
+     * a background transform, call cancel() supplying its output model.
      *
      * If a transform is unknown or the transforms are insufficiently
      * closely related or the input model is not an appropriate type
@@ -138,7 +139,7 @@ public:
      * when those models become available, and ownership of those
      * models will be transferred to the handler. Otherwise (if the
      * handler is null) any such models will be discarded. Note that
-     * calling abandon() on any one of the models returned by
+     * calling cancel() with any one of the models returned by
      * transformMultiple is sufficient to cancel all background
      * transform activity associated with these output models.
      *
@@ -151,6 +152,17 @@ public:
                                            AdditionalModelHandler *handler = 0);
 
     bool haveRunningTransformers() const;
+
+    /**
+     * Cancel any running transform associated with the given output
+     * model, waiting for the transform to stop and any associated
+     * threads or processes to exit before returning. The output model
+     * IDs for that transform are unmodified and remain valid.
+     *
+     * Return false if there is no running transform associated with
+     * this model.
+     */
+    bool cancel(ModelId);
     
 signals:
     void transformFailed(QString transformName, QString message);
