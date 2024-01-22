@@ -105,11 +105,7 @@ private:
 extern SVDebug &getSVDebug();
 extern SVCerr &getSVCerr();
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 using Qt::endl;
-#elif QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-using QTextStreamFunctions::endl;
-#endif
 
 // Writes to debug log only
 #define SVDEBUG getSVDebug()
