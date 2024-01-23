@@ -70,6 +70,7 @@ protected:
         void setFileFinder(FileFinder *ff) { m_ff = ff; }
         FileFinder *getFileFinder() const { return m_ff; }
     private:
+        FFContainer() : m_ff(nullptr) { }
         FileFinder *m_ff;
     };
 
