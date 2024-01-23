@@ -13,6 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
+#ifndef WITHOUT_LIBSNDFILE // See note in header
+
 #include "WavFileReader.h"
 
 #include "base/HitCount.h"
@@ -333,3 +335,4 @@ WavFileReader::supports(FileSource &source)
 
 } // end namespace sv
 
+#endif

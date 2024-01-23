@@ -13,6 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
+#ifndef WITHOUT_LIBSNDFILE // See note in header
+
 #include "DecodingWavFileReader.h"
 
 #include "WavFileReader.h"
@@ -206,3 +208,4 @@ DecodingWavFileReader::supports(FileSource &source)
 
 } // end namespace sv
 
+#endif

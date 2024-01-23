@@ -16,6 +16,15 @@
 #ifndef SV_DECODING_WAV_FILE_READER_H
 #define SV_DECODING_WAV_FILE_READER_H
 
+// We build DecodingWavFileReader only with libsndfile enabled. That's
+// because (a) it's only used (by AudioFileReaderFactory) when
+// libsndfile is enabled, and (b) it uses a [libsndfile] WavFileReader
+// as its source and we don't want to switch that to a generic
+// AudioFileReader because we'd need further logic to make sure
+// AudioFileReaderFactory never implemented it using a
+// DecodingWavFileReader, giving us infinite recursion
+#ifndef WITHOUT_LIBSNDFILE
+
 #include "CodedAudioFileReader.h"
 
 #include "base/Thread.h"
@@ -89,6 +98,8 @@ protected:
 };
 
 } // end namespace sv
+
+#endif // !WITHOUT_LIBSNDFILE
 
 #endif
 

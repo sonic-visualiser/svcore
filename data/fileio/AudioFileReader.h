@@ -164,6 +164,26 @@ public:
     virtual std::vector<floatvec_t> getDeInterleavedFrames(sv_frame_t start,
                                                            sv_frame_t count) const;
 
+    /**
+     * Notify the reader that the frame count may have changed
+     * (i.e. something has been appended to the file). If isUpdating
+     * returns true, the reader is aware that this may happen and will
+     * handle it, perhaps by re-opening the file. If isUpdating
+     * returns false, then this will do nothing.
+     *
+     * The default implementation of isUpdating in this class always
+     * returns false, so the default implementation of
+     * updateFrameCount also does nothing.
+     */
+    virtual void updateFrameCount() { }
+
+    /**
+     * Notify the reader that the frame count has stopped changing
+     * (i.e. nothing further has been appended to the file and
+     * updateFrameCount will not be called again).
+     */
+    virtual void updateDone() { }
+    
 signals:
     void frameCountChanged();
     

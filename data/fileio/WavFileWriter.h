@@ -18,14 +18,11 @@
 
 #include <QString>
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
-#endif
-
-#include <sndfile.h>
-
 #include "base/BaseTypes.h"
+
+namespace breakfastquay {
+class AudioWriteStream;
+};
 
 namespace sv {
 
@@ -79,7 +76,7 @@ protected:
     sv_samplerate_t m_sampleRate;
     int m_channels;
     TempWriteFile *m_temp;
-    SNDFILE *m_file;
+    breakfastquay::AudioWriteStream *m_stream;
     QString m_error;
 
     QString getWriteFilename() const;

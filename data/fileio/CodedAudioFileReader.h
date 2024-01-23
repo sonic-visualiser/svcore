@@ -21,12 +21,13 @@
 #include <QMutex>
 #include <QReadWriteLock>
 
+#ifndef WITHOUT_LIBSNDFILE
 #ifdef Q_OS_WIN
 #include <windows.h>
 #define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
 #endif
-
 #include <sndfile.h>
+#endif // !WITHOUT_LIBSNDFILE
 
 #include <atomic>
 
@@ -112,8 +113,10 @@ protected:
     sv_samplerate_t m_fileRate;
 
     QString m_cacheFileName;
+#ifndef WITHOUT_LIBSNDFILE
     SNDFILE *m_cacheFileWritePtr;
-    WavFileReader *m_cacheFileReader;
+#endif
+    AudioFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
     sv_frame_t m_cacheWriteBufferIndex;  // buffer write pointer in samples
     sv_frame_t m_cacheWriteBufferFrames; // buffer size in frames

@@ -225,7 +225,7 @@ protected:
     WavFileWriter *m_targetWriter;
     QString m_targetPath;
 
-    WavFileReader *m_reader;
+    AudioFileReader *m_reader;
     Normalisation m_normalisation;
     sv_samplerate_t m_sampleRate;
     int m_channels;

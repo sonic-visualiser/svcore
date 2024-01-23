@@ -87,7 +87,7 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel &source,
     }
     
     floatvec_t sourceData = source.getData(channel, i0, i1 - i0);
-    
+
     for (sv_frame_t i = i0; i < i1; ++i) {
         float v = sourceData[i - i0];
         sv_frame_t outOffset =

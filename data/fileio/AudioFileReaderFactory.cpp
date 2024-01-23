@@ -36,7 +36,10 @@ AudioFileReaderFactory::getKnownExtensions()
 {
     set<QString> extensions;
 
+#ifndef WITHOUT_LIBSNDFILE // See note in WavFileReader.h
     WavFileReader::getSupportedExtensions(extensions);
+#endif
+    
 #ifdef HAVE_MAD
     MP3FileReader::getSupportedExtensions(extensions);
 #endif
@@ -60,9 +63,11 @@ AudioFileReaderFactory::isSupported(FileSource source)
         return true;
     }
 #endif
+#ifndef WITHOUT_LIBSNDFILE // See note in WavFileReader.h
     if (WavFileReader::supports(source)) {
         return true;
     }
+#endif
     if (BQAFileReader::supports(source)) {
         return true;
     }
@@ -120,6 +125,8 @@ AudioFileReaderFactory::createReader(FileSource source,
          CodedAudioFileReader::DecodeThreaded :
          CodedAudioFileReader::DecodeAtOnce);
 
+    bool fileUpdating = params.fileUpdating;
+    
     // We go through the set of supported readers at most twice: once
     // picking out only the readers that claim to support the given
     // file's extension or MIME type, and (if that fails) again
@@ -160,6 +167,9 @@ AudioFileReaderFactory::createReader(FileSource source,
                      targetRate, normalised, reporter);
 
                 if (reader->isOK()) {
+                    if (fileUpdating && !reader->isUpdating()) {
+                        SVDEBUG << "AudioFileReaderFactory: WARNING: fileUpdating set to true, but MP3 reader doesn't support it" << endl;
+                    }
                     SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
                     return reader;
                 } else {
@@ -169,19 +179,21 @@ AudioFileReaderFactory::createReader(FileSource source,
         }
 #endif
 
+#ifndef WITHOUT_LIBSNDFILE // See note in WavFileReader.h
         if (anyReader || WavFileReader::supports(source)) {
 
-            reader = new WavFileReader(source);
+            reader = new WavFileReader(source, fileUpdating);
 
             sv_samplerate_t fileRate = reader->getSampleRate();
 
             if (reader->isOK() &&
                 (!reader->isQuicklySeekable() ||
                  normalised ||
-                 (cacheMode == CodedAudioFileReader::CacheInMemory) ||
+                 (cacheMode == CodedAudioFileReader::CacheInMemory &&
+                  !fileUpdating) ||
                  (targetRate != 0 && fileRate != targetRate))) {
 
-                SVDEBUG << "AudioFileReaderFactory: WAV file reader rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", creating decoding reader" << endl;
+                SVDEBUG << "AudioFileReaderFactory: WAV file reader rate: " << reader->getSampleRate() << ", normalised " << normalised << ", seekable " << reader->isQuicklySeekable() << ", in memory " << (cacheMode == CodedAudioFileReader::CacheInMemory) << ", fileUpdating " << fileUpdating << ", creating decoding reader" << endl;
             
                 delete reader;
                 reader = new DecodingWavFileReader
@@ -193,13 +205,17 @@ AudioFileReaderFactory::createReader(FileSource source,
             }
 
             if (reader->isOK()) {
+                if (fileUpdating && !reader->isUpdating()) {
+                    SVDEBUG << "AudioFileReaderFactory: WARNING: fileUpdating set to true, but WAV reader is reporting it doesn't support it - did we create it in the wrong mode?" << endl;
+                }
                 SVDEBUG << "AudioFileReaderFactory: WAV file reader is OK, returning it" << endl;
                 return reader;
             } else {
                 delete reader;
             }
         }
-    
+#endif
+        
         if (anyReader || BQAFileReader::supports(source)) {
 
             reader = new BQAFileReader
@@ -207,6 +223,9 @@ AudioFileReaderFactory::createReader(FileSource source,
                  targetRate, normalised, reporter);
 
             if (reader->isOK()) {
+                if (fileUpdating && !reader->isUpdating()) {
+                    SVDEBUG << "AudioFileReaderFactory: WARNING: fileUpdating set to true, but BQA reader doesn't support it" << endl;
+                }
                 SVDEBUG << "AudioFileReaderFactory: BQA reader is OK, returning it" << endl;
                 return reader;
             } else {

@@ -40,7 +40,9 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
     m_initialised(false),
     m_serialiser(nullptr),
     m_fileRate(0),
+#ifndef WITHOUT_LIBSNDFILE
     m_cacheFileWritePtr(nullptr),
+#endif
     m_cacheFileReader(nullptr),
     m_cacheWriteBuffer(nullptr),
     m_cacheWriteBufferIndex(0),
@@ -65,6 +67,16 @@ CodedAudioFileReader::CodedAudioFileReader(CacheMode cacheMode,
             << (targetRate == 0 ? " (use source rate)" : "")
             << ", normalised: " << normalised << endl;
 
+#ifdef WITHOUT_LIBSNDFILE
+    if (cacheMode == CacheInTemporaryFile) {
+        // We won't use any old AudioFileReader for
+        // CacheInTemporaryFile mode, because we want to ensure w64
+        // float support
+        SVDEBUG << "CodedAudioFileReader: CacheInTemporaryFile requested, but we are compiled without libsndfile support! Falling back to CacheInMemory. This probably won't end well" << endl;
+        m_cacheMode = CacheInMemory;
+    }
+#endif
+    
     m_frameCount = 0;
     m_sampleRate = targetRate;
 }
@@ -74,8 +86,10 @@ CodedAudioFileReader::~CodedAudioFileReader()
     QMutexLocker locker(&m_cacheMutex);
 
     if (m_serialiser) endSerialised();
-    
+
+#ifndef WITHOUT_LIBSNDFILE
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
+#endif
 
     SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
 
@@ -165,6 +179,7 @@ CodedAudioFileReader::initialiseDecodeCache()
 
     if (m_cacheMode == CacheInTemporaryFile) {
 
+#ifndef WITHOUT_LIBSNDFILE
         try {
             QDir dir(TempDirectory::getInstance()->getPath());
             m_cacheFileName = dir.filePath(QString("decoded_%1.w64")
@@ -235,6 +250,10 @@ CodedAudioFileReader::initialiseDecodeCache()
             SVDEBUG << "CodedAudioFileReader::initialiseDecodeCache: failed to create temporary directory! Falling back to in-memory cache" << endl;
             m_cacheMode = CacheInMemory;
         }
+
+#else // WITHOUT_LIBSNDFILE
+        throw std::logic_error("CodedAudioFileReader::initialiseDecodeCache: Running CacheInTemporaryFile path when compiled without libsndfile - this should not be possible");
+#endif
     }
 
     if (m_cacheMode == CacheInMemory) {
@@ -344,9 +363,13 @@ CodedAudioFileReader::finishDecodeCache()
 
     if (m_cacheMode == CacheInTemporaryFile) {
 
+#ifndef WITHOUT_LIBSNDFILE
         sf_close(m_cacheFileWritePtr);
         m_cacheFileWritePtr = nullptr;
         if (m_cacheFileReader) m_cacheFileReader->updateFrameCount();
+#else
+        throw std::logic_error("CodedAudioFileReader::finishDecodeCache: Running CacheInTemporaryFile path when compiled without libsndfile - this should not be possible");
+#endif
 
     } else {
         // I know, I know, we already allocated it...
@@ -472,11 +495,15 @@ CodedAudioFileReader::pushBufferNonResampling(float *buffer, sv_frame_t sz)
     switch (m_cacheMode) {
 
     case CacheInTemporaryFile:
+#ifndef WITHOUT_LIBSNDFILE
         if (sf_writef_float(m_cacheFileWritePtr, buffer, sz) < sz) {
             sf_close(m_cacheFileWritePtr);
             m_cacheFileWritePtr = nullptr;
             throw InsufficientDiscSpace(TempDirectory::getInstance()->getPath());
         }
+#else
+        throw std::logic_error("CodedAudioFileReader::pushBufferNonResampling: Running CacheInTemporaryFile path when compiled without libsndfile - this should not be possible");
+#endif
         break;
 
     case CacheInMemory:

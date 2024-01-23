@@ -16,6 +16,18 @@
 #ifndef SV_WAV_FILE_READER_H
 #define SV_WAV_FILE_READER_H
 
+// Most library support is included only with a HAVE_ flag, but this
+// reader which uses libsndfile directly is different: we won't skip
+// it without a more explicit direction. That's because in some places
+// we rely on capabilities it has (e.g. peak chunks, w64 float
+// support) that another wav file reader might not, and it's the only
+// reader we support for direct seeking, so we don't want to lose it
+// by accident. But we do want to allow builds without libsndfile,
+// e.g. for embedded scenarios where we usually aren't reading the
+// audio ourselves.
+//
+#ifndef WITHOUT_LIBSNDFILE
+
 #include "AudioFileReader.h"
 
 #ifdef Q_OS_WIN
@@ -75,8 +87,8 @@ public:
 
     bool isUpdating() const override { return m_updating; }
 
-    void updateFrameCount();
-    void updateDone();
+    void updateFrameCount() override;
+    void updateDone() override;
 
 protected:
     SF_INFO m_fileInfo;
@@ -106,5 +118,7 @@ protected:
 };
 
 } // end namespace sv
+
+#endif // !WITHOUT_LIBSNDFILE
 
 #endif

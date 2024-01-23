@@ -31,6 +31,7 @@ AudioFileSizeEstimator::estimate(FileSource source,
     SVDEBUG << "AudioFileSizeEstimator: Sample count estimate requested for file \""
             << source.getLocalFilename() << "\"" << endl;
 
+#ifndef WITHOUT_LIBSNDFILE
     // Most of our file readers don't know the sample count until
     // after they've finished decoding. This is an exception:
 
@@ -51,9 +52,10 @@ AudioFileSizeEstimator::estimate(FileSource source,
         SVDEBUG << "AudioFileSizeEstimator: WAV file reader doesn't like this file, "
                 << "estimating from file size and extension instead" << endl;
     }
-
+        
     delete reader;
     reader = nullptr;
+#endif
 
     if (estimate == 0) {
 
