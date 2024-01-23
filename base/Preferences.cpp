@@ -24,6 +24,8 @@
 #include <QMutex>
 #include <QSettings>
 
+#include <mutex>
+
 namespace sv {
 
 Preferences *
@@ -32,7 +34,8 @@ Preferences::m_instance = nullptr;
 Preferences *
 Preferences::getInstance()
 {
-    if (!m_instance) m_instance = new Preferences();
+    static std::once_flag f;
+    std::call_once(f, [&]() { m_instance = new Preferences(); });
     return m_instance;
 }
 

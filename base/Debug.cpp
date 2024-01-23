@@ -30,24 +30,22 @@ static std::unique_ptr<SVDebug> svdebug = nullptr;
 static std::unique_ptr<SVCerr> svcerr = nullptr;
 static QMutex mutex;
 
-SVDebug &getSVDebug() {
-    mutex.lock();
-    if (!svdebug) {
+SVDebug &getSVDebug()
+{
+    static std::once_flag f;
+    std::call_once(f, [&]() {
         svdebug = std::unique_ptr<SVDebug>(new SVDebug());
-    }
-    mutex.unlock();
+    });
     return *svdebug;
 }
 
-SVCerr &getSVCerr() {
-    mutex.lock();
-    if (!svcerr) {
-        if (!svdebug) {
-            svdebug = std::unique_ptr<SVDebug>(new SVDebug());
-        }
-        svcerr = std::unique_ptr<SVCerr>(new SVCerr(*svdebug));
-    }
-    mutex.unlock();
+SVCerr &getSVCerr()
+{
+    SVDebug &svdebug = getSVDebug();
+    static std::once_flag f;
+    std::call_once(f, [&]() {
+        svcerr = std::unique_ptr<SVCerr>(new SVCerr(svdebug));
+    });
     return *svcerr;
 }
 

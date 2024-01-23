@@ -28,15 +28,16 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <mutex>
 
 namespace sv {
 
-Profiles* Profiles::m_instance = nullptr;
+Profiles *Profiles::m_instance = nullptr;
 
-Profiles* Profiles::getInstance()
+Profiles *Profiles::getInstance()
 {
-    if (!m_instance) m_instance = new Profiles();
-    
+    static std::once_flag f;
+    std::call_once(f, [&]() { m_instance = new Profiles(); });
     return m_instance;
 }
 
