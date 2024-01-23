@@ -36,6 +36,7 @@
 #include <QFile>
 
 #include <iostream>
+#include <mutex>
 
 namespace sv {
 
@@ -58,7 +59,8 @@ PluginRDFIndexer::m_instance = nullptr;
 PluginRDFIndexer *
 PluginRDFIndexer::getInstance() 
 {
-    if (!m_instance) m_instance = new PluginRDFIndexer();
+    static std::once_flag f;
+    std::call_once(f, [&]() { m_instance = new PluginRDFIndexer(); });
     return m_instance;
 }
 
