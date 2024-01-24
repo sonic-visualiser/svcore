@@ -271,8 +271,28 @@ WritableWaveFileModel::writeComplete()
         m_temporaryWriter->close();
         normaliseToTarget();
     }
+
+    if (!m_reader->isUpdating()) {
+        // We set isUpdating ourselves, so if the reader reports that
+        // it isn't set, that means it doesn't support this flag at
+        // all and we need to recreate it rather than just tell it
+        // we're finished
+        SVDEBUG << "WritableWaveFileModel::writeComplete: Reader didn't support isUpdating; recreating it entirely" << endl;
+        delete m_reader;
+        AudioFileReaderFactory::Parameters params;
+        m_reader = AudioFileReaderFactory::createReader(m_targetPath, params);
+        if (!m_reader || !m_reader->getError().isEmpty()) {
+            SVCERR << "WritableWaveFileModel::writeComplete: Error in recreating wave file reader for \"" << m_targetPath << "\": " << (m_reader ? m_reader->getError() : "unsupported format") << endl;
+            delete m_reader;
+            m_reader = nullptr;
+            delete m_model;
+            m_model = nullptr;
+            return;
+        }
+    } else {
+        m_reader->updateDone();
+    }
     
-    m_reader->updateDone();
     m_proportion = 100;
     emit modelChanged(getId());
     emit writeCompleted(getId());
