@@ -25,6 +25,15 @@ UnsupportedFormat::isLegitimatelyUnsupported(QString format)
 {
 #ifdef Q_OS_WIN
 
+#ifdef WITHOUT_LIBSNDFILE
+    // When we build without libsndfile support, it's because we are
+    // building without support for any interesting audio codecs at
+    // all - only wav.
+    if (format != "wav") {
+        return true;
+    }
+#endif
+
     if (sizeof(void *) == 4) {
         // Our 32-bit MinGW build lacks MediaFoundation support
         return (format == "aac" ||
