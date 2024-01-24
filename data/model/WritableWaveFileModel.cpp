@@ -144,10 +144,28 @@ WritableWaveFileModel::init(QString path)
         }
     }        
 
+    recreateReaderAndModel(false);
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
+}
+
+void
+WritableWaveFileModel::recreateReaderAndModel(bool complete)
+{
+    // See comment in ctor above about handling failures
+
+    delete m_model;
+    delete m_reader;
+    m_model = nullptr;
+    m_reader = nullptr;
+    
     FileSource source(m_targetPath);
 
     AudioFileReaderFactory::Parameters params;
-    params.fileUpdating = true;
+    if (!complete) {
+        params.fileUpdating = true;
+    }
     m_reader = AudioFileReaderFactory::createReader(source, params);
     if (!m_reader || !m_reader->getError().isEmpty()) {
         SVCERR << "WritableWaveFileModel: Error in creating wave file reader for \"" << m_targetPath << "\": " << (m_reader ? m_reader->getError() : "unsupported format") << endl;
@@ -167,9 +185,6 @@ WritableWaveFileModel::init(QString path)
             this, SLOT(componentModelChanged(ModelId)));
     connect(m_model, SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
             this, SLOT(componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
-    
-    PlayParameterRepository::getInstance()->addPlayable
-        (getId().untyped, this);
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
@@ -278,17 +293,7 @@ WritableWaveFileModel::writeComplete()
         // all and we need to recreate it rather than just tell it
         // we're finished
         SVDEBUG << "WritableWaveFileModel::writeComplete: Reader didn't support isUpdating; recreating it entirely" << endl;
-        delete m_reader;
-        AudioFileReaderFactory::Parameters params;
-        m_reader = AudioFileReaderFactory::createReader(m_targetPath, params);
-        if (!m_reader || !m_reader->getError().isEmpty()) {
-            SVCERR << "WritableWaveFileModel::writeComplete: Error in recreating wave file reader for \"" << m_targetPath << "\": " << (m_reader ? m_reader->getError() : "unsupported format") << endl;
-            delete m_reader;
-            m_reader = nullptr;
-            delete m_model;
-            m_model = nullptr;
-            return;
-        }
+        recreateReaderAndModel(true);
     } else {
         m_reader->updateDone();
     }

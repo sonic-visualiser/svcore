@@ -236,6 +236,7 @@ protected:
 private:
     void init(QString path = "");
     void normaliseToTarget();
+    void recreateReaderAndModel(bool complete);
 };
 
 } // end namespace sv
