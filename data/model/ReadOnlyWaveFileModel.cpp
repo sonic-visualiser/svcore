@@ -813,9 +813,6 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
 
                 count[cacheType] = 0;
             }
-            
-            const Range &rr = *m_model.m_cache[cacheType].begin();
-            MUNLOCK(&rr, m_model.m_cache[cacheType].capacity() * sizeof(Range));
         }
     }
     
