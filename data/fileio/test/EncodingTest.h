@@ -309,6 +309,12 @@ private slots:
 
             AudioFileReader *rereader =
                 AudioFileReaderFactory::createReader(outfile, params);
+
+            if (!rereader) {
+                bool exists = QFile(outfile).exists();
+                SVCERR << "EncodingTest::readWriteAudio: Failed to create re-reader for filename \"" << outfile << "\" (created from input file \"" << audiofile << "\", title \"" << title << "\", with useTemporary = " << useTemporary << ") " << (exists ? "[file does exist]" : "[file does not exist]") << endl;
+            }
+            
             QVERIFY(rereader != nullptr);
 
             floatvec_t readFrames = rereader->getInterleavedFrames(0, 8);
