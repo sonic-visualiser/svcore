@@ -27,7 +27,8 @@ class RealTimeEffectModelTransformer : public ModelTransformer
 {
 public:
     RealTimeEffectModelTransformer(Input input,
-                                   const Transform &transform);
+                                   const Transform &transform,
+                                   CompletionReporter *reporter = nullptr);
     virtual ~RealTimeEffectModelTransformer();
 
 protected:

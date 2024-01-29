@@ -60,6 +60,27 @@ public:
     };
 
     /**
+     * An interface that can be provided if synchronous reporting of
+     * transform completion is required. Functions in this interface
+     * may be called from any thread. Note that updates within a GUI
+     * application are arguably better handled by connecting to the
+     * completionChanged() and ready() signals of each output
+     * Model. This mechanism is more useful in contexts without an
+     * event loop.
+     */     
+    class CompletionReporter {
+    public:
+        /**
+         * Report a change in transform completion. The percentage
+         * will of course be in the range 0-100; a value of 100
+         * indicates that the given model is complete and that
+         * setCompletion will not be called for that model by this
+         * transformer again.
+         */  
+        virtual void setCompletion(ModelId modelId, int percentage) = 0;
+    };
+    
+    /**
      * Hint to the processing thread that it should give up, for
      * example because the process is going to exit or the
      * model/document context is being replaced.  Caller should still
@@ -120,14 +141,19 @@ public:
     QString getMessage() const { return m_message; }
 
 protected:
-    ModelTransformer(Input input, const Transform &transform);
-    ModelTransformer(Input input, const Transforms &transforms);
+    ModelTransformer(Input input,
+                     const Transform &transform,
+                     CompletionReporter *reporter = nullptr);
+    ModelTransformer(Input input,
+                     const Transforms &transforms,
+                     CompletionReporter *reporter = nullptr);
 
     virtual void awaitOutputModels() = 0;
     
     Transforms m_transforms;
     Input m_input;
     Models m_outputs;
+    CompletionReporter *m_reporter;
     bool m_abandoned;
     QString m_message;
 

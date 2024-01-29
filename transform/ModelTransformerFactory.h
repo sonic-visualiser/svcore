@@ -112,7 +112,8 @@ public:
     ModelId transform(const Transform &transform,
                       const ModelTransformer::Input &input,
                       QString &message,
-                      AdditionalModelHandler *handler = 0);
+                      AdditionalModelHandler *handler = nullptr,
+                      ModelTransformer::CompletionReporter *reporter = nullptr);
 
     /**
      * Return the multiple output models resulting from applying the
@@ -149,7 +150,8 @@ public:
     std::vector<ModelId> transformMultiple(const Transforms &transform,
                                            const ModelTransformer::Input &input,
                                            QString &message,
-                                           AdditionalModelHandler *handler = 0);
+                                           AdditionalModelHandler *handler = nullptr,
+                                           ModelTransformer::CompletionReporter *reporter = nullptr);
 
     bool haveRunningTransformers() const;
 
@@ -172,7 +174,8 @@ protected slots:
 
 protected:
     ModelTransformer *createTransformer(const Transforms &transforms,
-                                        const ModelTransformer::Input &input);
+                                        const ModelTransformer::Input &input,
+                                        ModelTransformer::CompletionReporter *);
 
     mutable QMutex m_mutex;
     

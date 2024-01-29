@@ -184,7 +184,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
 ModelTransformer *
 ModelTransformerFactory::createTransformer(const Transforms &transforms,
-                                           const ModelTransformer::Input &input)
+                                           const ModelTransformer::Input &input,
+                                           ModelTransformer::CompletionReporter *reporter)
 {
     ModelTransformer *transformer = nullptr;
 
@@ -193,12 +194,16 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
     if (RealTimePluginFactory::instanceFor(id)) {
 
         transformer =
-            new RealTimeEffectModelTransformer(input, transforms[0]);
+            new RealTimeEffectModelTransformer(input,
+                                               transforms[0],
+                                               reporter);
 
     } else {
 
         transformer =
-            new FeatureExtractionModelTransformer(input, transforms);
+            new FeatureExtractionModelTransformer(input,
+                                                  transforms,
+                                                  reporter);
     }
 
     if (transformer) transformer->setObjectName(transforms[0].getIdentifier());
@@ -209,13 +214,15 @@ ModelId
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message,
-                                   AdditionalModelHandler *handler) 
+                                   AdditionalModelHandler *handler,
+                                   ModelTransformer::CompletionReporter *reporter) 
 {
     SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     Transforms transforms;
     transforms.push_back(transform);
-    vector<ModelId> mm = transformMultiple(transforms, input, message, handler);
+    vector<ModelId> mm =
+        transformMultiple(transforms, input, message, handler, reporter);
     if (mm.empty()) return {};
     else return mm[0];
 }
@@ -224,7 +231,8 @@ vector<ModelId>
 ModelTransformerFactory::transformMultiple(const Transforms &transforms,
                                            const ModelTransformer::Input &input,
                                            QString &message,
-                                           AdditionalModelHandler *handler) 
+                                           AdditionalModelHandler *handler,
+                                           ModelTransformer::CompletionReporter *reporter) 
 {
     SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
     
@@ -233,7 +241,7 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
     auto inputModel = ModelById::get(input.getModel());
     if (!inputModel) return {};
     
-    ModelTransformer *t = createTransformer(transforms, input);
+    ModelTransformer *t = createTransformer(transforms, input, reporter);
     if (!t) return {};
 
     if (handler) {
