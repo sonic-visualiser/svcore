@@ -208,12 +208,12 @@ private slots:
                         SVCERR << "Title does not match expected: codepoints are" << endl;
                         SVCERR << "Title (" << title.length() << "ch): ";
                         for (int i = 0; i < title.length(); ++i) {
-                            SVCERR << title[i].unicode() << " ";
+                            SVCERR << int(title[i].unicode()) << " ";
                         }
                         SVCERR << endl;
                         SVCERR << "Expected (" << expected.length() << "ch): ";
                         for (int i = 0; i < expected.length(); ++i) {
-                            SVCERR << expected[i].unicode() << " ";
+                            SVCERR << int(expected[i].unicode()) << " ";
                         }
                         SVCERR << endl;
                     }
