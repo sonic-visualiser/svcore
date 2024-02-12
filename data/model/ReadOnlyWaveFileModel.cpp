@@ -178,7 +178,7 @@ ReadOnlyWaveFileModel::isReady(int *completion) const
 {
     bool ready = true;
     if (!isOK()) ready = false;
-    if (m_fillThread) ready = false;
+    if (m_fillThread && !m_fillThread->isFinished()) ready = false;
     if (m_reader && m_reader->isUpdating()) ready = false;
 
     double c = double(m_lastFillExtent) /
