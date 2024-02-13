@@ -154,10 +154,31 @@ ColumnOp::distribute(Column &out,
             interpolate = false;
         }
     }
+
+    bool actuallyInterpolate = interpolate;
     
     for (int y = 0; y < h; ++y) {
 
-        if (interpolate) {
+        // As remarked above, it's common for bins to be more
+        // widely-spaced at one end than the other. We switch
+        // interpolation off or on if we reach a step at which
+        // bins-per-y drops above or below 1.0. (But we won't do so
+        // repeatedly)
+        
+        if (actuallyInterpolate) {
+            if (y > 0 &&
+                fabs(binfory[y] - binfory[y-1]) > 1.0) {
+                interpolate = false;
+                actuallyInterpolate = false;
+            }
+        } else if (interpolate) {
+            if (y > 0 &&
+                fabs(binfory[y] - binfory[y-1]) < 1.0) {
+                actuallyInterpolate = true;
+            }
+        }                
+            
+        if (actuallyInterpolate) {
 
             double sy = binfory[y] - minbin - 0.5;
             double syf = floor(sy);

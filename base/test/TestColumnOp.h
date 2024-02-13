@@ -269,17 +269,19 @@ private slots:
     }
     
     void distribute_nonlinear_someshrinking_interpolated() {
-        // But we *should* interpolate if the mapping involves
-        // shrinking some bins but expanding others.  See
-        // distribute_simple_interpolated for note on 0.5 offset
+        // But we *should* interpolate, at least initially, if the
+        // mapping involves shrinking some bins but expanding others.
+        // In this case ColumnOp should spot that our bins have got
+        // closer together and stop interpolating after the first one.
+        // See distribute_simple_interpolated for note on 0.5 offset
         Column in { 4, 1, 2, 3, 5, 6 };
-        BinMapping binfory { 0.0f, 3.0f, 4.0f, 4.5f };
-        Column expected { 4.0f, 2.5f, 4.0f, 5.0f };
+        BinMapping binfory { 1.0f, 3.0f, 4.0f, 4.5f };
+        Column expected { 2.5f, 3.0f, 5.0f, 6.0f };
         Column actual(C::distribute(in, 4, binfory, 0, true));
         report(actual);
         QCOMPARE(actual, expected);
         binfory = BinMapping { 0.5f, 1.0f, 2.0f, 5.0f };
-        expected = { 4.0f, 2.5f, 1.5f, 5.5f };
+        expected = { 4.0f, 2.5f, 1.5f, 6.0f };
         actual = (C::distribute(in, 4, binfory, 0, true));
         report(actual);
         QCOMPARE(actual, expected);
