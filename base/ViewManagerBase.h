@@ -44,8 +44,8 @@ public:
     virtual sv_frame_t alignPlaybackFrameToReference(sv_frame_t) const = 0;
     virtual sv_frame_t alignReferenceToPlaybackFrame(sv_frame_t) const = 0;
 
-    virtual const MultiSelection &getSelection() const = 0;
-    virtual const MultiSelection::SelectionList &getSelections() const = 0;
+    virtual MultiSelection getSelection() const = 0;
+    virtual MultiSelection::SelectionList getSelections() const = 0;
     virtual sv_frame_t constrainFrameToSelection(sv_frame_t frame) const = 0;
 
     virtual Selection getContainingSelection
