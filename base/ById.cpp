@@ -17,7 +17,11 @@
 #include <unordered_map>
 #include <typeinfo>
 
+#include <QObject>
+
 //#define DEBUG_BY_ID 1
+
+namespace sv {
 
 int IdAlloc::getNextId()
 {
@@ -152,3 +156,6 @@ AnyById::impl()
     static Impl impl;
     return impl;
 }
+
+} // end namespace sv
+

@@ -35,12 +35,14 @@
 #include <set>
 #include <functional>
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTextStream>
 
 #include "base/Thread.h"
 
 //#define DEBUG_TRANSFORM_FACTORY 1
+
+namespace sv {
 
 TransformFactory *
 TransformFactory::m_instance = new TransformFactory;
@@ -159,7 +161,7 @@ TransformFactory::getInstalledTransformDescriptions()
     std::set<TransformDescription> dset;
     for (auto i = m_transforms.begin(); i != m_transforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier << " (" << i->second.name << ")" << endl;
+        SVCERR << "inserting transform into set: id = " << i->second.identifier << " (" << i->second.name << ")" << endl;
 #endif
         dset.insert(i->second);
     }
@@ -167,7 +169,7 @@ TransformFactory::getInstalledTransformDescriptions()
     TransformList list;
     for (auto i = dset.begin(); i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into list: id = " << i->identifier << " (" << i->name << ")" << endl;
+        SVCERR << "inserting transform into list: id = " << i->identifier << " (" << i->name << ")" << endl;
 #endif
         list.push_back(*i);
     }
@@ -204,7 +206,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     for (auto i = m_uninstalledTransforms.begin();
          i != m_uninstalledTransforms.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into set: id = " << i->second.identifier << endl;
+        SVCERR << "inserting transform into set: id = " << i->second.identifier << endl;
 #endif
         dset.insert(i->second);
     }
@@ -212,7 +214,7 @@ TransformFactory::getUninstalledTransformDescriptions()
     TransformList list;
     for (auto i = dset.begin(); i != dset.end(); ++i) {
 #ifdef DEBUG_TRANSFORM_FACTORY
-        cerr << "inserting transform into uninstalled list: id = " << i->identifier << endl;
+        SVCERR << "inserting transform into uninstalled list: id = " << i->identifier << endl;
 #endif
         list.push_back(*i);
     }
@@ -463,7 +465,7 @@ TransformFactory::populateInstalledTransforms()
             QString to = td.section(": ", 1);
 
             if (names[tn] > 1) {
-                maker.replace(QRegExp(tr(" [\\(<].*$")), "");
+                maker.replace(QRegularExpression(tr(" [\\(<].*$")), "");
                 tn = QString("%1 [%2]").arg(tn).arg(maker);
             }
 
@@ -507,7 +509,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
         piper_vamp::PluginStaticData psd = factory->getPluginStaticData(pluginId);
 
         if (psd.pluginKey == "") {
-            cerr << "WARNING: TransformFactory::populateInstalledTransforms: No plugin static data available for instance " << pluginId << endl;
+            SVCERR << "WARNING: TransformFactory::populateFeatureExtractionPlugins: No plugin static data available for instance " << pluginId << endl;
             continue;
         }
 
@@ -562,7 +564,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                  !psd.parameters.empty());
 
 #ifdef DEBUG_TRANSFORM_FACTORY
-            cerr << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
+            SVCERR << "Feature extraction plugin transform: " << transformId << " friendly name: " << friendlyName << endl;
 #endif
 
             transforms[transformId] = 
@@ -588,7 +590,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
         RealTimePluginFactory::getAllPluginIdentifiers();
     if (m_exiting) return;
 
-    static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
+    static QRegularExpression unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
 
     for (int i = 0; in_range_for(plugs, i); ++i) {
         
@@ -598,7 +600,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             RealTimePluginFactory::instanceFor(pluginId);
 
         if (!factory) {
-            cerr << "WARNING: TransformFactory::populateInstalledTransforms: No real time plugin factory for instance " << pluginId << endl;
+            SVCERR << "WARNING: TransformFactory::populateRealTimePlugins: No real time plugin factory for instance " << pluginId << endl;
             continue;
         }
 
@@ -606,7 +608,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
             factory->getPluginDescriptor(pluginId);
 
         if (descriptor.name == "") {
-            cerr << "WARNING: TransformFactory::populateInstalledTransforms: Failed to query plugin " << pluginId << endl;
+            SVCERR << "WARNING: TransformFactory::populateRealTimePlugins: Failed to query plugin " << pluginId << endl;
             continue;
         }
         
@@ -639,8 +641,9 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                         .arg(pluginName)
                         .arg(portName);
 
-                    if (unitRE.indexIn(portName) >= 0) {
-                        units = unitRE.cap(1);
+                    auto match = unitRE.match(portName);
+                    if (match.hasMatch()) {
+                        units = match.captured(1);
                     }
 
                 } else if (descriptor.controlOutputPortCount > 1) {
@@ -1051,7 +1054,7 @@ TransformFactory::setParametersFromPlugin(Transform &transform,
     for (Vamp::PluginBase::ParameterList::const_iterator i = parameters.begin();
          i != parameters.end(); ++i) {
         pmap[i->identifier.c_str()] = plugin->getParameter(i->identifier);
-//        cerr << "TransformFactory::setParametersFromPlugin: parameter "
+//        SVCERR << "TransformFactory::setParametersFromPlugin: parameter "
 //                  << i->identifier << " -> value " <<
 //            pmap[i->identifier.c_str()] << endl;
     }
@@ -1149,10 +1152,10 @@ TransformFactory::makeContextConsistentWithPlugin(Transform &transform,
         }
         if (!transform.getStepSize()) {
             if (domain == Vamp::Plugin::FrequencyDomain) {
-//                cerr << "frequency domain, step = " << blockSize/2 << endl;
+//                SVCERR << "frequency domain, step = " << blockSize/2 << endl;
                 transform.setStepSize(transform.getBlockSize()/2);
             } else {
-//                cerr << "time domain, step = " << blockSize/2 << endl;
+//                SVCERR << "time domain, step = " << blockSize/2 << endl;
                 transform.setStepSize(transform.getBlockSize());
             }
         }
@@ -1329,4 +1332,6 @@ TransformFactory::searchUnadjusted(QStringList keywords)
     
     return results;
 }
+
+} // end namespace sv
 

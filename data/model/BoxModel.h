@@ -28,6 +28,8 @@
 
 #include <QMutex>
 
+namespace sv {
+
 /**
  * BoxModel -- a model for annotations having start time, duration,
  * and a value range. We use Events as usual for these, but treat the
@@ -432,5 +434,7 @@ protected:
 
     mutable QMutex m_mutex;
 };
+
+} // end namespace sv
 
 #endif

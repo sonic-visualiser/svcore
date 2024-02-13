@@ -27,6 +27,8 @@
 #include "base/Preferences.h"
 #include "base/HelperExecPath.h"
 
+namespace sv {
+
 QMutex
 PluginPathSetter::m_mutex;
 
@@ -278,4 +280,6 @@ PluginPathSetter::initialiseEnvironmentVariables()
         putEnvUtf8(envVarStr, proposedValue.toStdString());
     }
 }
+
+} // end namespace sv
 

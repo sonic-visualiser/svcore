@@ -41,9 +41,12 @@
 
 //#define DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN 1
 
+namespace sv {
+
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
-                                                                     const Transform &transform) :
-    ModelTransformer(in, transform),
+                                                                     const Transform &transform,
+                                                                     CompletionReporter *reporter) :
+    ModelTransformer(in, transform, reporter),
     m_plugin(nullptr),
     m_haveOutputs(false)
 {
@@ -51,8 +54,9 @@ FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
 }
 
 FeatureExtractionModelTransformer::FeatureExtractionModelTransformer(Input in,
-                                                                     const Transforms &transforms) :
-    ModelTransformer(in, transforms),
+                                                                     const Transforms &transforms,
+                                                                     CompletionReporter *reporter) :
+    ModelTransformer(in, transforms, reporter),
     m_plugin(nullptr),
     m_haveOutputs(false)
 {
@@ -868,6 +872,9 @@ FeatureExtractionModelTransformer::run()
             int completion = int
                 ((((blockFrame - contextStart) / stepSize) * 99) /
                  (contextDuration / stepSize + 1));
+            if (completion > 99) {
+                completion = 99; // 100 reserved for complete
+            }
 
             bool haveAllModels = true;
             if (!ModelById::get(inputId)) {
@@ -1258,12 +1265,18 @@ FeatureExtractionModelTransformer::setCompletion(int n, int completion)
     SVDEBUG << "FeatureExtractionModelTransformer::setCompletion("
               << completion << ")" << endl;
 #endif
-
+    
     (void)
         (setOutputCompletion<SparseOneDimensionalModel>(n, completion) ||
          setOutputCompletion<SparseTimeValueModel>(n, completion) ||
          setOutputCompletion<NoteModel>(n, completion) ||
          setOutputCompletion<RegionModel>(n, completion) ||
          setOutputCompletion<BasicCompressedDenseThreeDimensionalModel>(n, completion));
+
+    if (m_reporter) {
+        m_reporter->setCompletion(m_outputs[n], completion);
+    }
 }
+
+} // end namespace sv
 

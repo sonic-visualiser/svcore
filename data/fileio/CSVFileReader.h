@@ -27,6 +27,9 @@
 #include <QIODevice>
 
 class QFile;
+
+namespace sv {
+
 class ProgressReporter;
 
 class CSVFileReader : public DataFileReader
@@ -89,6 +92,8 @@ protected:
     QString getConvertedAudioFilePath() const;
 };
 
+
+} // end namespace sv
 
 #endif
 

@@ -20,6 +20,8 @@
 
 #include "base/BaseTypes.h"
 
+using namespace sv;
+
 /**
  * Class that generates a single fixed test pattern to a given sample
  * rate and number of channels.

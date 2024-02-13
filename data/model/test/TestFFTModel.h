@@ -29,6 +29,7 @@
 #include <complex>
 
 using namespace std;
+using namespace sv;
 
 class TestFFTModel : public QObject
 {

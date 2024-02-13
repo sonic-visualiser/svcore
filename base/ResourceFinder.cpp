@@ -37,6 +37,13 @@
 
 #include "system/System.h"
 
+// We use cerr throughout instead of SVCERR, because the debug stream
+// depends on this class
+using std::cerr;
+using std::endl;
+
+namespace sv {
+
 /**
    Resource files may be found in three places:
 
@@ -394,4 +401,6 @@ ResourceFinder::unbundleResource(QString resourceCat, QString fileName)
 
     return true;
 }
+
+} // end namespace sv
 

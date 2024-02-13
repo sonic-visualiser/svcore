@@ -30,6 +30,8 @@
 using namespace std;
 using namespace Vamp;
 
+namespace sv {
+
 FileFeatureWriter::FileFeatureWriter(int support,
                                      QString extension) :
     m_prevstream(nullptr),
@@ -316,7 +318,12 @@ FileFeatureWriter::getOutputFile(QString trackId,
 
 QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
                                                 TransformId transformId,
-                                                QTextCodec *codec)
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                                QStringConverter::Encoding encoding
+#else
+                                                QString encodingName
+#endif
+    )
 {
     QFile *file = getOutputFile(trackId, transformId);
     if (!file && !m_stdout) {
@@ -329,7 +336,11 @@ QTextStream *FileFeatureWriter::getOutputStream(QString trackId,
         } else {
             m_streams[file] = new QTextStream(file);
         }
-        m_streams[file]->setCodec(codec);
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+        m_streams[file]->setEncoding(encoding);
+#else
+        m_streams[file]->setCodec(encodingName.toLocal8Bit().data());
+#endif
     }
 
     QTextStream *stream = m_streams[file];
@@ -374,4 +385,6 @@ FileFeatureWriter::finish()
     }
     m_prevstream = nullptr;
 }
+
+} // end namespace sv
 

@@ -18,6 +18,8 @@
 
 #include "BaseTypes.h"
 
+namespace sv {
+
 /**
  * A trivial interface for things that permit retrieving "the current
  * frame".  Implementations of this interface are used, for example,
@@ -30,5 +32,7 @@ public:
     virtual ~FrameTimer() { }
     virtual sv_frame_t getFrame() const = 0;
 };
+
+} // end namespace sv
 
 #endif

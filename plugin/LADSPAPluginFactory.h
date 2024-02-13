@@ -31,6 +31,8 @@
 #include <set>
 #include <QString>
 
+namespace sv {
+
 class LADSPAPluginInstance;
 
 class LADSPAPluginFactory : public RealTimePluginFactory
@@ -101,6 +103,8 @@ protected:
     typedef std::map<QString, void *> LibraryHandleMap;
     LibraryHandleMap m_libraryHandles;
 };
+
+} // end namespace sv
 
 #endif
 

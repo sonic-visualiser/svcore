@@ -20,6 +20,8 @@
 #include <QDir>
 #include <iostream>
 
+namespace sv {
+
 TempWriteFile::TempWriteFile(QString target) :
     m_target(target)
 {
@@ -71,3 +73,5 @@ TempWriteFile::moveToTarget()
     m_temp = "";
 }
     
+} // end namespace sv
+

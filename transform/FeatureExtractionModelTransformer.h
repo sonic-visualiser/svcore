@@ -27,6 +27,8 @@
 #include <iostream>
 #include <map>
 
+namespace sv {
+
 class DenseTimeValueModel;
 class SparseTimeValueModel;
 
@@ -36,7 +38,8 @@ class FeatureExtractionModelTransformer : public ModelTransformer // + is a Thre
 
 public:
     FeatureExtractionModelTransformer(Input input,
-                                      const Transform &transform);
+                                      const Transform &transform,
+                                      CompletionReporter *reporter = nullptr);
 
     /**
      * Obtain outputs for a set of transforms that all use the same
@@ -44,7 +47,8 @@ public:
      * plugin once only and collect more than one output from it.
      */
     FeatureExtractionModelTransformer(Input input,
-                                      const Transforms &relatedTransforms);
+                                      const Transforms &relatedTransforms,
+                                      CompletionReporter *reporter = nullptr);
 
     virtual ~FeatureExtractionModelTransformer();
 
@@ -113,6 +117,8 @@ protected:
         }
     }
 };
+
+} // end namespace sv
 
 #endif
 

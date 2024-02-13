@@ -27,6 +27,8 @@
 
 //#define DEBUG_EVENT_SERIES 1
 
+namespace sv {
+
 /**
  * Container storing a series of events, with or without durations,
  * and supporting the ability to query which events are active at a
@@ -245,7 +247,7 @@ public:
 private:
     mutable QMutex m_mutex;
 
-    EventSeries(const EventSeries &other, const QMutexLocker &);
+    EventSeries(const EventSeries &other, const QMutexLocker<QMutex> &);
     
     /**
      * This vector contains all events in the series, in the normal
@@ -376,5 +378,7 @@ private:
     }
 #endif
 };
+
+} // end namespace sv
 
 #endif

@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <numeric>
 
+namespace sv {
+
 namespace CSVStreamWriter
 {
 
@@ -154,5 +156,9 @@ writeInChunks(OutStream& oss,
         blockSize
     );
 }
+
 } // namespace CSVStreamWriter
+
+} // end namespace sv
+
 #endif

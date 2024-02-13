@@ -25,11 +25,6 @@
 #include <process.h>
 #include <math.h>
 
-#define MLOCK(a,b)   1
-#define MUNLOCK(a,b) 1
-#define MUNLOCK_SAMPLEBLOCK(a) 1
-#define MUNLOCKALL() 1
-
 extern void SystemMemoryBarrier();
 #define MBARRIER()   SystemMemoryBarrier()
 
@@ -83,13 +78,6 @@ int gettimeofday(struct timeval *p, void *tz);
 #include <stdio.h> // for perror
 #include <cmath>
 #include <unistd.h> // sleep + usleep primarily
-
-#define MLOCK(a,b)   ::mlock((a),(b))
-#define MUNLOCK(a,b) (::munlock((a),(b)) ? (::perror("munlock failed"), 0) : 0)
-#define MUNLOCK_SAMPLEBLOCK(a) do { if (!(a).empty()) { const float &b = *(a).begin(); MUNLOCK(&b, (a).capacity() * sizeof(float)); } } while(0);
-//#define MLOCK(a,b)   1
-//#define MUNLOCK(a,b) 1
-//#define MUNLOCK_SAMPLEBLOCK(a) 1
 
 #define DLOPEN(a,b)  dlopen((a).toStdString().c_str(),(b))
 #define DLSYM(a,b)   dlsym((a),(b))

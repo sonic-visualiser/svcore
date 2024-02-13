@@ -26,6 +26,8 @@
 // Can't have this on by default, as we're called on every refresh
 //#define DEBUG_SCALE_TICK_INTERVALS 1
 
+namespace sv {
+
 class ScaleTickIntervals
 {
 public:
@@ -395,5 +397,7 @@ private:
         return ticks;
     }
 };
+
+} // end namespace sv
 
 #endif

@@ -21,6 +21,8 @@
 
 #include <QString>
 
+namespace sv {
+
 /**
  * A utility class designed to help decide whether to store cache data
  * (for example FFT outputs) in memory or on disk in the TempDirectory.
@@ -89,10 +91,22 @@ public:
      */
     static void setFixedRecommendation(Recommendation recommendation);
 
+    /**
+     * Set the greed level for RAM. This is a value from 0 to 1, by
+     * which we scale the measured amount of free RAM before using it
+     * in any heuristics. A value of 1 (the default) indicates that we
+     * should behave as if we are the main thing the user is running
+     * and that the free RAM is generally available to us. A value of
+     * 0 indicates that we should act as if there is never any free
+     * RAM at all.
+     */
+    static void setRAMGreed(double greed);
+    
 private:
     static size_t m_discPlanned;
     static size_t m_memoryPlanned;
     static Recommendation m_baseRecommendation;
+    static double m_greed;
 
     enum StorageStatus {
         Unknown,
@@ -105,6 +119,8 @@ private:
     static QString recommendationToString(int);
     static QString storageStatusToString(StorageStatus);
 };
+
+} // end namespace sv
 
 #endif
 

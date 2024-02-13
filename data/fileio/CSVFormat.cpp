@@ -15,8 +15,11 @@
 
 #include "CSVFormat.h"
 
+//#define DEBUG_COLUMN_QUALITIES 1
+
 #include "base/StringBits.h"
 #include "base/UnitDatabase.h"
+#include "base/Debug.h"
 
 #include <QFile>
 #include <QString>
@@ -26,9 +29,7 @@
 
 #include <iostream>
 
-#include "base/Debug.h"
-
-//#define DEBUG_COLUMN_QUALITIES 1
+namespace sv {
 
 CSVFormat::CSVFormat(QString path) :
     m_separator(""),
@@ -80,7 +81,7 @@ CSVFormat::guessFormatFor(QString path)
         // See comment about line endings in CSVFileReader::load() 
 
         QString chunk = in.readLine();
-        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+        QStringList lines = chunk.split('\r', Qt::SkipEmptyParts);
 
         for (int li = 0; li < lines.size(); ++li) {
 
@@ -356,7 +357,7 @@ CSVFormat::guessPurposes()
             QString headingAsSeen = m_columnHeadings[i];
 
             if (headingAsSeen != "") {
-                heading = headingAsSeen.split(' ', QString::SkipEmptyParts)[0]
+                heading = headingAsSeen.split(' ', Qt::SkipEmptyParts)[0]
                     .toLower();
             }
             
@@ -633,4 +634,6 @@ CSVFormat::updateScaleUnits()
         }
     }
 }
+
+} // end namespace sv
 

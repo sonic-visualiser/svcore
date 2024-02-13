@@ -33,7 +33,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QString>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QStringList>
 #include <QTextStream>
 #include <QDateTime>
@@ -43,6 +43,8 @@
 #include <string>
 
 using namespace std;
+
+namespace sv {
 
 CSVFileReader::CSVFileReader(QString path, CSVFormat format,
                              sv_samplerate_t mainModelSampleRate,
@@ -123,7 +125,7 @@ CSVFileReader::convertTimeValue(QString s, int lineno,
                                 int increment,
                                 sv_frame_t &calculatedFrame) const
 {
-    QRegExp nonNumericRx("[^0-9eE.,+-]");
+    QRegularExpression nonNumericRx("[^0-9eE.,+-]");
     int warnLimit = 10;
 
     CSVFormat::TimeUnits timeUnits = m_format.getTimeUnits();
@@ -282,7 +284,7 @@ CSVFileReader::load() const
         // read a line at a time, and that's obviously OK.
 
         QString chunk = in.readLine();
-        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+        QStringList lines = chunk.split('\r', Qt::SkipEmptyParts);
 
         m_readCount += chunk.size() + 1;
 
@@ -687,7 +689,7 @@ QString
 CSVFileReader::getConvertedAudioFilePath() const
 {
     QString base = m_filename;
-    base.replace(QRegExp("[/\\,.:;~<>\"'|?%*]+"), "_");
+    base.replace(QRegularExpression("[/\\,.:;~<>\"'|?%*]+"), "_");
 
     QString convertedFileDir = RecordDirectory::getConvertedAudioDirectory();
     if (convertedFileDir == "") {
@@ -702,4 +704,6 @@ CSVFileReader::getConvertedAudioFilePath() const
     return QDir(convertedFileDir).filePath
         (QString("%1-%2.wav").arg(base).arg(s));
 }
+
+} // end namespace sv
 

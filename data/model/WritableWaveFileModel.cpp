@@ -22,7 +22,8 @@
 #include "base/PlayParameterRepository.h"
 
 #include "fileio/WavFileWriter.h"
-#include "fileio/WavFileReader.h"
+#include "fileio/AudioFileReaderFactory.h"
+#include "fileio/AudioFileReader.h"
 
 #include <QDir>
 #include <QTextStream>
@@ -32,6 +33,8 @@
 #include <stdint.h>
 
 using namespace std;
+
+namespace sv {
 
 const int WritableWaveFileModel::PROPORTION_UNKNOWN = -1;
 
@@ -99,7 +102,7 @@ WritableWaveFileModel::init(QString path)
             QDir dir(TempDirectory::getInstance()->getPath());
             path = dir.filePath(QString("written_%1.wav")
                                 .arg(getId().untyped));
-        } catch (const DirectoryCreationFailed &f) {
+        } catch (const DirectoryCreationFailed &) {
             SVCERR << "WritableWaveFileModel: Failed to create temporary directory" << endl;
             return;
         }
@@ -141,11 +144,31 @@ WritableWaveFileModel::init(QString path)
         }
     }        
 
+    recreateReaderAndModel(false);
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
+}
+
+void
+WritableWaveFileModel::recreateReaderAndModel(bool complete)
+{
+    // See comment in ctor above about handling failures
+
+    delete m_model;
+    delete m_reader;
+    m_model = nullptr;
+    m_reader = nullptr;
+    
     FileSource source(m_targetPath);
 
-    m_reader = new WavFileReader(source, true);
-    if (!m_reader->getError().isEmpty()) {
-        SVCERR << "WritableWaveFileModel: Error in creating wave file reader: " << m_reader->getError() << endl;
+    AudioFileReaderFactory::Parameters params;
+    if (!complete) {
+        params.fileUpdating = true;
+    }
+    m_reader = AudioFileReaderFactory::createReader(source, params);
+    if (!m_reader || !m_reader->getError().isEmpty()) {
+        SVCERR << "WritableWaveFileModel: Error in creating wave file reader for \"" << m_targetPath << "\": " << (m_reader ? m_reader->getError() : "unsupported format") << endl;
         return;
     }
     
@@ -162,9 +185,6 @@ WritableWaveFileModel::init(QString path)
             this, SLOT(componentModelChanged(ModelId)));
     connect(m_model, SIGNAL(modelChangedWithin(ModelId, sv_frame_t, sv_frame_t)),
             this, SLOT(componentModelChangedWithin(ModelId, sv_frame_t, sv_frame_t)));
-    
-    PlayParameterRepository::getInstance()->addPlayable
-        (getId().untyped, this);
 }
 
 WritableWaveFileModel::~WritableWaveFileModel()
@@ -266,8 +286,18 @@ WritableWaveFileModel::writeComplete()
         m_temporaryWriter->close();
         normaliseToTarget();
     }
+
+    if (!m_reader->isUpdating()) {
+        // We set isUpdating ourselves, so if the reader reports that
+        // it isn't set, that means it doesn't support this flag at
+        // all and we need to recreate it rather than just tell it
+        // we're finished
+        SVDEBUG << "WritableWaveFileModel::writeComplete: Reader didn't support isUpdating; recreating it entirely" << endl;
+        recreateReaderAndModel(true);
+    } else {
+        m_reader->updateDone();
+    }
     
-    m_reader->updateDone();
     m_proportion = 100;
     emit modelChanged(getId());
     emit writeCompleted(getId());
@@ -280,21 +310,24 @@ WritableWaveFileModel::normaliseToTarget()
         SVCERR << "WritableWaveFileModel::normaliseToTarget: No temporary path available" << endl;
         return;
     }
-    
-    WavFileReader normalisingReader(m_temporaryPath, false,
-                                    WavFileReader::Normalisation::Peak);
 
-    if (!normalisingReader.getError().isEmpty()) {
-        SVCERR << "WritableWaveFileModel: Error in creating normalising reader: " << normalisingReader.getError() << endl;
+    AudioFileReaderFactory::Parameters params;
+    params.normalisation = AudioFileReaderFactory::Normalisation::Peak;
+    AudioFileReader *normalisingReader = AudioFileReaderFactory::createReader
+        (m_temporaryPath, params);
+
+    if (!normalisingReader || !normalisingReader->getError().isEmpty()) {
+        SVCERR << "WritableWaveFileModel: Error in creating normalising reader: " << normalisingReader->getError() << endl;
+        delete normalisingReader;
         return;
     }
 
     sv_frame_t frame = 0;
     sv_frame_t block = 65536;
-    sv_frame_t count = normalisingReader.getFrameCount();
+    sv_frame_t count = normalisingReader->getFrameCount();
 
     while (frame < count) {
-        auto frames = normalisingReader.getInterleavedFrames(frame, block);
+        auto frames = normalisingReader->getInterleavedFrames(frame, block);
         if (!m_targetWriter->putInterleavedFrames(frames)) {
             SVCERR << "ERROR: WritableWaveFileModel::normaliseToTarget: writer failed: " << m_targetWriter->getError() << endl;
             return;
@@ -306,6 +339,7 @@ WritableWaveFileModel::normaliseToTarget()
 
     delete m_temporaryWriter;
     m_temporaryWriter = nullptr;
+    delete normalisingReader;
     QFile::remove(m_temporaryPath);
 }
 
@@ -372,4 +406,6 @@ WritableWaveFileModel::toXml(QTextStream &out,
          .arg(encodeEntities(m_targetPath))
          .arg(extraAttributes));
 }
+
+} // end namespace sv
 

@@ -43,7 +43,7 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 
 #if defined(__MACOSX_CORE__)
-  #if TARGET_OS_IPHONE
+  #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
     #define AudioGetCurrentHostTime CAHostTimeBase::GetCurrentTime
     #define AudioConvertHostTimeToNanos CAHostTimeBase::ConvertToNanos
   #endif

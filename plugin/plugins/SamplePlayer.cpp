@@ -29,14 +29,15 @@
 #include <QDir>
 #include <QFileInfo>
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
-#endif
+#include <bqaudiostream/AudioReadStreamFactory.h>
+#include <bqaudiostream/AudioReadStream.h>
 
-#include <sndfile.h>
-#include <samplerate.h>
+#include <bqresample/Resampler.h>
+
 #include <iostream>
+#include <vector>
+
+using std::vector;
 
 //#define DEBUG_SAMPLE_PLAYER 1
 
@@ -150,7 +151,7 @@ SamplePlayer::SamplePlayer(int sampleRate) :
 
 SamplePlayer::~SamplePlayer()
 {
-    if (m_sampleData) free(m_sampleData);
+    delete[] m_sampleData;
 }
     
 LADSPA_Handle
@@ -246,8 +247,9 @@ SamplePlayer::configure(LADSPA_Handle handle, const char *key, const char *value
             return nullptr;
 
         } else {
-            char *buffer = (char *)malloc(strlen(value) + 80);
-            sprintf(buffer, "Sample directory \"%s\" does not exist, leaving unchanged", value);
+            size_t len = strlen(value) + 80;
+            char *buffer = (char *)malloc(len);
+            snprintf(buffer, len, "Sample directory \"%s\" does not exist, leaving unchanged", value);
             return buffer;
         }
     }
@@ -382,7 +384,7 @@ SamplePlayer::searchSamples()
             m_samples.push_back(std::pair<QString, QString>
                                 (file.baseName(), file.filePath()));
 #ifdef DEBUG_SAMPLE_PLAYER
-            cerr << "Found: " << dir[i] << endl;
+            SVCERR << "Found: " << dir[i] << endl;
 #endif
         }
     }
@@ -393,98 +395,96 @@ SamplePlayer::searchSamples()
 void
 SamplePlayer::loadSampleData(QString path)
 {
-    SF_INFO info;
-    SNDFILE *file;
-    size_t samples = 0;
-    float *tmpFrames, *tmpSamples, *tmpResamples, *tmpOld;
-    size_t i;
-
-    info.format = 0;
-#ifdef Q_OS_WIN
-    file = sf_wchar_open((LPCWSTR)path.utf16(), SFM_READ, &info);
-#else
-    file = sf_open(path.toLocal8Bit().data(), SFM_READ, &info);
-#endif
-    if (!file) {
-        cerr << "SamplePlayer::loadSampleData: Failed to open file "
-                  << path << ": "
-                  << sf_strerror(file) << endl;
+    breakfastquay::AudioReadStream *stream = nullptr;
+    try {
+        stream = breakfastquay::AudioReadStreamFactory::createReadStream
+            (path.toStdString());
+    } catch (const std::exception &e) {
+        SVCERR << "SamplePlayer::loadSampleData: ERROR: " << e.what() << endl;
         return;
-    }
-    
-    samples = info.frames;
-    tmpFrames = (float *)malloc(info.frames * info.channels * sizeof(float));
-    if (!tmpFrames) return;
+    } 
 
-    sf_readf_float(file, tmpFrames, info.frames);
-    sf_close(file);
-
-    tmpResamples = nullptr;
-
-    if (info.samplerate != m_sampleRate) {
+    auto channels = stream->getChannelCount();
+    auto rate = stream->getSampleRate();
+    auto frames = stream->getEstimatedFrameCount();
         
-        double ratio = (double)m_sampleRate / (double)info.samplerate;
-        size_t target = (size_t)(double(info.frames) * ratio);
-        SRC_DATA data;
-
-        tmpResamples = (float *)malloc(target * info.channels * sizeof(float));
-        if (!tmpResamples) {
-            free(tmpFrames);
-            return;
-        }
-
-        memset(tmpResamples, 0, target * info.channels * sizeof(float));
-
-        data.data_in = tmpFrames;
-        data.data_out = tmpResamples;
-        data.input_frames = info.frames;
-        data.output_frames = target;
-        data.src_ratio = ratio;
-
-        if (!src_simple(&data, SRC_SINC_BEST_QUALITY, info.channels)) {
-            free(tmpFrames);
-            tmpFrames = tmpResamples;
-            samples = target;
-        } else {
-            free(tmpResamples);
-        }
-    }
-
-    /* add an extra sample for linear interpolation */
-    tmpSamples = (float *)malloc((samples + 1) * sizeof(float));
-    if (!tmpSamples) {
-        free(tmpFrames);
+    if (!stream->isSeekable() || frames == 0) {
+        SVCERR << "SamplePlayer::loadSampleData: ERROR: Audio file \""
+               << path << "\" must be of a format with known length"
+               << endl;
+        delete stream;
         return;
     }
 
-    for (i = 0; i < samples; ++i) {
-        int j;
-        tmpSamples[i] = 0.0f;
-        for (j = 0; j < info.channels; ++j) {
-            tmpSamples[i] += tmpFrames[i * info.channels + j];
-        }
+    // Allow some extra at the end in case of resampler imprecision
+    size_t padding = 1000;
+    
+    vector<float> interleaved((frames + padding) * channels, 0.f);
+    auto obtained = stream->getInterleavedFrames(frames, interleaved.data());
+    delete stream;
+    
+    if (obtained < frames) {
+        SVCERR << "SamplePlayer::loadSampleData: ERROR: Too few frames read from \""
+               << path << "\" (expected " << frames << ", got " << obtained
+               << ")" << endl;
+        return;
     }
 
-    free(tmpFrames);
+    vector<float> resampled;
+    size_t targetFrames = frames;
 
-    /* add an extra sample for linear interpolation */
-    tmpSamples[samples] = 0.0f;
+    if (rate != m_sampleRate) {
+        
+        double ratio = (double)m_sampleRate / (double)rate;
+        targetFrames = (size_t)(round(double(frames) * ratio));
+        resampled = vector<float>(targetFrames * channels, 0.f);
+
+        breakfastquay::Resampler::Parameters params;
+        params.quality = breakfastquay::Resampler::Best;
+        params.dynamism = breakfastquay::Resampler::RatioMostlyFixed;
+        params.ratioChange = breakfastquay::Resampler::SuddenRatioChange;
+
+        breakfastquay::Resampler resampler(params, channels);
+        int obtained = resampler.resampleInterleaved
+            (resampled.data(), targetFrames,
+             interleaved.data(), frames + padding,
+             ratio, true);
+        if (obtained != targetFrames) {
+            SVDEBUG << "SamplePlayer::loadSampleData: WARNING: Expected "
+                    << targetFrames << " frames from resampler (input frames = "
+                    << frames << ", padding = " << padding << ", ratio = "
+                    << ratio << "), obtained " << obtained << endl;
+        }
+    } else {
+        resampled = interleaved;
+    }
+
+    /* mixdown, adding an extra sample for linear interpolation */
+    float *tmpSamples = new float[targetFrames + 1];
     
+    for (int i = 0; i < targetFrames; ++i) {
+        tmpSamples[i] = 0.0f;
+        for (int j = 0; j < channels; ++j) {
+            tmpSamples[i] += resampled[i * channels + j];
+        }
+    }
+    tmpSamples[targetFrames] = 0.0f;
+
     QMutexLocker locker(&m_mutex);
 
-    tmpOld = m_sampleData;
+    float *old = m_sampleData;
     m_sampleData = tmpSamples;
-    m_sampleCount = samples;
+    m_sampleCount = targetFrames;
 
-    for (i = 0; i < Polyphony; ++i) {
+    for (int i = 0; i < Polyphony; ++i) {
         m_ons[i] = -1;
         m_offs[i] = -1;
         m_velocities[i] = 0;
     }
 
-    if (tmpOld) free(tmpOld);
+    delete[] old;
 
-    printf("%s: loaded %s (%ld samples from original %ld channels resampled from %ld frames at %ld Hz)\n", "sampler", path.toLocal8Bit().data(), (long)samples, (long)info.channels, (long)info.frames, (long)info.samplerate);
+    printf("%s: loaded %s (%ld samples from original %ld channels resampled from %ld frames at %ld Hz)\n", "sampler", path.toStdString().data(), (long)targetFrames, (long)channels, (long)frames, (long)rate);
 }
 
 void
@@ -514,7 +514,7 @@ SamplePlayer::runImpl(unsigned long sampleCount,
 
             if (events[event_pos].type == SND_SEQ_EVENT_NOTEON) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                cerr << "SamplePlayer: found NOTEON at time " 
+                SVCERR << "SamplePlayer: found NOTEON at time " 
                           << events[event_pos].time.tick << endl;
 #endif
                 snd_seq_ev_note_t n = events[event_pos].data.note;
@@ -532,7 +532,7 @@ SamplePlayer::runImpl(unsigned long sampleCount,
             } else if (events[event_pos].type == SND_SEQ_EVENT_NOTEOFF &&
                        (!m_sustain || (*m_sustain < 0.001))) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                cerr << "SamplePlayer: found NOTEOFF at time " 
+                SVCERR << "SamplePlayer: found NOTEOFF at time " 
                           << events[event_pos].time.tick << endl;
 #endif
                 snd_seq_ev_note_t n = events[event_pos].data.note;
@@ -559,7 +559,9 @@ SamplePlayer::runImpl(unsigned long sampleCount,
         }
 
 #ifdef DEBUG_SAMPLE_PLAYER
-        cerr << "SamplePlayer: have " << notecount << " note(s) sounding currently" << endl;
+        SVCERR << "SamplePlayer: have " << notecount << " note(s) sounding currently" << endl;
+#else
+        (void)notecount;
 #endif
 
         pos += count;
@@ -599,7 +601,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 
         if (rsi >= m_sampleCount) {
 #ifdef DEBUG_SAMPLE_PLAYER
-            cerr << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << endl;
+            SVCERR << "Note " << n << " has run out of samples (were " << m_sampleCount << " available at ratio " << ratio << "), ending" << endl;
 #endif
             m_ons[n] = -1;
             break;
@@ -618,7 +620,7 @@ SamplePlayer::addSample(int n, unsigned long pos, unsigned long count)
 
             if (dist > releaseFrames) {
 #ifdef DEBUG_SAMPLE_PLAYER
-                cerr << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << endl;
+                SVCERR << "Note " << n << " has expired its release time (" << releaseFrames << " frames), ending" << endl;
 #endif
                 m_ons[n] = -1;
                 break;

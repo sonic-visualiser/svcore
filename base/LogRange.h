@@ -19,6 +19,8 @@
 #include <vector>
 #include "Debug.h"
 
+namespace sv {
+
 class LogRange
 {
 public:
@@ -51,5 +53,7 @@ public:
     static bool shouldUseLogScale(std::vector<double> values);
 
 };
+
+} // end namespace sv
 
 #endif

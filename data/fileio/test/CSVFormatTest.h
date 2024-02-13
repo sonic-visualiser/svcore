@@ -30,6 +30,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class CSVFormatTest : public QObject
 {

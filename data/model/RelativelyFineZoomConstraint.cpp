@@ -21,6 +21,8 @@
 
 using namespace std;
 
+namespace sv {
+
 ZoomLevel
 RelativelyFineZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
                                                   RoundingDirection dir) const
@@ -99,4 +101,6 @@ RelativelyFineZoomConstraint::getNearestZoomLevel(ZoomLevel requested,
     return newLevel;
 }
 
+
+} // end namespace sv
 

@@ -17,6 +17,8 @@
 
 #include <QTemporaryFile>
 
+namespace sv {
+
 /**
  * A class that manages the creation of a temporary file with a given
  * prefix and the renaming of that file to the prefix after use.  For
@@ -55,5 +57,7 @@ protected:
     QString m_temp;
 };
 
+
+} // end namespace sv
 
 #endif

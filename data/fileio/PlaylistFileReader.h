@@ -25,6 +25,8 @@
 
 class QFile;
 
+namespace sv {
+
 class PlaylistFileReader
 {
 public:
@@ -55,5 +57,7 @@ protected:
     QString m_basedir;
     QString m_error;
 };
+
+} // end namespace sv
 
 #endif

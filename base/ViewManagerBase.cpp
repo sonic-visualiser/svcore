@@ -15,6 +15,10 @@
 
 #include "ViewManagerBase.h"
 
+namespace sv {
+
 ViewManagerBase::~ViewManagerBase()
 {
 }
+} // end namespace sv
+

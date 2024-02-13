@@ -16,8 +16,11 @@
 #define SV_PROVIDER_H
 
 #include <QString>
+#include <QObject>
 
 #include <set>
+
+namespace sv {
 
 struct Provider
 {
@@ -85,5 +88,7 @@ struct Provider
         return !operator==(other);
     }
 };
+
+} // end namespace sv
 
 #endif

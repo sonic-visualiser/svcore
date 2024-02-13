@@ -30,6 +30,8 @@
 
 #include <QMutexLocker>
 
+namespace sv {
+
 class NoteModel : public Model,
                   public TabularModel,
                   public NoteExportable,
@@ -442,5 +444,7 @@ protected:
 
     EventSeries m_events;
 };
+
+} // end namespace sv
 
 #endif

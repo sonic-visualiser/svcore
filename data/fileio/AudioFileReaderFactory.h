@@ -21,6 +21,8 @@
 #include "FileSource.h"
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class AudioFileReader;
 class ProgressReporter;
 
@@ -114,12 +116,19 @@ public:
          * Threading mode. The default is ThreadingMode::NotThreaded.
          */
         ThreadingMode threadingMode;
+
+        /**
+         * True if the file is still being written and the frame count
+         * may change. Not all readers support this.
+         */
+        bool fileUpdating;
         
         Parameters() :
             targetRate(0),
             normalisation(Normalisation::None),
             gaplessMode(GaplessMode::Gapless),
-            threadingMode(ThreadingMode::NotThreaded)
+            threadingMode(ThreadingMode::NotThreaded),
+            fileUpdating(false)
         { }
     };
     
@@ -151,6 +160,8 @@ public:
      */
     static bool isSupported(FileSource source);
 };
+
+} // end namespace sv
 
 #endif
 

@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace sv {
+
 double
 StringBits::stringToDoubleLocaleFree(QString s, bool *ok)
 {
@@ -162,9 +164,19 @@ StringBits::split(QString line, QChar separator, bool quoted)
     if (quoted) {
         return splitQuoted(line, separator);
     } else {
-        return line.split(separator,
-                          separator == ' ' ? QString::SkipEmptyParts :
-                          QString::KeepEmptyParts);
+        return line.split(
+            separator,
+            separator == ' ' ?
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+            Qt::SkipEmptyParts :
+            Qt::KeepEmptyParts
+#else
+            QString::SkipEmptyParts :
+            QString::KeepEmptyParts
+} // end namespace sv
+
+#endif
+            );
     }
 }
 
@@ -254,6 +266,4 @@ StringBits::isValidUtf8(const std::string &bytes, bool isTruncated)
     return true;
 }
 
-
-        
-
+}

@@ -19,6 +19,8 @@
 #include "DenseThreeDimensionalModel.h"
 #include "EditableDenseThreeDimensionalModel.h"
 
+namespace sv {
+
 /**
  * A DenseThreeDimensionalModel that represents a reduction in the
  * time dimension of another DenseThreeDimensionalModel. Each column
@@ -100,6 +102,14 @@ public:
      */
     Column getColumn(int col) const override;
 
+    /**
+     * Retrieve the peaks column at peak-cache column number col,
+     * returning only nbins bins starting at bin minbin. No range
+     * checking is performed, so minbin and nbins must be in range for
+     * our height.
+     */
+    Column getColumn(int col, int minbin, int nbins) const override;
+    
     float getValueAt(int col, int n) const override;
 
     QString getValueUnit() const override;
@@ -147,5 +157,7 @@ private:
     void fillColumn(int column) const;
 };
 
+
+} // end namespace sv
 
 #endif

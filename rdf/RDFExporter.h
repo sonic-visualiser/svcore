@@ -18,6 +18,8 @@
 
 #include <QString>
 
+namespace sv {
+
 class Model;
 class RDFFeatureWriter;
 
@@ -45,5 +47,7 @@ protected:
     Model *m_model;
     RDFFeatureWriter *m_fw;
 };
+
+} // end namespace sv
 
 #endif

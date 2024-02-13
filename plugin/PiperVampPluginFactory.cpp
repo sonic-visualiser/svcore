@@ -47,6 +47,8 @@ using namespace std;
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
+namespace sv {
+
 class PiperVampPluginFactory::Logger : public piper_vamp::client::LogCallback {
 protected:
     void log(std::string message) const override {
@@ -352,5 +354,7 @@ PiperVampPluginFactory::populateFrom(const HelperExecPath::HelperExec &server,
         m_taxonomy[identifier] = catlist.join(" > ");
     }
 }
+
+} // end namespace sv
 
 #endif

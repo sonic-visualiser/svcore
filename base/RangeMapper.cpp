@@ -22,6 +22,8 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace sv {
+
 LinearRangeMapper::LinearRangeMapper(int minpos, int maxpos,
                                      double minval, double maxval,
                                      QString unit, bool inverted,
@@ -359,3 +361,5 @@ AutoRangeMapper::getValueForPositionUnclamped(int position) const
 {
     return m_mapper->getValueForPositionUnclamped(position);
 }
+} // end namespace sv
+

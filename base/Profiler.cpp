@@ -19,22 +19,25 @@
    and QMUL.
 */
 
-#include <iostream>
 #include "Profiler.h"
+#include "Debug.h"
 
-#include <cstdio>
+#include <sstream>
 
 #include <vector>
 #include <algorithm>
 #include <set>
 #include <map>
+#include <mutex>
 
-Profiles* Profiles::m_instance = nullptr;
+namespace sv {
 
-Profiles* Profiles::getInstance()
+Profiles *Profiles::m_instance = nullptr;
+
+Profiles *Profiles::getInstance()
 {
-    if (!m_instance) m_instance = new Profiles();
-    
+    static std::once_flag f;
+    std::call_once(f, [&]() { m_instance = new Profiles(); });
     return m_instance;
 }
 
@@ -44,40 +47,35 @@ Profiles::Profiles()
 
 Profiles::~Profiles()
 {
-    dump();
 }
 
 #ifndef NO_TIMING
-void Profiles::accumulate(
-    const char* id, clock_t time, RealTime rt
-)
+void Profiles::accumulate(const char* id, Duration duration)
 {
+    QMutexLocker locker(&m_mutex);
+
     ProfilePair &pair(m_profiles[id]);
     ++pair.first;
-    pair.second.first += time;
-    pair.second.second = pair.second.second + rt;
+    pair.second += duration;
 
-    TimePair &lastPair(m_lastCalls[id]);
-    lastPair.first = time;
-    lastPair.second = rt;
+    m_lastCalls[id] = duration;
 
-    TimePair &worstPair(m_worstCalls[id]);
-    if (time > worstPair.first) {
-        worstPair.first = time;
-    }
-    if (rt > worstPair.second) {
-        worstPair.second = rt;
+    Duration &worst(m_worstCalls[id]);
+    if (duration > worst) {
+        worst = duration;
     }
 }
 #endif
 
-void Profiles::dump() const
+void Profiles::dump()
 {
 #ifndef NO_TIMING
+    QMutexLocker locker(&m_mutex);
 
-    fprintf(stderr, "Profiling points:\n");
+    std::ostringstream s;
+    s << "\nProfiling points:\n";
 
-    fprintf(stderr, "\nBy name:\n");
+    s << "\nBy name:\n\n";
 
     typedef std::set<const char *, std::less<std::string> > StringSet;
 
@@ -96,28 +94,24 @@ void Profiles::dump() const
 
         const ProfilePair &pp(j->second);
 
-        fprintf(stderr, "%s(%d):\n", *i, pp.first);
+        s << *i << " (" << pp.first << " calls):\n";
 
-        fprintf(stderr, "\tCPU:  \t%.9g ms/call \t[%d ms total]\n",
-                (((double)pp.second.first * 1000.0 /
-                  (double)pp.first) / CLOCKS_PER_SEC),
-                int((double(pp.second.first) * 1000.0) / CLOCKS_PER_SEC));
-
-        fprintf(stderr, "\tReal: \t%s ms      \t[%s ms total]\n",
-                ((pp.second.second / pp.first) * 1000).toString().c_str(),
-                (pp.second.second * 1000).toString().c_str());
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(pp.second);
+        
+        s << "    Mean:  " << (ns / pp.first).count() << " ns/call\n";
 
         WorstCallMap::const_iterator k = m_worstCalls.find(*i);
         if (k == m_worstCalls.end()) continue;
         
-        const TimePair &wc(k->second);
+        Duration worst(k->second);
+        auto wns = std::chrono::duration_cast<std::chrono::nanoseconds>(worst);
 
-        fprintf(stderr, "\tWorst:\t%s ms/call \t[%d ms CPU]\n",
-                (wc.second * 1000).toString().c_str(),
-                int((double(wc.first) * 1000.0) / CLOCKS_PER_SEC));
+        s << "    Worst: " << wns.count() << " ns/call\n";
+
+        s << "    Total: " << ns.count() << " ns\n";
     }
 
-    typedef std::multimap<RealTime, const char *> TimeRMap;
+    typedef std::multimap<Duration, const char *> TimeRMap;
     typedef std::multimap<int, const char *> IntRMap;
     
     TimeRMap totmap, avgmap, worstmap;
@@ -125,46 +119,46 @@ void Profiles::dump() const
 
     for (ProfileMap::const_iterator i = m_profiles.begin();
          i != m_profiles.end(); ++i) {
-        totmap.insert(TimeRMap::value_type(i->second.second.second, i->first));
-        avgmap.insert(TimeRMap::value_type(i->second.second.second /
+        totmap.insert(TimeRMap::value_type(i->second.second, i->first));
+        avgmap.insert(TimeRMap::value_type(i->second.second /
                                            i->second.first, i->first));
         ncallmap.insert(IntRMap::value_type(i->second.first, i->first));
     }
 
     for (WorstCallMap::const_iterator i = m_worstCalls.begin();
          i != m_worstCalls.end(); ++i) {
-        worstmap.insert(TimeRMap::value_type(i->second.second,
-                                             i->first));
+        worstmap.insert(TimeRMap::value_type(i->second, i->first));
     }
 
+    s << "\nBy number of calls:\n\n";
 
-    fprintf(stderr, "\nBy number of calls:\n");
     for (IntRMap::const_iterator i = ncallmap.end(); i != ncallmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %d\n", i->second, i->first);
+        s << i->first << ": " << i->second << "\n";
     }
 
-    fprintf(stderr, "\nBy average:\n");
+    s << "\nBy average:\n\n";
     for (TimeRMap::const_iterator i = avgmap.end(); i != avgmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %s ms\n", i->second,
-                (i->first * 1000).toString().c_str());
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(i->first);
+        s << ns.count() << ": " << i->second << "\n";
     }
 
-    fprintf(stderr, "\nBy worst case:\n");
+    s << "\nBy worst case:\n\n";
     for (TimeRMap::const_iterator i = worstmap.end(); i != worstmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %s ms\n", i->second,
-                (i->first * 1000).toString().c_str());
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(i->first);
+        s << ns.count() << ": " << i->second << "\n";
     }
 
-    fprintf(stderr, "\nBy total:\n");
+    s << "\nBy total:\n\n";
     for (TimeRMap::const_iterator i = totmap.end(); i != totmap.begin(); ) {
         --i;
-        fprintf(stderr, "%-40s  %s ms\n", i->second,
-                (i->first * 1000).toString().c_str());
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(i->first);
+        s << ns.count() << ": " << i->second << "\n";
     }
 
+    SVCERR << s.str() << endl;
 #endif
 }
 
@@ -175,25 +169,16 @@ Profiler::Profiler(const char* c, bool showOnDestruct) :
     m_showOnDestruct(showOnDestruct),
     m_ended(false)
 {
-    m_startCPU = clock();
-
-    struct timeval tv;
-    (void)gettimeofday(&tv, 0);
-    m_startTime = RealTime::fromTimeval(tv);
+    m_start = std::chrono::steady_clock::now();
 }
 
 void
 Profiler::update() const
 {
-    clock_t elapsedCPU = clock() - m_startCPU;
-
-    struct timeval tv;
-    (void)gettimeofday(&tv, 0);
-    RealTime elapsedTime = RealTime::fromTimeval(tv) - m_startTime;
-
-    cerr << "Profiler : id = " << m_c
-         << " - elapsed so far = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
-         << "ms CPU, " << elapsedTime << " real" << endl;
+    auto t = std::chrono::steady_clock::now();
+    SVCERR << "Profiler : id = " << m_c << " - elapsed so far = "
+           << std::chrono::duration_cast<std::chrono::nanoseconds>(t - m_start).count()
+           << " ns" << endl;
 }    
 
 Profiler::~Profiler()
@@ -204,21 +189,19 @@ Profiler::~Profiler()
 void
 Profiler::end()
 {
-    clock_t elapsedCPU = clock() - m_startCPU;
+    auto t = std::chrono::steady_clock::now();
+    Profiles::getInstance()->accumulate(m_c, t - m_start);
 
-    struct timeval tv;
-    (void)gettimeofday(&tv, 0);
-    RealTime elapsedTime = RealTime::fromTimeval(tv) - m_startTime;
-
-    Profiles::getInstance()->accumulate(m_c, elapsedCPU, elapsedTime);
-
-    if (m_showOnDestruct)
-        cerr << "Profiler : id = " << m_c
-             << " - elapsed = " << ((elapsedCPU * 1000) / CLOCKS_PER_SEC)
-             << "ms CPU, " << elapsedTime << " real" << endl;
+    if (m_showOnDestruct) {
+        SVCERR << "Profiler : id = " << m_c << " - elapsed = "
+               << std::chrono::duration_cast<std::chrono::nanoseconds>(t - m_start).count()
+               << "ns" << endl;
+    }
 
     m_ended = true;
 }
  
 #endif
+
+} // end namespace sv
 

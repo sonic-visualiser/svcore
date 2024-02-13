@@ -27,6 +27,8 @@
 // A plugin identifier is simply a string; this class provides methods
 // to parse it into its constituent bits (plugin type, DLL path and label).
 
+namespace sv {
+
 class PluginIdentifier {
 
 public:
@@ -46,5 +48,7 @@ public:
     // Not strictly related to identifiers
     static QString RESERVED_PROJECT_DIRECTORY_KEY;
 };
+
+} // end namespace sv
 
 #endif

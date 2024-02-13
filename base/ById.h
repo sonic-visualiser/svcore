@@ -103,6 +103,8 @@
 //!!! to do: review how often we are calling getAs<...> when we could
 // just be using get
 
+namespace sv {
+
 struct IdAlloc {
 
     // The value NO_ID (-1) is never allocated
@@ -269,6 +271,8 @@ public:
         }
     }
 };
+
+} // end namespace sv
 
 #endif
 

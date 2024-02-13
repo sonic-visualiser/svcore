@@ -17,6 +17,8 @@
 
 #include "data/fileio/FileSource.h"
 
+namespace sv {
+
 class TextTest
 {
 public:
@@ -37,5 +39,7 @@ public:
      */
     static bool isApparentTextDocument(FileSource);
 };
+
+} // end namespace sv
 
 #endif

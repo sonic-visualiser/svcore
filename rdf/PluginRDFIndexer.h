@@ -26,6 +26,8 @@ namespace Dataquay {
     class BasicStore;
 }
 
+namespace sv {
+
 class PluginRDFIndexer
 {
 public:
@@ -80,6 +82,8 @@ protected:
 
     static PluginRDFIndexer *m_instance;
 };
+
+} // end namespace sv
 
 #endif
 

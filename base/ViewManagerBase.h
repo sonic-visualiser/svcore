@@ -20,6 +20,8 @@
 
 #include "Selection.h"
 
+namespace sv {
+
 class AudioPlaySource;
 class AudioRecordTarget;
 
@@ -74,6 +76,8 @@ signals:
     void alignModeChanged();
     void alignModeChanged(bool);
 };
+
+} // end namespace sv
 
 #endif
 

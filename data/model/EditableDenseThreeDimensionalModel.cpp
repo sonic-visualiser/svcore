@@ -26,6 +26,8 @@
 #include <cmath>
 #include <cassert>
 
+namespace sv {
+
 using std::vector;
 
 #include "system/System.h"
@@ -152,6 +154,26 @@ EditableDenseThreeDimensionalModel::getColumn(int index) const
     } else {
         Column cc(c);
         cc.resize(m_yBinCount, 0.0);
+        return cc;
+    }
+}
+
+EditableDenseThreeDimensionalModel::Column
+EditableDenseThreeDimensionalModel::getColumn(int index, int minbin, int nbins) const
+{
+    QMutexLocker locker(&m_mutex);
+    if (!in_range_for(m_data, index)) {
+        return {};
+    }
+    const Column &c = m_data.at(index);
+    if (int(c.size()) == nbins && minbin == 0) {
+        return c;
+    } else {
+        Column cc(nbins, 0.0);
+        for (int i = 0; i < nbins; ++i) {
+            if (!in_range_for(c, i + minbin)) break;
+            cc[i] = c[i + minbin];
+        }
         return cc;
     }
 }
@@ -451,4 +473,6 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     out << indent + "</dataset>\n";
 }
 
+
+} // end namespace sv
 

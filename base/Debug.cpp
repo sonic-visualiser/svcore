@@ -23,30 +23,29 @@
 #include <QDateTime>
 
 #include <stdexcept>
+#include <sstream>
 #include <memory>
 
 static std::unique_ptr<SVDebug> svdebug = nullptr;
 static std::unique_ptr<SVCerr> svcerr = nullptr;
 static QMutex mutex;
 
-SVDebug &getSVDebug() {
-    mutex.lock();
-    if (!svdebug) {
+SVDebug &getSVDebug()
+{
+    static std::once_flag f;
+    std::call_once(f, [&]() {
         svdebug = std::unique_ptr<SVDebug>(new SVDebug());
-    }
-    mutex.unlock();
+    });
     return *svdebug;
 }
 
-SVCerr &getSVCerr() {
-    mutex.lock();
-    if (!svcerr) {
-        if (!svdebug) {
-            svdebug = std::unique_ptr<SVDebug>(new SVDebug());
-        }
-        svcerr = std::unique_ptr<SVCerr>(new SVCerr(*svdebug));
-    }
-    mutex.unlock();
+SVCerr &getSVCerr()
+{
+    SVDebug &svdebug = getSVDebug();
+    static std::once_flag f;
+    std::call_once(f, [&]() {
+        svcerr = std::unique_ptr<SVCerr>(new SVCerr(svdebug));
+    });
     return *svcerr;
 }
 
@@ -63,11 +62,11 @@ SVDebug::SVDebug() :
     m_timer.start();
     
     if (qApp->applicationName() == "") {
-        cerr << "ERROR: Can't use SVDEBUG before setting application name" << endl;
+        std::cerr << "ERROR: Can't use SVDEBUG before setting application name" << std::endl;
         throw std::logic_error("Can't use SVDEBUG before setting application name");
     }
     
-    QString pfx = ResourceFinder().getUserResourcePrefix();
+    QString pfx = sv::ResourceFinder().getUserResourcePrefix();
     QDir logdir(QString("%1/%2").arg(pfx).arg("log"));
 
     m_prefix = strdup(QString("[%1]")
@@ -118,5 +117,61 @@ std::ostream &
 operator<<(std::ostream &target, const QUrl &u)
 {
     return target << "<" << u.toString() << ">";
+}
+
+static void
+svDebugQtMessageHandler(QtMsgType type,
+                        const QMessageLogContext &context,
+                        const QString &msg)
+{
+    SVDEBUG << qPrintable(qFormatLogMessage(type, context, msg)) << endl;
+}
+
+void
+SVDebug::installQtMessageHandler()
+{
+    (void)qInstallMessageHandler(svDebugQtMessageHandler);
+}
+
+static void
+svCerrQtMessageHandler(QtMsgType type,
+                        const QMessageLogContext &context,
+                        const QString &msg)
+{
+    SVCERR << qPrintable(qFormatLogMessage(type, context, msg)) << endl;
+}
+
+void
+SVCerr::installQtMessageHandler()
+{
+    (void)qInstallMessageHandler(svCerrQtMessageHandler);
+}
+
+static int funcLoggerDepth = 0;
+static QMutex funcLoggerMutex;
+
+FunctionLogger::FunctionLogger(const char *name) :
+    m_name(name)
+{
+    QMutexLocker locker(&funcLoggerMutex);
+    std::ostringstream os;
+    for (int i = 0; i < funcLoggerDepth; ++i) {
+        os << "  ";
+    }
+    os << "-[>] " << m_name;
+    SVDEBUG << os.str() << endl;
+    ++funcLoggerDepth;
+}
+
+FunctionLogger::~FunctionLogger()
+{
+    QMutexLocker locker(&funcLoggerMutex);
+    --funcLoggerDepth;
+    std::ostringstream os;
+    for (int i = 0; i < funcLoggerDepth; ++i) {
+        os << "  ";
+    }
+    os << "<[-] " << m_name;
+    SVDEBUG << os.str() << endl;
 }
 

@@ -26,7 +26,11 @@
 #include <iostream>
 
 
+namespace sv {
+
 RealTimePluginInstance::~RealTimePluginInstance()
 {
 }
+
+} // end namespace sv
 

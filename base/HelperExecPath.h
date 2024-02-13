@@ -18,6 +18,8 @@
 
 #include <QStringList>
 
+namespace sv {
+
 /**
  * Class to find helper executables that have been installed alongside
  * the application. There may be more than one executable available
@@ -85,5 +87,7 @@ private:
     QList<HelperExec> search(QString, QStringList &);
     QStringList getTags();
 };
+
+} // end namespace sv
 
 #endif

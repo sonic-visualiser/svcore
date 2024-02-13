@@ -29,6 +29,8 @@
 
 #include <QStringList>
 
+namespace sv {
+
 /**
  * A model representing image annotations, identified by filename or
  * URI, at a given time, with an optional label. The filename can be
@@ -305,6 +307,8 @@ protected:
     EventSeries m_events;
 };
 
+
+} // end namespace sv
 
 #endif
 

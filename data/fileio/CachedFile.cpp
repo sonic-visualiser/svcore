@@ -32,6 +32,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 CachedFile::OriginLocalFilenameMap
 CachedFile::m_knownGoodCaches;
 
@@ -269,4 +271,6 @@ CachedFile::updateLastRetrieval(bool successful)
     settings.endGroup();
 }
 
+
+} // end namespace sv
 

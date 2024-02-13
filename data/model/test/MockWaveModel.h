@@ -19,6 +19,7 @@
 #include "../DenseTimeValueModel.h"
 
 #include <vector>
+using namespace sv;
 
 enum Sort {
     DC,

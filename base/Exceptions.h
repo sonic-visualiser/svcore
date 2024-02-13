@@ -22,6 +22,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 class FileNotFound : virtual public std::exception
 {
 public:
@@ -107,5 +109,7 @@ public:
 protected:
     QString m_purpose;
 };
+
+} // end namespace sv
 
 #endif

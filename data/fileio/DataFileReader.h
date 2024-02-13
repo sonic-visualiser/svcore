@@ -19,6 +19,8 @@
 #include <QString>
 #include <QObject>
 
+namespace sv {
+
 class Model;
 
 class DataFileReader : public QObject
@@ -55,5 +57,7 @@ public:
      */
     virtual Model *load() const = 0;
 };
+
+} // end namespace sv
 
 #endif

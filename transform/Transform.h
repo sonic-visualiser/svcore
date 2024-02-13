@@ -23,13 +23,14 @@
 #include <vamp-hostsdk/PluginBase.h>
 
 #include <QString>
+#include <QMap>
 
 #include <map>
 #include <vector>
 
-typedef QString TransformId;
+namespace sv {
 
-class QXmlAttributes;
+typedef QString TransformId;
 
 class Transform : public XmlExportable
 {
@@ -142,11 +143,14 @@ public:
     void toXml(QTextStream &stream, QString indent = "",
                QString extraAttributes = "") const override;
 
+    typedef QMap<QString, QString> Attributes;
+
     /**
-     * Set the main transform data from the given XML attributes.
-     * This does not set the parameters or configuration, which are
-     * exported to separate XML elements rather than attributes of the
-     * transform element.
+     * Set the main transform data from the given attributes -
+     * historically, attributes read from an XML document.  This does
+     * not set the parameters or configuration, which are exported to
+     * separate XML elements rather than attributes of the transform
+     * element.
      * 
      * Note that this only sets those attributes which are actually
      * present in the argument.  Any attributes not defined in the
@@ -155,7 +159,7 @@ public:
      * ensure you start from an empty transform rather than one that
      * has already been configured.
      */
-    void setFromXmlAttributes(const QXmlAttributes &);
+    void setFromAttributes(const Attributes &);
 
     QString getErrorString() const { return m_errorString; }
     
@@ -202,6 +206,8 @@ protected:
 };
 
 typedef std::vector<Transform> Transforms;
+
+} // end namespace sv
 
 #endif
 

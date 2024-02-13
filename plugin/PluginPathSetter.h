@@ -23,6 +23,8 @@
 
 #include "checker/knownplugins.h"
 
+namespace sv {
+
 class PluginPathSetter
 {
 public:
@@ -81,5 +83,7 @@ private:
     static Paths getEnvironmentPathsUncached(const TypeKeys &keys);
     static QString getSettingTagFor(TypeKey);
 };
+
+} // end namespace sv
 
 #endif

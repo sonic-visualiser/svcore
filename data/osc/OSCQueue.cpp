@@ -25,11 +25,15 @@
 #include <iostream>
 #include <QThread>
 
+#ifdef HAVE_LIBLO
+#include <unistd.h>
+#endif
+
+namespace sv {
+
 #define OSC_MESSAGE_QUEUE_SIZE 1023
 
 #ifdef HAVE_LIBLO
-
-#include <unistd.h>
 
 void
 OSCQueue::oscError(int num, const char *msg, const char *path)
@@ -74,8 +78,8 @@ OSCQueue::oscMessageHandler(const char *path, const char *types, lo_arg **argv,
         case 'd': message.addArg(arg->d); break;
         case 'c': message.addArg(arg->c); break;
         case 't': message.addArg(arg->i); break;
-        case 's': message.addArg(&arg->s); break;
-        default:  cerr << "WARNING: OSCQueue::oscMessageHandler: "
+        case 's': message.addArg(QString::fromUtf8(&arg->s)); break;
+        default:  SVCERR << "WARNING: OSCQueue::oscMessageHandler: "
                             << "Unsupported OSC type '" << type << "'" 
                             << endl;
             break;
@@ -111,8 +115,8 @@ OSCQueue::OSCQueue(bool withNetworkPort) :
         SVDEBUG << "OSCQueue::OSCQueue: Started OSC thread, URL is "
              << lo_server_thread_get_url(m_thread) << endl;
             
-        cout << "OSCQueue::OSCQueue: Base OSC URL is "
-             << lo_server_thread_get_url(m_thread) << endl;
+        std::cout << "OSCQueue::OSCQueue: Base OSC URL is "
+                  << lo_server_thread_get_url(m_thread) << std::endl;
     }
 #else
     if (m_withPort) {
@@ -186,10 +190,10 @@ OSCQueue::postMessage(OSCMessage message)
     int count = 0, max = 5;
     while (m_buffer.getWriteSpace() == 0) {
         if (count == max) {
-            cerr << "ERROR: OSCQueue::postMessage: OSC message queue is full and not clearing -- abandoning incoming message" << endl;
+            SVCERR << "ERROR: OSCQueue::postMessage: OSC message queue is full and not clearing -- abandoning incoming message" << endl;
             return;
         }
-        cerr << "WARNING: OSCQueue::postMessage: OSC message queue (capacity " << m_buffer.getSize() << " is full!" << endl;
+        SVCERR << "WARNING: OSCQueue::postMessage: OSC message queue (capacity " << m_buffer.getSize() << " is full!" << endl;
         SVDEBUG << "Waiting for something to be processed" << endl;
 #ifdef _WIN32
         Sleep(1);
@@ -236,7 +240,7 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
     method = path.section('/', i, -1);
 
     if (method.contains('/')) {
-        cerr << "ERROR: OSCQueue::parseOSCPath: malformed path \""
+        SVCERR << "ERROR: OSCQueue::parseOSCPath: malformed path \""
                   << path << "\" (should be target/data/method or "
                   << "target/method or method, where target and data "
                   << "are numeric)" << endl;
@@ -248,4 +252,6 @@ OSCQueue::parseOSCPath(QString path, int &target, int &targetData,
 
     return true;
 }
+
+} // end namespace sv
 

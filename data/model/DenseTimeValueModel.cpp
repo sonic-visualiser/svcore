@@ -19,6 +19,8 @@
 
 using namespace std;
 
+namespace sv {
+
 QVector<QString>
 DenseTimeValueModel::getStringExportHeaders(DataExportOptions) const
 {
@@ -56,3 +58,6 @@ DenseTimeValueModel::toStringExportRows(DataExportOptions,
 
     return rows;
 }
+
+} // end namespace sv
+

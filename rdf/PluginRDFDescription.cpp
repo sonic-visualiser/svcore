@@ -24,7 +24,7 @@
 
 #include <dataquay/BasicStore.h>
 
-#include <iostream>
+namespace sv {
 
 using Dataquay::Uri;
 using Dataquay::Node;
@@ -415,4 +415,6 @@ PluginRDFDescription::indexOutputs()
 
     return true;
 }
+
+} // end namespace sv
 

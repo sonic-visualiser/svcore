@@ -24,6 +24,8 @@
 
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class CSVFormat
 {
 public:
@@ -200,5 +202,7 @@ protected:
     void guessAudioSampleRange();
     void updateScaleUnits();
 };
+
+} // end namespace sv
 
 #endif

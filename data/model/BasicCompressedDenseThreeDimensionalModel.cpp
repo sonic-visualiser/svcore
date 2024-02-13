@@ -16,6 +16,7 @@
 #include "BasicCompressedDenseThreeDimensionalModel.h"
 
 #include "base/LogRange.h"
+#include "base/Profiler.h"
 
 #include <QTextStream>
 #include <QStringList>
@@ -26,6 +27,8 @@
 
 #include <cmath>
 #include <cassert>
+
+namespace sv {
 
 using std::vector;
 
@@ -143,9 +146,23 @@ BasicCompressedDenseThreeDimensionalModel::setMaximumLevel(float level)
 BasicCompressedDenseThreeDimensionalModel::Column
 BasicCompressedDenseThreeDimensionalModel::getColumn(int index) const
 {
+    Profiler profiler("BasicCompressedDenseThreeDimensionalModel::getColumn");
     QReadLocker locker(&m_lock);
     if (in_range_for(m_data, index)) return expandAndRetrieve(index);
     else return Column();
+}
+
+BasicCompressedDenseThreeDimensionalModel::Column
+BasicCompressedDenseThreeDimensionalModel::getColumn(int index, int minbin, int nbins) const
+{
+    Profiler profiler("BasicCompressedDenseThreeDimensionalModel::getColumn (subset)");
+    Column c = getColumn(index);
+    Column cc;
+    cc.reserve(nbins);
+    for (int i = 0; i < nbins; ++i) {
+        cc.push_back(c[minbin + i]);
+    }
+    return cc;
 }
 
 float
@@ -311,7 +328,7 @@ BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve(int index) const
     Column p = expandAndRetrieve(index - tdist);
     int psize = int(p.size()), csize = int(c.size());
     if (psize != m_yBinCount) {
-        cerr << "WARNING: BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
+        SVCERR << "WARNING: BasicCompressedDenseThreeDimensionalModel::expandAndRetrieve: Trying to expand from incorrectly sized column" << endl;
     }
     if (top) {
         for (int i = csize; i < psize; ++i) {
@@ -600,4 +617,6 @@ BasicCompressedDenseThreeDimensionalModel::toXml(QTextStream &out,
     out << indent + "</dataset>\n";
 }
 
+
+} // end namespace sv
 

@@ -24,6 +24,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class TestScaleTickIntervals : public QObject
 {

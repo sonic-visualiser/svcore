@@ -22,6 +22,8 @@
 
 #include <vector>
 
+namespace sv {
+
 class EditableDenseThreeDimensionalModel : public DenseThreeDimensionalModel
 {
     Q_OBJECT
@@ -102,6 +104,12 @@ public:
      * Get the set of bin values at the given column.
      */
     Column getColumn(int x) const override;
+
+    /**
+     * Get the set of bin values at the given column, within the given
+     * bin range.
+     */
+    Column getColumn(int x, int minbin, int nbins) const override;
 
     /**
      * Get a single value, from the n'th bin of the given column.
@@ -219,5 +227,7 @@ protected:
 
     mutable QMutex m_mutex;
 };
+
+} // end namespace sv
 
 #endif

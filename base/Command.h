@@ -23,6 +23,8 @@
 
 #include "Debug.h"
 
+namespace sv {
+
 class Command
 {
 public:
@@ -119,6 +121,8 @@ public:
 
     QString getName() const override;
 };
+
+} // end namespace sv
 
 #endif
 

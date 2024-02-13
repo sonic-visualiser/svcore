@@ -31,6 +31,8 @@
 
 //#define DEBUG_FILE_READ_THREAD 1
 
+namespace sv {
+
 FileReadThread::FileReadThread() :
     m_nextToken(0),
     m_exiting(false)
@@ -115,7 +117,7 @@ FileReadThread::cancel(int token)
             m_cancelledRequests[token] = m_readyRequests[token];
             m_readyRequests.erase(token);
         } else {
-            cerr << "WARNING: FileReadThread::cancel: token " << token << " not found" << endl;
+            SVCERR << "WARNING: FileReadThread::cancel: token " << token << " not found" << endl;
         }
     }
 
@@ -202,11 +204,11 @@ FileReadThread::done(int token)
         m_readyRequests.erase(token);
         found = true;
     } else if (m_queue.find(token) != m_queue.end()) {
-        cerr << "WARNING: FileReadThread::done(" << token << "): request is still in queue (wait or cancel it)" << endl;
+        SVCERR << "WARNING: FileReadThread::done(" << token << "): request is still in queue (wait or cancel it)" << endl;
     }
 
     if (!found) {
-        cerr << "WARNING: FileReadThread::done(" << token << "): request not found" << endl;
+        SVCERR << "WARNING: FileReadThread::done(" << token << "): request not found" << endl;
     }
 }
 
@@ -264,18 +266,18 @@ FileReadThread::process()
 
     if (seekFailed) {
         ::perror("Seek failed");
-        cerr << "ERROR: FileReadThread::process: seek to "
+        SVCERR << "ERROR: FileReadThread::process: seek to "
                   << request.start << " failed" << endl;
         request.size = 0;
     } else {
         if (r < 0) {
             ::perror("ERROR: FileReadThread::process: Read failed");
-            cerr << "ERROR: FileReadThread::process: read of "
+            SVCERR << "ERROR: FileReadThread::process: read of "
                       << request.size << " at "
                       << request.start << " failed" << endl;
             request.size = 0;
         } else if (r < ssize_t(request.size)) {
-            cerr << "WARNING: FileReadThread::process: read "
+            SVCERR << "WARNING: FileReadThread::process: read "
                       << request.size << " returned only " << r << " bytes"
                       << endl;
             request.size = r;
@@ -325,5 +327,6 @@ FileReadThread::notifyCancelled()
         m_newlyCancelled.erase(token);
     }
 }
-        
     
+} // end namespace sv
+

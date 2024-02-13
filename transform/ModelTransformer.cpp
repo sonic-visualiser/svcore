@@ -17,17 +17,25 @@
 
 #include "TransformFactory.h"
 
-ModelTransformer::ModelTransformer(Input input, const Transform &transform) :
+namespace sv {
+
+ModelTransformer::ModelTransformer(Input input,
+                                   const Transform &transform,
+                                   CompletionReporter *reporter) :
     m_input(input),
+    m_reporter(reporter),
     m_abandoned(false)
 {
     m_transforms.push_back(transform);
     checkTransformsExist();
 }
 
-ModelTransformer::ModelTransformer(Input input, const Transforms &transforms) :
+ModelTransformer::ModelTransformer(Input input,
+                                   const Transforms &transforms,
+                                   CompletionReporter *reporter) :
     m_transforms(transforms),
     m_input(input),
+    m_reporter(reporter),
     m_abandoned(false)
 {
     checkTransformsExist();
@@ -52,3 +60,5 @@ ModelTransformer::checkTransformsExist()
         }
     }
 }
+} // end namespace sv
+

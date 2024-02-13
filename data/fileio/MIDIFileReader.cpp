@@ -25,6 +25,7 @@
 #include <string>
 #include <cstdio>
 #include <algorithm>
+#include <filesystem>
 
 #include "MIDIFileReader.h"
 
@@ -50,6 +51,8 @@ using std::ios;
 using std::vector;
 using std::map;
 using std::set;
+
+namespace sv {
 
 using namespace MIDIConstants;
 
@@ -284,13 +287,8 @@ MIDIFileReader::parseFile()
 #endif
 
     // Open the file
-#ifdef _MSC_VER
-    m_midiFile = new ifstream(m_path.utf16(),
+    m_midiFile = new ifstream(std::filesystem::u8path(m_path.toUtf8().data()),
                               ios::in | ios::binary);
-#else
-    m_midiFile = new ifstream(m_path.toUtf8().data(),
-                              ios::in | ios::binary);
-#endif
 
     if (!*m_midiFile) {
         m_error = "File not found or not readable.";
@@ -1065,5 +1063,7 @@ MIDIFileReader::loadTrack(unsigned int trackToLoad,
 
     return model;
 }
+
+} // end namespace sv
 
 

@@ -13,6 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
+#ifndef WITHOUT_LIBSNDFILE // See note in header
+
 #include "DecodingWavFileReader.h"
 
 #include "WavFileReader.h"
@@ -22,6 +24,8 @@
 #include <QFileInfo>
 
 using namespace std;
+
+namespace sv {
 
 DecodingWavFileReader::DecodingWavFileReader(FileSource source,
                                              DecodeMode decodeMode,
@@ -202,3 +206,6 @@ DecodingWavFileReader::supports(FileSource &source)
 }
 
 
+} // end namespace sv
+
+#endif

@@ -20,6 +20,8 @@
 
 #include "Window.h"
 
+namespace sv {
+
 class Preferences : public PropertyContainer
 {
     Q_OBJECT
@@ -40,13 +42,7 @@ public:
         SpectrogramInterpolated
     };
 
-    enum SpectrogramXSmoothing {
-        NoSpectrogramXSmoothing,
-        SpectrogramXInterpolated
-    };
-
     SpectrogramSmoothing getSpectrogramSmoothing() const { return m_spectrogramSmoothing; }
-    SpectrogramXSmoothing getSpectrogramXSmoothing() const { return m_spectrogramXSmoothing; }
     double getTuningFrequency() const { return m_tuningFrequency; }
     WindowType getWindowType() const { return m_windowType; }
 
@@ -118,7 +114,6 @@ public slots:
     void setProperty(const PropertyName &, int) override;
 
     void setSpectrogramSmoothing(SpectrogramSmoothing smoothing);
-    void setSpectrogramXSmoothing(SpectrogramXSmoothing smoothing);
     void setTuningFrequency(double freq);
     void setPropertyBoxLayout(PropertyBoxLayout layout);
     void setWindowType(WindowType type);
@@ -159,7 +154,6 @@ private:
     static OctaveNumberingSystem getSystemWithMiddleCInOctave(int o);
 
     SpectrogramSmoothing m_spectrogramSmoothing;
-    SpectrogramXSmoothing m_spectrogramXSmoothing;
     double m_tuningFrequency;
     PropertyBoxLayout m_propertyBoxLayout;
     WindowType m_windowType;
@@ -179,5 +173,7 @@ private:
     int m_octave;
     bool m_showSplash;
 };
+
+} // end namespace sv
 
 #endif

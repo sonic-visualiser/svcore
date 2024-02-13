@@ -27,6 +27,9 @@
 #include "base/Debug.h"
 
 class QFile;
+
+namespace sv {
+
 class ProgressReporter;
 
 /**
@@ -271,5 +274,7 @@ protected:
     static QMutex m_fileCreationMutex;
     static int m_count;
 };
+
+} // end namespace sv
 
 #endif

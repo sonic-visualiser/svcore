@@ -29,9 +29,12 @@
 
 #include <iostream>
 
+namespace sv {
+
 RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
-                                                               const Transform &t) :
-    ModelTransformer(in, t),
+                                                               const Transform &t,
+                                                               CompletionReporter *reporter) :
+    ModelTransformer(in, t, reporter),
     m_plugin(nullptr)
 {
     Transform transform(t);
@@ -79,7 +82,7 @@ RealTimeEffectModelTransformer::RealTimeEffectModelTransformer(Input in,
 
     if (m_outputNo >= 0 &&
         m_outputNo >= int(m_plugin->getControlOutputCount())) {
-        cerr << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << endl;
+        SVCERR << "RealTimeEffectModelTransformer: Plugin has fewer than desired " << m_outputNo << " control outputs" << endl;
         return;
     }
 
@@ -215,6 +218,9 @@ RealTimeEffectModelTransformer::run()
         int completion = int
             ((((blockFrame - contextStart) / blockSize) * 99) /
              (1 + ((contextDuration) / blockSize)));
+        if (completion > 99) {
+            completion = 99; // 100 reserved for complete
+        }
 
         sv_frame_t got = 0;
 
@@ -306,6 +312,9 @@ RealTimeEffectModelTransformer::run()
             // terminology, just as it was for WritableWaveFileModel
             if (stvm) stvm->setCompletion(completion);
             if (wwfm) wwfm->setWriteProportion(completion);
+            if (m_reporter) {
+                m_reporter->setCompletion(m_outputs[0], completion);
+            }
             prevCompletion = completion;
         }
         
@@ -313,8 +322,13 @@ RealTimeEffectModelTransformer::run()
     }
 
     if (m_abandoned) return;
-    
+
     if (stvm) stvm->setCompletion(100);
     if (wwfm) wwfm->writeComplete();
+    if (m_reporter) {
+        m_reporter->setCompletion(m_outputs[0], 100);
+    }
 }
+
+} // end namespace sv
 

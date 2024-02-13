@@ -24,6 +24,8 @@
 
 #include <vector>
 
+namespace sv {
+
 /**
  * Metadata associated with a transform.
  *
@@ -96,5 +98,7 @@ struct TransformDescription
 };
 
 typedef std::vector<TransformDescription> TransformList;
+
+} // end namespace sv
 
 #endif

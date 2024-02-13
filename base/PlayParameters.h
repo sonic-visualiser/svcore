@@ -20,6 +20,8 @@
 
 #include "XmlExportable.h"
 
+namespace sv {
+
 class PlayParameters : public QObject, public XmlExportable
 {
     Q_OBJECT
@@ -65,6 +67,8 @@ private:
     PlayParameters(const PlayParameters &);
     PlayParameters &operator=(const PlayParameters &);
 };
+
+} // end namespace sv
 
 #endif
 

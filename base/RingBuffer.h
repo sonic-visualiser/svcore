@@ -36,6 +36,8 @@
 #include <iostream>
 #endif
 
+namespace sv {
+
 /**
  * RingBuffer implements a lock-free ring buffer for one writer and N
  * readers, that is to be used to store a sample type T.
@@ -510,5 +512,8 @@ RingBuffer<T, N>::zero(int n)
     m_writer = (m_writer + n) % m_size;
     return n;
 }
+
+} // end namespace sv
+
 
 #endif // _RINGBUFFER_H_

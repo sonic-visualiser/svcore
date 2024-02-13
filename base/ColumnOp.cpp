@@ -19,9 +19,12 @@
 #include <algorithm>
 #include <iostream>
 
-#include "base/Debug.h"
+#include "Debug.h"
+#include "Profiler.h"
 
 using namespace std;
+
+namespace sv {
 
 ColumnOp::Column
 ColumnOp::fftScale(const Column &in, int fftSize)
@@ -120,6 +123,20 @@ ColumnOp::distribute(const Column &in,
                      bool interpolate)
 {
     Column out(h, 0.f);
+    distribute(out, in, h, binfory, minbin, interpolate);
+    return out;
+}
+
+void
+ColumnOp::distribute(Column &out,
+                     const Column &in,
+                     int h,
+                     const std::vector<double> &binfory,
+                     int minbin,
+                     bool interpolate)
+{
+    Profiler profiler("ColumnOp::distribute");
+    
     int bins = int(in.size());
 
     if (interpolate) {
@@ -137,10 +154,31 @@ ColumnOp::distribute(const Column &in,
             interpolate = false;
         }
     }
+
+    bool actuallyInterpolate = interpolate;
     
     for (int y = 0; y < h; ++y) {
 
-        if (interpolate) {
+        // As remarked above, it's common for bins to be more
+        // widely-spaced at one end than the other. We switch
+        // interpolation off or on if we reach a step at which
+        // bins-per-y drops above or below 1.0. (But we won't do so
+        // repeatedly)
+        
+        if (actuallyInterpolate) {
+            if (y > 0 &&
+                fabs(binfory[y] - binfory[y-1]) > 1.0) {
+                interpolate = false;
+                actuallyInterpolate = false;
+            }
+        } else if (interpolate) {
+            if (y > 0 &&
+                fabs(binfory[y] - binfory[y-1]) < 1.0) {
+                actuallyInterpolate = true;
+            }
+        }                
+            
+        if (actuallyInterpolate) {
 
             double sy = binfory[y] - minbin - 0.5;
             double syf = floor(sy);
@@ -203,6 +241,6 @@ ColumnOp::distribute(const Column &in,
             }
         }
     }
-
-    return out;
 }
+} // end namespace sv
+

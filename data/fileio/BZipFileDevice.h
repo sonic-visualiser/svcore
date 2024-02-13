@@ -21,6 +21,8 @@
 
 #include <bzlib.h>
 
+namespace sv {
+
 class BZipFileDevice : public QIODevice
 {
     Q_OBJECT
@@ -48,5 +50,7 @@ protected:
     bool m_atEnd;
     bool m_ok;
 };
+
+} // end namespace sv
 
 #endif

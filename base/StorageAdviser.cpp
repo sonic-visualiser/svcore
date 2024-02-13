@@ -22,6 +22,10 @@
 
 #include <iostream>
 
+namespace sv {
+
+double StorageAdviser::m_greed = 1.0;
+
 QString
 StorageAdviser::criteriaToString(int criteria)
 {
@@ -119,6 +123,12 @@ StorageAdviser::recommend(Criteria criteria,
         }
     }
 
+    if (m_greed < 1.0) {
+        memoryFree = ssize_t(round(m_greed * memoryFree));
+        SVDEBUG << "StorageAdviser: greed is set to " << m_greed
+                << ", scaled free real memory down to " << memoryFree << endl;
+    }
+    
     SVDEBUG << "StorageAdviser: disc planned: " << (m_discPlanned / 1024)
             << "K, memory planned: " << (m_memoryPlanned / 1024) << "K" << endl;
     SVDEBUG << "StorageAdviser: min requested: " << minimumSize
@@ -272,4 +282,14 @@ StorageAdviser::setFixedRecommendation(Recommendation recommendation)
 {
     m_baseRecommendation = recommendation;
 }
+
+void
+StorageAdviser::setRAMGreed(double greed)
+{
+    if (greed < 0.0) greed = 0.0;
+    if (greed > 1.0) greed = 1.0;
+    m_greed = greed;
+}
+
+} // end namespace sv
 

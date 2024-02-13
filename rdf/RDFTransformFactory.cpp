@@ -34,6 +34,8 @@
 #include <dataquay/BasicStore.h>
 #include <dataquay/PropertyObject.h>
 
+namespace sv {
+
 using Dataquay::Uri;
 using Dataquay::Node;
 using Dataquay::Nodes;
@@ -180,7 +182,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
             (Triple(tnode, m_store->expand("vamp:plugin"), Node()));
 
         if (pnode == Node()) {
-            cerr << "RDFTransformFactory: WARNING: No vamp:plugin for "
+            SVCERR << "RDFTransformFactory: WARNING: No vamp:plugin for "
                  << "vamp:Transform node " << tnode
                  << ", skipping this transform" << endl;
             continue;
@@ -191,7 +193,7 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
 
         QString pluginId = indexer->getIdForPluginURI(pluginUri);
         if (pluginId == "") {
-            cerr << "RDFTransformFactory: WARNING: Unknown plugin <"
+            SVCERR << "RDFTransformFactory: WARNING: Unknown plugin <"
                  << pluginUri << "> for transform <"
                  << transformUri << ">, skipping this transform"
                  << endl;
@@ -255,17 +257,17 @@ RDFTransformFactoryImpl::getTransforms(ProgressReporter *)
                 RealTime duration = RealTime::fromXsdDuration(onode.value.toStdString());
                 transform.setDuration(duration);
                 if (duration == RealTime::zeroTime) {
-                    cerr << "\nRDFTransformFactory: WARNING: Duration is specified as \"" << onode.value << "\" in RDF file,\n    but this evaluates to zero when parsed as an xsd:duration datatype.\n    The duration property will therefore be ignored.\n    To specify start time and duration use the xsd:duration format,\n    for example \"PT2.5S\"^^xsd:duration (for 2.5 seconds).\n\n";
+                    SVCERR << "\nRDFTransformFactory: WARNING: Duration is specified as \"" << onode.value << "\" in RDF file,\n    but this evaluates to zero when parsed as an xsd:duration datatype.\n    The duration property will therefore be ignored.\n    To specify start time and duration use the xsd:duration format,\n    for example \"PT2.5S\"^^xsd:duration (for 2.5 seconds).\n\n";
                 }
             } else if (optional == "plugin_version") {
                 transform.setPluginVersion(onode.value);
             } else {
-                cerr << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
+                SVCERR << "RDFTransformFactory: ERROR: Inconsistent optionals lists (unexpected optional \"" << optional << "\"" << endl;
             }
         }
 
-        cerr << "RDFTransformFactory: NOTE: Transform is: " << endl;
-        cerr << transform.toXmlString() << endl;
+        SVCERR << "RDFTransformFactory: NOTE: Transform is: " << endl;
+        SVCERR << transform.toXmlString() << endl;
 
         transforms.push_back(transform);
     }
@@ -325,7 +327,7 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
             (Triple(binding, m_store->expand("vamp:parameter"), Node()));
 
         if (paramNode == Node()) {
-            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:parameter for binding " << binding << endl;
+            SVCERR << "RDFTransformFactoryImpl::setParameters: No vamp:parameter for binding " << binding << endl;
             continue;
         }
 
@@ -333,7 +335,7 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
             (Triple(binding, m_store->expand("vamp:value"), Node()));
 
         if (paramNode == Node()) {
-            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:value for binding " << binding << endl;
+            SVCERR << "RDFTransformFactoryImpl::setParameters: No vamp:value for binding " << binding << endl;
             continue;
         }
         
@@ -353,7 +355,7 @@ RDFTransformFactoryImpl::setParameters(Transform &transform,
         }
 
         if (idNode == Node() || idNode.type != Node::Literal) {
-            cerr << "RDFTransformFactoryImpl::setParameters: No vamp:identifier for parameter " << paramNode << endl;
+            SVCERR << "RDFTransformFactoryImpl::setParameters: No vamp:identifier for parameter " << paramNode << endl;
             continue;
         }
         
@@ -381,7 +383,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
         s << uri << " a vamp:Transform ;" << endl;
         s << "    vamp:plugin <" << QUrl(pluginUri).toEncoded().data() << "> ;" << endl;
     } else {
-        cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId << "\", writing synthetic plugin and library resources" << endl;
+        SVCERR << "WARNING: RDFTransformFactory::writeTransformToRDF: No plugin URI available for plugin id \"" << pluginId << "\", writing synthetic plugin and library resources" << endl;
         QString type, soname, label;
         PluginIdentifier::parseIdentifier(pluginId, type, soname, label);
         s << uri << "_plugin a vamp:Plugin ;" << endl;
@@ -398,7 +400,7 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
     QString outputUri = description.getOutputUri(outputId);
 
     if (transform.getOutput() != "" && outputUri == "") {
-        cerr << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput() << "\", writing a synthetic output resource" << endl;
+        SVCERR << "WARNING: RDFTransformFactory::writeTransformToRDF: No output URI available for transform output id \"" << transform.getOutput() << "\", writing a synthetic output resource" << endl;
     }
 
     if (transform.getStepSize() != 0) {
@@ -456,4 +458,6 @@ RDFTransformFactoryImpl::writeTransformToRDF(const Transform &transform,
 
     return str;
 }
+
+} // end namespace sv
 

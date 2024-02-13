@@ -22,6 +22,8 @@
 #include <vector>
 #include <deque>
 
+namespace sv {
+
 /**
  * RecentFiles manages a list of recently-used identifier strings,
  * saving and restoring that list via QSettings.  The identifiers do
@@ -121,5 +123,7 @@ private:
     void write();
     void truncateAndWrite();
 };
+
+} // end namespace sv
 
 #endif

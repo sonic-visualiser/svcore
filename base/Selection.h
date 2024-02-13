@@ -22,6 +22,8 @@
 #include "XmlExportable.h"
 #include "BaseTypes.h"
 
+namespace sv {
+
 /**
  * A selection object simply represents a range in time, via start and
  * end frame.
@@ -95,5 +97,7 @@ protected:
     SelectionList m_selections;
 };
     
+
+} // end namespace sv
 
 #endif

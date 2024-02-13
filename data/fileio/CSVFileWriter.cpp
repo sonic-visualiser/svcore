@@ -30,6 +30,8 @@
 #include <QTextStream>
 #include <exception>
 
+namespace sv {
+
 CSVFileWriter::CSVFileWriter(QString path,
                              Model *model,
                              QString delimiter,
@@ -123,3 +125,6 @@ CSVFileWriter::writeSelection(MultiSelection selection)
         m_error = e.what();
     }
 }
+
+} // end namespace sv
+

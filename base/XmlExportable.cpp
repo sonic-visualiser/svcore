@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 QString
 XmlExportable::toXmlString(QString indent,
                            QString extraAttributes) const
@@ -82,4 +84,6 @@ XmlExportable::getExportId() const
     return m_exportId;
 }
 
+
+} // end namespace sv
 

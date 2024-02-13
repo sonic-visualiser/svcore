@@ -37,11 +37,12 @@ using namespace std;
 //#define DEBUG_WAVE_FILE_MODEL 1
 //#define DEBUG_WAVE_FILE_MODEL_READ 1
 
+namespace sv {
+
 PowerOfSqrtTwoZoomConstraint
 ReadOnlyWaveFileModel::m_zoomConstraint;
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t targetRate) :
-    m_source(source),
     m_path(source.getLocation()),
     m_reader(nullptr),
     m_myReader(true),
@@ -56,12 +57,12 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
 {
     Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel");
 
-    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
-            << m_path << ", target rate " << targetRate << endl;
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(" << getId()
+            << "): path " << m_path << ", target rate " << targetRate << endl;
     
-    m_source.waitForData();
+    source.waitForData();
 
-    if (m_source.isOK()) {
+    if (source.isOK()) {
 
         Preferences *prefs = Preferences::getInstance();
         
@@ -78,7 +79,7 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
         
         params.threadingMode = AudioFileReaderFactory::ThreadingMode::Threaded;
 
-        m_reader = AudioFileReaderFactory::createReader(m_source, params);
+        m_reader = AudioFileReaderFactory::createReader(source, params);
         if (m_reader) {
             SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: reader rate: "
                       << m_reader->getSampleRate() << endl;
@@ -94,7 +95,6 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, sv_samplerate_t 
 }
 
 ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader *reader) :
-    m_source(source),
     m_path(source.getLocation()),
     m_reader(nullptr),
     m_myReader(false),
@@ -105,14 +105,39 @@ ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(FileSource source, AudioFileReader 
     m_prevCompletion(0),
     m_exiting(false)
 {
-    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with reader)");
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with source and reader)");
 
-    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: path "
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel: source path "
             << m_path << ", with reader" << endl;
     
     m_reader = reader;
     if (m_reader) setObjectName(m_reader->getTitle());
     if (objectName() == "") setObjectName(QFileInfo(m_path).fileName());
+    fillCache();
+    
+    PlayParameterRepository::getInstance()->addPlayable
+        (getId().untyped, this);
+}
+
+ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(QString path, AudioFileReader *reader) :
+    m_path(path),
+    m_reader(nullptr),
+    m_myReader(false),
+    m_startFrame(0),
+    m_fillThread(nullptr),
+    m_updateTimer(nullptr),
+    m_lastFillExtent(0),
+    m_prevCompletion(0),
+    m_exiting(false)
+{
+    Profiler profiler("ReadOnlyWaveFileModel::ReadOnlyWaveFileModel (with path and reader)");
+
+    SVDEBUG << "ReadOnlyWaveFileModel::ReadOnlyWaveFileModel(" << getId()
+            << "): supplied path " << m_path << ", with reader" << endl;
+    
+    m_reader = reader;
+    if (m_reader) setObjectName(m_reader->getTitle());
+    if (objectName() == "") setObjectName(m_path);
     fillCache();
     
     PlayParameterRepository::getInstance()->addPlayable
@@ -127,11 +152,17 @@ ReadOnlyWaveFileModel::~ReadOnlyWaveFileModel()
         (getId().untyped);
     
     m_exiting = true;
-    if (m_fillThread) m_fillThread->wait();
-    if (m_myReader) delete m_reader;
+    if (m_fillThread) {
+        m_fillThread->wait();
+        delete m_fillThread;
+    }
+    if (m_myReader) {
+        delete m_reader;
+    }
     m_reader = nullptr;
 
-    SVDEBUG << "ReadOnlyWaveFileModel: Destructor exiting; we had caches of "
+    SVDEBUG << "ReadOnlyWaveFileModel(" << getId()
+            << "): Destructor exiting; we had caches of "
             << (m_cache[0].size() * sizeof(Range)) << " and "
             << (m_cache[1].size() * sizeof(Range)) << " bytes" << endl;
 }
@@ -147,7 +178,7 @@ ReadOnlyWaveFileModel::isReady(int *completion) const
 {
     bool ready = true;
     if (!isOK()) ready = false;
-    if (m_fillThread) ready = false;
+    if (m_fillThread && !m_fillThread->isFinished()) ready = false;
     if (m_reader && m_reader->isUpdating()) ready = false;
 
     double c = double(m_lastFillExtent) /
@@ -578,6 +609,10 @@ ReadOnlyWaveFileModel::fillCache()
 {
     m_mutex.lock();
 
+#ifdef DEBUG_WAVE_FILE_MODEL
+    SVCERR << "ReadOnlyWaveFileModel(" << objectName() << ")::fillCache: about to start fill thread" << endl;
+#endif
+    
     m_updateTimer = new QTimer(this);
     connect(m_updateTimer, SIGNAL(timeout()), this, SLOT(fillTimerTimedOut()));
     m_updateTimer->start(100);
@@ -672,6 +707,8 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         means[i] = 0.f;
     }
 
+    SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: entering loop" << endl;
+    
     bool first = true;
 
     while (first || updating) {
@@ -734,17 +771,26 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
                 ++frame;
             }
 
-            if (m_model.m_exiting) break;
+            if (m_model.m_exiting) {
+                SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from inner loop" << endl;
+                break;
+            }
             m_fillExtent = frame;
         }
 
         m_model.m_mutex.unlock();
             
         first = false;
-        if (m_model.m_exiting) break;
+        if (m_model.m_exiting) {
+            SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from outer loop" << endl;
+            break;
+        }
         if (updating) {
             usleep(100000);
-            if (m_model.m_exiting) break;
+            if (m_model.m_exiting) {
+                SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: exiting from outer loop after wakeup" << endl;
+                break;
+            }
         }
     }
 
@@ -767,9 +813,6 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
 
                 count[cacheType] = 0;
             }
-            
-            const Range &rr = *m_model.m_cache[cacheType].begin();
-            MUNLOCK(&rr, m_model.m_cache[cacheType].capacity() * sizeof(Range));
         }
     }
     
@@ -783,16 +826,20 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
         SVCERR << "ReadOnlyWaveFileModel(" << m_model.objectName() << "): Cache type " << cacheType << " now contains " << m_model.m_cache[cacheType].size() << " ranges" << endl;
     }
 #endif
+
+    SVDEBUG << "ReadOnlyWaveFileModel(" << m_model.getId() << ")::RangeCacheFillThread: done" << endl;
 }
 
 void
 ReadOnlyWaveFileModel::toXml(QTextStream &out,
-                     QString indent,
-                     QString extraAttributes) const
+                             QString indent,
+                             QString extraAttributes) const
 {
     Model::toXml(out, indent,
                  QString("type=\"wavefile\" file=\"%1\" %2")
                  .arg(encodeEntities(m_path)).arg(extraAttributes));
 }
+
+} // end namespace sv
 
     

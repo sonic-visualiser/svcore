@@ -19,6 +19,11 @@
 
 #include "Debug.h"
 
+namespace sv {
+
+using std::cerr;
+using std::endl;
+
 ProgressPrinter::ProgressPrinter(QString message, QObject *parent) :
     ProgressReporter(parent),
     m_prefix(message),
@@ -82,4 +87,6 @@ ProgressPrinter::setProgress(int progress)
     }
     m_lastProgress = progress;
 }
+
+} // end namespace sv
 

@@ -24,6 +24,8 @@
 #include "LADSPAPluginInstance.h"
 #include "LADSPAPluginFactory.h"
 
+#include <QRegularExpression>
+
 #ifdef HAVE_LRDF
 #include "lrdf.h"
 #endif // HAVE_LRDF
@@ -32,6 +34,8 @@
 
 #include <cmath>
 
+
+namespace sv {
 
 LADSPAPluginInstance::LADSPAPluginInstance(RealTimePluginFactory *factory,
                                            int clientId,
@@ -173,12 +177,13 @@ LADSPAPluginInstance::getParameterDescriptors() const
 
         if (haveLabels) {
             pd.name = QString(pd.name.c_str())
-                .replace(QRegExp("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
+                .replace(QRegularExpression("\\([^\\(\\)]+=[^\\(\\)]+\\)$"), "")
                 .toStdString();
         } else {
-            static QRegExp unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
-            if (unitRE.indexIn(pd.name.c_str()) >= 0) {
-                pd.unit = unitRE.cap(1).toStdString();
+            static QRegularExpression unitRE("[\\[\\(]([A-Za-z0-9/]+)[\\)\\]]$");
+            auto match = unitRE.match(pd.name.c_str());
+            if (match.hasMatch()) {
+                pd.unit = match.captured(1).toStdString();
                 pd.name = QString(pd.name.c_str())
                     .replace(unitRE, "").toStdString();
             }
@@ -265,7 +270,7 @@ LADSPAPluginInstance::init(int idealChannelCount)
                 if (!strcmp(m_descriptor->PortNames[i], "latency") ||
                     !strcmp(m_descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_LADSPA
-                    cerr << "Wooo! We have a latency port!" << endl;
+                    SVCERR << "Wooo! We have a latency port!" << endl;
 #endif
                     m_latencyPort = data;
                 }
@@ -388,7 +393,7 @@ LADSPAPluginInstance::instantiate(sv_samplerate_t sampleRate)
 #endif
 
     if (!m_descriptor->instantiate) {
-        cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+        SVCERR << "Bad plugin: plugin id " << m_descriptor->UniqueID
                   << ":" << m_descriptor->Label
                   << " has no instantiate method!" << endl;
         return;
@@ -396,7 +401,7 @@ LADSPAPluginInstance::instantiate(sv_samplerate_t sampleRate)
 
     unsigned long pluginRate = (unsigned long)(sampleRate);
     if (sampleRate != sv_samplerate_t(pluginRate)) {
-        cerr << "LADSPAPluginInstance: WARNING: Non-integer sample rate "
+        SVCERR << "LADSPAPluginInstance: WARNING: Non-integer sample rate "
              << sampleRate << " presented, rounding to " << pluginRate
              << endl;
     }
@@ -570,7 +575,7 @@ LADSPAPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->cleanup) {
-        cerr << "Bad plugin: plugin id " << m_descriptor->UniqueID
+        SVCERR << "Bad plugin: plugin id " << m_descriptor->UniqueID
                   << ":" << m_descriptor->Label
                   << " has no cleanup method!" << endl;
         return;
@@ -583,5 +588,7 @@ LADSPAPluginInstance::cleanup()
 
     m_instanceHandles.clear();
 }
+
+} // end namespace sv
 
 

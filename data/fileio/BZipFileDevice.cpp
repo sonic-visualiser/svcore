@@ -28,6 +28,8 @@
 #include <unistd.h>
 #endif
 
+namespace sv {
+
 BZipFileDevice::BZipFileDevice(QString fileName) :
     m_fileName(fileName),
     m_qfile(fileName),
@@ -230,7 +232,7 @@ BZipFileDevice::readData(char *data, qint64 maxSize)
 
     if (bzError != BZ_OK) {
         if (bzError != BZ_STREAM_END) {
-            cerr << "BZipFileDevice::readData: error condition" << endl;
+            SVCERR << "BZipFileDevice::readData: error condition" << endl;
             setErrorString(tr("bzip2 stream read error"));
             m_ok = false;
             return -1;
@@ -252,7 +254,7 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
 //    SVDEBUG << "BZipFileDevice::writeData: " << maxSize << " to write" << endl;
 
     if (bzError != BZ_OK) {
-        cerr << "BZipFileDevice::writeData: error condition" << endl;
+        SVCERR << "BZipFileDevice::writeData: error condition" << endl;
         setErrorString("bzip2 stream write error");
         m_ok = false;
         return -1;
@@ -262,4 +264,6 @@ BZipFileDevice::writeData(const char *data, qint64 maxSize)
 
     return maxSize;
 }
+
+} // end namespace sv
 

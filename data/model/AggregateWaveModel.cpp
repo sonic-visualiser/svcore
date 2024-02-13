@@ -23,6 +23,8 @@ using namespace std;
 
 //#define DEBUG_AGGREGATE_WAVE_FILE_MODEL 1
 
+namespace sv {
+
 PowerOfSqrtTwoZoomConstraint
 AggregateWaveModel::m_zoomConstraint;
 
@@ -268,4 +270,6 @@ AggregateWaveModel::toXml(QTextStream &out,
                  .arg(componentStrings.join(","))
                  .arg(extraAttributes));
 }
+
+} // end namespace sv
 

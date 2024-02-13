@@ -15,6 +15,8 @@
 #ifndef SV_OSC_MESSAGE_CALLBACK_H
 #define SV_OSC_MESSAGE_CALLBACK_H
 
+namespace sv {
+
 class OSCMessage;
 
 class OSCMessageCallback {
@@ -22,5 +24,7 @@ public:
     virtual ~OSCMessageCallback() { }
     virtual void handleOSCMessage(const OSCMessage &) = 0;
 };
+
+} // end namespace sv
 
 #endif

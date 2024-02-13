@@ -38,13 +38,7 @@
 
 #define EVENT_BUFFER_SIZE 1023
 
-#ifdef DEBUG_DSSI
-static std::ostream &operator<<(std::ostream& o, const QString &s)
-{
-    o << s;
-    return o;
-}
-#endif
+namespace sv {
 
 DSSIPluginInstance::GroupMap DSSIPluginInstance::m_groupMap;
 snd_seq_event_t **DSSIPluginInstance::m_groupLocalEventBuffers = nullptr;
@@ -184,7 +178,7 @@ DSSIPluginInstance::getParameter(std::string id) const
     for (int i = 0; in_range_for(m_controlPortsIn, i); ++i) {
         if (id == m_descriptor->LADSPA_Plugin->PortNames[m_controlPortsIn[i].first]) {
 #ifdef DEBUG_DSSI
-            cerr << "Matches port " << i << endl;
+            SVCERR << "Matches port " << i << endl;
 #endif
             float v = getParameterValue(i);
 #ifdef DEBUG_DSSI
@@ -252,7 +246,7 @@ DSSIPluginInstance::init()
                 if (!strcmp(descriptor->PortNames[i], "latency") ||
                     !strcmp(descriptor->PortNames[i], "_latency")) {
 #ifdef DEBUG_DSSI
-                    cerr << "Wooo! We have a latency port!" << endl;
+                    SVCERR << "Wooo! We have a latency port!" << endl;
 #endif
                     m_latencyPort = data;
                 }
@@ -467,7 +461,7 @@ DSSIPluginInstance::instantiate(sv_samplerate_t sampleRate)
     const LADSPA_Descriptor *descriptor = m_descriptor->LADSPA_Plugin;
 
     if (!descriptor->instantiate) {
-        cerr << "Bad plugin: plugin id " << descriptor->UniqueID
+        SVCERR << "Bad plugin: plugin id " << descriptor->UniqueID
                   << ":" << descriptor->Label
                   << " has no instantiate method!" << endl;
         return;
@@ -475,7 +469,7 @@ DSSIPluginInstance::instantiate(sv_samplerate_t sampleRate)
 
     unsigned long pluginRate = (unsigned long)(sampleRate);
     if (sampleRate != sv_samplerate_t(pluginRate)) {
-        cerr << "DSSIPluginInstance: WARNING: Non-integer sample rate "
+        SVCERR << "DSSIPluginInstance: WARNING: Non-integer sample rate "
              << sampleRate << " presented, rounding to " << pluginRate
              << endl;
     }
@@ -906,7 +900,7 @@ DSSIPluginInstance::configure(std::string key,
         qm = qm + message;
         free(message);
 
-        cerr << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm << "\"" << endl;
+        SVCERR << "DSSIPluginInstance::configure: warning: configure returned message: \"" << qm << "\"" << endl;
     }
 
     return qm;
@@ -927,7 +921,7 @@ DSSIPluginInstance::sendEvent(const RealTime &eventTime,
     if (m_haveLastEventSendTime &&
         m_lastEventSendTime > eventTime) {
 #ifdef DEBUG_DSSI_PROCESS
-        cerr << "... clearing down" << endl;
+        SVCERR << "... clearing down" << endl;
 #endif
         m_haveLastEventSendTime = false;
         clearEvents();
@@ -1055,7 +1049,7 @@ DSSIPluginInstance::run(const RealTime &blockTime, int count)
 #ifdef DEBUG_DSSI_PROCESS
         SVDEBUG << "DSSIPluginInstance::run: evTime " << evTime << ", blockTime " << blockTime << ", frameOffset " << frameOffset
                   << ", blockSize " << m_blockSize << endl;
-        cerr << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
+        SVCERR << "Type: " << int(ev->type) << ", pitch: " << int(ev->data.note.note) << ", velocity: " << int(ev->data.note.velocity) << endl;
 #endif
 
         if (frameOffset >= (long)count) break;
@@ -1332,7 +1326,7 @@ DSSIPluginInstance::cleanup()
     if (!m_descriptor) return;
 
     if (!m_descriptor->LADSPA_Plugin->cleanup) {
-        cerr << "Bad plugin: plugin id "
+        SVCERR << "Bad plugin: plugin id "
                   << m_descriptor->LADSPA_Plugin->UniqueID
                   << ":" << m_descriptor->LADSPA_Plugin->Label
                   << " has no cleanup method!" << endl;
@@ -1346,3 +1340,4 @@ DSSIPluginInstance::cleanup()
 #endif
 }
 
+} // end namespace sv

@@ -34,8 +34,9 @@
 #include <set>
 #include <map>
 
-#include <QRegExp>
 #include <QMutexLocker>
+
+namespace sv {
 
 using std::vector;
 using std::set;
@@ -183,7 +184,8 @@ ModelTransformerFactory::getConfigurationForTransform(Transform &transform,
 
 ModelTransformer *
 ModelTransformerFactory::createTransformer(const Transforms &transforms,
-                                           const ModelTransformer::Input &input)
+                                           const ModelTransformer::Input &input,
+                                           ModelTransformer::CompletionReporter *reporter)
 {
     ModelTransformer *transformer = nullptr;
 
@@ -192,12 +194,16 @@ ModelTransformerFactory::createTransformer(const Transforms &transforms,
     if (RealTimePluginFactory::instanceFor(id)) {
 
         transformer =
-            new RealTimeEffectModelTransformer(input, transforms[0]);
+            new RealTimeEffectModelTransformer(input,
+                                               transforms[0],
+                                               reporter);
 
     } else {
 
         transformer =
-            new FeatureExtractionModelTransformer(input, transforms);
+            new FeatureExtractionModelTransformer(input,
+                                                  transforms,
+                                                  reporter);
     }
 
     if (transformer) transformer->setObjectName(transforms[0].getIdentifier());
@@ -208,13 +214,15 @@ ModelId
 ModelTransformerFactory::transform(const Transform &transform,
                                    const ModelTransformer::Input &input,
                                    QString &message,
-                                   AdditionalModelHandler *handler) 
+                                   AdditionalModelHandler *handler,
+                                   ModelTransformer::CompletionReporter *reporter) 
 {
     SVDEBUG << "ModelTransformerFactory::transform: Constructing transformer with input model " << input.getModel() << endl;
 
     Transforms transforms;
     transforms.push_back(transform);
-    vector<ModelId> mm = transformMultiple(transforms, input, message, handler);
+    vector<ModelId> mm =
+        transformMultiple(transforms, input, message, handler, reporter);
     if (mm.empty()) return {};
     else return mm[0];
 }
@@ -223,7 +231,8 @@ vector<ModelId>
 ModelTransformerFactory::transformMultiple(const Transforms &transforms,
                                            const ModelTransformer::Input &input,
                                            QString &message,
-                                           AdditionalModelHandler *handler) 
+                                           AdditionalModelHandler *handler,
+                                           ModelTransformer::CompletionReporter *reporter) 
 {
     SVDEBUG << "ModelTransformerFactory::transformMultiple: Constructing transformer with input model " << input.getModel() << endl;
     
@@ -232,7 +241,7 @@ ModelTransformerFactory::transformMultiple(const Transforms &transforms,
     auto inputModel = ModelById::get(input.getModel());
     if (!inputModel) return {};
     
-    ModelTransformer *t = createTransformer(transforms, input);
+    ModelTransformer *t = createTransformer(transforms, input, reporter);
     if (!t) return {};
 
     if (handler) {
@@ -282,14 +291,14 @@ ModelTransformerFactory::transformerFinished()
 //    SVDEBUG << "ModelTransformerFactory::transformerFinished(" << transformer << ")" << endl;
 
     if (!transformer) {
-        cerr << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
+        SVCERR << "WARNING: ModelTransformerFactory::transformerFinished: sender is not a transformer" << endl;
         return;
     }
 
     m_mutex.lock();
     
     if (m_runningTransformers.find(transformer) == m_runningTransformers.end()) {
-        cerr << "WARNING: ModelTransformerFactory::transformerFinished(" 
+        SVCERR << "WARNING: ModelTransformerFactory::transformerFinished(" 
                   << transformer
                   << "): I have no record of this transformer running!"
                   << endl;
@@ -340,3 +349,40 @@ ModelTransformerFactory::haveRunningTransformers() const
     
     return (!m_runningTransformers.empty());
 }
+
+bool
+ModelTransformerFactory::cancel(ModelId outputModel)
+{
+    QMutexLocker locker(&m_mutex);
+
+    SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel << ")" << endl;
+    
+    bool found = false;
+    
+    for (auto mt : m_runningTransformers) {
+        for (auto model : mt->getOutputModels()) {
+            if (model == outputModel) {
+                found = true;
+                SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                        << "): Found a transformer, abandoning and waiting"
+                        << endl;
+                mt->abandon();
+                mt->wait();
+                SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                        << "): Done" << endl;
+                break;
+            }
+        }
+        if (found) break;
+    }
+
+    if (!found) {
+        SVDEBUG << "ModelTransformerFactory::cancel(" << outputModel
+                << "): No transformer(s) found" << endl;;
+    }
+    
+    return found;
+}
+
+} // end namespace sv
+

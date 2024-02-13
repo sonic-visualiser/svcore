@@ -17,6 +17,8 @@
 
 #include "NoteData.h"
 
+namespace sv {
+
 class NoteExportable
 {
 public:
@@ -40,5 +42,7 @@ public:
     virtual NoteList getNotesStartingWithin(sv_frame_t startFrame,
                                             sv_frame_t duration) const = 0;
 };
+
+} // end namespace sv
 
 #endif

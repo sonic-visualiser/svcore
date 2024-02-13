@@ -26,6 +26,8 @@
 class KnownPluginCandidates {};
 #endif
 
+namespace sv {
+
 class PluginScan
 {
 public:
@@ -80,8 +82,14 @@ private:
     void clear();
 
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
+    QString formatFailureMessage(QString helperTag,
+                                 std::pair<KnownPlugins::PluginType,
+                                           PluginCandidates::FailureRec>)
+        const;
+    
     QString formatFailureReport(QString helperTag,
-                                std::vector<PluginCandidates::FailureRec>)
+                                std::vector<std::pair<KnownPlugins::PluginType,
+                                                      PluginCandidates::FailureRec>>)
         const;
 #endif
 
@@ -95,5 +103,8 @@ private:
     class Logger;
     Logger *m_logger;
 };
+
+} // end namespace sv
+
 
 #endif

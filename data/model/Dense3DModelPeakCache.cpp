@@ -19,6 +19,8 @@
 
 #include "base/HitCount.h"
 
+namespace sv {
+
 Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                                              int columnsPerPeak) :
     m_source(sourceId),
@@ -43,13 +45,24 @@ Dense3DModelPeakCache::~Dense3DModelPeakCache()
 Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
+    Profiler profiler("Dense3DModelPeakCache::getColumn");
     if (!haveColumn(column)) fillColumn(column);
     return m_cache.at(column);
+}
+
+Dense3DModelPeakCache::Column
+Dense3DModelPeakCache::getColumn(int column, int minbin, int nbins) const
+{
+    Profiler profiler("Dense3DModelPeakCache::getColumn (subset)");
+    if (!haveColumn(column)) fillColumn(column);
+    const Column &c = m_cache.at(column);
+    return Column(c.data() + minbin, c.data() + minbin + nbins);
 }
 
 float
 Dense3DModelPeakCache::getValueAt(int column, int n) const
 {
+    Profiler profiler("Dense3DModelPeakCache::getValueAt");
     if (!haveColumn(column)) fillColumn(column);
     return m_cache.at(column).at(n);
 }
@@ -135,4 +148,6 @@ Dense3DModelPeakCache::fillColumn(int column) const
     m_coverage[column] = true;
 }
 
+
+} // end namespace sv
 

@@ -23,6 +23,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 PlaylistFileReader::PlaylistFileReader(QString path) :
     m_source(path),
     m_file(nullptr)
@@ -115,7 +117,7 @@ PlaylistFileReader::load() const
         // as well as DOS/Unix style
 
         QString chunk = in.readLine();
-        QStringList lines = chunk.split('\r', QString::SkipEmptyParts);
+        QStringList lines = chunk.split('\r', Qt::SkipEmptyParts);
         
         for (int li = 0; li < lines.size(); ++li) {
 
@@ -133,7 +135,7 @@ PlaylistFileReader::load() const
                     QString testpath = QDir(m_basedir).filePath(line);
                     if (QFileInfo(testpath).exists() &&
                         QFileInfo(testpath).isFile()) {
-                        cerr << "Path \"" << line
+                        SVCERR << "Path \"" << line
                                   << "\" is relative, resolving to \""
                                   << testpath << "\""
                                   << endl;
@@ -163,3 +165,5 @@ PlaylistFileReader::isSupported(FileSource source)
     QString ext = source.getExtension();
     return (supported.find(ext) != supported.end());
 }
+} // end namespace sv
+

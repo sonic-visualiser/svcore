@@ -126,7 +126,28 @@ private slots:
         
         floatvec_t readFrames = rereader->getInterleavedFrames(0, frameCount);
         floatvec_t expected(interleaved, interleaved + frameCount * channels);
-        QCOMPARE(readFrames, expected);
+
+        float threshold;
+
+#ifdef WITHOUT_LIBSNDFILE
+        // 24-bit WAV
+        threshold = 1.0 / double(1 << 23);
+#else
+        // IEEE float WAV
+        threshold = 0.0;
+#endif
+
+        for (int i = 0; i < frameCount * channels; ++i) {
+            float diff = fabsf(readFrames[i] - expected[i]);
+            if (diff > threshold) {
+                SVCERR << "ERROR: at index " << i << ": difference (" << diff
+                       << ") between actual (" << readFrames[i]
+                       << ") and expected (" << expected[i]
+                       << ") exceeds threshold " << threshold << endl;
+                QCOMPARE(diff, 0.f);
+                break;
+            }
+        }
 
         delete rereader;
     }

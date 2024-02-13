@@ -22,6 +22,8 @@
 
 class QTextStream;
 
+namespace sv {
+
 class XmlExportable
 {
 public:
@@ -64,5 +66,7 @@ public:
 private:
     mutable int m_exportId;
 };
+
+} // end namespace sv
 
 #endif

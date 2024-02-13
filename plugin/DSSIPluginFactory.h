@@ -28,6 +28,8 @@
 
 #include <QMutex>
 
+namespace sv {
+
 class DSSIPluginInstance;
 
 class DSSIPluginFactory : public LADSPAPluginFactory
@@ -64,6 +66,8 @@ protected:
 
     DSSI_Host_Descriptor m_hostDescriptor;
 };
+
+} // end namespace sv
 
 #endif
 

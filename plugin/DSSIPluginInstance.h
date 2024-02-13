@@ -36,6 +36,8 @@
 #include "RealTimePluginInstance.h"
 #include "base/Scavenger.h"
 
+namespace sv {
+
 class DSSIPluginInstance : public RealTimePluginInstance
 {
 public:
@@ -219,6 +221,8 @@ protected:
     };
     static std::map<LADSPA_Handle, std::set<NonRTPluginThread *> > m_threads;
 };
+
+} // end namespace sv
 
 #endif // _DSSIPLUGININSTANCE_H_
 

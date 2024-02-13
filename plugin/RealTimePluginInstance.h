@@ -32,6 +32,8 @@
 #include <string>
 #include <map>
 
+namespace sv {
+
 class RealTimePluginFactory;
         
 /**
@@ -151,5 +153,7 @@ protected:
     ConfigurationPairMap m_configurationData;
 };
 
+
+} // end namespace sv
 
 #endif

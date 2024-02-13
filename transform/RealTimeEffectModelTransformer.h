@@ -19,13 +19,16 @@
 #include "ModelTransformer.h"
 #include "plugin/RealTimePluginInstance.h"
 
+namespace sv {
+
 class DenseTimeValueModel;
 
 class RealTimeEffectModelTransformer : public ModelTransformer
 {
 public:
     RealTimeEffectModelTransformer(Input input,
-                                   const Transform &transform);
+                                   const Transform &transform,
+                                   CompletionReporter *reporter = nullptr);
     virtual ~RealTimeEffectModelTransformer();
 
 protected:
@@ -37,6 +40,8 @@ protected:
     std::shared_ptr<RealTimePluginInstance> m_plugin;
     int m_outputNo;
 };
+
+} // end namespace sv
 
 #endif
 

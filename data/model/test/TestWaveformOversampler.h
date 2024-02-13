@@ -23,6 +23,8 @@
 #include <QObject>
 #include <QtTest>
 
+using namespace sv;
+
 class TestWaveformOversampler : public QObject
 {
     Q_OBJECT
@@ -54,11 +56,18 @@ private:
     void compareStrided(floatvec_t obtained, floatvec_t expected, int stride) {
         QCOMPARE(obtained.size(), expected.size() * stride);
         float threshold = 1e-10f;
+#ifdef WITHOUT_LIBSNDFILE
+        // We don't have full-precision floating-point WAVs backing
+        // our test models (they're 24-bit)
+        threshold = 1.f / float(1 << 23);
+#endif
         for (int i = 0; in_range_for(expected, i); ++i) {
-            if (fabsf(obtained[i * stride] - expected[i]) > threshold) {
+            float diff = fabsf(obtained[i * stride] - expected[i]);
+            if (diff > threshold) {
                 std::cerr << "At position " << i * stride << ": "
                           << obtained[i * stride] << " != " << expected[i]
-                          << std::endl;
+                          << " (diff = " << diff << ", > threshold " << threshold
+                          << ")" << std::endl;
                 QCOMPARE(obtained, expected);
             }
         }

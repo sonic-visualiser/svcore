@@ -23,6 +23,8 @@
 #include <QtTest>
 #include <QDir>
 
+using namespace sv;
+
 // Tests for malformed audio files - primarily to ensure we don't crash
 
 class BogusAudioFileReaderTest : public QObject
@@ -35,7 +37,7 @@ private slots:
         QTest::addColumn<QString>("format");
         QTest::addColumn<bool>("empty");
         QStringList patterns = AudioFileReaderFactory::getKnownExtensions()
-            .split(" ", QString::SkipEmptyParts);
+            .split(" ", Qt::SkipEmptyParts);
 
         for (auto p: patterns) {
 

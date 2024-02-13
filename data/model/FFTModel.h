@@ -28,6 +28,8 @@
 #include <vector>
 #include <complex>
 
+namespace sv {
+
 /**
  * An implementation of DenseThreeDimensionalModel that makes FFT data
  * derived from a DenseTimeValueModel available as a generic data
@@ -89,6 +91,7 @@ public:
     float getMaximumLevel() const override { return 1.f; } // Can't provide
 
     Column getColumn(int x) const override; // magnitudes
+    Column getColumn(int x, int minbin, int nbins) const override; // magnitudes
 
     bool hasBinValues() const override {
         return true;
@@ -218,5 +221,7 @@ private:
 
     void clearCaches();
 };
+
+} // end namespace sv
 
 #endif

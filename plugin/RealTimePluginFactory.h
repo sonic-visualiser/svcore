@@ -29,6 +29,8 @@
 #include "base/Debug.h"
 #include "base/BaseTypes.h"
 
+namespace sv {
+
 class RealTimePluginInstance;
 
 class RealTimePluginDescriptor
@@ -111,5 +113,7 @@ protected:
 
     static sv_samplerate_t m_sampleRate;
 };
+
+} // end namespace sv
 
 #endif

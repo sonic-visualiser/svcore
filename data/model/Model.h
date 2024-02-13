@@ -28,6 +28,8 @@
 #include "base/BaseTypes.h"
 #include "base/DataExportOptions.h"
 
+namespace sv {
+
 class ZoomConstraint;
 class AlignmentModel;
 
@@ -343,5 +345,7 @@ protected:
 
 typedef Model::Id ModelId;
 typedef TypedById<Model, Model::Id> ModelById;
+
+} // end namespace sv
 
 #endif

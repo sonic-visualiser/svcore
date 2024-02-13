@@ -23,6 +23,8 @@
 #include <QString>
 #include <QStringList>
 
+namespace sv {
+
 class SparseTimeValueModel;
 
 class AlignmentModel : public Model
@@ -116,5 +118,7 @@ protected:
 
     sv_frame_t performAlignment(const Path &path, sv_frame_t frame) const;
 };
+
+} // end namespace sv
 
 #endif

@@ -15,6 +15,8 @@
 
 #include "UnitDatabase.h"
 
+namespace sv {
+
 UnitDatabase
 UnitDatabase::m_instance;
 
@@ -78,3 +80,6 @@ UnitDatabase::getUnitQuantity(QString unit)
         return Quantity::Other;
     }
 }
+
+} // end namespace sv
+

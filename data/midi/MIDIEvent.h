@@ -29,6 +29,8 @@
 
 #include "base/Debug.h"
 
+namespace sv {
+
 typedef unsigned char MIDIByte;
 
 namespace MIDIConstants
@@ -236,5 +238,7 @@ public:
 protected:
     QString m_message;
 };
+
+} // end namespace sv
 
 #endif

@@ -21,6 +21,8 @@
 
 #include "Profiler.h"
 
+namespace sv {
+
 class Thread : public QThread
 {
 Q_OBJECT
@@ -58,7 +60,9 @@ private:
 
     Profiler m_profiler;
     Printer m_printer;
-    QMutexLocker m_locker;
+    QMutexLocker<QMutex> m_locker;
 };
+
+} // end namespace sv
 
 #endif

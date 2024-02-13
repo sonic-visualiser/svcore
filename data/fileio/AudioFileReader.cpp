@@ -15,6 +15,8 @@
 
 #include "AudioFileReader.h"
 
+namespace sv {
+
 using std::vector;
 
 vector<floatvec_t>
@@ -37,4 +39,6 @@ AudioFileReader::getDeInterleavedFrames(sv_frame_t start, sv_frame_t count) cons
 
     return frames;
 }
+
+} // end namespace sv
 

@@ -32,6 +32,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class AudioFileReaderTest : public QObject
 {
@@ -307,11 +308,7 @@ private slots:
         
         if (!reader) {
             if (UnsupportedFormat::isLegitimatelyUnsupported(format)) {
-#if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
-#else
-                QSKIP("Unsupported file, skipping", SkipSingle);
-#endif
             }
         }
 

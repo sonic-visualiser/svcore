@@ -26,6 +26,8 @@
 #include <set>
 #include <atomic>
 
+namespace sv {
+
 class ProgressReporter;
 
 class MP3FileReader : public CodedAudioFileReader
@@ -156,6 +158,8 @@ protected:
     void loadTags(int fd);
     QString loadTag(void *vtag, const char *name);
 };
+
+} // end namespace sv
 
 #endif
 

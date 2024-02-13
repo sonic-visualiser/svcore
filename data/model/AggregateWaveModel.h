@@ -21,6 +21,8 @@
 
 #include <vector>
 
+namespace sv {
+
 class AggregateWaveModel : public RangeSummarisableTimeValueModel
 {
     Q_OBJECT
@@ -92,6 +94,8 @@ protected:
     ChannelSpecList m_components;
     static PowerOfSqrtTwoZoomConstraint m_zoomConstraint;
 };
+
+} // end namespace sv
 
 #endif
 

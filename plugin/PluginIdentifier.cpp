@@ -22,6 +22,8 @@
 #include <iostream>
 #include <QFileInfo>
 
+namespace sv {
+
 QString
 PluginIdentifier::createIdentifier(QString type,
                                    QString soName,
@@ -71,4 +73,6 @@ PluginIdentifier::BUILTIN_PLUGIN_SONAME = "_builtin";
 
 QString
 PluginIdentifier::RESERVED_PROJECT_DIRECTORY_KEY = "__QMUL__:__RESERVED__:ProjectDirectoryKey";
+
+} // end namespace sv
 

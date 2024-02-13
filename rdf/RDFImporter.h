@@ -24,6 +24,8 @@
 #include "base/BaseTypes.h"
 #include "data/model/Model.h"
 
+namespace sv {
+
 class RDFImporterImpl;
 class ProgressReporter;
 
@@ -69,5 +71,7 @@ public:
 protected:
     RDFImporterImpl *m_d;
 };
+
+} // end namespace sv
 
 #endif

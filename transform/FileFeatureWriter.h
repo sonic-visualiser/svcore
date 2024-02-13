@@ -26,14 +26,14 @@
 
 #include "FeatureWriter.h"
 
-using std::string;
-using std::map;
-using std::set;
-using std::pair;
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#include <QStringConverter>
+#endif
 
 class QTextStream;
-class QTextCodec;
 class QFile;
+
+namespace sv {
 
 class FileFeatureWriter : public FeatureWriter
 {
@@ -41,7 +41,7 @@ public:
     virtual ~FileFeatureWriter();
 
     ParameterList getSupportedParameters() const override;
-    void setParameters(map<string, string> &params) override;
+    void setParameters(std::map<std::string, std::string> &params) override;
 
     void testOutputFile(QString trackId, TransformId transformId) override;
     void flush() override;
@@ -56,12 +56,18 @@ protected:
     };
 
     FileFeatureWriter(int support, QString extension);
-    QTextStream *getOutputStream(QString, TransformId, QTextCodec *);
+    QTextStream *getOutputStream(QString, TransformId,
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                 QStringConverter::Encoding
+#else
+                                 QString encodingName
+#endif
+        );
 
-    typedef pair<QString, TransformId> TrackTransformPair;
-    typedef map<TrackTransformPair, QString> FileNameMap;
-    typedef map<TrackTransformPair, QFile *> FileMap;
-    typedef map<QFile *, QTextStream *> FileStreamMap;
+    typedef std::pair<QString, TransformId> TrackTransformPair;
+    typedef std::map<TrackTransformPair, QString> FileNameMap;
+    typedef std::map<TrackTransformPair, QFile *> FileMap;
+    typedef std::map<QFile *, QTextStream *> FileStreamMap;
     FileMap m_files;
     FileNameMap m_filenames;
     FileStreamMap m_streams;
@@ -93,5 +99,7 @@ protected:
     bool m_append;
     bool m_force;
 };
+
+} // end namespace sv
 
 #endif

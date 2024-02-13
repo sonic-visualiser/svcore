@@ -33,6 +33,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 const char utf8_name_cdp_1[] = "Caf\303\251 de Paris";
 const char utf8_name_cdp_2[] = "Caf\303\251 de \351\207\215\345\272\206";
@@ -140,11 +141,7 @@ private slots:
         if (!AudioFileReaderFactory::isSupported(encodingDir + "/" +
                                                  audiofile)) {
             if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
-#if ( QT_VERSION >= 0x050000 )
                 QSKIP("Known unsupported file, skipping");
-#else
-                QSKIP("Known unsupported file, skipping", SkipSingle);
-#endif
             }
         }            
         
@@ -181,11 +178,7 @@ private slots:
 
         if (!reader) {
             if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
-#if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
-#else
-                QSKIP("Unsupported file, skipping", SkipSingle);
-#endif
             }
         }
 
@@ -215,12 +208,12 @@ private slots:
                         SVCERR << "Title does not match expected: codepoints are" << endl;
                         SVCERR << "Title (" << title.length() << "ch): ";
                         for (int i = 0; i < title.length(); ++i) {
-                            SVCERR << title[i].unicode() << " ";
+                            SVCERR << int(title[i].unicode()) << " ";
                         }
                         SVCERR << endl;
                         SVCERR << "Expected (" << expected.length() << "ch): ";
                         for (int i = 0; i < expected.length(); ++i) {
-                            SVCERR << expected[i].unicode() << " ";
+                            SVCERR << int(expected[i].unicode()) << " ";
                         }
                         SVCERR << endl;
                     }
@@ -252,19 +245,15 @@ private slots:
         // For those files that have title metadata (i.e. all of them
         // except the WAVs), read the title metadata and write a wav
         // file (of arbitrary content) whose name matches that.  Then
-        // check that we can re-read it. This is intended to exercise
-        // systems on which the original test filename is miscoded (as
-        // can happen on Windows).
+        // check that we can re-read it. This is both a file writer
+        // test, and a test to exercise systems on which the original
+        // test filename is miscoded (as can happen on Windows).
         
         QFETCH(QString, audiofile);
 
         QStringList fileAndExt = audiofile.split(".");
         QString file = fileAndExt[0];
         QString extension = fileAndExt[1];
-
-        if (extension == "wav") {
-            return;
-        }
 
         AudioFileReaderFactory::Parameters params;
         AudioFileReader *reader =
@@ -273,18 +262,23 @@ private slots:
         
         if (!reader) {
             if (UnsupportedFormat::isLegitimatelyUnsupported(extension)) {
-#if ( QT_VERSION >= 0x050000 )
                 QSKIP("Unsupported file, skipping");
-#else
-                QSKIP("Unsupported file, skipping", SkipSingle);
-#endif
             }
         }
 
         QVERIFY(reader != nullptr);
 
         QString title = reader->getTitle();
-        QVERIFY(title != QString());
+
+        if (extension == "wav") {
+            // No title available, but we still want to exercise the
+            // writer. So use the filename as the title.
+            if (title == QString()) {
+                title = file;
+            }
+        } else {
+            QVERIFY(title != QString());
+        }
 
         for (int useTemporary = 0; useTemporary <= 1; ++useTemporary) {
         
@@ -300,7 +294,8 @@ private slots:
 
             floatvec_t data { 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, -1.0 };
             const float *samples = data.data();
-            bool ok = writer.writeSamples(&samples, 8);
+            int frameCount = data.size();
+            bool ok = writer.writeSamples(&samples, frameCount);
             QVERIFY(ok);
 
             ok = writer.close();
@@ -308,10 +303,36 @@ private slots:
 
             AudioFileReader *rereader =
                 AudioFileReaderFactory::createReader(outfile, params);
+
+            if (!rereader) {
+                bool exists = QFile(outfile).exists();
+                SVCERR << "EncodingTest::readWriteAudio: Failed to create re-reader for filename \"" << outfile << "\" (created from input file \"" << audiofile << "\", title \"" << title << "\", with useTemporary = " << useTemporary << ") " << (exists ? "[file does exist]" : "[file does not exist]") << endl;
+            }
+            
             QVERIFY(rereader != nullptr);
 
-            floatvec_t readFrames = rereader->getInterleavedFrames(0, 8);
-            QCOMPARE(readFrames, data);
+            floatvec_t readFrames = rereader->getInterleavedFrames(0, frameCount);
+            float threshold;
+
+#ifdef WITHOUT_LIBSNDFILE
+            // 24-bit WAV
+            threshold = 1.0 / double(1 << 23);
+#else
+            // IEEE float WAV
+            threshold = 0.0;
+#endif
+
+            for (int i = 0; i < frameCount; ++i) {
+                float diff = fabsf(readFrames[i] - data[i]);
+                if (diff > threshold) {
+                    SVCERR << "ERROR: at index " << i << ": difference (" << diff
+                           << ") between actual (" << readFrames[i]
+                           << ") and expected (" << data[i]
+                           << ") exceeds threshold " << threshold << endl;
+                    QCOMPARE(diff, 0.f);
+                    break;
+                }
+            }
 
             delete rereader;
         }

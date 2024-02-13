@@ -18,6 +18,8 @@
 
 #include "data/model/DenseTimeValueModel.h"
 
+namespace sv {
+
 floatvec_t
 WaveformOversampler::getOversampledData(const DenseTimeValueModel &source,
                                         int channel,
@@ -85,7 +87,7 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel &source,
     }
     
     floatvec_t sourceData = source.getData(channel, i0, i1 - i0);
-    
+
     for (sv_frame_t i = i0; i < i1; ++i) {
         float v = sourceData[i - i0];
         sv_frame_t outOffset =
@@ -104,6 +106,10 @@ WaveformOversampler::getFixedRatioData(const DenseTimeValueModel &source,
 
 int
 WaveformOversampler::m_filterRatio = 8;
+
+#if defined(_MSC_VER)
+#pragma warning(disable:4305) // truncation from double to float
+#endif
 
 /// Precalculated windowed sinc FIR filter for oversampling ratio of 8
 floatvec_t
@@ -293,3 +299,5 @@ WaveformOversampler::m_filter {
     2.0171043153063023E-4
 };
     
+} // end namespace sv
+

@@ -27,6 +27,8 @@
 
 #include "system/System.h"
 
+namespace sv {
+
 /**
  * A model representing a wiggly-line plot with points at arbitrary
  * intervals of the model resolution.
@@ -379,6 +381,8 @@ protected:
 
     EventSeries m_events;
 };
+
+} // end namespace sv
 
 #endif
 

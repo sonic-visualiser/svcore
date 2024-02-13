@@ -19,6 +19,8 @@
 
 #include "Pitch.h"
 
+namespace sv {
+
 /**
  * Note record used when constructing synthetic events for sonification.
  */
@@ -46,5 +48,7 @@ struct NoteData
 };
 
 typedef std::vector<NoteData> NoteList;
+
+} // end namespace sv
 
 #endif

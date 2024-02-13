@@ -30,6 +30,8 @@
 
 #include <QObject>
 
+namespace sv {
+
 class MIDIEvent;
 class ProgressReporter;
 
@@ -134,5 +136,7 @@ protected:
     MIDIFileImportPreferenceAcquirer *m_acquirer;
 };
 
+
+} // end namespace sv
 
 #endif // _MIDI_FILE_READER_H_

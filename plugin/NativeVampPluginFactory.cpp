@@ -39,6 +39,8 @@ using namespace std;
 
 //#define DEBUG_PLUGIN_SCAN_AND_INSTANTIATE 1
 
+namespace sv {
+
 class PluginDeletionNotifyAdapter : public Vamp::HostExt::PluginWrapper {
 public:
     PluginDeletionNotifyAdapter(Vamp::Plugin *plugin,
@@ -491,4 +493,6 @@ NativeVampPluginFactory::getPluginStaticData(QString identifier)
     m_pluginData[identifier] = psd;
     return psd;
 }
+
+} // end namespace sv
 

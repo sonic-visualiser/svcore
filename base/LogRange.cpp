@@ -20,6 +20,8 @@
 #include <iostream>
 #include <cmath>
 
+namespace sv {
+
 void
 LogRange::mapRange(double &min, double &max, double logthresh)
 {
@@ -115,3 +117,5 @@ LogRange::shouldUseLogScale(std::vector<double> values)
     else return false;
 }
     
+} // end namespace sv
+

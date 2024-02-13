@@ -21,6 +21,8 @@
 #include <QDateTime>
 #include <map>
 
+namespace sv {
+
 class ProgressReporter;
 
 class CachedFile
@@ -58,5 +60,7 @@ protected:
     typedef std::map<QString, QString> OriginLocalFilenameMap;
     static OriginLocalFilenameMap m_knownGoodCaches;
 };
+
+} // end namespace sv
 
 #endif

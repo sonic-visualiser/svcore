@@ -15,6 +15,8 @@
 
 #include "TextMatcher.h"
 
+namespace sv {
+
 TextMatcher::TextMatcher()
 {
 }
@@ -122,3 +124,5 @@ TextMatcher::Match::operator<(const Match &m) const
 
     return false;
 }
+} // end namespace sv
+

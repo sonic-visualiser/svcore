@@ -21,21 +21,24 @@
 #include <QMutex>
 #include <QReadWriteLock>
 
+#ifndef WITHOUT_LIBSNDFILE
 #ifdef Q_OS_WIN
 #include <windows.h>
 #define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
 #endif
-
 #include <sndfile.h>
+#endif // !WITHOUT_LIBSNDFILE
 
 #include <atomic>
-
-class WavFileReader;
-class Serialiser;
 
 namespace breakfastquay {
     class Resampler;
 }
+
+namespace sv {
+
+class WavFileReader;
+class Serialiser;
 
 class CodedAudioFileReader : public AudioFileReader
 {
@@ -110,13 +113,15 @@ protected:
     sv_samplerate_t m_fileRate;
 
     QString m_cacheFileName;
+#ifndef WITHOUT_LIBSNDFILE
     SNDFILE *m_cacheFileWritePtr;
-    WavFileReader *m_cacheFileReader;
+#endif
+    AudioFileReader *m_cacheFileReader;
     float *m_cacheWriteBuffer;
     sv_frame_t m_cacheWriteBufferIndex;  // buffer write pointer in samples
     sv_frame_t m_cacheWriteBufferFrames; // buffer size in frames
 
-    breakfastquay::Resampler *m_resampler;
+    ::breakfastquay::Resampler *m_resampler;
     float *m_resampleBuffer;
     int m_resampleBufferFrames;
     sv_frame_t m_fileFrameCount;
@@ -132,5 +137,7 @@ protected:
     sv_frame_t m_firstNonzero;
     sv_frame_t m_lastNonzero;
 };
+
+} // end namespace sv
 
 #endif

@@ -156,8 +156,8 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         lMEMORYSTATUSEX lms;
         lms.dwLength = sizeof(lms);
         if (!ex(&lms)) {
-            cerr << "WARNING: GlobalMemoryStatusEx failed: error code "
-                 << GetLastError() << endl;
+            SVCERR << "WARNING: GlobalMemoryStatusEx failed: error code "
+                   << GetLastError() << endl;
             return;
         }
         wavail = lms.ullAvailPhys;
@@ -232,7 +232,7 @@ GetRealMemoryMBAvailable(ssize_t &available, ssize_t &total)
         bool isMemTotal = (!isMemFree && (strncmp(buf, "MemTotal:", 9) == 0));
         if (isMemFree || isMemTotal) {
             QString line = QString(buf).trimmed();
-            QStringList elements = line.split(' ', QString::SkipEmptyParts);
+            QStringList elements = line.split(' ', Qt::SkipEmptyParts);
             QString unit = "kB";
             if (elements.size() > 2) unit = elements[2];
             int size = elements[1].toInt();
@@ -270,8 +270,8 @@ GetDiscSpaceMBAvailable(const char *path)
         if (a > INT_MAX) a = INT_MAX;
         return ssize_t(a);
     } else {
-        cerr << "WARNING: GetDiskFreeSpaceEx failed: error code "
-             << GetLastError() << endl;
+        SVCERR << "WARNING: GetDiskFreeSpaceEx failed: error code "
+               << GetLastError() << endl;
         return -1;
     }
 #else

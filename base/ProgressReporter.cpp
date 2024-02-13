@@ -15,6 +15,8 @@
 
 #include "ProgressReporter.h"
 
+namespace sv {
+
 ProgressReporter::ProgressReporter(QObject *parent) :
         QObject(parent)
 {
@@ -23,4 +25,6 @@ ProgressReporter::ProgressReporter(QObject *parent) :
 ProgressReporter::~ProgressReporter()
 {
 }
+
+} // end namespace sv
 

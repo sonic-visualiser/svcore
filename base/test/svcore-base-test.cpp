@@ -105,6 +105,8 @@ int main(int argc, char *argv[])
         else ++bad;
     }
 #endif
+
+    (void)good;
     
     if (bad > 0) {
         SVCERR << "\n********* " << bad << " test suite(s) failed!\n" << endl;

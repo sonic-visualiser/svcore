@@ -21,12 +21,17 @@
 
 #include <iostream>
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QTextStream>
-#include <QTextCodec>
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#include <QStringConverter>
+#endif
 
 using namespace std;
 using namespace Vamp;
+
+namespace sv {
 
 CSVFeatureWriter::CSVFeatureWriter() :
     FileFeatureWriter(SupportOneFilePerTrackTransform |
@@ -140,7 +145,12 @@ CSVFeatureWriter::write(QString trackId,
 
     QTextStream *sptr = getOutputStream(trackId,
                                         transformId,
-                                        QTextCodec::codecForName("UTF-8"));
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                        QStringConverter::Utf8
+#else
+                                        "UTF-8"
+#endif
+        );
     if (!sptr) {
         throw FailedToOpenOutputStream(trackId, transformId);
     }
@@ -188,7 +198,12 @@ CSVFeatureWriter::finish()
         Plugin::Feature f = i->second;
         QTextStream *sptr = getOutputStream(tt.first,
                                             tt.second.getIdentifier(),
-                                            QTextCodec::codecForName("UTF-8"));
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+                                            QStringConverter::Utf8
+#else
+                                            "UTF-8"
+#endif
+            );
         if (!sptr) {
             throw FailedToOpenOutputStream(tt.first, tt.second.getIdentifier());
         }
@@ -254,18 +269,18 @@ CSVFeatureWriter::writeFeature(DataId tt,
     } else {
 
         QString timestamp = f.timestamp.toString().c_str();
-        timestamp.replace(QRegExp("^ +"), "");
+        timestamp.replace(QRegularExpression("^ +"), "");
         stream << timestamp;
 
         if (haveDuration) {
             if (m_endTimes) {
                 QString endtime =
                     (::RealTime(f.timestamp) + duration).toString().c_str();
-                endtime.replace(QRegExp("^ +"), "");
+                endtime.replace(QRegularExpression("^ +"), "");
                 stream << m_separator << endtime;
             } else {
                 QString d = ::RealTime(duration).toString().c_str();
-                d.replace(QRegExp("^ +"), "");
+                d.replace(QRegularExpression("^ +"), "");
                 stream << m_separator << d;
             }
         }            
@@ -298,5 +313,7 @@ CSVFeatureWriter::writeFeature(DataId tt,
     
     stream << "\n";
 }
+
+} // end namespace sv
 
 

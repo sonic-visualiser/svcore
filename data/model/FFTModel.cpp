@@ -22,12 +22,18 @@
 #include "base/Debug.h"
 #include "base/MovingMedian.h"
 
+#include "bqvec/VectorOpsComplex.h"
+
 #include <algorithm>
 
 #include <cassert>
 #include <deque>
 
+//#define DEBUG_FFT_MODEL 1
+
 using namespace std;
+
+namespace sv {
 
 static HitCount inSmallCache("FFTModel: Small FFT cache");
 static HitCount inSourceCache("FFTModel: Source data cache");
@@ -160,16 +166,33 @@ FFTModel::getBinValue(int n) const
 FFTModel::Column
 FFTModel::getColumn(int x) const
 {
+    Profiler profiler("FFTModel::getColumn");
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
-    for (auto c: cplx) col.push_back(abs(c));
+    for (auto c: cplx) {
+        col.push_back(abs(c));
+    }
+    return col;
+}
+
+FFTModel::Column
+FFTModel::getColumn(int x, int minbin, int nbins) const
+{
+    Profiler profiler("FFTModel::getColumn (subset)");
+    auto cplx = getFFTColumn(x);
+    Column col;
+    col.reserve(nbins);
+    for (int i = 0; i < nbins; ++i) {
+        col.push_back(abs(cplx[minbin + i]));
+    }
     return col;
 }
 
 FFTModel::Column
 FFTModel::getPhases(int x) const
 {
+    Profiler profiler("FFTModel::getPhases");
     auto cplx = getFFTColumn(x);
     Column col;
     col.reserve(cplx.size());
@@ -264,7 +287,9 @@ FFTModel::getSourceSamples(int column) const
 {
     // m_fftSize may be greater than m_windowSize, but not the reverse
 
-//    cerr << "getSourceSamples(" << column << ")" << endl;
+#ifdef DEBUG_FFT_MODEL
+    SVDEBUG << "getSourceSamples(" << column << ")" << endl;
+#endif
     
     auto range = getSourceSampleRange(column);
     auto data = getSourceData(range);
@@ -287,12 +312,18 @@ FFTModel::getSourceSamples(int column) const
 floatvec_t
 FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
 {
-//    cerr << "getSourceData(" << range.first << "," << range.second
-//         << "): saved range is (" << m_savedData.range.first
-//         << "," << m_savedData.range.second << ")" << endl;
+#ifdef DEBUG_FFT_MODEL
+    SVDEBUG << "getSourceData(" << range.first << "," << range.second
+            << "): saved range is (" << m_savedData.range.first
+            << "," << m_savedData.range.second << ")" << endl;
+#endif
 
     if (m_savedData.range == range) {
         inSourceCache.hit();
+#ifdef DEBUG_FFT_MODEL
+        SVDEBUG << "getSourceData(" << range.first << "," << range.second
+                << "): source cache hit" << endl;
+#endif
         return m_savedData.data;
     }
 
@@ -303,6 +334,11 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
         range.second > m_savedData.range.second) {
 
         inSourceCache.partial();
+
+#ifdef DEBUG_FFT_MODEL
+        SVDEBUG << "getSourceData(" << range.first << "," << range.second
+                << "): source cache partial hit" << endl;
+#endif
         
         sv_frame_t discard = range.first - m_savedData.range.first;
 
@@ -324,6 +360,11 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
     } else {
 
         inSourceCache.miss();
+
+#ifdef DEBUG_FFT_MODEL
+        SVDEBUG << "getSourceData(" << range.first << "," << range.second
+                << "): source cache miss" << endl;
+#endif
         
         auto data = getSourceDataUncached(range);
         m_savedData = { range, data };
@@ -348,13 +389,14 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     auto data = model->getData(m_channel,
                                range.first,
                                range.second - range.first);
-/*
+
+#ifdef DEBUG_FFT_MODEL
     if (data.empty()) {
         SVDEBUG << "NOTE: empty source data for range (" << range.first << ","
                 << range.second << ") (model end frame "
                 << model->getEndFrame() << ")" << endl;
     }
-*/
+#endif
     
     // don't return a partial frame
     data.resize(range.second - range.first, 0.f);
@@ -422,6 +464,20 @@ FFTModel::getFFTColumn(int n) const
     // return a const ref without having to resize on a cache hit
     col.resize(getHeight());
 
+#ifdef DEBUG_FFT_MODEL
+    {
+        vector<double> mags(getHeight(), 0.0);
+        breakfastquay::v_cartesian_interleaved_to_magnitudes
+            ((double *)mags.data(),
+             (const double *)col.data(),
+             getHeight());
+        SVDEBUG << "FFTModel::getFFTColumn(" << n << "): fft size " << m_fftSize
+                << ", height " << getHeight() << ", mag range "
+                << breakfastquay::v_min(mags.data(), mags.size()) << " to "
+                << breakfastquay::v_max(mags.data(), mags.size()) << endl;
+    }
+#endif
+    
     m_cached[m_cacheWriteIndex].n = n;
 
     m_cacheWriteIndex = (m_cacheWriteIndex + 1) % m_cacheSize;
@@ -670,4 +726,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
 
     return peaks;
 }
+
+} // end namespace sv
 

@@ -26,6 +26,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace sv;
 
 class TestZoomConstraints : public QObject
 {

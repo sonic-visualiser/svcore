@@ -42,6 +42,8 @@
 
 using std::string;
 
+namespace sv {
+
 LADSPAPluginFactory::LADSPAPluginFactory()
 {
 #ifdef HAVE_LRDF
@@ -853,4 +855,6 @@ LADSPAPluginFactory::getPluginCategory(QString identifier)
 {
     return m_taxonomy[identifier];
 }
+
+} // end namespace sv
 

@@ -14,6 +14,8 @@
 
 #include "Strings.h"
 
+namespace sv {
+
 QString
 Strings::pi = QChar(0x3c0);
 
@@ -25,4 +27,6 @@ Strings::infinity = QChar(0x221e);
 
 QString
 Strings::minus_infinity = "-" + infinity;
+
+} // end namespace sv
 

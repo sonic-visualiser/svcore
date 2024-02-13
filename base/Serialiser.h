@@ -22,6 +22,8 @@
 #include <map>
 #include <atomic>
 
+namespace sv {
+
 class Serialiser
 {
 public:
@@ -56,5 +58,7 @@ protected:
     static QMutex m_mapMutex;
     static std::map<QString, QMutex *> m_mutexMap;
 };
+
+} // end namespace sv
 
 #endif

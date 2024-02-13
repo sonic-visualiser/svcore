@@ -24,6 +24,9 @@
 #include <bqvec/Allocators.h>
 #include <bqvec/VectorOps.h>
 
+#include <bqaudiostream/AudioWriteStream.h>
+#include <bqaudiostream/AudioWriteStreamFactory.h>
+
 #include <QFileInfo>
 
 #include <iostream>
@@ -31,6 +34,8 @@
 #include <string>
 
 using namespace std;
+
+namespace sv {
 
 WavFileWriter::WavFileWriter(QString path,
                              sv_samplerate_t sampleRate,
@@ -40,52 +45,39 @@ WavFileWriter::WavFileWriter(QString path,
     m_sampleRate(sampleRate),
     m_channels(channels),
     m_temp(nullptr),
-    m_file(nullptr)
+    m_stream(nullptr)
 {
-    SF_INFO fileInfo;
-
     int fileRate = int(round(m_sampleRate));
     if (m_sampleRate != sv_samplerate_t(fileRate)) {
         SVCERR << "WavFileWriter: WARNING: Non-integer sample rate "
              << m_sampleRate << " presented, rounding to " << fileRate
              << endl;
     }
-    fileInfo.samplerate = fileRate;
-    fileInfo.channels = m_channels;
-    fileInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
+    QString writePath = m_path;
     try {
-        QString writePath = m_path;
         if (mode == WriteToTemporary) {
             m_temp = new TempWriteFile(m_path);
             writePath = m_temp->getTemporaryFilename();
         }
-#ifdef Q_OS_WIN
-        m_file = sf_wchar_open((LPCWSTR)writePath.utf16(), SFM_WRITE, &fileInfo);
-#else
-        m_file = sf_open(writePath.toLocal8Bit(), SFM_WRITE, &fileInfo);
-#endif
-        if (!m_file) {
-            SVCERR << "WavFileWriter: Failed to create float-WAV file of "
-                   << m_channels << " channels at rate " << fileRate << " ("
-                   << sf_strerror(m_file) << ")" << endl;
-            m_error = QString("Failed to open audio file '%1' for writing")
-                .arg(writePath);
-            if (m_temp) {
-                delete m_temp;
-                m_temp = nullptr;
-            }
+        m_stream = breakfastquay::AudioWriteStreamFactory::createWriteStream
+            (writePath.toStdString(), m_channels, fileRate);
+    } catch (const std::exception &e) {
+        SVCERR << "WavFileWriter: Failed to create file of "
+               << m_channels << " channels at rate " << fileRate << " ("
+               << e.what() << ")" << endl;
+        m_error = QString("Failed to open audio file '%1' for writing")
+            .arg(writePath);
+        if (m_temp) {
+            delete m_temp;
+            m_temp = nullptr;
         }
-    } catch (FileOperationFailed &f) {
-        m_error = f.what();
-        m_temp = nullptr;
-        m_file = nullptr;
     }
 }
 
 WavFileWriter::~WavFileWriter()
 {
-    if (m_file) close();
+    if (m_stream) close();
 }
 
 bool
@@ -123,7 +115,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
         return false;
     }
 
-    if (!m_file) {
+    if (!m_stream) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
         return false;
@@ -157,11 +149,10 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
                 }
             }
 
-            sf_count_t written = sf_writef_float(m_file, interleaved.data(), n);
-
-            if (written < n) {
-                m_error = QString("Only wrote %1 of %2 frames at file frame %3")
-                        .arg(written).arg(n).arg(f);
+            try {
+                m_stream->putInterleavedFrames(n, interleaved.data());
+            } catch (const std::exception &e) {
+                m_error = QString("Exception during file write: %1").arg(e.what());
                 break;
             }
         }
@@ -175,7 +166,7 @@ WavFileWriter::writeModel(DenseTimeValueModel *source,
 bool
 WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
 {
-    if (!m_file) {
+    if (!m_stream) {
         m_error = QString("Failed to write model to audio file '%1': File not open")
             .arg(getWriteFilename());
         return false;
@@ -188,14 +179,13 @@ WavFileWriter::writeSamples(const float *const *samples, sv_frame_t count)
         }
     }
 
-    sv_frame_t written = sf_writef_float(m_file, b, count);
+    try {
+        m_stream->putInterleavedFrames(count, b);
+    } catch (const std::exception &e) {
+        m_error = QString("Exception during file write: %1").arg(e.what());
+    }
 
     delete[] b;
-
-    if (written < count) {
-        m_error = QString("Only wrote %1 of %2 frames")
-            .arg(written).arg(count);
-    }
 
     return isOK();
 }
@@ -216,9 +206,9 @@ WavFileWriter::putInterleavedFrames(const floatvec_t &frames)
 bool
 WavFileWriter::close()
 {
-    if (m_file) {
-        sf_close(m_file);
-        m_file = nullptr;
+    if (m_stream) {
+        delete m_stream;
+        m_stream = nullptr;
     }
     if (m_temp) {
         m_temp->moveToTarget();
@@ -227,4 +217,6 @@ WavFileWriter::close()
     }
     return true;
 }
+
+} // end namespace sv
 

@@ -16,6 +16,8 @@
 
 #include <QMutexLocker>
 
+namespace sv {
+
 using std::vector;
 using std::string;
 
@@ -24,7 +26,7 @@ EventSeries::EventSeries(const EventSeries &other) :
 {
 }
 
-EventSeries::EventSeries(const EventSeries &other, const QMutexLocker &) :
+EventSeries::EventSeries(const EventSeries &other, const QMutexLocker<QMutex> &) :
     m_events(other.m_events),
     m_seams(other.m_seams),
     m_finalDurationlessEventFrame(other.m_finalDurationlessEventFrame)
@@ -670,4 +672,6 @@ EventSeries::toStringExportRows(DataExportOptions options,
     
     return rows;
 }
+
+} // end namespace sv
 

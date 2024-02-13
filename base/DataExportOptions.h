@@ -15,6 +15,8 @@
 #ifndef DATA_EXPORT_OPTIONS_H
 #define DATA_EXPORT_OPTIONS_H
 
+namespace sv {
+
 enum DataExportOption
 {
     DataExportDefaults = 0x0,
@@ -51,5 +53,7 @@ enum DataExportOption
 };
 
 typedef int DataExportOptions;
+
+} // end namespace sv
 
 #endif

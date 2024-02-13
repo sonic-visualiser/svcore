@@ -13,6 +13,8 @@
     COPYING included with this distribution for more information.
 */
 
+#ifndef WITHOUT_LIBSNDFILE // See note in header
+
 #include "WavFileReader.h"
 
 #include "base/HitCount.h"
@@ -24,6 +26,8 @@
 #include <QFileInfo>
 
 using namespace std;
+
+namespace sv {
 
 WavFileReader::WavFileReader(FileSource source,
                              bool fileUpdating,
@@ -329,3 +333,6 @@ WavFileReader::supports(FileSource &source)
 }
 
 
+} // end namespace sv
+
+#endif

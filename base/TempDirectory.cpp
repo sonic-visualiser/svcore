@@ -28,6 +28,8 @@
 
 #include <time.h>
 
+namespace sv {
+
 TempDirectory *
 TempDirectory::m_instance = new TempDirectory;
 
@@ -206,7 +208,7 @@ TempDirectory::cleanupDirectory(QString tmpdir)
             cleanupDirectory(fi.absoluteFilePath());
         } else {
             if (!QFile(fi.absoluteFilePath()).remove()) {
-                cerr << "WARNING: TempDirectory::cleanup: "
+                SVCERR << "WARNING: TempDirectory::cleanup: "
                           << "Failed to unlink file \""
                           << fi.absoluteFilePath() << "\""
                           << endl;
@@ -217,13 +219,13 @@ TempDirectory::cleanupDirectory(QString tmpdir)
     QString dirname = dir.dirName();
     if (dirname != "") {
         if (!dir.cdUp()) {
-            cerr << "WARNING: TempDirectory::cleanup: "
+            SVCERR << "WARNING: TempDirectory::cleanup: "
                       << "Failed to cd to parent directory of "
                       << tmpdir << endl;
             return;
         }
         if (!dir.rmdir(dirname)) {
-            cerr << "WARNING: TempDirectory::cleanup: "
+            SVCERR << "WARNING: TempDirectory::cleanup: "
                       << "Failed to remove directory "
                       << dirname << endl;
         } 
@@ -247,10 +249,10 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
         QDir subdir(dirpath, "*.pid", QDir::Name, QDir::Files);
 
         if (subdir.count() == 0) {
-            cerr << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
+            SVCERR << "INFO: Found temporary directory with no .pid file in it!\n(directory=\""
                       << dirpath << "\").  Removing it..." << endl;
             cleanupDirectory(dirpath);
-            cerr << "...done." << endl;
+            SVCERR << "...done." << endl;
             continue;
         }
 
@@ -261,18 +263,18 @@ TempDirectory::cleanupAbandonedDirectories(QString svDir)
             if (!ok) continue;
 
             if (GetProcessStatus(pid) == ProcessNotRunning) {
-                cerr << "INFO: Found abandoned temporary directory from "
+                SVCERR << "INFO: Found abandoned temporary directory from "
                           << "a previous, defunct process\n(pid=" << pid
                           << ", directory=\""
                           << dirpath
                           << "\").  Removing it..." << endl;
                 cleanupDirectory(dirpath);
-                cerr << "...done." << endl;
+                SVCERR << "...done." << endl;
                 break;
             }
         }
     }
 }
 
+} // end namespace sv
 
-        

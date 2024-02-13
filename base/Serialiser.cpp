@@ -18,6 +18,8 @@
 
 #include <iostream>
 
+namespace sv {
+
 QMutex
 Serialiser::m_mapMutex;
 
@@ -76,3 +78,5 @@ Serialiser::~Serialiser()
 
 
     
+} // end namespace sv
+

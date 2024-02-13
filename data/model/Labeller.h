@@ -26,6 +26,8 @@
 #include <map>
 #include <iostream>
 
+namespace sv {
+
 class Labeller : public QObject
 {
     Q_OBJECT
@@ -454,5 +456,7 @@ protected:
     int m_dp;
     sv_samplerate_t m_rate;
 };
+
+} // end namespace sv
 
 #endif

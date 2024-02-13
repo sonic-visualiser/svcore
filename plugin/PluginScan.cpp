@@ -23,8 +23,11 @@
 
 #include <QMutex>
 #include <QCoreApplication>
+#include <QSettings>
 
-using std::string;
+using namespace std;
+
+namespace sv {
 
 class PluginScan::Logger
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
@@ -32,7 +35,7 @@ class PluginScan::Logger
 #endif
 {
 protected:
-    void log(std::string message) 
+    void log(string message) 
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
         override
 #endif
@@ -43,11 +46,7 @@ protected:
 
 PluginScan *PluginScan::getInstance()
 {
-    static QMutex mutex;
-    static PluginScan *m_instance = nullptr;
-    mutex.lock();
-    if (!m_instance) m_instance = new PluginScan();
-    mutex.unlock();
+    static PluginScan *m_instance = new PluginScan();
     return m_instance;
 }
 
@@ -96,10 +95,20 @@ PluginScan::scan()
         }
     }
 
+    QSettings settings;
+    settings.beginGroup("PluginScan");
+    auto ignoredSetting = settings.value("ignored").toMap();
+    settings.endGroup();
+
+    vector<string> ignored;
+    for (auto s: ignoredSetting.keys()) {
+        ignored.push_back(s.toStdString());
+    }
+    
     for (auto p: helpers) {
         try {
             KnownPluginCandidates *kp = new KnownPluginCandidates
-                (p.executable.toStdString(), m_logger);
+                (p.executable.toStdString(), ignored, m_logger);
             if (m_kp.find(p.tag) != m_kp.end()) {
                 SVDEBUG << "WARNING: PluginScan::scan: Duplicate tag " << p.tag
                      << " for helpers" << endl;
@@ -107,7 +116,7 @@ PluginScan::scan()
             }
             m_kp[p.tag] = kp;
             m_succeeded = true;
-        } catch (const std::exception &e) {
+        } catch (const exception &e) {
             SVDEBUG << "ERROR: PluginScan::scan: " << e.what()
                  << " (with helper path = " << p.executable << ")" << endl;
         }
@@ -150,7 +159,7 @@ PluginScan::getCandidateLibrariesFor(PluginType
     case VampPlugin: kpt = KnownPlugins::VampPlugin; break;
     case LADSPAPlugin: kpt = KnownPlugins::LADSPAPlugin; break;
     case DSSIPlugin: kpt = KnownPlugins::DSSIPlugin; break;
-    default: throw std::logic_error("Inconsistency in plugin type enums");
+    default: throw logic_error("Inconsistency in plugin type enums");
     }
     
     QList<Candidate> candidates;
@@ -190,77 +199,113 @@ PluginScan::getCandidateLibrariesFor(PluginType
 
 #ifdef HAVE_PLUGIN_CHECKER_HELPER
 QString
+PluginScan::formatFailureMessage(QString tag,
+                                 pair<KnownPlugins::PluginType,
+                                      PluginCandidates::FailureRec> p)
+    const
+{
+    auto f = p.second;
+    QString message = QString::fromStdString(f.message);
+
+    QString typeStr;
+    switch (p.first) {
+    case KnownPlugins::VampPlugin:
+        typeStr = QObject::tr("Vamp");
+        break;
+    case KnownPlugins::LADSPAPlugin:
+        typeStr = QObject::tr("LADSPA");
+        break;
+    case KnownPlugins::DSSIPlugin:
+        typeStr = QObject::tr("DSSI");
+        break;
+    }
+
+    switch (f.code) {
+    case PluginCheckCode::FAIL_LIBRARY_NOT_FOUND:
+        message = QObject::tr("Library file could not be opened");
+        break;
+
+    case PluginCheckCode::FAIL_WRONG_ARCHITECTURE:
+        if (tag == "64" || (sizeof(void *) == 8 && tag == "")) {
+            message = QObject::tr
+                ("Library has wrong architecture - possibly a 32-bit plugin installed in a 64-bit plugin folder");
+        } else if (tag == "32" || (sizeof(void *) == 4 && tag == "")) {
+            message = QObject::tr
+                ("Library has wrong architecture - possibly a 64-bit plugin installed in a 32-bit plugin folder");
+        }
+        break;
+
+    case PluginCheckCode::FAIL_DEPENDENCY_MISSING:
+        message = QObject::tr
+            ("Library depends on another library that cannot be found: %1")
+            .arg(message);
+        break;
+
+    case PluginCheckCode::FAIL_NOT_LOADABLE:
+        message = QObject::tr
+            ("Library cannot be loaded: %1").arg(message);
+        break;
+
+    case PluginCheckCode::FAIL_FORBIDDEN:
+        message = QObject::tr
+            ("Permission to load library was refused");
+        break;
+
+    case PluginCheckCode::FAIL_DESCRIPTOR_MISSING:
+        message = QObject::tr
+            ("Not a valid %1 plugin library (no descriptor found)")
+            .arg(typeStr);
+        break;
+
+    case PluginCheckCode::FAIL_NO_PLUGINS:
+        message = QObject::tr
+            ("%1 plugin library contains no plugins")
+            .arg(typeStr);
+        break;
+
+    case PluginCheckCode::FAIL_OTHER:
+        if (message == "") {
+            message = QObject::tr
+                ("Unknown error");
+        }
+        break;
+
+    case PluginCheckCode::FAIL_ON_IGNORE_LIST:
+        // should have been given special treatment already (by ignoring)
+        break;
+            
+    case PluginCheckCode::SUCCESS:
+        // success shouldn't happen here!
+        break;
+    }
+
+    return message;
+}
+
+QString
 PluginScan::formatFailureReport(QString tag,
-                                std::vector<PluginCandidates::FailureRec> failures) const
+                                vector<pair<KnownPlugins::PluginType,
+                                            PluginCandidates::FailureRec>>
+                                failures)
+    const
 {
     int n = int(failures.size());
     int i = 0;
 
-    std::ostringstream os;
+    ostringstream os;
     
     os << "<ul>";
-    for (auto f: failures) {
+    for (auto p: failures) {
+
+        auto f = p.second;
+        
         os << "<li><code>" + f.library + "</code>";
 
         SVDEBUG << "PluginScan::formatFailureReport: tag is \"" << tag
                 << "\", failure code is " << int(f.code) << ", message is \""
                 << f.message << "\"" << endl;
         
-        QString userMessage = QString::fromStdString(f.message);
-
-        switch (f.code) {
-
-        case PluginCheckCode::FAIL_LIBRARY_NOT_FOUND:
-            userMessage = QObject::tr("Library file could not be opened");
-            break;
-
-        case PluginCheckCode::FAIL_WRONG_ARCHITECTURE:
-            if (tag == "64" || (sizeof(void *) == 8 && tag == "")) {
-                userMessage = QObject::tr
-                    ("Library has wrong architecture - possibly a 32-bit plugin installed in a 64-bit plugin folder");
-            } else if (tag == "32" || (sizeof(void *) == 4 && tag == "")) {
-                userMessage = QObject::tr
-                    ("Library has wrong architecture - possibly a 64-bit plugin installed in a 32-bit plugin folder");
-            }
-            break;
-
-        case PluginCheckCode::FAIL_DEPENDENCY_MISSING:
-            userMessage = QObject::tr
-                ("Library depends on another library that cannot be found: %1")
-                .arg(userMessage);
-            break;
-
-        case PluginCheckCode::FAIL_NOT_LOADABLE:
-            userMessage = QObject::tr
-                ("Library cannot be loaded: %1").arg(userMessage);
-            break;
-
-        case PluginCheckCode::FAIL_FORBIDDEN:
-            userMessage = QObject::tr
-                ("Permission to load library was refused");
-            break;
-
-        case PluginCheckCode::FAIL_DESCRIPTOR_MISSING:
-            userMessage = QObject::tr
-                ("Not a valid plugin library (no descriptor found)");
-            break;
-
-        case PluginCheckCode::FAIL_NO_PLUGINS:
-            userMessage = QObject::tr
-                ("Library contains no plugins");
-            break;
-
-        case PluginCheckCode::FAIL_OTHER:
-            if (userMessage == "") {
-                userMessage = QObject::tr
-                    ("Unknown error");
-            }
-            break;
-
-        case PluginCheckCode::SUCCESS:
-            // success shouldn't happen here!
-            break;
-        }
+        QString userMessage = formatFailureMessage(tag, p);
         
         os << "<br><i>" + userMessage.toStdString() + "</i>";
         os << "</li>";
@@ -302,7 +347,7 @@ PluginScan::getStartupFailureReport() const
                            "(internal error?)</p>");
     }
 
-    std::set<string> silenced;
+    set<string> silenced;
     
 #ifdef Q_OS_MAC
     // On the Mac there are no separate locations for different plugin
@@ -335,19 +380,29 @@ PluginScan::getStartupFailureReport() const
         }
     }
 #endif
+
+    QSettings settings;
+    settings.beginGroup("PluginScan");
+    auto ignored = settings.value("ignored").toMap();
     
     QString report;
     for (auto kp: m_kp) {
         auto failures = kp.second->getFailures();
-        std::vector<PluginCandidates::FailureRec> filtered;
-        for (auto f: failures) {
+        vector<pair<KnownPlugins::PluginType, PluginCandidates::FailureRec>>
+            filtered;
+        for (auto p: failures) {
+            auto f = p.second;
             if (f.code == PluginCheckCode::FAIL_WRONG_ARCHITECTURE ||
                 f.code == PluginCheckCode::FAIL_NOT_LOADABLE) {
                 if (silenced.find(f.library) != silenced.end()) {
                     continue;
                 }
             }
-            filtered.push_back(f);
+            if (f.code != PluginCheckCode::FAIL_ON_IGNORE_LIST) {
+                ignored[QString::fromStdString(f.library)] =
+                    formatFailureMessage(kp.first, p);
+                filtered.push_back(p);
+            }
         }
         if (!filtered.empty()) {
             report += formatFailureReport(kp.first, filtered);
@@ -357,14 +412,18 @@ PluginScan::getStartupFailureReport() const
         return report;
     }
 
+    settings.setValue("ignored", ignored);
+    settings.endGroup();
+
     return QObject::tr("<p>Failed to load one or more plugin libraries:</p>")
         + report
-        + QObject::tr("<p>These plugins may be incompatible with the system, "
-                      "and will be ignored during this run of %1.</p>")
+        + QObject::tr("<p>These plugin libraries may be incompatible with the system, and will be ignored on this and future runs of %1.</p><p>You can review the list of ignored libraries in the Plugins tab of the Preferences.</p>")
         .arg(QCoreApplication::applicationName());
 
 #else
     return "";
 #endif
 }
+
+} // end namespace sv
 

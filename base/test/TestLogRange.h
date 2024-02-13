@@ -24,6 +24,7 @@
 #include <cmath>
 
 using namespace std;
+using namespace sv;
 
 class TestLogRange : public QObject
 {

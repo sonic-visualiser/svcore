@@ -14,6 +14,8 @@
 #ifndef SV_AUDIO_LEVEL_H
 #define SV_AUDIO_LEVEL_H
 
+namespace sv {
+
 /**
  * AudioLevel converts audio sample levels between various scales:
  *
@@ -102,6 +104,8 @@ public:
     static int voltage_to_fader(double dB, int maxFaderLevel, Scale type);
 };
 
+
+} // end namespace sv
 
 #endif
 
