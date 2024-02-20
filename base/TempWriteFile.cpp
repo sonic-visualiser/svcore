@@ -56,20 +56,41 @@ TempWriteFile::moveToTarget()
 {
     if (m_temp == "") return;
 
-    QFile tempFile(m_temp);
-    QFile targetFile(m_target);
-    
-    if (targetFile.exists()) {
-        if (!targetFile.remove()) {
-            SVCERR << "TempWriteFile: WARNING: Failed to remove existing target file " << m_target << " prior to moving temporary file " << m_temp << " to it" << endl;
+    {
+        QFile targetFile(m_target);
+        if (targetFile.exists()) {
+            if (!targetFile.remove()) {
+                SVCERR << "TempWriteFile: WARNING: Failed to remove existing target file " << m_target << " prior to moving temporary file " << m_temp << " to it" << endl;
+            }
         }
     }
-    
-    if (!tempFile.rename(m_target)) {
-        SVCERR << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << endl;
-        throw FileOperationFailed(m_temp, "rename");
+
+    {
+        QFile tempFile(m_temp);
+        if (!tempFile.rename(m_target)) {
+            SVCERR << "TempWriteFile: Failed to rename temporary file " << m_temp << " to target " << m_target << endl;
+            throw FileOperationFailed(m_temp, "rename");
+        }
     }
 
+#ifndef Q_OS_WIN
+    {
+        // QTemporaryFile creates files with rw------- permissions. We
+        // want rw-r--r-- minus umask. (Actually we want rw-rw-rw-
+        // minus umask, but I lack the confidence to apply a change
+        // that explicitly requests WriteGroup|WriteOther even though
+        // I know the umask should take care of it!)
+        
+        QFile targetFile(m_target);
+        if (!targetFile.setPermissions(QFile::ReadUser |
+                                       QFile::WriteUser |
+                                       QFile::ReadGroup |
+                                       QFile::ReadOther)) {
+            SVDEBUG << "TempWriteFile: WARNING: Failed to update file permissions after save" << endl;
+        }
+    }
+#endif
+    
     m_temp = "";
 }
     
