@@ -284,8 +284,14 @@ public:
         
         NoteList notes;
         EventVector ee = m_events.getEventsStartingWithin(startFrame, duration);
+        sv_frame_t priorFrame = startFrame - 1;
         for (const auto &e: ee) {
+            // Because these are just instants, without value or
+            // duration, we never want to return more than one with
+            // the same frame
+            if (e.getFrame() == priorFrame) continue;
             notes.push_back(e.toNoteData(getSampleRate(), true));
+            priorFrame = e.getFrame();
         }
         return notes;
     }
