@@ -215,5 +215,48 @@ Pitch::isFrequencyInMidiRange(double frequency,
     return (midiPitch >= 0 && midiPitch < 128);
 }
 
+double
+Pitch::getMelForFrequency(double frequency, MelFormula formula)
+{
+    switch (formula) {
+
+    default:
+    case MelFormula::OShaughnessy:
+        return 2595.0 * log10(1.0 + frequency / 700.0);
+
+    case MelFormula::Fant:
+        return 1000.0 * log2(1.0 + frequency / 1000.0);
+
+    case MelFormula::Slaney:
+        if (frequency < 1000.0) {
+            return (3.0 * frequency) / 200.0;
+        } else {
+            double arg = frequency / 1000.0;
+            return 15.0 + 27.0 * log10(arg) / log10(6.4);
+        }
+    }
+}
+
+double
+Pitch::getFrequencyForMel(double mel, MelFormula formula)
+{
+    switch (formula) {
+
+    default:
+    case MelFormula::OShaughnessy:
+        return 700.0 * (pow(10.0, mel / 2595.0) - 1.0);
+
+    case MelFormula::Fant:
+        return 1000.0 * (pow(2.0, mel / 1000.0) - 1.0);
+
+    case MelFormula::Slaney:
+        if (mel < 15.0) {
+            return 200.0 * (mel / 3.0);
+        } else {
+            return 1000.0 * pow(10.0, ((mel - 15.0) * log10(6.4)) / 27.0);
+        }
+    }
+}
+
 } // end namespace sv
 

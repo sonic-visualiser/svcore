@@ -33,8 +33,8 @@ public:
      * specified in the application preferences (default 440Hz).
      */
     static double getFrequencyForPitch(int midiPitch,
-                                      double centsOffset = 0,
-                                      double concertA = 0.0);
+                                       double centsOffset = 0,
+                                       double concertA = 0.0);
 
     /**
      * Return the nearest MIDI pitch to the given frequency.
@@ -166,6 +166,28 @@ public:
      */
     static bool isFrequencyInMidiRange(double frequency,
                                        double concertA = 0.0);
+
+    /**
+     * Choice of formula for mel-scale conversions.
+     * OShaughnessy: 2595 * log_10 (1 + f/700)
+     * Fant: 1000 / log(2) * log (1 + f/1000)
+     * Slaney: 3f/200 (f<1000), 15 + 27log_6.4(f/1000) (f>=1000)
+     */
+    enum class MelFormula {
+        OShaughnessy,
+        Fant,
+        Slaney
+    };
+    
+    /**
+     * Convert a frequency to a mel-scale value.
+     */
+    static double getMelForFrequency(double frequency, MelFormula);
+
+    /**
+     * Convert a mel-scale value to a frequency.
+     */
+    static double getFrequencyForMel(double mel, MelFormula);
 };
 
 

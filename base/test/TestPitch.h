@@ -104,6 +104,72 @@ private slots:
         QCOMPARE(Pitch::getPitchForFrequency(440.0, &centsOffset), 69);
         QCOMPARE(centsOffset + 1.f, 1.f);
     }
+
+    void melForFrequency()
+    {
+        auto check = [&](double freq, Pitch::MelFormula formula, double expected) {
+            double actual = Pitch::getMelForFrequency(freq, formula);
+            if (fabs(actual - expected) > 0.01) {
+                cerr << "(failure with formula = " << int(formula) << ")" << endl;
+                QCOMPARE(actual, expected);
+            }
+        };
+        
+        auto formula = Pitch::MelFormula::OShaughnessy;
+        check(1000.0, formula, 999.9855);
+        check(MIDDLE_C, formula, 357.8712);
+        check(4000.0, formula, 2146.0645);
+
+        formula = Pitch::MelFormula::Fant;
+        check(1000.0, formula, 1000.0000);
+        check(MIDDLE_C, formula, 335.2838);
+        check(4000.0, formula, 2321.9281);
+
+        formula = Pitch::MelFormula::Slaney;
+        check(1000.0, formula, 15.0000);
+        check(MIDDLE_C, formula, 3.9244);
+        check(4000.0, formula, 35.1638);
+    }
+    
+    void frequencyForMel()
+    {
+        // opposite arg order from above, so we can reuse the same calling code
+        auto check = [&](double expected, Pitch::MelFormula formula, double mel) {
+            double actual = Pitch::getFrequencyForMel(mel, formula);
+            if (fabs(actual - expected) > 0.01) {
+                cerr << "(failure with formula = " << int(formula) << ")" << endl;
+                QCOMPARE(actual, expected);
+            }
+        };
+        
+        auto formula = Pitch::MelFormula::OShaughnessy;
+        check(1000.0, formula, 999.9855);
+        check(MIDDLE_C, formula, 357.8712);
+        check(4000.0, formula, 2146.0645);
+
+        formula = Pitch::MelFormula::Fant;
+        check(1000.0, formula, 1000.0000);
+        check(MIDDLE_C, formula, 335.2838);
+        check(4000.0, formula, 2321.9281);
+
+        formula = Pitch::MelFormula::Slaney;
+        check(1000.0, formula, 15.0000);
+        check(MIDDLE_C, formula, 3.9244);
+        check(4000.0, formula, 35.16376);
+    }
+    
+    void melForFrequencyAndBack()
+    {
+        for (int form = 0; form < 3; ++form) {
+            Pitch::MelFormula formula = (Pitch::MelFormula)form;
+            for (int i = 0; i < 40; ++i) {
+                double freq = i * 200.0;
+                double mel = Pitch::getFrequencyForMel(freq, formula);
+                double back = Pitch::getMelForFrequency(mel, formula);
+                QCOMPARE(back, freq);
+            }
+        }
+    }
 };
 
 #endif
