@@ -289,7 +289,7 @@ ReadOnlyWaveFileModel::getData(int channel,
     Profiler profiler("ReadOnlyWaveFileModel::getData");
     
 #ifdef DEBUG_WAVE_FILE_MODEL_READ
-    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << endl;
+    SVCERR << "ReadOnlyWaveFileModel::getData[" << this << "]: " << channel << ", " << start << ", " << count << endl;
 #endif
 
     int channels = getChannelCount();
@@ -350,7 +350,7 @@ ReadOnlyWaveFileModel::getMultiChannelData(int fromchannel, int tochannel,
     Profiler profiler("ReadOnlyWaveFileModel::getMultiChannelData");
 
 #ifdef DEBUG_WAVE_FILE_MODEL_READ
-    cout << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << endl;
+    SVCERR << "ReadOnlyWaveFileModel::getData[" << this << "]: " << fromchannel << "," << tochannel << ", " << start << ", " << count << endl;
 #endif
 
     int channels = getChannelCount();
@@ -723,7 +723,7 @@ ReadOnlyWaveFileModel::RangeCacheFillThread::run()
             m_model.m_mutex.unlock();
 
 #ifdef DEBUG_WAVE_FILE_MODEL_READ
-            cout << "ReadOnlyWaveFileModel(" << m_model.objectName() << ")::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
+            SVCERR << "ReadOnlyWaveFileModel(" << m_model.objectName() << ")::fill inner loop: frame = " << frame << ", count = " << m_frameCount << ", blocksize " << readBlockSize << endl;
 #endif
 
             if (updating && (frame + readBlockSize > m_frameCount)) {
