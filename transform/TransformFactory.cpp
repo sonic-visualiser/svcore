@@ -45,11 +45,15 @@
 namespace sv {
 
 TransformFactory *
-TransformFactory::m_instance = new TransformFactory;
+TransformFactory::m_instance = nullptr;
 
 TransformFactory *
 TransformFactory::getInstance()
 {
+    static std::once_flag f;
+    std::call_once(f, [&]() {
+        m_instance = new TransformFactory();
+    });
     return m_instance;
 }
 
