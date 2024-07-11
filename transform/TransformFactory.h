@@ -126,8 +126,13 @@ public:
      * started at all.
      */
     bool havePopulatedUninstalledTransforms();
-    
+
+    /**
+     * Return descriptions for all installed transforms. The returned
+     * transforms are sorted in "display" order by name.
+     */
     TransformList getInstalledTransformDescriptions();
+    
     TransformDescription getInstalledTransformDescription(TransformId id);
     bool haveAnyInstalledTransforms();
 
