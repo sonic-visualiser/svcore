@@ -579,6 +579,7 @@ TransformFactory::populateFeatureExtractionPlugins(TransformDescriptionMap &tran
                                      friendlyName,
                                      description,
                                      longDescription,
+                                     pluginName,
                                      maker,
 //!!!                                     units,
                                      "",
@@ -683,6 +684,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                                          userName,
                                          "",
                                          description,
+                                         pluginName,
                                          maker,
                                          units,
                                          configurable);
@@ -715,6 +717,7 @@ TransformFactory::populateRealTimePlugins(TransformDescriptionMap &transforms)
                                          pluginName,
                                          "",
                                          description,
+                                         pluginName,
                                          maker,
                                          "",
                                          configurable);
