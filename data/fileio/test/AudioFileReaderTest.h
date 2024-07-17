@@ -412,6 +412,13 @@ private slots:
 //            std::cerr << "offset = " << offset << std::endl;
 //            std::cerr << "at file rate would be " << fileRateEquivalent << std::endl;
 
+            if (format == "aac" ||
+                (format == "mp3" && (readRate != fileRate))
+                ) {
+                // ouch!
+                if (offset == -1) offset = 0;
+            }
+
             // Previously our m4a test file had a fixed offset of 1024
             // at the file sample rate -- this may be because it was
             // produced by FAAC which did not write in the delay as
@@ -422,16 +429,12 @@ private slots:
             // "something else" otherwise.
             
             if (gapless) {
-                if (format == "aac" ||
-                    (format == "mp3" && (readRate != fileRate))
-                    ) {
-                    // ouch!
-                    if (offset == -1) offset = 0;
-                }
                 QCOMPARE(offset, 0);
             }
         }
 
+//        cerr << "about to write the diff file" << endl;
+        
         {
             // Write the diff file now, so that it's already been written
             // even if the comparison fails. We aren't checking anything
@@ -452,6 +455,7 @@ private slots:
             for (int c = 0; c < channels; ++c) {
                 for (int i = 0; i < refFrames; ++i) {
                     int ix = i + offset;
+//                    cerr << "c = " << c << ", i = " << i << ", ix = " << ix << endl;
                     if (ix < read) {
                         float signeddiff =
                             test[ix * channels + c] -
@@ -467,7 +471,9 @@ private slots:
             diffWriter.writeSamples(ptrs, refFrames);
             delete[] ptrs;
         }
-            
+
+//        std::cerr << "wrote diff file" << std::endl;
+        
         for (int c = 0; c < channels; ++c) {
 
             double maxDiff = 0.0;
@@ -511,11 +517,11 @@ private slots:
             double meanDiff = totalDiff / double(refFrames);
             double rmsDiff = sqrt(totalSqrDiff / double(refFrames));
 
-            /*
-        cerr << "channel " << c << ": mean diff " << meanDiff << endl;
-            cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
-            cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
-            */            
+
+//        cerr << "channel " << c << ": mean diff " << meanDiff << endl;
+//            cerr << "channel " << c << ":  rms diff " << rmsDiff << endl;
+//            cerr << "channel " << c << ":  max diff " << maxDiff << " at " << maxIndex << endl;
+
             if (rmsDiff >= rmsLimit) {
                 SVCERR << "ERROR: for audiofile " << audiofile << ": RMS diff = " << rmsDiff << " for channel " << c << " (limit = " << rmsLimit << ")" << endl;
                 QVERIFY(rmsDiff < rmsLimit);
