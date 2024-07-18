@@ -258,8 +258,8 @@ PluginPathSetter::initialiseEnvironmentVariables()
         if (currentValue != "" && p.second.useEnvVariable) {
             // don't override
             SVDEBUG << "PluginPathSetter: for environment variable "
-                    << envVariable << ", useEnvVariable setting is false; "
-                    << "leaving current value alone: it is \""
+                    << envVariable << ", useEnvVariable setting is true; "
+                    << "leaving current value of variable alone: it is \""
                     << currentValue << "\"" << endl;
             continue;
         }
@@ -272,9 +272,9 @@ PluginPathSetter::initialiseEnvironmentVariables()
             ;
         QString proposedValue = p.second.directories.join(separator);
         SVDEBUG << "PluginPathSetter: for environment variable "
-                << envVariable << ", useEnvVariable setting is true or "
+                << envVariable << ", useEnvVariable setting is false or "
                 << "variable is currently unset; "
-                << "changing value from \"" << currentValue
+                << "changing from current value of variable \"" << currentValue
                 << "\" to setting preference of \"" << proposedValue
                 << "\"" << endl;
         putEnvUtf8(envVarStr, proposedValue.toStdString());

@@ -34,42 +34,72 @@ public:
     typedef std::vector<TypeKey> TypeKeys;
 
     struct PathConfig {
-        QStringList directories; // Actual list of directories arising
-                                 // from user settings, environment
-                                 // variables, and defaults as
-                                 // appropriate
-        
-        QString envVariable; // Name of env var, e.g. LADSPA_PATH
-        
-        bool useEnvVariable; // True if env variable should override
-                             // any user settings for this
+        /** List of directories which may arise from user settings,
+         *  environment variables, and defaults as appropriate
+         */
+        QStringList directories;
+
+        /** Name of environment variable responsible, e.g. LADSPA_PATH
+         */
+        QString envVariable;
+
+        /** True if the environment variable should override any user
+         *  settings for this type. If so, and if the variable is set,
+         *  it will be preferentially used by getPaths and its
+         *  contents will not be replaced by
+         *  initialiseEnvironmentVariables.
+         */
+        bool useEnvVariable;
     };
 
     typedef std::map<TypeKey, PathConfig> Paths;
 
-    /// Update *_PATH environment variables from the settings, on
-    /// application startup. Must be called exactly once, before any
-    /// of the other functions in this class has been called
+    /** Update *_PATH environment variables based on the settings, so
+     *  that subsequent lookups through APIs unaware of this class
+     *  will follow the same paths as we have in the user config. This
+     *  should be called once on startup, after the QApplication has
+     *  been initialised so application settings are available.
+     */
     static void initialiseEnvironmentVariables();
 
-    /// Return default values of paths only, without any environment
-    /// variables or user-defined preferences
+    /**
+     *  Return default values of paths only, without taking any
+     *  environment variables or user-defined preferences into
+     *  account.
+     */
     static Paths getDefaultPaths();
 
-    /// Return paths arising from environment variables only, falling
-    /// back to the defaults, without any user-defined preferences
+    /**
+     *  Return paths arising from environment variables only, falling
+     *  back to the default as reported by getDefaultPaths in cases
+     *  where the variables are unset but without taking any
+     *  user-defined preferences into account. Note that calling
+     *  initialiseEnvironmentVariables does not affect the value
+     *  returned here - the original contents of the variables are
+     *  saved and reported here regardless.
+     */
     static Paths getEnvironmentPaths();
 
-    /// Return paths arising from user settings + environment
-    /// variables + defaults as appropriate
+    /**
+     *  Return paths arising from the combination of user settings,
+     *  environment variables, and defaults as appropriate. These are
+     *  the paths the user should be expecting to be searched.
+     */
     static Paths getPaths();
 
-    /// Save the given paths to the settings
+    /**
+     *  Save the given paths to the application settings.
+     */
     static void savePathSettings(Paths paths);
 
-    /// Return the original value observed on startup for the given
-    /// environment variable, if it is one of the variables used by a
-    /// known path config.
+    /**
+     *  Return the original value observed on startup for the given
+     *  environment variable, if it is one of the variables used by a
+     *  known path config. This can only be reported if
+     *  initialiseEnvironmentVariables has been called (as the other
+     *  APIs delegate environment variable handling to the plugin
+     *  checker layer).
+     */
     static QString getOriginalEnvironmentValue(QString envVariable);
     
 private:
