@@ -173,8 +173,6 @@ StringBits::split(QString line, QChar separator, bool quoted)
 #else
             QString::SkipEmptyParts :
             QString::KeepEmptyParts
-} // end namespace sv
-
 #endif
             );
     }
