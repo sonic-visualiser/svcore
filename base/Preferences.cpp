@@ -63,7 +63,7 @@ Preferences::Preferences() :
     QSettings settings;
     settings.beginGroup("Preferences");
     m_spectrogramSmoothing = SpectrogramSmoothing
-        (settings.value("spectrogram-y-smoothing", int(m_spectrogramSmoothing)).toInt());
+        (settings.value("spectrogram-smoothing", int(m_spectrogramSmoothing)).toInt());
     m_tuningFrequency = settings.value("tuning-frequency", 440.).toDouble();
     m_propertyBoxLayout = PropertyBoxLayout
         (settings.value("property-box-layout", int(VerticallyStacked)).toInt());
@@ -99,7 +99,7 @@ Preferences::PropertyList
 Preferences::getProperties() const
 {
     PropertyList props;
-    props.push_back("Spectrogram Y Smoothing");
+    props.push_back("Spectrogram Smoothing");
     props.push_back("Tuning Frequency");
     props.push_back("Property Box Layout");
     props.push_back("Window Type");
@@ -124,7 +124,7 @@ Preferences::getProperties() const
 QString
 Preferences::getPropertyLabel(const PropertyName &name) const
 {
-    if (name == "Spectrogram Y Smoothing") {
+    if (name == "Spectrogram Smoothing") {
         return tr("Default spectrogram interpolation:");
     }
     if (name == "Tuning Frequency") {
@@ -187,7 +187,7 @@ Preferences::getPropertyLabel(const PropertyName &name) const
 Preferences::PropertyType
 Preferences::getPropertyType(const PropertyName &name) const
 {
-    if (name == "Spectrogram Y Smoothing") {
+    if (name == "Spectrogram Smoothing") {
         return ValueProperty;
     }
     if (name == "Tuning Frequency") {
@@ -252,7 +252,7 @@ int
 Preferences::getPropertyRangeAndValue(const PropertyName &name,
                                       int *min, int *max, int *deflt) const
 {
-    if (name == "Spectrogram Y Smoothing") {
+    if (name == "Spectrogram Smoothing") {
         if (min) *min = 0;
         if (max) *max = 1;
         if (deflt) *deflt = int(SpectrogramInterpolated);
@@ -356,7 +356,7 @@ Preferences::getPropertyValueLabel(const PropertyName &name,
         case 2: return tr("Highest quality");
         }
     }
-    if (name == "Spectrogram Y Smoothing") {
+    if (name == "Spectrogram Smoothing") {
         switch (value) {
         case NoSpectrogramSmoothing: return tr("None");
         case SpectrogramInterpolated: return tr("Linear interpolation");
@@ -407,7 +407,7 @@ Preferences::getPropertyContainerIconName() const
 void
 Preferences::setProperty(const PropertyName &name, int value) 
 {
-    if (name == "Spectrogram Y Smoothing") {
+    if (name == "Spectrogram Smoothing") {
         setSpectrogramSmoothing(SpectrogramSmoothing(value));
     } else if (name == "Tuning Frequency") {
         //!!!
@@ -446,9 +446,9 @@ Preferences::setSpectrogramSmoothing(SpectrogramSmoothing smoothing)
 
         QSettings settings;
         settings.beginGroup("Preferences");
-        settings.setValue("spectrogram-y-smoothing", int(smoothing));
+        settings.setValue("spectrogram-smoothing", int(smoothing));
         settings.endGroup();
-        emit propertyChanged("Spectrogram Y Smoothing");
+        emit propertyChanged("Spectrogram Smoothing");
     }
 }
 
