@@ -164,6 +164,11 @@ public:
     
     void remove(Event e) override {
         m_events.remove(e);
+        // For historical reasons we don't emit modelChanged here -
+        // I'm not totally sure why but possibly because of a bad
+        // interaction with the way events are actually removed
+        // leading to many many undo records. If you want to receive
+        // notice of this, connect modelChangedWithin.
         emit modelChangedWithin(getId(),
                                 e.getFrame(), e.getFrame() + m_resolution);
     }
