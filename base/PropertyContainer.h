@@ -20,6 +20,8 @@
 
 #include <QString>
 #include <QObject>
+#include <QMutex>
+
 #include <vector>
 #include <memory>
 
@@ -135,6 +137,16 @@ public slots:
     virtual void setProperty(const PropertyName &, int value);
 
     /**
+     * Set a property, locking the discretionary property mutex while
+     * it is being set. This has no intrinsic meaning - it depends on
+     * the caller and subclass - but note that SetPropertyCommand uses
+     * this rather than setProperty directly. The subclass is not
+     * expected to override this, as within the mutex it just calls
+     * setProperty.
+     */
+    virtual void setPropertyProtected(const PropertyName &, int value);
+
+    /**
      * Obtain a command that sets the given property, which can be
      * added to the command history for undo/redo.  Returns NULL
      * if the property is already set to the given value.
@@ -163,6 +175,9 @@ public slots:
      */
     virtual Command *getSetPropertyCommand(QString nameString, QString valueString);
 
+    void takeDiscretionaryPropertyMutex();
+    void releaseDiscretionaryPropertyMutex();
+    
 protected:
 
     class SetPropertyCommand : public Command
@@ -184,6 +199,8 @@ protected:
 
     virtual bool convertPropertyStrings(QString nameString, QString valueString,
                                         PropertyName &name, int &value);
+
+    QMutex m_discretionaryPropertyMutex;
 };
 
 } // end namespace sv

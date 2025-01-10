@@ -17,6 +17,8 @@
 #include "RangeMapper.h"
 #include "UnitDatabase.h"
 
+#include <QMutexLocker>
+
 #include <iostream>
 
 using std::cerr;
@@ -80,6 +82,13 @@ void
 PropertyContainer::setProperty(const PropertyName &name, int) 
 {
     cerr << "WARNING: PropertyContainer[" << getPropertyContainerName() << "]::setProperty(" << name << "): no implementation in subclass!" << endl;
+}
+
+void
+PropertyContainer::setPropertyProtected(const PropertyName &name, int value) 
+{
+    QMutexLocker locker(&m_discretionaryPropertyMutex);
+    setProperty(name, value);
 }
 
 Command *
@@ -227,6 +236,18 @@ PropertyContainer::convertPropertyStrings(QString nameString, QString valueStrin
     return true;
 }
 
+void
+PropertyContainer::takeDiscretionaryPropertyMutex()
+{
+    m_discretionaryPropertyMutex.lock();
+}
+
+void
+PropertyContainer::releaseDiscretionaryPropertyMutex()
+{
+    m_discretionaryPropertyMutex.unlock();
+}
+
 PropertyContainer::SetPropertyCommand::SetPropertyCommand(PropertyContainer *pc,
                                                           const PropertyName &pn,
                                                           int value) :
@@ -241,13 +262,13 @@ void
 PropertyContainer::SetPropertyCommand::execute()
 {
     m_oldValue = m_pc->getPropertyRangeAndValue(m_pn, nullptr, nullptr, nullptr);
-    m_pc->setProperty(m_pn, m_value);
+    m_pc->setPropertyProtected(m_pn, m_value);
 }
 
 void
 PropertyContainer::SetPropertyCommand::unexecute() 
 {
-    m_pc->setProperty(m_pn, m_oldValue);
+    m_pc->setPropertyProtected(m_pn, m_oldValue);
 }
 
 QString
