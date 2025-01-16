@@ -88,6 +88,8 @@ FFTModel::~FFTModel()
 void
 FFTModel::clearCaches()
 {
+    QMutexLocker locker(&m_mutex);
+    
     m_cached.clear();
     while (m_cached.size() < m_cacheSize) {
         m_cached.push_back({ -1, doublecomplexvec_t(m_fftSize / 2 + 1) });
@@ -318,6 +320,8 @@ FFTModel::getSourceData(pair<sv_frame_t, sv_frame_t> range) const
             << "," << m_savedData.range.second << ")" << endl;
 #endif
 
+    QMutexLocker locker(&m_mutex);
+
     if (m_savedData.range == range) {
         inSourceCache.hit();
 #ifdef DEBUG_FFT_MODEL
@@ -424,19 +428,23 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
 const doublecomplexvec_t &
 FFTModel::getFFTColumn(int n) const
 {
-    // The small cache (i.e. the m_cached deque) is for cases where
-    // values are looked up individually, and for e.g. peak-frequency
-    // spectrograms where values from two consecutive columns are
-    // needed at once. This cache gets essentially no hits when
-    // scrolling through a magnitude spectrogram, but 95%+ hits with a
-    // peak-frequency spectrogram or spectrum.
-    for (const auto &incache : m_cached) {
-        if (incache.n == n) {
-            inSmallCache.hit();
-            return incache.col;
+    {
+        QMutexLocker locker(&m_mutex);
+    
+        // The small cache (i.e. the m_cached deque) is for cases where
+        // values are looked up individually, and for e.g. peak-frequency
+        // spectrograms where values from two consecutive columns are
+        // needed at once. This cache gets essentially no hits when
+        // scrolling through a magnitude spectrogram, but 95%+ hits with a
+        // peak-frequency spectrogram or spectrum.
+        for (const auto &incache : m_cached) {
+            if (incache.n == n) {
+                inSmallCache.hit();
+                return incache.col;
+            }
         }
+        inSmallCache.miss();
     }
-    inSmallCache.miss();
 
     Profiler profiler("FFTModel::getFFTColumn (cache miss)");
     
@@ -477,6 +485,8 @@ FFTModel::getFFTColumn(int n) const
                 << breakfastquay::v_max(mags.data(), mags.size()) << endl;
     }
 #endif
+    
+    QMutexLocker locker(&m_mutex);
     
     m_cached[m_cacheWriteIndex].n = n;
 
