@@ -78,6 +78,7 @@ EditableDenseThreeDimensionalModel::getStartFrame() const
 void
 EditableDenseThreeDimensionalModel::setStartFrame(sv_frame_t f)
 {
+    QMutexLocker locker(&m_mutex);
     m_startFrame = f; 
 }
 
@@ -96,6 +97,7 @@ EditableDenseThreeDimensionalModel::getResolution() const
 void
 EditableDenseThreeDimensionalModel::setResolution(int sz)
 {
+    QMutexLocker locker(&m_mutex);
     m_resolution = sz;
 }
 
@@ -114,6 +116,7 @@ EditableDenseThreeDimensionalModel::getHeight() const
 void
 EditableDenseThreeDimensionalModel::setHeight(int sz)
 {
+    QMutexLocker locker(&m_mutex);
     m_yBinCount = sz;
 }
 
@@ -126,6 +129,7 @@ EditableDenseThreeDimensionalModel::getMinimumLevel() const
 void
 EditableDenseThreeDimensionalModel::setMinimumLevel(float level)
 {
+    QMutexLocker locker(&m_mutex);
     m_minimum = level;
 }
 
@@ -138,6 +142,7 @@ EditableDenseThreeDimensionalModel::getMaximumLevel() const
 void
 EditableDenseThreeDimensionalModel::setMaximumLevel(float level)
 {
+    QMutexLocker locker(&m_mutex);
     m_maximum = level;
 }
 
@@ -269,6 +274,7 @@ EditableDenseThreeDimensionalModel::setColumn(int index,
 QString
 EditableDenseThreeDimensionalModel::getBinName(int n) const
 {
+    QMutexLocker locker(&m_mutex);
     if (n >= 0 && (int)m_binNames.size() > n) return m_binNames[n];
     else return "";
 }
@@ -276,27 +282,35 @@ EditableDenseThreeDimensionalModel::getBinName(int n) const
 void
 EditableDenseThreeDimensionalModel::setBinName(int n, QString name)
 {
-    while ((int)m_binNames.size() <= n) m_binNames.push_back("");
-    m_binNames[n] = name;
+    {
+        QMutexLocker locker(&m_mutex);
+        while ((int)m_binNames.size() <= n) m_binNames.push_back("");
+        m_binNames[n] = name;
+    }
     emit modelChanged(getId());
 }
 
 void
 EditableDenseThreeDimensionalModel::setBinNames(std::vector<QString> names)
 {
-    m_binNames = names;
+    {
+        QMutexLocker locker(&m_mutex);
+        m_binNames = names;
+    }
     emit modelChanged(getId());
 }
 
 bool
 EditableDenseThreeDimensionalModel::hasBinValues() const
 {
+    QMutexLocker locker(&m_mutex);
     return !m_binValues.empty();
 }
 
 float
 EditableDenseThreeDimensionalModel::getBinValue(int n) const
 {
+    QMutexLocker locker(&m_mutex);
     if (n < (int)m_binValues.size()) return m_binValues[n];
     else return 0.f;
 }
@@ -304,18 +318,21 @@ EditableDenseThreeDimensionalModel::getBinValue(int n) const
 void
 EditableDenseThreeDimensionalModel::setBinValues(std::vector<float> values)
 {
+    QMutexLocker locker(&m_mutex);
     m_binValues = values;
 }
 
 QString
 EditableDenseThreeDimensionalModel::getBinValueUnit() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_binValueUnit;
 }
 
 void
 EditableDenseThreeDimensionalModel::setBinValueUnit(QString unit)
 {
+    QMutexLocker locker(&m_mutex);
     m_binValueUnit = unit;
 }
 
@@ -353,7 +370,9 @@ EditableDenseThreeDimensionalModel::shouldUseLogValueScale() const
 void
 EditableDenseThreeDimensionalModel::setCompletion(int completion, bool update)
 {
-    if (m_completion != completion) {
+    int prevCompletion = m_completion;
+    
+    if (prevCompletion != completion) {
         m_completion = completion;
 
         if (completion == 100) {
@@ -390,6 +409,7 @@ QVector<QString>
 EditableDenseThreeDimensionalModel::getStringExportHeaders(DataExportOptions)
     const
 {
+    QMutexLocker locker(&m_mutex);
     QVector<QString> sv;
     for (int i = 0; i < m_yBinCount; ++i) {
         sv.push_back(QString("Bin%1").arg(i+1));

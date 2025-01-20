@@ -215,15 +215,15 @@ protected:
 
     sv_frame_t m_startFrame;
     sv_samplerate_t m_sampleRate;
-    int m_resolution;
-    int m_yBinCount;
-    float m_minimum;
-    float m_maximum;
-    bool m_haveExtents;
-    bool m_notifyOnAdd;
+    std::atomic<int> m_resolution;
+    std::atomic<int> m_yBinCount;
+    std::atomic<float> m_minimum;
+    std::atomic<float> m_maximum;
+    std::atomic<bool> m_haveExtents;
+    std::atomic<bool> m_notifyOnAdd;
     sv_frame_t m_sinceLastNotifyMin;
     sv_frame_t m_sinceLastNotifyMax;
-    int m_completion;
+    std::atomic<int> m_completion;
 
     mutable QMutex m_mutex;
 };

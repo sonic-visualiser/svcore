@@ -28,7 +28,7 @@ namespace sv {
  * the source. Each column is populated from the source model when
  * first requested, and is returned from cache on subsequent requests.
  *
- * Dense3DModelPeakCache is not thread-safe.
+ * Dense3DModelPeakCache is thread-safe if its source model is.
  */
 class Dense3DModelPeakCache : public DenseThreeDimensionalModel
 {
@@ -145,16 +145,16 @@ protected slots:
     void sourceModelChanged(ModelId);
 
 private:
-    ModelId m_source;
-    int m_columnsPerPeak;
+    const ModelId m_source;
+    const int m_columnsPerPeak;
 
     mutable std::vector<Column> m_cache;
     mutable std::vector<bool> m_coverage; // bool for space efficiency
                                           // (vector of bool is a bitmap)
     mutable bool m_finalColumnIncomplete;
 
-    bool haveColumn(int column) const;
-    void fillColumn(int column) const;
+    bool haveColumn(int column) const; // call with mutex held
+    void fillColumn(int column) const; // call with mutex held
 };
 
 

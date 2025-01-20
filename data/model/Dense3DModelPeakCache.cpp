@@ -21,21 +21,27 @@
 
 namespace sv {
 
+static ModelId validateSource(ModelId sourceId)
+{
+    auto source = ModelById::getAs<DenseThreeDimensionalModel>(sourceId);
+    if (!source) {
+        SVCERR << "WARNING: Dense3DModelPeakCache constructed for unknown or wrong-type source model id " << sourceId << endl;
+        return ModelId();
+    } else {
+        return sourceId;
+    }
+}
+
 Dense3DModelPeakCache::Dense3DModelPeakCache(ModelId sourceId,
                                              int columnsPerPeak) :
-    m_source(sourceId),
+    m_source(validateSource(sourceId)),
     m_columnsPerPeak(columnsPerPeak),
     m_finalColumnIncomplete(false)
 {
-    auto source = ModelById::getAs<DenseThreeDimensionalModel>(m_source);
-    if (!source) {
-        SVCERR << "WARNING: Dense3DModelPeakCache constructed for unknown or wrong-type source model id " << m_source << endl;
-        m_source = {};
-        return;
+    if (!m_source.isNone()) {
+        connect(ModelById::get(m_source).get(), &Model::modelChanged,
+                this, &Dense3DModelPeakCache::sourceModelChanged);
     }
-
-    connect(source.get(), SIGNAL(modelChanged(ModelId)),
-            this, SLOT(sourceModelChanged(ModelId)));
 }
 
 Dense3DModelPeakCache::~Dense3DModelPeakCache()
@@ -46,6 +52,7 @@ Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column) const
 {
     Profiler profiler("Dense3DModelPeakCache::getColumn");
+    QMutexLocker locker(&m_mutex);
     if (!haveColumn(column)) fillColumn(column);
     return m_cache.at(column);
 }
@@ -54,6 +61,7 @@ Dense3DModelPeakCache::Column
 Dense3DModelPeakCache::getColumn(int column, int minbin, int nbins) const
 {
     Profiler profiler("Dense3DModelPeakCache::getColumn (subset)");
+    QMutexLocker locker(&m_mutex);
     if (!haveColumn(column)) fillColumn(column);
     const Column &c = m_cache.at(column);
     return Column(c.data() + minbin, c.data() + minbin + nbins);
@@ -63,6 +71,7 @@ float
 Dense3DModelPeakCache::getValueAt(int column, int n) const
 {
     Profiler profiler("Dense3DModelPeakCache::getValueAt");
+    QMutexLocker locker(&m_mutex);
     if (!haveColumn(column)) fillColumn(column);
     return m_cache.at(column).at(n);
 }
@@ -78,6 +87,7 @@ Dense3DModelPeakCache::getValueUnit() const
 void
 Dense3DModelPeakCache::sourceModelChanged(ModelId)
 {
+    QMutexLocker locker(&m_mutex);
     if (m_finalColumnIncomplete && m_coverage.size() > 0) {
         // The last peak came from an incomplete read, which may since
         // have been filled, so reset it
