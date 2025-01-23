@@ -91,9 +91,11 @@ CodedAudioFileReader::~CodedAudioFileReader()
     if (m_cacheFileWritePtr) sf_close(m_cacheFileWritePtr);
 #endif
 
-    SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
+    if (m_cacheFileReader) {
+        SVDEBUG << "CodedAudioFileReader::~CodedAudioFileReader: deleting cache file reader" << endl;
+        delete m_cacheFileReader;
+    }
 
-    delete m_cacheFileReader;
     delete[] m_cacheWriteBuffer;
     
     if (m_cacheFileName != "") {
