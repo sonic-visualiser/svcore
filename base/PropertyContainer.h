@@ -200,7 +200,7 @@ protected:
     virtual bool convertPropertyStrings(QString nameString, QString valueString,
                                         PropertyName &name, int &value);
 
-    QMutex m_discretionaryPropertyMutex;
+    mutable QMutex m_discretionaryPropertyMutex;
 };
 
 } // end namespace sv
