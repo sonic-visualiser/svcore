@@ -460,6 +460,10 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data() + (m_fftSize - m_windowSize) / 2);
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
+    // before referring to m_cached *or* m_fft (as breakfastquay::FFT
+    // is not thread safe)
+    QMutexLocker locker(&m_mutex);
+
     doublecomplexvec_t &col = m_cached[m_cacheWriteIndex].col;
 
     // expand to large enough for fft destination, if truncated previously
@@ -485,8 +489,6 @@ FFTModel::getFFTColumn(int n) const
                 << breakfastquay::v_max(mags.data(), mags.size()) << endl;
     }
 #endif
-    
-    QMutexLocker locker(&m_mutex);
     
     m_cached[m_cacheWriteIndex].n = n;
 
