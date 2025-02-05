@@ -153,15 +153,15 @@ public:
         MajorPitchAdaptivePeaks  /// Bigger window for higher frequencies
     };
 
-    typedef std::set<int> PeakLocationSet; // bin
+    typedef std::vector<int> PeakLocations; // bin (in order)
     typedef std::map<int, double> PeakSet; // bin -> freq
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
      * ymax is zero, getHeight()-1 will be used.
      */
-    virtual PeakLocationSet getPeaks(PeakPickType type, int x,
-                                     int ymin = 0, int ymax = 0) const;
+    virtual PeakLocations getPeaks(PeakPickType type, int x,
+                                   int ymin = 0, int ymax = 0) const;
 
     /**
      * Return locations and estimated stable frequencies of peak bins.
@@ -200,24 +200,29 @@ private:
         return { startFrame, endFrame };
     }
 
-    const doublecomplexvec_t &getFFTColumn(int column) const;
+    doublecomplexvec_t getFFTColumn(int column) const;
+    doublecomplexvec_t getFFTColumnUsingSmallCache(int column) const;
     floatvec_t getSourceSamples(int column) const;
     floatvec_t getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
     floatvec_t getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
+    PeakLocations getPeaksAndColumn(PeakPickType type, int x,
+                                    int ymin, int ymax,
+                                    doublecomplexvec_t *column) const;
+
+    struct SavedColumn {
+        int n;
+        doublecomplexvec_t col;
+    };
+    mutable std::vector<SavedColumn> m_smallCache;
+    mutable size_t m_smallCacheWriteIndex;
+    mutable QMutex m_smallCacheMutex;
+    size_t m_smallCacheSize;
 
     struct SavedSourceData {
         std::pair<sv_frame_t, sv_frame_t> range;
         floatvec_t data;
     };
     mutable SavedSourceData m_savedData;
-
-    struct SavedColumn {
-        int n;
-        doublecomplexvec_t col;
-    };
-    mutable std::vector<SavedColumn> m_cached;
-    mutable size_t m_cacheWriteIndex;
-    size_t m_cacheSize;
 
     void clearCaches();
 };
