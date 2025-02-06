@@ -72,7 +72,7 @@ FFTModel::FFTModel(ModelId modelId,
                << ") may not exceed FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size may not exceed FFT size");
     }
-
+    
     auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
     if (model) {
         m_sampleRate = model->getSampleRate();
@@ -89,6 +89,13 @@ FFTModel::FFTModel(ModelId modelId,
 
 FFTModel::~FFTModel()
 {
+    // Avoid cache slots being wrongly reused by any future model
+    // created at the same address
+    for (auto &incache : smallCache) {
+        if (incache.model == this) {
+            incache.model = nullptr;
+        }
+    }
 }
 
 bool
@@ -449,6 +456,7 @@ FFTModel::getFFTColumn(int n) const
         const auto &incache = smallCache.at(i);
         if (incache.model == this && incache.n == n) {
             inSmallCache.hit();
+//            cerr << "*HIT* at " << i << " with model = " << this << " and n = " << n << endl;
             return incache.col;
         }
     }
@@ -468,7 +476,11 @@ FFTModel::getFFTColumn(int n) const
     smallCache[ix].model = this;
     smallCache[ix].n = n;
 
+//    cerr << "wrote at " << ix << " with model = " << this << " and n = " << n << endl;
+
     smallCacheWriteIndex = (ix + 1) % smallCacheSize;
+
+//    cerr << "smallCacheWriteIndex is now " << smallCacheWriteIndex << endl;
 
     return col;
 }
