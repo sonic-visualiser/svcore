@@ -26,6 +26,7 @@
 
 #include <set>
 #include <vector>
+#include <thread>
 #include <complex>
 
 namespace sv {
@@ -92,6 +93,8 @@ public:
 
     Column getColumn(int x) const override; // magnitudes
     Column getColumn(int x, int minbin, int nbins) const override; // magnitudes
+
+    Column getColumnWithoutCache(int x, int minbin, int nbins) const; // magnitudes
 
     bool hasBinValues() const override {
         return true;
@@ -184,7 +187,6 @@ private:
     int m_windowIncrement;
     int m_fftSize;
     Window<double> m_windower;
-    mutable breakfastquay::FFT m_fft;
     double m_maximumFrequency;
     mutable QString m_error;
     
@@ -200,8 +202,8 @@ private:
         return { startFrame, endFrame };
     }
 
-    doublecomplexvec_t getFFTColumn(int column) const;
-    doublecomplexvec_t getFFTColumnUsingSmallCache(int column) const;
+    const doublecomplexvec_t &getFFTColumn(int column) const;
+    void getFFTColumnUncached(int column, doublecomplexvec_t &) const;
     floatvec_t getSourceSamples(int column) const;
     floatvec_t getSourceData(std::pair<sv_frame_t, sv_frame_t>) const;
     floatvec_t getSourceDataUncached(std::pair<sv_frame_t, sv_frame_t>) const;
@@ -209,22 +211,11 @@ private:
                                     int ymin, int ymax,
                                     doublecomplexvec_t *column) const;
 
-    struct SavedColumn {
-        int n;
-        doublecomplexvec_t col;
-    };
-    mutable std::vector<SavedColumn> m_smallCache;
-    mutable size_t m_smallCacheWriteIndex;
-    mutable QMutex m_smallCacheMutex;
-    size_t m_smallCacheSize;
-
     struct SavedSourceData {
         std::pair<sv_frame_t, sv_frame_t> range;
         floatvec_t data;
     };
     mutable SavedSourceData m_savedData;
-
-    void clearCaches();
 };
 
 } // end namespace sv

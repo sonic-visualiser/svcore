@@ -35,6 +35,19 @@ using namespace std;
 
 namespace sv {
 
+static thread_local unordered_map<int, shared_ptr<breakfastquay::FFT>> fftMap;
+
+struct SavedFFTColumn {
+    const FFTModel *model;      // requesting model (used for comparison only)
+    int n;                      // column number
+    doublecomplexvec_t col;
+};
+typedef std::vector<SavedFFTColumn> SmallCache;
+
+static thread_local SmallCache smallCache;
+static thread_local int smallCacheWriteIndex = 0;
+static constexpr size_t smallCacheSize = 16;
+
 static HitCount inSmallCache("FFTModel: Small FFT cache");
 static HitCount inSourceCache("FFTModel: Source data cache");
 
@@ -52,20 +65,13 @@ FFTModel::FFTModel(ModelId modelId,
     m_windowIncrement(windowIncrement),
     m_fftSize(fftSize),
     m_windower(windowType, windowSize),
-    m_fft(fftSize),
-    m_maximumFrequency(0.0),
-    m_smallCacheWriteIndex(0),
-    m_smallCacheSize(4)
+    m_maximumFrequency(0.0)
 {
-    clearCaches();
-    
     if (m_windowSize > m_fftSize) {
         SVCERR << "ERROR: FFTModel::FFTModel: window size (" << m_windowSize
                << ") may not exceed FFT size (" << m_fftSize << ")" << endl;
         throw invalid_argument("FFTModel window size may not exceed FFT size");
     }
-
-    m_fft.initFloat();
 
     auto model = ModelById::getAs<DenseTimeValueModel>(m_model);
     if (model) {
@@ -83,20 +89,6 @@ FFTModel::FFTModel(ModelId modelId,
 
 FFTModel::~FFTModel()
 {
-}
-
-void
-FFTModel::clearCaches()
-{
-    QMutexLocker locker(&m_mutex);
-
-    m_smallCache.clear();
-    while (m_smallCache.size() < m_smallCacheSize) {
-        m_smallCache.push_back({ -1, doublecomplexvec_t() });
-    }
-    m_smallCacheWriteIndex = 0;
-
-    m_savedData.range = { 0, 0 };
 }
 
 bool
@@ -129,7 +121,6 @@ void
 FFTModel::setMaximumFrequency(double freq)
 {
     m_maximumFrequency = freq;
-    clearCaches();
 }
 
 int
@@ -193,6 +184,20 @@ FFTModel::getColumn(int x, int minbin, int nbins) const
 }
 
 FFTModel::Column
+FFTModel::getColumnWithoutCache(int x, int minbin, int nbins) const
+{
+    Profiler profiler("FFTModel::getColumnWithoutCache (subset)");
+    doublecomplexvec_t cplx;
+    getFFTColumnUncached(x, cplx);
+    Column col;
+    col.reserve(nbins);
+    for (int i = 0; i < nbins; ++i) {
+        col.push_back(abs(cplx[minbin + i]));
+    }
+    return col;
+}
+
+FFTModel::Column
 FFTModel::getPhases(int x) const
 {
     Profiler profiler("FFTModel::getPhases");
@@ -211,7 +216,7 @@ FFTModel::getMagnitudeAt(int x, int y) const
     if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) {
         return 0.f;
     }
-    auto col = getFFTColumnUsingSmallCache(x);
+    auto col = getFFTColumn(x);
     return abs(col[y]);
 }
 
@@ -231,7 +236,7 @@ float
 FFTModel::getPhaseAt(int x, int y) const
 {
     if (x < 0 || x >= getWidth() || y < 0 || y >= getHeight()) return 0.f;
-    return arg(getFFTColumnUsingSmallCache(x)[y]);
+    return arg(getFFTColumn(x)[y]);
 }
 
 void
@@ -242,7 +247,7 @@ FFTModel::getValuesAt(int x, int y, float &re, float &im) const
         im = 0.f;
         return;
     }
-    auto col = getFFTColumnUsingSmallCache(x);
+    auto col = getFFTColumn(x);
     re = col[y].real();
     im = col[y].imag();
 }
@@ -426,22 +431,23 @@ FFTModel::getSourceDataUncached(pair<sv_frame_t, sv_frame_t> range) const
     return data;
 }
 
-doublecomplexvec_t
-FFTModel::getFFTColumnUsingSmallCache(int n) const
+const doublecomplexvec_t &
+FFTModel::getFFTColumn(int n) const
 {
-    Profiler profiler("FFTModel::getFFTColumnUsingSmallCache");
-
-    QMutexLocker locker(&m_smallCacheMutex);
+    Profiler profiler("FFTModel::getFFTColumn");
 
     // The small cache is for cases where values are looked up
     // individually, and for e.g. peak-frequency spectrograms where
     // values from two consecutive columns are needed at once. This
-    // cache is unused when e.g. scrolling through a magnitude
+    // cache is seldom used when e.g. scrolling through a magnitude
     // spectrogram, but gets a lot of hits with a peak-frequency
     // spectrogram or spectrum.
-    
-    for (const auto &incache : m_smallCache) {
-        if (incache.n == n) {
+
+    // Note that the small cache is thread-local, so no mutex
+
+    for (int i = 0; in_range_for(smallCache, i); ++i) {
+        const auto &incache = smallCache.at(i);
+        if (incache.model == this && incache.n == n) {
             inSmallCache.hit();
             return incache.col;
         }
@@ -449,19 +455,33 @@ FFTModel::getFFTColumnUsingSmallCache(int n) const
         
     inSmallCache.miss();
 
-    doublecomplexvec_t col = getFFTColumn(n);
+    while (smallCache.size() < smallCacheSize) {
+        smallCache.push_back({ nullptr, -1, doublecomplexvec_t() });
+    }
+    
+    int ix = smallCacheWriteIndex;
 
-    m_smallCache[m_smallCacheWriteIndex].n = n;
-    m_smallCache[m_smallCacheWriteIndex].col = col;
-    m_smallCacheWriteIndex = (m_smallCacheWriteIndex + 1) % m_smallCacheSize;
+    doublecomplexvec_t &col = smallCache[ix].col;
+    
+    getFFTColumnUncached(n, col);
+
+    smallCache[ix].model = this;
+    smallCache[ix].n = n;
+
+    smallCacheWriteIndex = (ix + 1) % smallCacheSize;
 
     return col;
 }
 
-doublecomplexvec_t
-FFTModel::getFFTColumn(int n) const
+void
+FFTModel::getFFTColumnUncached(int n, doublecomplexvec_t &col) const
 {
-    Profiler profiler("FFTModel::getFFTColumn");
+//    Profiler profiler("FFTModel::getFFTColumnUncached");
+
+    if (fftMap.find(m_fftSize) == fftMap.end()) {
+        fftMap[m_fftSize] = make_shared<breakfastquay::FFT>(m_fftSize);
+        fftMap[m_fftSize]->initDouble();
+    }
     
     auto fsamples = getSourceSamples(n);
 
@@ -471,14 +491,11 @@ FFTModel::getFFTColumn(int n) const
     m_windower.cut(samples.data() + (m_fftSize - m_windowSize) / 2);
     breakfastquay::v_fftshift(samples.data(), m_fftSize);
 
-    // mutex before referring to m_fft, as breakfastquay::FFT is not
-    // thread safe
-    QMutexLocker locker(&m_mutex);
+    col.resize(m_fftSize/2 + 1);
 
-    doublecomplexvec_t col(m_fftSize/2 + 1);
-
-    m_fft.forwardInterleaved(samples.data(),
-                             reinterpret_cast<double *>(col.data()));
+    // thread-local FFT (breakfastquay::FFT is not thread-safe)
+    fftMap[m_fftSize]->forwardInterleaved
+        (samples.data(), reinterpret_cast<double *>(col.data()));
 
     // keep only the number of elements we need
     col.resize(getHeight());
@@ -496,8 +513,6 @@ FFTModel::getFFTColumn(int n) const
                 << breakfastquay::v_max(mags.data(), mags.size()) << endl;
     }
 #endif
-    
-    return col;
 }
 
 bool
@@ -561,7 +576,7 @@ FFTModel::getPeaksAndColumn(PeakPickType type, int x, int ymin, int ymax,
         ymax = getHeight() - 1;
     }
 
-    doublecomplexvec_t col = getFFTColumnUsingSmallCache(x);
+    doublecomplexvec_t col = getFFTColumn(x);
     if (colReturn) {
         *colReturn = col;
     }
@@ -742,7 +757,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     doublecomplexvec_t col;
     PeakLocations locations = getPeaksAndColumn(type, x, ymin, ymax, &col);
 
-    doublecomplexvec_t nextCol = getFFTColumnUsingSmallCache(x+1);
+    doublecomplexvec_t nextCol = getFFTColumn(x+1);
     
     sv_samplerate_t sampleRate = getSampleRate();
     int incr = getResolution();
