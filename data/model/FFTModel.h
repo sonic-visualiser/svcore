@@ -157,7 +157,7 @@ public:
     };
 
     typedef std::vector<int> PeakLocations; // bin (in order)
-    typedef std::map<int, double> PeakSet; // bin -> freq
+    typedef std::vector<std::pair<int, double>> Peaks; // bin, freq (in bin order)
 
     /**
      * Return locations of peak bins in the range [ymin,ymax].  If
@@ -169,8 +169,8 @@ public:
     /**
      * Return locations and estimated stable frequencies of peak bins.
      */
-    virtual PeakSet getPeakFrequencies(PeakPickType type, int x,
-                                       int ymin = 0, int ymax = 0) const;
+    virtual Peaks getPeakFrequencies(PeakPickType type, int x,
+                                     int ymin = 0, int ymax = 0) const;
 
     QString getTypeName() const override { return tr("FFT"); }
 

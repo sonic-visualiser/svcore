@@ -743,20 +743,21 @@ FFTModel::getPeakPickWindowSize(PeakPickType type, sv_samplerate_t sampleRate,
     return medianWinSize;
 }
 
-FFTModel::PeakSet
+FFTModel::Peaks
 FFTModel::getPeakFrequencies(PeakPickType type, int x,
                              int ymin, int ymax) const
 {
     Profiler profiler("FFTModel::getPeakFrequencies");
 
-    PeakSet peaks;
+    Peaks peaks;
     if (!isOK() || x >= getWidth()) {
         return peaks;
     }
 
     doublecomplexvec_t col;
     PeakLocations locations = getPeaksAndColumn(type, x, ymin, ymax, &col);
-
+    peaks.reserve(locations.size());
+    
     doublecomplexvec_t nextCol = getFFTColumn(x+1);
     
     sv_samplerate_t sampleRate = getSampleRate();
@@ -777,7 +778,7 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
         double frequency =
             (sampleRate * (expectedPhase + phaseError - oldPhase))
             / (2 * M_PI * incr);
-        peaks[location] = frequency;
+        peaks.push_back({ location, frequency });
         ++phaseIndex;
     }
 
