@@ -81,5 +81,19 @@ UnitDatabase::getUnitQuantity(QString unit)
     }
 }
 
+QString
+UnitDatabase::asCommonUnit(QString unit)
+{
+    unit = unit.toLower();
+
+    if (unit == "hz" || unit == "hertz") return "Hz";
+    if (unit == "v" || unit == "volt" || unit == "volts") return "V";
+    if (unit == "db" || unit == "decibel" || unit == "decibels") return "dB";
+    if (unit == "s" || unit == "sec" || unit == "second" || unit == "seconds")
+        return "s";
+    
+    return {};
+}
+
 } // end namespace sv
 

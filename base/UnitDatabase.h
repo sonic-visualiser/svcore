@@ -59,6 +59,14 @@ public:
      * affects dB value calculations.
      */
     static Quantity getUnitQuantity(QString unit);
+
+    /**
+     * If a unit is some form of one of the small set of common units
+     * "Hz", "V", "dB", or "s", return the matching one. For example,
+     * given "volts" return "V". If the unit is not recognised as one
+     * of these, return QString().
+     */
+    static QString asCommonUnit(QString unit);
     
 signals:
     void unitDatabaseChanged();

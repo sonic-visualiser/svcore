@@ -363,7 +363,7 @@ public:
         EventVector ee = m_events.getEventsCovering(frame);
         for (const auto &e: ee) {
             notes.push_back(e.toNoteData(getSampleRate(),
-                                         getScaleUnits() != "Hz"));
+                                         UnitDatabase::asCommonUnit(getScaleUnits()) != "Hz"));
         }
         return notes;
     }
@@ -375,7 +375,7 @@ public:
         EventVector ee = m_events.getEventsStartingWithin(startFrame, duration);
         for (const auto &e: ee) {
             notes.push_back(e.toNoteData(getSampleRate(),
-                                         getScaleUnits() != "Hz"));
+                                         UnitDatabase::asCommonUnit(getScaleUnits()) != "Hz"));
         }
         return notes;
     }
