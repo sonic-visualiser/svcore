@@ -1146,6 +1146,11 @@ FeatureExtractionModelTransformer::addFeature(int n,
         return;
     }
 
+    int nvalues = int(feature.values.size());
+    if (m_descriptors[n].hasFixedBinCount) {
+        nvalues = std::min(nvalues, int(m_descriptors[n].binCount));
+    }
+
     // Rather than repeat the complicated tests from the constructor
     // to determine what sort of model we must be adding the features
     // to, we instead test what sort of model the constructor decided
@@ -1164,17 +1169,12 @@ FeatureExtractionModelTransformer::addFeature(int n,
         auto model = ModelById::getAs<SparseTimeValueModel>(outputId);
         if (!model) return;
 
-        int nvalues = int(feature.values.size());
-        if (m_descriptors[n].hasFixedBinCount) {
-            nvalues = std::min(nvalues, int(m_descriptors[n].binCount));
-        }
-        
         for (int i = 0; i < nvalues; ++i) {
 
             float value = feature.values[i];
 
             QString label = feature.label.c_str();
-            if (feature.values.size() > 1) {
+            if (nvalues > 1) {
                 label = QString("[%1] %2").arg(i+1).arg(label);
             }
 
@@ -1194,7 +1194,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         int index = 0;
 
         float value = 0.0;
-        if ((int)feature.values.size() > index) {
+        if (nvalues > index) {
             value = feature.values[index++];
         }
 
@@ -1202,7 +1202,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (feature.hasDuration) {
             duration = RealTime::realTime2Frame(feature.duration, inputRate);
         } else {
-            if (in_range_for(feature.values, index)) {
+            if (nvalues > index) {
                 duration = lrintf(feature.values[index++]);
             }
         }
@@ -1211,7 +1211,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (noteModel) {
 
             float velocity = 100;
-            if ((int)feature.values.size() > index) {
+            if (nvalues > index) {
                 velocity = feature.values[index++];
             }
             if (velocity < 0) velocity = 127;
@@ -1227,13 +1227,13 @@ FeatureExtractionModelTransformer::addFeature(int n,
         if (regionModel) {
             
             if (feature.hasDuration && !feature.values.empty()) {
-                
-                for (int i = 0; in_range_for(feature.values, i); ++i) {
+
+                for (int i = 0; i < nvalues; ++i) {
                     
                     float value = feature.values[i];
                     
                     QString label = feature.label.c_str();
-                    if (feature.values.size() > 1) {
+                    if (nvalues > 1) {
                         label = QString("[%1] %2").arg(i+1).arg(label);
                     }
                     
@@ -1259,7 +1259,10 @@ FeatureExtractionModelTransformer::addFeature(int n,
         
         DenseThreeDimensionalModel::Column values;
         values.insert(values.begin(),
-                      feature.values.begin(), feature.values.end());
+                      // not begin() to end(), as we want to limit to
+                      // hasFixedBinCount even if the plugin happens
+                      // to return more
+                      feature.values.begin(), feature.values.begin() + nvalues);
         
         if (!feature.hasTimestamp && m_fixedRateFeatureNos[n] >= 0) {
             model->setColumn(m_fixedRateFeatureNos[n], values);
