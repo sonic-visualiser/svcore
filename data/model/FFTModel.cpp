@@ -85,9 +85,17 @@ FFTModel::FFTModel(ModelId modelId,
     } else {
         m_error = QString("Model #%1 is not available").arg(m_model.untyped);
     }
+
+    m_savedData.range = { 0, 0 };
 }
 
 FFTModel::~FFTModel()
+{
+    clearCaches();
+}
+
+void
+FFTModel::clearCaches()
 {
     // Avoid cache slots being wrongly reused by any future model
     // created at the same address
@@ -96,6 +104,9 @@ FFTModel::~FFTModel()
             incache.model = nullptr;
         }
     }
+
+    QMutexLocker locker(&m_mutex);
+    m_savedData.range = { 0, 0 };
 }
 
 bool
@@ -128,6 +139,9 @@ void
 FFTModel::setMaximumFrequency(double freq)
 {
     m_maximumFrequency = freq;
+
+    // This call changes the column height, so cached values are no longer valid
+    clearCaches();
 }
 
 int

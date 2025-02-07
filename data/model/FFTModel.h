@@ -216,6 +216,8 @@ private:
         floatvec_t data;
     };
     mutable SavedSourceData m_savedData;
+
+    void clearCaches();
 };
 
 } // end namespace sv
