@@ -618,7 +618,7 @@ FFTModel::getPeaksAndColumn(PeakPickType type, int x, int ymin, int ymax,
         Column values;
         values.reserve(n);
         for (int i = 0; i < n; ++i) {
-            values[i] = abs(col[minbin + i]);
+            values.push_back(abs(col[minbin + i]));
         }
 
         for (int bin = ymin; bin <= ymax; ++bin) {
@@ -636,7 +636,7 @@ FFTModel::getPeaksAndColumn(PeakPickType type, int x, int ymin, int ymax,
     Column values;
     values.reserve(nv);
     for (int i = 0; i < nv; ++i) {
-        values[i] = abs(col[i]);
+        values.push_back(abs(col[i]));
     }
 
     float mean = 0.f;
