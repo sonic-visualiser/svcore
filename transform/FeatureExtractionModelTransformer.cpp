@@ -1079,11 +1079,13 @@ FeatureExtractionModelTransformer::addFeature(int n,
 
     sv_samplerate_t inputRate = input->getSampleRate();
 
-//    cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
-//              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
-//              << ", timestamp = " << feature.timestamp << ", hasDuration = "
-//              << feature.hasDuration << ", duration = " << feature.duration
-//              << endl;
+#ifdef PRINT_DETAILED_FEATURE_TIMINGS
+    std::cerr << "FeatureExtractionModelTransformer::addFeature: blockFrame = "
+              << blockFrame << ", hasTimestamp = " << feature.hasTimestamp
+              << ", timestamp = " << feature.timestamp << ", hasDuration = "
+              << feature.hasDuration << ", duration = " << feature.duration
+              << ", label = " << feature.label << std::endl;
+#endif
 
     sv_frame_t frame = blockFrame;
 
@@ -1100,8 +1102,10 @@ FeatureExtractionModelTransformer::addFeature(int n,
             frame = RealTime::realTime2Frame(feature.timestamp, inputRate);
         }
 
-//        cerr << "variable sample rate: timestamp = " << feature.timestamp
-//             << " at input rate " << inputRate << " -> " << frame << endl;
+#ifdef PRINT_DETAILED_FEATURE_TIMINGS
+        std::cerr << "variable sample rate: timestamp = " << feature.timestamp
+                  << " at input rate " << inputRate << " -> " << frame << std::endl;
+#endif
         
     } else if (m_descriptors[n].sampleType ==
                Vamp::Plugin::OutputDescriptor::FixedSampleRate) {
@@ -1118,12 +1122,18 @@ FeatureExtractionModelTransformer::addFeature(int n,
             m_fixedRateFeatureNos[n] = (int)lrint(ts.toDouble() * rate);
         }
 
-//        cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNos[n]
-//             << ", m_descriptor->sampleRate = " << m_descriptors[n].sampleRate
-//             << ", inputRate = " << inputRate
-//             << " giving frame = ";
+#ifdef PRINT_DETAILED_FEATURE_TIMINGS
+        std::cerr << "m_fixedRateFeatureNo = " << m_fixedRateFeatureNos[n]
+                  << ", m_descriptor->sampleRate = " << m_descriptors[n].sampleRate
+                  << ", inputRate = " << inputRate
+                  << " giving frame = ";
+#endif
+        
         frame = lrint((double(m_fixedRateFeatureNos[n]) / rate) * inputRate);
-//        cerr << frame << endl;
+
+#ifdef PRINT_DETAILED_FEATURE_TIMINGS
+        std::cerr << frame << std::endl;
+#endif
     }
 
     if (frame < 0) {
@@ -1154,7 +1164,12 @@ FeatureExtractionModelTransformer::addFeature(int n,
         auto model = ModelById::getAs<SparseTimeValueModel>(outputId);
         if (!model) return;
 
-        for (int i = 0; in_range_for(feature.values, i); ++i) {
+        int nvalues = int(feature.values.size());
+        if (m_descriptors[n].hasFixedBinCount) {
+            nvalues = std::min(nvalues, int(m_descriptors[n].binCount));
+        }
+        
+        for (int i = 0; i < nvalues; ++i) {
 
             float value = feature.values[i];
 
