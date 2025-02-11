@@ -40,6 +40,7 @@
 #include <QSettings>
 
 //#define DEBUG_FEATURE_EXTRACTION_TRANSFORMER_RUN 1
+//#define PRINT_DETAILED_FEATURE_TIMINGS 1
 
 namespace sv {
 
@@ -1226,7 +1227,7 @@ FeatureExtractionModelTransformer::addFeature(int n,
         auto regionModel = ModelById::getAs<RegionModel>(outputId);
         if (regionModel) {
             
-            if (feature.hasDuration && !feature.values.empty()) {
+            if (feature.hasDuration && nvalues > 0) {
 
                 for (int i = 0; i < nvalues; ++i) {
                     
