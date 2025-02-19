@@ -447,7 +447,7 @@ FeatureExtractionModelTransformer::createOutputModels(int n)
         
         // Regions do not have units of Hz or MIDI things (a sweeping
         // assumption!)
-        if (m_descriptors[n].unit == "Hz" ||
+        if (UnitDatabase::asCommonUnit(m_descriptors[n].unit.c_str()) == "Hz" ||
             m_descriptors[n].unit.find("MIDI") != std::string::npos ||
             m_descriptors[n].unit.find("midi") != std::string::npos) {
             isNoteModel = true;
