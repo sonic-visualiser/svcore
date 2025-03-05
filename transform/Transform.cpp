@@ -49,7 +49,19 @@ Transform::Transform(QString xml) :
 {
     QDomDocument doc;
 
-    auto result = doc.setContent(xml);
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+    QString error;
+    int errorLine;
+    int errorColumn;
+    if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
+        m_errorString = QString("%1 at line %2, column %3")
+            .arg(error)
+            .arg(errorLine)
+            .arg(errorColumn);
+        return;
+    }
+#else
+    QDomDocument::ParseResult result = doc.setContent(xml);
     if (!result) {
         m_errorString = QString("%1 at line %2, column %3")
             .arg(result.errorMessage)
@@ -57,6 +69,7 @@ Transform::Transform(QString xml) :
             .arg(result.errorColumn);
         return;
     }
+#endif
     
     QDomElement transformElt = doc.firstChildElement("transform");
     QDomNamedNodeMap attrNodes = transformElt.attributes();

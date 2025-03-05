@@ -199,6 +199,18 @@ PluginXml::setParametersFromXml(QString xml)
 //    SVDEBUG << "PluginXml::setParametersFromXml: XML is \""
 //              << xml << "\"" << endl;
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+    QString error;
+    int errorLine;
+    int errorColumn;
+    if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
+        SVCERR << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;
+        SVCERR << "Input follows:" << endl;
+        SVCERR << xml << endl;
+        SVCERR << "Input ends." << endl;
+        return;
+    }
+#else
     QDomDocument::ParseResult result = doc.setContent(xml);
     if (!result) {
         SVCERR << "PluginXml::setParametersFromXml: Error in parsing XML: " << result.errorMessage << " at line " << result.errorLine << ", column " << result.errorColumn << endl;
@@ -207,6 +219,7 @@ PluginXml::setParametersFromXml(QString xml)
         SVCERR << "Input ends." << endl;
         return;
     }
+#endif
 
     QDomElement pluginElt = doc.firstChildElement("plugin");
     QDomNamedNodeMap attrNodes = pluginElt.attributes();
