@@ -433,7 +433,7 @@ SamplePlayer::loadSampleData(QString path)
     vector<float> resampled;
     size_t targetFrames = frames;
 
-    if (rate != m_sampleRate) {
+    if (int(rate) != m_sampleRate) {
         
         double ratio = (double)m_sampleRate / (double)rate;
         targetFrames = (size_t)(round(double(frames) * ratio));
@@ -449,7 +449,7 @@ SamplePlayer::loadSampleData(QString path)
             (resampled.data(), targetFrames,
              interleaved.data(), frames + padding,
              ratio, true);
-        if (obtained != targetFrames) {
+        if (obtained != int(targetFrames)) {
             SVDEBUG << "SamplePlayer::loadSampleData: WARNING: Expected "
                     << targetFrames << " frames from resampler (input frames = "
                     << frames << ", padding = " << padding << ", ratio = "
@@ -462,9 +462,9 @@ SamplePlayer::loadSampleData(QString path)
     /* mixdown, adding an extra sample for linear interpolation */
     float *tmpSamples = new float[targetFrames + 1];
     
-    for (int i = 0; i < targetFrames; ++i) {
+    for (size_t i = 0; i < targetFrames; ++i) {
         tmpSamples[i] = 0.0f;
-        for (int j = 0; j < channels; ++j) {
+        for (size_t j = 0; j < channels; ++j) {
             tmpSamples[i] += resampled[i * channels + j];
         }
     }

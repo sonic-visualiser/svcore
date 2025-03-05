@@ -48,14 +48,13 @@ Transform::Transform(QString xml) :
     m_sampleRate(0)
 {
     QDomDocument doc;
-    
-    QString error;
-    int errorLine;
-    int errorColumn;
 
-    if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
+    auto result = doc.setContent(xml);
+    if (!result) {
         m_errorString = QString("%1 at line %2, column %3")
-            .arg(error).arg(errorLine).arg(errorColumn);
+            .arg(result.errorMessage)
+            .arg(result.errorLine)
+            .arg(result.errorColumn);
         return;
     }
     

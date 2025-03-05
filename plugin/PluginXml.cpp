@@ -196,15 +196,12 @@ PluginXml::setParametersFromXml(QString xml)
 {
     QDomDocument doc;
 
-    QString error;
-    int errorLine;
-    int errorColumn;
-
 //    SVDEBUG << "PluginXml::setParametersFromXml: XML is \""
 //              << xml << "\"" << endl;
 
-    if (!doc.setContent(xml, false, &error, &errorLine, &errorColumn)) {
-        SVCERR << "PluginXml::setParametersFromXml: Error in parsing XML: " << error << " at line " << errorLine << ", column " << errorColumn << endl;
+    QDomDocument::ParseResult result = doc.setContent(xml);
+    if (!result) {
+        SVCERR << "PluginXml::setParametersFromXml: Error in parsing XML: " << result.errorMessage << " at line " << result.errorLine << ", column " << result.errorColumn << endl;
         SVCERR << "Input follows:" << endl;
         SVCERR << xml << endl;
         SVCERR << "Input ends." << endl;
