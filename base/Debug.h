@@ -64,6 +64,7 @@ public:
     static void silence() { m_silenced = true; }
 
     static void installQtMessageHandler();
+    static void restoreQtMessageHandler();
     
 private:
     std::fstream m_stream;
@@ -71,6 +72,7 @@ private:
     bool m_ok;
     bool m_eol;
     QElapsedTimer m_timer;
+    static QtMessageHandler m_formerQtMessageHandler;
     static bool m_silenced;
 };
 
@@ -96,9 +98,11 @@ public:
     static void silence() { m_silenced = true; }
 
     static void installQtMessageHandler();
+    static void restoreQtMessageHandler();
     
 private:
     SVDebug &m_d;
+    static QtMessageHandler m_formerQtMessageHandler;
     static bool m_silenced;
 };
 

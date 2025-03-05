@@ -49,6 +49,8 @@ SVCerr &getSVCerr()
     return *svcerr;
 }
 
+QtMessageHandler SVDebug::m_formerQtMessageHandler = nullptr;
+QtMessageHandler SVCerr::m_formerQtMessageHandler = nullptr;
 bool SVDebug::m_silenced = false;
 bool SVCerr::m_silenced = false;
 
@@ -130,7 +132,13 @@ svDebugQtMessageHandler(QtMsgType type,
 void
 SVDebug::installQtMessageHandler()
 {
-    (void)qInstallMessageHandler(svDebugQtMessageHandler);
+    m_formerQtMessageHandler = qInstallMessageHandler(svDebugQtMessageHandler);
+}
+
+void
+SVDebug::restoreQtMessageHandler()
+{
+    (void)qInstallMessageHandler(m_formerQtMessageHandler);
 }
 
 static void
@@ -144,7 +152,13 @@ svCerrQtMessageHandler(QtMsgType type,
 void
 SVCerr::installQtMessageHandler()
 {
-    (void)qInstallMessageHandler(svCerrQtMessageHandler);
+    m_formerQtMessageHandler = qInstallMessageHandler(svCerrQtMessageHandler);
+}
+
+void
+SVCerr::restoreQtMessageHandler()
+{
+    (void)qInstallMessageHandler(m_formerQtMessageHandler);
 }
 
 static int funcLoggerDepth = 0;
