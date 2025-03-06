@@ -794,7 +794,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
     // columns, instead of jumping back and forth between columns x and
     // x+1, which may be significantly slower if re-seeking is needed
 
-    int phaseIndex = 0;
     for (auto location : locations) {
         double oldPhase = arg(col[location]);
         double newPhase = arg(nextCol[location]);
@@ -805,7 +804,6 @@ FFTModel::getPeakFrequencies(PeakPickType type, int x,
             (sampleRate * (expectedPhase + phaseError - oldPhase))
             / (2 * M_PI * incr);
         peaks.push_back({ location, frequency });
-        ++phaseIndex;
     }
 
     return peaks;
