@@ -20,12 +20,16 @@
 
 #include <stdint.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <io.h>
+#else // ! _WIN32
 #include <signal.h>
 #include <sys/statvfs.h>
 #include <locale.h>
 #include <unistd.h>
 #endif
+
+#include <fcntl.h>
 
 #ifdef __APPLE__
 #include <sys/types.h>
@@ -37,6 +41,7 @@
 #include <cstdlib>
 
 #include <iostream>
+#include <stdexcept>
 
 #ifdef __APPLE__
 extern "C" {
@@ -468,3 +473,59 @@ runningUnderTranslation()
     return false;
 #endif
 }
+
+// For use when running plugins or calling other external code in a
+// command-line context. Plugins should be writing diagnostic
+// information to stderr, and nothing to stdout. But some plugins do
+// write to stdout, and we may need to suppress that. To do so we open
+// a null file descriptor and dup2() it into place of stdout. These
+// functions provide the ability to toggle stdout off and on again.
+
+static void
+suppressOrResumeStdout(bool suppress)
+{
+    static int normalFd = -1;
+    static int suppressedFd = -1;
+
+    if (normalFd == -1) {
+#ifdef _WIN32
+        normalFd = _dup(1);
+        suppressedFd = _open("NUL", _O_WRONLY);
+#else
+        normalFd = dup(1);
+        suppressedFd = open("/dev/null", O_WRONLY);
+#endif
+        if (normalFd < 0 || suppressedFd < 0) {
+            throw std::runtime_error
+                ("Failed to initialise fds for stdio suppression");
+        }
+    }
+
+    if (suppress) {
+#ifdef _WIN32
+        _dup2(suppressedFd, 1);
+#else
+        dup2(suppressedFd, 1);
+#endif
+    } else {
+        fflush(stdout);
+#ifdef _WIN32
+        _dup2(normalFd, 1);
+#else
+        dup2(normalFd, 1);
+#endif
+    }
+}
+
+void
+suppressStdout()
+{
+    suppressOrResumeStdout(true);
+}
+
+void
+resumeStdout()
+{
+    suppressOrResumeStdout(false);
+}
+

@@ -182,6 +182,23 @@ extern bool putEnvUtf8(std::string variable, std::string value);
  */
 extern bool runningUnderTranslation();
 
+/** Suppress output to stdout by substituting a stream that has been
+    redirected to null.
+ */
+extern void suppressStdout();
+
+/** Resume output to stdout.
+ */
+extern void resumeStdout();
+
+/** RAII class to suppress on construction and resume when leaving
+    scope.
+ */
+struct StdoutSuppressor {
+    StdoutSuppressor() { suppressStdout(); }
+    ~StdoutSuppressor() { resumeStdout(); }
+};
+
 #endif /* ! _SYSTEM_H_ */
 
 
