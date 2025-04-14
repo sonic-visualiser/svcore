@@ -342,8 +342,8 @@ public:
              .arg("true") // always true after model reaches 100% -
                           // subsequent events are always notified
              .arg(m_events.getExportId())
-             .arg(m_valueMinimum)
-             .arg(m_valueMaximum)
+             .arg(m_valueMinimum.load())
+             .arg(m_valueMaximum.load())
              .arg(encodeEntities(m_units))
              .arg(extraAttributes));
         

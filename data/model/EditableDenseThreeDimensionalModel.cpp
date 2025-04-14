@@ -458,10 +458,10 @@ EditableDenseThreeDimensionalModel::toXml(QTextStream &out,
     Model::toXml
         (out, indent,
          QString("type=\"dense\" dimensions=\"3\" windowSize=\"%1\" yBinCount=\"%2\" minimum=\"%3\" maximum=\"%4\" dataset=\"%5\" startFrame=\"%6\" %7")
-         .arg(m_resolution)
-         .arg(m_yBinCount)
-         .arg(m_minimum)
-         .arg(m_maximum)
+         .arg(m_resolution.load())
+         .arg(m_yBinCount.load())
+         .arg(m_minimum.load())
+         .arg(m_maximum.load())
          .arg(getExportId())
          .arg(m_startFrame)
          .arg(extraAttributes));
