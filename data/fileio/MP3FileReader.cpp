@@ -637,6 +637,34 @@ MP3FileReader::supports(FileSource &source)
             supportsContentType(source.getContentType()));
 }
 
+bool
+MP3FileReader::contentsCouldBeMp3(FileSource &source)
+{
+    QString path = source.getLocalFilename();
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        SVDEBUG << "MP3FileReader::contentsCouldBeMp3(" << path << "): unable to open, so no" << endl;
+        return false;
+    }
+    QByteArray head = file.read(3);
+    file.close();
+    if (head.length() < 3) {
+        SVDEBUG << "MP3FileReader::contentsCouldBeMp3(" << path << "): trivial file, so no" << endl;
+        return false;
+    }
+    if (head[0] == 'I' && head[1] == 'D' && head[2] == '3') {
+        SVDEBUG << "MP3FileReader::contentsCouldBeMp3(" << path << "): starts with ID3, so yes" << endl;
+        return true;
+    }
+    if ((uint8_t)(head[0]) == 0xff &&
+        ((uint8_t)(head[1]) & 0xf0) == 0xf0) {
+        SVDEBUG << "MP3FileReader::contentsCouldBeMp3(" << path << "): starts with 12 bits set, so yes" << endl;
+        return true;
+    }
+    SVDEBUG << "MP3FileReader::contentsCouldBeMp3(" << path << "): nothing suggestive found, saying no" << endl;
+    return false;
+}
+
 } // end namespace sv
 
 

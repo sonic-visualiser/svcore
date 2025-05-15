@@ -89,6 +89,10 @@ public:
     static bool supportsContentType(QString type);
     static bool supports(FileSource &source);
 
+    // Test whether the first couple of bytes are plausible. For use
+    // with extensionless files.
+    static bool contentsCouldBeMp3(FileSource &source);
+    
     int getDecodeCompletion() const override { return m_completion; }
 
     bool isUpdating() const override {

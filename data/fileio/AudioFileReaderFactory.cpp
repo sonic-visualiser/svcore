@@ -138,49 +138,54 @@ AudioFileReaderFactory::createReader(FileSource source,
 
     for (int any = 0; any <= 1; ++any) {
 
-        bool anyReader = (any > 0);
+        bool observeFileExtension = (any == 0);
 
-        if (!anyReader) {
-            SVDEBUG << "AudioFileReaderFactory: Checking whether any reader officially handles this source" << endl;
+        if (observeFileExtension) {
+            SVDEBUG << "AudioFileReaderFactory: Checking whether a reader officially handles this source" << endl;
         } else {
-            SVDEBUG << "AudioFileReaderFactory: Source not officially handled by any reader, trying again with each reader in turn"
+            SVDEBUG << "AudioFileReaderFactory: Source not officially handled by a reader, trying again with each reader in turn"
                     << endl;
         }
 
 #ifdef HAVE_MAD
         // Having said we'll try any reader on the second pass, we
-        // actually don't want to try the mp3 reader for anything not
-        // identified as an mp3 - it can't identify files by header,
-        // it'll try to read any data and then fail with
-        // synchronisation errors - causing misleading and potentially
-        // alarming warning messages at the least
-        if (!anyReader) {
-            if (MP3FileReader::supports(source)) {
+        // actually don't want to try the mp3 reader for anything we
+        // don't think is an mp3. That's because it will happily try
+        // to open anything, imagining it's just in the middle of an
+        // mp3 frame and giving a read error later rather than
+        // refusing up-front. We include a special hack to check the
+        // contents of mp3 files before passing them on (for use when
+        // the extension is not mp3) - code is above
 
-                MP3FileReader::GaplessMode gapless =
-                    params.gaplessMode == GaplessMode::Gapless ?
-                    MP3FileReader::GaplessMode::Gapless :
-                    MP3FileReader::GaplessMode::Gappy;
+        bool tryMp3 = 
+            (observeFileExtension && MP3FileReader::supports(source)) ||
+            (!observeFileExtension && MP3FileReader::contentsCouldBeMp3(source));
+
+        if (tryMp3) {
+
+            MP3FileReader::GaplessMode gapless =
+                params.gaplessMode == GaplessMode::Gapless ?
+                MP3FileReader::GaplessMode::Gapless :
+                MP3FileReader::GaplessMode::Gappy;
             
-                reader = new MP3FileReader
-                    (source, decodeMode, cacheMode, gapless,
-                     targetRate, normalised, reporter);
-
-                if (reader->isOK()) {
-                    if (fileUpdating && !reader->isUpdating()) {
-                        SVDEBUG << "AudioFileReaderFactory: WARNING: fileUpdating set to true, but MP3 reader doesn't support it" << endl;
-                    }
-                    SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
-                    return reader;
-                } else {
-                    delete reader;
+            reader = new MP3FileReader
+                (source, decodeMode, cacheMode, gapless,
+                 targetRate, normalised, reporter);
+            
+            if (reader->isOK()) {
+                if (fileUpdating && !reader->isUpdating()) {
+                    SVDEBUG << "AudioFileReaderFactory: WARNING: fileUpdating set to true, but MP3 reader doesn't support it" << endl;
                 }
+                SVDEBUG << "AudioFileReaderFactory: MP3 file reader is OK, returning it" << endl;
+                return reader;
+            } else {
+                delete reader;
             }
         }
 #endif
 
 #ifndef WITHOUT_LIBSNDFILE // See note in WavFileReader.h
-        if (anyReader || WavFileReader::supports(source)) {
+        if (!observeFileExtension || WavFileReader::supports(source)) {
 
             reader = new WavFileReader(source, fileUpdating);
 
@@ -216,7 +221,7 @@ AudioFileReaderFactory::createReader(FileSource source,
         }
 #endif
         
-        if (anyReader || BQAFileReader::supports(source)) {
+        if (!observeFileExtension || BQAFileReader::supports(source)) {
 
             reader = new BQAFileReader
                 (source, decodeMode, cacheMode, 
